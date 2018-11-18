@@ -1,0 +1,22 @@
+{
+  "env": {
+    "node": true
+  },
+  "parserOptions": {
+    "sourceType": "script",
+    "ecmaVersion": 2018
+  },
+  "rules": {
+    "curly": 0,
+    "brace-style": 0,
+    "eol-last": 0,
+    "comma-dangle": 0,
+    "indent": 0,
+    "no-var": 0,
+    "no-cond-assign": 0,
+    "quotes": 0,
+    "semi-spacing": 0,
+    "space-unary-ops": 0,
+    "space-before-function-paren": 0
+  }
+}
