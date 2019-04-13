@@ -45,7 +45,7 @@ Example with bpmn-moddle:
 ```js
 import * as elements from 'bpmn-elements';
 import BpmnModdle from 'bpmn-moddle';
-import MyStartEvent from './MyStartEvent';
+import MyStartEvent from './extend/MyStartEvent';
 import {default as serialize, TypeResolver} from 'moddle-context-serializer';
 
 const myOwnElements = {
@@ -62,6 +62,97 @@ const sourceDefinition = `
   <process id="theProcess" isExecutable="true">
     <startEvent id="start" />
   </process>
+</definitions>`;
+
+run(sourceDefinition);
+
+async function run(source) {
+  const moddleContext = await getModdleContext(source);
+  const options = {
+    services: {
+      myService(arg, next) {
+        next();
+      },
+    },
+  };
+  const context = Context(serialize(moddleContext, typeResolver));
+
+  const definition = Definition(context, options);
+  definition.run();
+}
+
+function getModdleContext(sourceXml) {
+  const bpmnModdle = new BpmnModdle();
+
+  return new Promise((resolve, reject) => {
+    bpmnModdle.fromXML(sourceXml.trim(), (err, definitions, moddleCtx) => {
+      if (err) return reject(err);
+      resolve(moddleCtx);
+    });
+  });
+}
+```
+
+# Extend event definition
+
+First of define your own event definition type function.
+
+The behaviour function will receive the Activity instance and the workflow context when the activity executes.
+
+To complete execution the broker must publish an `execute.completed` or an `execute.error` message.
+
+```js
+export default function EscalateEventDefinition(activity, eventDefinition = {}) {
+  const {id, broker, environment} = activity;
+  const {type, behaviour} = eventDefinition;
+  const {debug} = environment.Logger(type.toLowerCase());
+
+  const source = {
+    id,
+    type,
+    execute,
+  };
+
+  return source;
+
+  function execute(executeMessage) {
+    debug(`escalate to ${behaviour.escalation.code}`);
+    broker.publish('event', 'activity.escalate', {...executeMessage.content, escalateTo: {...behaviour.escalateTo}}, {type: 'escalate'});
+    broker.publish('execution', 'execute.completed', executeMessage.content);
+  }
+}
+```
+
+Then extend the serializer.
+
+Example with bpmn-moddle:
+```js
+import EscalationEventDefinition from './extend/EscalationEventDefinition';
+
+import Escalation from './extend/Escalation';
+import IntermediateThrowEvent from './extend/IntermediateThrowEvent';
+
+import * as elements from 'bpmn-elements';
+import BpmnModdle from 'bpmn-moddle';
+
+import {default as serialize, TypeResolver} from 'moddle-context-serializer';
+
+const {Context, Definition} = elements;
+const typeResolver = TypeResolver(elements, (activityTypes) => {
+  activityTypes['bpmn:Escalation'] = Escalation;
+  activityTypes['bpmn:IntermediateThrowEvent'] = IntermediateThrowEvent;
+  activityTypes['bpmn:EscalationEventDefinition'] = EscalationEventDefinition;
+});
+
+const sourceDefinition = `
+<?xml version="1.0" encoding="UTF-8"?>
+  <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <process id="theProcess" isExecutable="true">
+    <intermediateThrowEvent id="event_1">
+      <escalationEventDefinition escalationRef="escalation_1" />
+    </intermediateThrowEvent>
+  </process>
+  <escalation id="escalation_1" name="escalation #1" escalationCode="10" />
 </definitions>`;
 
 run(sourceDefinition);

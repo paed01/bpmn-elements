@@ -42,4 +42,3 @@ The following elements are tested and supported.
 - TimerEventDefinition
   - duration only
 - MultiInstanceLoopCharacteristics
-
