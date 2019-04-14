@@ -2,7 +2,7 @@ import ActivityExecution from './ActivityExecution';
 import {getUniqueId, filterUndefined} from '../shared';
 import {ActivityApi} from '../Api';
 import {ActivityBroker} from '../EventBroker';
-import {getRoutingKeyPattern} from 'smqp/src/shared';
+import {getRoutingKeyPattern} from 'smqp';
 import {cloneContent, cloneParent} from '../messageHelper';
 
 export default function Activity(Behaviour, activityDef, context) {

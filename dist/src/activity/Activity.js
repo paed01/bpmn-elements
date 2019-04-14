@@ -13,7 +13,7 @@ var _Api = require("../Api");
 
 var _EventBroker = require("../EventBroker");
 
-var _shared2 = require("smqp/src/shared");
+var _smqp = require("smqp");
 
 var _messageHelper = require("../messageHelper");
 
@@ -673,7 +673,7 @@ function Activity(Behaviour, activityDef, context) {
       for (let i = 0; i < pendingFormats.length; i++) {
         const pendingFormat = pendingFormats[i];
 
-        if ((0, _shared2.getRoutingKeyPattern)(pendingFormat.content.endRoutingKey).test(routingKey)) {
+        if ((0, _smqp.getRoutingKeyPattern)(pendingFormat.content.endRoutingKey).test(routingKey)) {
           logger.debug(`<${id}> completed formatting ${fields.routingKey} message content with formatter ${routingKey}`);
           pendingFormats.splice(i, 1);
           pendingFormat.ack();
