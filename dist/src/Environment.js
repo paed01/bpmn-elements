@@ -94,8 +94,8 @@ function Environment(options = {}) {
         },
         Logger,
         extensions,
-        ...overrideOptions,
         scripts,
+        ...overrideOptions,
         services
       };
       if (overrideOptions.services) newOptions.services = { ...services,

@@ -83,8 +83,8 @@ export default function Environment(options = {}) {
         output: {...output},
         Logger,
         extensions,
-        ...overrideOptions,
         scripts,
+        ...overrideOptions,
         services,
       };
 
