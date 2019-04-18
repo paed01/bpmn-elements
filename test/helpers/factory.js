@@ -94,7 +94,7 @@ function userTask(userTaskId = 'userTask', definitionId) {
           </inputSet>
           <dataOutput id="userInput" name="input" />
         </ioSpecification>
-        <dataInputAssociation id="associatedInput" sourceRef="input_1" targetRef="globalInputRef" />
+        <dataInputAssociation id="associatedInput" sourceRef="globalInputRef" targetRef="input_1" />
         <dataOutputAssociation id="associatedOutput" sourceRef="userInput" targetRef="inputFromUserRef" />
       </userTask>
       <endEvent id="theEnd" />

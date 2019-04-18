@@ -1,4 +1,5 @@
 import Environment from '../../src/Environment';
+import factory from '../helpers/factory';
 import testHelpers from '../helpers/testHelpers';
 import SignalTask from '../../src/tasks/SignalTask';
 import { ActivityError } from '../../src/error/Errors';
@@ -691,6 +692,34 @@ describe('Process', () => {
       expect(bp.sendMessage({
         target: {id: 'notask'},
       }));
+    });
+  });
+
+  describe('data objects', () => {
+    let bp;
+    beforeEach('setup proc', async () => {
+      const context = await testHelpers.context(factory.userTask());
+      [bp] = context.getProcesses();
+    });
+
+    it('are saved to variables', () => {
+      bp.run();
+
+      expect(bp.getPostponed()).to.have.length(1);
+      const [taskApi] = bp.getPostponed();
+
+      taskApi.signal({
+        ioSpecification: {
+          dataOutputs: [{
+            id: 'userInput',
+            value: 'von Rosen',
+          }],
+        },
+      });
+
+      expect(bp.environment.variables).to.have.property('_data').that.eql({
+        inputFromUser: 'von Rosen'
+      });
     });
   });
 });
