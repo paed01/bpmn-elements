@@ -1,136 +1,122 @@
 import expressions from './expressions';
 import {Scripts as IScripts} from './Scripts';
 
-const defaultOptions = ['extensions', 'output', 'services', 'scripts', 'settings', 'variables'];
+const defaultOptions = ['extensions', 'output', 'services', 'scripts', 'settings', 'variables', 'Logger'];
 
 export default function Environment(options = {}) {
   const initialOptions = validateOptions(options);
 
-  const initialSettings = {...(options.settings || {})};
-  const initialOutput = options.output || {};
-  const initialVariables = options.variables || {};
+  let variables = options.variables || {};
+  const settings = {...(options.settings || {})};
+  const output = options.output || {};
   const services = options.services || {};
   const scripts = options.scripts || IScripts();
   const Logger = options.Logger || DummyLogger;
   const extensions = options.extensions;
 
-  return init(initialOptions, initialSettings, initialVariables, initialOutput);
+  const environmentApi = {
+    options: initialOptions,
+    extensions,
+    output,
+    scripts,
+    services,
+    settings,
+    get variables() {
+      return variables;
+    },
+    addService,
+    assignVariables,
+    clone,
+    getScript,
+    getServiceByName,
+    getState,
+    registerScript,
+    resolveExpression,
+    recover,
+    Logger,
+  };
 
-  function init(clonedOptions, settings, variables, output) {
-    const environmentApi = {
-      options: clonedOptions,
-      extensions,
-      output,
-      scripts,
+  return environmentApi;
+
+  function getState() {
+    return {
+      settings: {...settings},
+      variables: {...variables},
+      output: {...output},
+    };
+  }
+
+  function recover(state) {
+    if (!state) return environmentApi;
+
+    const recoverOptions = {
       services,
-      settings,
-      get variables() {
-        return variables;
-      },
-      addService,
-      assignVariables,
-      clone,
-      getInput,
-      getOutput,
-      getScript,
-      getServiceByName,
-      getState,
-      registerScript,
-      resolveExpression,
-      recover,
+      scripts,
       Logger,
+      extensions,
+      settings: {
+        ...state.settings || {},
+        ...settings,
+      },
+      variables: {
+        ...variables,
+        ...state.variables || {},
+      },
+      output: {
+        ...output,
+        ...state.output || {},
+      },
     };
 
-    return environmentApi;
+    return Environment(recoverOptions);
+  }
 
-    function getState() {
-      return {
-        settings: {...settings},
-        variables: {...variables},
-        output: {...output},
-      };
-    }
+  function clone(overrideOptions = {}) {
+    const newOptions = {
+      settings: {...settings},
+      variables: {...variables},
+      output: {...output},
+      Logger,
+      extensions,
+      scripts,
+      ...initialOptions,
+      ...overrideOptions,
+      services,
+    };
 
-    function recover(state) {
-      if (!state) return environmentApi;
+    if (overrideOptions.services) newOptions.services = {...services, ...overrideOptions.services};
 
-      const recoverOptions = {
-        services,
-        scripts,
-        Logger,
-        extensions,
-        settings: {
-          ...state.settings || {},
-          ...settings,
-        },
-        variables: {
-          ...variables,
-          ...state.variables || {},
-        },
-        output: {
-          ...output,
-          ...state.output || {},
-        },
-      };
+    return Environment(newOptions);
+  }
 
-      return Environment(recoverOptions);
-    }
+  function assignVariables(newVars) {
+    if (!newVars || typeof newVars !== 'object') return;
 
-    function clone(overrideOptions = {}) {
-      const newOptions = {
-        settings: {...settings},
-        variables: {...variables},
-        output: {...output},
-        Logger,
-        extensions,
-        scripts,
-        ...overrideOptions,
-        services,
-      };
+    variables = {
+      ...variables,
+      ...newVars,
+    };
+  }
 
-      if (overrideOptions.services) newOptions.services = {...services, ...overrideOptions.services};
+  function getScript(...args) {
+    return scripts.getScript(...args);
+  }
 
-      return Environment(newOptions);
-    }
+  function registerScript(...args) {
+    return scripts.register(...args);
+  }
 
-    function assignVariables(newVars) {
-      if (!newVars || typeof newVars !== 'object') return;
+  function getServiceByName(serviceName) {
+    return services[serviceName];
+  }
 
-      variables = {
-        ...variables,
-        ...newVars,
-      };
-    }
+  function resolveExpression(expression, message = {}, expressionFnContext) {
+    const from = {
+      environment: environmentApi,
+      ...message,
+    };
 
-    function getScript(...args) {
-      return scripts.getScript(...args);
-    }
-
-    function registerScript(...args) {
-      return scripts.register(...args);
-    }
-
-    function getServiceByName(serviceName) {
-      return services[serviceName];
-    }
-
-    function resolveExpression(expression, message = {}, expressionFnContext) {
-      const from = {
-        environment: environmentApi,
-        ...message,
-      };
-
-      return expressions(expression, from, expressionFnContext);
-    }
-
-    function getInput() {
-      return Object.assign({}, initialOptions, {
-        variables: initialVariables,
-      });
-    }
-    function getOutput() {
-      return output;
-    }
+    return expressions(expression, from, expressionFnContext);
   }
 
   function addService(name, fn) {
@@ -165,7 +151,9 @@ function DummyLogger() {
   return {
     debug,
     error,
+    warn,
   };
   function debug() {}
   function error() {}
+  function warn() {}
 }

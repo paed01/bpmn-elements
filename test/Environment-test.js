@@ -183,22 +183,27 @@ describe('Environment', () => {
   });
 
   describe('clone()', () => {
-    it('clones variables and settings but keeps services, scripts and Logger', () => {
+    it('clones variables, settings, output, and options but keeps services, scripts and Logger', () => {
       const variables = {
         init: true,
       };
       const settings = {
         init: true,
       };
+      const listener = {
+        emit() {}
+      };
       const environment = Environment({
+        listener,
         settings,
         variables,
         services: {
           get() {},
         },
         Logger() {},
-        Script() {},
       });
+
+      expect(environment.options).to.have.property('listener', listener);
 
       const clone = environment.clone();
       expect(environment.variables.init).to.be.true;
@@ -207,9 +212,22 @@ describe('Environment', () => {
 
       expect(environment.variables.init).to.be.true;
       expect(environment.settings.init).to.be.true;
+      expect(clone.options).to.have.property('listener', listener);
+
       expect(clone.getServiceByName('get')).to.be.a('function');
       expect(clone.Logger).to.be.a('function');
       expect(clone.scripts === environment.scripts).to.be.true;
+    });
+
+    it('extends options', () => {
+      const environment = Environment({
+        listener: {},
+      });
+
+      expect(environment.options).to.have.property('listener');
+      const clone = environment.clone({myOption: 1});
+      expect(clone.options).to.have.property('listener');
+      expect(clone.options).to.have.property('myOption', 1);
     });
 
     it('allows override of output and variables', () => {
@@ -228,6 +246,23 @@ describe('Environment', () => {
       expect(environment.variables.init).to.be.true;
 
       expect(clone.output).to.be.ok.and.an('object').that.is.not.equal(output);
+    });
+
+    it('allows override of scripts', () => {
+      const environment = Environment({
+        scripts: {
+          register() {},
+          getScript() {},
+        }
+      });
+
+      const myScripts = {
+        register() {},
+        getScript() {},
+      };
+      const clone = environment.clone({scripts: myScripts});
+
+      expect(clone.scripts).to.be.ok.and.an('object').that.equal(myScripts);
     });
 
     it('extends services', () => {

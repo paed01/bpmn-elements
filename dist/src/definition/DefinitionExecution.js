@@ -343,7 +343,7 @@ function DefinitionExecution(definition) {
       type,
       executionId,
       status,
-      input: environment.getInput(),
+      // input: environment.getInput(),
       ...content
     };
   }

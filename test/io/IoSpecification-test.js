@@ -342,7 +342,7 @@ describe('IoSpecification', () => {
 
     await leave;
 
-    expect(context.environment.getOutput()).to.eql({});
+    expect(context.environment.output).to.eql({});
   });
 
   it('no data objects effectively ignores io', async () => {
