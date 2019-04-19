@@ -14,6 +14,8 @@ var _Api = require("../Api");
 
 var _EventBroker = require("../EventBroker");
 
+var _messageHelper = require("../messageHelper");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var _default = Process;
@@ -232,7 +234,7 @@ function Process(processDef, context) {
           status = 'executing';
           postponedMessage = message;
           execution = execution || (0, _ProcessExecution.default)(processApi, context);
-          return execution.execute(message);
+          return execution.execute((0, _messageHelper.cloneMessage)(message));
         }
 
       case 'run.error':

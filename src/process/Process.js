@@ -2,6 +2,7 @@ import ProcessExecution from './ProcessExecution';
 import {getUniqueId} from '../shared';
 import {ProcessApi} from '../Api';
 import {ProcessBroker} from '../EventBroker';
+import {cloneMessage} from '../messageHelper';
 
 export default Process;
 
@@ -185,7 +186,7 @@ export function Process(processDef, context) {
         status = 'executing';
         postponedMessage = message;
         execution = execution || ProcessExecution(processApi, context);
-        return execution.execute(message);
+        return execution.execute(cloneMessage(message));
       }
       case 'run.error': {
         publishEvent('error', content);

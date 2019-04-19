@@ -38,6 +38,28 @@ describe('Process', () => {
     });
   });
 
+  describe('run()', () => {
+    it('assigns run message to environment', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions id="def" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <task id="task" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const bp = context.getProcessById('theProcess');
+
+      bp.run();
+
+      expect(bp.environment.variables).to.have.property('fields').with.property('routingKey', 'run.execute');
+      expect(bp.environment.variables).to.have.property('content').with.property('id', 'theProcess');
+      expect(bp.environment.variables).to.have.property('properties').with.property('messageId');
+      expect(bp.environment.variables).to.not.have.property('ack');
+    });
+  });
+
   describe('errors', () => {
     it('throws error if no-one is listening for errors', async () => {
       const source = `
