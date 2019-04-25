@@ -1,4 +1,5 @@
 import {ActivityApi} from '../Api';
+import {cloneContent, cloneMessage} from '../messageHelper';
 
 export default function ActivityExecution(activity, context) {
   const {id, broker, logger, Behaviour} = activity;
@@ -37,19 +38,22 @@ export default function ActivityExecution(activity, context) {
     const isRedelivered = executeMessage.fields.redelivered;
     executionId = executeMessage.content.executionId;
 
-    logger.debug(`<${executionId} (${id})>`, isRedelivered ? 'resume execution' : 'execute');
-
-    const executeContent = {...executeMessage.content, executionId, state: 'start', isRootScope: true};
-    initMessage = {...executeMessage, content: executeContent};
+    initMessage = cloneMessage(executeMessage);
+    initMessage.content = {...initMessage.content, executionId, state: 'start', isRootScope: true};
 
     if (isRedelivered) {
+      logger.debug(`<${executionId} (${id})> resume execution`);
+
       if (!source) source = Behaviour(activity, context);
-      return activate();
+
+      activate();
+      return broker.publish('execution', 'execute.resume.execution', cloneContent(initMessage.content), {persistent: false});
     }
 
+    logger.debug(`<${executionId} (${id})> execute`);
     activate();
     source = Behaviour(activity, context);
-    broker.publish('execution', 'execute.start', executeContent);
+    broker.publish('execution', 'execute.start', cloneContent(initMessage.content));
   }
 
   function discard() {
@@ -64,14 +68,17 @@ export default function ActivityExecution(activity, context) {
   }
 
   function getState() {
-    if (!source || !source.getState) return;
-    return source.getState();
+    const result = {completed};
+
+    if (!source || !source.getState) return result;
+    return {...result, ...source.getState()};
   }
 
   function recover(state) {
     postponed.splice(0);
 
     if (!state) return executionApi;
+    if ('completed' in state) completed = state.completed;
 
     source = Behaviour(activity, context);
     if (source.recover) {
@@ -109,6 +116,10 @@ export default function ActivityExecution(activity, context) {
     const {isRootScope, ignoreIfExecuting, keep, executionId: cexid, error} = content;
 
     switch (routingKey) {
+      case 'execute.resume.execution': {
+        if (!postponed.length) return broker.publish('execution', 'execute.start', cloneContent(initMessage.content));
+        break;
+      }
       case 'execute.error':
       case 'execute.discard':
         executionDiscard();
@@ -123,7 +134,6 @@ export default function ActivityExecution(activity, context) {
         executionCompleted();
         break;
       }
-      case 'execute.resume':
       case 'execute.start': {
         if (!stateChangeMessage()) return;
         return source.execute(getExecuteMessage());

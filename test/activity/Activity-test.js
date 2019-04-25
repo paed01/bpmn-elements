@@ -1999,6 +1999,27 @@ describe('Activity', () => {
       expect(state.execution).to.be.undefined;
     });
 
+    it('returns expected state when running', () => {
+      const activity = getActivity(undefined, () => {
+        return {
+          execute() {},
+          getState() {
+            return {
+              behaviourState: true
+            };
+          },
+        };
+      });
+      activity.run();
+      const state = activity.getState();
+
+      expect(state).to.have.property('status', 'executing');
+      expect(state).to.have.property('execution').with.property('completed', false);
+      expect(state.execution).to.have.property('behaviourState', true);
+      expect(state.counters).to.eql({discarded: 0, taken: 0});
+      expect(state).to.have.property('broker').with.property('queues');
+    });
+
     it('returns expected state when stopped', () => {
       const activity = getActivity(undefined, () => {
         return {
@@ -2074,7 +2095,7 @@ describe('Activity', () => {
   });
 
   describe('recover()', () => {
-    it('recovers running activity without state', () => {
+    it('recovers stopped activity without state', () => {
       const activity = getActivity(undefined, SignalTaskBehaviour);
       activity.run();
       activity.stop();
@@ -2089,10 +2110,83 @@ describe('Activity', () => {
       expect(activity.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
     });
 
-    it('recovers running activity', () => {
-      const activity = getActivity(undefined, SignalTaskBehaviour);
+    it('recovers stopped activity with state', () => {
+      let activityState;
+      const activity = getActivity(undefined, () => {
+        return {
+          execute() {},
+          getState() {
+            return {
+              behaviourState: true
+            };
+          },
+          recover(executionState) {
+            activityState = executionState;
+          }
+        };
+      });
       activity.run();
       activity.stop();
+
+      const state = activity.getState();
+
+      activity.recover(state);
+
+      expect(activity.stopped).to.be.true;
+      expect(activity.status).to.equal('executing');
+      expect(activity.execution).to.be.ok;
+      expect(activity.execution).to.have.property('completed', false);
+
+      expect(activity.broker.getQueue('run-q')).to.have.property('consumerCount', 0);
+      expect(activity.broker.getQueue('execution-q')).to.have.property('consumerCount', 0);
+      expect(activity.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
+
+      expect(activityState).to.have.property('behaviourState', true);
+    });
+
+    it('recovers new activity with state', () => {
+      let activityState;
+      const activity = getActivity(undefined, () => {
+        return {
+          execute() {},
+          getState() {
+            return {
+              behaviourState: true
+            };
+          },
+        };
+      });
+      activity.run();
+      activity.stop();
+
+      const state = activity.getState();
+
+      const recoveredActivity = getActivity(undefined, () => {
+        return {
+          execute() {},
+          recover(executionState) {
+            activityState = executionState;
+          }
+        };
+      });
+
+      recoveredActivity.recover(state);
+
+      expect(recoveredActivity.stopped).to.be.true;
+      expect(recoveredActivity.status).to.equal('executing');
+      expect(recoveredActivity.execution).to.be.ok;
+      expect(recoveredActivity.execution).to.have.property('completed', false);
+
+      expect(recoveredActivity.broker.getQueue('run-q')).to.have.property('consumerCount', 0);
+      expect(recoveredActivity.broker.getQueue('execution-q')).to.have.property('consumerCount', 0);
+      expect(recoveredActivity.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
+
+      expect(activityState).to.have.property('behaviourState', true);
+    });
+
+    it('recovers new activity with running state', () => {
+      const activity = getActivity(undefined, SignalTaskBehaviour);
+      activity.run();
       expect(activity.counters).to.eql({discarded: 0, taken: 0});
 
       const state = activity.getState();
@@ -2110,6 +2204,17 @@ describe('Activity', () => {
       expect(recoveredActivity.broker.getQueue('execution-q')).to.have.property('messageCount', 0);
       expect(recoveredActivity.broker.getQueue('execute-q')).to.have.property('consumerCount', 0);
       expect(recoveredActivity.broker.getQueue('execute-q')).to.have.property('messageCount', 1);
+    });
+
+    it('throws if recover is called if activity is running', () => {
+      const activity = getActivity(undefined, SignalTaskBehaviour);
+      activity.run();
+
+      const state = activity.getState();
+
+      expect(() => {
+        activity.recover(state);
+      }).to.throw('cannot recover running activity');
     });
   });
 
@@ -2129,7 +2234,7 @@ describe('Activity', () => {
       expect(activity.broker.getQueue('execution-q')).to.have.property('consumerCount', 1);
       expect(activity.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
       expect(activity.broker.getQueue('execute-q')).to.have.property('consumerCount', 1);
-      expect(activity.broker.getQueue('execute-q')).to.have.property('messageCount', 1);
+      expect(activity.broker.getQueue('execute-q')).to.have.property('messageCount', 2);
 
       activity.getApi().signal();
       expect(activity.counters).to.eql({discarded: 0, taken: 1});
@@ -2150,14 +2255,48 @@ describe('Activity', () => {
       recoveredActivity.resume();
 
       expect(recoveredActivity.broker.getQueue('run-q')).to.have.property('consumerCount', 1);
-      expect(recoveredActivity.broker.getQueue('run-q')).to.have.property('messageCount', 1);
+      expect(recoveredActivity.broker.getQueue('run-q')).to.have.property('messageCount', 2);
       expect(recoveredActivity.broker.getQueue('execution-q')).to.have.property('consumerCount', 1);
       expect(recoveredActivity.broker.getQueue('execution-q')).to.have.property('messageCount', 0);
       expect(recoveredActivity.broker.getQueue('execute-q')).to.have.property('consumerCount', 1);
-      expect(recoveredActivity.broker.getQueue('execute-q')).to.have.property('messageCount', 1);
+      expect(recoveredActivity.broker.getQueue('execute-q')).to.have.property('messageCount', 2);
 
       recoveredActivity.getApi().signal();
       expect(recoveredActivity.counters).to.eql({discarded: 0, taken: 1});
+    });
+
+    it('resumes recovered activity with running state', () => {
+      const activity = getActivity(undefined, SignalTaskBehaviour);
+
+      activity.run();
+
+      expect(activity.counters).to.eql({discarded: 0, taken: 0});
+
+      const state = activity.getState();
+      const recoveredActivity = getActivity(undefined, SignalTaskBehaviour);
+
+      recoveredActivity.recover(state);
+
+      recoveredActivity.resume();
+
+      expect(recoveredActivity.broker.getQueue('run-q')).to.have.property('consumerCount', 1);
+      expect(recoveredActivity.broker.getQueue('run-q')).to.have.property('messageCount', 2);
+      expect(recoveredActivity.broker.getQueue('execution-q')).to.have.property('consumerCount', 1);
+      expect(recoveredActivity.broker.getQueue('execution-q')).to.have.property('messageCount', 0);
+      expect(recoveredActivity.broker.getQueue('execute-q')).to.have.property('consumerCount', 1);
+      expect(recoveredActivity.broker.getQueue('execute-q')).to.have.property('messageCount', 2);
+
+      recoveredActivity.getApi().signal();
+      expect(recoveredActivity.counters).to.eql({discarded: 0, taken: 1});
+    });
+
+    it('throws if resume is called when activity is running', () => {
+      const activity = getActivity(undefined, SignalTaskBehaviour);
+      activity.run();
+
+      expect(() => {
+        activity.resume();
+      }).to.throw('cannot resume running activity');
     });
   });
 });

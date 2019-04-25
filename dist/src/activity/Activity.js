@@ -370,6 +370,7 @@ function Activity(Behaviour, activityDef, context) {
       ack
     } = message;
     const content = (0, _messageHelper.cloneContent)(originalContent);
+    console.log('---->', fields);
     stateMessage = message;
 
     switch (routingKey) {

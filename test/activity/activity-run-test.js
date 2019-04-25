@@ -45,7 +45,7 @@ describe('activity run', () => {
       data: 1,
     });
 
-    expect(activity).to.have.property('status', 'start');
+    expect(activity).to.have.property('status', 'started');
     current = activity.next();
     expect(current.fields).to.have.property('routingKey', 'run.start');
     expect(current.content).to.have.property('input').that.eql({
@@ -110,7 +110,7 @@ describe('activity run', () => {
     expect(current.content).to.have.property('message').that.eql({data: 1});
     expect(current.content).to.have.property('inbound').with.length(1);
 
-    expect(activity).to.have.property('status', 'start');
+    expect(activity).to.have.property('status', 'started');
     current = activity.next();
     expect(current.fields).to.have.property('routingKey', 'run.start');
     expect(current.content).to.have.property('message').that.eql({data: 1});
@@ -145,7 +145,7 @@ describe('activity run', () => {
     expect(current.fields).to.have.property('routingKey', 'run.enter');
     expect(current.content.input).to.be.undefined;
 
-    expect(activity).to.have.property('status', 'start');
+    expect(activity).to.have.property('status', 'started');
     current = activity.next();
     expect(current.fields).to.have.property('routingKey', 'run.start');
     expect(current.content).to.have.property('input').that.eql({
@@ -176,7 +176,7 @@ describe('activity run', () => {
     expect(current.fields).to.have.property('routingKey', 'run.enter');
     expect(current.content.input).to.be.undefined;
 
-    expect(activity).to.have.property('status', 'start');
+    expect(activity).to.have.property('status', 'started');
     current = activity.next();
     expect(current.fields).to.have.property('routingKey', 'run.start');
 
@@ -209,7 +209,7 @@ describe('activity run', () => {
     expect(current.fields).to.have.property('routingKey', 'run.enter');
     expect(current.content.input).to.be.undefined;
 
-    expect(activity).to.have.property('status', 'start');
+    expect(activity).to.have.property('status', 'started');
     current = activity.next();
     expect(current.fields).to.have.property('routingKey', 'run.start');
 

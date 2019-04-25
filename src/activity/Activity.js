@@ -28,7 +28,7 @@ export default function Activity(Behaviour, activityDef, context) {
   const isParallelJoin = inboundSequenceFlows.length > 1 && isParallelGateway;
   const isMultiInstance = !!behaviour.loopCharacteristics;
 
-  let execution, executionId, stateMessage, status, stopped = false, executeMessage;
+  let execution, executionId, stateMessage, status, stopped = false, executeMessage, consumingRunQ;
 
   const inboundTriggers = attachedToActivity ? [attachedToActivity] : inboundSequenceFlows.slice();
   const inboundJoinFlows = [];
@@ -61,6 +61,10 @@ export default function Activity(Behaviour, activityDef, context) {
     },
     get stopped() {
       return stopped;
+    },
+    get isRunning() {
+      if (!consumingRunQ) return false;
+      return !!status;
     },
     Behaviour,
     activate,
@@ -114,17 +118,14 @@ export default function Activity(Behaviour, activityDef, context) {
 
   function run(runContent) {
     executionId = getUniqueId(id);
-    broker.cancel('_activity-run');
-    broker.cancel('_activity-api');
+    deactivateRunConsumers();
 
     const content = createMessage({...runContent, executionId});
 
     broker.publish('run', 'run.enter', content);
     broker.publish('run', 'run.start', cloneContent(content));
 
-    broker.subscribeTmp('api', `activity.*.${executionId}`, onApiMessage, {noAck: true, consumerTag: '_activity-api'});
-
-    runQ.assertConsumer(onRunMessage, {exclusive: true, consumerTag: '_activity-run'});
+    activateRunConsumers();
   }
 
   function createMessage(override = {}) {
@@ -139,64 +140,13 @@ export default function Activity(Behaviour, activityDef, context) {
     };
   }
 
-  function resume() {
-    if (!status) return activate();
-
-    stopped = false;
-
-    broker.subscribeTmp('api', `activity.*.${executionId}`, onApiMessage, {noAck: true, consumerTag: '_activity-api'});
-
-    runQ.assertConsumer(onRunMessage, {exclusive: true, consumerTag: '_activity-run'});
-  }
-
-  function discard(discardContent) {
-    if (!status) return runDiscard(discardContent);
-    if (execution && !execution.completed) return execution.discard();
-
-    broker.cancel('_activity-run');
-    runQ.purge();
-    broker.publish('run', 'run.discard', cloneContent(stateMessage.content));
-    runQ.assertConsumer(onRunMessage, {exclusive: true, consumerTag: '_activity-run'});
-  }
-
-  function discardRun() {
-    if (!status) return;
-    if (execution && !execution.completed) return;
-
-    broker.cancel('_activity-run');
-    runQ.purge();
-    broker.publish('run', 'run.discard', cloneContent(stateMessage.content));
-    runQ.assertConsumer(onRunMessage, {exclusive: true, consumerTag: '_activity-run'});
-  }
-
-  function runDiscard(discardContent = {}) {
-    executionId = getUniqueId(id);
-    const content = createMessage({...discardContent, executionId});
-    broker.publish('run', 'run.discard', content);
-
-    broker.subscribeTmp('api', 'activity.#', onApiMessage, {noAck: true, consumerTag: '_activity-api'});
-
-    runQ.assertConsumer(onRunMessage, {exclusive: true, consumerTag: '_activity-run'});
-  }
-
-  function stop() {
-    stopped = true;
-
-    deactivate();
-    broker.cancel('_activity-api');
-    broker.cancel('_activity-run');
-    broker.cancel('_activity-execution');
-
-    if (execution) execution.stop();
-
-    if (status) publishEvent('stop');
-  }
-
   function recover(state) {
+    if (activityApi.isRunning) throw new Error('cannot recover running activity');
     if (!state) return;
 
     stopped = state.stopped;
     status = state.status;
+    executionId = state.executionId;
     counters = state.counters && {...counters, ...state.counters};
 
     if (state.execution) {
@@ -204,6 +154,56 @@ export default function Activity(Behaviour, activityDef, context) {
     }
 
     broker.recover(state.broker);
+  }
+
+  function resume() {
+    if (activityApi.isRunning) throw new Error('cannot resume running activity');
+    if (!status) return activate();
+
+    stopped = false;
+
+    const content = createMessage();
+    broker.publish('run', 'run.resume', content, {persistent: false});
+    activateRunConsumers();
+  }
+
+  function discard(discardContent) {
+    if (!status) return runDiscard(discardContent);
+    if (execution && !execution.completed) return execution.discard();
+
+    deactivateRunConsumers();
+    runQ.purge();
+    broker.publish('run', 'run.discard', cloneContent(stateMessage.content));
+    activateRunConsumers();
+  }
+
+  function discardRun() {
+    if (!status) return;
+    if (execution && !execution.completed) return;
+
+    deactivateRunConsumers();
+    runQ.purge();
+    broker.publish('run', 'run.discard', cloneContent(stateMessage.content));
+    activateRunConsumers();
+  }
+
+  function runDiscard(discardContent = {}) {
+    executionId = getUniqueId(id);
+    const content = createMessage({...discardContent, executionId});
+    broker.publish('run', 'run.discard', content);
+
+    activateRunConsumers();
+  }
+
+  function stop() {
+    stopped = true;
+
+    deactivate();
+    deactivateRunConsumers();
+    broker.cancel('_activity-execution');
+
+    if (execution) execution.stop();
+    if (status) publishEvent('stop');
   }
 
   function activate() {
@@ -293,38 +293,69 @@ export default function Activity(Behaviour, activityDef, context) {
   }
 
   function onRunMessage(routingKey, message, messageProperties) {
-    if (routingKey === 'run.next') return continueRunMessage(routingKey, message, messageProperties);
+    switch (routingKey) {
+      case 'run.next':
+        return continueRunMessage(routingKey, message, messageProperties);
+      case 'run.resume': {
+        return onResumeMessage();
+      }
+    }
 
-    return formatRunMessageContent(formatRunQ, message, (err, formattedContent) => {
+    return formatRunMessage(formatRunQ, message, (err, formattedContent) => {
       if (err) return broker.publish('run', 'run.error', err);
       message.content = formattedContent;
       continueRunMessage(routingKey, message, messageProperties);
     });
+
+    function onResumeMessage() {
+      message.ack();
+
+      const {fields} = stateMessage;
+      switch (fields.routingKey) {
+        case 'run.enter':
+        case 'run.start':
+        case 'run.discarded':
+        case 'run.end':
+        case 'run.leave':
+          break;
+        default:
+          return;
+      }
+
+      if (!fields.redelivered) return;
+
+      logger.debug(`<${id}> resume from ${status}`);
+
+      return broker.publish('run', fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
+    }
   }
 
   function continueRunMessage(routingKey, message) {
     broker.cancel('_format-consumer');
 
     const {fields, content: originalContent, ack} = message;
+    const isRedelivered = fields.redelivered;
     const content = cloneContent(originalContent);
 
     stateMessage = message;
 
     switch (routingKey) {
       case 'run.enter': {
-        logger.debug(`<${id}> enter`);
+        logger.debug(`<${id}> enter`, isRedelivered ? 'redelivered' : '');
 
         status = 'entered';
-        execution = undefined;
+        if (!isRedelivered) {
+          execution = undefined;
+        }
 
         if (extensions) extensions.activate(message);
         if (ioSpecification) ioSpecification.activate(message);
 
-        publishEvent('enter', content);
+        if (!isRedelivered) publishEvent('enter', content);
         break;
       }
       case 'run.discard': {
-        logger.debug(`<${id}> discarded`);
+        logger.debug(`<${id}> discard`, isRedelivered ? 'redelivered' : '');
 
         status = 'discard';
         execution = undefined;
@@ -332,22 +363,27 @@ export default function Activity(Behaviour, activityDef, context) {
         if (extensions) extensions.activate(message);
         if (ioSpecification) ioSpecification.activate(message);
 
-        if (!fields.redelivered) broker.publish('run', 'run.discarded', content);
-        publishEvent('discard', content);
+        if (!isRedelivered) {
+          broker.publish('run', 'run.discarded', content);
+          publishEvent('discard', content);
+        }
         break;
       }
       case 'run.start': {
-        logger.debug(`<${id}> start`);
-        status = 'start';
-        if (!fields.redelivered) broker.publish('run', 'run.execute', content);
-        publishEvent('start', content);
+        logger.debug(`<${id}> start`, isRedelivered ? 'redelivered' : '');
+        status = 'started';
+        if (!isRedelivered) {
+          broker.publish('run', 'run.execute', content);
+          publishEvent('start', content);
+        }
+
         break;
       }
       case 'run.execute': {
         status = 'executing';
         executeMessage = message;
 
-        if (fields.redelivered) {
+        if (isRedelivered) {
           if (extensions) extensions.activate(message);
           if (ioSpecification) ioSpecification.activate(message);
         }
@@ -363,8 +399,10 @@ export default function Activity(Behaviour, activityDef, context) {
         counters.taken++;
 
         status = 'end';
-        if (!fields.redelivered) broker.publish('run', 'run.leave', content);
-        publishEvent('end', content);
+        if (!isRedelivered) {
+          broker.publish('run', 'run.leave', content);
+          publishEvent('end', content);
+        }
         break;
       }
       case 'run.error': {
@@ -376,7 +414,9 @@ export default function Activity(Behaviour, activityDef, context) {
 
         status = 'discarded';
         content.outbound = undefined;
-        if (!fields.redelivered) broker.publish('run', 'run.leave', content);
+        if (!isRedelivered) {
+          broker.publish('run', 'run.leave', content);
+        }
         break;
       }
       case 'run.leave': {
@@ -384,9 +424,11 @@ export default function Activity(Behaviour, activityDef, context) {
         status = undefined;
         broker.cancel('_activity-api');
 
-        if (!fields.redelivered) broker.publish('run', 'run.next', content);
-        publishEvent('leave', {...content, outbound: outbound.slice()});
-        doOutbound(content, outbound);
+        if (!isRedelivered) {
+          broker.publish('run', 'run.next', content);
+          publishEvent('leave', {...content, outbound: outbound.slice()});
+          doOutbound(content, outbound);
+        }
         break;
       }
       case 'run.next':
@@ -492,14 +534,18 @@ export default function Activity(Behaviour, activityDef, context) {
   }
 
   function getState() {
-    return createMessage({
+    const msg = createMessage();
+
+    return {
+      ...msg,
       status,
+      executionId,
       stopped,
       behaviour: {...behaviour},
       counters: {...counters},
       broker: broker.getState(),
       execution: execution && execution.getState(),
-    });
+    };
   }
 
   function inboundMessage(messageContent) {
@@ -522,7 +568,19 @@ export default function Activity(Behaviour, activityDef, context) {
     return ActivityApi(broker, message || stateMessage);
   }
 
-  function formatRunMessageContent(formatQ, runMessage, callback) {
+  function activateRunConsumers() {
+    broker.subscribeTmp('api', `activity.*.${executionId}`, onApiMessage, {noAck: true, consumerTag: '_activity-api'});
+    consumingRunQ = true;
+    runQ.assertConsumer(onRunMessage, {exclusive: true, consumerTag: '_activity-run'});
+  }
+
+  function deactivateRunConsumers() {
+    broker.cancel('_activity-api');
+    broker.cancel('_activity-run');
+    consumingRunQ = false;
+  }
+
+  function formatRunMessage(formatQ, runMessage, callback) {
     const startFormatMsg = formatQ.get();
     if (!startFormatMsg) return callback(null, runMessage.content);
 
@@ -531,14 +589,18 @@ export default function Activity(Behaviour, activityDef, context) {
     const fundamentals = {
       id: content.id,
       type: content.type,
-      parent: content.parent,
+      parent: cloneParent(content.parent),
       attachedTo: content.attachedTo,
       executionId: content.executionId,
       isSubProcess: content.isSubProcess,
       isMultiInstance: content.isMultiInstance,
-      inbound: content.inbound,
-      outbound: content.outbound,
     };
+    if (content.inbound) {
+      fundamentals.inbound = content.inbound.slice();
+    }
+    if (content.outbound) {
+      fundamentals.outbound = content.outbound.slice();
+    }
 
     let formattedContent = cloneContent(content);
 

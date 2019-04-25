@@ -65,6 +65,8 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
 
         broker.subscribeOnce('api', `activity.stop.${parentExecutionId}`, stop, {consumerTag: apiConsumerTag});
         broker.subscribeTmp('execution', 'execute.completed', onCompleteMessage, {noAck: true, consumerTag, priority: 200});
+        if (executeRoutingKey === 'execute.iteration.next') return startNext(executeMessage.content.index);
+
         return;
       } else if (executeRoutingKey === 'execute.resume') {
         return startNext(executeMessage.content.index, true);

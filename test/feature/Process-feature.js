@@ -1374,7 +1374,7 @@ Feature('Process', () => {
     });
 
     And('state is saved', () => {
-      state = JSON.parse(JSON.stringify(processInstance.getState(), null, 2));
+      state = JSON.parse(JSON.stringify(processInstance.getState()));
     });
 
     When('process is recovered', () => {

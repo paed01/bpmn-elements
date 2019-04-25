@@ -608,6 +608,21 @@ describe('Definition', () => {
 
       expect(definition.counters).to.have.property('completed', 1);
     });
+
+    it('resumes after recovered with running state', () => {
+      const startDefinition = Definition(context);
+      startDefinition.run();
+      const state = startDefinition.getState();
+
+      const definition = Definition(context.clone()).recover(state);
+      definition.resume();
+
+      const [activity] = definition.getPostponed();
+      expect(activity.id).to.equal('userTask');
+      expect(definition.counters).to.have.property('completed', 0);
+      activity.signal();
+      expect(definition.counters).to.have.property('completed', 1);
+    });
   });
 
   describe('getProcesses()', () => {

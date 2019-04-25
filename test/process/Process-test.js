@@ -258,21 +258,6 @@ describe('Process', () => {
     });
   });
 
-  describe('resume()', () => {
-    it('resumes after stopped', async () => {
-      const bp = Process({id: 'theProcess'}, Context());
-
-      bp.run();
-      bp.stop();
-
-      bp.resume();
-
-      bp.getPostponed()[0].signal();
-
-      expect(bp.counters).to.have.property('completed', 1);
-    });
-  });
-
   describe('getState()', () => {
     it('returns expected state when not running', () => {
       const bp = Process({id: 'theProcess'}, Context());
@@ -315,6 +300,52 @@ describe('Process', () => {
       expect(state).to.have.property('execution').that.is.ok;
       expect(state).to.have.property('counters');
       expect(state).to.have.property('status', 'executing');
+    });
+  });
+
+  describe('resume()', () => {
+    it('resumes after stopped', async () => {
+      const bp = Process({id: 'theProcess'}, Context());
+
+      bp.run();
+      bp.stop();
+
+      bp.resume();
+
+      bp.getPostponed()[0].signal();
+
+      expect(bp.counters).to.have.property('completed', 1);
+    });
+
+    it('resumes with stopped state', async () => {
+      const bp1 = Process({id: 'theProcess'}, Context());
+
+      bp1.run();
+      bp1.stop();
+
+      const bp2 = Process({id: 'theProcess'}, Context());
+      bp2.recover(bp1.getState());
+
+      bp2.resume();
+
+      bp2.getPostponed()[0].signal();
+
+      expect(bp2.counters).to.have.property('completed', 1);
+    });
+
+    it('resumes with running state', async () => {
+      const bp1 = Process({id: 'theProcess'}, Context());
+
+      bp1.run();
+
+      const bp2 = Process({id: 'theProcess'}, Context());
+      bp2.recover(bp1.getState());
+
+      bp2.resume();
+
+      bp2.getPostponed()[0].signal();
+
+      expect(bp2.counters).to.have.property('completed', 1);
     });
   });
 

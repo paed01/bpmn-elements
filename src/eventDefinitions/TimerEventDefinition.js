@@ -59,11 +59,13 @@ export default function TimerEventDefinition(activity, eventDefinition) {
 
     function resumeTimer() {
       timerContent = startMessage.content;
+
       const {startedAt, isoDuration, timeout: originalTimeout} = timerContent;
-      let timeout = originalTimeout - (new Date() - startedAt);
+      const startDate = new Date(startedAt);
+      let timeout = originalTimeout - (new Date() - startDate);
       if (timeout < 0) timeout = 0;
 
-      debug(`<${executionId} (${id})> resume timer ${originalTimeout}ms started at ${startedAt.toISOString()}, duration ${isoDuration || 'none'}, remaining ${timeout}ms`);
+      debug(`<${executionId} (${id})> resume timer ${originalTimeout}ms started at ${startDate.toISOString()}, duration ${isoDuration || 'none'}, remaining ${timeout}ms`);
 
       broker.publish('execution', 'execute.timer', cloneContent(timerContent));
       broker.publish('event', 'activity.timer', cloneContent(timerContent));
