@@ -15,7 +15,7 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
   const apiConsumerTag = '_api-multi-instance-tag';
   broker.cancel(apiConsumerTag);
 
-  let startIterationContent, cardinality, collection, loopOutput, parent;
+  let loopSettings;
 
   const characteristics = {
     type,
@@ -35,47 +35,19 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
   }
 
   function execute(executeMessage) {
-    const isRedelivered = executeMessage.fields && executeMessage.fields.redelivered;
-    const executeRoutingKey = executeMessage.fields && executeMessage.fields.routingKey;
-    const {isRootScope, executionId: parentExecutionId} = executeMessage.content;
-
-    if (isRootScope) {
-      cardinality = getCardinality();
-      collection = getCollection();
-
-      startIterationContent = {
-        ...cloneContent(executeMessage.content),
-        loopCardinality: cardinality,
-        isSequential,
-        output: undefined,
-      };
-
-      loopOutput = executeMessage.content.output || [];
-
-      parent = shiftParent(executeMessage.content, executeMessage.content.parent);
-    }
+    const {routingKey: executeRoutingKey, redelivered: isRedelivered} = executeMessage.fields || {};
+    const {executionId: parentExecutionId} = executeMessage.content;
 
     return isSequential ? executeSequential() : executeParallel();
 
     function executeSequential() {
-      if (isRedelivered && isRootScope && executeRoutingKey !== 'execute.start') {
-        debug(`<${parentExecutionId} (${id})> resume sequential loop from`, executeRoutingKey);
-
-        broker.publish('execution', 'execute.resume', {...executeMessage.content});
-
-        broker.subscribeOnce('api', `activity.stop.${parentExecutionId}`, stop, {consumerTag: apiConsumerTag});
-        broker.subscribeTmp('execution', 'execute.completed', onCompleteMessage, {noAck: true, consumerTag, priority: 200});
-        if (executeRoutingKey === 'execute.iteration.next') return startNext(executeMessage.content.index);
-
-        return;
-      } else if (executeRoutingKey === 'execute.resume') {
-        return startNext(executeMessage.content.index, true);
-      } else {
-        broker.subscribeOnce('api', `activity.stop.${parentExecutionId}`, stop, {consumerTag: apiConsumerTag});
-        broker.subscribeTmp('execution', 'execute.completed', onCompleteMessage, {noAck: true, consumerTag, priority: 200});
+      let startIndex = 0;
+      if (isRedelivered && executeRoutingKey === 'execute.iteration.next') {
+        startIndex = executeMessage.content.index;
+        debug(`<${parentExecutionId} (${id})> resume sequential loop from`, startIndex);
       }
-
-      return startNext(0);
+      subscribe(onCompleteMessage);
+      return startNext(startIndex, startIndex > 0);
 
       function startNext(index, ignoreIfExecuting) {
         const content = next(index);
@@ -84,10 +56,10 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
         debug(`<${content.executionId} (${id})> start sequential iteration index ${content.index}`);
         broker.publish('execution', 'execute.iteration.next', {
           ...content,
-          ...executeMessage.content,
+          ...getCharacteristics().getContent(),
           index,
           preventComplete: true,
-          output: loopOutput,
+          output: getCharacteristics().output.slice(),
           state: 'iteration.next',
         });
 
@@ -101,42 +73,40 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
         if (content.isRootScope) return;
         if (!content.isMultiInstance) return;
 
+        const loopOutput = getCharacteristics().output;
         if (content.output !== undefined) loopOutput[content.index] = content.output;
 
         broker.publish('execution', 'execute.iteration.completed', {
           ...message.content,
-          ...executeMessage.content,
+          ...getCharacteristics().getContent(),
           preventComplete: true,
-          output: loopOutput,
+          output: loopOutput.slice(),
           state: 'iteration.completed',
         });
 
         if (completionCondition && environment.resolveExpression(completionCondition, message)) {
-          debug(`<${startIterationContent.executionId} (${id})> complete condition met`);
+          debug(`<${parentExecutionId} (${id})> complete condition met`);
         } else if (startNext(content.index + 1)) return;
 
-        debug(`<${startIterationContent.executionId} (${id})> sequential loop completed`);
+        debug(`<${parentExecutionId} (${id})> sequential loop completed`);
 
         broker.cancel(consumerTag);
         broker.cancel(apiConsumerTag);
         return broker.publish('execution', 'execute.completed', {
           ...message.content,
-          ...executeMessage.content,
+          ...getCharacteristics().getContent(),
           output: loopOutput,
         });
       }
     }
 
     function executeParallel() {
-      if (isRootScope) {
-        broker.subscribeOnce('api', `activity.stop.${parentExecutionId}`, stop, {consumerTag: apiConsumerTag});
-        broker.subscribeTmp('execution', 'execute.completed', onCompleteMessage, {noAck: true, consumerTag, priority: 200});
-        if (isRedelivered) return;
-      }
+      subscribe(onCompleteMessage);
+      if (isRedelivered) return;
 
       let index = 0, startContent;
       while ((startContent = next(index))) {
-        debug(`<${startContent.executionId} (${id})> start parallel iteration index ${index}`);
+        debug(`<${parentExecutionId} (${id})> start parallel iteration index ${index}`);
         broker.publish('execution', 'execute.start', {...startContent, keep: true});
         index++;
       }
@@ -146,11 +116,12 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
         if (content.isRootScope) return broker.cancel(consumerTag);
         if (!content.isMultiInstance) return;
 
+        const loopOutput = getCharacteristics().output;
         if (content.output !== undefined) loopOutput[content.index] = content.output;
 
         broker.publish('execution', 'execute.iteration.completed', {
           ...content,
-          ...executeMessage.content,
+          ...getCharacteristics().getContent(),
           index: content.index,
           output: loopOutput,
           state: 'iteration.completed',
@@ -161,8 +132,8 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
 
           return broker.publish('execution', 'execute.completed', {
             ...content,
-            ...startIterationContent,
-            output: loopOutput,
+            ...getCharacteristics().getContent(),
+            output: getCharacteristics().output,
           });
         }
       }
@@ -170,8 +141,10 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
 
     function next(index) {
       const executionId = `${parentExecutionId}_${index}`;
+
+      const {cardinality, collection, messageContent, parent} = getCharacteristics();
       const content = {
-        ...startIterationContent,
+        ...messageContent,
         isRootScope: undefined,
         executionId,
         isMultiInstance: true,
@@ -193,6 +166,37 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
       }
     }
 
+    function getCharacteristics() {
+      if (loopSettings) return loopSettings;
+
+      const cardinality = getCardinality();
+      const collection = getCollection();
+
+      const messageContent = {
+        ...cloneContent(executeMessage.content),
+        loopCardinality: cardinality,
+        isSequential,
+        output: undefined,
+      };
+
+      const output = executeMessage.content.output || [];
+
+      const parent = shiftParent(executeMessage.content, executeMessage.content.parent);
+
+      loopSettings = {
+        cardinality,
+        collection,
+        messageContent,
+        output,
+        parent,
+        getContent() {
+          return cloneContent(messageContent);
+        },
+      };
+
+      return loopSettings;
+    }
+
     function getCardinality() {
       if (!loopCardinality) return;
       let value = loopCardinality;
@@ -210,6 +214,11 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
       if (!collectionExpression) return;
       debug(`<${id}> has collection`);
       return environment.resolveExpression(collectionExpression, executeMessage);
+    }
+
+    function subscribe(onCompleteMessage) {
+      broker.subscribeOnce('api', `activity.stop.${parentExecutionId}`, stop, {consumerTag: apiConsumerTag});
+      broker.subscribeTmp('execution', 'execute.completed', onCompleteMessage, {noAck: true, consumerTag, priority: 200});
     }
   }
 

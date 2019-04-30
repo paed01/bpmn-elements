@@ -377,7 +377,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
     });
 
     describe('recovered', () => {
-      it('recovered root start message triggers loop start', () => {
+      it('recovered execute start message triggers start iteration', () => {
         const messages = [];
         task.broker.subscribeTmp('execution', '#', (_, msg) => {
           messages.push(msg);
@@ -411,12 +411,12 @@ describe('MultiInstanceLoopCharacteristics', () => {
         expect(messages[0].content).to.have.property('index', 0);
 
         expect(messages[1].fields).to.have.property('routingKey', 'execute.start');
-        expect(messages[1].content).to.have.property('isRootScope', undefined);
-        expect(messages[1].content).to.have.property('executionId').that.is.not.equal('parent-execution-id');
+        expect(messages[1].content.isRootScope).to.not.be.ok;
+        expect(messages[1].content).to.have.property('executionId', 'recovered-parent-id_0');
         expect(messages[1].content).to.have.property('index', 0);
       });
 
-      it('recovered root iteration message doesn´t trigger starts but publishes resume loop message', () => {
+      it('recovered root iteration placeholder message triggers start iteration', () => {
         const messages = [];
         task.broker.subscribeTmp('execution', '#', (_, msg) => {
           messages.push(msg);
@@ -441,54 +441,17 @@ describe('MultiInstanceLoopCharacteristics', () => {
           },
         });
 
-        expect(messages).to.have.length(1);
+        expect(messages).to.have.length(2);
 
-        expect(messages[0].fields).to.have.property('routingKey', 'execute.resume');
+        expect(messages[0].fields).to.have.property('routingKey', 'execute.iteration.next');
         expect(messages[0].content).to.have.property('executionId', 'recovered-parent-id');
         expect(messages[0].content).to.have.property('isRootScope', true);
         expect(messages[0].content).to.have.property('index', 2);
-      });
 
-      it('resume loop message triggers next iteration', () => {
-        const messages = [];
-        task.broker.subscribeTmp('execution', '#', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
-
-        const loop = MultiInstanceLoopCharacteristics(task, {
-          behaviour: {
-            isSequential: true,
-            loopCardinality: 3,
-          },
-        });
-
-        loop.execute({
-          fields: {
-            routingKey: 'execute.iteration.next',
-            redelivered: true,
-          },
-          content: {
-            isRootScope: true,
-            executionId: 'recovered-parent-id',
-            index: 2,
-          },
-        });
-
-        expect(messages).to.have.length(1);
-        expect(messages[0].fields).to.have.property('routingKey', 'execute.resume');
-        expect(messages[0].content.isRootScope).to.be.true;
-
-        loop.execute(messages[0]);
-
-        expect(messages).to.have.length(3);
-
-        expect(messages[1].fields).to.have.property('routingKey', 'execute.iteration.next');
-        expect(messages[1].content.isRootScope).to.be.true;
+        expect(messages[1].fields).to.have.property('routingKey', 'execute.start');
+        expect(messages[1].content).to.have.property('executionId', 'recovered-parent-id_2');
+        expect(messages[1].content.isRootScope).to.not.be.ok;
         expect(messages[1].content).to.have.property('index', 2);
-
-        expect(messages[2].fields).to.have.property('routingKey', 'execute.start');
-        expect(messages[2].content).to.have.property('index', 2);
-        expect(messages[2].content.isRootScope).to.be.undefined;
       });
 
       it('resume loop message instructs execution to ignore message if executing', () => {
@@ -516,22 +479,15 @@ describe('MultiInstanceLoopCharacteristics', () => {
           },
         });
 
-        expect(messages).to.have.length(1);
-        expect(messages[0].fields).to.have.property('routingKey', 'execute.resume');
+        expect(messages).to.have.length(2);
+
+        expect(messages[0].fields).to.have.property('routingKey', 'execute.iteration.next');
         expect(messages[0].content.isRootScope).to.be.true;
+        expect(messages[0].content).to.have.property('index', 2);
 
-        loop.execute(messages[0]);
-
-        expect(messages).to.have.length(3);
-
-        expect(messages[1].fields).to.have.property('routingKey', 'execute.iteration.next');
-        expect(messages[1].content.isRootScope).to.be.true;
+        expect(messages[1].fields).to.have.property('routingKey', 'execute.start');
         expect(messages[1].content).to.have.property('index', 2);
-
-        expect(messages[2].fields).to.have.property('routingKey', 'execute.start');
-        expect(messages[2].content).to.have.property('index', 2);
-        expect(messages[2].content.isRootScope).to.be.undefined;
-        expect(messages[2].content.ignoreIfExecuting).to.be.true;
+        expect(messages[1].content.isRootScope).to.be.undefined;
       });
 
       it('resumes execution when iteration execution completes', () => {
@@ -568,27 +524,27 @@ describe('MultiInstanceLoopCharacteristics', () => {
           output: 1,
         });
 
-        expect(messages).to.have.length(5);
+        expect(messages).to.have.length(6);
 
-        expect(messages[2].fields).to.have.property('routingKey', 'execute.iteration.completed');
-        expect(messages[2].content).to.have.property('executionId', 'recovered-parent-id');
-        expect(messages[2].content).to.have.property('isRootScope', true);
-        expect(messages[2].content).to.have.property('index', 1);
-        expect(messages[2].content).to.have.property('loopCardinality', 3);
-        expect(messages[2].content).to.have.property('output').that.eql([0, 1]);
-
-        expect(messages[3].fields).to.have.property('routingKey', 'execute.iteration.next');
+        expect(messages[3].fields).to.have.property('routingKey', 'execute.iteration.completed');
         expect(messages[3].content).to.have.property('executionId', 'recovered-parent-id');
         expect(messages[3].content).to.have.property('isRootScope', true);
-        expect(messages[3].content).to.have.property('index', 2);
+        expect(messages[3].content).to.have.property('index', 1);
         expect(messages[3].content).to.have.property('loopCardinality', 3);
         expect(messages[3].content).to.have.property('output').that.eql([0, 1]);
 
-        expect(messages[4].fields).to.have.property('routingKey', 'execute.start');
-        expect(messages[4].content).to.have.property('executionId').that.is.not.equal('parent-execution-id');
+        expect(messages[4].fields).to.have.property('routingKey', 'execute.iteration.next');
+        expect(messages[4].content).to.have.property('executionId', 'recovered-parent-id');
+        expect(messages[4].content).to.have.property('isRootScope', true);
         expect(messages[4].content).to.have.property('index', 2);
         expect(messages[4].content).to.have.property('loopCardinality', 3);
-        expect(messages[4].content.isRootScope).to.be.undefined;
+        expect(messages[4].content).to.have.property('output').that.eql([0, 1]);
+
+        expect(messages[5].fields).to.have.property('routingKey', 'execute.start');
+        expect(messages[5].content).to.have.property('executionId').that.is.not.equal('parent-execution-id');
+        expect(messages[5].content).to.have.property('index', 2);
+        expect(messages[5].content).to.have.property('loopCardinality', 3);
+        expect(messages[5].content.isRootScope).to.be.undefined;
       });
     });
   });

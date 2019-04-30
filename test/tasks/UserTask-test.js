@@ -232,6 +232,87 @@ describe('UserTask', () => {
 
       expect(left.content.output).to.eql([0, 1, 2]);
     });
+
+    it('resumes stopped recovered from last completed', async () => {
+      const task = context.getActivityById('task');
+
+      task.once('wait', (api) => {
+        api.signal(api.content.index);
+      });
+
+      task.run();
+
+      task.stop();
+
+      const recoveredTask = context.clone().getActivityById('task');
+      const leave = recoveredTask.waitFor('leave');
+
+      const waitConsumer = recoveredTask.on('wait', (api) => {
+        api.signal(api.content.index);
+      });
+
+      const state = task.getState();
+
+      recoveredTask.recover(state);
+      recoveredTask.resume();
+
+      const left = await leave;
+      waitConsumer.cancel();
+      expect(left.content.output).to.eql([0, 1, 2]);
+    });
+
+    it('resumes recovered running state from last completed', async () => {
+      const task = context.getActivityById('task');
+
+      task.once('wait', (api) => {
+        api.signal(api.content.index);
+      });
+
+      task.run();
+
+      const recoveredTask = context.clone().getActivityById('task');
+      const leave = recoveredTask.waitFor('leave');
+
+      const waitConsumer = recoveredTask.on('wait', (api) => {
+        api.signal(api.content.index);
+      });
+
+      const state = task.getState();
+
+      recoveredTask.recover(state);
+      recoveredTask.resume();
+
+      const left = await leave;
+      waitConsumer.cancel();
+      expect(left.content.output).to.eql([0, 1, 2]);
+    });
+
+    it('resumes recovered stopped while signaled from last completed', async () => {
+      const task = context.getActivityById('task');
+
+      task.on('wait', (api) => {
+        api.signal(api.content.index);
+        if (api.content.index === 1) task.stop();
+      });
+
+      task.run();
+
+      const recoveredTask = context.clone().getActivityById('task');
+      const leave = recoveredTask.waitFor('leave');
+
+      const waitConsumer = recoveredTask.on('wait', (api) => {
+        api.signal(api.content.index);
+      });
+
+      const state = task.getState();
+
+      recoveredTask.recover(state);
+      recoveredTask.resume();
+
+      const left = await leave;
+      waitConsumer.cancel();
+      expect(left.content.output).to.eql([0, 1, 2]);
+    });
   });
 
   describe('parallel loop execution', () => {

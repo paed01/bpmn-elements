@@ -25,7 +25,6 @@ export function SignalTaskBehaviour(activity) {
 
     const {executionId} = content;
 
-
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
     broker.publish('event', 'activity.wait', {...content, state: 'wait'});
 
