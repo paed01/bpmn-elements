@@ -5,6 +5,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = MultiInstanceLoopCharacteristics;
 
+var _Errors = require("../error/Errors");
+
 var _messageHelper = require("../messageHelper");
 
 function MultiInstanceLoopCharacteristics(activity, loopCharacteristics) {
@@ -51,6 +53,7 @@ function MultiInstanceLoopCharacteristics(activity, loopCharacteristics) {
   }
 
   function execute(executeMessage) {
+    if (!executeMessage) throw new Error('MultiInstanceLoop execution requires message');
     const {
       routingKey: executeRoutingKey,
       redelivered: isRedelivered
@@ -58,6 +61,7 @@ function MultiInstanceLoopCharacteristics(activity, loopCharacteristics) {
     const {
       executionId: parentExecutionId
     } = executeMessage.content;
+    getCharacteristics();
     return isSequential ? executeSequential() : executeParallel();
 
     function executeSequential() {
@@ -76,7 +80,7 @@ function MultiInstanceLoopCharacteristics(activity, loopCharacteristics) {
         if (!content) return;
         debug(`<${content.executionId} (${id})> start sequential iteration index ${content.index}`);
         broker.publish('execution', 'execute.iteration.next', { ...content,
-          ...executeMessage.content,
+          ...getCharacteristics().getContent(),
           index,
           preventComplete: true,
           output: getCharacteristics().output.slice(),
@@ -161,10 +165,10 @@ function MultiInstanceLoopCharacteristics(activity, loopCharacteristics) {
       const {
         cardinality,
         collection,
-        messageContent,
-        parent
+        parent,
+        getContent
       } = getCharacteristics();
-      const content = { ...messageContent,
+      const content = { ...getContent(),
         isRootScope: undefined,
         executionId,
         isMultiInstance: true,
@@ -217,7 +221,7 @@ function MultiInstanceLoopCharacteristics(activity, loopCharacteristics) {
       if (!value) return;
       value = environment.resolveExpression(value, executeMessage);
       const nValue = Number(value);
-      if (isNaN(nValue)) return nValue;
+      if (isNaN(nValue)) return activity.emitFatal(new _Errors.ActivityError(`<${id}> loopCardinality is not a Number >${value}<`, executeMessage));
       return nValue;
     }
 

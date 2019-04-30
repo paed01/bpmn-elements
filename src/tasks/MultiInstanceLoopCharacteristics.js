@@ -1,3 +1,4 @@
+import {ActivityError} from '../error/Errors';
 import {cloneContent, shiftParent} from '../messageHelper';
 
 export default function MultiInstanceLoopCharacteristics(activity, loopCharacteristics) {
@@ -35,8 +36,10 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
   }
 
   function execute(executeMessage) {
+    if (!executeMessage) throw new Error('MultiInstanceLoop execution requires message');
     const {routingKey: executeRoutingKey, redelivered: isRedelivered} = executeMessage.fields || {};
     const {executionId: parentExecutionId} = executeMessage.content;
+    getCharacteristics();
 
     return isSequential ? executeSequential() : executeParallel();
 
@@ -142,9 +145,9 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
     function next(index) {
       const executionId = `${parentExecutionId}_${index}`;
 
-      const {cardinality, collection, messageContent, parent} = getCharacteristics();
+      const {cardinality, collection, parent, getContent} = getCharacteristics();
       const content = {
-        ...messageContent,
+        ...getContent(),
         isRootScope: undefined,
         executionId,
         isMultiInstance: true,
@@ -205,7 +208,7 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
       value = environment.resolveExpression(value, executeMessage);
 
       const nValue = Number(value);
-      if (isNaN(nValue)) return nValue;
+      if (isNaN(nValue)) return activity.emitFatal(new ActivityError(`<${id}> loopCardinality is not a Number >${value}<`, executeMessage));
 
       return nValue;
     }

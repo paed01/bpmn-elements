@@ -13,6 +13,74 @@ describe('MultiInstanceLoopCharacteristics', () => {
     task.broker.bindQueue('execute-q', 'execution', '#');
   });
 
+  describe('ctorish(activity, loopCharacteristics)', () => {
+    it('returns loop characteristics api with execute function', () => {
+      const loop = MultiInstanceLoopCharacteristics(task, {
+        behaviour: {
+          loopCardinality: 3,
+          isSequential: true,
+          collection: '${environment.variables.list}',
+          elementVariable: 'testitem',
+        },
+      });
+
+      expect(loop).to.have.property('isSequential', true);
+      expect(loop).to.have.property('loopCardinality', 3);
+      expect(loop).to.have.property('collection', '${environment.variables.list}');
+      expect(loop).to.have.property('elementVariable', 'testitem');
+      expect(loop).to.have.property('execute').that.is.a('function');
+    });
+
+    it('returns NO loop characteristics if collection and cardinality is absent', () => {
+      const loop = MultiInstanceLoopCharacteristics(task, {
+        behaviour: {
+          isSequential: true,
+        },
+      });
+
+      expect(loop).to.not.be.ok;
+    });
+
+    it('empty behaviour is ok and returns no characteristics', () => {
+      const loop = MultiInstanceLoopCharacteristics(task, {});
+      expect(loop).to.not.be.ok;
+    });
+  });
+
+  describe('execute(executeMessage)', () => {
+    it('throws if executeMessage is missing', () => {
+      const loop = MultiInstanceLoopCharacteristics(task, {
+        behaviour: {
+          loopCardinality: 3,
+          isSequential: true,
+        },
+      });
+
+      expect(loop.execute).to.throw(/requires message/);
+    });
+
+    it('publishes error on activity broker if loopCardinality is not a number', (done) => {
+      const loop = MultiInstanceLoopCharacteristics(task, {
+        behaviour: {
+          loopCardinality: '3 pcs',
+          isSequential: true,
+        },
+      });
+
+      task.once('error', (err) => {
+        expect(err).to.match(/loopCardinality is not a Number/i);
+        done();
+      });
+
+      loop.execute({
+        content: {
+          isRootScope: true,
+          executionId: 'parent-execution-id',
+        },
+      });
+    });
+  });
+
   describe('sequential (isSequential = true)', () => {
     it('updates start message with loop characteristics when loop is started', () => {
       const messages = [];

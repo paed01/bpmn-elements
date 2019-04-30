@@ -29,7 +29,8 @@
   "nyc": {
     "exclude": [
       "dist",
-      "test"
+      "test",
+      "babel.config.js"
     ]
   },
   "files": [
@@ -38,17 +39,17 @@
     "index.js"
   ],
   "devDependencies": {
-    "@babel/cli": "^7.4.3",
-    "@babel/core": "^7.4.3",
-    "@babel/preset-env": "^7.4.3",
-    "@babel/register": "^7.4.0",
+    "@babel/cli": "^7.4.4",
+    "@babel/core": "^7.4.4",
+    "@babel/preset-env": "^7.4.4",
+    "@babel/register": "^7.4.4",
     "@bonniernews/wichita": "^0.5.0",
     "bpmn-moddle": "^5.1.6",
     "camunda-bpmn-moddle": "^3.2.0",
     "chai": "^4.2.0",
     "debug": "^4.1.1",
     "eslint": "^5.16.0",
-    "mocha": "^6.1.3",
+    "mocha": "^6.1.4",
     "mocha-cakes-2": "^3.3.0",
     "moddle-context-serializer": "^0.2.0",
     "nock": "^10.0.6",
