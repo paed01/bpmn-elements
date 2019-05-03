@@ -151,7 +151,8 @@ function DefinitionExecution(definition) {
       type,
       executionId
     }, {
-      type: 'stop'
+      type: 'stop',
+      persistent: false
     });
   }
 

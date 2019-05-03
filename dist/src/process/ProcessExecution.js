@@ -88,23 +88,25 @@ function ProcessExecution(parentActivity, context) {
 
   function execute(executeMessage) {
     if (!executeMessage) throw new Error('Process execution requires message');
-    const content = executeMessage.content;
-    executionId = content.executionId;
-    if (!executionId) throw new Error('Process execution requires execution id');
-    stopped = false;
-    environment.assignVariables(executeMessage);
-    const executeContent = { ...content,
+    if (!executeMessage.content || !executeMessage.content.executionId) throw new Error('Process execution requires execution id');
+    const isRedelivered = executeMessage.fields.redelivered;
+    executionId = executeMessage.content.executionId;
+    initMessage = (0, _messageHelper.cloneMessage)(executeMessage);
+    initMessage.content = { ...initMessage.content,
       executionId,
       state: 'start'
     };
-    initMessage = { ...executeMessage,
-      content: executeContent
-    };
+    stopped = false;
+    environment.assignVariables(executeMessage);
     activityQ = broker.assertQueue(`execute-${executionId}-q`, {
       durable: true,
       autoDelete: false
     });
-    if (executeMessage.fields.redelivered) return resume(executeMessage);
+
+    if (isRedelivered) {
+      return resume();
+    }
+
     logger.debug(`<${executionId} (${id})> execute`, isSubProcess ? 'sub process' : 'process');
     start();
     return true;
@@ -132,7 +134,7 @@ function ProcessExecution(parentActivity, context) {
     const executeContent = { ...initMessage.content,
       state: status
     };
-    broker.publish(exchangeName, 'execute.start', executeContent);
+    broker.publish(exchangeName, 'execute.start', (0, _messageHelper.cloneContent)(executeContent));
     startActivities.forEach(prepareStartActivity);
     startActivities.forEach(activity => activity.run());
     postponed.splice(0);
@@ -164,7 +166,8 @@ function ProcessExecution(parentActivity, context) {
       type,
       executionId
     }, {
-      type: 'stop'
+      type: 'stop',
+      persistent: false
     });
   }
 

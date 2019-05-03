@@ -59,21 +59,22 @@ export default function ProcessExecution(parentActivity, context) {
 
   function execute(executeMessage) {
     if (!executeMessage) throw new Error('Process execution requires message');
+    if (!executeMessage.content || !executeMessage.content.executionId) throw new Error('Process execution requires execution id');
 
-    const content = executeMessage.content;
-    executionId = content.executionId;
-    if (!executionId) throw new Error('Process execution requires execution id');
+    const isRedelivered = executeMessage.fields.redelivered;
+    executionId = executeMessage.content.executionId;
+
+    initMessage = cloneMessage(executeMessage);
+    initMessage.content = {...initMessage.content, executionId, state: 'start'};
 
     stopped = false;
 
     environment.assignVariables(executeMessage);
-
-    const executeContent = {...content, executionId, state: 'start'};
-    initMessage = {...executeMessage, content: executeContent};
-
     activityQ = broker.assertQueue(`execute-${executionId}-q`, {durable: true, autoDelete: false});
 
-    if (executeMessage.fields.redelivered) return resume(executeMessage);
+    if (isRedelivered) {
+      return resume();
+    }
 
     logger.debug(`<${executionId} (${id})> execute`, isSubProcess ? 'sub process' : 'process');
     start();
@@ -103,7 +104,7 @@ export default function ProcessExecution(parentActivity, context) {
 
     const executeContent = {...initMessage.content, state: status};
 
-    broker.publish(exchangeName, 'execute.start', executeContent);
+    broker.publish(exchangeName, 'execute.start', cloneContent(executeContent));
 
     startActivities.forEach(prepareStartActivity);
     startActivities.forEach((activity) => activity.run());
@@ -122,7 +123,7 @@ export default function ProcessExecution(parentActivity, context) {
       id,
       type,
       executionId,
-    }, {type: 'stop'});
+    }, {type: 'stop', persistent: false});
   }
 
   function activate() {

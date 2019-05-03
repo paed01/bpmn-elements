@@ -112,7 +112,7 @@ export default function DefinitionExecution(definition) {
       id,
       type,
       executionId,
-    }, {type: 'stop'});
+    }, {type: 'stop', persistent: false});
   }
 
   function getState() {

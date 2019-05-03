@@ -2,7 +2,7 @@ import ProcessExecution from './ProcessExecution';
 import {getUniqueId} from '../shared';
 import {ProcessApi} from '../Api';
 import {ProcessBroker} from '../EventBroker';
-import {cloneMessage} from '../messageHelper';
+import {cloneMessage, cloneContent} from '../messageHelper';
 
 export default Process;
 
@@ -13,7 +13,7 @@ export function Process(processDef, context) {
 
   const logger = environment.Logger(type.toLowerCase());
 
-  let execution, executionId, status, stopped, postponedMessage;
+  let execution, executionId, status, stopped, postponedMessage, stateMessage, consumingRunQ;
 
   let counters = {
     completed: 0,
@@ -42,6 +42,10 @@ export function Process(processDef, context) {
     get execution() {
       return execution;
     },
+    get isRunning() {
+      if (!consumingRunQ) return false;
+      return !!status;
+    },
     context,
     environment,
     activate,
@@ -57,7 +61,6 @@ export function Process(processDef, context) {
     resume,
     run,
     sendMessage,
-    signal,
     stop,
   };
 
@@ -78,14 +81,14 @@ export function Process(processDef, context) {
   return processApi;
 
   function run() {
+    deactivateRunConsumers();
     executionId = getUniqueId(id);
 
     broker.publish('run', 'run.enter', createMessage({executionId, state: 'enter'}));
     broker.publish('run', 'run.start', createMessage({executionId, state: 'start'}));
     broker.publish('run', 'run.execute', createMessage({executionId, state: 'execute'}));
 
-    runQ.assertConsumer(onRunMessage, {exclusive: true, consumerTag: '_process-run'});
-    executionQ.assertConsumer(onExecutionMessage, {exclusive: true, consumerTag: '_process-execution'});
+    activateRunConsumers();
   }
 
   function createMessage(override = {}) {
@@ -99,6 +102,7 @@ export function Process(processDef, context) {
 
   function getState() {
     return createMessage({
+      executionId,
       status,
       stopped,
       counters: {...counters},
@@ -107,11 +111,26 @@ export function Process(processDef, context) {
     });
   }
 
+  function stop() {
+    if (!status) return;
+
+    stopped = true;
+
+    deactivate();
+    deactivateRunConsumers();
+
+    if (execution) execution.stop();
+
+    if (status) publishEvent('stop');
+  }
+
   function recover(state) {
+    if (processApi.isRunning) throw new Error('cannot recover running process');
     if (!state) return processApi;
 
     stopped = state.stopped;
     status = state.status;
+    executionId = state.executionId;
     if (state.counters) {
       counters = {...counters, ...state.counters};
     }
@@ -125,27 +144,15 @@ export function Process(processDef, context) {
     return processApi;
   }
 
-  function stop() {
-    if (!status) return;
-
-    stopped = true;
-
-    deactivate();
-    broker.cancel('_process-run');
-    broker.cancel('_process-execution');
-
-    if (execution) execution.stop();
-
-    if (status) publishEvent('stop');
-  }
-
   function resume() {
+    if (processApi.isRunning) throw new Error('cannot resume running process');
     if (!status) return activate();
 
     stopped = false;
 
-    runQ.assertConsumer(onRunMessage, {exclusive: true, consumerTag: '_process-run'});
-    executionQ.assertConsumer(onExecutionMessage, {exclusive: true, consumerTag: '_process-execution'});
+    const content = createMessage({executionId});
+    broker.publish('run', 'run.resume', content, {persistent: false});
+    activateRunConsumers();
   }
 
   function getApi(message) {
@@ -154,16 +161,23 @@ export function Process(processDef, context) {
   }
 
   function onRunMessage(routingKey, message) {
-    const {content, ack} = message;
+    const {content, ack, fields} = message;
+    if (routingKey === 'run.resume') {
+      return onResumeMessage();
+    }
+
+    stateMessage = message;
 
     switch (routingKey) {
       case 'run.enter': {
         logger.debug(`<${id}> enter`);
 
         status = 'entered';
-        execution = undefined;
+        if (fields.redelivered) break;
 
+        execution = undefined;
         publishEvent('enter', content);
+
         break;
       }
       case 'run.discard': {
@@ -185,6 +199,8 @@ export function Process(processDef, context) {
       case 'run.execute': {
         status = 'executing';
         postponedMessage = message;
+
+        executionQ.assertConsumer(onExecutionMessage, {exclusive: true, consumerTag: '_process-execution'});
         execution = execution || ProcessExecution(processApi, context);
         return execution.execute(cloneMessage(message));
       }
@@ -215,12 +231,34 @@ export function Process(processDef, context) {
       }
       case 'run.leave': {
         status = undefined;
+        broker.cancel('_process-api');
         publishEvent('leave');
         break;
       }
     }
 
     ack();
+
+    function onResumeMessage() {
+      message.ack();
+
+      switch (stateMessage.fields.routingKey) {
+        case 'run.enter':
+        case 'run.start':
+        case 'run.discarded':
+        case 'run.end':
+        case 'run.leave':
+          break;
+        default:
+          return;
+      }
+
+      if (!fields.redelivered) return;
+
+      logger.debug(`<${id}> resume from ${status}`);
+
+      return broker.publish('run', fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
+    }
   }
 
   function onExecutionMessage(routingKey, message) {
@@ -250,7 +288,6 @@ export function Process(processDef, context) {
   }
 
   function publishEvent(state, content) {
-    if (!state) return;
     if (!content) content = createMessage();
     broker.publish('event', `process.${state}`, {...content, state}, {type: state, mandatory: state === 'error'});
   }
@@ -289,12 +326,30 @@ export function Process(processDef, context) {
     return [];
   }
 
-  function signal(childId, ...args) {
-    if (!execution) return;
-    return execution.signal(childId, ...args);
-  }
-
   function deactivate() {
     if (execution) execution.deactivate();
+  }
+
+  function activateRunConsumers() {
+    consumingRunQ = true;
+    broker.subscribeTmp('api', `activity.*.${executionId}`, onApiMessage, {noAck: true, consumerTag: '_process-api'});
+    runQ.assertConsumer(onRunMessage, {exclusive: true, consumerTag: '_process-run'});
+  }
+
+  function deactivateRunConsumers() {
+    broker.cancel('_process-api');
+    broker.cancel('_process-run');
+    consumingRunQ = false;
+  }
+
+  function onApiMessage(routingKey, message) {
+    const messageType = message.properties.type;
+
+    switch (messageType) {
+      case 'stop': {
+        stop();
+        break;
+      }
+    }
   }
 }

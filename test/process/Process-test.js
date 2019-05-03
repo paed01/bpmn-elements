@@ -288,8 +288,6 @@ describe('Process', () => {
     it('returns expected state when stopped', () => {
       const bp = Process({id: 'theProcess'}, Context());
       bp.run();
-
-      bp.run();
       bp.stop();
 
       const state = bp.getState();
@@ -300,6 +298,19 @@ describe('Process', () => {
       expect(state).to.have.property('execution').that.is.ok;
       expect(state).to.have.property('counters');
       expect(state).to.have.property('status', 'executing');
+    });
+  });
+
+  describe('recover(state)', () => {
+    it('throws if called when process is running', () => {
+      const bp = Process({id: 'theProcess'}, Context());
+      bp.run();
+
+      const state = bp.getState();
+
+      expect(() => {
+        bp.recover(state);
+      }).to.throw('cannot recover running process');
     });
   });
 
@@ -346,6 +357,51 @@ describe('Process', () => {
       bp2.getPostponed()[0].signal();
 
       expect(bp2.counters).to.have.property('completed', 1);
+    });
+
+    it('resumes on enter', async () => {
+      const bp1 = Process({id: 'theProcess'}, Context());
+      bp1.once('enter', (api) => {
+        api.stop();
+      });
+
+      bp1.run();
+
+      const bp2 = Process({id: 'theProcess'}, Context());
+      bp2.recover(bp1.getState());
+
+      bp2.resume();
+
+      bp2.getPostponed()[0].signal();
+
+      expect(bp2.counters).to.have.property('completed', 1);
+    });
+
+    it('resumes on start', async () => {
+      const bp1 = Process({id: 'theProcess'}, Context());
+      bp1.once('start', (api) => {
+        api.stop();
+      });
+
+      bp1.run();
+
+      const bp2 = Process({id: 'theProcess'}, Context());
+      bp2.recover(bp1.getState());
+
+      bp2.resume();
+
+      bp2.getPostponed()[0].signal();
+
+      expect(bp2.counters).to.have.property('completed', 1);
+    });
+
+    it('throws if called while process is running', () => {
+      const bp = Process({id: 'theProcess'}, Context());
+      bp.run();
+
+      expect(() => {
+        bp.resume();
+      }).to.throw('cannot resume running process');
     });
   });
 

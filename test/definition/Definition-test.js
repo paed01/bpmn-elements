@@ -591,7 +591,7 @@ describe('Definition', () => {
       expect(definition.counters).to.have.property('completed', 1);
     });
 
-    it('resumes after recovered with state', () => {
+    it('resumes recovered with state', () => {
       const startDefinition = Definition(context);
       startDefinition.run();
       startDefinition.stop();
@@ -609,7 +609,7 @@ describe('Definition', () => {
       expect(definition.counters).to.have.property('completed', 1);
     });
 
-    it('resumes after recovered with running state', () => {
+    it('resumes recovered with running state', () => {
       const startDefinition = Definition(context);
       startDefinition.run();
       const state = startDefinition.getState();
@@ -621,6 +621,33 @@ describe('Definition', () => {
       expect(activity.id).to.equal('userTask');
       expect(definition.counters).to.have.property('completed', 0);
       activity.signal();
+      expect(definition.counters).to.have.property('completed', 1);
+    });
+
+    it('resumes recovered with state from stopped on activity event', async () => {
+      const startDefinition = Definition(context);
+      const stopped = startDefinition.waitFor('stop');
+
+      let state;
+      startDefinition.once('wait', () => {
+        startDefinition.stop();
+        state = startDefinition.getState();
+      });
+
+      startDefinition.run();
+
+      await stopped;
+
+      const definition = Definition(context.clone()).recover(state);
+
+      definition.resume();
+
+      const [activity] = definition.getPostponed();
+      expect(activity.id).to.equal('userTask');
+      expect(definition.counters).to.have.property('completed', 0);
+
+      activity.signal();
+
       expect(definition.counters).to.have.property('completed', 1);
     });
   });
