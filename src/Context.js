@@ -23,7 +23,6 @@ function ContextInstance(definitionContext, environment) {
     definitionContext,
     environment,
     clone,
-
     getActivities,
     getActivityById,
     getErrorById,

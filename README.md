@@ -12,7 +12,7 @@ Executable workflow elements based on BPMN 2.0.
 
 The following elements are tested and supported.
 
-- Definition: Executes processes
+- [Definition: Executes processes](/docs/Definition.md)
 - Process: Executes elements
 - BoundaryEvent
 - Error
