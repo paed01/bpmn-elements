@@ -108,6 +108,7 @@ function Process(processDef, context) {
   return processApi;
 
   function run() {
+    if (processApi.isRunning) throw new Error('process is already running');
     deactivateRunConsumers();
     executionId = (0, _shared.getUniqueId)(id);
     broker.publish('run', 'run.enter', createMessage({
@@ -219,16 +220,6 @@ function Process(processDef, context) {
           break;
         }
 
-      case 'run.discard':
-        {
-          logger.debug(`<${id}> discarded`);
-          status = 'discard';
-          execution = undefined;
-          execution.discard();
-          publishEvent('discard', content);
-          break;
-        }
-
       case 'run.start':
         {
           logger.debug(`<${id}> start`);
@@ -257,10 +248,10 @@ function Process(processDef, context) {
 
       case 'run.end':
         {
-          if (status === 'end') break;
+          status = 'end';
+          if (fields.redelivered) break;
           logger.debug(`<${id}> completed`);
           counters.completed++;
-          status = 'end';
           broker.publish('run', 'run.leave', content);
           publishEvent('end', content);
           break;
@@ -268,9 +259,9 @@ function Process(processDef, context) {
 
       case 'run.discarded':
         {
-          if (status === 'discarded') break;
-          counters.discarded++;
           status = 'discarded';
+          if (fields.redelivered) break;
+          counters.discarded++;
           broker.publish('run', 'run.leave', content);
           break;
         }
@@ -398,6 +389,7 @@ function Process(processDef, context) {
   function deactivateRunConsumers() {
     broker.cancel('_process-api');
     broker.cancel('_process-run');
+    broker.cancel('_process-execution');
     consumingRunQ = false;
   }
 

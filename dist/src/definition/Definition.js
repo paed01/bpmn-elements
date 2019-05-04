@@ -16,6 +16,8 @@ var _shared = require("../shared");
 
 var _Errors = require("../error/Errors");
 
+var _messageHelper = require("../messageHelper");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var _default = Definition;
@@ -36,11 +38,12 @@ function Definition(context, options) {
   }
 
   const logger = environment.Logger(type.toLowerCase());
-  let execution, executionId, processes, executableProcesses, postponedMessage, returnListener, stopped;
+  let execution, executionId, processes, executableProcesses, postponedMessage, stateMessage, returnListener, stopped, consumingRunQ;
   let status = 'pending';
   const runCallbacks = [];
   let counters = {
-    completed: 0
+    completed: 0,
+    discarded: 0
   };
   const definitionApi = {
     id,
@@ -64,6 +67,11 @@ function Definition(context, options) {
 
     get execution() {
       return execution;
+    },
+
+    get isRunning() {
+      if (!consumingRunQ) return false;
+      return !!status;
     },
 
     environment,
@@ -105,7 +113,14 @@ function Definition(context, options) {
   return definitionApi;
 
   function run(callback) {
-    addConsumerCallbacks();
+    if (definitionApi.isRunning) {
+      const err = new Error('definition is already running');
+      if (callback) return callback(err);
+      throw err;
+    }
+
+    deactivateRunConsumers();
+    addConsumerCallbacks(callback);
     executionId = (0, _shared.getUniqueId)(id);
     broker.publish('run', 'run.enter', createMessage({
       executionId,
@@ -119,40 +134,39 @@ function Definition(context, options) {
       executionId,
       state: 'execute'
     }));
-    runQ.assertConsumer(onRunMessage, {
-      exclusive: true,
-      consumerTag: '_definition-run'
+    activateRunConsumers();
+  }
+
+  function addConsumerCallbacks(callback) {
+    if (returnListener) returnListener.cancel();
+
+    if (!callback) {
+      returnListener = broker.on('return', onBrokerReturn);
+      return;
+    }
+
+    clearConsumers();
+    broker.subscribeOnce('event', 'definition.leave', cbLeave, {
+      consumerTag: 'ctag-cb-leave'
     });
-    executionQ.assertConsumer(onExecutionMessage, {
-      exclusive: true,
-      consumerTag: '_definition-execution'
+    broker.subscribeOnce('event', 'definition.error', cbError, {
+      consumerTag: 'ctag-cb-error'
     });
 
-    function addConsumerCallbacks() {
-      if (returnListener) returnListener.cancel();
+    function cbLeave(_, message) {
+      clearConsumers();
+      return callback(null, getApi(message));
+    }
 
-      if (!callback) {
-        returnListener = broker.on('return', onBrokerReturn);
-        return;
-      }
+    function cbError(_, message) {
+      clearConsumers();
+      const err = (0, _Errors.makeErrorFromMessage)(message);
+      return callback(err);
+    }
 
-      const leaveConsumer = broker.subscribeOnce('event', 'definition.leave', cbLeave, {
-        consumerTag: 'ctag-cb-leave'
-      });
-      const errorConsumer = broker.subscribeOnce('event', 'definition.error', cbError, {
-        consumerTag: 'ctag-cb-error'
-      });
-
-      function cbLeave(_, message) {
-        errorConsumer.cancel();
-        return callback(null, getApi(message));
-      }
-
-      function cbError(_, message) {
-        leaveConsumer.cancel();
-        const err = (0, _Errors.makeErrorFromMessage)(message);
-        return callback(err);
-      }
+    function clearConsumers() {
+      broker.cancel('ctag-cb-leave');
+      broker.cancel('ctag-cb-error');
     }
   }
 
@@ -160,8 +174,7 @@ function Definition(context, options) {
     if (!status || status === 'pending') return;
     stopped = true;
     deactivate();
-    broker.cancel('_definition-run');
-    broker.cancel('_definition-execution');
+    deactivateRunConsumers();
     if (execution) execution.stop();
     if (status) publishEvent('stop');
   }
@@ -174,19 +187,44 @@ function Definition(context, options) {
     };
   }
 
-  function resume() {
-    if (runQ.peek()) {
-      publishEvent('resume');
+  function recover(state) {
+    if (definitionApi.isRunning) throw new Error('cannot recover running definition');
+    if (!state) return definitionApi;
+    stopped = state.stopped;
+    status = state.status;
+    executionId = state.executionId;
+
+    if (state.counters) {
+      counters = { ...counters,
+        ...state.counters
+      };
     }
 
-    runQ.assertConsumer(onRunMessage, {
-      exclusive: true,
-      consumerTag: '_definition-run'
+    if (state.execution) {
+      execution = (0, _DefinitionExecution.default)(definitionApi, context).recover(state.execution);
+    }
+
+    broker.recover(state.broker);
+    return definitionApi;
+  }
+
+  function resume(callback) {
+    if (definitionApi.isRunning) {
+      const err = new Error('cannot resume running definition');
+      if (callback) return callback(err);
+      throw err;
+    }
+
+    stopped = false;
+    if (!status) return;
+    addConsumerCallbacks(callback);
+    const content = createMessage({
+      executionId
     });
-    executionQ.assertConsumer(onExecutionMessage, {
-      exclusive: true,
-      consumerTag: '_definition-execution'
+    broker.publish('run', 'run.resume', content, {
+      persistent: false
     });
+    activateRunConsumers();
   }
 
   function onBrokerReturn(message) {
@@ -201,25 +239,24 @@ function Definition(context, options) {
   function onRunMessage(routingKey, message) {
     const {
       content,
-      ack
+      ack,
+      fields
     } = message;
+
+    if (routingKey === 'run.resume') {
+      return onResumeMessage();
+    }
+
+    stateMessage = message;
 
     switch (routingKey) {
       case 'run.enter':
         {
           logger.debug(`<${id}> enter`);
           status = 'entered';
+          if (fields.redelivered) break;
           execution = undefined;
           publishEvent('enter', content);
-          break;
-        }
-
-      case 'run.discard':
-        {
-          logger.debug(`<${id}> discarded`);
-          status = 'discard';
-          execution.discard();
-          publishEvent('discard', content);
           break;
         }
 
@@ -235,8 +272,12 @@ function Definition(context, options) {
         {
           status = 'executing';
           postponedMessage = message;
+          executionQ.assertConsumer(onExecutionMessage, {
+            exclusive: true,
+            consumerTag: '_definition-execution'
+          });
           execution = execution || (0, _DefinitionExecution.default)(definitionApi, context);
-          return execution.execute(message);
+          return execution.execute((0, _messageHelper.cloneMessage)(message));
         }
 
       case 'run.error':
@@ -275,6 +316,26 @@ function Definition(context, options) {
     }
 
     ack();
+
+    function onResumeMessage() {
+      message.ack();
+
+      switch (stateMessage.fields.routingKey) {
+        case 'run.enter':
+        case 'run.start':
+        case 'run.discarded':
+        case 'run.end':
+        case 'run.leave':
+          break;
+
+        default:
+          return;
+      }
+
+      if (!fields.redelivered) return;
+      logger.debug(`<${id}> resume from ${status}`);
+      return broker.publish('run', fields.routingKey, (0, _messageHelper.cloneContent)(stateMessage.content), stateMessage.properties);
+    }
   }
 
   function onExecutionMessage(routingKey, message) {
@@ -289,10 +350,6 @@ function Definition(context, options) {
           broker.publish('run', 'run.discarded', content);
           break;
         }
-
-      case 'discard':
-        broker.publish('run', 'run.discarded', content);
-        break;
 
       default:
         {
@@ -317,9 +374,8 @@ function Definition(context, options) {
   }
 
   function getState() {
-    return {
-      id,
-      type,
+    return createMessage({
+      executionId,
       status,
       stopped,
       counters: { ...counters
@@ -327,26 +383,7 @@ function Definition(context, options) {
       environment: environment.getState(),
       execution: execution && execution.getState(),
       broker: broker.getState()
-    };
-  }
-
-  function recover(state) {
-    if (!state) return definitionApi;
-    stopped = state.stopped;
-    status = state.status;
-
-    if (state.counters) {
-      counters = { ...counters,
-        ...state.counters
-      };
-    }
-
-    if (state.execution) {
-      execution = (0, _DefinitionExecution.default)(definitionApi, context).recover(state.execution);
-    }
-
-    broker.recover(state.broker);
-    return definitionApi;
+    });
   }
 
   function deactivate() {
@@ -396,5 +433,36 @@ function Definition(context, options) {
   function getApi(message) {
     if (execution) return execution.getApi(message);
     return (0, _Api.DefinitionApi)(broker, message);
+  }
+
+  function activateRunConsumers() {
+    consumingRunQ = true;
+    broker.subscribeTmp('api', `activity.*.${executionId}`, onApiMessage, {
+      noAck: true,
+      consumerTag: '_definition-api'
+    });
+    runQ.assertConsumer(onRunMessage, {
+      exclusive: true,
+      consumerTag: '_definition-run'
+    });
+  }
+
+  function deactivateRunConsumers() {
+    broker.cancel('_definition-api');
+    broker.cancel('_definition-run');
+    broker.cancel('_definition-execution');
+    consumingRunQ = false;
+  }
+
+  function onApiMessage(routingKey, message) {
+    const messageType = message.properties.type;
+
+    switch (messageType) {
+      case 'stop':
+        {
+          stop();
+          break;
+        }
+    }
   }
 }

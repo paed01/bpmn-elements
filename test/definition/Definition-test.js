@@ -320,6 +320,45 @@ describe('Definition', () => {
 
       expect(def.run).to.throw(/unstable/);
     });
+
+    it('throws if called while definition is running', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions id="Definition_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <userTask id="task" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+
+      const definition = Definition(context);
+      definition.run();
+
+      expect(() => {
+        definition.run();
+      }).to.throw('definition is already running');
+    });
+
+    it('returns error in callback if called while definition is running', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions id="Definition_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <userTask id="task" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+
+      const definition = Definition(context);
+      definition.run();
+
+      let error;
+      definition.run((err) => {
+        error = err;
+      });
+
+      expect(error.message).to.equal('definition is already running');
+    });
   });
 
   describe('getActivityById()', () => {
@@ -563,6 +602,17 @@ describe('Definition', () => {
       const definition2 = Definition(context.clone()).recover(definition1.getState());
       expect(definition2).to.have.property('status', 'executing');
     });
+
+    it('throws if called while definition is running', () => {
+      const definition = Definition(context);
+      definition.run();
+
+      const state = definition.getState();
+
+      expect(() => {
+        definition.recover(state);
+      }).to.throw('cannot recover running definition');
+    });
   });
 
   describe('resume()', () => {
@@ -650,6 +700,44 @@ describe('Definition', () => {
 
       expect(definition.counters).to.have.property('completed', 1);
     });
+
+    it('calls callback when definition completes', (done) => {
+      const startDefinition = Definition(context);
+
+      let state;
+      startDefinition.once('wait', () => {
+        startDefinition.stop();
+        state = startDefinition.getState();
+      });
+
+      startDefinition.run();
+
+      const definition = Definition(context.clone()).recover(state);
+      definition.once('wait', (api) => {
+        api.signal();
+      });
+
+      definition.resume(done);
+    });
+
+    it('throws if called while definition is running', () => {
+      const definition = Definition(context);
+      definition.run();
+
+      expect(() => {
+        definition.resume();
+      }).to.throw('cannot resume running definition');
+    });
+
+    it('returns error in callback if called while definition is running', (done) => {
+      const definition = Definition(context);
+      definition.run();
+
+      definition.resume((err) => {
+        expect(err.message).to.equal('cannot resume running definition');
+        done();
+      });
+    });
   });
 
   describe('getProcesses()', () => {
@@ -708,6 +796,8 @@ describe('Definition', () => {
       expect(errors).to.have.length(1);
       expect(errors[0]).to.be.instanceof(ActivityError);
       expect(errors[0].message).to.equal('unstable');
+
+      expect(definition.counters).to.have.property('discarded', 1);
     });
 
     it('emits error on flow error', async () => {

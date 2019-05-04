@@ -58,6 +58,25 @@ describe('Process', () => {
       expect(bp.environment.variables).to.have.property('properties').with.property('messageId');
       expect(bp.environment.variables).to.not.have.property('ack');
     });
+
+    it('throws if called while process is running', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions id="Definition_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <userTask id="task" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const bp = context.getProcessById('theProcess');
+
+      bp.run();
+
+      expect(() => {
+        bp.run();
+      }).to.throw('process is already running');
+    });
   });
 
   describe('errors', () => {
@@ -104,6 +123,8 @@ describe('Process', () => {
       expect(errors).to.have.length(1);
       expect(errors[0]).to.be.instanceof(ActivityError);
       expect(errors[0].message).to.equal('unstable');
+
+      expect(bp.counters).to.have.property('discarded', 1);
     });
 
     it('emits error on flow error', async () => {
