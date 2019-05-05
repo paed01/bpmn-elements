@@ -3,7 +3,7 @@ Extensions
 
 # Extend by overriding behaviour
 
-First of define your own type function. The requirements are that it should return an instance of `Activity` with a behaviour function.
+First off define your own type function. The requirements are that it should return an instance of `Activity` with a behaviour function.
 
 The type function will receive the type data from the source context.
 The behaviour function will receive the Activity instance and the workflow context when the activity executes.
@@ -95,7 +95,7 @@ function getModdleContext(sourceXml) {
 
 # Extend event definition
 
-First of define your own event definition type function.
+Define your own event definition type function.
 
 The behaviour function will receive the Activity instance and the workflow context when the activity executes.
 
