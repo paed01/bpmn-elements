@@ -9,7 +9,7 @@ Definition constructor.
 
 Arguments:
 - `context`: context instance, see [Context](/docs/Context.md)
-- `options`: optional options that will be passed to environment
+- `options`: optional options that will be passed to [environment](/docs/Environment.md)
 
 Returns api with properties:
 - `id`: definition id

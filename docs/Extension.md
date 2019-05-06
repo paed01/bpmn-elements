@@ -1,185 +1,81 @@
-Extensions
-==========
+Extension
+=========
 
-# Extend by overriding behaviour
+Extend activity behaviour.
 
-First off define your own type function. The requirements are that it should return an instance of `Activity` with a behaviour function.
+## `extension(activity, context)`
 
-The type function will receive the type data from the source context.
-The behaviour function will receive the Activity instance and the workflow context when the activity executes.
+All activities will call this function when instantiated.
 
-To complete execution the broker must publish an `execute.completed` message, or an `execute.error` message if things went sideways.
-
+Example:
 ```js
-import {Activity} from 'bpmn-elements';
-
-export default function MyOwnStartEvent(activityDefinition, context) {
-  return Activity(MyStartEventBehaviour, activityDefinition, context);
-}
-
-export function MyStartEventBehaviour(activity, context) {
-  const {id, type, broker} = activity;
-  const {environment} = context;
-
-  const event = {
-    execute,
-  };
-
-  return event;
-
-  function execute(executeMessage) {
-    const content = executeMessage.content;
-
-    environment.services.getSomeData({id, type}, (err, result) => {
-      if (err) return broker.publish('execution', 'execute.error', {...content, error: err});
-
-      return broker.publish('execution', 'execute.completed', {...content, result});
-    });
+const definition = Definition(context, {
+  extensions: {
+    saveAllOutputToEnvironmentExtension
   }
-}
-```
-
-Second the behavior must be mapped to the workflow context and passed to the definition.
-
-Example with bpmn-moddle:
-```js
-import * as elements from 'bpmn-elements';
-import BpmnModdle from 'bpmn-moddle';
-import MyStartEvent from './extend/MyStartEvent';
-import {default as serialize, TypeResolver} from 'moddle-context-serializer';
-
-const myOwnElements = {
-  ...elements,
-  StartEvent: MyStartEvent,
-};
-
-const {Context, Definition} = elements;
-const typeResolver = TypeResolver(myOwnElements);
-
-const sourceDefinition = `
-<?xml version="1.0" encoding="UTF-8"?>
-  <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <process id="theProcess" isExecutable="true">
-    <startEvent id="start" />
-  </process>
-</definitions>`;
-
-run(sourceDefinition);
-
-async function run(source) {
-  const moddleContext = await getModdleContext(source);
-  const options = {
-    services: {
-      myService(arg, next) {
-        next();
-      },
-    },
-  };
-  const context = Context(serialize(moddleContext, typeResolver));
-
-  const definition = Definition(context, options);
-  definition.run();
-}
-
-function getModdleContext(sourceXml) {
-  const bpmnModdle = new BpmnModdle();
-
-  return new Promise((resolve, reject) => {
-    bpmnModdle.fromXML(sourceXml.trim(), (err, definitions, moddleCtx) => {
-      if (err) return reject(err);
-      resolve(moddleCtx);
-    });
-  });
-}
-```
-
-# Extend event definition
-
-Define your own event definition type function.
-
-The behaviour function will receive the Activity instance and the workflow context when the activity executes.
-
-To complete execution the broker must publish an `execute.completed` or an `execute.error` message.
-
-```js
-export default function EscalateEventDefinition(activity, eventDefinition = {}) {
-  const {id, broker, environment} = activity;
-  const {type, behaviour} = eventDefinition;
-  const {debug} = environment.Logger(type.toLowerCase());
-
-  const source = {
-    id,
-    type,
-    execute,
-  };
-
-  return source;
-
-  function execute(executeMessage) {
-    debug(`escalate to ${behaviour.escalation.code}`);
-    broker.publish('event', 'activity.escalate', {...executeMessage.content, escalateTo: {...behaviour.escalateTo}}, {type: 'escalate'});
-    broker.publish('execution', 'execute.completed', executeMessage.content);
-  }
-}
-```
-
-Then extend the serializer.
-
-Example with bpmn-moddle:
-```js
-import EscalationEventDefinition from './extend/EscalationEventDefinition';
-
-import Escalation from './extend/Escalation';
-import IntermediateThrowEvent from './extend/IntermediateThrowEvent';
-
-import * as elements from 'bpmn-elements';
-import BpmnModdle from 'bpmn-moddle';
-
-import {default as serialize, TypeResolver} from 'moddle-context-serializer';
-
-const {Context, Definition} = elements;
-const typeResolver = TypeResolver(elements, (activityTypes) => {
-  activityTypes['bpmn:Escalation'] = Escalation;
-  activityTypes['bpmn:IntermediateThrowEvent'] = IntermediateThrowEvent;
-  activityTypes['bpmn:EscalationEventDefinition'] = EscalationEventDefinition;
 });
 
-const sourceDefinition = `
-<?xml version="1.0" encoding="UTF-8"?>
-  <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <process id="theProcess" isExecutable="true">
-    <intermediateThrowEvent id="event_1">
-      <escalationEventDefinition escalationRef="escalation_1" />
-    </intermediateThrowEvent>
-  </process>
-  <escalation id="escalation_1" name="escalation #1" escalationCode="10" />
-</definitions>`;
-
-run(sourceDefinition);
-
-async function run(source) {
-  const moddleContext = await getModdleContext(source);
-  const options = {
-    services: {
-      myService(arg, next) {
-        next();
-      },
-    },
-  };
-  const context = Context(serialize(moddleContext, typeResolver));
-
-  const definition = Definition(context, options);
-  definition.run();
-}
-
-function getModdleContext(sourceXml) {
-  const bpmnModdle = new BpmnModdle();
-
-  return new Promise((resolve, reject) => {
-    bpmnModdle.fromXML(sourceXml.trim(), (err, definitions, moddleCtx) => {
-      if (err) return reject(err);
-      resolve(moddleCtx);
-    });
+function saveAllOutputToEnvironmentExtension(activity, {environment}) {
+  activity.on('end', (api) => {
+    environment.output[api.id] = api.content.output;
   });
 }
 ```
+
+## Formatting
+
+In some cases it may be required to fetch some extra data when an activity executes.
+
+The basic flow is the publish a formatting message on the activity format queue. If an asynchronous operation is required pass an end routing key to formatting message. When the call is completed publish the end routing key.
+
+Example:
+```js
+import bent from 'bent';
+import {resolve} from 'url';
+
+const {Definition} = elements;
+
+const getJSON = bent('json');
+
+const definition = Definition(context, {
+  variables: {
+    remoteFormUrl: 'https://exmple.com'
+  },
+  extensions: {
+    fetchAsyncFormExtension,
+    saveAllOutputToEnvironmentExtension
+  }
+});
+
+definition.once('activity.start', (api) => {
+  console.log(api.content.form);
+});
+
+definition.run();
+
+function fetchAsyncFormExtension(activity, {environment}) {
+  if (!activity.behaviour.formKey) return;
+
+  const {broker} = activity;
+
+  broker.subscribeTmp('event', 'activity.enter', (_, message) => {
+    const endRoutingKey = 'run.input.end';
+    broker.publish('format', 'run.input.start', { endRoutingKey });
+
+    getFormData(activity.behaviour.formKey, message.content.id).then((form) => {
+      broker.publish('format', endRoutingKey, { form });
+    });
+  }, {noAck: true});
+
+  function getFormData(formKey, id) {
+    return getJSON(resolve(environment.variables.remoteFormUrl, `/api/${formKey}?id=${encodeURIComponent(id)}`));
+  }
+}
+
+function saveAllOutputToEnvironmentExtension(activity, {environment}) {
+  activity.on('end', (api) => {
+    environment.output[api.id] = api.content.output;
+  });
+}
+```
+

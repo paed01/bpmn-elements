@@ -6,13 +6,13 @@ Executable workflow elements based on BPMN 2.0.
 [![Build Status](https://travis-ci.org/paed01/bpmn-elements.svg?branch=master)](https://travis-ci.org/paed01/bpmn-elements)
 
 - [Examples](/docs/Examples.md)
-- [Extension](/docs/Extension.md)
+- [Extending behaviour](/docs/Extend.md)
 
 # Supported elements
 
 The following elements are tested and supported.
 
-- [Definition: Executes processes](/docs/Definition.md)
+- [Definition: Executable definition](/docs/Definition.md)
 - Process: Executes elements
 - BoundaryEvent
 - Error

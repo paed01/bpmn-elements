@@ -5,15 +5,17 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.Scripts = Scripts;
 
-function Scripts()
-/*code, options*/
-{
+function Scripts() {
   return {
     getScript,
     register
   };
 
-  function getScript() {}
+  function getScript()
+  /*scriptType, activity*/
+  {}
 
-  function register() {}
+  function register()
+  /*activity*/
+  {}
 }
