@@ -5,7 +5,11 @@ Extend activity behaviour.
 
 ## `extension(activity, context)`
 
-All activities will call this function when instantiated.
+All activities will call extension functions when instantiated.
+
+Arguments:
+- `activity`: instance of [activity](/docs/Activity.md)
+- `context`: shared [context](/docs/Context.md)
 
 Example:
 ```js

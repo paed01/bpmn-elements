@@ -32,11 +32,11 @@ Returns clone of context with new activity instances.
 
 ### `getActivities([scopeId])`
 
-Get all activity instances and/or scoped to id.
+Get all [activity instances](/docs/Activity.md) scoped to id.
 
 ### `getActivityById(id)`
 
-Get activity instances by id.
+Get [activity instance](/docs/Activity.md) by id.
 
 ### `getErrorById(id)`
 
@@ -79,3 +79,5 @@ Get activity inbound sequence flows.
 Get activity outbound sequence flows.
 
 ### `loadExtensions(activity)`
+
+Load [extensions](/docs/Extension.md) for activity.

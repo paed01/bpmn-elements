@@ -14,7 +14,7 @@ Arguments:
     - `step`: boolean, true makes activity runs to go forward in steps, defaults to false
   - `scripts`: [Scripts instance](/docs/Scripts.md)
   - `Logger`: optional [Logger](#logger) defaults to a dummy logger that does basically nothing but supply the required log functions
-  - `extensions`: [extend function](/docs/Extension.md) called when activity is loaded
+  - `extensions`: [extensions](/docs/Extension.md) object with functions
 
 Properties:
 - `options`: initial options

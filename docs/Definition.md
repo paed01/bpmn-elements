@@ -1,11 +1,11 @@
 Definition
 ==========
 
-Executable BPMN 2 definition. Pass context and execute.
+Executable BPMN 2 definition. Pass [context](/docs/Context.md) and execute.
 
 ## `Definition(context[, options])`
 
-Definition constructor.
+Definition constructorish.
 
 Arguments:
 - `context`: context instance, see [Context](/docs/Context.md)
@@ -21,8 +21,8 @@ Returns api with properties:
 - `executionId`: current execution id
 - `status`: status
 - `execution`: current execution
+- `environment`: definition environment instance, see [Environment](/docs/Environment.md)
 - `isRunning`: boolean indicating if the definition is running
-- `environment`: definition environment instance, see [Environment](/docs/Environment)
 - `broker`: definition message broker
 
 ### `run([callback])`
@@ -58,10 +58,6 @@ Get all executable processes.
 
 Get definition state.
 
-### `stop()`
-
-Stop definition execution.
-
 ## `recover(state)`
 
 Recover definition.
@@ -84,7 +80,8 @@ Listen for events.
 
 Arguments:
 - `eventName`: name of event
-- `handler`: called when event occur
+- `handler`: required function called when events occur
+  - `api`: element [api](/docs/SharedApi.md)
 - `eventOptions`: passed to underlying broker as consume options
 
 ### `once(eventName, handler[, eventOptions])`
@@ -93,8 +90,13 @@ Listen for event.
 
 Arguments:
 - `eventName`: name of event
-- `handler`: called when event occur
+- `handler`: required function called when event occur
+  - `api`: element [api](/docs/SharedApi.md)
 - `eventOptions`: passed to underlying broker as consume options
+
+### `stop()`
+
+Stop definition run.
 
 ### `waitFor(eventName[, onMessage])`
 
@@ -107,4 +109,5 @@ Arguments:
   - `message`: actual message that match event name
   - `owner`: broker owner, in this case probably the actual definition
 
-Returns Promise
+Returns Promise that will resolve with element [api](/docs/SharedApi.md) on event name or reject on error.
+

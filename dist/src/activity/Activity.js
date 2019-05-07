@@ -73,7 +73,8 @@ function Activity(Behaviour, activityDef, context) {
     name,
     isStart,
     isSubProcess,
-    parent,
+    parent: { ...parent
+    },
     behaviour: { ...behaviour
     },
     attachedTo: attachedToActivity,

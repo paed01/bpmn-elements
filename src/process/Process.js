@@ -48,6 +48,7 @@ export function Process(processDef, context) {
     },
     context,
     environment,
+    parent: {...parent},
     activate,
     deactivate,
     logger,

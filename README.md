@@ -12,8 +12,8 @@ Executable workflow elements based on BPMN 2.0.
 
 The following elements are tested and supported.
 
-- [Definition: Executable definition](/docs/Definition.md)
-- Process: Executes elements
+- [Definition](/docs/Definition.md): Executable definition
+- [Process](/docs/Process.md): Executes activity elements
 - BoundaryEvent
 - Error
 - DataObject
