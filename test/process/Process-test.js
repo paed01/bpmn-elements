@@ -398,7 +398,25 @@ describe('Process', () => {
       expect(bp2.counters).to.have.property('completed', 1);
     });
 
-    it('resumes on start', async () => {
+    it('resumes stopped with state on enter', async () => {
+      const bp1 = Process({id: 'theProcess'}, Context());
+      bp1.once('enter', (api) => {
+        api.stop();
+      });
+
+      bp1.run();
+
+      const bp2 = Process({id: 'theProcess'}, Context());
+      bp2.recover(bp1.getState());
+
+      bp2.resume();
+
+      bp2.getPostponed()[0].signal();
+
+      expect(bp2.counters).to.have.property('completed', 1);
+    });
+
+    it('resumes stopped with state on start', async () => {
       const bp1 = Process({id: 'theProcess'}, Context());
       bp1.once('start', (api) => {
         api.stop();

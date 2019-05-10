@@ -26,8 +26,8 @@ function ProcessBroker(owner) {
   return ExecutionBroker(owner, 'process');
 }
 
-function DefinitionBroker(owner) {
-  return ExecutionBroker(owner, 'definition');
+function DefinitionBroker(owner, onBrokerReturn) {
+  return ExecutionBroker(owner, 'definition', onBrokerReturn);
 }
 
 function MessageFlowBroker(owner) {
@@ -49,12 +49,12 @@ function MessageFlowBroker(owner) {
   return eventBroker;
 }
 
-function ExecutionBroker(brokerOwner, prefix) {
+function ExecutionBroker(brokerOwner, prefix, onBrokerReturn) {
   const eventBroker = EventBroker(brokerOwner, {
     prefix,
     autoDelete: false,
     durable: false
-  });
+  }, onBrokerReturn);
   const broker = eventBroker.broker;
   broker.assertExchange('api', 'topic', {
     autoDelete: false,
@@ -87,11 +87,11 @@ function ExecutionBroker(brokerOwner, prefix) {
   return eventBroker;
 }
 
-function EventBroker(brokerOwner, options) {
+function EventBroker(brokerOwner, options, onBrokerReturn) {
   const broker = (0, _smqp.Broker)(brokerOwner);
   const pfx = options.prefix;
   broker.assertExchange('event', 'topic', options);
-  broker.on('return', onBrokerReturn);
+  broker.on('return', onBrokerReturn || onBrokerReturnFn);
   return {
     eventPrefix: pfx,
     broker,
@@ -150,7 +150,7 @@ function EventBroker(brokerOwner, options) {
     });
   }
 
-  function onBrokerReturn(message) {
+  function onBrokerReturnFn(message) {
     if (message.properties.type === 'error') {
       const err = (0, _Errors.makeErrorFromMessage)(message);
       throw err;

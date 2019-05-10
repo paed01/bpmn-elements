@@ -81,7 +81,7 @@ describe('Definition', () => {
     });
   });
 
-  describe('run()', () => {
+  describe('run([callback])', () => {
     it('publishes enter on run', async () => {
       const definition = Definition({
         id: 'Def_1',
@@ -209,6 +209,18 @@ describe('Definition', () => {
           if (err) return done(err);
           done();
         });
+      });
+    });
+
+    it('calls callback if stopped', (done) => {
+      testHelpers.context(factory.userTask(), {}, (_, moddleContext) => {
+        const def = Definition(moddleContext, {scripts: JavaScripts()});
+        def.run((err) => {
+          if (err) return done(err);
+          done();
+        });
+
+        def.stop();
       });
     });
 
@@ -641,7 +653,7 @@ describe('Definition', () => {
       expect(definition.counters).to.have.property('completed', 1);
     });
 
-    it('resumes recovered with state', () => {
+    it('resumes recovered with stopped state', () => {
       const startDefinition = Definition(context);
       startDefinition.run();
       startDefinition.stop();
@@ -737,6 +749,54 @@ describe('Definition', () => {
         expect(err.message).to.equal('cannot resume running definition');
         done();
       });
+    });
+
+    it('resumes recovered with stopped on enter state', async () => {
+      const startDefinition = Definition(context);
+      const stop = startDefinition.waitFor('stop');
+      startDefinition.once('enter', (api) => {
+        api.stop();
+      });
+
+      startDefinition.run();
+
+      await stop;
+      const state = startDefinition.getState();
+
+      const definition = Definition(context.clone()).recover(state);
+      definition.resume();
+
+      const [activity] = definition.getPostponed();
+      expect(activity.id).to.equal('userTask');
+      expect(definition.counters).to.have.property('completed', 0);
+
+      activity.signal();
+
+      expect(definition.counters).to.have.property('completed', 1);
+    });
+
+    it('resumes recovered with stopped on start state', async () => {
+      const startDefinition = Definition(context);
+      const stop = startDefinition.waitFor('stop');
+      startDefinition.once('start', (api) => {
+        api.stop();
+      });
+
+      startDefinition.run();
+
+      await stop;
+      const state = startDefinition.getState();
+
+      const definition = Definition(context.clone()).recover(state);
+      definition.resume();
+
+      const [activity] = definition.getPostponed();
+      expect(activity.id).to.equal('userTask');
+      expect(definition.counters).to.have.property('completed', 0);
+
+      activity.signal();
+
+      expect(definition.counters).to.have.property('completed', 1);
     });
   });
 

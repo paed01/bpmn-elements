@@ -1,7 +1,7 @@
 Activity
 ========
 
-Activity
+Shared activity behaviour.
 
 ## `Activity(Behaviour, activityDefinition, context)`
 
@@ -22,7 +22,7 @@ Activity properties:
 - `broker`: activity [broker](https://github.com/paed01/smqp)
 - `counters`: counters for completed runs etc
 - `environment`: shared [environment](/docs/Environment)
-- `execution`: getter for current execution instance
+- `execution`: getter for current [execution instance](/docs/ActivityExecution.md)
 - `executionId`: current unique execution id
 - `extensions`: object with [extensions](/docs/Extension.md)
 - `inbound`: list of inbound sequence flows
@@ -39,11 +39,11 @@ Activity properties:
 
 ### `activate()`
 
-Start listening on inbound sequence flow(s).
+Start listening on inbound sequence flow(s) events.
 
 ### `deactivate()`
 
-Stop listening on inbound sequence flow(s).
+Stop listening for inbound sequence flow(s) events.
 
 ### `discard()`
 
@@ -106,6 +106,9 @@ Resume recovered or stopped activity.
 
 Run activity.
 
+Arguments:
+- `runContent`: optional object containing extra content for the broker messages.
+
 ### `stop()`
 
 Stop activity run.
@@ -116,9 +119,9 @@ Wait for event to occur as promised.
 
 Arguments:
 - `eventName`: name of event
-- `onMessage`: optional message callback for event filtering purposes. Return false if the promise should not resolve. Called with the following arguments
+- `onMessage`: optional message callback for event filtering purposes. Return false if the promise should not resolve. Called with the following arguments:
   - `routingKey`: broker message routing key
   - `message`: actual message that match event name
-  - `owner`: broker owner, in this case probably the actual activity
+  - `owner`: message owner, in this case probably the actual activity instance
 
 Returns Promise that will resolve with [activity api](/docs/SharedApi.md) on event name or reject on error.

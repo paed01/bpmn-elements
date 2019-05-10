@@ -13,7 +13,7 @@ Inline scripts handler interface.
 Register script. Called from activity behaviour.
 
 Arguments:
-- `activity`: activity with script
+- `activity`: [activity](/docs/Activity.md) instance
 
 ## `getScript(scriptType, activity)`
 
@@ -21,7 +21,7 @@ Get registered script. Called from activity behaviour when executing.
 
 Arguments:
 - `scriptType`: script type from definition
-- `activity`: activity with script
+- `activity`: [activity](/docs/Activity.md) with script
 
 Must return interface with one required function that is named `execute`.
 

@@ -11,7 +11,6 @@ export function Scripts() {
   function register({id, type, behaviour}) {
     let scriptBody, language;
 
-
     switch (type) {
       case 'bpmn:SequenceFlow': {
         if (!behaviour.conditionExpression) return;
@@ -29,8 +28,8 @@ export function Scripts() {
     scripts[id] = new Script(scriptBody, {filename: `${type}/${id}`});
   }
 
-  function getScript(scriptType, {id}) {
-    if (!/^javascript$/i.test(scriptType)) return;
+  function getScript(language, {id}) {
+    if (!/^javascript$/i.test(language)) return;
     const script = scripts[id];
     if (!script) return;
 

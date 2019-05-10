@@ -27,12 +27,12 @@ Returns api with properties:
 
 ### `run([callback])`
 
-Run definition.
+Run definition with optional callback. The callback will be called on error, when run completes, or run is stopped.
 
 Arguments:
 - `callback`: optional callback
   - `err`: occasional error
-  - `message`: last message
+  - `api`: [api](/docs/SharedApi.md)
 
 ### `getActivityById(id)`
 
@@ -40,7 +40,7 @@ Get activity by id
 
 ### `getPostponed()`
 
-Get activities that are in a postponed state.
+Get list of elements that are in a postponed state.
 
 ### `getProcesses()`
 
@@ -67,12 +67,12 @@ Arguments:
 
 ## `resume([callback])`
 
-Resume stopped or recovered definition.
+Resume stopped or recovered definition with optional callback. The callback will be called on error, when run completes, or run is stopped.
 
 Arguments:
 - `callback`: optional callback
   - `err`: occasional error
-  - `message`: last message
+  - `api`: [api](/docs/SharedApi.md)
 
 ### `on(eventName, handler[, eventOptions])`
 

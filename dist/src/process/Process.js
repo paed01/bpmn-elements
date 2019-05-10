@@ -233,13 +233,19 @@ function Process(processDef, context) {
       case 'run.execute':
         {
           status = 'executing';
+          const executeMessage = (0, _messageHelper.cloneMessage)(message);
+
+          if (fields.redelivered && !execution) {
+            executeMessage.fields.redelivered = undefined;
+          }
+
           postponedMessage = message;
           executionQ.assertConsumer(onExecutionMessage, {
             exclusive: true,
             consumerTag: '_process-execution'
           });
           execution = execution || (0, _ProcessExecution.default)(processApi, context);
-          return execution.execute((0, _messageHelper.cloneMessage)(message));
+          return execution.execute(executeMessage);
         }
 
       case 'run.error':
@@ -378,7 +384,7 @@ function Process(processDef, context) {
 
   function activateRunConsumers() {
     consumingRunQ = true;
-    broker.subscribeTmp('api', `activity.*.${executionId}`, onApiMessage, {
+    broker.subscribeTmp('api', `process.*.${executionId}`, onApiMessage, {
       noAck: true,
       consumerTag: '_process-api'
     });

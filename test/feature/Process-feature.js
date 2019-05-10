@@ -1685,6 +1685,82 @@ Feature('Process', () => {
     });
   });
 
+  Scenario('A process wit a sub process with a waiting user task stopped recovered and resumed', () => {
+    const source = `
+    <?xml version="1.0" encoding="UTF-8"?>
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <process id="theProcess" isExecutable="true">
+        <startEvent id="start" />
+        <sequenceFlow id="flow-start" sourceRef="start" targetRef="activity" />
+        <subProcess id="activity">
+          <userTask id="subActivity" />
+        </subProcess>
+        <sequenceFlow id="flow-end" sourceRef="activity" targetRef="end" />
+        <endEvent id="end" />
+      </process>
+    </definitions>`;
+
+    const messages = [];
+    let context, processInstance, assertMessage;
+    Given('a process wit a user task', async () => {
+      context = await testHelpers.context(source);
+      processInstance = context.getProcessById('theProcess');
+      assertMessage = AssertMessage(context, messages, false);
+    });
+
+    And('the activities are subscribed to', () => {
+      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
+        messages.push(message);
+      }, {noAck: true});
+    });
+
+    let waiting;
+    When('run', () => {
+      waiting = processInstance.waitFor('wait');
+      processInstance.run();
+    });
+
+    Then('the process is waiting for the sub user task to be signaled', async () => {
+      const task = await waiting;
+      expect(task).to.have.property('id', 'subActivity');
+      assertMessage('activity.wait', 'subActivity');
+    });
+
+    let state;
+    When('the process is stopped', () => {
+      processInstance.stop();
+    });
+
+    And('state is saved', () => {
+      state = JSON.parse(JSON.stringify(processInstance.getState()));
+    });
+
+    When('process is recovered', () => {
+      processInstance = context.clone().getProcessById('theProcess').recover(state);
+    });
+
+    Then('state is still the same', () => {
+      expect(JSON.parse(JSON.stringify(processInstance.getState()))).to.eql(state);
+    });
+
+    When('resuming execution', () => {
+      waiting = processInstance.waitFor('wait');
+      completed = processInstance.waitFor('leave');
+      processInstance.resume();
+    });
+
+    let completed;
+    And('signaling sub user task', async () => {
+      const task = await waiting;
+      expect(task).to.have.property('id', 'subActivity');
+      task.signal();
+    });
+
+    Then('the process completes', () => {
+      return completed;
+    });
+  });
+
   Scenario('Mother of all', () => {
     const messages = [];
     let processInstance, assertMessage;

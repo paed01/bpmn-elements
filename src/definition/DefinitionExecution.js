@@ -9,7 +9,7 @@ export default function DefinitionExecution(definition) {
   const executableProcesses = definition.getExecutableProcesses();
 
   const postponed = [];
-  let apiConsumer, activityQ, executionId, initMessage, stopped, status = 'init', completed = false;
+  let activityQ, executionId, initMessage, stopped, status = 'init', completed = false;
 
   broker.assertExchange('execution', 'topic', {autoDelete: false, durable: true});
 
@@ -37,7 +37,6 @@ export default function DefinitionExecution(definition) {
     },
     processes,
     createMessage,
-    deactivate,
     getApi,
     getState,
     getPostponed,
@@ -176,8 +175,6 @@ export default function DefinitionExecution(definition) {
   }
 
   function deactivate() {
-    if (apiConsumer) apiConsumer.cancel();
-
     processes.forEach((p) => {
       p.broker.cancel('_definition-message-consumer');
       p.broker.cancel('_definition-activity-consumer');
@@ -288,7 +285,6 @@ export default function DefinitionExecution(definition) {
       type,
       executionId,
       status,
-      // input: environment.getInput(),
       ...content,
     };
   }

@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Executable workflow elements based on BPMN 2.0",
   "main": "dist/index.js",
   "module": "index.js",
@@ -24,7 +24,8 @@
     "bpmn",
     "bpmn 2",
     "workflow",
-    "automation"
+    "automation",
+    "isomorphic"
   ],
   "nyc": {
     "exclude": [
@@ -58,6 +59,6 @@
   },
   "dependencies": {
     "iso8601-duration": "^1.2.0",
-    "smqp": "^1.5.0"
+    "smqp": "^1.6.0"
   }
 }

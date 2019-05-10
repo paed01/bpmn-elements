@@ -23,8 +23,7 @@ function DefinitionExecution(definition) {
   }) => childId);
   const executableProcesses = definition.getExecutableProcesses();
   const postponed = [];
-  let apiConsumer,
-      activityQ,
+  let activityQ,
       executionId,
       initMessage,
       stopped,
@@ -65,7 +64,6 @@ function DefinitionExecution(definition) {
 
     processes,
     createMessage,
-    deactivate,
     getApi,
     getState,
     getPostponed,
@@ -224,7 +222,6 @@ function DefinitionExecution(definition) {
   }
 
   function deactivate() {
-    if (apiConsumer) apiConsumer.cancel();
     processes.forEach(p => {
       p.broker.cancel('_definition-message-consumer');
       p.broker.cancel('_definition-activity-consumer');
@@ -344,7 +341,6 @@ function DefinitionExecution(definition) {
       type,
       executionId,
       status,
-      // input: environment.getInput(),
       ...content
     };
   }

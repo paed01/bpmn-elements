@@ -454,4 +454,37 @@ Feature('Definition', () => {
       expect(messages).to.have.length(0);
     });
   });
+
+  Scenario('No executable processes', () => {
+    let definition;
+    const source = `
+    <?xml version="1.0" encoding="UTF-8"?>
+    <definitions id="theDefinition" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <process id="theProcess">
+        <startEvent id="activity" name="Start" />
+      </process>
+    </definitions>`;
+    let context;
+    before(async () => {
+      context = await testHelpers.context(source);
+    });
+
+    Given('a definition with no executable process', async () => {
+      definition = Definition(context);
+    });
+
+    Then('throws on run', () => {
+      expect(definition.run).to.throw('No executable process');
+      expect(definition.isRunning).to.be.false;
+    });
+
+    And('returns error in callback on run', (done) => {
+      definition = Definition(context);
+      definition.run((err) => {
+        expect(err).to.have.property('message', 'No executable process');
+        expect(definition.isRunning).to.be.false;
+        done();
+      });
+    });
+  });
 });
