@@ -1,10 +1,9 @@
-import BpmnModdle from 'bpmn-moddle';
 import * as types from '../../index';
-import {default as Serializer, TypeResolver} from 'moddle-context-serializer';
+import BpmnModdle from 'bpmn-moddle';
 import Context from '../../src/Context';
 import Debug from 'debug';
 import Environment from '../../src/Environment';
-import getOptionsAndCallback from '../../src/getOptionsAndCallback';
+import {default as Serializer, TypeResolver} from 'moddle-context-serializer';
 import {Scripts} from './JavaScripts';
 
 const typeResolver = TypeResolver(types);
@@ -12,10 +11,7 @@ const typeResolver = TypeResolver(types);
 export default {
   AssertMessage,
   context,
-  getModdleContext,
   moddleContext,
-  readFromDb,
-  serializeModdleContext,
   Logger,
 };
 
@@ -38,11 +34,6 @@ async function context(source, ...args) {
   return ctx;
 }
 
-function getModdleContext(source, ...args) {
-  const [options, callback] = getOptionsAndCallback(...args);
-  moddleContext(source, options).then((res) => callback(null, res)).catch(callback);
-}
-
 function moddleContext(source, options = {}) {
   const moddleOptions = options.extensions && Object.keys(options.extensions).reduce((result, ext) => {
     result[ext] = options.extensions[ext].moddleOptions;
@@ -57,16 +48,6 @@ function moddleContext(source, options = {}) {
       resolve(moddleCtx);
     });
   });
-}
-
-function readFromDb(state) {
-  const savedState = JSON.stringify(state);
-  const loadedState = JSON.parse(savedState);
-  return loadedState;
-}
-
-function serializeModdleContext(moddleCtx) {
-  return JSON.stringify(Serializer(moddleCtx, typeResolver).clone());
 }
 
 export function Logger(scope) {
@@ -105,4 +86,16 @@ function AssertMessage(processContext, messages, inSequence) {
 
     return message;
   };
+}
+
+function getOptionsAndCallback(optionsOrCallback, callback, defaultOptions) {
+  let options;
+  if (typeof optionsOrCallback === 'function') {
+    callback = optionsOrCallback;
+    options = defaultOptions;
+  } else {
+    options = defaultOptions ? Object.assign(defaultOptions, optionsOrCallback) : optionsOrCallback;
+  }
+
+  return [options, callback];
 }
