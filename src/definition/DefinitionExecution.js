@@ -204,15 +204,7 @@ export default function DefinitionExecution(definition) {
 
     if (routingKey === 'execution.stop' && childExecutionId === executionId) {
       message.ack();
-
-      logger.debug(`<${executionId} (${id})> stop definition execution (stop process executions ${postponed.length})`);
-      activityQ.close();
-      deactivate();
-      processes.slice().forEach((p) => {
-        p.stop();
-      });
-      stopped = true;
-      return;
+      return onStopped();
     }
 
     if (routingKey === 'process.leave') {
@@ -254,6 +246,20 @@ export default function DefinitionExecution(definition) {
         message.ack();
         complete('completed');
       }
+    }
+
+    function onStopped() {
+      logger.debug(`<${executionId} (${id})> stop definition execution (stop process executions ${postponed.length})`);
+      activityQ.close();
+      deactivate();
+      processes.slice().forEach((p) => {
+        p.stop();
+      });
+      stopped = true;
+      return broker.publish('execution', `execution.stopped.${executionId}`, {
+        ...initMessage.content,
+        ...content,
+      }, {type: 'stopped', persistent: false});
     }
   }
 

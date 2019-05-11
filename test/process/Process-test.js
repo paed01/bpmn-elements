@@ -79,169 +79,6 @@ describe('Process', () => {
     });
   });
 
-  describe('errors', () => {
-    it('throws error if no-one is listening for errors', async () => {
-      const source = `
-      <?xml version="1.0" encoding="UTF-8"?>
-        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <process id="theProcess" isExecutable="true">
-          <serviceTask id="task" implementation="\${environment.services.shaky}" />
-        </process>
-      </definitions>`;
-
-      const context = await testHelpers.context(source);
-      context.environment.addService('shaky', (_, next) => {
-        next(Error('unstable'));
-      });
-      const bp = context.getProcessById('theProcess');
-
-      expect(bp.run).to.throw('unstable');
-    });
-
-    it('emits error on activity error', async () => {
-      const source = `
-      <?xml version="1.0" encoding="UTF-8"?>
-        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <process id="theProcess" isExecutable="true">
-          <serviceTask id="task" implementation="\${environment.services.shaky}" />
-        </process>
-      </definitions>`;
-
-      const context = await testHelpers.context(source);
-      context.environment.addService('shaky', (_, next) => {
-        next(Error('unstable'));
-      });
-      const bp = context.getProcessById('theProcess');
-
-      const errors = [];
-      bp.on('error', (err) => {
-        errors.push(err);
-      });
-
-      bp.run();
-
-      expect(errors).to.have.length(1);
-      expect(errors[0]).to.be.instanceof(ActivityError);
-      expect(errors[0].message).to.equal('unstable');
-
-      expect(bp.counters).to.have.property('discarded', 1);
-    });
-
-    it('emits error on flow error', async () => {
-      const source = `
-      <?xml version="1.0" encoding="UTF-8"?>
-        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <process id="theProcess" isExecutable="true">
-          <startEvent id="theStart" />
-          <exclusiveGateway id="decision" />
-          <endEvent id="end1" />
-          <endEvent id="end2" />
-          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
-          <sequenceFlow id="flow2" sourceRef="decision" targetRef="end1">
-            <conditionExpression xsi:type="tFormalExpression" language="PowerShell"><![CDATA[
-            ls | clip
-            ]]></conditionExpression>
-          </sequenceFlow>
-          <sequenceFlow id="flow3" sourceRef="decision" targetRef="end2">
-            <conditionExpression xsi:type="tFormalExpression" language="PowerShell"><![CDATA[
-            ls | clip
-            ]]></conditionExpression>
-          </sequenceFlow>
-        </process>
-      </definitions>`;
-
-      const context = await testHelpers.context(source);
-      const bp = context.getProcessById('theProcess');
-
-      const errors = [];
-      bp.once('error', (err) => {
-        errors.push(err);
-      });
-
-      bp.run();
-
-      expect(errors).to.have.length(1);
-      expect(errors[0]).to.be.instanceof(Error);
-      expect(errors[0].message).to.match(/is unsupported/);
-    });
-  });
-
-  describe('waitFor()', () => {
-    it('returns promise that resolves when event occur', async () => {
-      const bp = Process({id: 'theProcess'}, {
-        environment: Environment( { Logger: testHelpers.Logger }),
-        getActivities() {},
-        getSequenceFlows() {},
-        getDataObjects() {},
-        getMessageFlows() {},
-      });
-
-      const leave = bp.waitFor('leave');
-
-      bp.run();
-
-      return leave;
-    });
-
-    it('rejects if process error is published', (done) => {
-      const bp = Process({id: 'theProcess'}, {
-        environment: Environment( { Logger: testHelpers.Logger }),
-        getActivities() {},
-        getSequenceFlows() {},
-        getDataObjects() {},
-        getMessageFlows() {},
-      });
-
-      bp.once('end', () => {
-        bp.broker.publish('event', 'process.error', new Error('unstable'), {mandatory: true});
-      });
-
-      bp.waitFor('leave').catch((err) => {
-        expect(err.message).to.equal('unstable');
-        done();
-      });
-
-      bp.run();
-    });
-
-    it('rejects if execution error occur', (done) => {
-      const context = {
-        environment: Environment( { Logger: testHelpers.Logger }),
-        getActivities() {
-          return this.activities || (this.activities = [SignalTask({
-            id: 'task',
-            type: 'manualtask',
-            Behaviour: SignalTask,
-            parent: {
-              id: 'theProcess',
-            },
-          }, this)]);
-        },
-        getSequenceFlows() {},
-        getDataObjects() {},
-        getMessageFlows() {},
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
-        getActivityById(id) {
-          return this.activities.find((a) => a.id === id);
-        },
-        loadExtensions() {},
-      };
-      const bp = Process({id: 'theProcess'}, context);
-
-      bp.once('wait', () => {
-        bp.broker.publish('execution', 'execution.error', {error: new Error('unstable')}, {mandatory: true, type: 'error'});
-      });
-
-      bp.waitFor('leave').catch((err) => {
-        expect(err.message).to.equal('unstable');
-        done();
-      });
-
-      bp.run();
-    });
-  });
-
   describe('stop()', () => {
     it('sets stopped flag', () => {
       const bp = Process({id: 'theProcess'}, Context());
@@ -276,6 +113,22 @@ describe('Process', () => {
 
       expect(bp.execution.getActivities()).to.have.length(1);
       expect(bp.execution.getActivities()[0]).to.have.property('stopped', true);
+    });
+
+    it('stop on activity start stops all running activities', (done) => {
+      const bp = Process({id: 'theProcess'}, Context());
+
+      bp.once('activity.start', () => {
+        bp.stop();
+      });
+
+      bp.once('stop', () => {
+        expect(bp.execution.getActivities()).to.have.length(1);
+        expect(bp.execution.getActivities()[0]).to.have.property('stopped', true);
+        done();
+      });
+
+      bp.run();
     });
   });
 
@@ -430,6 +283,26 @@ describe('Process', () => {
       bp2.resume();
 
       bp2.getPostponed()[0].signal();
+
+      expect(bp2.counters).to.have.property('completed', 1);
+    });
+
+    it('resumes stopped with state on end', async () => {
+      const bp1 = Process({id: 'theProcess'}, Context());
+      const stopped = bp1.waitFor('stop');
+      bp1.once('end', (api) => {
+        api.stop();
+      });
+
+      bp1.run();
+      bp1.getPostponed()[0].signal();
+
+      await stopped;
+
+      const bp2 = Process({id: 'theProcess'}, Context());
+      bp2.recover(bp1.getState());
+
+      bp2.resume();
 
       expect(bp2.counters).to.have.property('completed', 1);
     });
@@ -868,6 +741,169 @@ describe('Process', () => {
       expect(bp.environment.variables).to.have.property('_data').that.eql({
         inputFromUser: 'von Rosen'
       });
+    });
+  });
+
+  describe('errors', () => {
+    it('throws error if no-one is listening for errors', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <serviceTask id="task" implementation="\${environment.services.shaky}" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      context.environment.addService('shaky', (_, next) => {
+        next(Error('unstable'));
+      });
+      const bp = context.getProcessById('theProcess');
+
+      expect(bp.run).to.throw('unstable');
+    });
+
+    it('emits error on activity error', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <serviceTask id="task" implementation="\${environment.services.shaky}" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      context.environment.addService('shaky', (_, next) => {
+        next(Error('unstable'));
+      });
+      const bp = context.getProcessById('theProcess');
+
+      const errors = [];
+      bp.on('error', (err) => {
+        errors.push(err);
+      });
+
+      bp.run();
+
+      expect(errors).to.have.length(1);
+      expect(errors[0]).to.be.instanceof(ActivityError);
+      expect(errors[0].message).to.equal('unstable');
+
+      expect(bp.counters).to.have.property('discarded', 1);
+    });
+
+    it('emits error on flow error', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="theStart" />
+          <exclusiveGateway id="decision" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
+          <sequenceFlow id="flow2" sourceRef="decision" targetRef="end1">
+            <conditionExpression xsi:type="tFormalExpression" language="PowerShell"><![CDATA[
+            ls | clip
+            ]]></conditionExpression>
+          </sequenceFlow>
+          <sequenceFlow id="flow3" sourceRef="decision" targetRef="end2">
+            <conditionExpression xsi:type="tFormalExpression" language="PowerShell"><![CDATA[
+            ls | clip
+            ]]></conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const bp = context.getProcessById('theProcess');
+
+      const errors = [];
+      bp.once('error', (err) => {
+        errors.push(err);
+      });
+
+      bp.run();
+
+      expect(errors).to.have.length(1);
+      expect(errors[0]).to.be.instanceof(Error);
+      expect(errors[0].message).to.match(/is unsupported/);
+    });
+  });
+
+  describe('waitFor()', () => {
+    it('returns promise that resolves when event occur', async () => {
+      const bp = Process({id: 'theProcess'}, {
+        environment: Environment( { Logger: testHelpers.Logger }),
+        getActivities() {},
+        getSequenceFlows() {},
+        getDataObjects() {},
+        getMessageFlows() {},
+      });
+
+      const leave = bp.waitFor('leave');
+
+      bp.run();
+
+      return leave;
+    });
+
+    it('rejects if process error is published', (done) => {
+      const bp = Process({id: 'theProcess'}, {
+        environment: Environment( { Logger: testHelpers.Logger }),
+        getActivities() {},
+        getSequenceFlows() {},
+        getDataObjects() {},
+        getMessageFlows() {},
+      });
+
+      bp.once('end', () => {
+        bp.broker.publish('event', 'process.error', new Error('unstable'), {mandatory: true});
+      });
+
+      bp.waitFor('leave').catch((err) => {
+        expect(err.message).to.equal('unstable');
+        done();
+      });
+
+      bp.run();
+    });
+
+    it('rejects if execution error occur', (done) => {
+      const context = {
+        environment: Environment( { Logger: testHelpers.Logger }),
+        getActivities() {
+          return this.activities || (this.activities = [SignalTask({
+            id: 'task',
+            type: 'manualtask',
+            Behaviour: SignalTask,
+            parent: {
+              id: 'theProcess',
+            },
+          }, this)]);
+        },
+        getSequenceFlows() {},
+        getDataObjects() {},
+        getMessageFlows() {},
+        getInboundSequenceFlows() {},
+        getOutboundSequenceFlows() {},
+        getActivityById(id) {
+          return this.activities.find((a) => a.id === id);
+        },
+        loadExtensions() {},
+      };
+      const bp = Process({id: 'theProcess'}, context);
+
+      bp.once('wait', () => {
+        bp.broker.publish('execution', 'execution.error', {error: new Error('unstable')}, {mandatory: true, type: 'error'});
+      });
+
+      bp.waitFor('leave').catch((err) => {
+        expect(err.message).to.equal('unstable');
+        done();
+      });
+
+      bp.run();
     });
   });
 });

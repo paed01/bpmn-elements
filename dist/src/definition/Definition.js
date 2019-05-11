@@ -190,11 +190,15 @@ function Definition(context, options) {
   }
 
   function stop() {
-    if (!status || status === 'pending') return;
+    if (!definitionApi.isRunning) return;
     stopped = true;
-    deactivateRunConsumers();
-    if (execution) execution.stop();
-    if (status) publishEvent('stop');
+
+    if (!execution || execution.completed) {
+      deactivateRunConsumers();
+      return publishEvent('stop');
+    }
+
+    execution.stop();
   }
 
   function createMessage(override = {}) {
@@ -348,6 +352,12 @@ function Definition(context, options) {
     message.ack();
 
     switch (messageType) {
+      case 'stopped':
+        {
+          deactivateRunConsumers();
+          return publishEvent('stop');
+        }
+
       case 'error':
         {
           broker.publish('run', 'run.error', content);

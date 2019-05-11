@@ -158,6 +158,11 @@ function ActivityExecution(activity, context) {
       error
     } = content;
 
+    if (routingKey === 'execute.stop' && isRootScope) {
+      message.ack();
+      return onStopped();
+    }
+
     switch (routingKey) {
       case 'execute.resume.execution':
         {
@@ -295,6 +300,16 @@ function ActivityExecution(activity, context) {
         state: completionType
       }, {
         type: completionType
+      });
+    }
+
+    function onStopped() {
+      deactivate();
+      const running = postponed.slice();
+      running.forEach(msg => getApi(msg).stop());
+      return broker.publish('execution', 'execution.stopped', (0, _messageHelper.cloneContent)(message.content), {
+        type: 'stopped',
+        persistent: false
       });
     }
   }

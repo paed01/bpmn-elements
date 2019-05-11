@@ -247,14 +247,7 @@ function ProcessExecution(parentActivity, context) {
 
     if (routingKey === 'execution.stop' && childExecutionId === executionId) {
       message.ack();
-      logger.debug(`<${executionId} (${id})> stop process execution (stop child executions ${postponed.length})`);
-      activityQ.close();
-      deactivate();
-      postponed.slice().forEach(msg => {
-        getApi(msg).stop();
-      });
-      stopped = true;
-      return;
+      return onStopped();
     } else if (routingKey === 'execution.terminate') {
       message.ack();
       return terminate(message);
@@ -320,6 +313,22 @@ function ProcessExecution(parentActivity, context) {
         message.ack();
         complete('completed');
       }
+    }
+
+    function onStopped() {
+      logger.debug(`<${executionId} (${id})> stop process execution (stop child executions ${postponed.length})`);
+      activityQ.close();
+      deactivate();
+      postponed.slice().forEach(msg => {
+        getApi(msg).stop();
+      });
+      stopped = true;
+      return broker.publish(exchangeName, `execution.stopped.${executionId}`, { ...initMessage.content,
+        ...content
+      }, {
+        type: 'stopped',
+        persistent: false
+      });
     }
 
     function isErrorCaught() {

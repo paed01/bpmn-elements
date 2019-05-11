@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Executable workflow elements based on BPMN 2.0",
   "main": "dist/index.js",
   "module": "index.js",
@@ -54,7 +54,7 @@
     "mocha-cakes-2": "^3.3.0",
     "moddle-context-serializer": "^0.2.0",
     "nock": "^10.0.6",
-    "nyc": "^14.1.0",
+    "nyc": "^14.1.1",
     "request": "^2.88.0"
   },
   "dependencies": {

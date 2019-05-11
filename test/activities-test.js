@@ -551,7 +551,6 @@ describe('activity', () => {
         expect(messages, 'no more messages').to.have.length(0);
       });
 
-
       it('resume stopped on end leaves activity', async () => {
         const context = await testHelpers.context(singleFlowDefinition);
         const activity = context.getActivityById('activity');

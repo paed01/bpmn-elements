@@ -373,137 +373,6 @@ describe('Definition', () => {
     });
   });
 
-  describe('getActivityById()', () => {
-    let context;
-    before(async () => {
-      context = await testHelpers.context(lanesSource);
-    });
-
-    it('returns child activity', () => {
-      const definition = Definition(context);
-      expect(definition.getActivityById('task1')).to.exist;
-    });
-
-    it('returns child activity from participant process', () => {
-      const definition = Definition(context);
-      expect(definition.getActivityById('completeTask')).to.exist;
-    });
-
-    it('returns null if activity is not found', () => {
-      const definition = Definition(context);
-      expect(definition.getActivityById('whoAmITask')).to.be.null;
-    });
-  });
-
-  describe('getPostponed()', () => {
-    let context;
-    beforeEach(async () => {
-      const source = `
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <process id="theProcess" isExecutable="true">
-          <startEvent id="start" />
-          <sequenceFlow id="flow1" sourceRef="start" targetRef="task1" />
-          <sequenceFlow id="flow2" sourceRef="start" targetRef="task2" />
-          <sequenceFlow id="flow3" sourceRef="start" targetRef="subProcess" />
-          <userTask id="task1" />
-          <userTask id="task2" />
-          <subProcess id="subProcess">
-            <userTask id="task3" />
-          </subProcess>
-          <sequenceFlow id="flow4" sourceRef="task1" targetRef="end" />
-          <sequenceFlow id="flow5" sourceRef="task2" targetRef="end" />
-          <sequenceFlow id="flow6" sourceRef="subProcess" targetRef="end" />
-          <endEvent id="end" />
-        </process>
-      </definitions>`;
-
-      context = await testHelpers.context(source);
-    });
-
-    it('returns none if not executing', () => {
-      const def = Definition(context);
-      expect(def.getPostponed()).to.have.length(0);
-    });
-
-    it('returns executing activities', () => {
-      const def = Definition(context);
-      def.run();
-
-      const activities = def.getPostponed();
-      expect(activities).to.have.length(3);
-      expect(activities[0].id).to.equal('task1');
-      expect(activities[1].id).to.equal('task2');
-      expect(activities[2].id).to.equal('subProcess');
-    });
-  });
-
-  describe('getApi()', () => {
-    let context;
-    before(async () => {
-      const source = `
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <process id="theProcess" isExecutable="true">
-          <startEvent id="start" />
-          <sequenceFlow id="flow1" sourceRef="start" targetRef="task1" />
-          <sequenceFlow id="flow2" sourceRef="start" targetRef="task2" />
-          <sequenceFlow id="flow3" sourceRef="start" targetRef="subProcess" />
-          <userTask id="task1" />
-          <userTask id="task2" />
-          <subProcess id="subProcess">
-            <userTask id="task3" />
-          </subProcess>
-          <sequenceFlow id="flow4" sourceRef="task1" targetRef="end" />
-          <sequenceFlow id="flow5" sourceRef="task2" targetRef="end" />
-          <sequenceFlow id="flow6" sourceRef="subProcess" targetRef="end" />
-          <endEvent id="end" />
-        </process>
-      </definitions>`;
-
-      context = await testHelpers.context(source);
-    });
-
-    it('returns api on each event', () => {
-      const definition = Definition(context.clone());
-      definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
-        const api = definition.getApi(message);
-        expect(api, message.content.id).to.be.ok;
-        expect(message.content.type).to.equal(api.content.type);
-      }, {noAck: true});
-
-      definition.run();
-    });
-
-    it('returns undefined if message parent is not definition execution', () => {
-      const definition = Definition(context.clone());
-
-      let api = false;
-      definition.broker.subscribeOnce('event', 'activity.#', (routingKey, message) => {
-        message.content.parent.id = 'fake-id';
-        api = definition.getApi(message);
-      }, {noAck: true});
-
-      definition.run();
-
-      expect(api).to.be.undefined;
-    });
-
-    it('returns undefined if message parent path is not resolved', () => {
-      const definition = Definition(context.clone());
-
-      let api = false;
-      definition.broker.subscribeTmp('event', 'activity.#', (routingKey, message) => {
-        if (message.content.id === 'task3') {
-          message.content.parent.path = [];
-          api = definition.getApi(message);
-        }
-      }, {noAck: true});
-
-      definition.run();
-
-      expect(api).to.be.undefined;
-    });
-  });
-
   describe('getState()', () => {
     const source = factory.userTask(undefined, 'stateDef');
     let context;
@@ -574,6 +443,8 @@ describe('Definition', () => {
       const processes = definition.getProcesses();
       expect(processes).to.have.length(1);
       expect(processes[0]).to.have.property('stopped', true);
+      expect(processes[0]).to.have.property('isRunning', false);
+      expect(processes[0].broker).to.have.property('consumerCount', 0);
     });
 
     it('stops run queue and leaves run message', () => {
@@ -586,6 +457,59 @@ describe('Definition', () => {
       expect(runQ).to.have.property('consumerCount', 0);
       expect(runQ).to.have.property('messageCount', 1);
       expect(runQ.peek(true)).to.have.property('fields').that.have.property('routingKey', 'run.execute');
+    });
+
+    it('publishes stop message when processes are stopped', (done) => {
+      const definition = Definition(context);
+      definition.once('stop', () => {
+        expect(definition.stopped).to.equal(true);
+
+        const runQ = definition.broker.getQueue('run-q');
+        expect(runQ).to.have.property('consumerCount', 0);
+        expect(runQ).to.have.property('messageCount', 1);
+        expect(runQ.peek(true)).to.have.property('fields').that.have.property('routingKey', 'run.execute');
+        done();
+      });
+
+      definition.run();
+      definition.stop();
+    });
+
+    it('publishes stop message after processes are stopped', (done) => {
+      const definition = Definition(context);
+      const [bp] = definition.getProcesses();
+      let bpStopped;
+      bp.once('stop', () => {
+        bpStopped = true;
+      });
+
+      definition.once('stop', () => {
+        expect(bpStopped).to.be.true;
+        done();
+      });
+
+      definition.run();
+      definition.stop();
+    });
+
+    it('stop on activity start stops process', (done) => {
+      const definition = Definition(context);
+      const [bp] = definition.getProcesses();
+      let bpStopped;
+      bp.once('stop', () => {
+        bpStopped = true;
+      });
+
+      definition.once('activity.start', () => {
+        definition.stop();
+      });
+
+      definition.once('stop', () => {
+        expect(bpStopped).to.be.true;
+        done();
+      });
+
+      definition.run();
     });
   });
 
@@ -795,6 +719,30 @@ describe('Definition', () => {
       expect(definition.counters).to.have.property('completed', 0);
 
       activity.signal();
+
+      expect(definition.counters).to.have.property('completed', 1);
+    });
+
+    it('resumes recovered with stopped on end state', async () => {
+      const startDefinition = Definition(context);
+      const stop = startDefinition.waitFor('stop');
+      startDefinition.once('end', (api) => {
+        api.stop();
+      });
+
+      startDefinition.run();
+
+      const [activity] = startDefinition.getPostponed();
+      expect(activity.id).to.equal('userTask');
+      expect(startDefinition.counters).to.have.property('completed', 0);
+
+      activity.signal();
+
+      await stop;
+      const state = startDefinition.getState();
+
+      const definition = Definition(context.clone()).recover(state);
+      definition.resume();
 
       expect(definition.counters).to.have.property('completed', 1);
     });
@@ -1026,6 +974,138 @@ describe('Definition', () => {
 
         definition.run();
       });
+    });
+  });
+
+
+  describe('getActivityById()', () => {
+    let context;
+    before(async () => {
+      context = await testHelpers.context(lanesSource);
+    });
+
+    it('returns child activity', () => {
+      const definition = Definition(context);
+      expect(definition.getActivityById('task1')).to.exist;
+    });
+
+    it('returns child activity from participant process', () => {
+      const definition = Definition(context);
+      expect(definition.getActivityById('completeTask')).to.exist;
+    });
+
+    it('returns null if activity is not found', () => {
+      const definition = Definition(context);
+      expect(definition.getActivityById('whoAmITask')).to.be.null;
+    });
+  });
+
+  describe('getPostponed()', () => {
+    let context;
+    beforeEach(async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="flow1" sourceRef="start" targetRef="task1" />
+          <sequenceFlow id="flow2" sourceRef="start" targetRef="task2" />
+          <sequenceFlow id="flow3" sourceRef="start" targetRef="subProcess" />
+          <userTask id="task1" />
+          <userTask id="task2" />
+          <subProcess id="subProcess">
+            <userTask id="task3" />
+          </subProcess>
+          <sequenceFlow id="flow4" sourceRef="task1" targetRef="end" />
+          <sequenceFlow id="flow5" sourceRef="task2" targetRef="end" />
+          <sequenceFlow id="flow6" sourceRef="subProcess" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    it('returns none if not executing', () => {
+      const def = Definition(context);
+      expect(def.getPostponed()).to.have.length(0);
+    });
+
+    it('returns executing activities', () => {
+      const def = Definition(context);
+      def.run();
+
+      const activities = def.getPostponed();
+      expect(activities).to.have.length(3);
+      expect(activities[0].id).to.equal('task1');
+      expect(activities[1].id).to.equal('task2');
+      expect(activities[2].id).to.equal('subProcess');
+    });
+  });
+
+  describe('getApi()', () => {
+    let context;
+    before(async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="flow1" sourceRef="start" targetRef="task1" />
+          <sequenceFlow id="flow2" sourceRef="start" targetRef="task2" />
+          <sequenceFlow id="flow3" sourceRef="start" targetRef="subProcess" />
+          <userTask id="task1" />
+          <userTask id="task2" />
+          <subProcess id="subProcess">
+            <userTask id="task3" />
+          </subProcess>
+          <sequenceFlow id="flow4" sourceRef="task1" targetRef="end" />
+          <sequenceFlow id="flow5" sourceRef="task2" targetRef="end" />
+          <sequenceFlow id="flow6" sourceRef="subProcess" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    it('returns api on each event', () => {
+      const definition = Definition(context.clone());
+      definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
+        const api = definition.getApi(message);
+        expect(api, message.content.id).to.be.ok;
+        expect(message.content.type).to.equal(api.content.type);
+      }, {noAck: true});
+
+      definition.run();
+    });
+
+    it('returns undefined if message parent is not definition execution', () => {
+      const definition = Definition(context.clone());
+
+      let api = false;
+      definition.broker.subscribeOnce('event', 'activity.#', (routingKey, message) => {
+        message.content.parent.id = 'fake-id';
+        api = definition.getApi(message);
+      }, {noAck: true});
+
+      definition.run();
+
+      expect(api).to.be.undefined;
+    });
+
+    it('returns undefined if message parent path is not resolved', () => {
+      const definition = Definition(context.clone());
+
+      let api = false;
+      definition.broker.subscribeTmp('event', 'activity.#', (routingKey, message) => {
+        if (message.content.id === 'task3') {
+          message.content.parent.path = [];
+          api = definition.getApi(message);
+        }
+      }, {noAck: true});
+
+      definition.run();
+
+      expect(api).to.be.undefined;
     });
   });
 });

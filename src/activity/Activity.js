@@ -196,14 +196,18 @@ export default function Activity(Behaviour, activityDef, context) {
   }
 
   function stop() {
+    if (!activityApi.isRunning) return;
+
     stopped = true;
 
-    deactivate();
-    deactivateRunConsumers();
-    broker.cancel('_activity-execution');
+    if (!execution || execution.completed) {
+      deactivate();
+      deactivateRunConsumers();
+      broker.cancel('_activity-execution');
+      return publishEvent('stop');
+    }
 
-    if (execution) execution.stop();
-    if (status) publishEvent('stop');
+    execution.stop();
   }
 
   function activate() {
@@ -445,6 +449,13 @@ export default function Activity(Behaviour, activityDef, context) {
     publishEvent(routingKey, content);
 
     switch (routingKey) {
+      case 'execution.stopped': {
+        message.ack();
+        deactivate();
+        deactivateRunConsumers();
+        broker.cancel('_activity-execution');
+        return publishEvent('stop');
+      }
       case 'execution.error': {
         status = 'error';
         broker.publish('run', 'run.error', content);

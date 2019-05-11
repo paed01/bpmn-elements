@@ -119,12 +119,13 @@ export function Process(processDef, context) {
 
     stopped = true;
 
-    deactivate();
-    deactivateRunConsumers();
+    if (!execution || execution.completed) {
+      deactivate();
+      deactivateRunConsumers();
+      return publishEvent('stop');
+    }
 
-    if (execution) execution.stop();
-
-    if (status) publishEvent('stop');
+    execution.stop();
   }
 
   function recover(state) {
@@ -263,6 +264,11 @@ export function Process(processDef, context) {
     message.ack();
 
     switch (messageType) {
+      case 'stopped': {
+        deactivate();
+        deactivateRunConsumers();
+        return publishEvent('stop');
+      }
       case 'error': {
         broker.publish('run', 'run.error', content);
         broker.publish('run', 'run.discarded', content);

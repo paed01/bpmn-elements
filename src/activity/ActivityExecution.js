@@ -115,6 +115,11 @@ export default function ActivityExecution(activity, context) {
     const isRedelivered = fields.redelivered;
     const {isRootScope, ignoreIfExecuting, keep, executionId: cexid, error} = content;
 
+    if (routingKey === 'execute.stop' && isRootScope) {
+      message.ack();
+      return onStopped();
+    }
+
     switch (routingKey) {
       case 'execute.resume.execution': {
         if (!postponed.length) return broker.publish('execution', 'execute.start', cloneContent(initMessage.content));
@@ -234,6 +239,13 @@ export default function ActivityExecution(activity, context) {
         ...completeContent,
         state: completionType,
       }, {type: completionType});
+    }
+
+    function onStopped() {
+      deactivate();
+      const running = postponed.slice();
+      running.forEach((msg) => getApi(msg).stop());
+      return broker.publish('execution', 'execution.stopped', cloneContent(message.content), {type: 'stopped', persistent: false});
     }
   }
 
