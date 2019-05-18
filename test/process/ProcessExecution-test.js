@@ -2,6 +2,8 @@ import BoundaryEvent from '../../src/events/BoundaryEvent';
 import EndEvent from '../../src/events/EndEvent';
 import Environment from '../../src/Environment';
 import ErrorEventDefinition from '../../src/eventDefinitions/ErrorEventDefinition';
+import MessageEventDefinition from '../../src/eventDefinitions/MessageEventDefinition';
+import TimerEventDefinition from '../../src/eventDefinitions/TimerEventDefinition';
 import ProcessExecution from '../../src/process/ProcessExecution';
 import Process from '../../src/process/Process';
 import ServiceTask from '../../src/tasks/ServiceTask';
@@ -155,7 +157,7 @@ describe('Process execution', () => {
       });
 
       const [, task] = execution.getActivities();
-      task.broker.publish('event', 'activity.arb', {id: 'task', state: 'arb'});
+      task.broker.publish('event', 'activity.arb', {id: 'task', state: 'arb', parent: {id: bp.id}});
 
       expect(messages.length).to.be.ok;
       const msg = messages.pop();
@@ -391,14 +393,14 @@ describe('Process execution', () => {
           executionId: 'process1_1',
         },
       });
-      activity1.broker.publish('event', 'activity.enter', {id: 'task1'});
-      activity2.broker.publish('event', 'activity.enter', {id: 'task2'});
+      activity1.broker.publish('event', 'activity.enter', {id: 'task1', parent: {id: 'process1'}});
+      activity2.broker.publish('event', 'activity.enter', {id: 'task2', parent: {id: 'process1'}});
 
-      activity1.broker.publish('event', 'activity.leave', {id: 'task1'});
+      activity1.broker.publish('event', 'activity.leave', {id: 'task1', parent: {id: 'process1'}});
 
       expect(execution).to.have.property('completed', false);
 
-      activity2.broker.publish('event', 'activity.leave', {id: 'task2'});
+      activity2.broker.publish('event', 'activity.leave', {id: 'task2', parent: {id: 'process1'}});
 
       expect(execution).to.have.property('completed', true);
     });
@@ -416,14 +418,14 @@ describe('Process execution', () => {
           executionId: 'process1_1',
         },
       });
-      activity1.broker.publish('event', 'activity.enter', {id: activity1.id});
+      activity1.broker.publish('event', 'activity.enter', {id: activity1.id, parent: {id: 'process1'}});
       sequenceflow.preFlight();
-      activity1.broker.publish('event', 'activity.leave', {id: activity1.id});
+      activity1.broker.publish('event', 'activity.leave', {id: activity1.id, parent: {id: 'process1'}});
 
       expect(execution).to.have.property('completed', false);
 
-      activity1.broker.publish('event', 'activity.enter', {id: activity2.id, inbound: [{id: sequenceflow.id}]});
-      activity2.broker.publish('event', 'activity.leave', {id: activity2.id});
+      activity1.broker.publish('event', 'activity.enter', {id: activity2.id, parent: {id: 'process1'}, inbound: [{id: sequenceflow.id}]});
+      activity2.broker.publish('event', 'activity.leave', {id: activity2.id, parent: {id: 'process1'}});
 
       expect(execution).to.have.property('completed', true);
     });
@@ -444,11 +446,11 @@ describe('Process execution', () => {
           executionId: 'process1_1',
         },
       });
-      activity1.broker.publish('event', 'activity.enter', {id: 'task1'});
-      activity2.broker.publish('event', 'activity.enter', {id: 'task2'});
+      activity1.broker.publish('event', 'activity.enter', {id: 'task1', parent: {id: 'process1'}});
+      activity2.broker.publish('event', 'activity.enter', {id: 'task2', parent: {id: 'process1'}});
 
-      activity1.broker.publish('event', 'activity.leave', {id: 'task1'});
-      activity2.broker.publish('event', 'activity.leave', {id: 'task2'});
+      activity1.broker.publish('event', 'activity.leave', {id: 'task1', parent: {id: 'process1'}});
+      activity2.broker.publish('event', 'activity.leave', {id: 'task2', parent: {id: 'process1'}});
 
       expect(execution).to.have.property('completed', true);
       expect(bp.broker.getQueue('execute-process1_1-q')).to.not.be.ok;
@@ -573,6 +575,127 @@ describe('Process execution', () => {
       expect(executionQ).to.be.ok;
       expect(executionQ).to.have.property('consumerCount', 0);
       expect(executionQ).to.have.property('messageCount').above(0);
+    });
+
+    it('stops running event eventDefinitions', async () => {
+      const bp = createProcess();
+      const activity = StartEvent({
+        id: 'start',
+        type: 'bpmn:StartEvent',
+        isStart: true,
+        parent: {id: 'process1'},
+        behaviour: {
+          eventDefinitions: [{
+            Behaviour: MessageEventDefinition,
+          }, {
+            Behaviour: TimerEventDefinition,
+            behaviour: {
+              timeDuration: 'PT1M'
+            }
+          }]
+        }
+      }, bp.context);
+
+      bp.context.getActivities = () => {
+        return [activity];
+      };
+
+      const stop = new Promise((resolve) => {
+        bp.broker.subscribeOnce('event', 'activity.wait', () => {
+          expect(activity.broker.getQueue('messages')).to.have.property('consumerCount', 1);
+          execution.stop();
+          resolve();
+        });
+      });
+
+      const execution = ProcessExecution(bp, bp.context);
+      execution.execute({
+        fields: {},
+        content: {
+          id: 'process1',
+          executionId: 'process1_1',
+        },
+      });
+
+      await stop;
+
+      expect(execution).to.have.property('completed', false);
+      expect(execution.getPostponed()).to.have.length(1);
+
+      expect(execution).to.have.property('completed', false);
+      expect(execution).to.have.property('stopped', true);
+      expect(execution.getPostponed()).to.have.length(1);
+
+      expect(activity).to.have.property('stopped', true);
+
+      expect(activity.broker.getQueue('messages')).to.have.property('consumerCount', 0);
+    });
+
+    it('stops running sub process', async () => {
+      const bp = createProcess();
+
+      const subActivity = StartEvent({
+        id: 'start',
+        type: 'bpmn:StartEvent',
+        isStart: true,
+        parent: {id: 'activity'},
+        behaviour: {
+          eventDefinitions: [{
+            Behaviour: MessageEventDefinition,
+          }, {
+            Behaviour: TimerEventDefinition,
+            behaviour: {
+              timeDuration: 'PT1M'
+            }
+          }]
+        }
+      }, bp.context);
+
+      const activity = SubProcess({
+        id: 'activity',
+        type: 'bpmn:SubProcess',
+        isStart: true,
+        parent: {id: 'process1'},
+        behaviour: {}
+      }, bp.context);
+
+      bp.context.getActivities = (id) => {
+        if (id === 'activity') return [subActivity];
+        return [activity];
+      };
+      bp.context.getSequenceFlows = () => {
+        return [];
+      };
+
+      const stop = new Promise((resolve) => {
+        bp.broker.subscribeOnce('event', 'activity.wait', () => {
+          expect(subActivity.broker.getQueue('messages')).to.have.property('consumerCount', 1);
+          execution.stop();
+          resolve();
+        });
+      });
+
+      const execution = ProcessExecution(bp, bp.context);
+      execution.execute({
+        fields: {},
+        content: {
+          id: 'process1',
+          executionId: 'process1_1',
+        },
+      });
+
+      await stop;
+
+      expect(execution).to.have.property('completed', false);
+      expect(execution.getPostponed()).to.have.length(1);
+
+      expect(execution).to.have.property('completed', false);
+      expect(execution).to.have.property('stopped', true);
+      expect(execution.getPostponed()).to.have.length(1);
+
+      expect(subActivity).to.have.property('stopped', true);
+
+      expect(subActivity.broker.getQueue('messages')).to.have.property('consumerCount', 0);
     });
   });
 
@@ -1285,7 +1408,8 @@ function createProcess(override, step) {
     loadExtensions,
     getSequenceFlows,
     clone(newEnv) {
-      return {...this, environment: newEnv};
+      if (newEnv) return {...this, environment: newEnv};
+      return {...this};
     },
     ...override,
   };

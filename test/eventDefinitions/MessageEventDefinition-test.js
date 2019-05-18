@@ -38,6 +38,7 @@ describe('MessageEventDefinition', () => {
     expect(messages).to.have.length(1);
     expect(messages[0].fields).to.have.property('routingKey', 'activity.wait');
     expect(messages[0].content).to.have.property('executionId', 'event_1_0');
+    expect(messages[0].content.parent).to.have.property('id', 'bound');
   });
 
   it('completes when signaled', (done) => {

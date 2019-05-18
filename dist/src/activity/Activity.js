@@ -180,7 +180,7 @@ function Activity(Behaviour, activityDef, context) {
   }
 
   function recover(state) {
-    if (activityApi.isRunning) throw new Error('cannot recover running activity');
+    if (activityApi.isRunning) throw new Error(`cannot recover running activity <${id}>`);
     if (!state) return;
     stopped = state.stopped;
     status = state.status;
@@ -197,7 +197,7 @@ function Activity(Behaviour, activityDef, context) {
   }
 
   function resume() {
-    if (activityApi.isRunning) throw new Error('cannot resume running activity');
+    if (activityApi.isRunning) throw new Error(`cannot resume running activity <${id}>`);
     if (!status) return activate();
     stopped = false;
     const content = createMessage();
@@ -520,7 +520,7 @@ function Activity(Behaviour, activityDef, context) {
     const content = { ...executeMessage.content,
       ...message.content
     };
-    publishEvent(routingKey, content);
+    publishEvent(routingKey, content, message.properties);
 
     switch (routingKey) {
       case 'execution.stopped':
@@ -584,14 +584,15 @@ function Activity(Behaviour, activityDef, context) {
     }
   }
 
-  function publishEvent(state, content) {
+  function publishEvent(state, content, messageProperties) {
     if (!state) return;
     if (!content) content = createMessage();
     broker.publish('event', `activity.${state}`, { ...content,
       state
-    }, {
+    }, { ...messageProperties,
       type: state,
-      mandatory: state === 'error'
+      mandatory: state === 'error',
+      persistent: state !== 'stop'
     });
   }
 

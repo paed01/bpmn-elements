@@ -10,6 +10,8 @@ var _Activity = _interopRequireDefault(require("../activity/Activity"));
 
 var _ProcessExecution = _interopRequireDefault(require("../process/ProcessExecution"));
 
+var _messageHelper = require("../messageHelper");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function SubProcess(activityDef, context) {
@@ -167,13 +169,15 @@ function SubProcessBehaviour(activity, context) {
   }
 
   function addListeners(processExecution, executionId) {
+    const executionConsumerTag = `_sub-process-execution-${executionId}`;
+    const apiConsumerTag = `_sub-process-api-${executionId}`;
     broker.subscribeTmp('subprocess-execution', `execution.#.${executionId}`, onExecutionCompleted, {
       noAck: true,
-      consumerTag: `_sub-process-execution-${executionId}`
+      consumerTag: executionConsumerTag
     });
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
       noAck: true,
-      consumerTag: `_sub-process-api-${executionId}`
+      consumerTag: apiConsumerTag
     });
 
     function onExecutionCompleted(_, message) {
@@ -181,25 +185,30 @@ function SubProcessBehaviour(activity, context) {
       const messageType = message.properties.type;
 
       switch (messageType) {
+        case 'stopped':
+          {
+            broker.cancel(executionConsumerTag);
+            broker.publish('execution', 'execute.stopped', (0, _messageHelper.cloneContent)(content));
+            break;
+          }
+
         case 'completed':
           {
-            broker.cancel(`_sub-process-execution-${executionId}`);
-            broker.cancel(`_sub-process-api-${executionId}`);
-            broker.publish('execution', 'execute.completed', { ...content
-            });
+            broker.cancel(executionConsumerTag);
+            broker.cancel(apiConsumerTag);
+            broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content));
             break;
           }
 
         case 'error':
           {
-            broker.cancel(`_sub-process-execution-${executionId}`);
-            broker.cancel(`_sub-process-api-${executionId}`);
+            broker.cancel(executionConsumerTag);
+            broker.cancel(apiConsumerTag);
             const {
               error
             } = content;
             logger.error(`<${id}>`, error);
-            broker.publish('execution', 'execute.error', { ...content
-            });
+            broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(content));
             break;
           }
       }
@@ -210,12 +219,11 @@ function SubProcessBehaviour(activity, context) {
       const content = message.content;
 
       if (apiMessageType === 'stop') {
-        broker.cancel(`_sub-process-api-${executionId}`);
-        broker.cancel(`_sub-process-execution-${executionId}`);
+        broker.cancel(apiConsumerTag);
         return processExecution.stop();
       } else if (message.properties.type === 'discard') {
-        broker.cancel(`_sub-process-api-${executionId}`);
-        broker.cancel(`_sub-process-execution-${executionId}`);
+        broker.cancel(apiConsumerTag);
+        broker.cancel(executionConsumerTag);
         processExecution.discard();
         return broker.publish('execution', 'execute.discard', { ...content,
           state: 'discard'

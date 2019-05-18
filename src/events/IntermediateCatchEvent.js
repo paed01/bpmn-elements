@@ -1,5 +1,6 @@
 import Activity from '../activity/Activity';
 import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution';
+import {cloneContent} from '../messageHelper';
 
 export default function IntermediateCatchEvent(activityDef, context) {
   return Activity(IntermediateCatchEventBehaviour, activityDef, context);
@@ -24,6 +25,6 @@ export function IntermediateCatchEventBehaviour(activity) {
       return eventDefinitionExecution.execute(executeMessage);
     }
 
-    return broker.publish('execution', 'execute.completed', {...content});
+    return broker.publish('execution', 'execute.completed', cloneContent(content));
   }
 }

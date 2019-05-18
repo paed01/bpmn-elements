@@ -164,7 +164,7 @@ export default function DefinitionExecution(definition) {
       if (isDirectChild) {
         parent.executionId = executionId;
       } else {
-        content.parent = unshiftParent({id, type, executionId}, parent);
+        content.parent = unshiftParent(parent, {id, type, executionId});
       }
 
       broker.publish('event', routingKey, content, {...message.properties, mandatory: false});

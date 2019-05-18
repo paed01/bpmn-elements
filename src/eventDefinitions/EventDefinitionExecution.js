@@ -1,5 +1,4 @@
-import {cloneContent, shiftParent} from '../messageHelper';
-import {getUniqueId} from '../shared';
+import {cloneContent, unshiftParent, shiftParent} from '../messageHelper';
 
 export default function EventDefinitionExecution(activity, eventDefinitions, completedRoutingKey = 'execute.completed') {
   const {id, broker, logger} = activity;
@@ -19,32 +18,31 @@ export default function EventDefinitionExecution(activity, eventDefinitions, com
   function execute(executeMessage) {
     const executeContent = executeMessage.content;
     const isRedelivered = executeMessage.fields.redelivered;
-    const {isRootScope, isDefinitionScope, executionId: msgExecutionId} = executeContent;
+    const {isRootScope, isDefinitionScope, executionId: messageExecutionId} = executeContent;
 
     if (isDefinitionScope) return executeDefinition();
 
     if (isRootScope) {
-      broker.subscribeOnce('api', `activity.stop.${msgExecutionId}`, stop, {noAck: true, consumerTag: apiConsumerTag});
+      broker.subscribeOnce('api', `activity.stop.${messageExecutionId}`, stop, {noAck: true, consumerTag: apiConsumerTag});
       broker.subscribeTmp('execution', 'execute.completed', onExecuteCompleted, {noAck: true, consumerTag, priority: 200});
-      rootExecutionContent = cloneContent(executeContent);
+      rootExecutionContent = executeContent;
 
-      parent = shiftParent(rootExecutionContent, rootExecutionContent.parent);
-
-      broker.publish('execution', 'execute.update', {...rootExecutionContent, preventComplete: true});
+      parent = unshiftParent(rootExecutionContent.parent, rootExecutionContent);
+      broker.publish('execution', 'execute.update', {...cloneContent(rootExecutionContent), preventComplete: true});
     }
     if (isRedelivered) return;
 
-    for (let index = 0; index < eventDefinitions.length; index++) {
+    for (let index = 0; index < eventDefinitions.length; ++index) {
       if (completed) break;
       if (stopped) break;
 
       const ed = eventDefinitions[index];
-      const executionId = getUniqueId(id);
+      const executionId = `${messageExecutionId}_${index}`;
 
-      logger.debug(`<${rootExecutionContent.executionId} (${id})> start event definition ${ed.type}, index ${index}`);
+      logger.debug(`<${messageExecutionId} (${id})> start event definition ${ed.type}, index ${index}`);
 
       broker.publish('execution', 'execute.start', {
-        ...rootExecutionContent,
+        ...cloneContent(rootExecutionContent),
         isRootScope: undefined,
         type: ed.type,
         executionId,
@@ -60,22 +58,23 @@ export default function EventDefinitionExecution(activity, eventDefinitions, com
       completed = true;
       stop();
 
-      logger.debug(`<${rootExecutionContent.executionId} (${id})> event definition ${content.type} completed, index ${content.index}`);
+      logger.debug(`<${messageExecutionId} (${id})> event definition ${content.type} completed, index ${content.index}`);
 
       broker.publish('execution', completedRoutingKey, {
-        ...content,
+        ...cloneContent(content),
         executionId: rootExecutionContent.executionId,
         isRootScope: true,
+        parent: shiftParent(content.parent),
       });
     }
 
     function executeDefinition() {
       const ed = eventDefinitions[executeContent.index];
-      if (!ed) return logger.warn(`<${rootExecutionContent.executionId} (${id})> found no event definition on index ${executeContent.index}`);
+      if (!ed) return logger.warn(`<${messageExecutionId} (${id})> found no event definition on index ${executeContent.index}`);
 
       const behaviour = ed.Behaviour(activity, ed);
 
-      logger.debug(`<${rootExecutionContent.executionId} (${id})> execute event definition ${ed.type}, index ${executeContent.index}`);
+      logger.debug(`<${messageExecutionId} (${id})> execute event definition ${ed.type}, index ${executeContent.index}`);
 
       behaviour.execute(executeMessage);
     }

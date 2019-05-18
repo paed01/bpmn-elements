@@ -28,9 +28,11 @@ function TerminateEventDefinition(activity, eventDefinition = {}) {
 
   function execute(executeMessage) {
     const content = (0, _messageHelper.cloneContent)(executeMessage.content);
-    content.state = 'terminate';
+    const terminateContent = (0, _messageHelper.cloneContent)(content);
+    terminateContent.parent = (0, _messageHelper.shiftParent)(terminateContent.parent);
+    terminateContent.state = 'terminate';
     debug(`<${content.executionId} (${content.id})> terminate`);
-    broker.publish('event', 'process.terminate', (0, _messageHelper.cloneContent)(content), {
+    broker.publish('event', 'process.terminate', terminateContent, {
       type: 'terminate'
     });
     broker.publish('execution', 'execute.completed', content);

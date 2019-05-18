@@ -141,7 +141,7 @@ export default function Activity(Behaviour, activityDef, context) {
   }
 
   function recover(state) {
-    if (activityApi.isRunning) throw new Error('cannot recover running activity');
+    if (activityApi.isRunning) throw new Error(`cannot recover running activity <${id}>`);
     if (!state) return;
 
     stopped = state.stopped;
@@ -157,7 +157,7 @@ export default function Activity(Behaviour, activityDef, context) {
   }
 
   function resume() {
-    if (activityApi.isRunning) throw new Error('cannot resume running activity');
+    if (activityApi.isRunning) throw new Error(`cannot resume running activity <${id}>`);
     if (!status) return activate();
 
     stopped = false;
@@ -446,7 +446,7 @@ export default function Activity(Behaviour, activityDef, context) {
   function onExecutionCompletedMessage(routingKey, message) {
     const content = {...executeMessage.content, ...message.content};
 
-    publishEvent(routingKey, content);
+    publishEvent(routingKey, content, message.properties);
 
     switch (routingKey) {
       case 'execution.stopped': {
@@ -501,10 +501,15 @@ export default function Activity(Behaviour, activityDef, context) {
     }
   }
 
-  function publishEvent(state, content) {
+  function publishEvent(state, content, messageProperties) {
     if (!state) return;
     if (!content) content = createMessage();
-    broker.publish('event', `activity.${state}`, {...content, state}, {type: state, mandatory: state === 'error'});
+    broker.publish('event', `activity.${state}`, {...content, state}, {
+      ...messageProperties,
+      type: state,
+      mandatory: state === 'error',
+      persistent: state !== 'stop',
+    });
   }
 
   function prepareOutbound({message, outbound: evaluatedOutbound = [], discardSequence}, isDiscarded) {

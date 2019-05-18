@@ -16,7 +16,7 @@ function TimerEventDefinition(activity, eventDefinition) {
     environment
   } = activity;
   const {
-    type,
+    type = 'TimerEventDefinition',
     behaviour = {}
   } = eventDefinition;
   const {

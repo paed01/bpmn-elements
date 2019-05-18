@@ -52,23 +52,28 @@ function MessageEventDefinition(activity, eventDefinition) {
     function onApiMessage(routingKey, message) {
       const messageType = message.properties.type;
 
-      if (messageType === 'signal') {
-        completed = true;
-        stop();
-        return signal(routingKey, {
-          message: message.content.message
-        });
-      }
+      switch (messageType) {
+        case 'signal':
+          {
+            completed = true;
+            stop();
+            return signal(routingKey, {
+              message: message.content.message
+            });
+          }
 
-      if (messageType === 'discard') {
-        completed = true;
-        stop();
-        return broker.publish('execution', 'execute.discard', { ...messageContent
-        });
-      }
+        case 'discard':
+          {
+            completed = true;
+            stop();
+            return broker.publish('execution', 'execute.discard', { ...messageContent
+            });
+          }
 
-      if (messageType === 'stop') {
-        stop();
+        case 'stop':
+          {
+            stop();
+          }
       }
     }
 

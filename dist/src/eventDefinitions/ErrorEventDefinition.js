@@ -7,6 +7,8 @@ exports.default = ErrorEventDefinition;
 
 var _Errors = require("../error/Errors");
 
+var _messageHelper = require("../messageHelper");
+
 function ErrorEventDefinition(activity, eventDefinition) {
   const {
     id,
@@ -88,6 +90,7 @@ function ErrorEventDefinition(activity, eventDefinition) {
       debug(`<${executionId} (${id})> caught ${expect && expect.errorCode || 'any'} error from <${content.executionId}>:`, error.message);
       broker.publish('event', 'activity.catch', { ...messageContent,
         executionId: parentExecutionId,
+        parent: (0, _messageHelper.shiftParent)(executeMessage.content.parent),
         error
       });
       broker.publish('execution', 'execute.completed', { ...messageContent,

@@ -206,11 +206,11 @@ function DefinitionExecution(definition) {
       if (isDirectChild) {
         parent.executionId = executionId;
       } else {
-        content.parent = (0, _messageHelper.unshiftParent)({
+        content.parent = (0, _messageHelper.unshiftParent)(parent, {
           id,
           type,
           executionId
-        }, parent);
+        });
       }
 
       broker.publish('event', routingKey, content, { ...message.properties,

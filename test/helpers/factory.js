@@ -53,7 +53,7 @@ const invalidProcess = `
   </process>
 </definitions>`;
 
-function valid(definitionId) {
+function valid(definitionId = 'Def_1') {
   if (!definitionId) definitionId = 'valid';
   return `
   <?xml version="1.0" encoding="UTF-8"?>
@@ -76,10 +76,10 @@ function invalid() {
   return invalidProcess;
 }
 
-function userTask(userTaskId = 'userTask', definitionId) {
+function userTask(userTaskId = 'userTask', definitionId = 'Def_1') {
   return `
   <?xml version="1.0" encoding="UTF-8"?>
-  <definitions id="${definitionId || 'testUserTask'}" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <definitions id="${definitionId}" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <process id="theProcess" isExecutable="true">
       <dataObjectReference id="globalInputRef" dataObjectRef="input" />
       <dataObjectReference id="inputFromUserRef" dataObjectRef="inputFromUser" />

@@ -40,6 +40,7 @@ function ProcessExecution(parentActivity, context) {
       status = 'init',
       executionId,
       stopped,
+      activated,
       apiConsumer,
       initMessage,
       completed = false;
@@ -70,6 +71,11 @@ function ProcessExecution(parentActivity, context) {
 
     get postponedCount() {
       return postponed.length;
+    },
+
+    get isRunning() {
+      if (activated) return true;
+      return false;
     },
 
     deactivate,
@@ -198,21 +204,29 @@ function ProcessExecution(parentActivity, context) {
       });
       if (activity.isStart) startActivities.push(activity);
     });
+    activated = true;
 
     function onActivityEvent(routingKey, activityMessage) {
       const message = (0, _messageHelper.cloneMessage)(activityMessage);
       const content = message.content;
       const parent = content.parent = content.parent || {};
-      const isDirectChild = childIds.indexOf(content.id) > -1 || flowIds.indexOf(content.id) > -1;
+      if (message.fields.redelivered && message.properties.persistent === false) return;
+      let isDirectChild;
+
+      if (childIds.indexOf(content.id) > -1) {
+        isDirectChild = parent.id === id;
+      } else if (flowIds.indexOf(content.id) > -1) {
+        isDirectChild = true;
+      }
 
       if (isDirectChild) {
         parent.executionId = executionId;
       } else {
-        content.parent = (0, _messageHelper.unshiftParent)({
+        content.parent = (0, _messageHelper.pushParent)(parent, {
           id,
           type,
           executionId
-        }, parent);
+        });
       }
 
       broker.publish('event', routingKey, content, { ...message.properties,
@@ -244,10 +258,11 @@ function ProcessExecution(parentActivity, context) {
       type: activityType,
       executionId: childExecutionId
     } = content;
+    if (message.fields.redelivered && message.properties.persistent === false) return;
 
     if (routingKey === 'execution.stop' && childExecutionId === executionId) {
       message.ack();
-      return onStopped();
+      return stopExecution();
     } else if (routingKey === 'execution.terminate') {
       message.ack();
       return terminate(message);
@@ -255,6 +270,8 @@ function ProcessExecution(parentActivity, context) {
 
     if (routingKey === 'activity.leave') {
       return onChildCompleted();
+    } else if (routingKey === 'activity.stop') {
+      return onChildStopped();
     } else if (routingKey === 'flow.looped') {
       return onChildCompleted();
     }
@@ -307,7 +324,7 @@ function ProcessExecution(parentActivity, context) {
     function onChildCompleted() {
       stateChangeMessage(false);
       if (isRedelivered) return message.ack();
-      logger.debug(`<${executionId} (${id})> left <${childId}> (${activityType}), pending runs ${postponed.length}`);
+      logger.debug(`<${executionId} (${id})> left <${childId}> (${activityType}), pending runs ${postponed.length}`, postponed.map(a => a.content.id));
 
       if (!postponed.length) {
         message.ack();
@@ -315,14 +332,30 @@ function ProcessExecution(parentActivity, context) {
       }
     }
 
-    function onStopped() {
+    function stopExecution() {
+      if (stopped) return;
       logger.debug(`<${executionId} (${id})> stop process execution (stop child executions ${postponed.length})`);
-      activityQ.close();
-      deactivate();
       postponed.slice().forEach(msg => {
         getApi(msg).stop();
       });
       stopped = true;
+    }
+
+    function onChildStopped() {
+      message.ack();
+
+      for (const activityApi of postponed) {
+        const activity = getActivityById(activityApi.content.id);
+        if (!activity) continue;
+        if (activity.isRunning) return;
+      }
+
+      onStopped();
+    }
+
+    function onStopped() {
+      activityQ.close();
+      deactivate();
       return broker.publish(exchangeName, `execution.stopped.${executionId}`, { ...initMessage.content,
         ...content
       }, {
@@ -348,6 +381,7 @@ function ProcessExecution(parentActivity, context) {
   }
 
   function deactivate() {
+    activated = false;
     if (apiConsumer) apiConsumer.cancel();
     children.forEach(activity => {
       activity.broker.cancel('_process-activity-consumer');

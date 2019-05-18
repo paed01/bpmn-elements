@@ -7,6 +7,7 @@ export default function BoundaryEvent(activityDef, context) {
 
 export function BoundaryEventBehaviour(activity) {
   const {id, type = 'BoundaryEvent', broker, attachedTo, behaviour = {}} = activity;
+
   const cancelActivity = 'cancelActivity' in behaviour ? behaviour.cancelActivity : true;
   const {eventDefinitions} = behaviour;
   const eventDefinitionExecution = eventDefinitions && EventDefinitionExecution(activity, eventDefinitions, 'execute.bound.completed');

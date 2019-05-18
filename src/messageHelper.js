@@ -3,7 +3,8 @@ export {
   cloneMessage,
   cloneParent,
   shiftParent,
-  unshiftParent
+  unshiftParent,
+  pushParent,
 };
 
 function cloneContent(content) {
@@ -46,8 +47,8 @@ function cloneParent(parent) {
   return clone;
 }
 
-function unshiftParent(newParent, parent) {
-  const {id, type, executionId} = newParent;
+function unshiftParent(parent, adoptingParent) {
+  const {id, type, executionId} = adoptingParent;
   if (!parent) {
     return {
       id,
@@ -57,28 +58,48 @@ function unshiftParent(newParent, parent) {
   }
 
   const clone = cloneParent(parent);
+  const {id: parentId, type: parentType, executionId: parentExecutionId} = parent;
+  clone.id = id;
+  clone.executionId = executionId;
+  clone.type = type;
+
   const path = clone.path = clone.path || [];
-  path.push({id, type, executionId});
+  path.unshift({id: parentId, type: parentType, executionId: parentExecutionId});
 
   return clone;
 }
 
-function shiftParent(newParent, parent) {
-  const {id, type, executionId} = newParent;
+function shiftParent(parent) {
+  if (!parent) return;
+  if (!parent.path || !parent.path.length) return;
+
+  const clone = cloneParent(parent);
+  const {id, executionId, type} = clone.path.shift();
+  clone.id = id;
+  clone.executionId = executionId;
+  clone.type = type;
+  clone.path = clone.path.length ? clone.path : undefined;
+  return clone;
+}
+
+function pushParent(parent, ancestor) {
+  const {id, type, executionId} = ancestor;
   if (!parent) return {id, type, executionId};
 
   const clone = cloneParent(parent);
+  if (clone.id === id) {
+    if (executionId) clone.executionId = executionId;
+    return clone;
+  }
   const path = clone.path = clone.path || [];
-  path.unshift({
-    id: clone.id,
-    type: clone.type,
-    executionId: clone.executionId,
-  });
 
-  return {
-    id,
-    type,
-    executionId,
-    path,
-  };
+  for (const p of path) {
+    if (p.id === id) {
+      if (executionId) p.executionId = executionId;
+      return clone;
+    }
+  }
+
+  path.push({id, type, executionId});
+  return clone;
 }

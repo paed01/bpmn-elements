@@ -1,5 +1,5 @@
 import {ActivityError} from '../error/Errors';
-import {cloneContent, shiftParent} from '../messageHelper';
+import {cloneContent, unshiftParent} from '../messageHelper';
 
 export default function MultiInstanceLoopCharacteristics(activity, loopCharacteristics) {
   const {id, broker, environment} = activity;
@@ -184,7 +184,7 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
 
       const output = executeMessage.content.output || [];
 
-      const parent = shiftParent(executeMessage.content, executeMessage.content.parent);
+      const parent = unshiftParent(executeMessage.content.parent, executeMessage.content);
 
       loopSettings = {
         cardinality,

@@ -648,6 +648,46 @@ describe('ActivityExecution', () => {
       }
     });
 
+    it('stops sub executions before publishing root stop message', () => {
+      const activity = createActivity(Behaviour);
+      const execution = ActivityExecution(activity);
+      let stoppedExecution = false;
+      let stoppedSubExecution = false;
+
+
+      execution.execute({
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
+      activity.broker.subscribeOnce('execution', 'execution.stopped', () => {
+        expect(stoppedSubExecution).to.be.true;
+        stoppedExecution = true;
+      });
+
+      execution.stop();
+
+      expect(stoppedExecution).to.be.true;
+      expect(stoppedSubExecution).to.be.true;
+
+      function Behaviour({broker}) {
+        broker.subscribeOnce('api', 'activity.stop.activity_2', () => {
+          stoppedSubExecution = true;
+        });
+
+        return {
+          execute({content}) {
+            if (!content.isRootScope) return;
+            broker.publish('execution', 'execute.start', {...content, executionId: 'activity_2', isRootScope: undefined});
+          },
+        };
+      }
+    });
+
     it('ignored if not executing', () => {
       const activity = createActivity();
       const execution = ActivityExecution(activity);

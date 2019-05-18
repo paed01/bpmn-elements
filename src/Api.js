@@ -58,6 +58,7 @@ function Api(pfx, broker, sourceMessage, environment) {
   function sendApiMessage(action, content) {
     let key = `${pfx}.${action}`;
     if (executionId) key += `.${executionId}`;
+
     broker.publish('api', key, createMessage(content), {type: action});
   }
 

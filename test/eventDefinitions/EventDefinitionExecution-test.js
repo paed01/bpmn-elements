@@ -1,5 +1,6 @@
 import EventDefinitionExecution from '../../src/eventDefinitions/EventDefinitionExecution';
 import {ActivityBroker} from '../../src/EventBroker';
+import {cloneContent} from '../../src/messageHelper';
 import {Logger} from '../helpers/testHelpers';
 
 describe('EventDefinitionExecution', () => {
@@ -100,6 +101,7 @@ describe('EventDefinitionExecution', () => {
         redelivered: true,
       },
       content: {
+        id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
         parent: {
@@ -134,6 +136,7 @@ describe('EventDefinitionExecution', () => {
     execution.execute({
       fields: {},
       content: {
+        id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
         parent: {
@@ -172,6 +175,7 @@ describe('EventDefinitionExecution', () => {
     execution.execute({
       fields: {},
       content: {
+        id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
         parent: {
@@ -186,12 +190,18 @@ describe('EventDefinitionExecution', () => {
     expect(messages[0].content).to.have.property('executionId').that.is.ok.and.not.equal('root-execution-id');
     expect(messages[0].content).to.have.property('index', 0);
     expect(messages[0].content).to.have.property('isDefinitionScope', true);
+    expect(messages[0].content).to.have.property('parent').with.property('id', event.id);
+    expect(messages[0].content.parent).to.have.property('path').with.length(1);
+    expect(messages[0].content.parent.path[0]).to.have.property('id', 'theProcess');
 
     expect(messages[1].content.isRootScope).to.be.undefined;
     expect(messages[1].content).to.have.property('type', 'bpmn:TimerEventDefinition');
     expect(messages[1].content).to.have.property('executionId').that.is.ok.and.not.equal('root-execution-id');
     expect(messages[1].content).to.have.property('index', 1);
     expect(messages[1].content).to.have.property('isDefinitionScope', true);
+    expect(messages[1].content).to.have.property('parent').with.property('id', event.id);
+    expect(messages[1].content.parent).to.have.property('path').with.length(1);
+    expect(messages[1].content.parent.path[0]).to.have.property('id', 'theProcess');
   });
 
   it('publishes event definition complete message with output to update root scope', () => {
@@ -214,6 +224,7 @@ describe('EventDefinitionExecution', () => {
     execution.execute({
       fields: {},
       content: {
+        id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
         parent: {
@@ -223,7 +234,7 @@ describe('EventDefinitionExecution', () => {
     });
 
     event.broker.publish('execution', 'execute.completed', {
-      ...messages[0].content,
+      ...cloneContent(messages[0].content),
       output: 1,
     });
 
@@ -253,6 +264,7 @@ describe('EventDefinitionExecution', () => {
     execution.execute({
       fields: {},
       content: {
+        id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
         parent: {
@@ -295,6 +307,7 @@ describe('EventDefinitionExecution', () => {
     execution.execute({
       fields: {},
       content: {
+        id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
         parent: {
@@ -304,12 +317,14 @@ describe('EventDefinitionExecution', () => {
     });
 
     event.broker.publish('execution', 'execute.completed', {
-      ...messages[0].content,
+      ...cloneContent(messages[0].content),
       output: 1,
     });
 
     expect(completeMessage).to.be.ok;
     expect(completeMessage.content).to.have.property('output', 1);
+
+    expect(completeMessage.content).to.have.property('parent').with.property('id', 'theProcess');
   });
 
   it('doesn´t start second event definition if first completes immediately', () => {
@@ -350,6 +365,7 @@ describe('EventDefinitionExecution', () => {
     execution.execute({
       fields: {},
       content: {
+        id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
         parent: {
@@ -386,6 +402,7 @@ describe('EventDefinitionExecution', () => {
     execution.execute({
       fields: {},
       content: {
+        id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
         parent: {
@@ -418,6 +435,7 @@ describe('EventDefinitionExecution', () => {
         redelivered: true,
       },
       content: {
+        id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
         parent: {
@@ -462,6 +480,7 @@ describe('EventDefinitionExecution', () => {
         redelivered: true,
       },
       content: {
+        id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
         parent: {
@@ -506,6 +525,7 @@ describe('EventDefinitionExecution', () => {
         redelivered: true,
       },
       content: {
+        id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
         parent: {
@@ -554,6 +574,7 @@ describe('EventDefinitionExecution', () => {
     execution.execute({
       fields: {},
       content: {
+        id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
         parent: {
@@ -595,6 +616,7 @@ describe('EventDefinitionExecution', () => {
     execution.execute({
       fields: {},
       content: {
+        id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
         parent: {

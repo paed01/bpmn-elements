@@ -14,6 +14,7 @@ export default function MessageEventDefinition(activity, eventDefinition) {
 
   function execute(executeMessage) {
     let completed;
+
     const messageContent = cloneContent(executeMessage.content);
     const {executionId, parent} = messageContent;
     const parentExecutionId = parent && parent.executionId;
@@ -29,18 +30,20 @@ export default function MessageEventDefinition(activity, eventDefinition) {
 
     function onApiMessage(routingKey, message) {
       const messageType = message.properties.type;
-      if (messageType === 'signal') {
-        completed = true;
-        stop();
-        return signal(routingKey, {message: message.content.message});
-      }
-      if (messageType === 'discard') {
-        completed = true;
-        stop();
-        return broker.publish('execution', 'execute.discard', {...messageContent});
-      }
-      if (messageType === 'stop') {
-        stop();
+      switch (messageType) {
+        case 'signal': {
+          completed = true;
+          stop();
+          return signal(routingKey, {message: message.content.message});
+        }
+        case 'discard': {
+          completed = true;
+          stop();
+          return broker.publish('execution', 'execute.discard', {...messageContent});
+        }
+        case 'stop': {
+          stop();
+        }
       }
     }
 

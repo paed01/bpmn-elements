@@ -1,4 +1,5 @@
 import {ActivityError, BpmnError} from '../error/Errors';
+import {shiftParent} from '../messageHelper';
 
 export default function ErrorEventDefinition(activity, eventDefinition) {
   const {id, broker, environment, attachedTo, getErrorById} = activity;
@@ -61,7 +62,12 @@ export default function ErrorEventDefinition(activity, eventDefinition) {
 
       debug(`<${executionId} (${id})> caught ${(expect && expect.errorCode) || 'any'} error from <${content.executionId}>:`, error.message);
 
-      broker.publish('event', 'activity.catch', {...messageContent, executionId: parentExecutionId, error});
+      broker.publish('event', 'activity.catch', {
+        ...messageContent,
+        executionId: parentExecutionId,
+        parent: shiftParent(executeMessage.content.parent),
+        error,
+      });
       broker.publish('execution', 'execute.completed', {
         ...messageContent,
         expect: {...expect},

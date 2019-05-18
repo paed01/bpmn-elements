@@ -3,7 +3,7 @@ import { toSeconds, parse } from 'iso8601-duration';
 
 export default function TimerEventDefinition(activity, eventDefinition) {
   const {id, broker, environment} = activity;
-  const {type, behaviour = {}} = eventDefinition;
+  const {type = 'TimerEventDefinition', behaviour = {}} = eventDefinition;
   const {timeDuration} = behaviour;
   const {debug} = environment.Logger(type.toLowerCase());
 

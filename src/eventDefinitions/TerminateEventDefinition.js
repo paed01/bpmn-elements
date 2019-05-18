@@ -1,4 +1,4 @@
-import {cloneContent} from '../messageHelper';
+import {cloneContent, shiftParent} from '../messageHelper';
 
 export default function TerminateEventDefinition(activity, eventDefinition = {}) {
   const {id, broker, environment} = activity;
@@ -15,9 +15,12 @@ export default function TerminateEventDefinition(activity, eventDefinition = {})
 
   function execute(executeMessage) {
     const content = cloneContent(executeMessage.content);
-    content.state = 'terminate';
+    const terminateContent = cloneContent(content);
+    terminateContent.parent = shiftParent(terminateContent.parent);
+    terminateContent.state = 'terminate';
+
     debug(`<${content.executionId} (${content.id})> terminate`);
-    broker.publish('event', 'process.terminate', cloneContent(content), {type: 'terminate'});
+    broker.publish('event', 'process.terminate', terminateContent, {type: 'terminate'});
     broker.publish('execution', 'execute.completed', content);
   }
 }

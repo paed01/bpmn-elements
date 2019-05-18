@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Executable workflow elements based on BPMN 2.0",
   "main": "dist/index.js",
   "module": "index.js",
@@ -44,7 +44,6 @@
     "@babel/core": "^7.4.4",
     "@babel/preset-env": "^7.4.4",
     "@babel/register": "^7.4.4",
-    "@bonniernews/wichita": "^0.5.0",
     "bpmn-moddle": "^5.1.6",
     "camunda-bpmn-moddle": "^3.2.0",
     "chai": "^4.2.0",

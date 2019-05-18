@@ -577,6 +577,7 @@ Feature('Process', () => {
       assertMessage('process.terminate', 'end1');
       assertMessage('activity.end', 'end1');
       assertMessage('activity.leave', 'end1');
+      assertMessage('activity.stop', 'timer');
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
 
@@ -1580,6 +1581,8 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'activity0');
       assertMessage('activity.start', 'activity0');
       assertMessage('activity.wait', 'activity0');
+      assertMessage('activity.execution.stopped', 'activity0');
+      assertMessage('activity.stop', 'activity0');
 
       assertMessage('process.stop');
 

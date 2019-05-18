@@ -84,6 +84,8 @@ function ActivityExecution(activity, context) {
   function stop() {
     if (!initMessage) return;
     broker.publish('execution', 'execute.stop', { ...initMessage.content
+    }, {
+      persistent: false
     });
   }
 
@@ -191,14 +193,6 @@ function ActivityExecution(activity, context) {
         {
           if (!stateChangeMessage()) return;
           return source.execute(getExecuteMessage());
-        }
-
-      case 'execute.stop':
-        {
-          message.ack();
-          deactivate();
-          const running = postponed.slice();
-          return running.forEach(msg => getApi(msg).stop());
         }
 
       default:

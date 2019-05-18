@@ -199,7 +199,7 @@ function MultiInstanceLoopCharacteristics(activity, loopCharacteristics) {
         output: undefined
       };
       const output = executeMessage.content.output || [];
-      const parent = (0, _messageHelper.shiftParent)(executeMessage.content, executeMessage.content.parent);
+      const parent = (0, _messageHelper.unshiftParent)(executeMessage.content.parent, executeMessage.content);
       loopSettings = {
         cardinality,
         collection,

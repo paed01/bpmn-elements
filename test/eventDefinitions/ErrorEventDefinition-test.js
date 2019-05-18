@@ -178,6 +178,9 @@ describe('ErrorEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'bound_1',
+            path: [{
+              id: 'process_1'
+            }]
           },
         },
       });
@@ -188,6 +191,7 @@ describe('ErrorEventDefinition', () => {
 
       expect(message).to.have.property('content').with.property('id', 'bound');
       expect(message.content).to.have.property('executionId', 'bound_1');
+      expect(message.content.parent).to.have.property('id', 'process_1');
     });
 
     it('without expected error catches any execute error from attached activity and publishes activity catch message', () => {

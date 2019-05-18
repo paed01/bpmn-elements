@@ -130,6 +130,162 @@ describe('Process', () => {
 
       bp.run();
     });
+
+    it('publish stop event when all activities are stopped', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <userTask id="task1" />
+          <userTask id="task2" />
+          <userTask id="task3" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const [bp] = context.getProcesses();
+      const [task1, task2, task3] = bp.getActivities();
+
+      const stop = bp.waitFor('stop');
+      bp.run();
+
+      expect(task1).to.have.property('isRunning', true);
+      expect(task2).to.have.property('isRunning', true);
+      expect(task3).to.have.property('isRunning', true);
+
+      bp.stop();
+
+      await stop;
+
+      expect(task1).to.have.property('isRunning', false);
+      expect(task2).to.have.property('isRunning', false);
+      expect(task3).to.have.property('isRunning', false);
+    });
+
+    it.skip('publish stop event when postponed start event is stopped', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start">
+            <messageEventDefinition />
+          </startEvent>
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const [bp] = context.getProcesses();
+      const [start] = bp.getActivities();
+
+      const stop = bp.waitFor('stop');
+      bp.run();
+
+      expect(start).to.have.property('isRunning', true);
+
+      bp.stop();
+
+      await stop;
+
+      expect(start).to.have.property('isRunning', false);
+    });
+
+    it('publish stop event when boundaryEvent with event definitions is stopped', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <userTask id="task1" />
+          <boundaryEvent id="bound" attachedToRef="task1">
+            <messageEventDefinition />
+            <timerEventDefinition>
+              <timeDuration>PT1H</timeDuration>
+            </timerEventDefinition>
+          </boundaryEvent>
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const [bp] = context.getProcesses();
+      const [task1, bound] = bp.getActivities();
+
+      const stop = bp.waitFor('stop');
+      bp.run();
+
+      expect(task1).to.have.property('isRunning', true);
+      expect(bound).to.have.property('isRunning', true);
+
+      bp.stop();
+
+      await stop;
+
+      expect(task1).to.have.property('isRunning', false);
+      expect(bound).to.have.property('isRunning', false);
+    });
+
+    it('emit stop event when all activities are stopped', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <userTask id="task1" />
+          <userTask id="task2" />
+          <userTask id="task3" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const [bp] = context.getProcesses();
+      const [task1, task2, task3] = bp.getActivities();
+
+      const stop = new Promise((resolve) => {
+        bp.once('stop', () => {
+          expect(task1).to.have.property('isRunning', false);
+          expect(task2).to.have.property('isRunning', false);
+          expect(task3).to.have.property('isRunning', false);
+          resolve();
+        });
+      });
+
+      bp.run();
+
+      expect(task1).to.have.property('isRunning', true);
+      expect(task2).to.have.property('isRunning', true);
+      expect(task3).to.have.property('isRunning', true);
+
+      bp.stop();
+
+      await stop;
+    });
+
+    it('publish stop event when all subProcess activities are stopped', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <subProcess id="subProcess">
+            <userTask id="task1" />
+            <userTask id="task2" />
+            <userTask id="task3" />
+          </subProcess>
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const [bp] = context.getProcesses();
+      const [subProcess] = bp.getActivities();
+
+      const stop = bp.waitFor('stop');
+      bp.run();
+
+      const [task1, task2, task3] = subProcess.execution.source.execution.getActivities();
+
+      expect(task1).to.have.property('isRunning', true);
+      expect(task2).to.have.property('isRunning', true);
+      expect(task3).to.have.property('isRunning', true);
+
+      bp.stop();
+
+      await stop;
+
+      expect(task1).to.have.property('isRunning', false);
+      expect(task2).to.have.property('isRunning', false);
+      expect(task3).to.have.property('isRunning', false);
+    });
   });
 
   describe('getState()', () => {
@@ -411,7 +567,7 @@ describe('Process', () => {
       expect(postponed).to.have.length(3);
     });
 
-    it('looped activity returns one executing', async () => {
+    it('looped activity returns root task', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="theProcess" isExecutable="true">
@@ -430,6 +586,7 @@ describe('Process', () => {
       const activities = bp.getPostponed();
       expect(activities).to.have.length(1);
       expect(activities[0].id).to.equal('task');
+      expect(activities[0].content.parent).to.have.property('id', 'theProcess');
     });
 
     it('looped subProcess returns sub process', async () => {
@@ -457,6 +614,28 @@ describe('Process', () => {
       expect(childApi.id).to.equal('subProcess');
       expect(childApi.owner.execution.source).to.have.property('executions').with.length(3);
       expect(childApi.owner.execution.source.getPostponed()).to.have.length(3);
+    });
+
+    it('events with event definitions return root event', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start">
+            <messageEventDefinition />
+            <messageEventDefinition />
+            <messageEventDefinition />
+          </startEvent>
+        </process>
+      </definitions>`;
+
+      const [bp] = (await testHelpers.context(source)).getProcesses();
+
+      bp.run();
+
+      const activities = bp.getPostponed();
+      expect(activities).to.have.length(1);
+      expect(activities[0].id).to.equal('start');
+      expect(activities[0].content.parent).to.have.property('id', 'theProcess');
     });
   });
 
@@ -620,6 +799,127 @@ describe('Process', () => {
       expect(bp.counters).to.have.property('completed', 1);
 
       expect(bp.getActivityById('end').counters).to.eql({taken: 1, discarded: 0});
+    });
+
+    it('stop process stops subProcess', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="flow1" sourceRef="start" targetRef="subProcess" />
+          <subProcess id="subProcess">
+            <userTask id="task1" />
+          </subProcess>
+          <sequenceFlow id="flow3" sourceRef="subProcess" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const [bp] = context.getProcesses();
+
+      const stop = bp.waitFor('stop');
+      bp.on('activity.start', ({id}) => {
+        if (id === 'subProcess') bp.stop();
+      });
+      bp.run();
+
+      await stop;
+      expect(bp.getActivityById('subProcess')).to.have.property('isRunning', false);
+    });
+
+    it('stop and resume process with subProcess continues execution', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="flow1" sourceRef="start" targetRef="subProcess" />
+          <subProcess id="subProcess">
+            <userTask id="task1" />
+          </subProcess>
+          <sequenceFlow id="flow3" sourceRef="subProcess" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const [bp] = context.getProcesses();
+      const subProcess = bp.getActivityById('subProcess');
+
+      const stop = bp.waitFor('stop');
+      bp.on('activity.start', ({id}) => {
+        if (id === subProcess.id) {
+          bp.broker.cancel('_test-tag');
+          bp.stop();
+        }
+      }, {consumerTag: '_test-tag'});
+
+      bp.run();
+
+      await stop;
+
+      const wait = bp.waitFor('wait');
+      const leave = bp.waitFor('leave');
+      bp.resume();
+
+      (await wait).signal();
+
+      await leave;
+
+      expect(subProcess).to.have.property('isRunning', false);
+    });
+
+    it('stop and resume process with subProcess with timeout event continues execution', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="flow1" sourceRef="start" targetRef="subProcess" />
+          <subProcess id="subProcess">
+            <userTask id="task1" />
+            <boundaryEvent id="timeoutEvent" attachedToRef="task1">
+              <timerEventDefinition>
+                <timeDuration xsi:type="tFormalExpression">PT0.1S</timeDuration>
+              </timerEventDefinition>
+            </boundaryEvent>
+          </subProcess>
+          <sequenceFlow id="flow3" sourceRef="subProcess" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const [bp] = context.getProcesses();
+      const subProcess = bp.getActivityById('subProcess');
+
+      const stop = bp.waitFor('stop');
+      bp.on('activity.start', ({id}) => {
+        if (id === subProcess.id) {
+          bp.broker.cancel('_test-tag');
+          bp.stop();
+        }
+      }, {consumerTag: '_test-tag'});
+
+      bp.run();
+
+      await stop;
+
+      expect(subProcess.execution.source.execution).to.have.property('isRunning', false);
+      const subTask = subProcess.execution.source.execution.getActivityById('task1');
+      const subEvent = subProcess.execution.source.execution.getActivityById('timeoutEvent');
+
+      expect(subTask, subTask.id).to.have.property('isRunning', false);
+      expect(subEvent, subEvent.id).to.have.property('isRunning', false);
+
+      const wait = bp.waitFor('wait');
+      const leave = bp.waitFor('leave');
+      bp.resume();
+
+      (await wait).signal();
+
+      await leave;
+
+      expect(subProcess).to.have.property('isRunning', false);
     });
   });
 

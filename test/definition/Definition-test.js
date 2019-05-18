@@ -1078,20 +1078,6 @@ describe('Definition', () => {
       definition.run();
     });
 
-    it('returns undefined if message parent is not definition execution', () => {
-      const definition = Definition(context.clone());
-
-      let api = false;
-      definition.broker.subscribeOnce('event', 'activity.#', (routingKey, message) => {
-        message.content.parent.id = 'fake-id';
-        api = definition.getApi(message);
-      }, {noAck: true});
-
-      definition.run();
-
-      expect(api).to.be.undefined;
-    });
-
     it('returns undefined if message parent path is not resolved', () => {
       const definition = Definition(context.clone());
 
