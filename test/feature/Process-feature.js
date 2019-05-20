@@ -1472,8 +1472,8 @@ Feature('Process', () => {
     });
 
     And('the postponed activities were resumed', async () => {
-      assertMessage('activity.wait', 'userInput');
       assertMessage('activity.timer', 'attached');
+      assertMessage('activity.wait', 'userInput');
     });
 
     When('signaling user task', async () => {
@@ -1811,7 +1811,11 @@ Feature('Process', () => {
       return timeout;
     });
 
-    Then('process execution is looped back to user task', () => {
+    Then('end event is discarded', () => {
+      assertMessage('activity.discard', 'theEnd');
+    });
+
+    And('process execution is looped back to user task', () => {
       assertMessage('activity.wait', 'userTask1');
     });
 
@@ -1828,16 +1832,16 @@ Feature('Process', () => {
       return timeout;
     });
 
-    Then('looped flow is discarded', () => {
+    Then('end event completes', () => {
+      assertMessage('activity.end', 'theEnd');
+    });
+
+    And('looped flow is discarded', () => {
       assertMessage('flow.discard', 'toLoop');
     });
 
     And('user task is discarded', () => {
       assertMessage('activity.discard', 'userTask1');
-    });
-
-    And('process execution reaches end event', () => {
-      assertMessage('activity.end', 'theEnd');
     });
 
     And('flow loop is detected', () => {
@@ -1946,16 +1950,16 @@ Feature('Process', () => {
       return timeout;
     });
 
-    Then('looped flow is discarded', () => {
+    Then('process execution reaches end event', () => {
+      assertMessage('activity.end', 'theEnd');
+    });
+
+    And('looped flow is discarded', () => {
       assertMessage('flow.discard', 'toLoop');
     });
 
     And('user task is discarded', () => {
       assertMessage('activity.discard', 'userTask1');
-    });
-
-    And('process execution reaches end event', () => {
-      assertMessage('activity.end', 'theEnd');
     });
 
     And('flow loop is detected', () => {

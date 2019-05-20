@@ -220,33 +220,32 @@ describe('Process', () => {
     });
 
     it('emit stop event when all activities are stopped', async () => {
-      const source = `
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <process id="theProcess" isExecutable="true">
-          <userTask id="task1" />
-          <userTask id="task2" />
-          <userTask id="task3" />
-        </process>
-      </definitions>`;
-
-      const context = await testHelpers.context(source);
+      const context = await multiContext();
       const [bp] = context.getProcesses();
-      const [task1, task2, task3] = bp.getActivities();
+      const [start, task1, task2, task3] = bp.getActivities();
+
+      expect(start, start.id).to.have.property('id', 'start');
+      expect(task1, task1.id).to.have.property('id', 'task1');
+      expect(task2, task2.id).to.have.property('id', 'task2');
+      expect(task3, task3.id).to.have.property('id', 'subProcess');
 
       const stop = new Promise((resolve) => {
         bp.once('stop', () => {
-          expect(task1).to.have.property('isRunning', false);
-          expect(task2).to.have.property('isRunning', false);
-          expect(task3).to.have.property('isRunning', false);
+          expect(start, start.id).to.have.property('isRunning', false);
+          expect(task1, task1.id).to.have.property('isRunning', false);
+          expect(task2, task2.id).to.have.property('isRunning', false);
+          expect(task3, task3.id).to.have.property('isRunning', false);
           resolve();
         });
       });
 
       bp.run();
 
-      expect(task1).to.have.property('isRunning', true);
-      expect(task2).to.have.property('isRunning', true);
-      expect(task3).to.have.property('isRunning', true);
+      expect(start, start.id).to.have.property('isRunning', false);
+      expect(start, start.id).to.have.property('counters').with.property('taken', 1);
+      expect(task1, task1.id).to.have.property('isRunning', true);
+      expect(task2, task2.id).to.have.property('isRunning', true);
+      expect(task3, task3.id).to.have.property('isRunning', true);
 
       bp.stop();
 
@@ -476,26 +475,7 @@ describe('Process', () => {
   describe('getPostponed()', () => {
     let context;
     beforeEach(async () => {
-      const source = `
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <process id="theProcess" isExecutable="true">
-          <startEvent id="start" />
-          <sequenceFlow id="flow1" sourceRef="start" targetRef="task1" />
-          <userTask id="task1" />
-          <sequenceFlow id="flow2" sourceRef="start" targetRef="task2" />
-          <userTask id="task2" />
-          <sequenceFlow id="flow3" sourceRef="start" targetRef="subProcess" />
-          <subProcess id="subProcess">
-            <userTask id="task3" />
-          </subProcess>
-          <sequenceFlow id="flow4" sourceRef="task1" targetRef="end" />
-          <sequenceFlow id="flow5" sourceRef="task2" targetRef="end" />
-          <sequenceFlow id="flow6" sourceRef="subProcess" targetRef="end" />
-          <endEvent id="end" />
-        </process>
-      </definitions>`;
-
-      context = await testHelpers.context(source);
+      context = await multiContext();
     });
 
     it('returns none if not executing', () => {
@@ -543,7 +523,54 @@ describe('Process', () => {
       expect(bp.counters).to.have.property('completed', 1);
     });
 
-    it('returns executing activities if resumed', () => {
+    it('still returns executing activities if stopped', () => {
+      const [bp] = context.getProcesses();
+      bp.run();
+
+      let postponed = bp.getPostponed();
+      expect(postponed[0].id).to.equal('task1');
+      expect(postponed[1].id).to.equal('task2');
+      expect(postponed[2].id).to.equal('subProcess');
+      expect(postponed).to.have.length(3);
+
+      bp.stop();
+
+      postponed = bp.getPostponed();
+
+      expect(postponed[0].id).to.equal('task1');
+      expect(postponed[0].owner).to.have.property('stopped', true);
+      expect(postponed[1].id).to.equal('task2');
+      expect(postponed[1].owner).to.have.property('stopped', true);
+      expect(postponed[2].id).to.equal('subProcess');
+      expect(postponed[2].owner).to.have.property('stopped', true);
+      expect(postponed).to.have.length(3);
+    });
+
+    it('recovered returns executing stopped activities', () => {
+      const [bp] = context.getProcesses();
+      bp.run();
+
+      let postponed = bp.getPostponed();
+      expect(postponed[0].id).to.equal('task1');
+      expect(postponed[1].id).to.equal('task2');
+      expect(postponed[2].id).to.equal('subProcess');
+      expect(postponed).to.have.length(3);
+
+      bp.stop();
+
+      const recovered = context.clone().getProcessById(bp.id).recover(JSON.parse(JSON.stringify(bp.getState())));
+      postponed = recovered.getPostponed();
+      expect(postponed).to.have.length(3);
+
+      expect(postponed[0].id).to.equal('task1');
+      expect(postponed[0].owner).to.have.property('stopped', true);
+      expect(postponed[1].id).to.equal('task2');
+      expect(postponed[1].owner).to.have.property('stopped', true);
+      expect(postponed[2].id).to.equal('subProcess');
+      expect(postponed[2].owner).to.have.property('stopped', true);
+    });
+
+    it('returns executing activities if recovered and resumed', () => {
       const [bp] = context.getProcesses();
       bp.run();
 
@@ -1231,4 +1258,27 @@ function Context() {
     },
     loadExtensions() {},
   };
+}
+
+function multiContext() {
+  const source = `
+  <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <process id="theProcess" isExecutable="true">
+      <startEvent id="start" />
+      <sequenceFlow id="flow1" sourceRef="start" targetRef="task1" />
+      <sequenceFlow id="flow2" sourceRef="start" targetRef="task2" />
+      <sequenceFlow id="flow3" sourceRef="start" targetRef="subProcess" />
+      <userTask id="task1" />
+      <userTask id="task2" />
+      <subProcess id="subProcess">
+        <userTask id="task3" />
+      </subProcess>
+      <sequenceFlow id="flow4" sourceRef="task1" targetRef="end" />
+      <sequenceFlow id="flow5" sourceRef="task2" targetRef="end" />
+      <sequenceFlow id="flow6" sourceRef="subProcess" targetRef="end" />
+      <endEvent id="end" />
+    </process>
+  </definitions>`;
+
+  return testHelpers.context(source);
 }

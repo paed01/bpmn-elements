@@ -511,6 +511,37 @@ describe('Definition', () => {
 
       definition.run();
     });
+
+    it('publish stop event when all activities are stopped', async () => {
+      const stopSource = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <userTask id="task1" />
+          <userTask id="task2" />
+          <userTask id="task3" />
+        </process>
+      </definitions>`;
+
+      const stopContext = await testHelpers.context(stopSource);
+      const definition = Definition(stopContext);
+
+      const stop = definition.waitFor('stop');
+      await definition.run();
+
+      const [bp] = await definition.getProcesses();
+      const [task1, task2, task3] = bp.getActivities();
+      expect(task1).to.have.property('isRunning', true);
+      expect(task2).to.have.property('isRunning', true);
+      expect(task3).to.have.property('isRunning', true);
+
+      definition.stop();
+
+      await stop;
+
+      expect(task1).to.have.property('isRunning', false);
+      expect(task2).to.have.property('isRunning', false);
+      expect(task3).to.have.property('isRunning', false);
+    });
   });
 
   describe('recover()', () => {
@@ -976,7 +1007,6 @@ describe('Definition', () => {
       });
     });
   });
-
 
   describe('getActivityById()', () => {
     let context;

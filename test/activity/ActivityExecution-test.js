@@ -664,7 +664,8 @@ describe('ActivityExecution', () => {
           state: 'start',
         },
       });
-      activity.broker.subscribeOnce('execution', 'execution.stopped', () => {
+      activity.broker.subscribeOnce('execution', 'execution.stopped', (_, message) => {
+        expect(message).to.have.property('properties').with.property('persistent', false);
         expect(stoppedSubExecution).to.be.true;
         stoppedExecution = true;
       });

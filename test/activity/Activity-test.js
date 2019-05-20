@@ -1017,6 +1017,34 @@ describe('Activity', () => {
       expect(activity.broker.getQueue('execution-q')).to.have.property('consumerCount', 0);
       expect(activity.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
     });
+
+    it('stop on event publises activity.stop', async () => {
+      const activity = getActivity(undefined, ({broker}) => {
+        return {
+          execute({content}) {
+            broker.publish('event', 'activity.wait', {...content});
+          },
+        };
+      });
+
+      let stopMessage;
+      activity.broker.subscribeOnce('event', 'activity.stop', (_, msg) => {
+        stopMessage = msg;
+      });
+      activity.broker.subscribeOnce('event', 'activity.wait', () => {
+        activity.stop();
+      });
+
+      activity.run();
+
+      expect(stopMessage).to.be.ok;
+      expect(stopMessage).to.have.property('properties').with.property('persistent', false);
+      expect(stopMessage).to.have.property('content').with.property('parent').with.property('id', activity.parent.id);
+
+      expect(activity.broker.getExchange('api')).to.have.property('bindingCount', 0);
+      expect(activity.broker.getQueue('execution-q')).to.have.property('consumerCount', 0);
+      expect(activity.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
+    });
   });
 
   describe('error', () => {

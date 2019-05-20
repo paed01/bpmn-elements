@@ -93,6 +93,7 @@ export default function ActivityExecution(activity, context) {
 
     broker.bindQueue(executeQ.name, 'execution', 'execute.#', {priority: 100});
     executeQ.assertConsumer(onExecuteMessage, {exclusive: true, prefetch: 100, priority: 100});
+    if (completed) return deactivate();
 
     broker.subscribeTmp('api', `activity.*.${executionId}`, onParentApiMessage, {noAck: true, consumerTag: '_activity-api-execution', priority: 100});
   }

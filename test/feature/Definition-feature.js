@@ -487,4 +487,69 @@ Feature('Definition', () => {
       });
     });
   });
+
+  Scenario('Using callbacks', () => {
+    let source, context;
+    Given('a massive source with user task, timeouts, and the rest', async () => {
+      source = factory.resource('mother-of-all.bpmn');
+      context = await testHelpers.context(source);
+    });
+
+    let definition;
+    And('a definition', () => {
+      definition = Definition(context);
+    });
+
+    And('expects to be stopped at first user task wait', () => {
+      definition.once('wait', () => {
+        definition.stop();
+      });
+    });
+
+    let callbackCalled, stopped;
+    When('definition is executed with a callback', async () => {
+      stopped = definition.waitFor('stop');
+
+      callbackCalled = new Promise((resolve, reject) => {
+        definition.run((err, endApi) => {
+          if (err) return reject(err);
+          resolve(endApi);
+        });
+      });
+    });
+
+    Given('definition is stopped when waiting for user task', () => {
+      return stopped;
+    });
+
+    Then('callback is called with stopped definition api', async () => {
+      const api = await callbackCalled;
+      expect(api.content).to.have.property('status', 'stop');
+    });
+
+    Given('user tasks expects to be signaled', () => {
+      definition.on('wait', (api) => {
+        api.signal();
+      });
+    });
+
+    let ended;
+    When('definition is resumed with a callback', async () => {
+      ended = definition.waitFor('leave');
+
+      callbackCalled = new Promise((resolve, reject) => {
+        definition.resume((err, endApi) => {
+          if (err) return reject(err);
+          resolve(endApi);
+        });
+      });
+    });
+
+    Then('callback is called when definition execution is completed', async () => {
+      await ended;
+      const api = await callbackCalled;
+      expect(api.content).to.have.property('status', 'completed');
+    });
+
+  });
 });

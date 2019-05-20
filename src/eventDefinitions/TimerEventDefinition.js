@@ -1,5 +1,5 @@
 import {cloneContent} from '../messageHelper';
-import { toSeconds, parse } from 'iso8601-duration';
+import {toSeconds, parse} from 'iso8601-duration';
 
 export default function TimerEventDefinition(activity, eventDefinition) {
   const {id, broker, environment} = activity;
@@ -77,11 +77,14 @@ export default function TimerEventDefinition(activity, eventDefinition) {
       broker.cancel(`_api-${executionId}`);
       timer = undefined;
 
+      const startedAt = new Date(timerContent.startedAt);
       const stoppedAt = new Date();
-      const runningTime = Date.now() - timerContent.startedAt.getTime();
+
+      const runningTime = stoppedAt.getTime() - startedAt.getTime();
       debug(`<${executionId} (${id})> completed in ${runningTime}ms, duration ${timerContent.isoDuration || 'none'}`);
 
       const completedContent = {...timerContent, stoppedAt, runningTime, state: 'timeout'};
+
       broker.publish('event', 'activity.timeout', cloneContent(completedContent));
       broker.publish('execution', 'execute.completed', cloneContent(completedContent));
     }
