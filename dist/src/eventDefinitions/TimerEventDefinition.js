@@ -98,8 +98,9 @@ function TimerEventDefinition(activity, eventDefinition) {
     function completed() {
       broker.cancel(`_api-${executionId}`);
       timer = undefined;
+      const startedAt = new Date(timerContent.startedAt);
       const stoppedAt = new Date();
-      const runningTime = Date.now() - timerContent.startedAt.getTime();
+      const runningTime = stoppedAt.getTime() - startedAt.getTime();
       debug(`<${executionId} (${id})> completed in ${runningTime}ms, duration ${timerContent.isoDuration || 'none'}`);
       const completedContent = { ...timerContent,
         stoppedAt,

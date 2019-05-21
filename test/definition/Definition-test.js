@@ -789,6 +789,33 @@ describe('Definition', () => {
     it('returns processes from passed moddle context', () => {
       expect(definition.getProcesses().length).to.equal(2);
     });
+
+    it('returns same process instances when called again', () => {
+      const result1 = definition.getProcesses();
+      const result2 = definition.getProcesses();
+      expect(result1.length).to.equal(2);
+      expect(result1[0] === result2[0]).to.be.true;
+      expect(result1[1] === result2[1]).to.be.true;
+    });
+  });
+
+  describe('getExecutableProcesses()', () => {
+    let definition;
+    before('Given definition is initiated with two processes', async () => {
+      const context = await testHelpers.context(lanesSource);
+      definition = Definition(context);
+    });
+
+    it('returns executable processes from passed moddle context', () => {
+      expect(definition.getExecutableProcesses().length).to.equal(1);
+    });
+
+    it('returns same process instances when called again', () => {
+      const result1 = definition.getExecutableProcesses();
+      const result2 = definition.getExecutableProcesses();
+      expect(result1.length).to.equal(1);
+      expect(result1[0] === result2[0]).to.be.true;
+    });
   });
 
   describe('errors', () => {

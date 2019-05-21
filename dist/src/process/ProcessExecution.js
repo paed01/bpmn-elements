@@ -26,9 +26,6 @@ function ProcessExecution(parentActivity, context) {
   const childIds = children.map(({
     id: childId
   }) => childId);
-  const flowIds = flows.map(({
-    id: childId
-  }) => childId);
   const startActivities = [];
   const postponed = [];
   const exchangeName = isSubProcess ? 'subprocess-execution' : 'execution';
@@ -118,6 +115,32 @@ function ProcessExecution(parentActivity, context) {
     return true;
   }
 
+  function recover(state) {
+    if (!state) return processExecution;
+    executionId = state.executionId;
+    stopped = state.stopped;
+    completed = state.completed;
+    logger.debug(`<${executionId} (${id})> recover process execution`);
+
+    if (state.flows) {
+      state.flows.forEach(flowState => {
+        const flow = getFlowById(flowState.id);
+        if (!flow) return;
+        flow.recover(flowState);
+      });
+    }
+
+    if (state.children) {
+      state.children.forEach(childState => {
+        const child = getActivityById(childState.id);
+        if (!child) return;
+        child.recover(childState);
+      });
+    }
+
+    return processExecution;
+  }
+
   function resume() {
     logger.debug(`<${executionId} (${id})> resume process execution`);
     if (completed) return complete('completed');
@@ -126,8 +149,11 @@ function ProcessExecution(parentActivity, context) {
     activityQ.consume(onChildMessage, {
       prefetch: 1000
     });
+    if (completed) return complete('completed');
     flows.forEach(flow => flow.resume());
-    children.forEach(child => child.resume());
+    postponed.slice().forEach(({
+      content
+    }) => getActivityById(content.id).resume());
   }
 
   function start() {
@@ -160,6 +186,8 @@ function ProcessExecution(parentActivity, context) {
         executionId,
         type
       }
+    }, {
+      persistent: true
     });
   }
 
@@ -211,13 +239,7 @@ function ProcessExecution(parentActivity, context) {
       const content = message.content;
       const parent = content.parent = content.parent || {};
       if (message.fields.redelivered && message.properties.persistent === false) return;
-      let isDirectChild;
-
-      if (childIds.indexOf(content.id) > -1) {
-        isDirectChild = parent.id === id;
-      } else if (flowIds.indexOf(content.id) > -1) {
-        isDirectChild = true;
-      }
+      const isDirectChild = content.parent.id === id;
 
       if (isDirectChild) {
         parent.executionId = executionId;
@@ -238,11 +260,15 @@ function ProcessExecution(parentActivity, context) {
         return activityQ.queueMessage({
           routingKey: 'execution.terminate'
         }, (0, _messageHelper.cloneContent)(content), {
-          type: 'terminate'
+          type: 'terminate',
+          persistent: true
         });
       }
 
-      activityQ.queueMessage(message.fields, (0, _messageHelper.cloneContent)(content), message.properties);
+      activityQ.queueMessage(message.fields, (0, _messageHelper.cloneContent)(content), {
+        persistent: true,
+        ...message.properties
+      });
     }
   }
 
@@ -255,25 +281,31 @@ function ProcessExecution(parentActivity, context) {
     const isRedelivered = message.fields.redelivered;
     const {
       id: childId,
-      type: activityType,
-      executionId: childExecutionId
+      type: activityType
     } = content;
     if (message.fields.redelivered && message.properties.persistent === false) return;
 
-    if (routingKey === 'execution.stop' && childExecutionId === executionId) {
-      message.ack();
-      return stopExecution();
-    } else if (routingKey === 'execution.terminate') {
-      message.ack();
-      return terminate(message);
-    }
+    switch (routingKey) {
+      case 'execution.stop':
+        message.ack();
+        return stopExecution();
 
-    if (routingKey === 'activity.leave') {
-      return onChildCompleted();
-    } else if (routingKey === 'activity.stop') {
-      return onChildStopped();
-    } else if (routingKey === 'flow.looped') {
-      return onChildCompleted();
+      case 'execution.terminate':
+        message.ack();
+        return terminate(message);
+
+      case 'activity.stop':
+        return onChildStopped();
+
+      case 'flow.looped':
+      case 'activity.leave':
+        return onChildCompleted();
+
+      default:
+        if (!message.properties.persistent) {
+          return message.ack();
+        }
+
     }
 
     stateChangeMessage(true);
@@ -396,8 +428,8 @@ function ProcessExecution(parentActivity, context) {
   }
 
   function getPostponed() {
-    return postponed.reduce((result, p) => {
-      const api = childIds.indexOf(p.content.id) > -1 && getApi(p);
+    return postponed.slice().reduce((result, p) => {
+      const api = getApi(p);
       if (api) result.push(api);
       return result;
     }, []);
@@ -454,34 +486,6 @@ function ProcessExecution(parentActivity, context) {
       children: children.map(activity => activity.getState()),
       flows: flows.map(f => f.getState())
     };
-  }
-
-  function recover(state) {
-    if (!state) return processExecution;
-    executionId = state.executionId;
-    stopped = state.stopped;
-    completed = state.completed;
-    logger.debug(`<${executionId} (${id})> recover process execution`);
-    recoverChildren(state);
-    return processExecution;
-  }
-
-  function recoverChildren(state) {
-    if (state.flows) {
-      state.flows.forEach(flowState => {
-        const flow = getFlowById(flowState.id);
-        if (!flow) return;
-        flow.recover(flowState);
-      });
-    }
-
-    if (state.children) {
-      state.children.forEach(childState => {
-        const child = getActivityById(childState.id);
-        if (!child) return;
-        child.recover(childState);
-      });
-    }
   }
 
   function getActivities() {

@@ -406,7 +406,7 @@ describe('Process', () => {
       expect(bp2.counters).to.have.property('completed', 1);
     });
 
-    it('resumes stopped with state on enter', async () => {
+    it('resumes stopped recovered on enter', async () => {
       const bp1 = Process({id: 'theProcess'}, Context());
       bp1.once('enter', (api) => {
         api.stop();
@@ -424,7 +424,7 @@ describe('Process', () => {
       expect(bp2.counters).to.have.property('completed', 1);
     });
 
-    it('resumes stopped with state on start', async () => {
+    it('resumes stopped recovered on start', async () => {
       const bp1 = Process({id: 'theProcess'}, Context());
       bp1.once('start', (api) => {
         api.stop();
@@ -442,7 +442,7 @@ describe('Process', () => {
       expect(bp2.counters).to.have.property('completed', 1);
     });
 
-    it('resumes stopped with state on end', async () => {
+    it('resumes stopped recovered on end', async () => {
       const bp1 = Process({id: 'theProcess'}, Context());
       const stopped = bp1.waitFor('stop');
       bp1.once('end', (api) => {
@@ -458,6 +458,25 @@ describe('Process', () => {
       bp2.recover(bp1.getState());
 
       bp2.resume();
+
+      expect(bp2.counters).to.have.property('completed', 1);
+    });
+
+    it('resumes stopped recovered on activity event', async () => {
+      const bp1 = Process({id: 'theProcess'}, Context());
+      bp1.once('wait', (api) => {
+        api.stop();
+      });
+
+      bp1.run();
+      expect(bp1.counters).to.have.property('completed', 0);
+
+      const bp2 = Process({id: 'theProcess'}, Context());
+      bp2.recover(JSON.parse(JSON.stringify(bp1.getState())));
+
+      bp2.resume();
+
+      bp2.getPostponed()[0].signal();
 
       expect(bp2.counters).to.have.property('completed', 1);
     });
@@ -546,7 +565,7 @@ describe('Process', () => {
       expect(postponed).to.have.length(3);
     });
 
-    it('recovered returns executing stopped activities', () => {
+    it('returns executing activities when recovered and resumed', () => {
       const [bp] = context.getProcesses();
       bp.run();
 
@@ -558,29 +577,6 @@ describe('Process', () => {
 
       bp.stop();
 
-      const recovered = context.clone().getProcessById(bp.id).recover(JSON.parse(JSON.stringify(bp.getState())));
-      postponed = recovered.getPostponed();
-      expect(postponed).to.have.length(3);
-
-      expect(postponed[0].id).to.equal('task1');
-      expect(postponed[0].owner).to.have.property('stopped', true);
-      expect(postponed[1].id).to.equal('task2');
-      expect(postponed[1].owner).to.have.property('stopped', true);
-      expect(postponed[2].id).to.equal('subProcess');
-      expect(postponed[2].owner).to.have.property('stopped', true);
-    });
-
-    it('returns executing activities if recovered and resumed', () => {
-      const [bp] = context.getProcesses();
-      bp.run();
-
-      let postponed = bp.getPostponed();
-      expect(postponed[0].id).to.equal('task1');
-      expect(postponed[1].id).to.equal('task2');
-      expect(postponed[2].id).to.equal('subProcess');
-      expect(postponed).to.have.length(3);
-
-      bp.stop();
       const state = bp.getState();
 
       const recovered = context.clone().getProcessById(state.id).recover(JSON.parse(JSON.stringify(state)));

@@ -340,9 +340,9 @@ function Definition(context, options) {
           return;
       }
 
-      if (!fields.redelivered) return;
+      if (!stateMessage.fields.redelivered) return;
       logger.debug(`<${id}> resume from ${status}`);
-      return broker.publish('run', fields.routingKey, (0, _messageHelper.cloneContent)(stateMessage.content), stateMessage.properties);
+      return broker.publish('run', stateMessage.fields.routingKey, (0, _messageHelper.cloneContent)(stateMessage.content), stateMessage.properties);
     }
   }
 

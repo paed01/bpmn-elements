@@ -550,6 +550,5 @@ Feature('Definition', () => {
       const api = await callbackCalled;
       expect(api.content).to.have.property('status', 'completed');
     });
-
   });
 });

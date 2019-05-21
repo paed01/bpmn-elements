@@ -129,7 +129,7 @@ export function Process(processDef, context) {
   }
 
   function recover(state) {
-    if (processApi.isRunning) throw new Error('cannot recover running process');
+    if (processApi.isRunning) throw new Error(`cannot recover running process <${id}>`);
     if (!state) return processApi;
 
     stopped = state.stopped;
@@ -149,7 +149,7 @@ export function Process(processDef, context) {
   }
 
   function resume() {
-    if (processApi.isRunning) throw new Error('cannot resume running process');
+    if (processApi.isRunning) throw new Error(`cannot resume running process <${id}>`);
     if (!status) return activate();
 
     stopped = false;
@@ -166,6 +166,7 @@ export function Process(processDef, context) {
 
   function onRunMessage(routingKey, message) {
     const {content, ack, fields} = message;
+
     if (routingKey === 'run.resume') {
       return onResumeMessage();
     }
@@ -250,11 +251,11 @@ export function Process(processDef, context) {
           return;
       }
 
-      if (!fields.redelivered) return;
+      if (!stateMessage.fields.redelivered) return;
 
       logger.debug(`<${id}> resume from ${status}`);
 
-      return broker.publish('run', fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
+      return broker.publish('run', stateMessage.fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
     }
   }
 

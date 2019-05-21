@@ -122,6 +122,7 @@ function ActivityExecution(activity, context) {
       prefetch: 100,
       priority: 100
     });
+    if (completed) return deactivate();
     broker.subscribeTmp('api', `activity.*.${executionId}`, onParentApiMessage, {
       noAck: true,
       consumerTag: '_activity-api-execution',

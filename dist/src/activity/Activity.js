@@ -197,7 +197,10 @@ function Activity(Behaviour, activityDef, context) {
   }
 
   function resume() {
-    if (activityApi.isRunning) throw new Error(`cannot resume running activity <${id}>`);
+    if (activityApi.isRunning) {
+      throw new Error(`cannot resume running activity <${id}>`);
+    }
+
     if (!status) return activate();
     stopped = false;
     const content = createMessage();
@@ -584,7 +587,7 @@ function Activity(Behaviour, activityDef, context) {
     }
   }
 
-  function publishEvent(state, content, messageProperties) {
+  function publishEvent(state, content, messageProperties = {}) {
     if (!state) return;
     if (!content) content = createMessage();
     broker.publish('event', `activity.${state}`, { ...content,
@@ -592,7 +595,7 @@ function Activity(Behaviour, activityDef, context) {
     }, { ...messageProperties,
       type: state,
       mandatory: state === 'error',
-      persistent: state !== 'stop'
+      persistent: 'persistent' in messageProperties ? messageProperties.persistent : state !== 'stop'
     });
   }
 
