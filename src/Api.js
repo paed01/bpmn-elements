@@ -3,7 +3,8 @@ import {cloneMessage} from './messageHelper';
 export {
   ActivityApi,
   DefinitionApi,
-  ProcessApi
+  ProcessApi,
+  FlowApi,
 };
 
 function ActivityApi(broker, apiMessage, environment) {
@@ -16,6 +17,10 @@ function DefinitionApi(broker, apiMessage, environment) {
 
 function ProcessApi(broker, apiMessage, environment) {
   return Api('process', broker, apiMessage, environment);
+}
+
+function FlowApi(broker, apiMessage, environment) {
+  return Api('flow', broker, apiMessage, environment);
 }
 
 function Api(pfx, broker, sourceMessage, environment) {

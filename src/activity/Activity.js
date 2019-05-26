@@ -6,7 +6,8 @@ import {getRoutingKeyPattern} from 'smqp';
 import {cloneContent, cloneParent} from '../messageHelper';
 
 export default function Activity(Behaviour, activityDef, context) {
-  const {id, type = 'activity', name, parent, behaviour = {}, isParallelGateway, isSubProcess} = activityDef;
+  const {id, type = 'activity', name, parent: originalParent, behaviour = {}, isParallelGateway, isSubProcess} = activityDef;
+  const parent = cloneParent(originalParent);
   const {environment, getInboundSequenceFlows, getOutboundSequenceFlows} = context;
 
   const logger = environment.Logger(type.toLowerCase());
@@ -28,7 +29,7 @@ export default function Activity(Behaviour, activityDef, context) {
   const isParallelJoin = inboundSequenceFlows.length > 1 && isParallelGateway;
   const isMultiInstance = !!behaviour.loopCharacteristics;
 
-  let execution, executionId, stateMessage, status, stopped = false, executeMessage, consumingRunQ;
+  let execution, initExecutionId, executionId, stateMessage, status, stopped = false, executeMessage, consumingRunQ;
 
   const inboundTriggers = attachedToActivity ? [attachedToActivity] : inboundSequenceFlows.slice();
   const inboundJoinFlows = [];
@@ -44,7 +45,7 @@ export default function Activity(Behaviour, activityDef, context) {
     name,
     isStart,
     isSubProcess,
-    parent: {...parent},
+    parent: cloneParent(parent),
     behaviour: {...behaviour},
     attachedTo: attachedToActivity,
     environment,
@@ -74,6 +75,7 @@ export default function Activity(Behaviour, activityDef, context) {
     getApi,
     getErrorById,
     getState,
+    init,
     message: inboundMessage,
     recover,
     resume,
@@ -116,9 +118,17 @@ export default function Activity(Behaviour, activityDef, context) {
 
   return activityApi;
 
+  function init() {
+    initExecutionId = getUniqueId(id);
+    logger.debug(`<${id}> initialized with executionId <${initExecutionId}>`);
+    publishEvent('init', createMessage({executionId: initExecutionId}));
+  }
+
   function run(runContent) {
-    executionId = getUniqueId(id);
-    deactivateRunConsumers();
+    if (activityApi.isRunning) throw new Error(`activity <${id}> is already running`);
+
+    executionId = initExecutionId || getUniqueId(id);
+    initExecutionId = undefined;
 
     const content = createMessage({...runContent, executionId});
 
@@ -433,7 +443,7 @@ export default function Activity(Behaviour, activityDef, context) {
         if (!isRedelivered) {
           broker.publish('run', 'run.next', content);
           publishEvent('leave', {...content, outbound: outbound.slice()});
-          doOutbound(content, outbound);
+          doOutbound(outbound);
         }
         break;
       }
@@ -519,7 +529,8 @@ export default function Activity(Behaviour, activityDef, context) {
 
     return outboundSequenceFlows.map((flow) => {
       const preparedFlow = getPrepared(flow.id);
-      flow.preFlight(preparedFlow.action);
+      const sequenceId = flow.preFlight(preparedFlow.action);
+      preparedFlow.sequenceId = sequenceId;
       return preparedFlow;
     });
 
@@ -538,7 +549,7 @@ export default function Activity(Behaviour, activityDef, context) {
     }
   }
 
-  function doOutbound(content, preparedOutbound) {
+  function doOutbound(preparedOutbound) {
     if (!preparedOutbound) return;
 
     outboundSequenceFlows.forEach((flow, idx) => {

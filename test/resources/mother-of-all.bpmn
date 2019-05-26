@@ -7,11 +7,11 @@
   </bpmn:collaboration>
   <bpmn:process id="motherOfAll" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1" name="Start">
-      <bpmn:outgoing>SequenceFlow_0t6kfgx</bpmn:outgoing>
+      <bpmn:outgoing>toFirstScriptTask</bpmn:outgoing>
     </bpmn:startEvent>
     <bpmn:scriptTask id="scriptTask1" name="Script&#10;" scriptFormat="JavaScript">
-      <bpmn:incoming>SequenceFlow_0t6kfgx</bpmn:incoming>
       <bpmn:incoming>toFirstScriptTask</bpmn:incoming>
+      <bpmn:incoming>toReturnScriptTask</bpmn:incoming>
       <bpmn:outgoing>toFirstUserTask</bpmn:outgoing>
       <bpmn:script>next()</bpmn:script>
     </bpmn:scriptTask>
@@ -22,24 +22,24 @@
     <bpmn:subProcess id="subProcess1" name="Sub process&#10;">
       <bpmn:incoming>toSubProcess</bpmn:incoming>
       <bpmn:outgoing>toInclusiveGateway</bpmn:outgoing>
-      <bpmn:sequenceFlow id="SequenceFlow_1up51pb" sourceRef="subUserTask1" targetRef="subScriptTask1" />
+      <bpmn:sequenceFlow id="toSubScriptTask" sourceRef="subUserTask1" targetRef="subScriptTask1" />
       <bpmn:userTask id="subUserTask1" name="Sub user task">
-        <bpmn:outgoing>SequenceFlow_1up51pb</bpmn:outgoing>
+        <bpmn:outgoing>toSubScriptTask</bpmn:outgoing>
       </bpmn:userTask>
       <bpmn:boundaryEvent id="subUserTaskTimer" attachedToRef="subUserTask1">
-        <bpmn:outgoing>SequenceFlow_0mdaw7s</bpmn:outgoing>
+        <bpmn:outgoing>toSubScriptTaskTimeout</bpmn:outgoing>
         <bpmn:timerEventDefinition>
           <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT0.01S</bpmn:timeDuration>
         </bpmn:timerEventDefinition>
       </bpmn:boundaryEvent>
-      <bpmn:sequenceFlow id="SequenceFlow_0mdaw7s" sourceRef="subUserTaskTimer" targetRef="subScriptTask1" />
+      <bpmn:sequenceFlow id="toSubScriptTaskTimeout" sourceRef="subUserTaskTimer" targetRef="subScriptTask1" />
       <bpmn:scriptTask id="subScriptTask1" name="Sub script" scriptFormat="JavaScript">
-        <bpmn:incoming>SequenceFlow_1up51pb</bpmn:incoming>
-        <bpmn:incoming>SequenceFlow_0mdaw7s</bpmn:incoming>
+        <bpmn:incoming>toSubScriptTask</bpmn:incoming>
+        <bpmn:incoming>toSubScriptTaskTimeout</bpmn:incoming>
         <bpmn:script>next();</bpmn:script>
       </bpmn:scriptTask>
     </bpmn:subProcess>
-    <bpmn:task id="Task_0nofq10" name="Default task">
+    <bpmn:task id="defaultTask" name="Default task">
       <bpmn:incoming>toPickMe2</bpmn:incoming>
       <bpmn:outgoing>toJoin2</bpmn:outgoing>
     </bpmn:task>
@@ -49,11 +49,11 @@
       <bpmn:incoming>toJoin3</bpmn:incoming>
       <bpmn:outgoing>toDecision</bpmn:outgoing>
     </bpmn:parallelGateway>
-    <bpmn:task id="Task_1he29fg" name="Pick me">
+    <bpmn:task id="pickMeTask" name="Pick me">
       <bpmn:incoming>toPickMe3</bpmn:incoming>
       <bpmn:outgoing>toJoin3</bpmn:outgoing>
     </bpmn:task>
-    <bpmn:task id="Task_0d5f6aq" name="No! Pick me">
+    <bpmn:task id="noPickMeTask" name="No! Pick me">
       <bpmn:incoming>toPickMe1</bpmn:incoming>
       <bpmn:outgoing>toJoin1</bpmn:outgoing>
     </bpmn:task>
@@ -64,11 +64,11 @@
     </bpmn:exclusiveGateway>
     <bpmn:scriptTask id="scriptTask2" name="Only run me once" scriptFormat="JavaScript">
       <bpmn:incoming>toLoop</bpmn:incoming>
-      <bpmn:outgoing>toFirstScriptTask</bpmn:outgoing>
+      <bpmn:outgoing>toReturnScriptTask</bpmn:outgoing>
       <bpmn:script>environment.variables.stopLoop = true;
 next();</bpmn:script>
     </bpmn:scriptTask>
-    <bpmn:inclusiveGateway id="InclusiveGateway_0mwa6t0" default="toPickMe2">
+    <bpmn:inclusiveGateway id="manyDecisions" default="toPickMe2">
       <bpmn:incoming>toInclusiveGateway</bpmn:incoming>
       <bpmn:outgoing>toPickMe2</bpmn:outgoing>
       <bpmn:outgoing>toPickMe3</bpmn:outgoing>
@@ -82,17 +82,17 @@ next();</bpmn:script>
     <bpmn:sequenceFlow id="toLoop" name="Enter loop" sourceRef="decision" targetRef="scriptTask2">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">!environment.variables.stopLoop</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:sequenceFlow id="toPickMe1" sourceRef="InclusiveGateway_0mwa6t0" targetRef="Task_0d5f6aq" />
-    <bpmn:sequenceFlow id="toPickMe3" sourceRef="InclusiveGateway_0mwa6t0" targetRef="Task_1he29fg" />
-    <bpmn:sequenceFlow id="toJoin3" sourceRef="Task_1he29fg" targetRef="join" />
-    <bpmn:sequenceFlow id="toJoin1" sourceRef="Task_0d5f6aq" targetRef="join" />
-    <bpmn:sequenceFlow id="toJoin2" sourceRef="Task_0nofq10" targetRef="join" />
-    <bpmn:sequenceFlow id="toPickMe2" sourceRef="InclusiveGateway_0mwa6t0" targetRef="Task_0nofq10" />
-    <bpmn:sequenceFlow id="toInclusiveGateway" sourceRef="subProcess1" targetRef="InclusiveGateway_0mwa6t0" />
+    <bpmn:sequenceFlow id="toPickMe1" sourceRef="manyDecisions" targetRef="noPickMeTask" />
+    <bpmn:sequenceFlow id="toPickMe3" sourceRef="manyDecisions" targetRef="pickMeTask" />
+    <bpmn:sequenceFlow id="toJoin3" sourceRef="pickMeTask" targetRef="join" />
+    <bpmn:sequenceFlow id="toJoin1" sourceRef="noPickMeTask" targetRef="join" />
+    <bpmn:sequenceFlow id="toJoin2" sourceRef="defaultTask" targetRef="join" />
+    <bpmn:sequenceFlow id="toPickMe2" sourceRef="manyDecisions" targetRef="defaultTask" />
+    <bpmn:sequenceFlow id="toInclusiveGateway" sourceRef="subProcess1" targetRef="manyDecisions" />
     <bpmn:sequenceFlow id="toSubProcess" sourceRef="userTask1" targetRef="subProcess1" />
     <bpmn:sequenceFlow id="toFirstUserTask" sourceRef="scriptTask1" targetRef="userTask1" />
-    <bpmn:sequenceFlow id="toFirstScriptTask" sourceRef="scriptTask2" targetRef="scriptTask1" />
-    <bpmn:sequenceFlow id="SequenceFlow_0t6kfgx" sourceRef="StartEvent_1" targetRef="scriptTask1" />
+    <bpmn:sequenceFlow id="toReturnScriptTask" sourceRef="scriptTask2" targetRef="scriptTask1" />
+    <bpmn:sequenceFlow id="toFirstScriptTask" sourceRef="StartEvent_1" targetRef="scriptTask1" />
   </bpmn:process>
   <bpmn:process id="participantProcess" isExecutable="false">
     <bpmn:startEvent id="messageStartEvent">
@@ -129,7 +129,7 @@ next();</bpmn:script>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="collaborationLane">
-      <bpmndi:BPMNEdge id="SequenceFlow_1up51pb_di" bpmnElement="SequenceFlow_1up51pb">
+      <bpmndi:BPMNEdge id="SequenceFlow_1up51pb_di" bpmnElement="toSubScriptTask">
         <di:waypoint x="730" y="292" />
         <di:waypoint x="776" y="292" />
         <bpmndi:BPMNLabel>
@@ -145,7 +145,7 @@ next();</bpmn:script>
           <dc:Bounds x="479" y="268" width="90" height="0" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="SequenceFlow_0mdaw7s_di" bpmnElement="SequenceFlow_0mdaw7s">
+      <bpmndi:BPMNEdge id="SequenceFlow_0mdaw7s_di" bpmnElement="toSubScriptTaskTimeout">
         <di:waypoint x="679" y="350" />
         <di:waypoint x="679" y="362" />
         <di:waypoint x="826" y="362" />
@@ -175,7 +175,7 @@ next();</bpmn:script>
       <bpmndi:BPMNShape id="SubProcess_153levg_di" bpmnElement="subProcess1" isExpanded="true">
         <dc:Bounds x="577" y="191" width="350" height="200" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_0nofq10_di" bpmnElement="Task_0nofq10">
+      <bpmndi:BPMNShape id="Task_0nofq10_di" bpmnElement="defaultTask">
         <dc:Bounds x="1067" y="251" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="ParallelGateway_0fmzq3y_di" bpmnElement="join">
@@ -184,10 +184,10 @@ next();</bpmn:script>
           <dc:Bounds x="1251" y="312" width="21" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_1he29fg_di" bpmnElement="Task_1he29fg">
+      <bpmndi:BPMNShape id="Task_1he29fg_di" bpmnElement="pickMeTask">
         <dc:Bounds x="952" y="386" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_0d5f6aq_di" bpmnElement="Task_0d5f6aq">
+      <bpmndi:BPMNShape id="Task_0d5f6aq_di" bpmnElement="noPickMeTask">
         <dc:Bounds x="952" y="101" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="ExclusiveGateway_0s9m5h8_di" bpmnElement="decision" isMarkerVisible="true">
@@ -199,7 +199,7 @@ next();</bpmn:script>
       <bpmndi:BPMNShape id="ScriptTask_1qt9lqz_di" bpmnElement="scriptTask2">
         <dc:Bounds x="837" y="492" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="InclusiveGateway_0f7ip5d_di" bpmnElement="InclusiveGateway_0mwa6t0">
+      <bpmndi:BPMNShape id="InclusiveGateway_0f7ip5d_di" bpmnElement="manyDecisions">
         <dc:Bounds x="977" y="266" width="50" height="50" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="802" y="234" width="90" height="0" />
@@ -211,14 +211,14 @@ next();</bpmn:script>
           <dc:Bounds x="1530" y="309" width="24" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="SequenceFlow_0t6kfgx_di" bpmnElement="SequenceFlow_0t6kfgx">
+      <bpmndi:BPMNEdge id="SequenceFlow_0t6kfgx_di" bpmnElement="toFirstScriptTask">
         <di:waypoint x="242" y="291" />
         <di:waypoint x="286" y="291" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="64" y="184" width="90" height="0" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="SequenceFlow_14x0br6_di" bpmnElement="toFirstScriptTask">
+      <bpmndi:BPMNEdge id="SequenceFlow_14x0br6_di" bpmnElement="toReturnScriptTask">
         <di:waypoint x="837" y="532" />
         <di:waypoint x="336" y="534" />
         <di:waypoint x="336" y="331" />

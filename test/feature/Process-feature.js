@@ -44,6 +44,7 @@ Feature('Process', () => {
     Then('the process has the expected execution sequence', async () => {
       assertMessage('process.enter', 'theProcess');
       assertMessage('process.start', 'theProcess');
+      assertMessage('activity.init', 'activity');
       assertMessage('activity.enter', 'activity');
       assertMessage('activity.start', 'activity');
       assertMessage('activity.end', 'activity');
@@ -95,6 +96,7 @@ Feature('Process', () => {
     Then('the process has the expected execution sequence', () => {
       assertMessage('process.enter', 'theProcess');
       assertMessage('process.start', 'theProcess');
+      assertMessage('activity.init', 'start');
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
@@ -152,6 +154,8 @@ Feature('Process', () => {
     Then('the process has the expected execution sequence', () => {
       assertMessage('process.enter', 'theProcess');
       assertMessage('process.start', 'theProcess');
+      assertMessage('activity.init', 'start1');
+      assertMessage('activity.init', 'start2');
       assertMessage('activity.enter', 'start1');
       assertMessage('activity.start', 'start1');
       assertMessage('activity.end', 'start1');
@@ -221,6 +225,7 @@ Feature('Process', () => {
     Then('the process has the expected execution sequence', () => {
       assertMessage('process.enter', 'theProcess');
       assertMessage('process.start', 'theProcess');
+      assertMessage('activity.init', 'start');
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
@@ -286,6 +291,8 @@ Feature('Process', () => {
     Then('the process has the expected execution sequence', () => {
       assertMessage('process.enter', 'theProcess');
       assertMessage('process.start', 'theProcess');
+      assertMessage('activity.init', 'start1');
+      assertMessage('activity.init', 'start2');
       assertMessage('activity.enter', 'start1');
       assertMessage('activity.start', 'start1');
       assertMessage('activity.end', 'start1');
@@ -356,6 +363,7 @@ Feature('Process', () => {
     Then('the process has the expected execution sequence', () => {
       assertMessage('process.enter', 'theProcess');
       assertMessage('process.start', 'theProcess');
+      assertMessage('activity.init', 'start');
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
@@ -435,6 +443,7 @@ Feature('Process', () => {
       assertMessage('process.enter');
       assertMessage('process.start');
 
+      assertMessage('activity.init', 'start');
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.execution.completed', 'start');
@@ -559,6 +568,8 @@ Feature('Process', () => {
     Then('the process has the expected execution sequence', () => {
       assertMessage('process.enter', 'theProcess');
       assertMessage('process.start', 'theProcess');
+      assertMessage('activity.init', 'start');
+      assertMessage('activity.init', 'fork');
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
@@ -633,6 +644,7 @@ Feature('Process', () => {
     });
 
     Then('the process started the timeout event', () => {
+      assertMessage('activity.init', 'start');
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
@@ -710,6 +722,7 @@ Feature('Process', () => {
     });
 
     Then('the process is waiting for the receive message event', () => {
+      assertMessage('activity.init', 'start');
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
@@ -788,6 +801,7 @@ Feature('Process', () => {
     });
 
     Then('the process started the combined event', () => {
+      assertMessage('activity.init', 'start');
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
@@ -831,6 +845,7 @@ Feature('Process', () => {
     And('the combined event is signaled', async () => {
       const api = await waiting;
 
+      assertMessage('activity.init', 'start');
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
@@ -969,6 +984,7 @@ Feature('Process', () => {
     Then('the service task is waiting for service completion', async () => {
       await stateChange;
 
+      assertMessage('activity.init', 'start');
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
@@ -1017,6 +1033,7 @@ Feature('Process', () => {
     And('service task has started', async () => {
       await stateChange;
 
+      assertMessage('activity.init', 'start');
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
@@ -1099,6 +1116,7 @@ Feature('Process', () => {
     Then('the service task is waiting for service completion', async () => {
       await stateChange;
 
+      assertMessage('activity.init', 'start');
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
@@ -1153,6 +1171,7 @@ Feature('Process', () => {
     And('service is started', async () => {
       await stateChange;
 
+      assertMessage('activity.init', 'start');
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
@@ -1346,7 +1365,7 @@ Feature('Process', () => {
 
     const messages = [];
     let context, processInstance, assertMessage;
-    Given('a process wit a user task', async () => {
+    Given('a process with a user task', async () => {
       context = await testHelpers.context(source);
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, false);
@@ -1569,6 +1588,7 @@ Feature('Process', () => {
       assertMessage('process.enter');
       assertMessage('process.start');
 
+      assertMessage('activity.init', 'start');
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.execution.completed', 'start');
@@ -1688,7 +1708,7 @@ Feature('Process', () => {
     });
   });
 
-  Scenario('A process wit a sub process with a waiting user task stopped recovered and resumed', () => {
+  Scenario('A process with a sub process with a waiting user task stopped recovered and resumed', () => {
     const source = `
     <?xml version="1.0" encoding="UTF-8"?>
     <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -1705,7 +1725,7 @@ Feature('Process', () => {
 
     const messages = [];
     let context, processInstance, assertMessage;
-    Given('a process wit a user task', async () => {
+    Given('a process with a user task', async () => {
       context = await testHelpers.context(source);
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, false);
@@ -1764,6 +1784,98 @@ Feature('Process', () => {
     });
   });
 
+  Scenario('A process with boundary event waiting for task', () => {
+    const source = `
+    <?xml version="1.0" encoding="UTF-8"?>
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <process id="theProcess" isExecutable="true">
+        <task id="task" />
+        <sequenceFlow id="toEnd" sourceRef="task" targetRef="end" />
+        <boundaryEvent id="bound" attachedToRef="task">
+          <timerEventDefinition>
+            <timeDuration xsi:type="tFormalExpression">PT1S</timeDuration>
+          </timerEventDefinition>
+        </boundaryEvent>
+        <sequenceFlow id="fromBoundaryEvent" sourceRef="bound" targetRef="end" />
+        <endEvent id="end" />
+      </process>
+    </definitions>`;
+
+    const messages = [];
+    let context, processInstance, assertMessage;
+    Given('a process with a task and bound timer event both leading to end event', async () => {
+      context = await testHelpers.context(source);
+      processInstance = context.getProcessById('theProcess');
+      assertMessage = AssertMessage(context, messages, true);
+    });
+
+    And('the activities are subscribed to', () => {
+      processInstance.broker.subscribeTmp('event', '#', (routingKey, message) => {
+        messages.push(message);
+      }, {noAck: true});
+    });
+
+    When('run', () => {
+      processInstance.run();
+    });
+
+    Then('the task is entered', async () => {
+      assertMessage('process.enter');
+      assertMessage('process.start');
+      assertMessage('activity.init', 'task');
+      assertMessage('activity.enter', 'task');
+    });
+
+    And('timer is started', async () => {
+      assertMessage('activity.enter', 'bound');
+      assertMessage('activity.start', 'bound');
+      assertMessage('activity.timer', 'bound');
+    });
+
+    And('task is started', async () => {
+      assertMessage('activity.start', 'task');
+    });
+
+    When('task completes execution', async () => {
+      assertMessage('activity.execution.completed', 'task');
+      assertMessage('activity.end', 'task');
+    });
+
+    Then('timer is discarded', async () => {
+      assertMessage('activity.execution.discard', 'bound');
+    });
+
+    And('bound flow is discarded', () => {
+      assertMessage('flow.pre-flight', 'fromBoundaryEvent');
+      assertMessage('activity.leave', 'bound');
+      assertMessage('flow.discard', 'fromBoundaryEvent');
+    });
+
+    And('end event is discarded', () => {
+      assertMessage('activity.discard', 'end');
+      assertMessage('activity.leave', 'end');
+    });
+
+    When('task takes flow to end', () => {
+      assertMessage('flow.pre-flight', 'toEnd');
+      assertMessage('activity.leave', 'task');
+      assertMessage('flow.take', 'toEnd');
+    });
+
+    Then('end event completes execution', () => {
+      assertMessage('activity.enter', 'end');
+      assertMessage('activity.start', 'end');
+      assertMessage('activity.execution.completed', 'end');
+      assertMessage('activity.end', 'end');
+      assertMessage('activity.leave', 'end');
+    });
+
+    And('process completes', () => {
+      assertMessage('process.end');
+      assertMessage('process.leave');
+    });
+  });
+
   Scenario('Mother of all', () => {
     const messages = [];
     let processInstance, assertMessage;
@@ -1783,6 +1895,10 @@ Feature('Process', () => {
 
         messages.push(message);
       }, {noAck: true});
+
+      processInstance.broker.subscribeTmp('event', 'process.leave', () => {
+        throw new Error('Left too early');
+      }, {noAck: true, consumerTag: 'too-early'});
     });
 
     let waiting;
@@ -1822,6 +1938,8 @@ Feature('Process', () => {
     When('user task is signaled again', () => {
       timeout = processInstance.waitFor('activity.timeout');
 
+      processInstance.broker.cancel('too-early');
+
       const postponed = processInstance.getPostponed();
       expect(postponed).to.have.length(1);
       expect(postponed[0]).to.have.property('id', 'userTask1');
@@ -1856,6 +1974,31 @@ Feature('Process', () => {
     And('no more messages are received', async () => {
       await new Promise((resolve) => process.nextTick(resolve));
       expect(messages.length).to.equal(0);
+    });
+
+    const waits = [];
+    Given('signaling waiting activities immediately', () => {
+      processInstance.on('wait', (api) => {
+        waits.push(api.content.id);
+
+        if (api.id === 'userTask1' && waits.includes('userTask1')) processInstance.broker.cancel('too-early');
+
+        api.signal();
+      });
+    });
+
+    let left;
+    When('process is ran again', () => {
+      processInstance.broker.subscribeTmp('event', 'process.leave', () => {
+        throw new Error('Left too early');
+      }, {noAck: true, consumerTag: 'too-early'});
+
+      left = processInstance.waitFor('leave');
+      processInstance.run();
+    });
+
+    Then('process completes', () => {
+      return left;
     });
   });
 

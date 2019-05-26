@@ -50,6 +50,7 @@ Feature('Definition', () => {
       assertMessage('definition.start', 'theDefinition');
       assertMessage('process.enter', 'theProcess');
       assertMessage('process.start', 'theProcess');
+      assertMessage('activity.init', 'activity');
       assertMessage('activity.enter', 'activity');
       assertMessage('activity.start', 'activity');
       assertMessage('activity.execution.completed', 'activity');
@@ -97,6 +98,7 @@ Feature('Definition', () => {
       assertMessage('process.enter', 'mainProcess');
       assertMessage('process.start', 'mainProcess');
 
+      assertMessage('activity.init', 'mainStartEvent');
       assertMessage('activity.enter', 'mainStartEvent');
       assertMessage('activity.start', 'mainStartEvent');
       assertMessage('activity.execution.completed', 'mainStartEvent');
@@ -114,6 +116,7 @@ Feature('Definition', () => {
       assertMessage('process.enter', 'participantProcess');
       assertMessage('process.start', 'participantProcess');
 
+      assertMessage('activity.init', 'messageStartEvent');
       assertMessage('activity.enter', 'messageStartEvent');
       assertMessage('activity.start', 'messageStartEvent');
       assertMessage('activity.wait', 'messageStartEvent');
@@ -411,6 +414,7 @@ Feature('Definition', () => {
 
       assertMessage('process.enter', 'Process_1');
       assertMessage('process.start', 'Process_1');
+      assertMessage('activity.init', 'StartEvent_1');
       assertMessage('activity.enter', 'StartEvent_1');
       assertMessage('activity.start', 'StartEvent_1');
       assertMessage('activity.execution.completed', 'StartEvent_1');
@@ -431,6 +435,7 @@ Feature('Definition', () => {
 
       assertMessage('process.enter', 'Process_2');
       assertMessage('process.start', 'Process_2');
+      assertMessage('activity.init', 'StartEvent_2');
       assertMessage('activity.enter', 'StartEvent_2');
       assertMessage('activity.start', 'StartEvent_2');
       assertMessage('activity.execution.completed', 'StartEvent_2');

@@ -10,7 +10,7 @@ const subProcessSource = factory.resource('sub-process.bpmn');
 
 describe('SubProcess', () => {
   it('decorates activity with isSubProcess', () => {
-    const subProcess = SubProcess({id: 'sub-process'}, {
+    const subProcess = SubProcess({id: 'sub-process', parent: {id: 'process1'}}, {
       environment: Environment({Logger: testHelpers.Logger}),
       getInboundSequenceFlows() {},
       getOutboundSequenceFlows() {},
@@ -173,6 +173,7 @@ describe('SubProcess', () => {
       assertMessage('activity.enter', 'subProcess');
       assertMessage('activity.start', 'subProcess');
 
+      assertMessage('activity.init', 'subUserTask');
       assertMessage('activity.enter', 'subUserTask');
       assertMessage('activity.start', 'subUserTask');
       assertMessage('activity.wait', 'subUserTask');
@@ -210,6 +211,7 @@ describe('SubProcess', () => {
 
       assertMessage('activity.enter', 'subProcess');
       assertMessage('activity.start', 'subProcess');
+      assertMessage('activity.init', 'subUserTask');
       assertMessage('activity.enter', 'subUserTask');
       assertMessage('activity.start', 'subUserTask');
       assertMessage('activity.wait', 'subUserTask');

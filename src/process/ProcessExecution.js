@@ -136,15 +136,11 @@ export default function ProcessExecution(parentActivity, context) {
 
     broker.publish(exchangeName, 'execute.start', cloneContent(executeContent));
 
-    startActivities.forEach(prepareStartActivity);
+    startActivities.forEach((activity) => activity.init());
     startActivities.forEach((activity) => activity.run());
 
     postponed.splice(0);
     activityQ.consume(onChildMessage, {prefetch: 1000});
-  }
-
-  function prepareStartActivity(activity) {
-    activityQ.queueMessage({routingKey: 'activity.init'}, {id: activity.id, type: activity.type, parent: {id, executionId, type}}, {persistent: true});
   }
 
   function stop() {
@@ -234,7 +230,7 @@ export default function ProcessExecution(parentActivity, context) {
       case 'activity.enter': {
         if (content.inbound) {
           content.inbound.forEach((trigger) => {
-            const msg = popPostponed(trigger.id);
+            const msg = popPostponed(trigger);
             if (msg) msg.ack();
           });
         }
@@ -253,13 +249,17 @@ export default function ProcessExecution(parentActivity, context) {
     }
 
     function stateChangeMessage(postponeMessage = true) {
-      const previousMsg = popPostponed(childId);
+      const previousMsg = popPostponed(content);
       if (previousMsg) previousMsg.ack();
       if (postponeMessage) postponed.push(message);
     }
 
-    function popPostponed(postponedId) {
-      const idx = postponed.findIndex((msg) => msg.content.id === postponedId);
+    function popPostponed(byContent) {
+      const idx = postponed.findIndex((msg) => {
+        if (msg.content.isSequenceFlow) return msg.content.sequenceId === byContent.sequenceId;
+        return msg.content.executionId === byContent.executionId;
+      });
+
       if (idx > -1) {
         return postponed.splice(idx, 1)[0];
       }
@@ -289,7 +289,7 @@ export default function ProcessExecution(parentActivity, context) {
     function onChildStopped() {
       message.ack();
 
-      for (const activityApi of postponed) {
+      for (const activityApi of postponed.slice()) {
         const activity = getActivityById(activityApi.content.id);
         if (!activity) continue;
         if (activity.isRunning) return;

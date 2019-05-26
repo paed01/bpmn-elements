@@ -84,7 +84,7 @@ describe('Process execution', () => {
       const execution = ProcessExecution(bp, bp.context);
 
       let message;
-      bp.broker.subscribeOnce('event', 'activity.#', (_, msg) => {
+      bp.broker.subscribeOnce('event', 'activity.enter', (_, msg) => {
         message = msg;
       });
 
@@ -393,14 +393,14 @@ describe('Process execution', () => {
           executionId: 'process1_1',
         },
       });
-      activity1.broker.publish('event', 'activity.enter', {id: 'task1', parent: {id: 'process1'}});
-      activity2.broker.publish('event', 'activity.enter', {id: 'task2', parent: {id: 'process1'}});
+      activity1.broker.publish('event', 'activity.enter', {id: activity1.id, executionId: activity1.executionId, parent: {id: 'process1'}});
+      activity2.broker.publish('event', 'activity.enter', {id: activity2.id, executionId: activity2.executionId, parent: {id: 'process1'}});
 
-      activity1.broker.publish('event', 'activity.leave', {id: 'task1', parent: {id: 'process1'}});
+      activity1.broker.publish('event', 'activity.leave', {id: activity1.id, executionId: activity1.executionId, parent: {id: 'process1'}});
 
       expect(execution).to.have.property('completed', false);
 
-      activity2.broker.publish('event', 'activity.leave', {id: 'task2', parent: {id: 'process1'}});
+      activity2.broker.publish('event', 'activity.leave', {id: activity2.id, executionId: activity2.executionId, parent: {id: 'process1'}});
 
       expect(execution).to.have.property('completed', true);
     });
@@ -418,14 +418,14 @@ describe('Process execution', () => {
           executionId: 'process1_1',
         },
       });
-      activity1.broker.publish('event', 'activity.enter', {id: activity1.id, parent: {id: 'process1'}});
-      sequenceflow.preFlight();
-      activity1.broker.publish('event', 'activity.leave', {id: activity1.id, parent: {id: 'process1'}});
+      activity1.broker.publish('event', 'activity.enter', {id: activity1.id, executionId: activity1.executionId, parent: {id: 'process1'}});
+      const sequenceId = sequenceflow.preFlight();
+      activity1.broker.publish('event', 'activity.leave', {id: activity1.id, executionId: activity1.executionId, parent: {id: 'process1'}});
 
       expect(execution).to.have.property('completed', false);
 
-      activity1.broker.publish('event', 'activity.enter', {id: activity2.id, parent: {id: 'process1'}, inbound: [{id: sequenceflow.id}]});
-      activity2.broker.publish('event', 'activity.leave', {id: activity2.id, parent: {id: 'process1'}});
+      activity2.broker.publish('event', 'activity.enter', {id: activity2.id, executionId: activity2.executionId, parent: {id: 'process1'}, inbound: [{id: sequenceflow.id, sequenceId}]});
+      activity2.broker.publish('event', 'activity.leave', {id: activity2.id, executionId: activity2.executionId, parent: {id: 'process1'}});
 
       expect(execution).to.have.property('completed', true);
     });
@@ -446,11 +446,15 @@ describe('Process execution', () => {
           executionId: 'process1_1',
         },
       });
-      activity1.broker.publish('event', 'activity.enter', {id: 'task1', parent: {id: 'process1'}});
-      activity2.broker.publish('event', 'activity.enter', {id: 'task2', parent: {id: 'process1'}});
+      activity1.broker.publish('event', 'activity.enter', {id: activity1.id, executionId: activity1.executionId, parent: {id: 'process1'}});
+      activity2.broker.publish('event', 'activity.enter', {id: activity2.id, executionId: activity2.executionId, parent: {id: 'process1'}});
 
-      activity1.broker.publish('event', 'activity.leave', {id: 'task1', parent: {id: 'process1'}});
-      activity2.broker.publish('event', 'activity.leave', {id: 'task2', parent: {id: 'process1'}});
+      activity1.broker.publish('event', 'activity.leave', {id: activity1.id, executionId: activity1.executionId, parent: {id: 'process1'}});
+
+      expect(execution).to.have.property('completed', false);
+      expect(bp.broker.getQueue('execute-process1_1-q')).to.be.ok;
+
+      activity2.broker.publish('event', 'activity.leave', {id: activity2.id, executionId: activity2.executionId, parent: {id: 'process1'}});
 
       expect(execution).to.have.property('completed', true);
       expect(bp.broker.getQueue('execute-process1_1-q')).to.not.be.ok;
@@ -1005,7 +1009,7 @@ describe('Process execution', () => {
 
     it('returns running activity api with changed state', () => {
       const bp = createProcess();
-      const [task] = bp.getActivities();
+      const [, task] = bp.getActivities();
 
       const execution = ProcessExecution(bp, bp.context);
 
@@ -1017,13 +1021,14 @@ describe('Process execution', () => {
         },
       });
 
-      task.broker.publish('event', 'activity.start', {id: 'task', state: 'postponed', parent: {id: 'process1'}});
+      task.broker.publish('event', 'activity.made-up', {id: task.id, executionId: task.executionId, state: 'postponed', parent: {id: 'process1'}});
 
       const postponed = execution.getPostponed();
       expect(postponed).to.have.length(1);
 
       expect(postponed[0].content).to.eql({
         id: 'task',
+        executionId: task.executionId,
         state: 'postponed',
         parent: {
           id: 'process1',
@@ -1379,6 +1384,7 @@ describe('Process execution', () => {
 
       activity2.broker.publish('event', 'activity.leave', {
         id: 'start2',
+        executionId: activity2.executionId,
         parent: {
           id: 'process1',
         }

@@ -1,9 +1,12 @@
 import ExecutionScope from '../activity/ExecutionScope';
 import {cloneParent} from '../messageHelper';
+import {getUniqueId} from '../shared';
 import {EventBroker} from '../EventBroker';
+import {FlowApi} from '../Api';
 
 export default function SequenceFlow(flowDef, {environment}) {
-  const {id, type = 'sequenceflow', parent, targetId, sourceId, isDefault, behaviour = {}} = flowDef;
+  const {id, type = 'sequenceflow', parent: originalParent, targetId, sourceId, isDefault, behaviour = {}} = flowDef;
+  const parent = cloneParent(originalParent);
   const logger = environment.Logger(type.toLowerCase());
 
   environment.registerScript({id, type, behaviour});
@@ -53,10 +56,12 @@ export default function SequenceFlow(flowDef, {environment}) {
 
   return flowApi;
 
-  function take(content) {
+  function take(content = {}) {
     flowApi.looped = undefined;
 
-    logger.debug(`<${id}> take, target <${targetId}>`);
+    const {sequenceId} = content;
+
+    logger.debug(`<${sequenceId} (${id})> take, target <${targetId}>`);
     ++counters.take;
 
     publishEvent('take', content);
@@ -65,6 +70,7 @@ export default function SequenceFlow(flowDef, {environment}) {
   }
 
   function discard(content = {}) {
+    const {sequenceId} = content;
     const discardSequence = content.discardSequence = (content.discardSequence || []).slice();
     if (discardSequence.indexOf(targetId) > -1) {
       ++counters.looped;
@@ -74,7 +80,7 @@ export default function SequenceFlow(flowDef, {environment}) {
 
     discardSequence.push(sourceId);
 
-    logger.debug(`<${id}> discard, target <${targetId}>`);
+    logger.debug(`<${sequenceId} (${id})> discard, target <${targetId}>`);
     ++counters.discard;
     publishEvent('discard', content);
   }
@@ -89,7 +95,9 @@ export default function SequenceFlow(flowDef, {environment}) {
   }
 
   function preFlight(action) {
-    broker.publish('event', 'flow.pre-flight', createMessage({action, state: 'pre-flight'}), {type: 'pre-flight'});
+    const sequenceId = getUniqueId(id);
+    broker.publish('event', 'flow.pre-flight', createMessage({action, sequenceId, state: 'pre-flight'}), {type: 'pre-flight'});
+    return sequenceId;
   }
 
   function createMessage(override = {}) {
@@ -123,12 +131,8 @@ export default function SequenceFlow(flowDef, {environment}) {
     broker.recover(state.broker);
   }
 
-  function getApi(content) {
-    return {
-      ...content,
-      getState,
-      stop,
-    };
+  function getApi(message) {
+    return FlowApi(broker, message || {content: createMessage()});
   }
 
   function stop() {

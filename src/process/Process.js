@@ -82,7 +82,7 @@ export function Process(processDef, context) {
   return processApi;
 
   function run() {
-    if (processApi.isRunning) throw new Error('process is already running');
+    if (processApi.isRunning) throw new Error(`process <${id}> is already running`);
 
     deactivateRunConsumers();
     executionId = getUniqueId(id);

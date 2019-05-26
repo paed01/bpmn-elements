@@ -1873,13 +1873,16 @@ function createActivity(Behaviour) {
   });
 
   return Activity(Behaviour || ActivityBehaviour, {
-    processId: 'process1',
     id: 'activity',
     type: 'task',
+    parent: {
+      id: 'process1',
+      type: 'process'
+    }
   }, {
     environment,
     getInboundSequenceFlows() {
-      return [SequenceFlow({id: 'flow', sourceId: 'task', targetId: 'end'}, {environment})];
+      return [SequenceFlow({id: 'flow', sourceId: 'task', targetId: 'end', parent: {id: 'process1'}}, {environment})];
     },
     getOutboundSequenceFlows() {
       return [];

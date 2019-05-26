@@ -75,7 +75,7 @@ describe('Process', () => {
 
       expect(() => {
         bp.run();
-      }).to.throw('process is already running');
+      }).to.throw(/process .+? is already running/);
     });
   });
 

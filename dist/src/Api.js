@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.ActivityApi = ActivityApi;
 exports.DefinitionApi = DefinitionApi;
 exports.ProcessApi = ProcessApi;
+exports.FlowApi = FlowApi;
 
 var _messageHelper = require("./messageHelper");
 
@@ -19,6 +20,10 @@ function DefinitionApi(broker, apiMessage, environment) {
 
 function ProcessApi(broker, apiMessage, environment) {
   return Api('process', broker, apiMessage, environment);
+}
+
+function FlowApi(broker, apiMessage, environment) {
+  return Api('flow', broker, apiMessage, environment);
 }
 
 function Api(pfx, broker, sourceMessage, environment) {

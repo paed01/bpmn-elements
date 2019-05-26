@@ -674,6 +674,17 @@ describe('Activity', () => {
 
       expect(leaveApi.content).to.have.property('output', 1);
     });
+
+    it('throws if called when already running', () => {
+      const activity = getActivity(undefined, () => {
+        return {
+          execute() {},
+        };
+      });
+
+      activity.run();
+      expect(activity.run).to.throw(/activity .+? is already running/);
+    });
   });
 
   describe('discard()', () => {
@@ -1045,6 +1056,68 @@ describe('Activity', () => {
       expect(activity.broker.getQueue('execution-q')).to.have.property('consumerCount', 0);
       expect(activity.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
     });
+  });
+
+  describe('init()', () => {
+    it('publishes init event', () => {
+      const activity = getActivity({
+        id: 'start',
+      }, () => {
+        return {
+          execute() {},
+        };
+      });
+
+      const initialized = activity.waitFor('init');
+      activity.init();
+      return initialized;
+    });
+
+    it('runs with execution id from init', async () => {
+      let executionId;
+      const activity = getActivity(undefined, () => {
+        return {
+          execute({content}) {
+            executionId = content.executionId;
+          },
+        };
+      });
+
+      const initialized = activity.waitFor('init');
+      activity.init();
+      activity.run();
+      const init = await initialized;
+
+      expect(init.content.executionId).to.be.ok;
+      expect(init.content.executionId).to.equal(executionId);
+    });
+
+    it('can be called twice and so forth', () => {
+      const activity = getActivity({
+        id: 'start',
+      }, () => {
+        return {
+          execute() {},
+        };
+      });
+
+      const messages = [];
+      activity.broker.subscribeTmp('event', 'activity.#', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      activity.init();
+      activity.init();
+      activity.init();
+
+      expect(messages).to.have.length(3);
+      expect(messages[0].fields).to.have.property('routingKey', 'activity.init');
+      expect(messages[0].content).to.have.property('executionId').that.is.ok;
+      expect(messages[1].fields).to.have.property('routingKey', 'activity.init');
+      expect(messages[1].content).to.have.property('executionId').that.is.ok.and.not.equal(messages[0].content.executionId);
+      expect(messages[2].fields).to.have.property('routingKey', 'activity.init');
+    });
+
   });
 
   describe('error', () => {
@@ -2401,7 +2474,8 @@ function getContext() {
     getActivityExtensions() {
       return {};
     },
-    getInboundSequenceFlows() {
+    getInboundSequenceFlows(id) {
+      if (id !== 'activity') return [];
       return [SequenceFlow({id: 'flow', parent: {id: 'process1'}}, {environment})];
     },
     getOutboundMessageFlows() {

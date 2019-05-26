@@ -24,11 +24,12 @@ function Activity(Behaviour, activityDef, context) {
     id,
     type = 'activity',
     name,
-    parent,
+    parent: originalParent,
     behaviour = {},
     isParallelGateway,
     isSubProcess
   } = activityDef;
+  const parent = (0, _messageHelper.cloneParent)(originalParent);
   const {
     environment,
     getInboundSequenceFlows,
@@ -55,6 +56,7 @@ function Activity(Behaviour, activityDef, context) {
   const isParallelJoin = inboundSequenceFlows.length > 1 && isParallelGateway;
   const isMultiInstance = !!behaviour.loopCharacteristics;
   let execution,
+      initExecutionId,
       executionId,
       stateMessage,
       status,
@@ -73,8 +75,7 @@ function Activity(Behaviour, activityDef, context) {
     name,
     isStart,
     isSubProcess,
-    parent: { ...parent
-    },
+    parent: (0, _messageHelper.cloneParent)(parent),
     behaviour: { ...behaviour
     },
     attachedTo: attachedToActivity,
@@ -112,6 +113,7 @@ function Activity(Behaviour, activityDef, context) {
     getApi,
     getErrorById,
     getState,
+    init,
     message: inboundMessage,
     recover,
     resume,
@@ -157,9 +159,18 @@ function Activity(Behaviour, activityDef, context) {
   const ioSpecification = ioSpecificationDef && ioSpecificationDef.Behaviour(activityApi, ioSpecificationDef, context);
   return activityApi;
 
+  function init() {
+    initExecutionId = (0, _shared.getUniqueId)(id);
+    logger.debug(`<${id}> initialized with executionId <${initExecutionId}>`);
+    publishEvent('init', createMessage({
+      executionId: initExecutionId
+    }));
+  }
+
   function run(runContent) {
-    executionId = (0, _shared.getUniqueId)(id);
-    deactivateRunConsumers();
+    if (activityApi.isRunning) throw new Error(`activity <${id}> is already running`);
+    executionId = initExecutionId || (0, _shared.getUniqueId)(id);
+    initExecutionId = undefined;
     const content = createMessage({ ...runContent,
       executionId
     });
@@ -505,7 +516,7 @@ function Activity(Behaviour, activityDef, context) {
             publishEvent('leave', { ...content,
               outbound: outbound.slice()
             });
-            doOutbound(content, outbound);
+            doOutbound(outbound);
           }
 
           break;
@@ -607,7 +618,8 @@ function Activity(Behaviour, activityDef, context) {
     if (!outboundSequenceFlows.length) return [];
     return outboundSequenceFlows.map(flow => {
       const preparedFlow = getPrepared(flow.id);
-      flow.preFlight(preparedFlow.action);
+      const sequenceId = flow.preFlight(preparedFlow.action);
+      preparedFlow.sequenceId = sequenceId;
       return preparedFlow;
     });
 
@@ -628,7 +640,7 @@ function Activity(Behaviour, activityDef, context) {
     }
   }
 
-  function doOutbound(content, preparedOutbound) {
+  function doOutbound(preparedOutbound) {
     if (!preparedOutbound) return;
     outboundSequenceFlows.forEach((flow, idx) => {
       const preparedFlow = preparedOutbound[idx];
