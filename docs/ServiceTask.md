@@ -28,8 +28,8 @@ Environment({
     getService(messageContent) {
       return function myService(executionContext, callback) {
         callback();
-      }
-    },
+      };
+    }
   }
 })
 ```
