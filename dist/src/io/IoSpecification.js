@@ -47,7 +47,7 @@ function IoSpecification(activity, ioSpecificationDef, context) {
   }
 
   function onActivityEvent(routingKey, message) {
-    if (dataInputs && routingKey === 'activity.enter') {
+    if ((dataInputs || dataOutputs) && routingKey === 'activity.enter') {
       return formatOnEnter();
     }
 
@@ -57,6 +57,16 @@ function IoSpecification(activity, ioSpecificationDef, context) {
   }
 
   function formatOnEnter() {
+    const startRoutingKey = `run.onstart.${safeType}`;
+
+    if (!dataInputs) {
+      return broker.publish('format', startRoutingKey, {
+        ioSpecification: {
+          dataOutputs: getDataOutputs()
+        }
+      });
+    }
+
     const {
       dataObjects,
       sources
@@ -80,7 +90,6 @@ function IoSpecification(activity, ioSpecificationDef, context) {
       dataObjects: [],
       sources: []
     });
-    const startRoutingKey = `run.onstart.${safeType}`;
 
     if (!dataObjects.length) {
       return broker.publish('format', startRoutingKey, {

@@ -9,6 +9,7 @@ export default function IoSpecification(activity, ioSpecificationDef, context) {
   let activityConsumer;
 
   const {dataInputs, dataOutputs} = behaviour;
+
   const ioApi = {
     id,
     type,
@@ -29,7 +30,7 @@ export default function IoSpecification(activity, ioSpecificationDef, context) {
   }
 
   function onActivityEvent(routingKey, message) {
-    if (dataInputs && routingKey === 'activity.enter') {
+    if ((dataInputs || dataOutputs) && routingKey === 'activity.enter') {
       return formatOnEnter();
     }
 
@@ -39,6 +40,15 @@ export default function IoSpecification(activity, ioSpecificationDef, context) {
   }
 
   function formatOnEnter() {
+    const startRoutingKey = `run.onstart.${safeType}`;
+    if (!dataInputs) {
+      return broker.publish('format', startRoutingKey, {
+        ioSpecification: {
+          dataOutputs: getDataOutputs(),
+        },
+      });
+    }
+
     const {dataObjects, sources} = dataInputs.reduce((result, ioSource, index) => {
       const source = {
         id: ioSource.id,
@@ -58,7 +68,6 @@ export default function IoSpecification(activity, ioSpecificationDef, context) {
       sources: [],
     });
 
-    const startRoutingKey = `run.onstart.${safeType}`;
     if (!dataObjects.length) {
       return broker.publish('format', startRoutingKey, {
         ioSpecification: {

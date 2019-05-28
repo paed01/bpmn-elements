@@ -345,6 +345,53 @@ describe('IoSpecification', () => {
     expect(context.environment.output).to.eql({});
   });
 
+  it('dataOutput formats activity start run message', async () => {
+    const source = `
+    <?xml version="1.0" encoding="UTF-8"?>
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <process id="theProcess" isExecutable="true">
+        <dataObjectReference id="inputFromUserRef" dataObjectRef="inputFromUser" />
+        <dataObject id="inputFromUser" />
+        <startEvent id="theStart" />
+        <userTask id="userTask">
+          <ioSpecification id="inputSpec">
+            <dataOutput id="userInput" name="sirname" />
+          </ioSpecification>
+          <dataOutputAssociation id="associatedWith" sourceRef="userInput" targetRef="inputFromUserRef" />
+        </userTask>
+        <endEvent id="theEnd" />
+        <sequenceFlow id="flow1" sourceRef="theStart" targetRef="userTask" />
+        <sequenceFlow id="flow2" sourceRef="userTask" targetRef="theEnd" />
+      </process>
+    </definitions>`;
+
+    const context = await testHelpers.context(source);
+    const task = context.getActivityById('userTask');
+
+    const wait = task.waitFor('wait');
+    const leave = task.waitFor('leave');
+
+    task.run();
+
+    let api = await wait;
+
+    expect(api.content.ioSpecification).to.have.property('dataOutputs').with.length(1);
+    expect(api.content.ioSpecification.dataOutputs[0]).that.eql({ id: 'userInput', type: 'bpmn:DataOutput', name: 'sirname' });
+
+    api.signal({
+      ioSpecification: {
+        dataOutputs: [{
+          id: 'userInput',
+          value: 'von Rosen',
+        }],
+      },
+    });
+
+    api = await leave;
+
+    expect(context.environment.variables._data).to.have.property('inputFromUser', 'von Rosen');
+  });
+
   it('no data objects effectively ignores io', async () => {
     const source = `
     <?xml version="1.0" encoding="UTF-8"?>
