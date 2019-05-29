@@ -490,8 +490,25 @@ describe('Process', () => {
       }).to.throw('cannot resume running process');
     });
 
-    it('ignored if called is not running', () => {
+    it('ignored if never started', () => {
       const bp = Process({id: 'theProcess'}, Context());
+      bp.broker.subscribeTmp('event', '#', () => {
+        throw new Error('Shouldn´t happen');
+      });
+      expect(bp.resume()).to.equal(bp);
+    });
+
+    it('ignored if completed', () => {
+      const bp = Process({id: 'theProcess'}, Context());
+
+      bp.on('wait', (activityApi) => {
+        activityApi.signal();
+      });
+
+      bp.run();
+
+      expect(bp.counters).to.have.property('completed', 1);
+
       bp.broker.subscribeTmp('event', '#', () => {
         throw new Error('Shouldn´t happen');
       });

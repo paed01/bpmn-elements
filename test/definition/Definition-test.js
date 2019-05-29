@@ -778,8 +778,25 @@ describe('Definition', () => {
       expect(definition.counters).to.have.property('completed', 1);
     });
 
-    it('resume non-running definition is ignored', () => {
+    it('ignored if never started', () => {
       const definition = Definition(context);
+      definition.broker.subscribeTmp('event', '#', () => {
+        throw new Error('Shouldn´t happen');
+      });
+      expect(definition.resume()).to.equal(definition);
+    });
+
+    it('ignored if completed', () => {
+      const definition = Definition(context);
+
+      definition.on('wait', (activityApi) => {
+        activityApi.signal();
+      });
+
+      definition.run();
+
+      expect(definition.counters).to.have.property('completed', 1);
+
       definition.broker.subscribeTmp('event', '#', () => {
         throw new Error('Shouldn´t happen');
       });
