@@ -21,7 +21,7 @@ export function Definition(context, options) {
   const logger = environment.Logger(type.toLowerCase());
 
   let execution, executionId, processes, executableProcesses, postponedMessage, stateMessage, stopped, consumingRunQ;
-  let status = 'pending';
+  let status;
 
   let counters = {
     completed: 0,
@@ -114,13 +114,14 @@ export function Definition(context, options) {
     }
 
     stopped = false;
-    if (!status) return;
+    if (!status) return definitionApi;
 
     addConsumerCallbacks(callback);
 
     const content = createMessage({executionId});
     broker.publish('run', 'run.resume', content, {persistent: false});
     activateRunConsumers();
+    return definitionApi;
   }
 
   function addConsumerCallbacks(callback) {

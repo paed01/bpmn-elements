@@ -350,7 +350,7 @@ describe('Process', () => {
       bp.run();
       bp.stop();
 
-      bp.resume();
+      expect(bp.resume()).to.equal(bp);
 
       bp.getPostponed()[0].signal();
 
@@ -488,6 +488,14 @@ describe('Process', () => {
       expect(() => {
         bp.resume();
       }).to.throw('cannot resume running process');
+    });
+
+    it('ignored if called is not running', () => {
+      const bp = Process({id: 'theProcess'}, Context());
+      bp.broker.subscribeTmp('event', '#', () => {
+        throw new Error('Shouldn´t happen');
+      });
+      expect(bp.resume()).to.equal(bp);
     });
   });
 

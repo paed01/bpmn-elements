@@ -49,8 +49,6 @@ export function Process(processDef, context) {
     context,
     environment,
     parent: {...parent},
-    activate,
-    deactivate,
     logger,
     getApi,
     getActivities,
@@ -120,7 +118,6 @@ export function Process(processDef, context) {
     stopped = true;
 
     if (!execution || execution.completed) {
-      deactivate();
       deactivateRunConsumers();
       return publishEvent('stop');
     }
@@ -150,13 +147,14 @@ export function Process(processDef, context) {
 
   function resume() {
     if (processApi.isRunning) throw new Error(`cannot resume running process <${id}>`);
-    if (!status) return activate();
+    if (!status) return processApi;
 
     stopped = false;
 
     const content = createMessage({executionId});
     broker.publish('run', 'run.resume', content, {persistent: false});
     activateRunConsumers();
+    return processApi;
   }
 
   function getApi(message) {
@@ -266,7 +264,6 @@ export function Process(processDef, context) {
 
     switch (messageType) {
       case 'stopped': {
-        deactivate();
         deactivateRunConsumers();
         return publishEvent('stop');
       }
@@ -293,10 +290,6 @@ export function Process(processDef, context) {
   function publishEvent(state, content) {
     if (!content) content = createMessage();
     broker.publish('event', `process.${state}`, {...content, state}, {type: state, mandatory: state === 'error'});
-  }
-
-  function activate() {
-    return processApi;
   }
 
   function sendMessage(messageContent) {
@@ -327,10 +320,6 @@ export function Process(processDef, context) {
   function getPostponed() {
     if (execution) return execution.getPostponed();
     return [];
-  }
-
-  function deactivate() {
-    if (execution) execution.deactivate();
   }
 
   function activateRunConsumers() {

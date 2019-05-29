@@ -385,7 +385,7 @@ describe('Definition', () => {
 
       const state = definition.getState();
 
-      expect(state.status).to.equal('pending');
+      expect(state.status, 'status').to.be.undefined;
       expect(state).to.have.property('broker').that.is.ok;
       expect(state.execution).to.be.undefined;
     });
@@ -557,7 +557,7 @@ describe('Definition', () => {
       definition.run();
       definition.stop();
 
-      definition.recover();
+      expect(definition.recover()).to.equal(definition);
     });
 
     it('recovers with state', () => {
@@ -596,7 +596,7 @@ describe('Definition', () => {
 
       expect(definition.getPostponed()[0].id).to.equal('userTask');
 
-      definition.resume();
+      expect(definition.resume()).to.equal(definition);
       expect(definition).to.have.property('status', 'executing');
       expect(definition.counters).to.have.property('completed', 0);
 
@@ -776,6 +776,14 @@ describe('Definition', () => {
       definition.resume();
 
       expect(definition.counters).to.have.property('completed', 1);
+    });
+
+    it('resume non-running definition is ignored', () => {
+      const definition = Definition(context);
+      definition.broker.subscribeTmp('event', '#', () => {
+        throw new Error('Shouldn´t happen');
+      });
+      expect(definition.resume()).to.equal(definition);
     });
   });
 

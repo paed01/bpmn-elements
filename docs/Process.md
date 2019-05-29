@@ -28,14 +28,6 @@ Process properties:
 - `status`: current status
 - `stopped`: boolean indicating if the process is in a stopped state
 
-### `activate()`
-
-Start listening on process activities activity.
-
-### `deactivate()`
-
-Stop listening on process activities.
-
 ### `getApi(message)`
 
 Get process or activity api.
@@ -85,13 +77,17 @@ Arguments:
   - `api`: activity or process [api](/docs/SharedApi.md)
 - `eventOptions`: passed to underlying broker as consume options
 
-### `recover(state)`
+### `recover([state])`
 
 Recover process from state.
+
+Returns process.
 
 ### `resume()`
 
 Resume process from a stopped or recovered state.
+
+Returns process.
 
 ### `run()`
 

@@ -43,7 +43,6 @@ export default function ProcessExecution(parentActivity, context) {
       if (activated) return true;
       return false;
     },
-    deactivate,
     discard,
     execute,
     getApi,

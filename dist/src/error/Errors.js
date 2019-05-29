@@ -58,22 +58,7 @@ class BpmnError extends Error {
     if (inner) this.inner = inner;
   }
 
-} // function BpmnError(id = 'BpmnError', name = 'BpmnError', errorCode, source, inner) {
-//   this.id = id;
-//   this.type = 'BpmnError';
-//   if (name) this.name = name;
-//   this.message = inner && inner.message;
-//   this.code = errorCode;
-//   this.source = source && {
-//     id: source.id,
-//     type: source.type,
-//     executionId: source.executionId,
-//   };
-//   if (inner) this.inner = inner;
-// }
-// BpmnError.prototype = Object.create(Error.prototype);
-// BpmnError.prototype.constructor = BpmnError;
-
+}
 
 exports.BpmnError = BpmnError;
 

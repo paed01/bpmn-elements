@@ -72,7 +72,6 @@ function ProcessExecution(parentActivity, context) {
       return false;
     },
 
-    deactivate,
     discard,
     execute,
     getApi,

@@ -77,8 +77,6 @@ function Process(processDef, context) {
     environment,
     parent: { ...parent
     },
-    activate,
-    deactivate,
     logger,
     getApi,
     getActivities,
@@ -155,7 +153,6 @@ function Process(processDef, context) {
     stopped = true;
 
     if (!execution || execution.completed) {
-      deactivate();
       deactivateRunConsumers();
       return publishEvent('stop');
     }
@@ -186,7 +183,7 @@ function Process(processDef, context) {
 
   function resume() {
     if (processApi.isRunning) throw new Error(`cannot resume running process <${id}>`);
-    if (!status) return activate();
+    if (!status) return processApi;
     stopped = false;
     const content = createMessage({
       executionId
@@ -195,6 +192,7 @@ function Process(processDef, context) {
       persistent: false
     });
     activateRunConsumers();
+    return processApi;
   }
 
   function getApi(message) {
@@ -318,7 +316,6 @@ function Process(processDef, context) {
     switch (messageType) {
       case 'stopped':
         {
-          deactivate();
           deactivateRunConsumers();
           return publishEvent('stop');
         }
@@ -357,10 +354,6 @@ function Process(processDef, context) {
     });
   }
 
-  function activate() {
-    return processApi;
-  }
-
   function sendMessage(messageContent) {
     const activity = getActivityById(messageContent.target.id);
     if (!activity) return logger.debug(`<${id}> message delivery canceled, <${messageContent.target.id}> not found`);
@@ -387,10 +380,6 @@ function Process(processDef, context) {
   function getPostponed() {
     if (execution) return execution.getPostponed();
     return [];
-  }
-
-  function deactivate() {
-    if (execution) execution.deactivate();
   }
 
   function activateRunConsumers() {

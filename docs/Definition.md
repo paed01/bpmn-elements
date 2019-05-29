@@ -65,6 +65,8 @@ Recover definition.
 Arguments:
 - `state`: state from definition `getState()`
 
+Returns definition.
+
 ## `resume([callback])`
 
 Resume stopped or recovered definition with optional callback. The callback will be called on error, when run completes, or run is stopped.
@@ -73,6 +75,8 @@ Arguments:
 - `callback`: optional callback
   - `err`: occasional error
   - `api`: [api](/docs/SharedApi.md)
+
+Returns definition.
 
 ### `on(eventName, handler[, eventOptions])`
 
