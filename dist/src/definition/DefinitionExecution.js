@@ -206,7 +206,7 @@ function DefinitionExecution(definition) {
       if (isDirectChild) {
         parent.executionId = executionId;
       } else {
-        content.parent = (0, _messageHelper.unshiftParent)(parent, {
+        content.parent = (0, _messageHelper.pushParent)(parent, {
           id,
           type,
           executionId

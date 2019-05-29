@@ -890,16 +890,16 @@ describe('Definition', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      const bp = context.getProcessById('theProcess');
+      const definition = Definition(context);
 
       let error;
-      bp.once('error', (err) => {
+      definition.once('error', (err) => {
         expect(err).to.be.instanceof(Error);
         expect(err.message).to.match(/is unsupported/);
         error = err;
       });
 
-      bp.run();
+      definition.run();
 
       expect(error).to.be.ok;
     });
@@ -949,7 +949,7 @@ describe('Definition', () => {
   });
 
   describe('Logger', () => {
-    it('passes Logger onto children', async () => {
+    it('passes Logger on to children', async () => {
       const log = {};
 
       const source = `
@@ -1096,6 +1096,63 @@ describe('Definition', () => {
       expect(activities[0].id).to.equal('task1');
       expect(activities[1].id).to.equal('task2');
       expect(activities[2].id).to.equal('subProcess');
+    });
+  });
+
+  describe('sub process', () => {
+    it('forwards events from sub process activities', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="def1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="process1" isExecutable="true">
+          <subProcess id="subp">
+            <userTask id="subtask" />
+          </subProcess>
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const definition = Definition(context);
+
+      const messages = [];
+      definition.broker.subscribeTmp('event', 'process.start', (_, message) => {
+        messages.push(message);
+      }, {noAck: true});
+      definition.broker.subscribeTmp('event', 'activity.start', (_, message) => {
+        messages.push(message);
+      }, {noAck: true});
+      definition.broker.subscribeTmp('event', 'activity.wait', (_, message) => {
+        messages.push(message);
+      }, {noAck: true});
+
+      definition.run();
+
+      expect(messages).to.have.length(4);
+      expect(messages[0]).to.have.property('fields').with.property('routingKey', 'process.start');
+      expect(messages[0]).to.have.property('content').with.property('id', 'process1');
+      expect(messages[0].content).to.have.property('parent').with.property('id', 'def1');
+      expect(messages[0].content.parent).to.have.property('executionId').that.is.ok.and.equal(definition.executionId);
+      expect(messages[0].content.parent).to.not.have.property('path');
+
+      expect(messages[1]).to.have.property('fields').with.property('routingKey', 'activity.start');
+      expect(messages[1]).to.have.property('content').with.property('id', 'subp');
+      expect(messages[1].content).to.have.property('parent').with.property('id', 'process1');
+      expect(messages[1].content.parent).to.have.property('path').with.length(1);
+      expect(messages[1].content.parent.path[0]).to.have.property('id', 'def1');
+
+      expect(messages[2]).to.have.property('fields').with.property('routingKey', 'activity.start');
+      expect(messages[2]).to.have.property('content').with.property('id', 'subtask');
+      expect(messages[2].content).to.have.property('parent').with.property('id', 'subp');
+      expect(messages[2].content.parent).to.have.property('path').with.length(2);
+      expect(messages[2].content.parent.path[0]).to.have.property('id', 'process1');
+      expect(messages[2].content.parent.path[1]).to.have.property('id', 'def1');
+
+      expect(messages[3]).to.have.property('fields').with.property('routingKey', 'activity.wait');
+      expect(messages[3]).to.have.property('content').with.property('id', 'subtask');
+      expect(messages[3].content).to.have.property('parent').with.property('id', 'subp');
+      expect(messages[3].content.parent).to.have.property('path').with.length(2);
+      expect(messages[3].content.parent.path[0]).to.have.property('id', 'process1');
+      expect(messages[3].content.parent.path[1]).to.have.property('id', 'def1');
     });
   });
 

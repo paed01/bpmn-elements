@@ -1,4 +1,4 @@
-import {cloneContent, cloneMessage, unshiftParent} from '../messageHelper';
+import {cloneContent, cloneMessage, pushParent} from '../messageHelper';
 import {DefinitionApi} from '../Api';
 
 export default function DefinitionExecution(definition) {
@@ -164,7 +164,7 @@ export default function DefinitionExecution(definition) {
       if (isDirectChild) {
         parent.executionId = executionId;
       } else {
-        content.parent = unshiftParent(parent, {id, type, executionId});
+        content.parent = pushParent(parent, {id, type, executionId});
       }
 
       broker.publish('event', routingKey, content, {...message.properties, mandatory: false});
