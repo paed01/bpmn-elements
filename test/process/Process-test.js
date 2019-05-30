@@ -1177,6 +1177,61 @@ describe('Process', () => {
       expect(errors[0]).to.be.instanceof(Error);
       expect(errors[0].message).to.match(/is unsupported/);
     });
+
+    it('emits error if unsupported script format', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <scriptTask id="task" scriptFormat="coffeescript">
+            <script>
+              <![CDATA[
+                if true then next() else next(new Error("tea"))
+              ]]>
+            </script>
+          </scriptTask>
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const bp = context.getProcessById('theProcess');
+
+      const errors = [];
+      bp.once('error', (err) => {
+        errors.push(err);
+      });
+
+      bp.run();
+
+      expect(errors).to.have.length(1);
+      expect(errors[0]).to.be.instanceof(Error);
+      expect(errors[0].message).to.match(/is unsupported/);
+    });
+
+    it('emits error if service was not defined', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <serviceTask id="task" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      context.environment.settings.enableDummyService = false;
+      const bp = context.getProcessById('theProcess');
+
+      const errors = [];
+      bp.once('error', (err) => {
+        errors.push(err);
+      });
+
+      bp.run();
+
+      expect(errors).to.have.length(1);
+      expect(errors[0]).to.be.instanceof(Error);
+      expect(errors[0].message).to.match(/service not defined/);
+    });
   });
 
   describe('waitFor()', () => {

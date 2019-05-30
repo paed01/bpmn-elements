@@ -12,6 +12,7 @@ Arguments:
   - `services`: optional named services object, key is name of service and value must be a function
   - `settings`: optional settings
     - `step`: boolean, true makes activity runs to go forward in steps, defaults to false
+    - `enableDummyService`: boolean, true returns dummy service function for service task
   - `scripts`: [Scripts instance](/docs/Scripts.md)
   - `Logger`: optional [Logger](#logger) defaults to a dummy logger that does basically nothing but supply the required log functions
   - `extensions`: [extensions](/docs/Extension.md) object with functions

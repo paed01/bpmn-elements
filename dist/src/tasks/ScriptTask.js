@@ -55,7 +55,7 @@ function ScriptTaskBehaviour(activity) {
     const script = environment.getScript(scriptFormat, activity);
 
     if (!script) {
-      return emitFatal(new _Errors.ActivityError(`Script format ${scriptFormat} is unsupported or was not registered for <${activity.id}>`, executeMessage));
+      return emitFatal(new _Errors.ActivityError(`Script format ${scriptFormat} is unsupported or was not registered for <${activity.id}>`, executeMessage), content);
     }
 
     return script.execute((0, _ExecutionScope.default)(activity, executeMessage), scriptCallback);

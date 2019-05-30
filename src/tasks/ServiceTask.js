@@ -28,7 +28,7 @@ export function ServiceTaskBehaviour(activity) {
 
     const {executionId} = content;
     const service = getService(executeMessage);
-    if (!service) return emitFatal(new ActivityError(`<${id}> service not defined`, executeMessage));
+    if (!service) return emitFatal(new ActivityError(`<${id}> service not defined`, executeMessage), content);
 
     broker.subscribeTmp('api', `activity.#.${content.executionId}`, onApiMessage, {consumerTag: `_api-${executionId}`});
 
@@ -59,7 +59,7 @@ export function ServiceTaskBehaviour(activity) {
   function getService() {
     const Service = behaviour.Service;
     if (!Service) {
-      return !environment.settings.disableDummyService ? DummyService(activity) : null;
+      return environment.settings.enableDummyService ? DummyService(activity) : null;
     }
     return Service(activity);
   }

@@ -26,7 +26,7 @@ async function context(source, ...args) {
     return result;
   }, {});
 
-  const ctx = Context(serializer, Environment({Logger, scripts: Scripts(), ...options, extensions}));
+  const ctx = Context(serializer, Environment({Logger, scripts: Scripts(), settings: {enableDummyService: true}, ...options, extensions}));
   if (callback) {
     callback(null, ctx);
   }
