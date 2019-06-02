@@ -51,7 +51,7 @@
     "eslint": "^5.16.0",
     "mocha": "^6.1.4",
     "mocha-cakes-2": "^3.3.0",
-    "moddle-context-serializer": "^0.2.0",
+    "moddle-context-serializer": "^0.3.0",
     "nock": "^10.0.6",
     "nyc": "^14.1.1",
     "request": "^2.88.0"
