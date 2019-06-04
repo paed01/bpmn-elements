@@ -15,9 +15,10 @@ The following elements are tested and supported.
 - [Definition](/docs/Definition.md): Executable BPMN 2 definition
 - [Process](/docs/Process.md): Executes and keeps track of activity elements
 - BoundaryEvent
-- Error
+- ConditionalEventDefinition
 - DataObject
 - EndEvent
+- Error
 - ErrorEventDefinition
 - ExclusiveGateway
 - InclusiveGateway

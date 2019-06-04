@@ -48,6 +48,7 @@ describe('TimerEventDefinition', () => {
     expect(messages[0].fields).to.have.property('routingKey', 'activity.timer');
     expect(messages[0].content).to.have.property('timeout').that.is.above(0);
     expect(messages[0].content).to.have.property('state', 'timer');
+    expect(messages[0].content).to.have.property('parent').with.property('id', 'bound');
 
     definition.stop();
   });

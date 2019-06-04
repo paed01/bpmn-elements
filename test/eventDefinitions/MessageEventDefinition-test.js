@@ -31,14 +31,19 @@ describe('MessageEventDefinition', () => {
         parent: {
           id: 'bound',
           executionId: 'event_1',
+          path: [{
+            id: 'theProcess',
+            executionId: 'theProcess_0'
+          }]
         },
       },
     });
 
     expect(messages).to.have.length(1);
     expect(messages[0].fields).to.have.property('routingKey', 'activity.wait');
-    expect(messages[0].content).to.have.property('executionId', 'event_1_0');
-    expect(messages[0].content.parent).to.have.property('id', 'bound');
+    expect(messages[0].content).to.have.property('executionId', 'event_1');
+    expect(messages[0].content.parent).to.have.property('id', 'theProcess');
+    expect(messages[0].content.parent).to.have.property('executionId', 'theProcess_0');
   });
 
   it('completes when signaled', (done) => {
@@ -129,8 +134,18 @@ describe('MessageEventDefinition', () => {
       type: 'bpmn:MessageEventDefinition',
     });
 
-    event.broker.subscribeOnce('event', 'activity.wait', (_, message) => {
-      ActivityApi(event.broker, message).discard();
+    event.broker.subscribeOnce('event', 'activity.wait', () => {
+      ActivityApi(event.broker, {
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+          },
+        },
+      }).discard();
     });
 
     event.broker.subscribeOnce('execution', 'execute.discard', () => {
@@ -158,8 +173,18 @@ describe('MessageEventDefinition', () => {
       type: 'bpmn:MessageEventDefinition',
     });
 
-    event.broker.subscribeOnce('event', 'activity.wait', (_, message) => {
-      ActivityApi(event.broker, message).stop();
+    event.broker.subscribeOnce('event', 'activity.wait', () => {
+      ActivityApi(event.broker, {
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+          },
+        },
+      }).stop();
       expect(event.broker.getExchange('api')).to.have.property('bindingCount', 0);
       expect(event.broker.getExchange('event')).to.have.property('bindingCount', 0);
       expect(event.broker.getQueue('messages')).to.have.property('consumerCount', 0);

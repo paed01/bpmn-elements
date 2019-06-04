@@ -183,6 +183,48 @@ describe('StartEvent', () => {
     });
   });
 
+  describe('with ConditionalEventDefinition', () => {
+    const source = `
+    <?xml version="1.0" encoding="UTF-8"?>
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <process id="theProcess" isExecutable="true">
+        <startEvent id="start">
+          <conditionalEventDefinition>
+            <condition xsi:type="tFormalExpression">\${environment.variables.conditionMet}</condition>
+          </conditionalEventDefinition>
+        </startEvent>
+        <endEvent id="end" />
+        <sequenceFlow id="flow1" sourceRef="start" targetRef="end" />
+      </process>
+    </definitions>`;
+
+    let context;
+    beforeEach(async () => {
+      context = await testHelpers.context(source);
+    });
+
+    it('emits start event wait', async () => {
+      const event = context.getActivityById('start');
+      const wait = event.waitFor('wait');
+
+      event.run();
+
+      const api = await wait;
+      expect(api.content.parent).to.have.property('id', 'theProcess');
+    });
+
+    it('completes immediately if condtion is met', async () => {
+      context.environment.variables.conditionMet = true;
+
+      const event = context.getActivityById('start');
+      const leave = event.waitFor('leave');
+
+      event.run();
+
+      return leave;
+    });
+  });
+
   describe('multiple event definitions', () => {
     const source = `
     <?xml version="1.0" encoding="UTF-8"?>

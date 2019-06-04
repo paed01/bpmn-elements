@@ -6,7 +6,10 @@ import Environment from '../../src/Environment';
 import {default as Serializer, TypeResolver} from 'moddle-context-serializer';
 import {Scripts} from './JavaScripts';
 
-const typeResolver = TypeResolver(types);
+const typeResolver = TypeResolver(types, (map) => {
+  map['bpmn:ConditionalEventDefinition'] = types.ConditionalEventDefinition;
+  return map;
+});
 
 export default {
   AssertMessage,

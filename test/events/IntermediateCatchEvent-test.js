@@ -228,4 +228,86 @@ describe('IntermediateCatchEvent', () => {
     });
   });
 
+  describe('with conditional event definition', () => {
+    const source = `
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <process id="theProcess" isExecutable="true">
+        <startEvent id="start" />
+        <sequenceFlow id="flow1" sourceRef="start" targetRef="event" />
+        <intermediateCatchEvent id="event">
+          <conditionalEventDefinition>
+            <condition xsi:type="tFormalExpression">\${environment.variables.conditionMet}</condition>
+          </conditionalEventDefinition>
+        </intermediateCatchEvent>
+        <sequenceFlow id="flow2" sourceRef="event" targetRef="end" />
+        <endEvent id="end" />
+      </process>
+    </definitions>`;
+
+    let context;
+    beforeEach(async () => {
+      context = await testHelpers.context(source);
+    });
+
+    it('completes when event is signaled and condition is met', async () => {
+      const event = context.getActivityById('event');
+
+      const leave = event.waitFor('leave');
+      const wait = event.waitFor('wait');
+
+      event.run();
+
+      const api = await wait;
+
+      event.environment.variables.conditionMet = true;
+      api.signal();
+
+      await leave;
+
+      expect(event.counters).to.have.property('taken', 1);
+    });
+
+    it('completes when parent event api is signaled', async () => {
+      const event = context.getActivityById('event');
+
+      const leave = event.waitFor('leave');
+      const wait = event.waitFor('wait');
+
+      event.run();
+
+      await wait;
+
+      event.environment.variables.conditionMet = true;
+      event.getApi().signal({data: 1});
+
+      await leave;
+
+      expect(event.counters).to.have.property('taken', 1);
+    });
+
+    it('keeps waiting if condition is not met', async () => {
+      const event = context.getActivityById('event');
+      const wait = event.waitFor('wait');
+
+      event.run();
+
+      await wait;
+
+      event.getApi().signal({data: 1});
+
+      expect(event.counters).to.have.property('taken', 0);
+    });
+
+    it('completes immediately if condition is met on execute', async () => {
+      context.environment.variables.conditionMet = true;
+      const event = context.getActivityById('event');
+
+      const leave = event.waitFor('leave');
+      event.run();
+
+      await leave;
+
+      expect(event.counters).to.have.property('taken', 1);
+    });
+  });
 });

@@ -45,6 +45,12 @@ Object.defineProperty(exports, "BpmnError", {
     return _BpmnError.default;
   }
 });
+Object.defineProperty(exports, "ConditionalEventDefinition", {
+  enumerable: true,
+  get: function () {
+    return _ConditionalEventDefinition.default;
+  }
+});
 Object.defineProperty(exports, "DataObject", {
   enumerable: true,
   get: function () {
@@ -191,6 +197,8 @@ var _Process = _interopRequireDefault(require("./src/process/Process"));
 var _BoundaryEvent = _interopRequireDefault(require("./src/events/BoundaryEvent"));
 
 var _BpmnError = _interopRequireDefault(require("./src/error/BpmnError"));
+
+var _ConditionalEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/ConditionalEventDefinition"));
 
 var _EnvironmentDataObject = _interopRequireDefault(require("./src/io/EnvironmentDataObject"));
 

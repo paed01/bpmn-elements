@@ -1,4 +1,4 @@
-import {cloneContent} from '../messageHelper';
+import {cloneContent, shiftParent} from '../messageHelper';
 
 export default function MessageEventDefinition(activity, eventDefinition) {
   const {id, broker} = activity;
@@ -26,7 +26,7 @@ export default function MessageEventDefinition(activity, eventDefinition) {
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
     broker.subscribeOnce('api', `activity.signal.${parentExecutionId}`, onApiMessage, {consumerTag: `_parent-signal-${executionId}`});
 
-    broker.publish('event', 'activity.wait', {...messageContent});
+    broker.publish('event', 'activity.wait', {...messageContent, executionId: parentExecutionId, parent: shiftParent(parent)});
 
     function onApiMessage(routingKey, message) {
       const messageType = message.properties.type;

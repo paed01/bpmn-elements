@@ -46,7 +46,9 @@ function MessageEventDefinition(activity, eventDefinition) {
     broker.subscribeOnce('api', `activity.signal.${parentExecutionId}`, onApiMessage, {
       consumerTag: `_parent-signal-${executionId}`
     });
-    broker.publish('event', 'activity.wait', { ...messageContent
+    broker.publish('event', 'activity.wait', { ...messageContent,
+      executionId: parentExecutionId,
+      parent: (0, _messageHelper.shiftParent)(parent)
     });
 
     function onApiMessage(routingKey, message) {

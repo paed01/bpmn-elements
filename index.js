@@ -5,6 +5,7 @@ import Definition from './src/definition/Definition';
 import Process from './src/process/Process';
 import BoundaryEvent from './src/events/BoundaryEvent';
 import BpmnError from './src/error/BpmnError';
+import ConditionalEventDefinition from './src/eventDefinitions/ConditionalEventDefinition';
 import DataObject from './src/io/EnvironmentDataObject';
 import Dummy from './src/activity/Dummy';
 import EndEvent from './src/events/EndEvent';
@@ -36,6 +37,7 @@ export {
   Activity,
   BoundaryEvent,
   BpmnError,
+  ConditionalEventDefinition,
   DataObject,
   Dummy,
   EndEvent,

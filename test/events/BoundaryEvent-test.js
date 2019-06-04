@@ -810,6 +810,7 @@ describe('BoundaryEvent', () => {
         await leave;
 
         expect(event.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 1);
       });
 
       it('discards attached activity when timeout occur', async () => {
@@ -1001,6 +1002,228 @@ describe('BoundaryEvent', () => {
 
         const task = context.getActivityById('service');
         const event = context.getActivityById('timeoutEvent');
+
+        const attachedLeave = task.waitFor('leave');
+
+        event.activate();
+        task.run();
+
+        await execute;
+        task.discard();
+
+        await attachedLeave;
+
+        expect(event.counters).to.have.property('discarded', 1);
+      });
+    });
+
+    describe('with non-interrupting conditional event definition', () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <serviceTask id="service" implementation="\${environment.services.test}" />
+          <boundaryEvent id="conditionalEvent" attachedToRef="service" cancelActivity="false">
+            <conditionalEventDefinition>
+              <condition xsi:type="tFormalExpression">\${content.output[0].conditionMet}</condition>
+            </conditionalEventDefinition>
+          </boundaryEvent>
+          <endEvent id="end" />
+          <sequenceFlow id="flow0" sourceRef="start" targetRef="service" />
+          <sequenceFlow id="flow1" sourceRef="service" targetRef="end" />
+          <sequenceFlow id="flow2" sourceRef="conditionalEvent" targetRef="end" />
+        </process>
+      </definitions>`;
+
+      let context;
+      beforeEach(async () => {
+        context = await testHelpers.context(source);
+        context.environment.addService('test', () => {});
+      });
+
+      it('completes if condition is met', async () => {
+        let serviceComplete;
+        context.environment.addService('test', (arg, next) => {
+          serviceComplete = next;
+        });
+
+        const task = context.getActivityById('service');
+        const event = context.getActivityById('conditionalEvent');
+
+        const leave = event.waitFor('leave');
+
+        event.activate();
+        task.run();
+
+        serviceComplete(null, {conditionMet: true});
+
+        await leave;
+
+        expect(event.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('taken', 1);
+      });
+
+      it('discards if condition is not met', async () => {
+        let serviceComplete;
+        context.environment.addService('test', (arg, next) => {
+          serviceComplete = next;
+        });
+
+        const task = context.getActivityById('service');
+        const event = context.getActivityById('conditionalEvent');
+
+        const leave = event.waitFor('leave');
+
+        event.activate();
+        task.run();
+
+        serviceComplete(null, {conditionMet: false});
+
+        await leave;
+
+        expect(event.counters).to.have.property('discarded', 1);
+        expect(task.counters).to.have.property('taken', 1);
+      });
+
+      it('is discarded when attached is discarded', async () => {
+        const task = context.getActivityById('service');
+        const event = context.getActivityById('conditionalEvent');
+
+        const leave = event.waitFor('leave');
+
+        event.activate();
+        task.activate();
+        task.inbound[0].discard();
+
+        await leave;
+
+        expect(event.counters).to.have.property('discarded', 1);
+        expect(task.counters).to.have.property('discarded', 1);
+      });
+
+      it('is discarded if attached is discarded while executing', async () => {
+        let executing;
+        const execute = new Promise((resolve) => {
+          executing = resolve;
+        });
+
+        context.environment.addService('test', () => {
+          executing();
+        });
+
+        const task = context.getActivityById('service');
+        const event = context.getActivityById('conditionalEvent');
+
+        const attachedLeave = task.waitFor('leave');
+
+        event.activate();
+        task.run();
+
+        await execute;
+        task.discard();
+
+        await attachedLeave;
+
+        expect(event.counters).to.have.property('discarded', 1);
+        expect(task.counters).to.have.property('discarded', 1);
+      });
+    });
+
+    describe('with interrupting conditional event definition', () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <serviceTask id="service" implementation="\${environment.services.test}" />
+          <boundaryEvent id="conditionalEvent" attachedToRef="service" cancelActivity="true">
+            <conditionalEventDefinition>
+              <condition xsi:type="tFormalExpression">\${content.output[0].conditionMet}</condition>
+            </conditionalEventDefinition>
+          </boundaryEvent>
+          <endEvent id="end" />
+          <sequenceFlow id="flow0" sourceRef="start" targetRef="service" />
+          <sequenceFlow id="flow1" sourceRef="service" targetRef="end" />
+          <sequenceFlow id="flow2" sourceRef="conditionalEvent" targetRef="end" />
+        </process>
+      </definitions>`;
+
+      let context;
+      beforeEach(async () => {
+        context = await testHelpers.context(source);
+        context.environment.addService('test', () => {});
+      });
+
+      it('completes if condition is met and discard attached', async () => {
+        let serviceComplete;
+        context.environment.addService('test', (arg, next) => {
+          serviceComplete = next;
+        });
+
+        const task = context.getActivityById('service');
+        const event = context.getActivityById('conditionalEvent');
+
+        const leave = event.waitFor('leave');
+
+        event.activate();
+        task.run();
+
+        serviceComplete(null, {conditionMet: true});
+
+        await leave;
+
+        expect(event.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('discarded', 1);
+      });
+
+      it('takes attached and discards if condition is not met', async () => {
+        let serviceComplete;
+        context.environment.addService('test', (arg, next) => {
+          serviceComplete = next;
+        });
+
+        const task = context.getActivityById('service');
+        const event = context.getActivityById('conditionalEvent');
+
+        const leave = event.waitFor('leave');
+
+        event.activate();
+        task.run();
+
+        serviceComplete(null, {conditionMet: false});
+
+        await leave;
+
+        expect(event.counters).to.have.property('discarded', 1);
+        expect(task.counters).to.have.property('taken', 1);
+      });
+
+      it('is discarded if attached inbound is discarded', async () => {
+        const task = context.getActivityById('service');
+        const event = context.getActivityById('conditionalEvent');
+
+        const leave = event.waitFor('leave');
+
+        event.activate();
+        task.activate();
+        task.inbound[0].discard();
+
+        await leave;
+
+        expect(event.counters).to.have.property('discarded', 1);
+      });
+
+      it('is discarded if attached is discarded while executing', async () => {
+        let executing;
+        const execute = new Promise((resolve) => {
+          executing = resolve;
+        });
+
+        context.environment.addService('test', () => {
+          executing();
+        });
+
+        const task = context.getActivityById('service');
+        const event = context.getActivityById('conditionalEvent');
 
         const attachedLeave = task.waitFor('leave');
 
