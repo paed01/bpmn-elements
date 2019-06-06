@@ -13,7 +13,7 @@ import ErrorEventDefinition from './src/eventDefinitions/ErrorEventDefinition';
 import ExclusiveGateway from './src/gateways/ExclusiveGateway';
 import InclusiveGateway from './src/gateways/InclusiveGateway';
 import IntermediateCatchEvent from './src/events/IntermediateCatchEvent';
-import IoSpecification from './src/io/IoSpecification';
+import InputOutputSpecification from './src/io/InputOutputSpecification';
 import MessageEventDefinition from './src/eventDefinitions/MessageEventDefinition';
 import MessageFlow from './src/flows/MessageFlow';
 import ParallelGateway from './src/gateways/ParallelGateway';
@@ -45,13 +45,15 @@ export {
   ExclusiveGateway,
   InclusiveGateway,
   IntermediateCatchEvent,
-  IoSpecification,
+  SignalTask as ManualTask,
   MessageEventDefinition,
   MessageFlow,
   ParallelGateway,
+  SignalTask as ReceiveTask,
   ScriptTask,
   SequenceFlow,
   ServiceImplementation,
+  ServiceTask as SendTask,
   ServiceTask,
   SignalTask,
   StartEvent,
@@ -59,5 +61,7 @@ export {
   Task,
   TerminateEventDefinition,
   TimerEventDefinition,
+  SignalTask as UserTask,
   MultiInstanceLoopCharacteristics,
+  InputOutputSpecification,
 };

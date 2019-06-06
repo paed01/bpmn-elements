@@ -21,7 +21,7 @@ function ConditionalEventDefinition(activity, eventDefinition) {
   const {
     debug
   } = environment.Logger(type.toLowerCase());
-  const condition = behaviour.condition && behaviour.condition.body;
+  const condition = behaviour.expression;
   const isWaiting = !attachedTo;
   const source = {
     type,
@@ -48,7 +48,7 @@ function ConditionalEventDefinition(activity, eventDefinition) {
       noAck: true,
       consumerTag: apiConsumerTag
     });
-    debug(`<${executionId} (${id})> listen for end from <${attachedTo.id}>`);
+    debug(`<${executionId} (${id})> listen for execute completed from <${attachedTo.id}>`);
     attachedToBroker.subscribeOnce('execution', 'execute.completed', onAttachedCompleted, {
       priority: 200,
       consumerTag: endConsumerTag
@@ -58,11 +58,11 @@ function ConditionalEventDefinition(activity, eventDefinition) {
       stop();
       const output = environment.resolveExpression(condition, endMessage);
       debug(`<${executionId} (${id})> condition from <${endMessage.content.executionId}> evaluated to`, !!output);
+      broker.publish('event', 'activity.condition', { ...(0, _messageHelper.cloneContent)(messageContent),
+        conditionResult: output
+      });
 
       if (output) {
-        broker.publish('event', 'activity.condition', { ...(0, _messageHelper.cloneContent)(messageContent),
-          output
-        });
         broker.publish('execution', 'execute.completed', { ...messageContent,
           output
         });

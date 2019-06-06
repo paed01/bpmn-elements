@@ -93,10 +93,10 @@ Object.defineProperty(exports, "IntermediateCatchEvent", {
     return _IntermediateCatchEvent.default;
   }
 });
-Object.defineProperty(exports, "IoSpecification", {
+Object.defineProperty(exports, "InputOutputSpecification", {
   enumerable: true,
   get: function () {
-    return _IoSpecification.default;
+    return _InputOutputSpecification.default;
   }
 });
 Object.defineProperty(exports, "MessageEventDefinition", {
@@ -135,13 +135,37 @@ Object.defineProperty(exports, "ServiceImplementation", {
     return _ServiceImplementation.default;
   }
 });
+Object.defineProperty(exports, "SendTask", {
+  enumerable: true,
+  get: function () {
+    return _ServiceTask.default;
+  }
+});
 Object.defineProperty(exports, "ServiceTask", {
   enumerable: true,
   get: function () {
     return _ServiceTask.default;
   }
 });
+Object.defineProperty(exports, "ManualTask", {
+  enumerable: true,
+  get: function () {
+    return _SignalTask.default;
+  }
+});
+Object.defineProperty(exports, "ReceiveTask", {
+  enumerable: true,
+  get: function () {
+    return _SignalTask.default;
+  }
+});
 Object.defineProperty(exports, "SignalTask", {
+  enumerable: true,
+  get: function () {
+    return _SignalTask.default;
+  }
+});
+Object.defineProperty(exports, "UserTask", {
   enumerable: true,
   get: function () {
     return _SignalTask.default;
@@ -214,7 +238,7 @@ var _InclusiveGateway = _interopRequireDefault(require("./src/gateways/Inclusive
 
 var _IntermediateCatchEvent = _interopRequireDefault(require("./src/events/IntermediateCatchEvent"));
 
-var _IoSpecification = _interopRequireDefault(require("./src/io/IoSpecification"));
+var _InputOutputSpecification = _interopRequireDefault(require("./src/io/InputOutputSpecification"));
 
 var _MessageEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/MessageEventDefinition"));
 
