@@ -203,7 +203,7 @@ describe('StartEvent', () => {
       context = await testHelpers.context(source);
     });
 
-    it('emits start event wait', async () => {
+    it('emits wait', async () => {
       const event = context.getActivityById('start');
       const wait = event.waitFor('wait');
 
@@ -211,6 +211,28 @@ describe('StartEvent', () => {
 
       const api = await wait;
       expect(api.content.parent).to.have.property('id', 'theProcess');
+    });
+
+    it('completes when signaled and condition is met', async () => {
+      const event = context.getActivityById('start');
+      const wait = event.waitFor('wait');
+      const leave = event.waitFor('leave');
+
+      event.run();
+
+      const waitApi = await wait;
+
+      context.environment.variables.conditionMet = true;
+
+      expect(event.counters).to.have.property('taken', 0);
+      expect(event.counters).to.have.property('discarded', 0);
+
+      waitApi.signal();
+
+      await leave;
+
+      expect(event.counters).to.have.property('taken', 1);
+      expect(event.counters).to.have.property('discarded', 0);
     });
 
     it('completes immediately if condtion is met', async () => {

@@ -89,9 +89,10 @@ export default function ConditionalEventDefinition(activity, eventDefinition) {
 
     function onApiMessage(routingKey, message) {
       const messageType = message.properties.type;
+
       switch (messageType) {
         case 'signal': {
-          return evaluate({...executeMessage, message, state: 'signal'});
+          return evaluate(message);
         }
         case 'discard': {
           stop();
@@ -107,18 +108,18 @@ export default function ConditionalEventDefinition(activity, eventDefinition) {
     function evaluate(message) {
       const output = environment.resolveExpression(condition, message);
       debug(`<${executionId} (${id})> condition evaluated to`, !!output);
-      if (!output) return;
 
       broker.publish('event', 'activity.condition', {
         ...cloneContent(messageContent),
-        output,
+        conditionResult: output,
       });
 
+      if (!output) return;
+      stop();
       return broker.publish('execution', 'execute.completed', {...messageContent, output});
     }
 
     function stop() {
-      broker.cancel(`_message-${executionId}`);
       broker.cancel(`_api-${executionId}`);
       broker.cancel(`_parent-signal-${executionId}`);
     }
