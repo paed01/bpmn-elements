@@ -404,7 +404,7 @@ export default function Activity(Behaviour, activityDef, context) {
           if (ioSpecification) ioSpecification.activate(message);
         }
 
-        executionQ.assertConsumer(onExecutionCompletedMessage, {exclusive: true, consumerTag: '_activity-execution'});
+        executionQ.assertConsumer(onExecutionMessage, {exclusive: true, consumerTag: '_activity-execution'});
         execution = execution || ActivityExecution(activityApi, context);
 
         return execution.execute(message);
@@ -436,15 +436,24 @@ export default function Activity(Behaviour, activityDef, context) {
         break;
       }
       case 'run.leave': {
-        const outbound = prepareOutbound(content, status === 'discarded');
+        const isDiscarded = status === 'discarded';
         status = undefined;
         broker.cancel('_activity-api');
 
-        if (!isRedelivered) {
-          broker.publish('run', 'run.next', content);
-          publishEvent('leave', {...content, outbound: outbound.slice()});
-          doOutbound(outbound);
+        if (isRedelivered) break;
+
+        const ignoreOutbound = content.ignoreOutbound;
+        let outbound, leaveContent;
+        if (!ignoreOutbound) {
+          outbound = prepareOutbound(content, isDiscarded);
+          leaveContent = {...content, outbound: outbound.slice()};
+        } else {
+          leaveContent = content;
         }
+
+        broker.publish('run', 'run.next', content);
+        publishEvent('leave', leaveContent);
+        if (!ignoreOutbound) doOutbound(outbound);
         break;
       }
       case 'run.next':
@@ -455,12 +464,17 @@ export default function Activity(Behaviour, activityDef, context) {
     if (!step) ack();
   }
 
-  function onExecutionCompletedMessage(routingKey, message) {
+  function onExecutionMessage(routingKey, message) {
     const content = {...executeMessage.content, ...message.content};
 
     publishEvent(routingKey, content, message.properties);
 
     switch (routingKey) {
+      case 'execution.outbound.take': {
+        message.ack();
+        const outbound = prepareOutbound(content);
+        return doOutbound(outbound);
+      }
       case 'execution.stopped': {
         message.ack();
         deactivate();
@@ -482,10 +496,11 @@ export default function Activity(Behaviour, activityDef, context) {
         if (content.outbound && content.outbound.discarded === outboundSequenceFlows.length) {
           status = 'discarded';
           broker.publish('run', 'run.discarded', content);
-        } else {
-          status = 'executed';
-          broker.publish('run', 'run.end', content);
+          break;
         }
+
+        status = 'executed';
+        broker.publish('run', 'run.end', content);
       }
     }
 

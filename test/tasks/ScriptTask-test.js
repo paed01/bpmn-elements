@@ -1,5 +1,3 @@
-/* global require */
-
 import nock from 'nock';
 import testHelpers from '../helpers/testHelpers';
 import js from '../resources/extensions/JsExtension';

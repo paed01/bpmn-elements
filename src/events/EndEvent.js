@@ -1,5 +1,6 @@
 import Activity from '../activity/Activity';
 import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution';
+import {cloneContent} from '../messageHelper';
 
 export default function EndEvent(activityDef, context) {
   return Activity(EndEventBehaviour, activityDef, context);
@@ -25,6 +26,6 @@ export function EndEventBehaviour(activity) {
       return eventDefinitionExecution.execute(executeMessage);
     }
 
-    return broker.publish('execution', 'execute.completed', {...content});
+    return broker.publish('execution', 'execute.completed', cloneContent(content));
   }
 }

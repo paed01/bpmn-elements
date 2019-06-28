@@ -27,9 +27,6 @@ function ServiceTaskBehaviour(activity) {
     emitFatal
   } = activity;
   const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
-  const {
-    debug
-  } = environment.Logger(type.toLowerCase());
   const source = {
     id,
     type,
@@ -75,7 +72,7 @@ function ServiceTaskBehaviour(activity) {
       if (message.properties.type === 'discard') {
         broker.cancel(`_api-${executionId}`);
         if (service && service.discard) service.discard(message);
-        debug(`<${content.executionId} (${id})> discarded`);
+        logger.debug(`<${content.executionId} (${id})> discarded`);
         return broker.publish('execution', 'execute.discard', { ...executeMessage.content,
           state: 'discard'
         });
@@ -84,7 +81,7 @@ function ServiceTaskBehaviour(activity) {
       if (message.properties.type === 'stop') {
         broker.cancel(`_api-${executionId}`);
         if (service && service.stop) service.stop(message);
-        return debug(`<${content.executionId} (${id})> stopped`);
+        return logger.debug(`<${content.executionId} (${id})> stopped`);
       }
     }
   }

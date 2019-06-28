@@ -144,6 +144,14 @@ export default function ActivityExecution(activity, context) {
         if (!stateChangeMessage()) return;
         return source.execute(getExecuteMessage());
       }
+      case 'execute.outbound.take': {
+        if (isRedelivered) {
+          message.ack();
+          break;
+        }
+        broker.publish('execution', 'execution.outbound.take', cloneContent(content), {type: 'outbound'});
+        break;
+      }
       default: {
         if (!stateChangeMessage()) return;
         if (isRedelivered) {
