@@ -1,5 +1,3 @@
-/* global __dirname */
-
 import BpmnModdle from 'bpmn-moddle';
 import fs from 'fs';
 import path from 'path';
