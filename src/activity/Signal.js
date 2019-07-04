@@ -1,0 +1,22 @@
+export default function Signal(signalDef, context) {
+  const {id, type, name, parent: originalParent} = signalDef;
+  const {environment} = context;
+  const parent = {...originalParent};
+
+  return {
+    id,
+    type,
+    name,
+    parent,
+    resolve,
+  };
+
+  function resolve(executionMessage) {
+    return {
+      id,
+      type,
+      name: name && environment.resolveExpression(name, executionMessage),
+      parent: {...parent},
+    };
+  }
+}

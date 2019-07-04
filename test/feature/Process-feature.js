@@ -1836,12 +1836,16 @@ Feature('Process', () => {
       assertMessage('activity.start', 'task');
     });
 
-    When('task completes execution', async () => {
+    When('task completes execution', () => {
       assertMessage('activity.execution.completed', 'task');
-      assertMessage('activity.end', 'task');
     });
 
-    Then('timer is discarded', async () => {
+    And('task ends', () => {
+      assertMessage('activity.end', 'task');
+      assertMessage('flow.pre-flight', 'toEnd');
+    });
+
+    And('timer is discarded', () => {
       assertMessage('activity.execution.discard', 'bound');
     });
 
@@ -1856,8 +1860,7 @@ Feature('Process', () => {
       assertMessage('activity.leave', 'end');
     });
 
-    When('task takes flow to end', () => {
-      assertMessage('flow.pre-flight', 'toEnd');
+    When('task leaves takes flow to end', () => {
       assertMessage('activity.leave', 'task');
       assertMessage('flow.take', 'toEnd');
     });

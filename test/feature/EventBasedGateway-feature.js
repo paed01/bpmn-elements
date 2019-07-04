@@ -26,12 +26,12 @@ Feature('EventBasedGateway', () => {
     });
 
     let signalApi;
-    And('signal event is waiting for event', async () => {
+    And('signal event is waiting for signal', async () => {
       signalApi = await wait;
     });
 
-    When('signal event signaled', async () => {
-      signalApi.signal();
+    When('process receives signal', async () => {
+      bp.signal(signalApi.content.signal);
     });
 
     Then('timer is discarded', async () => {
@@ -88,8 +88,8 @@ Feature('EventBasedGateway', () => {
       timerApi = await timer;
     });
 
-    And('signal event signaled', async () => {
-      signalApi.signal();
+    And('process is signaled', async () => {
+      bp.signal(signalApi.content.signal);
     });
 
     Then('timer is discarded', async () => {

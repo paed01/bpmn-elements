@@ -84,6 +84,7 @@ function Definition(context, options) {
     getProcessById,
     recover,
     resume,
+    signal,
     stop
   };
   const {
@@ -434,14 +435,20 @@ function Definition(context, options) {
     return child;
   }
 
-  function getPostponed() {
+  function getPostponed(...args) {
     if (!execution) return [];
-    return execution.getPostponed();
+    return execution.getPostponed(...args);
   }
 
   function getApi(message) {
     if (execution) return execution.getApi(message);
     return (0, _Api.DefinitionApi)(broker, message);
+  }
+
+  function signal(message) {
+    return getApi().signal(message, {
+      delegate: true
+    });
   }
 
   function activateRunConsumers() {

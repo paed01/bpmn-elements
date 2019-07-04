@@ -63,12 +63,6 @@ Object.defineProperty(exports, "Dummy", {
     return _Dummy.default;
   }
 });
-Object.defineProperty(exports, "Signal", {
-  enumerable: true,
-  get: function () {
-    return _Dummy.default;
-  }
-});
 Object.defineProperty(exports, "EndEvent", {
   enumerable: true,
   get: function () {
@@ -103,6 +97,12 @@ Object.defineProperty(exports, "IntermediateCatchEvent", {
   enumerable: true,
   get: function () {
     return _IntermediateCatchEvent.default;
+  }
+});
+Object.defineProperty(exports, "IntermediateThrowEvent", {
+  enumerable: true,
+  get: function () {
+    return _IntermediateThrowEvent.default;
   }
 });
 Object.defineProperty(exports, "InputOutputSpecification", {
@@ -157,6 +157,12 @@ Object.defineProperty(exports, "ServiceTask", {
   enumerable: true,
   get: function () {
     return _ServiceTask.default;
+  }
+});
+Object.defineProperty(exports, "Signal", {
+  enumerable: true,
+  get: function () {
+    return _Signal.default;
   }
 });
 Object.defineProperty(exports, "SignalEventDefinition", {
@@ -258,6 +264,8 @@ var _InclusiveGateway = _interopRequireDefault(require("./src/gateways/Inclusive
 
 var _IntermediateCatchEvent = _interopRequireDefault(require("./src/events/IntermediateCatchEvent"));
 
+var _IntermediateThrowEvent = _interopRequireDefault(require("./src/events/IntermediateThrowEvent"));
+
 var _InputOutputSpecification = _interopRequireDefault(require("./src/io/InputOutputSpecification"));
 
 var _MessageEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/MessageEventDefinition"));
@@ -273,6 +281,8 @@ var _SequenceFlow = _interopRequireDefault(require("./src/flows/SequenceFlow"));
 var _ServiceImplementation = _interopRequireDefault(require("./src/tasks/ServiceImplementation"));
 
 var _ServiceTask = _interopRequireDefault(require("./src/tasks/ServiceTask"));
+
+var _Signal = _interopRequireDefault(require("./src/activity/Signal"));
 
 var _SignalEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/SignalEventDefinition"));
 

@@ -1794,7 +1794,7 @@ describe('Activity', () => {
   });
 
   describe('attached to activity', () => {
-    it('starts run when inbound sequence flow is taken', () => {
+    it('starts run when attached to enters', () => {
       const attachedTo = {
         id: 'task',
         parent: {
@@ -1837,7 +1837,7 @@ describe('Activity', () => {
       activity.activate();
 
       const enter = activity.waitFor('enter');
-      attachedTo.broker.publish('event', 'activity.enter', {id: 'event'});
+      attachedTo.broker.publish('event', 'activity.enter', {id: attachedTo.id});
 
       return enter;
     });
@@ -2025,7 +2025,10 @@ describe('Activity', () => {
     });
 
     it('queues attached to starts if already running', () => {
-      const attachedTo = ActivityBroker();
+      const attachedTo = {
+        id: 'task',
+        broker: ActivityBroker(this).broker,
+      };
       const context = {
         environment: Environment({Logger}),
         getActivityById(id) {

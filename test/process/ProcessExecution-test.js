@@ -424,7 +424,7 @@ describe('Process execution', () => {
 
       expect(execution).to.have.property('completed', false);
 
-      activity2.broker.publish('event', 'activity.enter', {id: activity2.id, executionId: activity2.executionId, parent: {id: 'process1'}, inbound: [{id: sequenceflow.id, sequenceId}]});
+      activity2.broker.publish('event', 'activity.enter', {id: activity2.id, executionId: activity2.executionId, parent: {id: 'process1'}, inbound: [{id: sequenceflow.id, isSequenceFlow: true, sequenceId}]});
       activity2.broker.publish('event', 'activity.leave', {id: activity2.id, executionId: activity2.executionId, parent: {id: 'process1'}});
 
       expect(execution).to.have.property('completed', true);
@@ -1421,9 +1421,9 @@ function createProcess(override, step) {
   };
 
   const activities = [
-    StartEvent({id: 'start', parent: {id: 'process1'}}, context),
+    StartEvent({id: 'start', type: 'startEvent', parent: {id: 'process1'}}, context),
     SignalTask({id: 'task', type: 'signalTask', parent: {id: 'process1'}}, context),
-    EndEvent({id: 'end', parent: {id: 'process1'}}, context)
+    EndEvent({id: 'end', type: 'endEvent', parent: {id: 'process1'}}, context)
   ];
 
   return Process({

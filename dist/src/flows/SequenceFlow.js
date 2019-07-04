@@ -49,6 +49,7 @@ function SequenceFlow(flowDef, {
     sourceId,
     targetId,
     isDefault,
+    isSequenceFlow: true,
     environment,
 
     get counters() {

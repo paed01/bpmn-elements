@@ -2,11 +2,10 @@ import {ActivityError, BpmnError} from '../error/Errors';
 import {shiftParent} from '../messageHelper';
 
 export default function ErrorEventDefinition(activity, eventDefinition) {
-  const {id, broker, environment, attachedTo, getErrorById} = activity;
+  const {id, broker, environment, attachedTo, getErrorById, isThrowing} = activity;
   const {type = 'ErrorEventDefinition', behaviour = {}} = eventDefinition;
   const {debug} = environment.Logger(type.toLowerCase());
   const errorRef = behaviour.errorRef;
-  const isThrowing = !attachedTo;
 
   let errorListener;
 

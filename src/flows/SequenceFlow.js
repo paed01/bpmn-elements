@@ -25,6 +25,7 @@ export default function SequenceFlow(flowDef, {environment}) {
     sourceId,
     targetId,
     isDefault,
+    isSequenceFlow: true,
     environment,
     get counters() {
       return {...counters};

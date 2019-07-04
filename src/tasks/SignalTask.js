@@ -30,11 +30,11 @@ export function SignalTaskBehaviour(activity) {
 
     function onApiMessage(routingKey, message) {
       const messageType = message.properties.type;
+
       switch (messageType) {
         case 'stop':
           return broker.cancel(`_api-${executionId}`);
         case 'signal':
-
           broker.cancel(`_api-${executionId}`);
           return broker.publish('execution', 'execute.completed', {...content, output: message.content.message, state: 'signal'});
         case 'discard':

@@ -1049,19 +1049,11 @@ describe('ActivityExecution', () => {
         },
       });
 
-      // expect(messages).to.have.length(1);
-
       function Behaviour() {
         return {
           execute(executeMessage) {
             if (executeMessage.fields.routingKey !== 'execute.start') return;
-
             throw new Error('Shouldn´t execute');
-
-            // if (!executeMessage.content.isRootScope) return;
-
-            // broker.publish('execution', 'execute.preventcomplete', {...executeMessage.content, preventComplete: true});
-            // broker.publish('execution', 'execute.start', {...executeMessage.content, isRootScope: undefined, executionId: 'activity_2'});
           },
         };
       }

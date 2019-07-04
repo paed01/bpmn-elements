@@ -48,8 +48,8 @@ function Api(pfx, broker, sourceMessage, environment) {
     discard() {
       sendApiMessage('discard');
     },
-    signal(message) {
-      sendApiMessage('signal', {message});
+    signal(message, options) {
+      sendApiMessage('signal', {message}, options);
     },
     stop() {
       sendApiMessage('stop');
@@ -60,11 +60,11 @@ function Api(pfx, broker, sourceMessage, environment) {
     createMessage,
   };
 
-  function sendApiMessage(action, content) {
+  function sendApiMessage(action, content, options = {}) {
     let key = `${pfx}.${action}`;
     if (executionId) key += `.${executionId}`;
 
-    broker.publish('api', key, createMessage(content), {type: action});
+    broker.publish('api', key, createMessage(content), {...options, type: action});
   }
 
   function createMessage(content = {}) {
