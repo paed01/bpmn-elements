@@ -23,6 +23,7 @@ The following elements are tested and supported.
 - ExclusiveGateway
 - InclusiveGateway
 - IntermediateCatchEvent
+- IntermediateThrowEvent
 - IoSpecification
 - MessageEventDefinition
 - MessageFlow
@@ -32,6 +33,8 @@ The following elements are tested and supported.
 - ServiceImplementation: ServiceTask implementation attribute behaviour
 - [ServiceTask](/docs/ServiceTask.md)
   - SendTask: Same behaviour as ServiceTask
+- Signal
+- SignalEventDefinition
 - SignalTask
   - ManualTask
   - ReceiveTask

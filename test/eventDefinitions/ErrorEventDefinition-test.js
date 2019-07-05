@@ -559,6 +559,7 @@ describe('ErrorEventDefinition', () => {
         type: 'bpmn:EndEvent',
         broker: ActivityBroker(this).broker,
         environment,
+        isThrowing: true,
         getErrorById(id) {
           if (id !== 'Error_0') return;
           return bpmnError;

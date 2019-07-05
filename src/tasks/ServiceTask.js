@@ -8,7 +8,6 @@ export default function ServiceTask(activityDef, context) {
 export function ServiceTaskBehaviour(activity) {
   const {id, type, broker, logger, behaviour, environment, emitFatal} = activity;
   const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
-  const {debug} = environment.Logger(type.toLowerCase());
 
   const source = {
     id,
@@ -45,13 +44,13 @@ export function ServiceTaskBehaviour(activity) {
       if (message.properties.type === 'discard') {
         broker.cancel(`_api-${executionId}`);
         if (service && service.discard) service.discard(message);
-        debug(`<${content.executionId} (${id})> discarded`);
+        logger.debug(`<${content.executionId} (${id})> discarded`);
         return broker.publish('execution', 'execute.discard', {...executeMessage.content, state: 'discard'});
       }
       if (message.properties.type === 'stop') {
         broker.cancel(`_api-${executionId}`);
         if (service && service.stop) service.stop(message);
-        return debug(`<${content.executionId} (${id})> stopped`);
+        return logger.debug(`<${content.executionId} (${id})> stopped`);
       }
     }
   }

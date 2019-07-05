@@ -15,7 +15,8 @@ function ErrorEventDefinition(activity, eventDefinition) {
     broker,
     environment,
     attachedTo,
-    getErrorById
+    getErrorById,
+    isThrowing
   } = activity;
   const {
     type = 'ErrorEventDefinition',
@@ -25,7 +26,6 @@ function ErrorEventDefinition(activity, eventDefinition) {
     debug
   } = environment.Logger(type.toLowerCase());
   const errorRef = behaviour.errorRef;
-  const isThrowing = !attachedTo;
   let errorListener;
   const source = {
     type,

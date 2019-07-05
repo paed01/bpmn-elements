@@ -1,5 +1,6 @@
-import {cloneContent, cloneMessage, pushParent} from '../messageHelper';
 import {DefinitionApi} from '../Api';
+import {cloneContent, cloneMessage, pushParent} from '../messageHelper';
+import getPropertyValue from '../getPropertyValue';
 
 export default function DefinitionExecution(definition) {
   const {id, type, broker, logger, environment} = definition;
@@ -142,9 +143,9 @@ export default function DefinitionExecution(definition) {
     return definitionExecution;
   }
 
-  function getPostponed() {
+  function getPostponed(...args) {
     return processes.reduce((result, p) => {
-      result = result.concat(p.getPostponed());
+      result = result.concat(p.getPostponed(...args));
       return result;
     }, []);
   }
@@ -152,8 +153,11 @@ export default function DefinitionExecution(definition) {
   function activate() {
     processes.forEach((p) => {
       p.broker.subscribeTmp('message', 'message.outbound', onMessageOutbound, {noAck: true, consumerTag: '_definition-message-consumer'});
+      p.broker.subscribeTmp('event', 'activity.signal', onThrowSignal, {noAck: true, consumerTag: '_definition-signal-consumer', priority: 200});
       p.broker.subscribeTmp('event', '#', onEvent, {noAck: true, consumerTag: '_definition-activity-consumer', priority: 100});
     });
+
+    broker.subscribeTmp('api', '#', onApiMessage, {noAck: true, consumerTag: '_definition-api-consumer'});
 
     function onEvent(routingKey, originalMessage) {
       const message = cloneMessage(originalMessage);
@@ -175,9 +179,12 @@ export default function DefinitionExecution(definition) {
   }
 
   function deactivate() {
+    broker.cancel('_definition-api-consumer');
+
     processes.forEach((p) => {
       p.broker.cancel('_definition-message-consumer');
       p.broker.cancel('_definition-activity-consumer');
+      p.broker.cancel('_definition-signal-consumer');
     });
   }
 
@@ -267,11 +274,39 @@ export default function DefinitionExecution(definition) {
     const content = message.content;
     const {target, source} = content;
 
-    logger.debug(`<${executionId} ${id}> conveying message from <${source.processId}.${source.id}> to <${target.processId}.${target.id}>`);
+    logger.debug(`<${executionId} (${id})> conveying message from <${source.processId}.${source.id}> to <${target.processId}.${target.id}>`);
 
     const targetProcess = getProcessById(target.processId);
 
     targetProcess.sendMessage(content);
+  }
+
+  function onThrowSignal(routingKey, message) {
+    const content = message.content;
+    const signalMessage = message.content.message;
+    logger.debug(`<${executionId} (${id})> signal <${signalMessage.id}> received from <${content.parent.id}.${content.id}>. Delegating.`);
+
+    getApi().signal({...signalMessage}, {delegate: true});
+  }
+
+  function onApiMessage(routingKey, message) {
+    const messageType = message.properties.type;
+    if (id === message.content.id && messageType === 'signal') {
+      const signalId = getPropertyValue(message, 'content.message.id');
+      for (const bp of processes) {
+        if (bp.isRunning) continue;
+        if (bp.getStartActivities(signalId).length) {
+          logger.debug(`<${executionId} (${id})> start <${bp.id}>`);
+          bp.run();
+        }
+      }
+    }
+
+    if (message.properties.delegate) {
+      for (const bp of processes) {
+        bp.broker.publish('api', routingKey, cloneContent(message.content), message.properties);
+      }
+    }
   }
 
   function getProcessById(processId) {

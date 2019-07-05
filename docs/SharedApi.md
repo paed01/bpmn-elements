@@ -28,19 +28,23 @@ Api properties:
 
 ### `cancel()`
 
-Cancel run. Sends cancel message via element broker.
+Cancel run. Publishes cancel message via element broker on element broker `api` exchange.
 
 ### `discard()`
 
-Discard run. Sends discard message.
+Discard run. Publishes discard message on element broker `api` exchange.
 
-### `signal(message)`
+### `signal(message[, options])`
 
-Signal activity. Sends signal message.
+Signal activity. Publishes signal message on element broker `api` exchange.
+
+Arguments:
+- `message`: signal message
+- `options`: optional object with broker message options
 
 ### `stop()`
 
-Stop element run. Sends stop message.
+Stop element run. Publishes stop message on element broker `api` exchange.
 
 ### `resolveExpression(expression)`
 

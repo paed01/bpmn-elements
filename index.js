@@ -10,9 +10,11 @@ import DataObject from './src/io/EnvironmentDataObject';
 import Dummy from './src/activity/Dummy';
 import EndEvent from './src/events/EndEvent';
 import ErrorEventDefinition from './src/eventDefinitions/ErrorEventDefinition';
+import EventBasedGateway from './src/gateways/EventBasedGateway';
 import ExclusiveGateway from './src/gateways/ExclusiveGateway';
 import InclusiveGateway from './src/gateways/InclusiveGateway';
 import IntermediateCatchEvent from './src/events/IntermediateCatchEvent';
+import IntermediateThrowEvent from './src/events/IntermediateThrowEvent';
 import InputOutputSpecification from './src/io/InputOutputSpecification';
 import MessageEventDefinition from './src/eventDefinitions/MessageEventDefinition';
 import MessageFlow from './src/flows/MessageFlow';
@@ -21,6 +23,8 @@ import ScriptTask from './src/tasks/ScriptTask';
 import SequenceFlow from './src/flows/SequenceFlow';
 import ServiceImplementation from './src/tasks/ServiceImplementation';
 import ServiceTask from './src/tasks/ServiceTask';
+import Signal from './src/activity/Signal';
+import SignalEventDefinition from './src/eventDefinitions/SignalEventDefinition';
 import SignalTask from './src/tasks/SignalTask';
 import StartEvent from './src/events/StartEvent';
 import SubProcess from './src/tasks/SubProcess';
@@ -42,9 +46,11 @@ export {
   Dummy,
   EndEvent,
   ErrorEventDefinition,
+  EventBasedGateway,
   ExclusiveGateway,
   InclusiveGateway,
   IntermediateCatchEvent,
+  IntermediateThrowEvent,
   SignalTask as ManualTask,
   MessageEventDefinition,
   MessageFlow,
@@ -55,6 +61,8 @@ export {
   ServiceImplementation,
   ServiceTask as SendTask,
   ServiceTask,
+  Signal,
+  SignalEventDefinition,
   SignalTask,
   StartEvent,
   SubProcess,

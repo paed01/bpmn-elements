@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = EndEvent;
-exports.EndEventBehaviour = EndEventBehaviour;
+exports.default = IntermediateThrowEvent;
+exports.IntermediateThrowEventBehaviour = IntermediateThrowEventBehaviour;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 
@@ -14,13 +14,13 @@ var _messageHelper = require("../messageHelper");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function EndEvent(activityDef, context) {
-  return (0, _Activity.default)(EndEventBehaviour, { ...activityDef,
+function IntermediateThrowEvent(activityDef, context) {
+  return (0, _Activity.default)(IntermediateThrowEventBehaviour, { ...activityDef,
     isThrowing: true
   }, context);
 }
 
-function EndEventBehaviour(activity) {
+function IntermediateThrowEventBehaviour(activity) {
   const {
     id,
     type,

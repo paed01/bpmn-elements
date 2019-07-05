@@ -83,11 +83,13 @@ function Process(processDef, context) {
     getActivityById,
     getSequenceFlows,
     getPostponed,
+    getStartActivities,
     getState,
     recover,
     resume,
     run,
     sendMessage,
+    signal,
     stop
   };
   const {
@@ -198,6 +200,12 @@ function Process(processDef, context) {
   function getApi(message) {
     if (execution) return execution.getApi(message);
     return (0, _Api.ProcessApi)(broker, message);
+  }
+
+  function signal(message) {
+    return getApi().signal(message, {
+      delegate: true
+    });
   }
 
   function onRunMessage(routingKey, message) {
@@ -369,7 +377,18 @@ function Process(processDef, context) {
 
   function getActivities() {
     if (execution) return execution.getActivities();
-    return context.getActivities();
+    return context.getActivities(id);
+  }
+
+  function getStartActivities(withSignalRefId) {
+    return getActivities().filter(activity => {
+      if (!activity.isStart) return false;
+      if (!withSignalRefId) return true;
+      if (!activity.behaviour.eventDefinitions && !activity.behaviour.eventDefinitions) return false;
+      return activity.behaviour.eventDefinitions.some(ed => {
+        return ed.behaviour && ed.behaviour.signalRef && ed.behaviour.signalRef.id === withSignalRefId;
+      });
+    });
   }
 
   function getSequenceFlows() {
@@ -377,8 +396,8 @@ function Process(processDef, context) {
     return context.getSequenceFlows();
   }
 
-  function getPostponed() {
-    if (execution) return execution.getPostponed();
+  function getPostponed(...args) {
+    if (execution) return execution.getPostponed(...args);
     return [];
   }
 

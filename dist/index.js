@@ -75,6 +75,12 @@ Object.defineProperty(exports, "ErrorEventDefinition", {
     return _ErrorEventDefinition.default;
   }
 });
+Object.defineProperty(exports, "EventBasedGateway", {
+  enumerable: true,
+  get: function () {
+    return _EventBasedGateway.default;
+  }
+});
 Object.defineProperty(exports, "ExclusiveGateway", {
   enumerable: true,
   get: function () {
@@ -91,6 +97,12 @@ Object.defineProperty(exports, "IntermediateCatchEvent", {
   enumerable: true,
   get: function () {
     return _IntermediateCatchEvent.default;
+  }
+});
+Object.defineProperty(exports, "IntermediateThrowEvent", {
+  enumerable: true,
+  get: function () {
+    return _IntermediateThrowEvent.default;
   }
 });
 Object.defineProperty(exports, "InputOutputSpecification", {
@@ -145,6 +157,18 @@ Object.defineProperty(exports, "ServiceTask", {
   enumerable: true,
   get: function () {
     return _ServiceTask.default;
+  }
+});
+Object.defineProperty(exports, "Signal", {
+  enumerable: true,
+  get: function () {
+    return _Signal.default;
+  }
+});
+Object.defineProperty(exports, "SignalEventDefinition", {
+  enumerable: true,
+  get: function () {
+    return _SignalEventDefinition.default;
   }
 });
 Object.defineProperty(exports, "ManualTask", {
@@ -232,11 +256,15 @@ var _EndEvent = _interopRequireDefault(require("./src/events/EndEvent"));
 
 var _ErrorEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/ErrorEventDefinition"));
 
+var _EventBasedGateway = _interopRequireDefault(require("./src/gateways/EventBasedGateway"));
+
 var _ExclusiveGateway = _interopRequireDefault(require("./src/gateways/ExclusiveGateway"));
 
 var _InclusiveGateway = _interopRequireDefault(require("./src/gateways/InclusiveGateway"));
 
 var _IntermediateCatchEvent = _interopRequireDefault(require("./src/events/IntermediateCatchEvent"));
+
+var _IntermediateThrowEvent = _interopRequireDefault(require("./src/events/IntermediateThrowEvent"));
 
 var _InputOutputSpecification = _interopRequireDefault(require("./src/io/InputOutputSpecification"));
 
@@ -253,6 +281,10 @@ var _SequenceFlow = _interopRequireDefault(require("./src/flows/SequenceFlow"));
 var _ServiceImplementation = _interopRequireDefault(require("./src/tasks/ServiceImplementation"));
 
 var _ServiceTask = _interopRequireDefault(require("./src/tasks/ServiceTask"));
+
+var _Signal = _interopRequireDefault(require("./src/activity/Signal"));
+
+var _SignalEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/SignalEventDefinition"));
 
 var _SignalTask = _interopRequireDefault(require("./src/tasks/SignalTask"));
 

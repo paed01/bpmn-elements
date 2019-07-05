@@ -10,6 +10,8 @@ var _Activity = _interopRequireDefault(require("../activity/Activity"));
 
 var _EventDefinitionExecution = _interopRequireDefault(require("../eventDefinitions/EventDefinitionExecution"));
 
+var _messageHelper = require("../messageHelper");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function BoundaryEvent(activityDef, context) {
@@ -24,6 +26,7 @@ function BoundaryEventBehaviour(activity) {
     attachedTo,
     behaviour = {}
   } = activity;
+  const attachedToId = attachedTo.id;
   const cancelActivity = 'cancelActivity' in behaviour ? behaviour.cancelActivity : true;
   const {
     eventDefinitions
@@ -38,18 +41,19 @@ function BoundaryEventBehaviour(activity) {
   };
 
   function execute(executeMessage) {
-    const content = executeMessage.content;
+    const executeContent = (0, _messageHelper.cloneContent)(executeMessage.content);
     const {
       isRootScope,
       executionId,
       inbound
-    } = content;
+    } = executeContent;
     let completeContent;
 
     if (isRootScope) {
-      attachedTo.broker.subscribeTmp('event', 'activity.#', onAttachedComplete, {
+      attachedTo.broker.subscribeTmp('event', 'activity.leave', onAttachedLeave, {
         noAck: true,
-        consumerTag: `_bound-listener-${executionId}`
+        consumerTag: `_bound-listener-${executionId}`,
+        priority: 200
       });
       broker.subscribeOnce('api', `activity.stop.${executionId}`, stop, {
         noAck: true,
@@ -70,32 +74,25 @@ function BoundaryEventBehaviour(activity) {
         });
       }
 
-      completeContent = message.content;
+      completeContent = (0, _messageHelper.cloneContent)(message.content);
       const attachedToContent = inbound && inbound[0];
       attachedTo.getApi({
         content: attachedToContent
       }).discard();
     }
 
-    function onAttachedComplete(routingKey) {
-      switch (routingKey) {
-        case 'activity.end':
-          discard();
-          break;
-
-        case 'activity.leave':
-          if (!completeContent) return discard();
-          stop();
-          broker.publish('execution', 'execute.completed', { ...completeContent
-          });
-          break;
-      }
+    function onAttachedLeave(routingKey, attachMessage) {
+      if (attachMessage.content.id !== attachedToId) return;
+      if (!completeContent) return discard();
+      stop();
+      broker.publish('execution', 'execute.completed', { ...completeContent
+      });
     }
 
     function discard() {
       stop();
       if (eventDefinitionExecution) eventDefinitionExecution.discard();
-      return broker.publish('execution', 'execute.discard', { ...content,
+      return broker.publish('execution', 'execute.discard', { ...executeContent,
         state: 'discard'
       });
     }

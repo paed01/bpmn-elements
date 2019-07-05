@@ -1,5 +1,6 @@
 import Activity from '../activity/Activity';
 import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution';
+import {cloneContent} from '../messageHelper';
 
 export default function BoundaryEvent(activityDef, context) {
   return Activity(BoundaryEventBehaviour, activityDef, context);
@@ -7,6 +8,7 @@ export default function BoundaryEvent(activityDef, context) {
 
 export function BoundaryEventBehaviour(activity) {
   const {id, type = 'BoundaryEvent', broker, attachedTo, behaviour = {}} = activity;
+  const attachedToId = attachedTo.id;
 
   const cancelActivity = 'cancelActivity' in behaviour ? behaviour.cancelActivity : true;
   const {eventDefinitions} = behaviour;
@@ -21,13 +23,12 @@ export function BoundaryEventBehaviour(activity) {
   };
 
   function execute(executeMessage) {
-    const content = executeMessage.content;
-    const {isRootScope, executionId, inbound} = content;
+    const executeContent = cloneContent(executeMessage.content);
+    const {isRootScope, executionId, inbound} = executeContent;
 
     let completeContent;
-
     if (isRootScope) {
-      attachedTo.broker.subscribeTmp('event', 'activity.#', onAttachedComplete, {noAck: true, consumerTag: `_bound-listener-${executionId}`});
+      attachedTo.broker.subscribeTmp('event', 'activity.leave', onAttachedLeave, {noAck: true, consumerTag: `_bound-listener-${executionId}`, priority: 200});
       broker.subscribeOnce('api', `activity.stop.${executionId}`, stop, {noAck: true, consumerTag: `_api-stop-${executionId}`});
       broker.subscribeOnce('execution', 'execute.bound.completed', onCompleted, {noAck: true, consumerTag: `_execution-completed-${executionId}`});
     }
@@ -40,29 +41,23 @@ export function BoundaryEventBehaviour(activity) {
         return broker.publish('execution', 'execute.completed', {...message.content});
       }
 
-      completeContent = message.content;
+      completeContent = cloneContent(message.content);
 
       const attachedToContent = inbound && inbound[0];
       attachedTo.getApi({content: attachedToContent}).discard();
     }
 
-    function onAttachedComplete(routingKey) {
-      switch (routingKey) {
-        case 'activity.end':
-          discard();
-          break;
-        case 'activity.leave':
-          if (!completeContent) return discard();
-          stop();
-          broker.publish('execution', 'execute.completed', {...completeContent});
-          break;
-      }
+    function onAttachedLeave(routingKey, attachMessage) {
+      if (attachMessage.content.id !== attachedToId) return;
+      if (!completeContent) return discard();
+      stop();
+      broker.publish('execution', 'execute.completed', {...completeContent});
     }
 
     function discard() {
       stop();
       if (eventDefinitionExecution) eventDefinitionExecution.discard();
-      return broker.publish('execution', 'execute.discard', {...content, state: 'discard'});
+      return broker.publish('execution', 'execute.discard', {...executeContent, state: 'discard'});
     }
 
     function stop() {

@@ -35,7 +35,6 @@ function ProcessExecution(parentActivity, context) {
       executionId,
       stopped,
       activated,
-      apiConsumer,
       initMessage,
       completed = false;
   const processExecution = {
@@ -186,8 +185,9 @@ function ProcessExecution(parentActivity, context) {
   }
 
   function activate() {
-    apiConsumer = broker.subscribeTmp('api', '#', onApiMessage, {
-      noAck: true
+    broker.subscribeTmp('api', '#', onApiMessage, {
+      noAck: true,
+      consumerTag: `_process-api-consumer-${executionId}`
     });
     outboundMessageFlows.forEach(flow => {
       flow.broker.subscribeTmp('event', '#', onMessageFlowEvent, {
@@ -296,6 +296,7 @@ function ProcessExecution(parentActivity, context) {
         {
           if (content.inbound) {
             content.inbound.forEach(trigger => {
+              if (!trigger.isSequenceFlow) return;
               const msg = popPostponed(trigger);
               if (msg) msg.ack();
             });
@@ -388,6 +389,14 @@ function ProcessExecution(parentActivity, context) {
   }
 
   function onApiMessage(routingKey, message) {
+    if (message.properties.delegate) {
+      for (const child of children) {
+        child.broker.publish('api', routingKey, (0, _messageHelper.cloneContent)(message.content), message.properties);
+      }
+
+      return;
+    }
+
     if (message.content.id !== id) {
       const child = getActivityById(message.content.id);
       if (!child) return null;
@@ -397,7 +406,7 @@ function ProcessExecution(parentActivity, context) {
 
   function deactivate() {
     activated = false;
-    if (apiConsumer) apiConsumer.cancel();
+    broker.cancel(`_process-api-consumer-${executionId}`);
     children.forEach(activity => {
       activity.broker.cancel('_process-activity-consumer');
       activity.deactivate();
@@ -410,10 +419,15 @@ function ProcessExecution(parentActivity, context) {
     });
   }
 
-  function getPostponed() {
+  function getPostponed(filterFn) {
     return postponed.slice().reduce((result, p) => {
       const api = getApi(p);
-      if (api) result.push(api);
+
+      if (api) {
+        if (filterFn && !filterFn(api)) return result;
+        result.push(api);
+      }
+
       return result;
     }, []);
   }
