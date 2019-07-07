@@ -78,6 +78,7 @@ function Definition(context, options) {
     getApi,
     getState,
     getActivityById,
+    getElementById,
     getPostponed,
     getProcesses,
     getExecutableProcesses,
@@ -433,6 +434,10 @@ function Definition(context, options) {
     }
 
     return child;
+  }
+
+  function getElementById(elementId) {
+    return context.getActivityById(elementId);
   }
 
   function getPostponed(...args) {

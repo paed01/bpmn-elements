@@ -29,7 +29,7 @@ function getPropertyValue(inputContext, propertyPath, fnScope) {
 
 
     if (rest === iteratePropertyPath) return;
-    if (result === undefined) return;
+    if (result === undefined || result === null) return;
 
     const iterateNext = () => iterateProps(base, result, rest);
     iterateNext.getResult = () => {

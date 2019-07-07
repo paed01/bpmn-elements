@@ -2,7 +2,7 @@ import {ActivityApi} from '../Api';
 import {cloneContent, cloneMessage} from '../messageHelper';
 
 export default function ActivityExecution(activity, context) {
-  const {id, broker, logger, Behaviour} = activity;
+  const {id, broker, logger, isSubProcess, Behaviour} = activity;
   const postponed = [];
 
   let source, initMessage, completed = false, executionId;
@@ -28,7 +28,10 @@ export default function ActivityExecution(activity, context) {
   return executionApi;
 
   function getPostponed() {
-    return postponed.map((msg) => getApi(msg));
+    let apis = postponed.map((msg) => getApi(msg));
+    if (!isSubProcess || !source) return apis;
+    apis = apis.concat(source.getPostponed());
+    return apis;
   }
 
   function execute(executeMessage) {

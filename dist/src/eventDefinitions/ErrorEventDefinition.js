@@ -141,6 +141,7 @@ function ErrorEventDefinition(activity, eventDefinition) {
     broker.publish('execution', 'execute.error', { ...executeMessage.content,
       error
     }, {
+      bubbles: true,
       mandatory: true
     });
 

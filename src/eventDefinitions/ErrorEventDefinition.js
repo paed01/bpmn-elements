@@ -108,7 +108,7 @@ export default function ErrorEventDefinition(activity, eventDefinition) {
     const error = createError();
 
     debug(`<${id}> throwing error <${error.code || 'unknown'}>`);
-    broker.publish('execution', 'execute.error', {...executeMessage.content, error}, {mandatory: true});
+    broker.publish('execution', 'execute.error', {...executeMessage.content, error}, {bubbles: true, mandatory: true});
 
     function createError() {
       const message = `<${executionId} (${id})> ${type}`;

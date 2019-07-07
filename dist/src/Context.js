@@ -49,13 +49,14 @@ function ContextInstance(definitionContext, environment) {
     getErrorById,
     getExecutableProcesses,
     getDataObjectById,
+    getInboundSequenceFlows,
     getMessageFlows,
+    getOutboundSequenceFlows,
     getProcessById,
     getProcesses,
     getSequenceFlowById,
     getSequenceFlows,
-    getInboundSequenceFlows,
-    getOutboundSequenceFlows,
+    getStartActivities,
     loadExtensions
   };
   const extensionsMapper = (0, _ExtensionsMapper.default)(context);
@@ -159,6 +160,22 @@ function ContextInstance(definitionContext, environment) {
     if (!dataObjectDef) return;
     dataObject = dataObjectRefs[dataObjectDef.id] = dataObjectDef.Behaviour(dataObjectDef, context);
     return dataObject;
+  }
+
+  function getStartActivities(filterOptions, scopeId) {
+    const {
+      referenceId,
+      referenceType = 'unknown'
+    } = filterOptions || {};
+    return getActivities().filter(activity => {
+      if (!activity.isStart) return false;
+      if (scopeId && activity.parent.id !== scopeId) return false;
+      if (!filterOptions) return true;
+      if (!activity.behaviour.eventDefinitions && !activity.behaviour.eventDefinitions) return false;
+      return activity.eventDefinitions.some(ed => {
+        return ed.reference && ed.reference.id === referenceId && ed.reference.referenceType === referenceType;
+      });
+    });
   }
 
   function loadExtensions(activity) {

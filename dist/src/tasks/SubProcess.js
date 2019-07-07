@@ -15,9 +15,17 @@ var _messageHelper = require("../messageHelper");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function SubProcess(activityDef, context) {
-  return (0, _Activity.default)(SubProcessBehaviour, { ...activityDef,
-    isSubProcess: true
+  const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
+  const subProcess = (0, _Activity.default)(SubProcessBehaviour, { ...activityDef,
+    isSubProcess: true,
+    triggeredByEvent
   }, context);
+
+  subProcess.getStartActivities = function getStartActivities(filterOptions) {
+    return context.getStartActivities(filterOptions, activityDef.id);
+  };
+
+  return subProcess;
 }
 
 function SubProcessBehaviour(activity, context) {

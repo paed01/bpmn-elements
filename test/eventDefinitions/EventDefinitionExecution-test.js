@@ -119,12 +119,8 @@ describe('EventDefinitionExecution', () => {
     let executeMessage;
     const execution = EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
-      Behaviour() {
-        return {
-          execute(msg) {
-            executeMessage = msg;
-          },
-        };
+      execute(msg) {
+        executeMessage = msg;
       },
     }]);
 
@@ -161,10 +157,10 @@ describe('EventDefinitionExecution', () => {
     const event = getActivity();
     const execution = EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
-      Behaviour() {},
+      execute() {},
     }, {
       type: 'bpmn:TimerEventDefinition',
-      Behaviour() {},
+      execute() {},
     }]);
 
     const messages = [];
@@ -208,7 +204,7 @@ describe('EventDefinitionExecution', () => {
     const event = getActivity();
     const execution = EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
-      Behaviour() {},
+      execute() {},
     }]);
 
     let completeMessage;
@@ -248,7 +244,7 @@ describe('EventDefinitionExecution', () => {
     const event = getActivity();
     const execution = EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
-      Behaviour() {},
+      execute() {},
     }]);
 
     let completeMessage;
@@ -288,10 +284,10 @@ describe('EventDefinitionExecution', () => {
     const event = getActivity();
     const execution = EventDefinitionExecution(event, [{
       type: 'bpmn:TimerEventDefinition',
-      Behaviour() {},
+      execute() {},
     }, {
       type: 'bpmn:MessageEventDefinition',
-      Behaviour() {},
+      execute() {},
     }]);
 
     let completeMessage;
@@ -332,27 +328,19 @@ describe('EventDefinitionExecution', () => {
 
     const execution = EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
-      Behaviour({broker}) {
-        return {
-          execute(executeMessage) {
-            return broker.publish('execution', 'execute.completed', {
-              ...executeMessage.content,
-              output: 1,
-            });
-          },
-        };
+      execute(executeMessage) {
+        return event.broker.publish('execution', 'execute.completed', {
+          ...executeMessage.content,
+          output: 1,
+        });
       },
     }, {
       type: 'bpmn:MessageEventDefinition',
-      Behaviour({broker}) {
-        return {
-          execute(executeMessage) {
-            return broker.publish('execution', 'execute.completed', {
-              ...executeMessage.content,
-              output: 2,
-            });
-          },
-        };
+      execute(executeMessage) {
+        return event.broker.publish('execution', 'execute.completed', {
+          ...executeMessage.content,
+          output: 2,
+        });
       },
     }]);
 
@@ -383,15 +371,11 @@ describe('EventDefinitionExecution', () => {
 
     const execution = EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
-      Behaviour({broker}) {
-        return {
-          execute(executeMessage) {
-            return broker.publish('execution', 'execute.completed', {
-              ...executeMessage.content,
-              output: 1,
-            });
-          },
-        };
+      execute(executeMessage) {
+        return event.broker.publish('execution', 'execute.completed', {
+          ...executeMessage.content,
+          output: 1,
+        });
       },
     }]);
 
@@ -421,12 +405,8 @@ describe('EventDefinitionExecution', () => {
     let executeMessage;
     const execution = EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
-      Behaviour() {
-        return {
-          execute(msg) {
-            executeMessage = msg;
-          },
-        };
+      execute(msg) {
+        executeMessage = msg;
       },
     }]);
 
@@ -466,12 +446,8 @@ describe('EventDefinitionExecution', () => {
     let executeMessage;
     const execution = EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
-      Behaviour() {
-        return {
-          execute(msg) {
-            executeMessage = msg;
-          },
-        };
+      execute(msg) {
+        executeMessage = msg;
       },
     }]);
 
@@ -508,11 +484,7 @@ describe('EventDefinitionExecution', () => {
     const event = getActivity();
     const execution = EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
-      Behaviour() {
-        return {
-          execute() {},
-        };
-      },
+      execute() {},
     }]);
 
     let completeMessage;
@@ -562,11 +534,7 @@ describe('EventDefinitionExecution', () => {
     const event = getActivity();
     const execution = EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
-      Behaviour() {
-        return {
-          execute() {},
-        };
-      },
+      execute() {},
     }]);
 
     expect(event.broker.getExchange('execution')).to.have.property('bindingCount', 1);
@@ -596,12 +564,8 @@ describe('EventDefinitionExecution', () => {
     const event = getActivity();
     const execution = EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
-      Behaviour({broker}) {
-        return {
-          execute({content}) {
-            broker.publish('execution', 'execute.completed', {...content});
-          },
-        };
+      execute({content}) {
+        event.broker.publish('execution', 'execute.completed', {...content});
       },
     }], 'execute.custom');
 

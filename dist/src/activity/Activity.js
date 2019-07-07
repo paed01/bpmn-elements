@@ -28,6 +28,7 @@ function Activity(Behaviour, activityDef, context) {
     behaviour = {},
     isParallelGateway,
     isSubProcess,
+    triggeredByEvent,
     isThrowing
   } = activityDef;
   const parent = (0, _messageHelper.cloneParent)(originalParent);
@@ -42,7 +43,8 @@ function Activity(Behaviour, activityDef, context) {
   } = environment.settings;
   const {
     attachedTo: attachedToRef,
-    ioSpecification: ioSpecificationDef
+    ioSpecification: ioSpecificationDef,
+    eventDefinitions
   } = behaviour;
   let attachedToActivity, attachedTo;
 
@@ -53,7 +55,7 @@ function Activity(Behaviour, activityDef, context) {
 
   const inboundSequenceFlows = getInboundSequenceFlows(id) || [];
   const outboundSequenceFlows = getOutboundSequenceFlows(id) || [];
-  const isStart = inboundSequenceFlows.length === 0 && !attachedTo;
+  const isStart = inboundSequenceFlows.length === 0 && !attachedTo && !triggeredByEvent;
   const isParallelJoin = inboundSequenceFlows.length > 1 && isParallelGateway;
   const isMultiInstance = !!behaviour.loopCharacteristics;
   let execution,
@@ -77,8 +79,10 @@ function Activity(Behaviour, activityDef, context) {
     isStart,
     isSubProcess,
     isThrowing,
+    triggeredByEvent,
     parent: (0, _messageHelper.cloneParent)(parent),
-    behaviour: { ...behaviour
+    behaviour: { ...behaviour,
+      eventDefinitions
     },
     attachedTo: attachedToActivity,
     environment,
@@ -164,6 +168,11 @@ function Activity(Behaviour, activityDef, context) {
     get: () => extensions
   });
   const ioSpecification = ioSpecificationDef && ioSpecificationDef.Behaviour(activityApi, ioSpecificationDef, context);
+  const loaedEventDefinitions = eventDefinitions && eventDefinitions.map(ed => ed.Behaviour(activityApi, ed, context));
+  Object.defineProperty(activityApi, 'eventDefinitions', {
+    enumerable: true,
+    get: () => loaedEventDefinitions
+  });
   return activityApi;
 
   function init() {

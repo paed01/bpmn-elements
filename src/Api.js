@@ -29,6 +29,7 @@ function Api(pfx, broker, sourceMessage, environment) {
   const apiMessage = cloneMessage(sourceMessage);
   const apiContent = apiMessage.content;
   const executionId = apiContent.executionId;
+  const owner = broker.owner;
   environment = environment || broker.owner.environment;
 
   return {
@@ -40,7 +41,7 @@ function Api(pfx, broker, sourceMessage, environment) {
     content: apiContent,
     messageProperties: apiMessage.properties,
     get owner() {
-      return broker.owner;
+      return owner;
     },
     cancel() {
       sendApiMessage('cancel');
@@ -57,7 +58,9 @@ function Api(pfx, broker, sourceMessage, environment) {
     resolveExpression(expression) {
       return environment.resolveExpression(expression, apiMessage, broker.owner);
     },
+    sendApiMessage,
     createMessage,
+    getPostponed,
   };
 
   function sendApiMessage(action, content, options = {}) {
@@ -65,6 +68,12 @@ function Api(pfx, broker, sourceMessage, environment) {
     if (executionId) key += `.${executionId}`;
 
     broker.publish('api', key, createMessage(content), {...options, type: action});
+  }
+
+  function getPostponed(...args) {
+    if (owner.getPostponed) return owner.getPostponed(...args);
+    if (owner.isSubProcess && owner.execution) return owner.execution.getPostponed(...args);
+    return [];
   }
 
   function createMessage(content = {}) {

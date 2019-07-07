@@ -194,7 +194,7 @@ function DefinitionExecution(definition) {
         noAck: true,
         consumerTag: '_definition-message-consumer'
       });
-      p.broker.subscribeTmp('event', 'activity.signal', onThrowSignal, {
+      p.broker.subscribeTmp('event', 'activity.signal', onDelegateMessage, {
         noAck: true,
         consumerTag: '_definition-signal-consumer',
         priority: 200
@@ -346,26 +346,40 @@ function DefinitionExecution(definition) {
     targetProcess.sendMessage(content);
   }
 
-  function onThrowSignal(routingKey, message) {
-    const content = message.content;
-    const signalMessage = message.content.message;
-    logger.debug(`<${executionId} (${id})> signal <${signalMessage.id}> received from <${content.parent.id}.${content.id}>. Delegating.`);
-    getApi().signal({ ...signalMessage
+  function onDelegateMessage(routingKey, executeMessage) {
+    const content = executeMessage.content;
+    const messageType = executeMessage.properties.type;
+    const delegateMessage = executeMessage.content.message;
+    const reference = definition.getElementById(delegateMessage.id);
+    const message = reference && reference.resolve(executeMessage);
+    logger.debug(`<${executionId} (${id})>`, reference ? `${messageType} <${delegateMessage.id}>` : `anonymous ${messageType}`, `event received from <${content.parent.id}.${content.id}>. Delegating.`);
+    getApi().sendApiMessage(messageType, {
+      message
     }, {
-      delegate: true
+      delegate: true,
+      type: messageType
+    });
+    broker.publish('event', `definition.${messageType}`, createMessage({
+      message: message && (0, _messageHelper.cloneContent)(message)
+    }), {
+      type: messageType
     });
   }
 
   function onApiMessage(routingKey, message) {
     const messageType = message.properties.type;
+    const delegate = message.properties.delegate;
 
-    if (id === message.content.id && messageType === 'signal') {
-      const signalId = (0, _getPropertyValue.default)(message, 'content.message.id');
+    if (delegate && id === message.content.id) {
+      const referenceId = (0, _getPropertyValue.default)(message, 'content.message.id');
 
       for (const bp of processes) {
         if (bp.isRunning) continue;
 
-        if (bp.getStartActivities(signalId).length) {
+        if (bp.getStartActivities({
+          referenceId,
+          referenceType: messageType
+        }).length) {
           logger.debug(`<${executionId} (${id})> start <${bp.id}>`);
           bp.run();
         }

@@ -380,15 +380,16 @@ function Process(processDef, context) {
     return context.getActivities(id);
   }
 
-  function getStartActivities(withSignalRefId) {
-    return getActivities().filter(activity => {
-      if (!activity.isStart) return false;
-      if (!withSignalRefId) return true;
-      if (!activity.behaviour.eventDefinitions && !activity.behaviour.eventDefinitions) return false;
-      return activity.behaviour.eventDefinitions.some(ed => {
-        return ed.behaviour && ed.behaviour.signalRef && ed.behaviour.signalRef.id === withSignalRefId;
-      });
-    });
+  function getStartActivities(filterOptions) {
+    return context.getStartActivities(filterOptions, id); // const {referenceId, referenceType = 'unknown'} = filterOptions || {};
+    // return getActivities().filter((activity) => {
+    //   if (!activity.isStart) return false;
+    //   if (!filterOptions) return true;
+    //   if (!activity.behaviour.eventDefinitions && !activity.behaviour.eventDefinitions) return false;
+    //   return activity.eventDefinitions.some((ed) => {
+    //     return ed.reference && ed.reference.id === referenceId && ed.reference.referenceType === referenceType;
+    //   });
+    // });
   }
 
   function getSequenceFlows() {

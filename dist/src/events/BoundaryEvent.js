@@ -24,13 +24,11 @@ function BoundaryEventBehaviour(activity) {
     type = 'BoundaryEvent',
     broker,
     attachedTo,
-    behaviour = {}
+    behaviour = {},
+    eventDefinitions
   } = activity;
   const attachedToId = attachedTo.id;
   const cancelActivity = 'cancelActivity' in behaviour ? behaviour.cancelActivity : true;
-  const {
-    eventDefinitions
-  } = behaviour;
   const eventDefinitionExecution = eventDefinitions && (0, _EventDefinitionExecution.default)(activity, eventDefinitions, 'execute.bound.completed');
   return {
     id,

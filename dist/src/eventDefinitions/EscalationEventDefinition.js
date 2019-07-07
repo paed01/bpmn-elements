@@ -3,15 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = SignalEventDefinition;
+exports.default = EscalationEventDefinition;
 
 var _messageHelper = require("../messageHelper");
 
-var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function SignalEventDefinition(activity, eventDefinition) {
+function EscalationEventDefinition(activity, eventDefinition) {
   const {
     id,
     broker,
@@ -25,12 +21,14 @@ function SignalEventDefinition(activity, eventDefinition) {
   const {
     debug
   } = environment.Logger(type.toLowerCase());
-  const reference = behaviour.signalRef || {};
+  const reference = behaviour.escalationRef || {
+    name: 'anonymous'
+  };
   const source = {
     id,
     type,
     reference: { ...reference,
-      referenceType: 'signal'
+      referenceType: 'escalate'
     },
     execute: isThrowing ? executeThrow : executeCatch
   };
@@ -45,29 +43,42 @@ function SignalEventDefinition(activity, eventDefinition) {
     } = messageContent;
     const parentExecutionId = parent && parent.executionId;
     if (completed) return;
-    broker.subscribeTmp('api', '*.signal.#', onSignalApiMessage, {
+    broker.subscribeTmp('api', '*.escalate.#', onEscalationApiMessage, {
       noAck: true,
-      consumerTag: `_api-signal-${executionId}`
+      consumerTag: `_onescalate-${executionId}`,
+      priority: 200
     });
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
       noAck: true,
       consumerTag: `_api-${executionId}`
     });
-    const signalMessage = getSignal(executeMessage);
-    debug(`<${executionId} (${id})>`, reference.id ? `waiting for signal <${reference.id}> with name: ${signalMessage.name}` : 'wait for anonymous signal event');
+    const escalationMessage = getEscalation(executeMessage);
+    debug(`<${executionId} (${id})>`, reference.id ? `waiting for escalation <${reference.id}> with name: ${escalationMessage.name}` : 'wait for anonymous escalation event');
     broker.publish('event', 'activity.wait', { ...messageContent,
       executionId: parentExecutionId,
       parent: (0, _messageHelper.shiftParent)(parent),
-      signal: { ...signalMessage
+      escalation: { ...escalationMessage
       }
     });
 
-    function onSignalApiMessage(routingKey, message) {
-      if ((0, _getPropertyValue.default)(message, 'content.message.id') !== signalMessage.id) return;
+    function onEscalationApiMessage(routingKey, message) {
+      const output = message.content.message;
+      if (output && output.id !== escalationMessage.id) return;
       completed = true;
       stop();
-      return signal(routingKey, {
-        message: message.content.message
+      debug(`<${executionId} (${id})> catch escalated`, reference.id ? `<${reference.id}> with name: ${escalationMessage.name}` : 'anonymous event');
+      broker.publish('event', 'activity.catch', { ...messageContent,
+        message: { ...output
+        },
+        executionId: parentExecutionId,
+        parent: (0, _messageHelper.shiftParent)(executeMessage.content.parent)
+      }, {
+        type: 'catch',
+        bubbles: true
+      });
+      return broker.publish('execution', 'execute.completed', { ...messageContent,
+        output,
+        state: 'catch'
       });
     }
 
@@ -75,9 +86,9 @@ function SignalEventDefinition(activity, eventDefinition) {
       const messageType = message.properties.type;
 
       switch (messageType) {
-        case 'signal':
+        case 'escalate':
           {
-            return onSignalApiMessage(routingKey, message);
+            return onEscalationApiMessage(routingKey, message);
           }
 
         case 'discard':
@@ -96,20 +107,9 @@ function SignalEventDefinition(activity, eventDefinition) {
       }
     }
 
-    function signal(_, {
-      message
-    }) {
-      completed = true;
-      debug(`<${executionId} (${id})>`, reference.id ? `signaled with <${reference.id}> named ${message.name}` : 'signaled with anaonymous signal');
-      return broker.publish('execution', 'execute.completed', { ...messageContent,
-        output: message,
-        state: 'signal'
-      });
-    }
-
     function stop() {
       broker.cancel(`_api-${executionId}`);
-      broker.cancel(`_api-signal-${executionId}`);
+      broker.cancel(`_onescalate-${executionId}`);
     }
   }
 
@@ -120,24 +120,23 @@ function SignalEventDefinition(activity, eventDefinition) {
       parent
     } = messageContent;
     const parentExecutionId = parent && parent.executionId;
-    const signalMessage = getSignal(executeMessage);
-    debug(`<${executionId} (${id})> throw signal <${reference.id}> named ${signalMessage.name}`);
-    debug(`<${executionId} (${id})>`, reference.id ? `throw signal <${reference.id}> with name: ${signalMessage.name}` : 'throw anonymous signal');
-    broker.publish('event', 'activity.signal', { ...(0, _messageHelper.cloneContent)(messageContent),
+    const escalationMessage = getEscalation(executeMessage);
+    debug(`<${executionId} (${id})> escalate`, reference.id ? `<${reference.id}> with name: ${escalationMessage.name}` : 'anonymous event');
+    broker.publish('event', 'activity.escalate', { ...(0, _messageHelper.cloneContent)(messageContent),
       executionId: parentExecutionId,
       parent: (0, _messageHelper.shiftParent)(parent),
-      message: { ...signalMessage
+      message: { ...escalationMessage
       },
       state: 'throw'
     }, {
-      type: 'signal',
-      bubbles: true
+      type: 'escalate',
+      delegate: true
     });
     return broker.publish('execution', 'execute.completed', { ...messageContent
     });
   }
 
-  function getSignal(message) {
+  function getEscalation(message) {
     const result = { ...reference
     };
     if (result.name) result.name = environment.resolveExpression(reference.name, message);

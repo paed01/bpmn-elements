@@ -1,5 +1,6 @@
 import Activity from './src/activity/Activity';
 import Environment from './src/Environment';
+import Escalation from './src/activity/Escalation';
 import Context from './src/Context';
 import Definition from './src/definition/Definition';
 import Process from './src/process/Process';
@@ -10,6 +11,7 @@ import DataObject from './src/io/EnvironmentDataObject';
 import Dummy from './src/activity/Dummy';
 import EndEvent from './src/events/EndEvent';
 import ErrorEventDefinition from './src/eventDefinitions/ErrorEventDefinition';
+import EscalationEventDefinition from './src/eventDefinitions/EscalationEventDefinition';
 import EventBasedGateway from './src/gateways/EventBasedGateway';
 import ExclusiveGateway from './src/gateways/ExclusiveGateway';
 import InclusiveGateway from './src/gateways/InclusiveGateway';
@@ -46,6 +48,8 @@ export {
   Dummy,
   EndEvent,
   ErrorEventDefinition,
+  Escalation,
+  EscalationEventDefinition,
   EventBasedGateway,
   ExclusiveGateway,
   InclusiveGateway,

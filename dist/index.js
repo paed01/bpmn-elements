@@ -15,6 +15,12 @@ Object.defineProperty(exports, "Environment", {
     return _Environment.default;
   }
 });
+Object.defineProperty(exports, "Escalation", {
+  enumerable: true,
+  get: function () {
+    return _Escalation.default;
+  }
+});
 Object.defineProperty(exports, "Context", {
   enumerable: true,
   get: function () {
@@ -73,6 +79,12 @@ Object.defineProperty(exports, "ErrorEventDefinition", {
   enumerable: true,
   get: function () {
     return _ErrorEventDefinition.default;
+  }
+});
+Object.defineProperty(exports, "EscalationEventDefinition", {
+  enumerable: true,
+  get: function () {
+    return _EscalationEventDefinition.default;
   }
 });
 Object.defineProperty(exports, "EventBasedGateway", {
@@ -236,6 +248,8 @@ var _Activity = _interopRequireDefault(require("./src/activity/Activity"));
 
 var _Environment = _interopRequireDefault(require("./src/Environment"));
 
+var _Escalation = _interopRequireDefault(require("./src/activity/Escalation"));
+
 var _Context = _interopRequireDefault(require("./src/Context"));
 
 var _Definition = _interopRequireDefault(require("./src/definition/Definition"));
@@ -255,6 +269,8 @@ var _Dummy = _interopRequireDefault(require("./src/activity/Dummy"));
 var _EndEvent = _interopRequireDefault(require("./src/events/EndEvent"));
 
 var _ErrorEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/ErrorEventDefinition"));
+
+var _EscalationEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/EscalationEventDefinition"));
 
 var _EventBasedGateway = _interopRequireDefault(require("./src/gateways/EventBasedGateway"));
 

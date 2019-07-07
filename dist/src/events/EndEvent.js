@@ -25,11 +25,8 @@ function EndEventBehaviour(activity) {
     id,
     type,
     broker,
-    behaviour = {}
-  } = activity;
-  const {
     eventDefinitions
-  } = behaviour;
+  } = activity;
   const eventDefinitionExecution = eventDefinitions && (0, _EventDefinitionExecution.default)(activity, eventDefinitions);
   const source = {
     id,

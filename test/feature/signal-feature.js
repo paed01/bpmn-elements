@@ -156,6 +156,67 @@ Feature('Signals', () => {
       return end;
     });
   });
+
+  Scenario('anonymous signal', () => {
+    let definition;
+    Given('anonymous signal process, anonymous signal catch start process, anonymous escalation process', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="escalateProcess" isExecutable="true">
+          <intermediateThrowEvent id="escalate">
+            <signalEventDefinition />
+          </intermediateThrowEvent>
+        </process>
+        <process id="managerProcess">
+          <startEvent id="wakeManager">
+            <signalEventDefinition />
+          </startEvent>
+        </process>
+        <process id="bossProcess">
+          <startEvent id="wakeBoss">
+            <signalEventDefinition signalRef="BossSignal" />
+          </startEvent>
+        </process>
+        <process id="escalationProcess">
+          <startEvent id="startWithAnonymousSignal">
+            <escalationEventDefinition />
+          </startEvent>
+        </process>
+        <escalation id="BossSignal" />
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    let end;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    let escalateProcess, managerProcess, bossProcess, escalationProcess;
+    Then('run completes', async () => {
+      await end;
+      [escalateProcess, managerProcess, bossProcess, escalationProcess] = definition.getProcesses();
+    });
+
+    And('escalate process completed', () => {
+      expect(escalateProcess.counters).to.have.property('completed', 1);
+    });
+
+    And('manger process completed', () => {
+      expect(managerProcess.counters).to.have.property('completed', 1);
+    });
+
+    And('the boss is not bothered', () => {
+      expect(bossProcess.counters).to.have.property('completed', 0);
+    });
+
+    And('the escalation process is not touched', () => {
+      expect(escalationProcess.counters).to.have.property('completed', 0);
+    });
+  });
 });
 
 async function prepareSource() {

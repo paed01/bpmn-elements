@@ -7,8 +7,7 @@ export default function IntermediateThrowEvent(activityDef, context) {
 }
 
 export function IntermediateThrowEventBehaviour(activity) {
-  const {id, type, broker, behaviour = {}} = activity;
-  const {eventDefinitions} = behaviour;
+  const {id, type, broker, eventDefinitions} = activity;
   const eventDefinitionExecution = eventDefinitions && EventDefinitionExecution(activity, eventDefinitions);
 
   const source = {

@@ -3,7 +3,14 @@ import ProcessExecution from '../process/ProcessExecution';
 import {cloneContent} from '../messageHelper';
 
 export default function SubProcess(activityDef, context) {
-  return Activity(SubProcessBehaviour, {...activityDef, isSubProcess: true}, context);
+  const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
+  const subProcess = Activity(SubProcessBehaviour, {...activityDef, isSubProcess: true, triggeredByEvent}, context);
+
+  subProcess.getStartActivities = function getStartActivities(filterOptions) {
+    return context.getStartActivities(filterOptions, activityDef.id);
+  };
+
+  return subProcess;
 }
 
 export function SubProcessBehaviour(activity, context) {

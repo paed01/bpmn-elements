@@ -55,6 +55,7 @@ export function Definition(context, options) {
     getApi,
     getState,
     getActivityById,
+    getElementById,
     getPostponed,
     getProcesses,
     getExecutableProcesses,
@@ -372,6 +373,10 @@ export function Definition(context, options) {
       if (child) return child;
     }
     return child;
+  }
+
+  function getElementById(elementId) {
+    return context.getActivityById(elementId);
   }
 
   function getPostponed(...args) {

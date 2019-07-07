@@ -10,6 +10,7 @@ export default function ProcessExecution(parentActivity, context) {
   const outboundMessageFlows = context.getMessageFlows(id) || [];
 
   const startActivities = [];
+  const triggeredByEventActivities = [];
 
   const postponed = [];
   const exchangeName = isSubProcess ? 'subprocess-execution' : 'execution';
@@ -163,18 +164,21 @@ export default function ProcessExecution(parentActivity, context) {
     });
 
     children.forEach((activity) => {
-      activity.activate();
+      activity.activate(processExecution);
       activity.broker.subscribeTmp('event', '#', onActivityEvent, {noAck: true, consumerTag: '_process-activity-consumer', priority: 100});
       if (activity.isStart) startActivities.push(activity);
+      if (activity.triggeredByEvent) triggeredByEventActivities.push(activity);
     });
 
     activated = true;
 
     function onActivityEvent(routingKey, activityMessage) {
       const message = cloneMessage(activityMessage);
+      if (message.fields.redelivered && message.properties.persistent === false) return;
+
       const content = message.content;
       const parent = content.parent = content.parent || {};
-      if (message.fields.redelivered && message.properties.persistent === false) return;
+      let delegate = message.properties.delegate;
 
       const isDirectChild = content.parent.id === id;
       if (isDirectChild) {
@@ -183,7 +187,9 @@ export default function ProcessExecution(parentActivity, context) {
         content.parent = pushParent(parent, {id, type, executionId});
       }
 
-      broker.publish('event', routingKey, content, {...message.properties, mandatory: false});
+      if (delegate) delegate = onDelegateEvent(message);
+
+      broker.publish('event', routingKey, content, {...message.properties, delegate, mandatory: false});
       if (!isDirectChild) return;
 
       if (routingKey === 'process.terminate') {
@@ -192,6 +198,25 @@ export default function ProcessExecution(parentActivity, context) {
 
       activityQ.queueMessage(message.fields, cloneContent(content), {persistent: true, ...message.properties});
     }
+  }
+
+  function onDelegateEvent(message) {
+    const eventType = message.properties.type;
+    let delegate = true;
+
+    const content = message.content;
+    logger.debug(`<${executionId} (${id})> delegate`, eventType, content.message && content.message.id ? `event with id <${content.message.id}>` : 'anonymous event');
+
+    triggeredByEventActivities.forEach((activity) => {
+      if (activity.getStartActivities({referenceId: content.message && content.message.id, referenceType: eventType}).length) {
+        delegate = false;
+        activity.run(content.message);
+      }
+    });
+
+    getApi().sendApiMessage('escalate', content, {delegate: true});
+
+    return delegate;
   }
 
   function onMessageFlowEvent(routingKey, message) {
@@ -238,7 +263,7 @@ export default function ProcessExecution(parentActivity, context) {
       }
       case 'flow.error':
       case 'activity.error': {
-        if (isErrorCaught()) {
+        if (isEventCaught()) {
           logger.debug(`<${executionId} (${id})> error was caught`);
           break;
         }
@@ -306,7 +331,7 @@ export default function ProcessExecution(parentActivity, context) {
       }, {type: 'stopped', persistent: false});
     }
 
-    function isErrorCaught() {
+    function isEventCaught() {
       return postponed.find((msg) => {
         if (msg.fields.routingKey !== 'activity.catch') return;
         return content.error.properties && content.error.properties.messageId === msg.content.error.properties.messageId;

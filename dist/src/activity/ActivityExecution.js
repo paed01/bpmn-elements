@@ -14,6 +14,7 @@ function ActivityExecution(activity, context) {
     id,
     broker,
     logger,
+    isSubProcess,
     Behaviour
   } = activity;
   const postponed = [];
@@ -45,7 +46,10 @@ function ActivityExecution(activity, context) {
   return executionApi;
 
   function getPostponed() {
-    return postponed.map(msg => getApi(msg));
+    let apis = postponed.map(msg => getApi(msg));
+    if (!isSubProcess || !source) return apis;
+    apis = apis.concat(source.getPostponed());
+    return apis;
   }
 
   function execute(executeMessage) {

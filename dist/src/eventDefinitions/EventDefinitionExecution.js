@@ -91,9 +91,8 @@ function EventDefinitionExecution(activity, eventDefinitions, completedRoutingKe
     function executeDefinition() {
       const ed = eventDefinitions[executeContent.index];
       if (!ed) return logger.warn(`<${messageExecutionId} (${id})> found no event definition on index ${executeContent.index}`);
-      const behaviour = ed.Behaviour(activity, ed);
       logger.debug(`<${messageExecutionId} (${id})> execute event definition ${ed.type}, index ${executeContent.index}`);
-      behaviour.execute(executeMessage);
+      ed.execute(executeMessage);
     }
   }
 

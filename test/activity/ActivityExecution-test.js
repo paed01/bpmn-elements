@@ -1615,11 +1615,7 @@ describe('ActivityExecution', () => {
       function Behaviour(activity) {
         const eventDefinitionExecution = EventDefinitionExecution(activity, [{
           type: 'messageeventdef',
-          Behaviour() {
-            return {
-              execute() {},
-            };
-          },
+          execute() {},
         }]);
 
         return {
@@ -1675,18 +1671,10 @@ describe('ActivityExecution', () => {
       function Behaviour(activity) {
         const eventDefinitionExecution = EventDefinitionExecution(activity, [{
           type: 'messageeventdef1',
-          Behaviour() {
-            return {
-              execute() {},
-            };
-          },
+          execute() {},
         }, {
           type: 'messageeventdef2',
-          Behaviour() {
-            return {
-              execute() {},
-            };
-          },
+          execute() {},
         }]);
 
         return {
@@ -1744,18 +1732,10 @@ describe('ActivityExecution', () => {
       function Behaviour(activity) {
         const eventDefinitionExecution = EventDefinitionExecution(activity, [{
           type: 'messageeventdef1',
-          Behaviour() {
-            return {
-              execute() {},
-            };
-          },
+          execute() {},
         }, {
           type: 'messageeventdef2',
-          Behaviour() {
-            return {
-              execute() {},
-            };
-          },
+          execute() {},
         }]);
 
         return {

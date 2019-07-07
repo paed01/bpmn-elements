@@ -211,21 +211,18 @@ describe('BoundaryEvent', () => {
         };
         const broker = ActivityBroker().broker;
         const environment = Environment({Logger: testHelpers.Logger});
-        const behaviour = BoundaryEventBehaviour({
+        const activity = {
           id: 'event',
           broker,
           environment,
           logger: environment.Logger('BoundaryEvent'),
           attachedTo,
-          behaviour: {
-            eventDefinitions: [{
-              Behaviour: ErrorEventDefinition,
-            }, {
-              Behaviour: MessageEventDefinition,
-            }],
-          },
-        });
-
+          get eventDefinitions() {
+            const self = this;
+            return self._eds || (self._eds = [ErrorEventDefinition(self, {}), MessageEventDefinition(self, {})]);
+          }
+        };
+        const behaviour = BoundaryEventBehaviour(activity);
         expect(attachedTo.broker.getExchange('event')).to.have.property('bindingCount', 0);
 
         broker.subscribeTmp('event', 'execute.start', (_, msg) => behaviour.execute(msg));
@@ -252,18 +249,19 @@ describe('BoundaryEvent', () => {
         };
         const broker = ActivityBroker().broker;
         const environment = Environment({Logger: testHelpers.Logger});
-        const behaviour = BoundaryEventBehaviour({
+        const activity = {
           id: 'event',
           broker,
           environment,
           logger: environment.Logger('BoundaryEvent'),
           attachedTo,
-          behaviour: {
-            eventDefinitions: [{
-              Behaviour: ErrorEventDefinition,
-            }],
-          },
-        });
+          get eventDefinitions() {
+            const self = this;
+            return self._eds || (self._eds = [ErrorEventDefinition(self, {})]);
+          }
+        };
+
+        const behaviour = BoundaryEventBehaviour(activity);
 
         expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
 

@@ -6,15 +6,14 @@ import {getRoutingKeyPattern} from 'smqp';
 import {cloneContent, cloneParent} from '../messageHelper';
 
 export default function Activity(Behaviour, activityDef, context) {
-  const {id, type = 'activity', name, parent: originalParent, behaviour = {}, isParallelGateway, isSubProcess, isThrowing} = activityDef;
+  const {id, type = 'activity', name, parent: originalParent, behaviour = {}, isParallelGateway, isSubProcess, triggeredByEvent, isThrowing} = activityDef;
   const parent = cloneParent(originalParent);
   const {environment, getInboundSequenceFlows, getOutboundSequenceFlows} = context;
 
   const logger = environment.Logger(type.toLowerCase());
   const {step} = environment.settings;
 
-  const {attachedTo: attachedToRef, ioSpecification: ioSpecificationDef} = behaviour;
-
+  const {attachedTo: attachedToRef, ioSpecification: ioSpecificationDef, eventDefinitions} = behaviour;
   let attachedToActivity, attachedTo;
 
   if (attachedToRef) {
@@ -25,7 +24,7 @@ export default function Activity(Behaviour, activityDef, context) {
   const inboundSequenceFlows = getInboundSequenceFlows(id) || [];
   const outboundSequenceFlows = getOutboundSequenceFlows(id) || [];
 
-  const isStart = inboundSequenceFlows.length === 0 && !attachedTo;
+  const isStart = inboundSequenceFlows.length === 0 && !attachedTo && !triggeredByEvent;
   const isParallelJoin = inboundSequenceFlows.length > 1 && isParallelGateway;
   const isMultiInstance = !!behaviour.loopCharacteristics;
 
@@ -46,8 +45,9 @@ export default function Activity(Behaviour, activityDef, context) {
     isStart,
     isSubProcess,
     isThrowing,
+    triggeredByEvent,
     parent: cloneParent(parent),
-    behaviour: {...behaviour},
+    behaviour: {...behaviour, eventDefinitions},
     attachedTo: attachedToActivity,
     environment,
     inbound: inboundSequenceFlows,
@@ -119,6 +119,12 @@ export default function Activity(Behaviour, activityDef, context) {
   });
 
   const ioSpecification = ioSpecificationDef && ioSpecificationDef.Behaviour(activityApi, ioSpecificationDef, context);
+
+  const loaedEventDefinitions = eventDefinitions && eventDefinitions.map((ed) => ed.Behaviour(activityApi, ed, context));
+  Object.defineProperty(activityApi, 'eventDefinitions', {
+    enumerable: true,
+    get: () => loaedEventDefinitions,
+  });
 
   return activityApi;
 

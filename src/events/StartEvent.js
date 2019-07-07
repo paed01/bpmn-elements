@@ -6,8 +6,7 @@ export default function StartEvent(activityDef, context) {
 }
 
 export function StartEventBehaviour(activity) {
-  const {id, type, broker, behaviour = {}} = activity;
-  const {eventDefinitions} = behaviour;
+  const {id, type, broker, eventDefinitions} = activity;
   const eventDefinitionExecution = eventDefinitions && EventDefinitionExecution(activity, eventDefinitions);
 
   const event = {
