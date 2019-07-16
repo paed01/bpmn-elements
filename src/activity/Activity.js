@@ -6,7 +6,7 @@ import {getRoutingKeyPattern} from 'smqp';
 import {cloneContent, cloneParent} from '../messageHelper';
 
 export default function Activity(Behaviour, activityDef, context) {
-  const {id, type = 'activity', name, parent: originalParent, behaviour = {}, isParallelGateway, isSubProcess, triggeredByEvent, isThrowing} = activityDef;
+  const {id, type = 'activity', name, parent: originalParent = {}, behaviour = {}, isParallelGateway, isSubProcess, triggeredByEvent, isThrowing} = activityDef;
   const parent = cloneParent(originalParent);
   const {environment, getInboundSequenceFlows, getOutboundSequenceFlows} = context;
 
@@ -74,7 +74,7 @@ export default function Activity(Behaviour, activityDef, context) {
     logger,
     discard,
     getApi,
-    getErrorById,
+    getActivityById,
     getState,
     init,
     message: inboundMessage,
@@ -202,6 +202,12 @@ export default function Activity(Behaviour, activityDef, context) {
   function discardRun() {
     if (!status) return;
     if (execution && !execution.completed) return;
+    switch (status) {
+      case 'executing':
+      case 'error':
+      case 'discarded':
+        return;
+    }
 
     deactivateRunConsumers();
     runQ.purge();
@@ -219,17 +225,22 @@ export default function Activity(Behaviour, activityDef, context) {
 
   function stop() {
     if (!activityApi.isRunning) return;
+    getApi().stop();
+  }
+
+  function onStop() {
+    if (!activityApi.isRunning) return;
 
     stopped = true;
 
-    if (!execution || execution.completed) {
-      deactivate();
-      deactivateRunConsumers();
-      broker.cancel('_activity-execution');
-      return publishEvent('stop');
-    }
+    consumingRunQ = false;
+    broker.cancel('_activity-run');
+    broker.cancel('_activity-api');
+    broker.cancel('_activity-execution');
+    broker.cancel('_run-on-inbound');
+    broker.cancel('_format-consumer');
 
-    execution.stop();
+    publishEvent('stop');
   }
 
   function activate() {
@@ -246,7 +257,7 @@ export default function Activity(Behaviour, activityDef, context) {
   }
 
   function activateRunConsumers() {
-    broker.subscribeTmp('api', `activity.*.${executionId}`, onApiMessage, {noAck: true, consumerTag: '_activity-api'});
+    broker.subscribeTmp('api', `activity.*.${executionId}`, onApiMessage, {noAck: true, consumerTag: '_activity-api', priority: 100});
     consumingRunQ = true;
     runQ.assertConsumer(onRunMessage, {exclusive: true, consumerTag: '_activity-run'});
   }
@@ -254,6 +265,7 @@ export default function Activity(Behaviour, activityDef, context) {
   function deactivateRunConsumers() {
     broker.cancel('_activity-api');
     broker.cancel('_activity-run');
+    broker.cancel('_activity-execution');
     consumingRunQ = false;
   }
 
@@ -493,7 +505,12 @@ export default function Activity(Behaviour, activityDef, context) {
   }
 
   function onExecutionMessage(routingKey, message) {
-    const content = {...executeMessage.content, ...message.content};
+    const content = cloneContent({
+      ...executeMessage.content,
+      ...message.content,
+      executionId: executeMessage.content.executionId,
+      parent: {...parent},
+    });
 
     publishEvent(routingKey, content, message.properties);
 
@@ -543,14 +560,13 @@ export default function Activity(Behaviour, activityDef, context) {
 
   function onApiMessage(routingKey, message) {
     const messageType = message.properties.type;
-
     switch (messageType) {
       case 'discard': {
-        discardRun();
+        discardRun(message);
         break;
       }
       case 'stop': {
-        stop();
+        onStop();
         break;
       }
     }
@@ -607,8 +623,8 @@ export default function Activity(Behaviour, activityDef, context) {
     });
   }
 
-  function getErrorById(errorId) {
-    return context.getErrorById(errorId);
+  function getActivityById(elementId) {
+    return context.getActivityById(elementId);
   }
 
   function getState() {

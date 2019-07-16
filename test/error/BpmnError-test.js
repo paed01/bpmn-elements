@@ -29,6 +29,6 @@ describe('BpmnError', () => {
       },
     }, new Error('Men'));
 
-    expect(err).to.have.property('errorCode', 'EMES');
+    expect(err).to.have.property('code', 'EMES');
   });
 });

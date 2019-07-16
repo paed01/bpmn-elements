@@ -13,6 +13,7 @@ Arguments:
   - `settings`: optional settings
     - `step`: boolean, true makes activity runs to go forward in steps, defaults to false
     - `enableDummyService`: boolean, true returns dummy service function for service task
+    - `strict`: boolean, [strict mode](#strict_mode) defaults to false
   - `scripts`: [Scripts instance](/docs/Scripts.md)
   - `Logger`: optional [Logger](#logger) defaults to a dummy logger that does basically nothing but supply the required log functions
   - `extensions`: [extensions](/docs/Extension.md) object with functions
@@ -36,6 +37,10 @@ Properties:
 ### `registerScript(activity)`
 ### `resolveExpression(expression[, message = {}, expressionFnContext])`
 ### `recover(state)`
+
+## Strict mode
+
+If enabled Boundary event with error event definition only catches thrown Bpmn Errors.
 
 ## Logger
 

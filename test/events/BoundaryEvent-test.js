@@ -176,6 +176,8 @@ describe('BoundaryEvent', () => {
           behaviour: {
             cancelActivity: true,
           },
+          environment: Environment(),
+          logger: testHelpers.Logger('boundaryevent')
         });
 
         behaviour.execute({
@@ -263,7 +265,8 @@ describe('BoundaryEvent', () => {
 
         const behaviour = BoundaryEventBehaviour(activity);
 
-        expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
+        const apiExchange = broker.getExchange('api');
+        expect(apiExchange).to.have.property('bindingCount', 0);
 
         broker.subscribeTmp('execution', 'execute.start', (_, msg) => behaviour.execute(msg));
 
@@ -279,7 +282,7 @@ describe('BoundaryEvent', () => {
           },
         });
 
-        expect(broker.getExchange('api')).to.have.property('bindingCount', 3);
+        expect(apiExchange).to.have.property('bindingCount', 4);
       });
 
       it('discards event and cancels listeners on attachedTo end', () => {

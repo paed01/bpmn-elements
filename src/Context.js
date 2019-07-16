@@ -25,7 +25,6 @@ function ContextInstance(definitionContext, environment) {
     clone,
     getActivities,
     getActivityById,
-    getErrorById,
     getExecutableProcesses,
     getDataObjectById,
     getInboundSequenceFlows,
@@ -46,7 +45,6 @@ function ContextInstance(definitionContext, environment) {
   function getActivityById(activityId) {
     const activityInstance = activityRefs[activityId];
     if (activityInstance) return activityInstance;
-
     const activity = definitionContext.getActivityById(activityId);
     if (!activity) return null;
     return upsertActivity(activity);
@@ -59,13 +57,6 @@ function ContextInstance(definitionContext, environment) {
     activityInstance = activityRefs[activityDef.id] = activityDef.Behaviour(activityDef, context);
 
     return activityInstance;
-  }
-
-  function getErrorById(errorId) {
-    const error = definitionContext.getErrorById(errorId);
-    if (!error) return;
-
-    return error.Behaviour(error, context);
   }
 
   function getSequenceFlowById(sequenceFlowId) {

@@ -211,7 +211,7 @@ Feature('Escalate', () => {
     });
   });
 
-  Scenario('a process with caugth escalation', () => {
+  Scenario('a process with caught escalation', () => {
     let definition;
     Given('a boss that expects to be bothered only if escalation was not caught', async () => {
       const source = `
@@ -269,7 +269,7 @@ Feature('Escalate', () => {
     });
   });
 
-  Scenario('a process with uncaugth escalation', () => {
+  Scenario('a process with uncaught escalation', () => {
     let definition;
     Given('a boss that expects to be bothered only if escalation was not caught', async () => {
       const source = `

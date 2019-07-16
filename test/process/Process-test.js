@@ -80,13 +80,20 @@ describe('Process', () => {
   });
 
   describe('stop()', () => {
-    it('sets stopped flag', () => {
+    it('when executing sets stopped flag and cancels process broker consumers', () => {
       const bp = Process({id: 'theProcess'}, Context());
 
       bp.run();
       bp.stop();
 
-      expect(bp.getState()).to.have.property('stopped', true);
+      expect(bp).to.have.property('stopped', true);
+
+      expect(bp.broker.getQueue('run-q')).to.have.property('consumerCount', 0);
+      expect(bp.broker.getQueue('execution-q')).to.have.property('consumerCount', 0);
+      expect(bp.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
+      expect(bp.broker.getExchange('api'), 'api exchange').to.have.property('bindingCount', 0);
+      expect(bp.broker.getExchange('event'), 'event exchange').to.have.property('bindingCount', 0);
+      expect(bp.broker, 'broker').to.have.property('consumerCount', 0);
     });
 
     it('ignored if not executing', () => {
@@ -113,6 +120,26 @@ describe('Process', () => {
 
       expect(bp.execution.getActivities()).to.have.length(1);
       expect(bp.execution.getActivities()[0]).to.have.property('stopped', true);
+    });
+
+    it('stop on process enter stops all running activities', (done) => {
+      const bp = Process({id: 'theProcess'}, Context());
+
+      bp.once('enter', () => {
+        bp.stop();
+      });
+
+      bp.once('stop', () => {
+        expect(bp.broker.getQueue('run-q')).to.have.property('consumerCount', 0);
+        expect(bp.broker.getQueue('execution-q')).to.have.property('consumerCount', 0);
+        expect(bp.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
+        expect(bp.broker.getExchange('api'), 'api exchange').to.have.property('bindingCount', 0);
+        expect(bp.broker.getExchange('event'), 'event exchange').to.have.property('bindingCount', 0);
+        expect(bp.broker, 'broker').to.have.property('consumerCount', 0);
+        done();
+      });
+
+      bp.run();
     });
 
     it('stop on activity start stops all running activities', (done) => {
@@ -849,7 +876,7 @@ describe('Process', () => {
       expect(bp.getActivityById('end').counters).to.eql({taken: 1, discarded: 0});
     });
 
-    it('stop process stops subProcess', async () => {
+    it('stop process stops sub process', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="theProcess" isExecutable="true">
@@ -876,7 +903,40 @@ describe('Process', () => {
       expect(bp.getActivityById('subProcess')).to.have.property('isRunning', false);
     });
 
-    it('stop and resume process with subProcess continues execution', async () => {
+    it('stop process on sub task wait stops sub process', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="flow1" sourceRef="start" targetRef="subProcess" />
+          <subProcess id="subProcess">
+            <userTask id="task1" />
+          </subProcess>
+          <sequenceFlow id="flow3" sourceRef="subProcess" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const [bp] = context.getProcesses();
+
+      const stop = bp.waitFor('stop');
+      let task;
+      bp.on('activity.wait', (api) => {
+        if (api.id === 'task1') {
+          bp.stop();
+          task = api.owner;
+        }
+      });
+      bp.run();
+
+      await stop;
+      expect(bp.getActivityById('subProcess')).to.have.property('isRunning', false);
+      expect(task).to.have.property('isRunning', false);
+      expect(task).to.have.property('stopped', true);
+    });
+
+    it('stop and resume process continues sub process execution', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="theProcess" isExecutable="true">

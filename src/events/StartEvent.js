@@ -33,6 +33,7 @@ export function StartEventBehaviour(activity) {
 
     function onApiMessage(routingKey, message) {
       const messageType = message.properties.type;
+
       switch (messageType) {
         case 'stop':
           return broker.cancel(`_api-${executionId}`);

@@ -41,7 +41,8 @@ function MessageEventDefinition(activity, eventDefinition) {
     if (completed) return;
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
       noAck: true,
-      consumerTag: `_api-${executionId}`
+      consumerTag: `_api-${executionId}`,
+      priority: 300
     });
     broker.subscribeOnce('api', `activity.signal.${parentExecutionId}`, onApiMessage, {
       consumerTag: `_parent-signal-${executionId}`

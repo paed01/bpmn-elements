@@ -537,7 +537,9 @@ describe('EventDefinitionExecution', () => {
       execute() {},
     }]);
 
-    expect(event.broker.getExchange('execution')).to.have.property('bindingCount', 1);
+
+    const executionExchange = event.broker.getExchange('execution');
+    expect(executionExchange).to.have.property('bindingCount', 1);
 
     execution.execute({
       fields: {},
@@ -553,10 +555,9 @@ describe('EventDefinitionExecution', () => {
 
     expect(event.broker.getExchange('api')).to.have.property('bindingCount', 1);
 
-    event.broker.publish('api', 'activity.stop.root-execution-id');
-    event.broker.publish('api', 'activity.stop.event-definition-execution-id');
+    event.broker.publish('api', 'activity.stop.root-execution-id', {}, {type: 'stop'});
 
-    expect(event.broker.getExchange('execution')).to.have.property('bindingCount', 1);
+    expect(executionExchange).to.have.property('bindingCount', 1);
     expect(event.broker.getExchange('api')).to.have.property('bindingCount', 0);
   });
 

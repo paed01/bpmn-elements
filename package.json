@@ -51,13 +51,13 @@
     "eslint": "^6.0.1",
     "mocha": "^6.1.4",
     "mocha-cakes-2": "^3.3.0",
-    "moddle-context-serializer": "^0.4.0",
+    "moddle-context-serializer": "^0.5.0",
     "nock": "^10.0.6",
     "nyc": "^14.1.1",
     "request": "^2.88.0"
   },
   "dependencies": {
     "iso8601-duration": "^1.2.0",
-    "smqp": "^1.6.0"
+    "smqp": "^1.7.0"
   }
 }

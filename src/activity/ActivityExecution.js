@@ -45,6 +45,7 @@ export default function ActivityExecution(activity, context) {
     initMessage.content = {...initMessage.content, executionId, state: 'start', isRootScope: true};
 
     if (isRedelivered) {
+      postponed.splice(0);
       logger.debug(`<${executionId} (${id})> resume execution`);
 
       if (!source) source = Behaviour(activity, context);
@@ -67,7 +68,7 @@ export default function ActivityExecution(activity, context) {
 
   function stop() {
     if (!initMessage) return;
-    broker.publish('execution', 'execute.stop', {...initMessage.content}, {persistent: false});
+    getApi(initMessage).stop();
   }
 
   function getState() {
@@ -95,23 +96,42 @@ export default function ActivityExecution(activity, context) {
     if (completed) return;
 
     broker.bindQueue(executeQ.name, 'execution', 'execute.#', {priority: 100});
-    executeQ.assertConsumer(onExecuteMessage, {exclusive: true, prefetch: 100, priority: 100});
+    executeQ.assertConsumer(onExecuteMessage, {exclusive: true, prefetch: 100, priority: 100, consumerTag: '_activity-execute'});
     if (completed) return deactivate();
 
-    broker.subscribeTmp('api', `activity.*.${executionId}`, onParentApiMessage, {noAck: true, consumerTag: '_activity-api-execution', priority: 100});
+    broker.subscribeTmp('api', `activity.*.${executionId}`, onParentApiMessage, {noAck: true, consumerTag: '_activity-api-execution', priority: 200});
   }
 
   function deactivate() {
     broker.cancel('_activity-api-execution');
-    broker.unsubscribe(executeQ.name, onExecuteMessage);
+    broker.cancel('_activity-execute');
     broker.unbindQueue(executeQ.name, 'execution', 'execute.#');
   }
 
   function onParentApiMessage(routingKey, message) {
     const messageType = message.properties.type;
-    if (messageType === 'discard') {
-      return broker.publish('execution', 'execute.discard', {...message.content, state: 'discard'});
+
+    switch (messageType) {
+      case 'discard':
+        executeQ.queueMessage({routingKey: 'execute.discard'}, cloneContent(initMessage.content));
+        break;
+      case 'stop':
+        onStop(message);
+        break;
     }
+  }
+
+  function onStop(message) {
+    const stoppedId = message && message.content && message.content.executionId;
+    const running = getPostponed();
+    running.forEach((api) => {
+      if (stoppedId !== api.content.executionId) {
+        api.stop();
+      }
+    });
+
+    broker.cancel('_activity-execute');
+    broker.cancel('_activity-api-execution');
   }
 
   function onExecuteMessage(routingKey, message) {
@@ -119,10 +139,7 @@ export default function ActivityExecution(activity, context) {
     const isRedelivered = fields.redelivered;
     const {isRootScope, ignoreIfExecuting, keep, executionId: cexid, error} = content;
 
-    if (routingKey === 'execute.stop' && isRootScope) {
-      message.ack();
-      return onStopped();
-    }
+    if (isRedelivered && properties.persistent === false) return message.ack();
 
     switch (routingKey) {
       case 'execute.resume.execution': {
@@ -182,11 +199,9 @@ export default function ActivityExecution(activity, context) {
     }
 
     function getExecuteMessage() {
-      return {
-        fields: {...fields},
-        content: {...content, ignoreIfExecuting: undefined},
-        properties: {...properties},
-      };
+      const result = cloneMessage(message);
+      result.content.ignoreIfExecuting = undefined;
+      return result;
     }
 
     function executionCompleted() {
@@ -197,7 +212,7 @@ export default function ActivityExecution(activity, context) {
         logger.debug(`<${cexid} (${id})> completed sub execution`);
         if (!keep) message.ack();
         if (postponed.length === 1 && postponed[0].content.isRootScope && !postponed[0].content.preventComplete) {
-          return broker.publish('execution', 'execute.completed', {...postponed[0].content});
+          return broker.publish('execution', 'execute.completed', cloneContent(postponed[0].content));
         }
         return;
       }
@@ -220,7 +235,6 @@ export default function ActivityExecution(activity, context) {
       const postponedMsg = ackPostponed(message);
       if (!isRootScope && !postponedMsg) return;
 
-
       if (!error && !isRootScope) {
         message.ack();
         if (postponed.length === 1 && postponed[0].content.isRootScope) {
@@ -231,27 +245,22 @@ export default function ActivityExecution(activity, context) {
 
       message.ack(true);
 
+      deactivate();
+
       const subApis = getPostponed();
       postponed.splice(0);
       subApis.forEach((api) => api.discard());
-      deactivate();
 
       publishExecutionCompleted(error ? 'error' : 'discard', {...content});
     }
 
     function publishExecutionCompleted(completionType, completeContent) {
       completed = true;
+
       broker.publish('execution', `execution.${completionType}`, {
         ...completeContent,
         state: completionType,
       }, {type: completionType});
-    }
-
-    function onStopped() {
-      deactivate();
-      const running = postponed.slice();
-      running.forEach((msg) => getApi(msg).stop());
-      return broker.publish('execution', 'execution.stopped', cloneContent(message.content), {type: 'stopped', persistent: false});
     }
   }
 

@@ -32,7 +32,7 @@ export default function ConditionalEventDefinition(activity, eventDefinition) {
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: apiConsumerTag});
 
     debug(`<${executionId} (${id})> listen for execute completed from <${attachedTo.id}>`);
-    attachedToBroker.subscribeOnce('execution', 'execute.completed', onAttachedCompleted, {priority: 200, consumerTag: endConsumerTag});
+    attachedToBroker.subscribeOnce('execution', 'execute.completed', onAttachedCompleted, {priority: 300, consumerTag: endConsumerTag});
 
     function onAttachedCompleted(routingKey, endMessage) {
       stop();

@@ -22,10 +22,10 @@ export default function EscalationEventDefinition(activity, eventDefinition) {
     const {executionId, parent} = messageContent;
     const parentExecutionId = parent && parent.executionId;
 
-    if (completed) return;
-
-    broker.subscribeTmp('api', '*.escalate.#', onEscalationApiMessage, {noAck: true, consumerTag: `_onescalate-${executionId}`, priority: 200});
+    broker.subscribeTmp('api', '*.escalate.#', onEscalationApiMessage, {noAck: true, consumerTag: `_onescalate-${executionId}`, priority: 300});
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
+
+    if (completed) return stop();
 
     const escalationMessage = getEscalation(executeMessage);
     debug(`<${executionId} (${id})>`, reference.id ? `waiting for escalation <${reference.id}> with name: ${escalationMessage.name}` : 'wait for anonymous escalation event');
@@ -50,7 +50,7 @@ export default function EscalationEventDefinition(activity, eventDefinition) {
         message: {...output},
         executionId: parentExecutionId,
         parent: shiftParent(executeMessage.content.parent),
-      }, {type: 'catch', bubbles: true});
+      }, {type: 'catch'});
 
       return broker.publish('execution', 'execute.completed', {...messageContent, output, state: 'catch'});
     }

@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definition_0" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.1">
+  <bpmn:process id="Process_0" isExecutable="true">
+    <bpmn:startEvent id="start">
+      <bpmn:outgoing>toOrderProcess</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="toOrderProcess" sourceRef="start" targetRef="orderProcess" />
+    <bpmn:subProcess id="orderProcess">
+      <bpmn:incoming>toOrderProcess</bpmn:incoming>
+      <bpmn:outgoing>toEnd</bpmn:outgoing>
+      <bpmn:startEvent id="orderStart">
+        <bpmn:outgoing>toOrder</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:exclusiveGateway id="isScam" name="Scam?" default="toPlaceOrder">
+        <bpmn:extensionElements>
+          <camunda:inputOutput>
+            <camunda:outputParameter name="errorCode">AmountTooBig</camunda:outputParameter>
+          </camunda:inputOutput>
+        </bpmn:extensionElements>
+        <bpmn:incoming>fromOrder</bpmn:incoming>
+        <bpmn:outgoing>toEscalate</bpmn:outgoing>
+        <bpmn:outgoing>toPlaceOrder</bpmn:outgoing>
+      </bpmn:exclusiveGateway>
+      <bpmn:sequenceFlow id="toOrder" sourceRef="orderStart" targetRef="order" />
+      <bpmn:sequenceFlow id="toEscalate" name="yes" sourceRef="isScam" targetRef="endInError">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${environment.services.isAbove(10, environment.output.amount)}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:task id="placeOrder" name="Place order">
+        <bpmn:incoming>toPlaceOrder</bpmn:incoming>
+        <bpmn:outgoing>fromPlaceOrder2End</bpmn:outgoing>
+      </bpmn:task>
+      <bpmn:sequenceFlow id="toPlaceOrder" name="no" sourceRef="isScam" targetRef="placeOrder" />
+      <bpmn:endEvent id="orderEnd">
+        <bpmn:incoming>fromPlaceOrder2End</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:sequenceFlow id="fromPlaceOrder2End" sourceRef="placeOrder" targetRef="orderEnd" />
+      <bpmn:sequenceFlow id="fromOrder" sourceRef="order" targetRef="isScam" />
+      <bpmn:userTask id="order" name="Order">
+        <bpmn:extensionElements>
+          <camunda:formData>
+            <camunda:formField id="amount" label="Amount" type="long" />
+          </camunda:formData>
+          <camunda:inputOutput>
+            <camunda:outputParameter name="amount">${content.output.form.amount}</camunda:outputParameter>
+          </camunda:inputOutput>
+        </bpmn:extensionElements>
+        <bpmn:incoming>toOrder</bpmn:incoming>
+        <bpmn:outgoing>fromOrder</bpmn:outgoing>
+      </bpmn:userTask>
+      <bpmn:endEvent id="endInError">
+        <bpmn:incoming>toEscalate</bpmn:incoming>
+        <bpmn:errorEventDefinition errorRef="Error_1" />
+      </bpmn:endEvent>
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="fromEscalated" sourceRef="catchError" targetRef="endWithSignal" />
+    <bpmn:endEvent id="end">
+      <bpmn:incoming>toEnd</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="toEnd" sourceRef="orderProcess" targetRef="end" />
+    <bpmn:endEvent id="endWithSignal">
+      <bpmn:incoming>fromEscalated</bpmn:incoming>
+      <bpmn:signalEventDefinition signalRef="EscalatedSignal" />
+    </bpmn:endEvent>
+    <bpmn:boundaryEvent id="catchError" attachedToRef="orderProcess">
+      <bpmn:outgoing>fromEscalated</bpmn:outgoing>
+      <bpmn:errorEventDefinition errorRef="Error_1" />
+    </bpmn:boundaryEvent>
+  </bpmn:process>
+  <bpmn:signal id="EscalatedSignal" name="Too big signal" />
+  <bpmn:error id="Error_1" name="ScamError" errorCode="AmountTooBig" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_0">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="start">
+        <dc:Bounds x="162" y="151" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0hqie39_di" bpmnElement="toOrderProcess">
+        <di:waypoint x="198" y="169" />
+        <di:waypoint x="258" y="169" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="SubProcess_1s59b1j_di" bpmnElement="orderProcess" isExpanded="true">
+        <dc:Bounds x="258" y="56" width="612" height="224" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_12hqp6f_di" bpmnElement="orderStart">
+        <dc:Bounds x="283" y="130" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_0t49qn9_di" bpmnElement="isScam" isMarkerVisible="true">
+        <dc:Bounds x="498" y="123" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="505" y="104" width="35" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1ig4vwj_di" bpmnElement="toOrder">
+        <di:waypoint x="319" y="148" />
+        <di:waypoint x="353" y="148" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1qtrgjr_di" bpmnElement="toEscalate">
+        <di:waypoint x="523" y="173" />
+        <di:waypoint x="523" y="231" />
+        <di:waypoint x="638" y="231" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="529" y="199" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_0xzzgwd_di" bpmnElement="placeOrder">
+        <dc:Bounds x="606" y="108" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1tsbk1y_di" bpmnElement="toPlaceOrder">
+        <di:waypoint x="548" y="148" />
+        <di:waypoint x="606" y="148" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="571" y="130" width="13" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_1day18j_di" bpmnElement="orderEnd">
+        <dc:Bounds x="780" y="130" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0efq9ag_di" bpmnElement="fromPlaceOrder2End">
+        <di:waypoint x="706" y="148" />
+        <di:waypoint x="780" y="148" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="729" y="130" width="29" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1j1w3n4_di" bpmnElement="fromEscalated">
+        <di:waypoint x="797" y="298" />
+        <di:waypoint x="797" y="347" />
+        <di:waypoint x="912" y="347" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_0r71k9i_di" bpmnElement="end">
+        <dc:Bounds x="912" y="151" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1oth3rm_di" bpmnElement="toEnd">
+        <di:waypoint x="870" y="169" />
+        <di:waypoint x="912" y="169" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_09pghyu_di" bpmnElement="fromOrder">
+        <di:waypoint x="453" y="148" />
+        <di:waypoint x="498" y="148" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="UserTask_0kvhr62_di" bpmnElement="order">
+        <dc:Bounds x="353" y="108" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_0zsxtk7_di" bpmnElement="endWithSignal">
+        <dc:Bounds x="912" y="329" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_1omusld_di" bpmnElement="endInError">
+        <dc:Bounds x="638" y="213" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="680" y="238" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BoundaryEvent_006rxez_di" bpmnElement="catchError">
+        <dc:Bounds x="779" y="262" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="824" y="292" width="90" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -23,7 +23,7 @@ export default function MessageEventDefinition(activity, eventDefinition) {
     messagesQ.consume(onMessage, {noAck: true, consumerTag: `_message-${executionId}`});
     if (completed) return;
 
-    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
+    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`, priority: 300});
     broker.subscribeOnce('api', `activity.signal.${parentExecutionId}`, onApiMessage, {consumerTag: `_parent-signal-${executionId}`});
 
     broker.publish('event', 'activity.wait', {...messageContent, executionId: parentExecutionId, parent: shiftParent(parent)});

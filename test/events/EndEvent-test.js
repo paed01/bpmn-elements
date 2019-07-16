@@ -98,7 +98,7 @@ describe('EndEvent', () => {
 
     it('emits an error event', async () => {
       const event = context.getActivityById('endInError');
-      const error = event.waitFor('error');
+      const error = event.waitFor('throw');
 
       event.activate();
       event.inbound[0].take();

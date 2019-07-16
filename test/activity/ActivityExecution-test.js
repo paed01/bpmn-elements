@@ -165,7 +165,7 @@ describe('ActivityExecution', () => {
       expect(completeMessage).to.not.be.ok;
     });
 
-    it('discards sub executions on root execute complete message', () => {
+    it('discards sub executions by api on root execute complete message', () => {
       const activity = createActivity();
       const execution = ActivityExecution(activity);
 
@@ -175,7 +175,7 @@ describe('ActivityExecution', () => {
       }, {noAck: true});
 
       let discardMessage;
-      activity.broker.subscribeOnce('execution', 'execute.discard', (_, msg) => {
+      activity.broker.subscribeOnce('api', 'activity.discard.*', (_, msg) => {
         discardMessage = msg;
       });
 
@@ -192,7 +192,7 @@ describe('ActivityExecution', () => {
       activity.broker.publish('execution', 'execute.start', {
         id: 'activity',
         type: 'task',
-        executionId: 'activity_2',
+        executionId: 'activity_1_0',
       });
 
       expect(execution.getPostponed()).to.have.length(2);
@@ -200,12 +200,12 @@ describe('ActivityExecution', () => {
       activity.broker.publish('execution', 'execute.completed', startMessages[0].content);
 
       expect(execution.getPostponed()).to.have.length(0);
-      expect(discardMessage.content).to.have.property('executionId', 'activity_2');
+      expect(discardMessage.content).to.have.property('executionId', 'activity_1_0');
 
       expect(activity.broker.getQueue('execute-q')).to.have.property('messageCount', 0);
     });
 
-    it('discards sub executions on root execute discard message', () => {
+    it('discards sub executions by api on root execute discard message', () => {
       const activity = createActivity();
       const execution = ActivityExecution(activity);
 
@@ -214,10 +214,10 @@ describe('ActivityExecution', () => {
         startMessages.push(msg);
       }, {noAck: true});
 
-      const discardMessages = [];
-      activity.broker.subscribeTmp('execution', 'execute.discard', (_, msg) => {
-        discardMessages.push(msg);
-      }, {noAck: true});
+      let discardMessage;
+      activity.broker.subscribeOnce('api', 'activity.discard.*', (_, msg) => {
+        discardMessage = msg;
+      });
 
       execution.execute({
         fields: {},
@@ -232,7 +232,7 @@ describe('ActivityExecution', () => {
       activity.broker.publish('execution', 'execute.start', {
         id: 'activity',
         type: 'task',
-        executionId: 'activity_2',
+        executionId: 'activity_1_0',
       });
 
       expect(execution.getPostponed()).to.have.length(2);
@@ -240,7 +240,7 @@ describe('ActivityExecution', () => {
       activity.broker.publish('execution', 'execute.discard', startMessages[0].content);
 
       expect(execution.getPostponed()).to.have.length(0);
-      expect(discardMessages[1].content).to.have.property('executionId', 'activity_2');
+      expect(discardMessage.content).to.have.property('executionId', 'activity_1_0');
 
       expect(activity.broker.getQueue('execute-q')).to.have.property('messageCount', 0);
     });
@@ -378,7 +378,8 @@ describe('ActivityExecution', () => {
       activity.broker.publish('execution', 'execute.start', {
         id: 'activity',
         type: 'task',
-        executionId: 'activity_2',
+        executionId: 'activity_1_0',
+        isRootScope: false,
       });
 
       const errorMessages = [];
@@ -439,7 +440,7 @@ describe('ActivityExecution', () => {
       const execution = ActivityExecution(activity);
 
       let message;
-      activity.broker.subscribeOnce('execution', 'execute.discard', (_, msg) => {
+      activity.broker.subscribeOnce('execution', 'execution.discard', (_, msg) => {
         message = msg;
       });
 
@@ -452,6 +453,7 @@ describe('ActivityExecution', () => {
           state: 'start',
         },
       });
+
       execution.discard();
 
       expect(execution.completed).to.be.true;
@@ -574,7 +576,7 @@ describe('ActivityExecution', () => {
 
       execution.discard();
 
-      expect(discardMessages).to.have.length(2);
+      expect(discardMessages).to.have.length(1);
       expect(completedMessages).to.have.length(1);
 
       expect(activity.broker.getQueue('execute-q')).to.have.property('messageCount', 0);
@@ -584,7 +586,7 @@ describe('ActivityExecution', () => {
           execute(executeMessage) {
             broker.subscribeOnce('api', 'activity.discard.activity_1', () => {
               broker.publish('execution', 'execute.discard', {...executeMessage.content, discardedByBehaviour: true});
-            });
+            }, {priority: 1000});
           },
         };
       }
@@ -595,6 +597,8 @@ describe('ActivityExecution', () => {
     it('stops execution', () => {
       const activity = createActivity();
       const execution = ActivityExecution(activity);
+
+      const executeQ = activity.broker.getQueue('execute-q');
 
       execution.execute({
         fields: {},
@@ -608,8 +612,9 @@ describe('ActivityExecution', () => {
       execution.stop();
 
       expect(execution.completed).to.be.false;
-      expect(activity.broker.getQueue('execute-q')).to.have.property('consumerCount', 0);
-      expect(activity.broker.getQueue('execute-q')).to.have.property('messageCount', 1);
+
+      expect(executeQ).to.have.property('consumerCount', 0);
+      expect(executeQ).to.have.property('messageCount', 1);
     });
 
     it('stops sub executions', () => {
@@ -632,47 +637,6 @@ describe('ActivityExecution', () => {
       expect(activity.broker.getQueue('execute-q')).to.have.property('messageCount', 2);
       expect(activity.broker.getQueue('execute-q')).to.have.property('consumerCount', 0);
 
-      expect(stoppedSubExecution).to.be.true;
-
-      function Behaviour({broker}) {
-        broker.subscribeOnce('api', 'activity.stop.activity_2', () => {
-          stoppedSubExecution = true;
-        });
-
-        return {
-          execute({content}) {
-            if (!content.isRootScope) return;
-            broker.publish('execution', 'execute.start', {...content, executionId: 'activity_2', isRootScope: undefined});
-          },
-        };
-      }
-    });
-
-    it('stops sub executions before publishing root stop message', () => {
-      const activity = createActivity(Behaviour);
-      const execution = ActivityExecution(activity);
-      let stoppedExecution = false;
-      let stoppedSubExecution = false;
-
-
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
-      activity.broker.subscribeOnce('execution', 'execution.stopped', (_, message) => {
-        expect(message).to.have.property('properties').with.property('persistent', false);
-        expect(stoppedSubExecution).to.be.true;
-        stoppedExecution = true;
-      });
-
-      execution.stop();
-
-      expect(stoppedExecution).to.be.true;
       expect(stoppedSubExecution).to.be.true;
 
       function Behaviour({broker}) {
@@ -1016,29 +980,78 @@ describe('ActivityExecution', () => {
     });
   });
 
-  describe.skip('recovered', () => {
-    it('redelivered execute completed message is republished', () => {
+  describe('recovered', () => {
+    it('redelivered execute message runs behaviour execute with redelivered start message', () => {
       const activity = createActivity(Behaviour);
       const execution = ActivityExecution(activity);
 
-      const messages = [];
-      activity.broker.subscribeTmp('execution', 'execute.#', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
-
-      const executeQ = activity.broker.assertQueue('execute-q');
-      executeQ.queueMessage({
-        routingKey: 'execute.completed',
-        redelivered: true,
-      }, {
-        id: 'activity',
-        type: 'task',
-        executionId: 'activity_1',
-        isRootScope: true,
-      });
+      const executeMessages = [];
 
       execution.execute({
         fields: {
+          routingKey: 'run.execute'
+        },
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
+
+      execution.stop();
+
+      execution.execute({
+        fields: {
+          routingKey: 'run.execute',
+          redelivered: true
+        },
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
+
+      expect(executeMessages).to.have.length(2);
+      expect(executeMessages[0].fields).to.have.property('routingKey', 'execute.start');
+      expect(executeMessages[0].fields).to.not.have.property('redelivered');
+
+      expect(executeMessages[1].fields).to.have.property('routingKey', 'execute.start');
+      expect(executeMessages[1].fields).to.have.property('redelivered', true);
+
+      function Behaviour() {
+        return {
+          execute(executeMessage) {
+            executeMessages.push(executeMessage);
+          },
+        };
+      }
+    });
+
+    it('redeliveres last execute message to behaviour execute function', () => {
+      const activity = createActivity(Behaviour);
+      const execution = ActivityExecution(activity);
+
+      const executeMessages = [];
+      execution.execute({
+        fields: {
+          routingKey: 'run.execute'
+        },
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
+
+      execution.stop();
+
+      execution.execute({
+        fields: {
+          routingKey: 'run.execute',
           redelivered: true,
         },
         content: {
@@ -1049,11 +1062,73 @@ describe('ActivityExecution', () => {
         },
       });
 
+      expect(executeMessages).to.have.length(2);
+
+      expect(executeMessages[0].fields).to.have.property('routingKey', 'execute.start');
+      expect(executeMessages[0].fields).to.not.have.property('redelivered');
+
+      expect(executeMessages[1].fields).to.have.property('routingKey', 'execute.update');
+      expect(executeMessages[1].fields).to.have.property('redelivered', true);
+
       function Behaviour() {
         return {
           execute(executeMessage) {
-            if (executeMessage.fields.routingKey !== 'execute.start') return;
-            throw new Error('Shouldn´t execute');
+            executeMessages.push(executeMessage);
+            if (executeMessage.fields.redelivered) return;
+            if (executeMessage.fields.routingKey === 'execute.start') {
+              activity.broker.publish('execution', 'execute.update', executeMessage.content);
+            }
+          },
+        };
+      }
+    });
+
+    it('publishes new start message if no messages where in queue', () => {
+      const activity = createActivity(Behaviour);
+      const execution = ActivityExecution(activity);
+
+      const executeMessages = [];
+      execution.execute({
+        fields: {
+          routingKey: 'run.execute'
+        },
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
+
+      execution.stop();
+
+      activity.broker.getQueue('execute-q').purge();
+
+      execution.execute({
+        fields: {
+          routingKey: 'run.execute',
+          redelivered: true,
+        },
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
+
+      expect(executeMessages).to.have.length(2);
+
+      expect(executeMessages[0].fields).to.have.property('routingKey', 'execute.start');
+      expect(executeMessages[0].fields).to.not.have.property('redelivered');
+
+      expect(executeMessages[1].fields).to.have.property('routingKey', 'execute.start');
+      expect(executeMessages[1].fields).to.not.have.property('redelivered');
+
+      function Behaviour() {
+        return {
+          execute(executeMessage) {
+            executeMessages.push(executeMessage);
           },
         };
       }
@@ -1320,7 +1395,7 @@ describe('ActivityExecution', () => {
       }, {noAck: true});
 
       const discardMessages = [];
-      task.broker.subscribeTmp('execution', 'execute.discard', (_, msg) => {
+      task.broker.subscribeTmp('api', 'activity.discard.*', (_, msg) => {
         discardMessages.push(msg);
       }, {noAck: true});
 
@@ -1339,7 +1414,10 @@ describe('ActivityExecution', () => {
       });
 
       expect(startMessages).to.have.length(4);
-      expect(discardMessages).to.have.length(1);
+      expect(discardMessages).to.have.length(2);
+
+      expect(discardMessages[0].content).to.have.property('executionId', 'activity_1');
+      expect(discardMessages[1].content).to.have.property('executionId', 'activity_1_2');
 
       expect(errorMsg).to.be.ok;
       expect(errorMsg.content).to.have.property('executionId', startMessages[2].content.executionId);
@@ -1865,9 +1943,6 @@ function createActivity(Behaviour) {
   function ActivityBehaviour({broker}) {
     return {
       execute() {
-        broker.subscribeOnce('api', 'activity.discard.*', (_, {content}) => {
-          broker.publish('execution', 'execute.discard', {...content, state: 'discarded'});
-        });
         broker.subscribeOnce('api', 'activity.signal.*', (_, {content}) => {
           broker.publish('execution', 'execute.completed', {...content, output: content.message, state: 'signaled'});
         });

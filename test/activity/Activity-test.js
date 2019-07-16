@@ -889,6 +889,14 @@ describe('Activity', () => {
 
       expect(activity.broker.getQueue('execution-q')).to.have.property('consumerCount', 0);
       expect(activity.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
+
+      expect(activity.broker.getExchange('api')).to.have.property('bindingCount', 0);
+      expect(activity.broker.getExchange('event')).to.have.property('bindingCount', 0);
+
+      expect(activity.broker.getExchange('run')).to.have.property('bindingCount', 1);
+      expect(activity.broker.getExchange('execution')).to.have.property('bindingCount', 2);
+
+      expect(activity.broker.consumerCount, 'no consumers').to.equal(0);
     });
 
     it('publishes stop when stopped', (done) => {
@@ -898,18 +906,17 @@ describe('Activity', () => {
         };
       });
 
-      activity.on('stop', () => {
+      activity.once('stop', () => {
         expect(activity.stopped).to.be.true;
         expect(activity.status).to.equal('executing');
 
         const runQ = activity.broker.getQueue('run-q');
-        expect(runQ).to.have.property('consumerCount', 0);
         expect(runQ).to.have.property('messageCount', 1);
 
         expect(runQ.peek()).to.have.property('fields').with.property('redelivered', true);
 
-        expect(activity.broker.getQueue('execution-q')).to.have.property('consumerCount', 0);
-        expect(activity.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
+        expect(activity.broker.consumerCount, 'no consumers').to.equal(0);
+
         done();
       });
 
@@ -935,39 +942,10 @@ describe('Activity', () => {
       expect(activity.status).to.equal('executing');
 
       const runQ = activity.broker.getQueue('run-q');
-      expect(runQ).to.have.property('consumerCount', 0);
       expect(runQ).to.have.property('messageCount', 1);
-
       expect(runQ.peek()).to.have.property('fields').with.property('redelivered', true);
 
-      expect(activity.broker.getQueue('execution-q')).to.have.property('consumerCount', 0);
-      expect(activity.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
-    });
-
-    it('stops all executions', () => {
-      const activity = getActivity(undefined, ({broker}) => {
-        return {
-          execute({content}) {
-            if (content.isSubExec) return;
-            broker.publish('execution', 'execute.start', {...content, executionId: 'activity_sub_exec', isSubExec: true});
-          },
-        };
-      });
-
-      const apiMsgs = [];
-      activity.broker.subscribeTmp('api', '#', (_, msg) => {
-        apiMsgs.push(msg);
-      }, {noAck: true});
-
-      activity.run();
-
-      activity.stop();
-
-      expect(apiMsgs).to.have.length(2);
-      expect(apiMsgs[0].properties).to.have.property('type', 'stop');
-      expect(apiMsgs[0].content).to.have.property('isRootScope', true);
-      expect(apiMsgs[1].fields).to.have.property('routingKey', 'activity.stop.activity_sub_exec');
-      expect(apiMsgs[1].properties).to.have.property('type', 'stop');
+      expect(activity.broker.consumerCount, 'no consumers').to.equal(0);
     });
 
     it('next run can be stopped', async () => {
@@ -1786,6 +1764,7 @@ describe('Activity', () => {
 
       activity.run();
       activity.stop();
+
       activity.resume();
 
       expect(activateMessage).to.be.ok;

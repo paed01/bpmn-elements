@@ -79,8 +79,10 @@ describe('IntermediateCatchEvent', () => {
 
       await leave;
 
+      expect(event.counters).to.have.property('discarded', 1);
+
       const discarded = messages.filter(({fields}) => fields.routingKey === 'execute.discard');
-      expect(discarded.map(({content}) => content.type)).to.have.same.members(['bpmn:IntermediateCatchEvent', 'bpmn:MessageEventDefinition', 'bpmn:TimerEventDefinition']);
+      expect(discarded.map(({content}) => content.type)).to.have.members(['bpmn:MessageEventDefinition', 'bpmn:TimerEventDefinition']);
     });
   });
 

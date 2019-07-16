@@ -439,7 +439,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
         },
       });
 
-      task.broker.publish('api', 'activity.stop.parent-execution-id');
+      task.broker.publish('api', 'activity.stop.parent-execution-id', {}, {type: 'stop'});
 
       expect(task.broker.consumerCount).to.equal(0);
     });
@@ -849,7 +849,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
         },
       });
 
-      task.broker.publish('api', 'activity.stop.parent-execution-id');
+      task.broker.publish('api', 'activity.stop.parent-execution-id', {}, {type: 'stop'});
 
       expect(task.broker.consumerCount).to.equal(0);
     });

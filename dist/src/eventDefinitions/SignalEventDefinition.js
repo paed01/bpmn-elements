@@ -49,6 +49,10 @@ function SignalEventDefinition(activity, eventDefinition) {
       noAck: true,
       consumerTag: `_api-signal-${executionId}`
     });
+    broker.subscribeTmp('api', `activity.stop.${parentExecutionId}`, onApiMessage, {
+      noAck: true,
+      consumerTag: `_api-parent-${parentExecutionId}`
+    });
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
       noAck: true,
       consumerTag: `_api-${executionId}`
@@ -108,6 +112,7 @@ function SignalEventDefinition(activity, eventDefinition) {
     }
 
     function stop() {
+      broker.cancel(`_api-parent-${parentExecutionId}`);
       broker.cancel(`_api-${executionId}`);
       broker.cancel(`_api-signal-${executionId}`);
     }
@@ -130,11 +135,9 @@ function SignalEventDefinition(activity, eventDefinition) {
       },
       state: 'throw'
     }, {
-      type: 'signal',
-      bubbles: true
+      type: 'signal'
     });
-    return broker.publish('execution', 'execute.completed', { ...messageContent
-    });
+    return broker.publish('execution', 'execute.completed', messageContent);
   }
 
   function getSignal(message) {

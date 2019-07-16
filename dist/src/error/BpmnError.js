@@ -9,30 +9,31 @@ function BpmnErrorActivity(errorDef, context) {
   const {
     id,
     type,
-    name
+    name = 'BpmnError',
+    behaviour = {}
   } = errorDef;
   const {
     environment
   } = context;
-  const {
-    errorCode
-  } = errorDef.behaviour || {};
   return {
     id,
-    errorCode,
     type,
     name,
+    errorCode: behaviour.errorCode,
     resolve
   };
 
   function resolve(executionMessage, error) {
-    return {
+    const resolveCtx = { ...executionMessage,
+      error
+    };
+    const result = {
       id,
       type,
-      name,
-      errorCode: errorCode && environment.resolveExpression(errorCode, { ...executionMessage,
-        error
-      })
+      name: name && environment.resolveExpression(name, resolveCtx),
+      code: behaviour.errorCode && environment.resolveExpression(behaviour.errorCode, resolveCtx)
     };
+    if (error) result.inner = error;
+    return result;
   }
 }

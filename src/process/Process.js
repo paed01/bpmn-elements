@@ -115,16 +115,8 @@ export function Process(processDef, context) {
   }
 
   function stop() {
-    if (!status) return;
-
-    stopped = true;
-
-    if (!execution || execution.completed) {
-      deactivateRunConsumers();
-      return publishEvent('stop');
-    }
-
-    execution.stop();
+    if (!processApi.isRunning) return;
+    getApi().stop();
   }
 
   function recover(state) {
@@ -161,7 +153,7 @@ export function Process(processDef, context) {
 
   function getApi(message) {
     if (execution) return execution.getApi(message);
-    return ProcessApi(broker, message);
+    return ProcessApi(broker, message || stateMessage);
   }
 
   function signal(message) {
@@ -270,8 +262,7 @@ export function Process(processDef, context) {
 
     switch (messageType) {
       case 'stopped': {
-        deactivateRunConsumers();
-        return publishEvent('stop');
+        return onStop();
       }
       case 'error': {
         broker.publish('run', 'run.error', content);
@@ -320,17 +311,6 @@ export function Process(processDef, context) {
 
   function getStartActivities(filterOptions) {
     return context.getStartActivities(filterOptions, id);
-
-    // const {referenceId, referenceType = 'unknown'} = filterOptions || {};
-    // return getActivities().filter((activity) => {
-    //   if (!activity.isStart) return false;
-    //   if (!filterOptions) return true;
-
-    //   if (!activity.behaviour.eventDefinitions && !activity.behaviour.eventDefinitions) return false;
-    //   return activity.eventDefinitions.some((ed) => {
-    //     return ed.reference && ed.reference.id === referenceId && ed.reference.referenceType === referenceType;
-    //   });
-    // });
   }
 
   function getSequenceFlows() {
@@ -345,7 +325,7 @@ export function Process(processDef, context) {
 
   function activateRunConsumers() {
     consumingRunQ = true;
-    broker.subscribeTmp('api', `process.*.${executionId}`, onApiMessage, {noAck: true, consumerTag: '_process-api'});
+    broker.subscribeTmp('api', `process.*.${executionId}`, onApiMessage, {noAck: true, consumerTag: '_process-api', priority: 100});
     runQ.assertConsumer(onRunMessage, {exclusive: true, consumerTag: '_process-run'});
   }
 
@@ -361,9 +341,16 @@ export function Process(processDef, context) {
 
     switch (messageType) {
       case 'stop': {
-        stop();
+        if (execution && !execution.completed) return;
+        onStop();
         break;
       }
     }
+  }
+
+  function onStop() {
+    stopped = true;
+    deactivateRunConsumers();
+    return publishEvent('stop');
   }
 }

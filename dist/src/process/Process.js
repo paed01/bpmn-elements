@@ -151,15 +151,8 @@ function Process(processDef, context) {
   }
 
   function stop() {
-    if (!status) return;
-    stopped = true;
-
-    if (!execution || execution.completed) {
-      deactivateRunConsumers();
-      return publishEvent('stop');
-    }
-
-    execution.stop();
+    if (!processApi.isRunning) return;
+    getApi().stop();
   }
 
   function recover(state) {
@@ -199,7 +192,7 @@ function Process(processDef, context) {
 
   function getApi(message) {
     if (execution) return execution.getApi(message);
-    return (0, _Api.ProcessApi)(broker, message);
+    return (0, _Api.ProcessApi)(broker, message || stateMessage);
   }
 
   function signal(message) {
@@ -324,8 +317,7 @@ function Process(processDef, context) {
     switch (messageType) {
       case 'stopped':
         {
-          deactivateRunConsumers();
-          return publishEvent('stop');
+          return onStop();
         }
 
       case 'error':
@@ -381,15 +373,7 @@ function Process(processDef, context) {
   }
 
   function getStartActivities(filterOptions) {
-    return context.getStartActivities(filterOptions, id); // const {referenceId, referenceType = 'unknown'} = filterOptions || {};
-    // return getActivities().filter((activity) => {
-    //   if (!activity.isStart) return false;
-    //   if (!filterOptions) return true;
-    //   if (!activity.behaviour.eventDefinitions && !activity.behaviour.eventDefinitions) return false;
-    //   return activity.eventDefinitions.some((ed) => {
-    //     return ed.reference && ed.reference.id === referenceId && ed.reference.referenceType === referenceType;
-    //   });
-    // });
+    return context.getStartActivities(filterOptions, id);
   }
 
   function getSequenceFlows() {
@@ -406,7 +390,8 @@ function Process(processDef, context) {
     consumingRunQ = true;
     broker.subscribeTmp('api', `process.*.${executionId}`, onApiMessage, {
       noAck: true,
-      consumerTag: '_process-api'
+      consumerTag: '_process-api',
+      priority: 100
     });
     runQ.assertConsumer(onRunMessage, {
       exclusive: true,
@@ -427,9 +412,16 @@ function Process(processDef, context) {
     switch (messageType) {
       case 'stop':
         {
-          stop();
+          if (execution && !execution.completed) return;
+          onStop();
           break;
         }
     }
+  }
+
+  function onStop() {
+    stopped = true;
+    deactivateRunConsumers();
+    return publishEvent('stop');
   }
 }

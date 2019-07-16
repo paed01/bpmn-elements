@@ -24,7 +24,7 @@ function Activity(Behaviour, activityDef, context) {
     id,
     type = 'activity',
     name,
-    parent: originalParent,
+    parent: originalParent = {},
     behaviour = {},
     isParallelGateway,
     isSubProcess,
@@ -117,7 +117,7 @@ function Activity(Behaviour, activityDef, context) {
     logger,
     discard,
     getApi,
-    getErrorById,
+    getActivityById,
     getState,
     init,
     message: inboundMessage,
@@ -249,6 +249,14 @@ function Activity(Behaviour, activityDef, context) {
   function discardRun() {
     if (!status) return;
     if (execution && !execution.completed) return;
+
+    switch (status) {
+      case 'executing':
+      case 'error':
+      case 'discarded':
+        return;
+    }
+
     deactivateRunConsumers();
     runQ.purge();
     broker.publish('run', 'run.discard', (0, _messageHelper.cloneContent)(stateMessage.content));
@@ -266,16 +274,19 @@ function Activity(Behaviour, activityDef, context) {
 
   function stop() {
     if (!activityApi.isRunning) return;
+    getApi().stop();
+  }
+
+  function onStop() {
+    if (!activityApi.isRunning) return;
     stopped = true;
-
-    if (!execution || execution.completed) {
-      deactivate();
-      deactivateRunConsumers();
-      broker.cancel('_activity-execution');
-      return publishEvent('stop');
-    }
-
-    execution.stop();
+    consumingRunQ = false;
+    broker.cancel('_activity-run');
+    broker.cancel('_activity-api');
+    broker.cancel('_activity-execution');
+    broker.cancel('_run-on-inbound');
+    broker.cancel('_format-consumer');
+    publishEvent('stop');
   }
 
   function activate() {
@@ -299,7 +310,8 @@ function Activity(Behaviour, activityDef, context) {
   function activateRunConsumers() {
     broker.subscribeTmp('api', `activity.*.${executionId}`, onApiMessage, {
       noAck: true,
-      consumerTag: '_activity-api'
+      consumerTag: '_activity-api',
+      priority: 100
     });
     consumingRunQ = true;
     runQ.assertConsumer(onRunMessage, {
@@ -311,6 +323,7 @@ function Activity(Behaviour, activityDef, context) {
   function deactivateRunConsumers() {
     broker.cancel('_activity-api');
     broker.cancel('_activity-run');
+    broker.cancel('_activity-execution');
     consumingRunQ = false;
   }
 
@@ -581,9 +594,12 @@ function Activity(Behaviour, activityDef, context) {
   }
 
   function onExecutionMessage(routingKey, message) {
-    const content = { ...executeMessage.content,
-      ...message.content
-    };
+    const content = (0, _messageHelper.cloneContent)({ ...executeMessage.content,
+      ...message.content,
+      executionId: executeMessage.content.executionId,
+      parent: { ...parent
+      }
+    });
     publishEvent(routingKey, content, message.properties);
 
     switch (routingKey) {
@@ -644,13 +660,13 @@ function Activity(Behaviour, activityDef, context) {
     switch (messageType) {
       case 'discard':
         {
-          discardRun();
+          discardRun(message);
           break;
         }
 
       case 'stop':
         {
-          stop();
+          onStop();
           break;
         }
     }
@@ -712,8 +728,8 @@ function Activity(Behaviour, activityDef, context) {
     });
   }
 
-  function getErrorById(errorId) {
-    return context.getErrorById(errorId);
+  function getActivityById(elementId) {
+    return context.getActivityById(elementId);
   }
 
   function getState() {

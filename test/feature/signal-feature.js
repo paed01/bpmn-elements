@@ -144,7 +144,11 @@ Feature('Signals', () => {
     });
 
     Then('trader is presented new price', () => {
-      [tradeTask, spotPriceChanged] = definition.getPostponed();
+      const postponed = definition.getPostponed();
+      expect(postponed).to.have.length(2);
+
+      [tradeTask, spotPriceChanged] = postponed;
+
       expect(tradeTask.content.form.fields.price.defaultValue).to.equal(101);
     });
 

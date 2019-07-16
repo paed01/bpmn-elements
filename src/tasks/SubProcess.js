@@ -45,17 +45,14 @@ export function SubProcessBehaviour(activity, context) {
   return source;
 
   function execute(executeMessage) {
-    const content = executeMessage.content;
+    const content = cloneContent(executeMessage.content);
 
     if (content.isRootScope) {
       rootExecutionId = content.executionId;
     }
+
     if (loopCharacteristics && content.isRootScope) {
-      if (executeMessage.fields.routingKey === 'execute.resume') {
-        return;
-      } else {
-        broker.subscribeTmp('api', `activity.#.${rootExecutionId}`, onApiRootMessage, {noAck: true, consumerTag: `_api-${rootExecutionId}`});
-      }
+      broker.subscribeTmp('api', `activity.#.${rootExecutionId}`, onApiRootMessage, {noAck: true, consumerTag: `_api-${rootExecutionId}`, priority: 200});
       return loopCharacteristics.execute(executeMessage);
     }
 
@@ -65,14 +62,16 @@ export function SubProcessBehaviour(activity, context) {
     return processExecution.execute(executeMessage);
 
     function onApiRootMessage(routingKey, message) {
-      const apiMessageType = message.properties.type;
-
-      if (apiMessageType === 'stop') {
-        broker.cancel(`_api-${rootExecutionId}`);
-        return stop();
-      } else if (message.properties.type === 'discard') {
-        broker.cancel(`_api-${rootExecutionId}`);
-        return discard();
+      const messageType = message.properties.type;
+      switch (messageType) {
+        case 'stop':
+          broker.cancel(`_api-${rootExecutionId}`);
+          stop();
+          break;
+        case 'discard':
+          broker.cancel(`_api-${rootExecutionId}`);
+          discard();
+          break;
       }
     }
   }
@@ -152,53 +151,38 @@ export function SubProcessBehaviour(activity, context) {
 
   function addListeners(processExecution, executionId) {
     const executionConsumerTag = `_sub-process-execution-${executionId}`;
-    const apiConsumerTag = `_sub-process-api-${executionId}`;
 
     broker.subscribeTmp('subprocess-execution', `execution.#.${executionId}`, onExecutionCompleted, {noAck: true, consumerTag: executionConsumerTag});
-    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: apiConsumerTag});
 
     function onExecutionCompleted(_, message) {
       const content = message.content;
       const messageType = message.properties.type;
 
+      if (message.fields.redelivered && message.properties.persistent === false) return;
+
       switch (messageType) {
         case 'stopped': {
           broker.cancel(executionConsumerTag);
-          broker.publish('execution', 'execute.stopped', cloneContent(content));
+          break;
+        }
+        case 'discard': {
+          broker.cancel(executionConsumerTag);
+          broker.publish('execution', 'execute.discard', cloneContent(content));
           break;
         }
         case 'completed': {
           broker.cancel(executionConsumerTag);
-          broker.cancel(apiConsumerTag);
           broker.publish('execution', 'execute.completed', cloneContent(content));
           break;
         }
         case 'error': {
           broker.cancel(executionConsumerTag);
-          broker.cancel(apiConsumerTag);
 
           const {error} = content;
           logger.error(`<${id}>`, error);
           broker.publish('execution', 'execute.error', cloneContent(content));
           break;
         }
-      }
-    }
-
-    function onApiMessage(routingKey, message) {
-      const apiMessageType = message.properties.type;
-      const content = message.content;
-
-      if (apiMessageType === 'stop') {
-        broker.cancel(apiConsumerTag);
-        return processExecution.stop();
-      } else if (message.properties.type === 'discard') {
-        broker.cancel(apiConsumerTag);
-        broker.cancel(executionConsumerTag);
-
-        processExecution.discard();
-
-        return broker.publish('execution', 'execute.discard', {...content, state: 'discard'});
       }
     }
   }

@@ -107,6 +107,7 @@ function ProcessExecution(parentActivity, context) {
     }
 
     logger.debug(`<${executionId} (${id})> execute`, isSubProcess ? 'sub process' : 'process');
+    activate();
     start();
     return true;
   }
@@ -116,7 +117,8 @@ function ProcessExecution(parentActivity, context) {
     executionId = state.executionId;
     stopped = state.stopped;
     completed = state.completed;
-    logger.debug(`<${executionId} (${id})> recover process execution`);
+    status = state.status;
+    logger.debug(`<${executionId} (${id})> recover`, status, 'process execution');
 
     if (state.flows) {
       state.flows.forEach(flowState => {
@@ -138,14 +140,27 @@ function ProcessExecution(parentActivity, context) {
   }
 
   function resume() {
-    logger.debug(`<${executionId} (${id})> resume process execution`);
+    logger.debug(`<${executionId} (${id})> resume`, status, 'process execution');
     if (completed) return complete('completed');
     activate();
     postponed.splice(0);
     activityQ.consume(onChildMessage, {
-      prefetch: 1000
+      prefetch: 1000,
+      consumerTag: `_process-activity-${executionId}`
     });
     if (completed) return complete('completed');
+
+    switch (status) {
+      case 'init':
+        return start();
+
+      case 'executing':
+        {
+          if (!postponed.length) return complete('completed');
+          break;
+        }
+    }
+
     flows.forEach(flow => flow.resume());
     postponed.slice().forEach(({
       content
@@ -158,7 +173,6 @@ function ProcessExecution(parentActivity, context) {
     }
 
     status = 'start';
-    activate();
     const executeContent = { ...initMessage.content,
       state: status
     };
@@ -166,42 +180,34 @@ function ProcessExecution(parentActivity, context) {
     startActivities.forEach(activity => activity.init());
     startActivities.forEach(activity => activity.run());
     postponed.splice(0);
-    activityQ.consume(onChildMessage, {
-      prefetch: 1000
+    activityQ.assertConsumer(onChildMessage, {
+      prefetch: 1000,
+      consumerTag: `_process-activity-${executionId}`
     });
   }
 
   function stop() {
-    status = 'stop';
-    return activityQ.queueMessage({
-      routingKey: 'execution.stop'
-    }, {
-      id,
-      type,
-      executionId
-    }, {
-      type: 'stop',
-      persistent: false
-    });
+    getApi().stop();
   }
 
   function activate() {
     broker.subscribeTmp('api', '#', onApiMessage, {
       noAck: true,
-      consumerTag: `_process-api-consumer-${executionId}`
+      consumerTag: `_process-api-consumer-${executionId}`,
+      priority: 200
     });
     outboundMessageFlows.forEach(flow => {
       flow.broker.subscribeTmp('event', '#', onMessageFlowEvent, {
         consumerTag: '_process-message-controller',
         noAck: true,
-        priority: 100
+        priority: 200
       });
     });
     flows.forEach(flow => {
       flow.broker.subscribeTmp('event', '#', onActivityEvent, {
         consumerTag: '_process-flight-controller',
         noAck: true,
-        priority: 100
+        priority: 200
       });
     });
     children.forEach(activity => {
@@ -209,7 +215,7 @@ function ProcessExecution(parentActivity, context) {
       activity.broker.subscribeTmp('event', '#', onActivityEvent, {
         noAck: true,
         consumerTag: '_process-activity-consumer',
-        priority: 100
+        priority: 200
       });
       if (activity.isStart) startActivities.push(activity);
       if (activity.triggeredByEvent) triggeredByEventActivities.push(activity);
@@ -241,13 +247,17 @@ function ProcessExecution(parentActivity, context) {
       });
       if (!isDirectChild) return;
 
-      if (routingKey === 'process.terminate') {
-        return activityQ.queueMessage({
-          routingKey: 'execution.terminate'
-        }, (0, _messageHelper.cloneContent)(content), {
-          type: 'terminate',
-          persistent: true
-        });
+      switch (routingKey) {
+        case 'process.terminate':
+          return activityQ.queueMessage({
+            routingKey: 'execution.terminate'
+          }, (0, _messageHelper.cloneContent)(content), {
+            type: 'terminate',
+            persistent: true
+          });
+
+        case 'activity.stop':
+          return;
       }
 
       activityQ.queueMessage(message.fields, (0, _messageHelper.cloneContent)(content), {
@@ -255,6 +265,22 @@ function ProcessExecution(parentActivity, context) {
         ...message.properties
       });
     }
+  }
+
+  function deactivate() {
+    activated = false;
+    broker.cancel(`_process-activity-${executionId}`);
+    broker.cancel(`_process-api-consumer-${executionId}`);
+    children.forEach(activity => {
+      activity.broker.cancel('_process-activity-consumer');
+      activity.deactivate();
+    });
+    flows.forEach(flow => {
+      flow.broker.cancel('_process-flight-controller');
+    });
+    outboundMessageFlows.forEach(flow => {
+      flow.broker.cancel('_process-message-controller');
+    });
   }
 
   function onDelegateEvent(message) {
@@ -271,7 +297,7 @@ function ProcessExecution(parentActivity, context) {
         activity.run(content.message);
       }
     });
-    getApi().sendApiMessage('escalate', content, {
+    getApi().sendApiMessage(eventType, content, {
       delegate: true
     });
     return delegate;
@@ -299,8 +325,9 @@ function ProcessExecution(parentActivity, context) {
         message.ack();
         return terminate(message);
 
-      case 'activity.stop':
-        return onChildStopped();
+      case 'execution.discard':
+        message.ack();
+        return onDiscard(message);
 
       case 'flow.looped':
       case 'activity.leave':
@@ -319,6 +346,8 @@ function ProcessExecution(parentActivity, context) {
       case 'activity.discard':
       case 'activity.enter':
         {
+          status = 'executing';
+
           if (content.inbound) {
             content.inbound.forEach(trigger => {
               if (!trigger.isSequenceFlow) return;
@@ -376,27 +405,11 @@ function ProcessExecution(parentActivity, context) {
     function stopExecution() {
       if (stopped) return;
       logger.debug(`<${executionId} (${id})> stop process execution (stop child executions ${postponed.length})`);
-      postponed.slice().forEach(msg => {
-        getApi(msg).stop();
+      getPostponed().forEach(api => {
+        api.stop();
       });
-      stopped = true;
-    }
-
-    function onChildStopped() {
-      message.ack();
-
-      for (const activityApi of postponed.slice()) {
-        const activity = getActivityById(activityApi.content.id);
-        if (!activity) continue;
-        if (activity.isRunning) return;
-      }
-
-      onStopped();
-    }
-
-    function onStopped() {
-      activityQ.close();
       deactivate();
+      stopped = true;
       return broker.publish(exchangeName, `execution.stopped.${executionId}`, { ...initMessage.content,
         ...content
       }, {
@@ -405,10 +418,24 @@ function ProcessExecution(parentActivity, context) {
       });
     }
 
+    function onDiscard() {
+      deactivate();
+      const running = postponed.splice(0);
+      logger.debug(`<${executionId} (${id})> discard process execution (discard child executions ${running.length})`);
+      getSequenceFlows().forEach(flow => {
+        flow.stop();
+      });
+      running.forEach(msg => {
+        getApi(msg).discard();
+      });
+      activityQ.purge();
+      return complete('discard');
+    }
+
     function isEventCaught() {
       return postponed.find(msg => {
         if (msg.fields.routingKey !== 'activity.catch') return;
-        return content.error.properties && content.error.properties.messageId === msg.content.error.properties.messageId;
+        return msg.content.source && msg.content.source.executionId === content.executionId;
       });
     }
   }
@@ -422,26 +449,26 @@ function ProcessExecution(parentActivity, context) {
       return;
     }
 
-    if (message.content.id !== id) {
+    if (id !== message.content.id) {
       const child = getActivityById(message.content.id);
       if (!child) return null;
       return child.broker.publish('api', routingKey, message.content, message.properties);
     }
-  }
 
-  function deactivate() {
-    activated = false;
-    broker.cancel(`_process-api-consumer-${executionId}`);
-    children.forEach(activity => {
-      activity.broker.cancel('_process-activity-consumer');
-      activity.deactivate();
-    });
-    flows.forEach(flow => {
-      flow.broker.cancel('_process-flight-controller');
-    });
-    outboundMessageFlows.forEach(flow => {
-      flow.broker.cancel('_process-message-controller');
-    });
+    if (executionId !== message.content.executionId) return;
+
+    switch (message.properties.type) {
+      case 'discard':
+        return discard(message);
+
+      case 'stop':
+        activityQ.queueMessage({
+          routingKey: 'execution.stop'
+        }, (0, _messageHelper.cloneContent)(message.content), {
+          persistent: false
+        });
+        break;
+    }
   }
 
   function getPostponed(filterFn) {
@@ -473,6 +500,19 @@ function ProcessExecution(parentActivity, context) {
     });
   }
 
+  function discard() {
+    status = 'discard';
+    return activityQ.queueMessage({
+      routingKey: 'execution.discard'
+    }, {
+      id,
+      type,
+      executionId
+    }, {
+      type: 'discard'
+    });
+  }
+
   function terminate(message) {
     status = 'terminated';
     logger.debug(`<${executionId} (${id})> terminating process execution`);
@@ -493,18 +533,12 @@ function ProcessExecution(parentActivity, context) {
     activityQ.purge();
   }
 
-  function discard() {
-    logger.debug(`<${executionId} (${id})> discard process execution (discard child executions ${postponed.length})`);
-    postponed.slice().forEach(msg => {
-      getApi(msg).discard();
-    });
-  }
-
   function getState() {
     return {
       executionId,
       stopped,
       completed,
+      status,
       children: children.map(activity => activity.getState()),
       flows: flows.map(f => f.getState())
     };
@@ -531,7 +565,7 @@ function ProcessExecution(parentActivity, context) {
   }
 
   function getApi(message) {
-    if (!message) message = initMessage;
+    if (!message) return (0, _Api.ProcessApi)(broker, initMessage);
     const content = message.content;
 
     if (content.executionId !== executionId) {

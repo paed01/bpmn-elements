@@ -26,6 +26,7 @@ export default function SignalEventDefinition(activity, eventDefinition) {
     if (completed) return;
 
     broker.subscribeTmp('api', '*.signal.#', onSignalApiMessage, {noAck: true, consumerTag: `_api-signal-${executionId}`});
+    broker.subscribeTmp('api', `activity.stop.${parentExecutionId}`, onApiMessage, {noAck: true, consumerTag: `_api-parent-${parentExecutionId}`});
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
 
     const signalMessage = getSignal(executeMessage);
@@ -72,6 +73,7 @@ export default function SignalEventDefinition(activity, eventDefinition) {
     }
 
     function stop() {
+      broker.cancel(`_api-parent-${parentExecutionId}`);
       broker.cancel(`_api-${executionId}`);
       broker.cancel(`_api-signal-${executionId}`);
     }
@@ -93,9 +95,9 @@ export default function SignalEventDefinition(activity, eventDefinition) {
       parent: shiftParent(parent),
       message: {...signalMessage},
       state: 'throw',
-    }, {type: 'signal', bubbles: true});
+    }, {type: 'signal'});
 
-    return broker.publish('execution', 'execute.completed', {...messageContent});
+    return broker.publish('execution', 'execute.completed', messageContent);
   }
 
   function getSignal(message) {

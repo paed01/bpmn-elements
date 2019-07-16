@@ -46,58 +46,7 @@ describe('SubProcess', () => {
     expect(subProcess.broker.getExchange('subprocess-execution')).to.be.ok;
   });
 
-  describe('stop()', () => {
-    it('stops process execution', () => {
-      const environment = Environment({Logger: testHelpers.Logger});
-      const subProcess = SubProcess({id: 'sub-process', parent: {id: 'process1'}}, {
-        environment,
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
-        loadExtensions() {},
-        clone() {
-          const ctx = this;
-          const activity = SignalTask({id: 'task', parent: {id: 'sub-process'}}, ctx);
-          return {
-            environment,
-            getActivities() {
-              return [activity];
-            },
-            getActivityById() {
-              return activity;
-            },
-            getSequenceFlows() {},
-            getDataObjects() {},
-            getMessageFlows() {},
-          };
-        },
-      });
-
-      subProcess.run();
-      subProcess.stop();
-
-      const executionExchange = subProcess.broker.getExchange('subprocess-execution');
-      expect(executionExchange).to.be.ok;
-      expect(executionExchange).to.have.property('bindingCount', 0);
-
-      const apiExchange = subProcess.broker.getExchange('api');
-      expect(apiExchange).to.be.ok;
-      expect(apiExchange).to.have.property('bindingCount', 0);
-
-      const executeQ = subProcess.broker.getQueue('execute-q');
-      expect(executeQ).to.have.property('messageCount', 1);
-      expect(executeQ).to.have.property('consumerCount', 0);
-
-      const runQ = subProcess.broker.getQueue('run-q');
-      expect(runQ).to.have.property('consumerCount', 0);
-      expect(runQ).to.have.property('messageCount', 1);
-
-      const executionQ = subProcess.broker.getQueue('execution-q');
-      expect(executionQ).to.have.property('consumerCount', 0);
-      expect(executionQ).to.have.property('messageCount', 0);
-    });
-  });
-
-  describe('behaviour', () => {
+  describe('run()', () => {
     let context;
     beforeEach(async () => {
       context = await testHelpers.context(subProcessSource);
@@ -159,7 +108,7 @@ describe('SubProcess', () => {
         messages.push(message);
       }, {noAck: true});
 
-      const completed = subProcess.waitFor('leave');
+      const completed = subProcess.waitFor('leave', (_, a) => a.content.id === 'subProcess');
 
       subProcess.once('wait', (activityApi) => {
         expect(activityApi.type).to.equal('bpmn:UserTask');
@@ -200,7 +149,7 @@ describe('SubProcess', () => {
         messages.push(message);
       }, {noAck: true});
 
-      const completed = subProcess.waitFor('leave');
+      const completed = subProcess.waitFor('leave', (_, a) => a.content.id === 'subProcess');
       subProcess.once('wait', (activityApi) => {
         activityApi.discard();
       });
@@ -222,14 +171,32 @@ describe('SubProcess', () => {
       assertMessage('activity.leave', 'subProcess');
     });
 
-    it('child result is added to output', async () => {
+    it('publishes leave message when completed', async () => {
       const subProcess = context.getActivityById('subProcess');
+      const leave = subProcess.waitFor('leave', (_, a) => a.content.id === 'subProcess');
 
-      const leave = subProcess.waitFor('leave');
-      const wait = subProcess.waitFor('wait');
+      subProcess.once('wait', (api) => {
+        api.signal();
+      });
 
       subProcess.run();
-      (await wait).signal({child: 1});
+
+      const left = await leave;
+
+      expect(left.content).to.have.property('id', 'subProcess');
+      expect(left.content).to.have.property('parent').with.property('id', 'mainProcess');
+    });
+
+    it('sub process execution output is added to output', async () => {
+      const subProcess = context.getActivityById('subProcess');
+
+      const leave = subProcess.waitFor('leave', (_, a) => a.content.id === 'subProcess');
+      subProcess.once('wait', (api) => {
+        api.owner.environment.output.child = 1;
+        api.signal();
+      });
+
+      subProcess.run();
 
       const api = await leave;
 
@@ -240,23 +207,73 @@ describe('SubProcess', () => {
 
     it('adds parent to child', async () => {
       const subProcess = context.getActivityById('subProcess');
-      const leave = subProcess.waitFor('leave');
+      const leave = subProcess.waitFor('leave', (_, a) => a.content.id === 'subProcess');
 
-      const waitConsumer = subProcess.on('wait', (api) => {
-        expect(api.content.type).to.equal('bpmn:UserTask');
-        expect(api.content.parent).to.have.property('id', 'subProcess');
-        expect(api.content.parent).to.have.property('executionId').that.match(/^subProcess_.+/);
-
-        api.signal({data: 1});
-      });
+      const wait = subProcess.waitFor('wait');
 
       subProcess.run();
 
-      const left = await leave;
+      const childApi = await wait;
 
-      waitConsumer.cancel();
+      expect(childApi.content.type).to.equal('bpmn:UserTask');
+      expect(childApi.content.parent).to.have.property('id', 'subProcess');
+      expect(childApi.content.parent).to.have.property('executionId').that.match(/^subProcess_.+/);
 
-      expect(left.content.output).to.eql({data: 1});
+      childApi.signal();
+      return leave;
+    });
+  });
+
+  describe('stop()', () => {
+    it('stops process execution', () => {
+      const environment = Environment({Logger: testHelpers.Logger});
+      const subProcess = SubProcess({id: 'sub-process', parent: {id: 'process1'}}, {
+        environment,
+        getInboundSequenceFlows() {},
+        getOutboundSequenceFlows() {},
+        loadExtensions() {},
+        clone() {
+          const ctx = this;
+          const activity = SignalTask({id: 'task', parent: {id: 'sub-process'}}, ctx);
+          return {
+            environment,
+            getActivities() {
+              return [activity];
+            },
+            getActivityById() {
+              return activity;
+            },
+            getSequenceFlows() {},
+            getDataObjects() {},
+            getMessageFlows() {},
+          };
+        },
+      });
+
+      subProcess.run();
+      subProcess.stop();
+
+      const executionExchange = subProcess.broker.getExchange('subprocess-execution');
+      expect(executionExchange).to.be.ok;
+      expect(executionExchange).to.have.property('bindingCount', 0);
+
+      const apiExchange = subProcess.broker.getExchange('api');
+      expect(apiExchange).to.be.ok;
+      expect(apiExchange).to.have.property('bindingCount', 0);
+
+      const executeQ = subProcess.broker.getQueue('execute-q');
+      expect(executeQ).to.have.property('messageCount', 1);
+      expect(executeQ).to.have.property('consumerCount', 0);
+
+      const runQ = subProcess.broker.getQueue('run-q');
+      expect(runQ).to.have.property('consumerCount', 0);
+      expect(runQ).to.have.property('messageCount', 1);
+
+      const executionQ = subProcess.broker.getQueue('execution-q');
+      expect(executionQ).to.have.property('consumerCount', 0);
+      expect(executionQ).to.have.property('messageCount', 0);
+
+      expect(subProcess.broker).to.have.property('consumerCount', 0);
     });
   });
 
@@ -273,7 +290,7 @@ describe('SubProcess', () => {
       subProcess.run();
       await wait;
 
-      const leave = subProcess.waitFor('leave');
+      const leave = subProcess.waitFor('leave', (_, a) => a.content.id === 'subProcess');
 
       subProcess.discard();
 
@@ -284,7 +301,7 @@ describe('SubProcess', () => {
       const children = subProcess.execution.source.execution.getActivities();
       expect(children).to.have.length(2);
       expect(children[0]).to.have.property('counters').with.property('discarded', 1);
-      expect(children[1]).to.have.property('counters').with.property('discarded', 1);
+      expect(children[1]).to.have.property('counters').with.property('taken', 0);
     });
   });
 
@@ -320,15 +337,16 @@ describe('SubProcess', () => {
 
       const executeQ = subProcess.broker.getQueue('execute-q');
       expect(executeQ.consumerCount).to.equal(0);
-      expect(executeQ.peek().fields).to.have.property('routingKey', 'execute.start');
 
       wait = subProcess.waitFor('wait');
-      const leave = subProcess.waitFor('leave');
+      const leave = subProcess.waitFor('leave', (_, a) => a.content.id === 'subProcess');
       subProcess.resume();
 
       (await wait).signal();
 
-      return leave;
+      const leaveApi = await leave;
+      expect(leaveApi).to.have.property('id', 'subProcess');
+      expect(leaveApi.content.parent).to.have.property('id', 'mainProcess');
     });
 
     it('recover and resume with state continues execution', async () => {
@@ -346,7 +364,7 @@ describe('SubProcess', () => {
       subProcess2.recover(state);
 
       wait = subProcess2.waitFor('wait');
-      const leave = subProcess2.waitFor('leave');
+      const leave = subProcess2.waitFor('leave', (_, a) => a.content.id === 'subProcess');
       subProcess2.resume();
 
       (await wait).signal();
@@ -671,6 +689,25 @@ describe('SubProcess', () => {
         }]);
       });
 
+      it('stop closes all consumers', async () => {
+        const task = context.getActivityById('sub-process-task');
+
+        const stop = task.waitFor('stop', (_, msg) => {
+          if (msg.content.id === task.id) return true;
+        });
+
+        task.once('wait', (api) => {
+          api.signal(1);
+          task.stop();
+        });
+
+        task.run();
+
+        await stop;
+
+        expect(task.broker).to.have.property('consumerCount', 0);
+      });
+
       it('resumes from last completed', async () => {
         const task = context.getActivityById('sub-process-task');
 
@@ -938,8 +975,6 @@ describe('SubProcess', () => {
 
         await stop;
 
-        expect(task.execution.source.executions).to.have.length(3);
-
         const leave = task.waitFor('leave', (_, msg) => msg.content.id === task.id);
 
         const waitConsumer = task.on('wait', (api) => {
@@ -958,35 +993,6 @@ describe('SubProcess', () => {
         }, {
           shopping: 1,
         }]);
-      });
-
-      it('resumes iteration with state', async () => {
-        const task = context.getActivityById('sub-process-task');
-
-        const stop = task.waitFor('stop', (_, msg) => msg.content.id === task.id);
-
-        task.once('wait', (api) => {
-          api.signal(1);
-          task.stop();
-        });
-
-        task.run();
-
-        await stop;
-
-        const state = task.getState();
-
-        const recoverContext = context.clone();
-        const recoveredTask = recoverContext.getActivityById('sub-process-task');
-
-        recoveredTask.recover(state);
-
-        expect(recoveredTask.execution.source.executions).to.have.length(3);
-
-        const subTask = recoveredTask.execution.source.executions[1].getActivityById('userTask');
-        expect(subTask).to.be.ok;
-
-        expect(subTask.status).to.equal('executing');
       });
 
       it('recover initiates executions with children', async () => {
@@ -1010,7 +1016,7 @@ describe('SubProcess', () => {
         recoveredTask.recover(JSON.parse(JSON.stringify(state)));
 
         const executions = recoveredTask.execution.source.executions;
-        expect(executions).to.have.length(3);
+        expect(executions).to.have.length(1);
 
         expect(executions[0]).to.have.property('environment').with.property('variables');
         expect(executions[0].environment.variables).to.have.property('content').with.property('id', 'sub-process-task');
@@ -1021,26 +1027,6 @@ describe('SubProcess', () => {
 
         expect(executions[0].getActivities()).to.have.length(1);
         expect(executions[0].getActivities()[0].environment === executions[0].environment, 'child environment').to.be.true;
-
-        expect(executions[1]).to.have.property('environment').with.property('variables');
-        expect(executions[1].environment.variables).to.have.property('content').with.property('id', 'sub-process-task');
-        expect(executions[1].environment.variables).to.have.property('content').with.property('executionId');
-        expect(executions[1].environment.variables).to.have.property('fields').with.property('routingKey');
-        expect(executions[1].environment.variables.content).to.have.property('item', 'archiving');
-        expect(executions[1]).to.have.property('environment').with.property('output').that.eql({});
-
-        expect(executions[1].getActivities()).to.have.length(1);
-        expect(executions[1].getActivities()[0].environment === executions[1].environment, 'child environment').to.be.true;
-
-        expect(executions[2]).to.have.property('environment').with.property('variables');
-        expect(executions[2].environment.variables).to.have.property('content').with.property('id', 'sub-process-task');
-        expect(executions[2].environment.variables).to.have.property('content').with.property('executionId');
-        expect(executions[2].environment.variables).to.have.property('fields').with.property('routingKey');
-        expect(executions[2].environment.variables.content).to.have.property('item', 'shopping');
-        expect(executions[2]).to.have.property('environment').with.property('output').that.eql({});
-
-        expect(executions[2].getActivities()).to.have.length(1);
-        expect(executions[2].getActivities()[0].environment === executions[2].environment, 'child environment').to.be.true;
       });
 
       it('resumes recovered', async () => {
@@ -1059,44 +1045,15 @@ describe('SubProcess', () => {
 
         const state = task.getState();
 
-        expect(state).to.have.property('execution');
-        expect(state.execution).to.have.property('executions').with.length(3);
-        expect(state.execution.executions[0]).to.have.property('environment').with.property('output').that.eql({labour: 'sub 0'});
-        expect(state.execution.executions[0]).to.have.property('environment').with.property('variables');
-        expect(state.execution.executions[0].environment.variables).to.have.property('fields').with.property('routingKey');
-        expect(state.execution.executions[0].environment.variables).to.have.property('content').with.property('executionId');
-        expect(state.execution.executions[0].environment.variables).to.have.property('content').with.property('index', 0);
-        expect(state.execution.executions[0].environment.variables).to.have.property('content').with.property('item', 'labour');
-
-        expect(state.execution.executions[1]).to.have.property('environment').with.property('output').that.eql({});
-        expect(state.execution.executions[1]).to.have.property('environment').with.property('variables');
-        expect(state.execution.executions[1].environment.variables).to.have.property('fields').with.property('routingKey');
-        expect(state.execution.executions[1].environment.variables).to.have.property('content').with.property('executionId');
-        expect(state.execution.executions[1].environment.variables).to.have.property('content').with.property('index', 1);
-        expect(state.execution.executions[1].environment.variables).to.have.property('content').with.property('item', 'archiving');
-
-        expect(state.execution.executions[2]).to.have.property('environment').with.property('output').that.eql({});
-        expect(state.execution.executions[2]).to.have.property('environment').with.property('variables');
-        expect(state.execution.executions[2].environment.variables).to.have.property('fields').with.property('routingKey');
-        expect(state.execution.executions[2].environment.variables).to.have.property('content').with.property('executionId');
-        expect(state.execution.executions[2].environment.variables).to.have.property('content').with.property('index', 2);
-        expect(state.execution.executions[2].environment.variables).to.have.property('content').with.property('item', 'shopping');
-
         const recoverContext = context.clone();
         recoverContext.environment.variables.prefix = 'recovered';
         const recoveredTask = recoverContext.getActivityById('sub-process-task');
 
         recoveredTask.recover(JSON.parse(JSON.stringify(state)));
 
-        expect(recoveredTask.execution.source.executions).to.have.length(3);
-
         const leave = recoveredTask.waitFor('leave', (_, msg) => msg.content.id === task.id);
 
         const waitConsumer = recoveredTask.on('wait', (api) => {
-          expect(api).to.have.property('content').with.property('id', 'userTask');
-          expect(api.environment.variables).to.have.property('content').with.property('index');
-          expect(api.environment.variables).to.have.property('prefix', 'sub');
-
           api.signal(`${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.index}')}`);
         });
 
@@ -1109,9 +1066,9 @@ describe('SubProcess', () => {
         expect(left.content.output).to.eql([{
           labour: 'sub 0',
         }, {
-          archiving: 'sub 1',
+          archiving: 'recovered 1',
         }, {
-          shopping: 'sub 2',
+          shopping: 'recovered 2',
         }]);
       });
     });

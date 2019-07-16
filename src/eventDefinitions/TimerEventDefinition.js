@@ -37,7 +37,7 @@ export default function TimerEventDefinition(activity, eventDefinition) {
       return debug(`<${executionId} (${id})> resumed, waiting for timer message`);
     }
 
-    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
+    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`, priority: 300});
 
     let timerContent;
 
@@ -92,17 +92,19 @@ export default function TimerEventDefinition(activity, eventDefinition) {
     function onApiMessage(routingKey, message) {
       const apiMessageType = message.properties.type;
 
-      if (apiMessageType === 'stop') {
-        broker.cancel(`_api-${executionId}`);
-        timer = clearTimeout(timer);
-        return debug(`<${executionId} (${id})> stopped`);
-      }
-      if (message.properties.type === 'discard') {
-        broker.cancel(`_api-${executionId}`);
-        timer = clearTimeout(timer);
-        debug(`<${executionId} (${id})> discarded`);
+      switch (apiMessageType) {
+        case 'stop': {
+          broker.cancel(`_api-${executionId}`);
+          timer = clearTimeout(timer);
+          return debug(`<${executionId} (${id})> stopped`);
+        }
+        case 'discard': {
+          broker.cancel(`_api-${executionId}`);
+          timer = clearTimeout(timer);
+          debug(`<${executionId} (${id})> discarded`);
 
-        return broker.publish('execution', 'execute.discard', {...messageContent, state: 'discard'});
+          return broker.publish('execution', 'execute.discard', {...messageContent, state: 'discard'});
+        }
       }
     }
   }

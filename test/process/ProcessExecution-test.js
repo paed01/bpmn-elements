@@ -111,7 +111,7 @@ describe('Process execution', () => {
       });
     });
 
-    it('publishes no start message if redelivered (recovered)', () => {
+    it('publishes start message if recovered on init', () => {
       const bp = createProcess();
       const execution = ProcessExecution(bp, bp.context);
 
@@ -133,7 +133,34 @@ describe('Process execution', () => {
         },
       });
 
-      expect(message).to.not.be.ok;
+      expect(message).to.be.ok;
+      expect(message.fields).to.have.property('routingKey', 'execute.start');
+    });
+
+    it('completes if recovered on executing when all activities are completed', () => {
+      const bp = createProcess();
+      const execution = ProcessExecution(bp, bp.context);
+      execution.recover({status: 'executing'});
+
+      let message;
+      bp.broker.subscribeOnce('execution', '#', (_, msg) => {
+        message = msg;
+      });
+
+      execution.execute({
+        fields: {
+          redelivered: true,
+        },
+        content: {
+          id: 'parentActivity',
+          type: 'task',
+          executionId: 'process1_1',
+          input: 1,
+        },
+      });
+
+      expect(message).to.be.ok;
+      expect(message.fields).to.have.property('routingKey', 'execution.completed.process1_1');
     });
 
     it('forwards activity events', () => {
@@ -198,7 +225,7 @@ describe('Process execution', () => {
   });
 
   describe('error', () => {
-    it('publish execution error on activity error', async () => {
+    it('uncaught activity error throws', async () => {
       const bp = createProcess();
       const activity = ServiceTask({
         id: 'service',
@@ -285,9 +312,9 @@ describe('Process execution', () => {
 
       const execution = ProcessExecution(bp, bp.context);
 
-      let message;
+      let errorMessage;
       execution.broker.subscribeOnce('execution', 'execution.error.*', (_, msg) => {
-        message = msg;
+        errorMessage = msg;
       });
 
       execution.execute({
@@ -298,7 +325,8 @@ describe('Process execution', () => {
         },
       });
 
-      expect(message).to.not.be.ok;
+      expect(errorMessage).to.not.be.ok;
+      expect(execution).to.have.property('completed', true);
     });
   });
 
@@ -698,6 +726,129 @@ describe('Process execution', () => {
       expect(execution.getPostponed()).to.have.length(1);
 
       expect(subActivity).to.have.property('stopped', true);
+
+      expect(subActivity.broker.getQueue('messages')).to.have.property('consumerCount', 0);
+    });
+  });
+
+  describe('discard()', () => {
+    it('discards all running activities', async () => {
+      const bp = createProcess();
+      const activity = SignalTask({id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}}, bp.context);
+      bp.context.getActivities = () => {
+        return [activity];
+      };
+
+      const execution = ProcessExecution(bp, bp.context);
+      execution.execute({
+        fields: {},
+        content: {
+          id: 'process1',
+          executionId: 'process1_1',
+        },
+      });
+      expect(execution).to.have.property('completed', false);
+      expect(execution.getPostponed()).to.have.length(1);
+
+      execution.discard();
+
+      expect(execution).to.have.property('completed', true);
+      expect(execution).to.have.property('status', 'discard');
+      expect(execution.getPostponed()).to.have.length(0);
+
+      expect(activity.counters).to.have.property('discarded', 1);
+      expect(activity.counters).to.have.property('taken', 0);
+    });
+
+    it('api.discard() discards all running activities', async () => {
+      const bp = createProcess();
+      const activity = SignalTask({id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}}, bp.context);
+      bp.context.getActivities = () => {
+        return [activity];
+      };
+
+      const execution = ProcessExecution(bp, bp.context);
+      execution.execute({
+        fields: {},
+        content: {
+          id: 'process1',
+          executionId: 'process1_1',
+        },
+      });
+      expect(execution).to.have.property('completed', false);
+      expect(execution.getPostponed()).to.have.length(1);
+
+      execution.getApi().discard();
+
+      expect(execution).to.have.property('completed', true);
+      expect(execution).to.have.property('status', 'discard');
+      expect(execution.getPostponed()).to.have.length(0);
+
+      expect(activity.counters).to.have.property('discarded', 1);
+      expect(activity.counters).to.have.property('taken', 0);
+    });
+
+    it('discards running sub process', async () => {
+      const bp = createProcess();
+
+      const subActivity = StartEvent({
+        id: 'start',
+        type: 'bpmn:StartEvent',
+        isStart: true,
+        parent: {id: 'activity'},
+        behaviour: {
+          eventDefinitions: [{
+            Behaviour: MessageEventDefinition,
+          }, {
+            Behaviour: TimerEventDefinition,
+            behaviour: {
+              timeDuration: 'PT1M'
+            }
+          }]
+        }
+      }, bp.context);
+
+      const activity = SubProcess({
+        id: 'activity',
+        type: 'bpmn:SubProcess',
+        isStart: true,
+        parent: {id: 'process1'},
+        behaviour: {}
+      }, bp.context);
+
+      bp.context.getActivities = (id) => {
+        if (id === 'activity') return [subActivity];
+        return [activity];
+      };
+      bp.context.getSequenceFlows = () => {
+        return [];
+      };
+
+      const discard = new Promise((resolve) => {
+        bp.broker.subscribeOnce('event', 'activity.wait', () => {
+          expect(subActivity.broker.getQueue('messages')).to.have.property('consumerCount', 1);
+          execution.discard();
+          resolve();
+        });
+      });
+
+      const execution = ProcessExecution(bp, bp.context);
+      execution.execute({
+        fields: {},
+        content: {
+          id: 'process1',
+          executionId: 'process1_1',
+        },
+      });
+
+      await discard;
+
+      expect(execution.getPostponed()).to.have.length(0);
+      expect(execution).to.have.property('completed', true);
+      expect(execution).to.have.property('status', 'discard');
+
+      expect(activity.counters).to.have.property('discarded', 1);
+      expect(subActivity.counters).to.have.property('discarded', 1);
 
       expect(subActivity.broker.getQueue('messages')).to.have.property('consumerCount', 0);
     });

@@ -945,22 +945,21 @@ Feature('Process', () => {
         <sequenceFlow id="flow0" sourceRef="start" targetRef="service" />
         <serviceTask id="service" implementation="\${environment.services.get}"/>
         <boundaryEvent id="attached" attachedToRef="service">
-          <errorEventDefinition errorRef="Error_0" />
+          <errorEventDefinition />
         </boundaryEvent>
         <sequenceFlow id="flow1" sourceRef="service" targetRef="end1" />
         <sequenceFlow id="flow2" sourceRef="attached" targetRef="end2" />
         <endEvent id="end1" />
         <endEvent id="end2" />
       </process>
-      <error id="Error_0" name="ServiceError" errorCode="\${message}" />
     </definitions>`;
 
     const messages = [];
-    let processInstance, assertMessage, serviceComplete;
+    let bp, assertMessage, serviceComplete;
     Given('a process', async () => {
       const context = await testHelpers.context(source);
-      processInstance = context.getProcessById('theProcess');
-      processInstance.environment.addService('get', get);
+      bp = context.getProcessById('theProcess');
+      bp.environment.addService('get', get);
       assertMessage = AssertMessage(context, messages, false);
 
       function get(...args) {
@@ -969,16 +968,16 @@ Feature('Process', () => {
     });
 
     And('the activities are subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
+      bp.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
         messages.push(message);
       }, {noAck: true});
     });
 
     let completed, stateChange;
     When('run', () => {
-      stateChange = processInstance.getActivityById('service').waitFor('start');
-      completed = processInstance.waitFor('leave');
-      processInstance.run();
+      stateChange = bp.getActivityById('service').waitFor('start');
+      completed = bp.waitFor('leave');
+      bp.run();
     });
 
     Then('the service task is waiting for service completion', async () => {
@@ -1023,11 +1022,11 @@ Feature('Process', () => {
     });
 
     When('run again', () => {
-      completed = processInstance.waitFor('leave');
+      completed = bp.waitFor('leave');
 
-      stateChange = processInstance.getActivityById('service').waitFor('start');
+      stateChange = bp.getActivityById('service').waitFor('start');
 
-      processInstance.run();
+      bp.run();
     });
 
     And('service task has started', async () => {
@@ -1045,7 +1044,7 @@ Feature('Process', () => {
       expect(messages.length, 'no more messages').to.equal(0);
     });
 
-    When('service task is erronuous', () => {
+    When('service task is erroneous', () => {
       serviceComplete(new Error('Some error'));
     });
 
@@ -1601,7 +1600,6 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'activity0');
       assertMessage('activity.start', 'activity0');
       assertMessage('activity.wait', 'activity0');
-      assertMessage('activity.execution.stopped', 'activity0');
       assertMessage('activity.stop', 'activity0');
 
       assertMessage('process.stop');
@@ -1724,57 +1722,63 @@ Feature('Process', () => {
     </definitions>`;
 
     const messages = [];
-    let context, processInstance, assertMessage;
+    let context, bp, assertMessage;
     Given('a process with a user task', async () => {
       context = await testHelpers.context(source);
-      processInstance = context.getProcessById('theProcess');
+      bp = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, false);
     });
 
     And('the activities are subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
+      bp.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
         messages.push(message);
       }, {noAck: true});
     });
 
     let waiting;
     When('run', () => {
-      waiting = processInstance.waitFor('wait');
-      processInstance.run();
+      waiting = bp.waitFor('wait');
+      bp.run();
     });
 
+    let task;
     Then('the process is waiting for the sub user task to be signaled', async () => {
-      const task = await waiting;
+      task = await waiting;
       expect(task).to.have.property('id', 'subActivity');
       assertMessage('activity.wait', 'subActivity');
     });
 
     let state;
     When('the process is stopped', () => {
-      processInstance.stop();
+      bp.stop();
     });
 
     And('state is saved', () => {
-      state = JSON.parse(JSON.stringify(processInstance.getState()));
+      state = JSON.parse(JSON.stringify(bp.getState()));
+    });
+
+    Then('sub process and activities are stopped', () => {
+      expect(bp.getActivityById('activity')).to.have.property('stopped', true);
+      expect(task.owner).to.have.property('stopped', true);
     });
 
     When('process is recovered', () => {
-      processInstance = context.clone().getProcessById('theProcess').recover(state);
+      bp = context.clone().getProcessById('theProcess').recover(state);
     });
 
     Then('state is still the same', () => {
-      expect(JSON.parse(JSON.stringify(processInstance.getState()))).to.eql(state);
+      expect(JSON.parse(JSON.stringify(bp.getState()))).to.eql(state);
     });
 
     When('resuming execution', () => {
-      waiting = processInstance.waitFor('wait');
-      completed = processInstance.waitFor('leave');
-      processInstance.resume();
+      waiting = bp.waitFor('wait');
+      completed = bp.waitFor('leave');
+      bp.resume();
     });
 
     let completed;
     And('signaling sub user task', async () => {
-      const task = await waiting;
+      task = await waiting;
       expect(task).to.have.property('id', 'subActivity');
       task.signal();
     });
