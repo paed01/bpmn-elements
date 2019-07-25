@@ -166,7 +166,7 @@ Feature('Signals', () => {
     Given('anonymous signal process, anonymous signal catch start process, anonymous escalation process', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <process id="escalateProcess" isExecutable="true">
+        <process id="signalProcess" isExecutable="true">
           <intermediateThrowEvent id="escalate">
             <signalEventDefinition />
           </intermediateThrowEvent>
@@ -181,7 +181,7 @@ Feature('Signals', () => {
             <signalEventDefinition signalRef="BossSignal" />
           </startEvent>
         </process>
-        <process id="escalationProcess">
+        <process id="signaledProcess">
           <startEvent id="startWithAnonymousSignal">
             <escalationEventDefinition />
           </startEvent>
@@ -199,14 +199,14 @@ Feature('Signals', () => {
       definition.run();
     });
 
-    let escalateProcess, managerProcess, bossProcess, escalationProcess;
+    let signalProcess, managerProcess, bossProcess, signaledProcess;
     Then('run completes', async () => {
       await end;
-      [escalateProcess, managerProcess, bossProcess, escalationProcess] = definition.getProcesses();
+      [signalProcess, managerProcess, bossProcess, signaledProcess] = definition.getProcesses();
     });
 
     And('escalate process completed', () => {
-      expect(escalateProcess.counters).to.have.property('completed', 1);
+      expect(signalProcess.counters).to.have.property('completed', 1);
     });
 
     And('manger process completed', () => {
@@ -218,7 +218,77 @@ Feature('Signals', () => {
     });
 
     And('the escalation process is not touched', () => {
-      expect(escalationProcess.counters).to.have.property('completed', 0);
+      expect(signaledProcess.counters).to.have.property('completed', 0);
+    });
+  });
+
+  Scenario('Process with end throwing signal and a start event waiting for signal', () => {
+    let definition;
+    Given('a process with two flows with user input, the first flow ends with signal, the second expects signal and then user input', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="signalProcess" isExecutable="true">
+          <startEvent id="start1" />
+          <sequenceFlow id="toTask1" sourceRef="start1" targetRef="task1" />
+          <userTask id="task1" />
+          <sequenceFlow id="toEnd1" sourceRef="task1" targetRef="end1" />
+          <endEvent id="end1">
+            <signalEventDefinition />
+          </endEvent>
+
+          <startEvent id="start2">
+            <signalEventDefinition />
+          </startEvent>
+          <sequenceFlow id="toTask2" sourceRef="start2" targetRef="task2" />
+          <userTask id="task2" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    When('definition is ran', () => {
+      definition.run();
+    });
+
+    let task1, start2;
+    Then('first user task is waiting for input and second start event waits for signal', async () => {
+      const postponed = definition.getPostponed();
+      expect(postponed).to.have.length(2);
+      [task1, start2] = postponed;
+      expect(task1).to.be.ok;
+      expect(task1).to.have.property('id', 'task1');
+      expect(start2).to.have.property('id', 'start2');
+    });
+
+    When('first user task receives input', async () => {
+      task1.signal();
+    });
+
+    Then('first flow is completed', () => {
+      expect(definition.getActivityById('end1').counters).to.have.property('taken', 1);
+    });
+
+    And('second flow is continued', () => {
+      expect(start2.owner.counters).to.have.property('taken', 1);
+    });
+
+    let task2;
+    And('second user task is awaiting input', async () => {
+      const postponed = definition.getPostponed();
+      expect(postponed).to.have.length(1);
+      [task2] = postponed;
+      expect(task2).to.be.ok;
+      expect(task2).to.have.property('id', 'task2');
+    });
+
+    When('second user task receives input', async () => {
+      task2.signal();
+    });
+
+    Then('run completes', () => {
+      expect(definition.counters).to.have.property('completed', 1);
     });
   });
 });
