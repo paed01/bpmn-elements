@@ -70,19 +70,29 @@ export default function DefinitionExecution(definition) {
 
     if (executeMessage.fields.redelivered) return resume(executeMessage);
 
+    activate();
     start();
     return true;
   }
 
   function resume() {
-    logger.debug(`<${executionId} (${id})> resume definition execution`);
+    logger.debug(`<${executionId} (${id})> resume`, status, 'definition execution');
 
     if (completed) return complete('completed');
+
     activate();
-
     postponed.splice(0);
+    activityQ.consume(onProcessEvent, {prefetch: 1000, consumerTag: `_definition-activity-${executionId}`});
 
-    activityQ.consume(onChildEvent, {prefetch: 1000});
+    if (completed) return complete('completed');
+    switch (status) {
+      case 'init':
+        return start();
+      case 'executing': {
+        if (!postponed.length) return complete('completed');
+        break;
+      }
+    }
 
     processes.forEach((p) => p.resume());
   }
@@ -91,15 +101,18 @@ export default function DefinitionExecution(definition) {
     if (!processes.length) {
       return publishCompletionMessage('completed');
     }
-    if (!executableProcesses.length) return definition.emitFatal(new Error('No executable process'));
+    if (!executableProcesses.length) {
+      deactivate();
+      return definition.emitFatal(new Error('No executable process'));
+    }
 
     status = 'start';
-    activate();
 
     executableProcesses.forEach(prepareProcess);
     executableProcesses.forEach((p) => p.run());
 
-    activityQ.consume(onChildEvent, {prefetch: 1000});
+    postponed.splice(0);
+    activityQ.assertConsumer(onProcessEvent, {prefetch: 1000, consumerTag: `_definition-activity-${executionId}`});
   }
 
   function prepareProcess(process) {
@@ -107,7 +120,6 @@ export default function DefinitionExecution(definition) {
   }
 
   function stop() {
-    status = 'stop';
     return activityQ.queueMessage({routingKey: 'execution.stop'}, {
       id,
       type,
@@ -130,8 +142,9 @@ export default function DefinitionExecution(definition) {
 
     stopped = state.stopped;
     completed = state.completed;
+    status = state.status;
 
-    logger.debug(`<${executionId} (${id})> recover definition execution`);
+    logger.debug(`<${executionId} (${id})> recover`, status, 'definition execution');
 
     state.processes.forEach((processState) => {
       const instance = definition.getProcessById(processState.id);
@@ -180,6 +193,7 @@ export default function DefinitionExecution(definition) {
 
   function deactivate() {
     broker.cancel('_definition-api-consumer');
+    broker.cancel(`_definition-activity-${executionId}`);
 
     processes.forEach((p) => {
       p.broker.cancel('_definition-message-consumer');
@@ -188,7 +202,7 @@ export default function DefinitionExecution(definition) {
     });
   }
 
-  function complete(completionType, content = {}) {
+  function complete(completionType, content) {
     deactivate();
     logger.debug(`<${executionId} (${id})> definition execution ${completionType}`);
     if (!content) content = createMessage();
@@ -204,7 +218,7 @@ export default function DefinitionExecution(definition) {
     }, {type: completionType, mandatory: completionType === 'error'});
   }
 
-  function onChildEvent(routingKey, message) {
+  function onProcessEvent(routingKey, message) {
     const content = message.content;
     const isRedelivered = message.fields.redelivered;
     const {id: childId, type: activityType, executionId: childExecutionId} = content;
@@ -221,6 +235,10 @@ export default function DefinitionExecution(definition) {
     stateChangeMessage(true);
 
     switch (routingKey) {
+      case 'process.discard':
+      case 'process.enter':
+        status = 'executing';
+        break;
       case 'process.error': {
         processes.slice().forEach((p) => {
           if (p.id !== childId) p.stop();

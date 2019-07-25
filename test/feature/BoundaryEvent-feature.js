@@ -635,4 +635,84 @@ Feature('BoundaryEvent', () => {
       return end;
     });
   });
+
+  Scenario('catch an error from multi instance sub process task', () => {
+    let bp;
+    const serviceCallbacks = [];
+    Given('a service task looped three times with error catching boundary event both ending up in a join', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="toTask" sourceRef="start" targetRef="task" />
+          <subProcess id="task">
+            <multiInstanceLoopCharacteristics isSequential="false">
+              <loopCardinality>3</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+            <serviceTask id="service" implementation="\${environment.services.volatile}" />
+          </subProcess>
+          <boundaryEvent id="bound" attachedToRef="task">
+            <errorEventDefinition />
+          </boundaryEvent>
+          <sequenceFlow id="toJoinFromTask" sourceRef="task" targetRef="join" />
+          <sequenceFlow id="toJoinFromBoundary" sourceRef="bound" targetRef="join" />
+          <parallelGateway id="join" />
+          <sequenceFlow id="toEnd" sourceRef="join" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      context.environment.addService('volatile', (ctx, next) => {
+        serviceCallbacks.push(next);
+      });
+      [bp] = context.getProcesses();
+    });
+
+    When('ran', () => {
+      bp.run();
+    });
+
+    let task;
+    Then('sub process is waiting for service to complete', () => {
+      [task] = bp.getPostponed((e) => e.id === 'task');
+      expect(task).to.be.ok;
+      expect(serviceCallbacks).to.have.length(3);
+    });
+
+    let bound;
+    And('boundary event is listening for errors', () => {
+      [bound] = bp.getPostponed((e) => e.id === 'bound');
+      expect(bound).to.be.ok;
+    });
+
+    let end;
+    When('service iteration 1 calls callback with an error', () => {
+      end = bp.waitFor('end');
+      serviceCallbacks[1](new Error('Type 1'));
+    });
+
+    Then('service task is discarded', () => {
+      expect(task.owner.counters).to.have.property('discarded', 1);
+      expect(task.owner.counters).to.have.property('taken', 0);
+    });
+
+    And('bound event is taken', () => {
+      expect(bound.owner.counters).to.have.property('taken', 1);
+      expect(bound.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('join is taken', () => {
+      expect(bp.getActivityById('join').counters).to.have.property('taken', 1);
+    });
+
+    And('end is taken', () => {
+      expect(bp.getActivityById('end').counters).to.have.property('taken', 1);
+    });
+
+    And('process completes', () => {
+      expect(bp.counters).to.have.property('completed', 1);
+      return end;
+    });
+  });
 });

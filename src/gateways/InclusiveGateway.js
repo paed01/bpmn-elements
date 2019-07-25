@@ -21,11 +21,10 @@ export function InclusiveGatewayBehaviour(activity) {
     const content = cloneContent(executeMessage.content);
     if (!outboundSequenceFlows.length) return complete();
 
-    let conditionMet, defaultFlow, stop;
+    let conditionMet, defaultFlow, evaluateError;
     const outbound = content.outbound = [];
 
     for (let i = 0; i < outboundSequenceFlows.length; i++) {
-      if (stop) return;
       const flow = outboundSequenceFlows[i];
 
       if (flow.isDefault) {
@@ -37,11 +36,10 @@ export function InclusiveGatewayBehaviour(activity) {
         conditionMet = true;
         outbound.push({id: flow.id, action: 'take'});
       } else {
+        if (evaluateError) return broker.publish('execution', 'execute.error', {...content, error: evaluateError});
         outbound.push({id: flow.id, action: 'discard'});
       }
     }
-
-    if (stop) return;
 
     if (defaultFlow) {
       if (conditionMet) {
@@ -62,8 +60,8 @@ export function InclusiveGatewayBehaviour(activity) {
       broker.publish('execution', 'execute.completed', content);
     }
 
-    function onEvaluateError() {
-      stop = true;
+    function onEvaluateError(err) {
+      evaluateError = err;
     }
   }
 }

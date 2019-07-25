@@ -214,7 +214,13 @@ function SequenceFlow(flowDef, {
           return onEvaluateError && onEvaluateError(err);
         }
 
-        return script.execute((0, _ExecutionScope.default)(flowApi, message));
+        try {
+          return script.execute((0, _ExecutionScope.default)(flowApi, message));
+        } catch (err) {
+          if (!onEvaluateError) throw err;
+          logger.error(`<${id}>`, err);
+          onEvaluateError(err);
+        }
       }
     };
   }

@@ -382,7 +382,6 @@ function Definition(context, options) {
   }
 
   function publishEvent(action, content = {}) {
-    if (!action) return;
     const msgOpts = {
       type: action,
       mandatory: action === 'error'

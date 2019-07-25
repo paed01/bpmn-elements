@@ -174,7 +174,13 @@ export default function SequenceFlow(flowDef, {environment}) {
           return onEvaluateError && onEvaluateError(err);
         }
 
-        return script.execute(ExecutionScope(flowApi, message));
+        try {
+          return script.execute(ExecutionScope(flowApi, message));
+        } catch (err) {
+          if (!onEvaluateError) throw err;
+          logger.error(`<${id}>`, err);
+          onEvaluateError(err);
+        }
       },
     };
   }

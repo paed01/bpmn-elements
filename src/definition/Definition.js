@@ -326,9 +326,7 @@ export function Definition(context, options) {
   }
 
   function publishEvent(action, content = {}) {
-    if (!action) return;
     const msgOpts = { type: action, mandatory: action === 'error' };
-
     broker.publish('event', `definition.${action}`, execution ? execution.createMessage(content) : content, msgOpts);
   }
 

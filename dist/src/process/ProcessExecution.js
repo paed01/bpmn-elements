@@ -112,33 +112,6 @@ function ProcessExecution(parentActivity, context) {
     return true;
   }
 
-  function recover(state) {
-    if (!state) return processExecution;
-    executionId = state.executionId;
-    stopped = state.stopped;
-    completed = state.completed;
-    status = state.status;
-    logger.debug(`<${executionId} (${id})> recover`, status, 'process execution');
-
-    if (state.flows) {
-      state.flows.forEach(flowState => {
-        const flow = getFlowById(flowState.id);
-        if (!flow) return;
-        flow.recover(flowState);
-      });
-    }
-
-    if (state.children) {
-      state.children.forEach(childState => {
-        const child = getActivityById(childState.id);
-        if (!child) return;
-        child.recover(childState);
-      });
-    }
-
-    return processExecution;
-  }
-
   function resume() {
     logger.debug(`<${executionId} (${id})> resume`, status, 'process execution');
     if (completed) return complete('completed');
@@ -184,6 +157,33 @@ function ProcessExecution(parentActivity, context) {
       prefetch: 1000,
       consumerTag: `_process-activity-${executionId}`
     });
+  }
+
+  function recover(state) {
+    if (!state) return processExecution;
+    executionId = state.executionId;
+    stopped = state.stopped;
+    completed = state.completed;
+    status = state.status;
+    logger.debug(`<${executionId} (${id})> recover`, status, 'process execution');
+
+    if (state.flows) {
+      state.flows.forEach(flowState => {
+        const flow = getFlowById(flowState.id);
+        if (!flow) return;
+        flow.recover(flowState);
+      });
+    }
+
+    if (state.children) {
+      state.children.forEach(childState => {
+        const child = getActivityById(childState.id);
+        if (!child) return;
+        child.recover(childState);
+      });
+    }
+
+    return processExecution;
   }
 
   function stop() {

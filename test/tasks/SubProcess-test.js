@@ -303,6 +303,27 @@ describe('SubProcess', () => {
       expect(children[0]).to.have.property('counters').with.property('discarded', 1);
       expect(children[1]).to.have.property('counters').with.property('taken', 0);
     });
+
+    it('discard by api discards children', async () => {
+      const subProcess = context.getActivityById('subProcess');
+
+      const wait = subProcess.waitFor('wait');
+      subProcess.run();
+      await wait;
+
+      const leave = subProcess.waitFor('leave', (_, a) => a.content.id === 'subProcess');
+
+      subProcess.getApi().discard();
+
+      await leave;
+
+      expect(subProcess.execution.source.execution).to.be.ok;
+
+      const children = subProcess.execution.source.execution.getActivities();
+      expect(children).to.have.length(2);
+      expect(children[0]).to.have.property('counters').with.property('discarded', 1);
+      expect(children[1]).to.have.property('counters').with.property('taken', 0);
+    });
   });
 
   describe('resume', () => {

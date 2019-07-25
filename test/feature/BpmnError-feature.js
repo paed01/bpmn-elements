@@ -224,6 +224,46 @@ Feature('Bpmn Error', () => {
       expect(startApi.owner.counters).to.have.property('taken', 1);
       expect(startApi.owner.counters).to.have.property('discarded', 0);
     });
+
+    let stop;
+    When('definition is ran again and stops at throw', () => {
+      stop = definition.waitFor('stop');
+      definition.once('activity.throw', () => definition.stop());
+      definition.run();
+    });
+
+    Then('error is thrown by end event', async () => {
+      endApi = await thrown;
+    });
+
+    And('run is stopped', async () => {
+      await stop;
+    });
+
+    When('resumed', () => {
+      end = definition.waitFor('end');
+      definition.resume();
+    });
+
+    And('definition completes', () => {
+      return end;
+    });
+
+    And('end event was taken', () => {
+      expect(endApi.owner.counters).to.have.property('taken', 1);
+      expect(endApi.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('sub process completed', () => {
+      expect(definition.getActivityById('errorSubProcess').counters).to.have.property('taken', 2);
+      expect(definition.getActivityById('errorSubProcess').counters).to.have.property('discarded', 0);
+    });
+
+    And('error was handled by sub process', async () => {
+      const startApi = await caught;
+      expect(startApi.owner.counters).to.have.property('taken', 1);
+      expect(startApi.owner.counters).to.have.property('discarded', 0);
+    });
   });
 
   Scenario('error with error code', () => {

@@ -529,7 +529,7 @@ Feature('Definition', () => {
 
     Then('callback is called with stopped definition api', async () => {
       const api = await callbackCalled;
-      expect(api.content).to.have.property('status', 'stop');
+      expect(api.content).to.have.property('status', 'executing');
     });
 
     Given('user tasks expects to be signaled', () => {

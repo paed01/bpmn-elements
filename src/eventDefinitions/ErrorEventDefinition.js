@@ -67,7 +67,7 @@ export default function ErrorEventDefinition(activity, eventDefinition) {
 
       stop();
 
-      debug(`<${executionId} (${id})> caught ${description}`, shiftParent(executeMessage.content.parent));
+      debug(`<${executionId} (${id})> caught ${description}`);
       broker.publish('event', 'activity.catch', {
         ...messageContent,
         source: {
@@ -107,13 +107,9 @@ export default function ErrorEventDefinition(activity, eventDefinition) {
   }
 
   function executeThrow(executeMessage) {
-    let completed;
-
     const messageContent = cloneContent(executeMessage.content);
     const {executionId, parent} = messageContent;
     const parentExecutionId = parent && parent.executionId;
-
-    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
 
     const {message: referenceMessage, description} = resolveMessage(executeMessage);
 
@@ -127,30 +123,7 @@ export default function ErrorEventDefinition(activity, eventDefinition) {
       state: 'throw',
     }, {type: 'throw', delegate: true});
 
-    if (completed) return;
-
-    stop();
     return broker.publish('execution', 'execute.completed', {...messageContent, message: referenceMessage});
-
-    function onApiMessage(routingKey, message) {
-      const messageType = message.properties.type;
-
-      switch (messageType) {
-        case 'discard': {
-          completed = true;
-          stop();
-          return broker.publish('execution', 'execute.discard', {...messageContent});
-        }
-        case 'stop': {
-          stop();
-          break;
-        }
-      }
-    }
-
-    function stop() {
-      broker.cancel(`_api-${executionId}`);
-    }
   }
 
   function resolveMessage(message) {

@@ -13,9 +13,9 @@ class ActivityError extends Error {
     if (!inner) return;
 
     this.inner = inner;
-    if ('name' in inner) this.name = inner.name;
-    if ('code' in inner) this.code = inner.code;
-    if ('id' in inner) this.id = inner.id;
+    if (inner.name) this.name = inner.name;
+    if (inner.code) this.code = inner.code;
+    if (inner.id) this.id = inner.id;
   }
 }
 
