@@ -210,6 +210,8 @@ function ProcessExecution(parentActivity, context) {
         priority: 200
       });
     });
+    startActivities.splice(0);
+    triggeredByEventActivities.splice(0);
     children.forEach(activity => {
       activity.activate(processExecution);
       activity.broker.subscribeTmp('event', '#', onActivityEvent, {

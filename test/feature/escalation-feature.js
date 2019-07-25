@@ -113,13 +113,13 @@ Feature('Escalate', () => {
       expect(escalateProcess.counters).to.have.property('completed', 1);
     });
 
-    And('manager is notified', async () => {
+    And('manager was notified', async () => {
       const manager = await caught;
       expect(manager).to.have.property('id', 'wakeManager');
       expect(manager.owner.counters).to.have.property('taken', 1);
     });
 
-    And('the boss is not bothered', () => {
+    And('the boss wasn´t bothered', () => {
       const boss = definition.getElementById('boss');
       expect(boss.counters).to.have.property('discarded', 1);
       expect(boss.counters).to.have.property('taken', 0);
@@ -152,7 +152,7 @@ Feature('Escalate', () => {
               <userTask id="call" />
               <intermediateThrowEvent id="timeout">
                 <timerEventDefinition>
-                  <timeDuration xsi:type="tFormalExpression">PT0.01S</timeDuration>
+                  <timeDuration xsi:type="tFormalExpression">\${environment.variables.alarmDuration}</timeDuration>
                 </timerEventDefinition>
               </intermediateThrowEvent>
               <sequenceFlow id="toEscalateToBoss" sourceRef="timeout" targetRef="notifyBoss"/>
@@ -183,6 +183,8 @@ Feature('Escalate', () => {
       definition.on('activity.catch', (api) => {
         caught.push(api);
       });
+      definition.environment.variables.alarmDuration = 'PT0.01S';
+
       end = definition.waitFor('end');
       definition.run();
     });
@@ -203,8 +205,125 @@ Feature('Escalate', () => {
       expect(manager.owner.counters).to.have.property('discarded', 0);
     });
 
-    And('the boss is notified', () => {
+    And('the boss was notified', () => {
       const boss = caught[1];
+      expect(boss).to.have.property('id', 'wakeBoss');
+      expect(boss.owner.counters).to.have.property('taken', 1);
+      expect(boss.owner.counters).to.have.property('discarded', 0);
+    });
+
+    let wait;
+    When('a second run is initiated with sligthly longer alarm duration', () => {
+      definition.environment.variables.alarmDuration = 'PT1M';
+
+      end = definition.waitFor('end');
+      wait = definition.waitFor('wait', (_, msg) => msg.content.id === 'call');
+
+      definition.run();
+    });
+
+    let managerCall;
+    And('manager is awake', async () => {
+      managerCall = await wait;
+      expect(managerCall).to.have.property('id', 'call');
+    });
+
+    When('manager is alive and kicking', () => {
+      managerCall.signal();
+    });
+
+    Then('run completes', async () => {
+      await end;
+      expect(caught).to.have.length(3);
+    });
+
+    And('manager took the call', async () => {
+      const manager = caught[2];
+      expect(manager).to.have.property('id', 'wakeManager');
+      expect(manager.owner.counters).to.have.property('taken', 1);
+      expect(manager.owner.counters).to.have.property('discarded', 0);
+    });
+
+    When('a third run is initiated', () => {
+      definition.environment.variables.alarmDuration = 'PT1M';
+
+      end = definition.waitFor('end');
+      wait = definition.waitFor('wait', (_, msg) => msg.content.id === 'call');
+
+      definition.run();
+    });
+
+    And('manager is awake', async () => {
+      managerCall = await wait;
+      expect(managerCall).to.have.property('id', 'call');
+    });
+
+    And('manager stops the workflow', () => {
+      definition.stop();
+    });
+
+    When('the process is resumed', () => {
+      end = definition.waitFor('end');
+      wait = definition.waitFor('wait', (_, msg) => msg.content.id === 'call');
+
+      definition.resume();
+    });
+
+    And('manager responds', () => {
+      managerCall.signal();
+    });
+
+    Then('run completes', async () => {
+      await end;
+      expect(caught).to.have.length(4);
+    });
+
+    And('manager took the call', async () => {
+      const manager = caught[3];
+      expect(manager).to.have.property('id', 'wakeManager');
+      expect(manager.owner.counters).to.have.property('taken', 1);
+      expect(manager.owner.counters).to.have.property('discarded', 0);
+    });
+
+    When('a fourth run is initiated', () => {
+      definition.environment.variables.alarmDuration = 'PT0.05S';
+
+      end = definition.waitFor('end');
+      wait = definition.waitFor('wait', (_, msg) => msg.content.id === 'call');
+
+      definition.run();
+    });
+
+    And('manager is awake', async () => {
+      managerCall = await wait;
+      expect(managerCall).to.have.property('id', 'call');
+    });
+
+    And('stops the workflow', () => {
+      definition.stop();
+    });
+
+    When('resumed', () => {
+      end = definition.waitFor('end');
+      definition.resume();
+    });
+
+    But('fail to respond in time', () => {});
+
+    Then('run completes', async () => {
+      await end;
+      expect(caught).to.have.length(6);
+    });
+
+    And('manager failed to take the call', async () => {
+      const manager = caught[4];
+      expect(manager).to.have.property('id', 'wakeManager');
+      expect(manager.owner.counters).to.have.property('taken', 1);
+      expect(manager.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('the boss was notified', () => {
+      const boss = caught[5];
       expect(boss).to.have.property('id', 'wakeBoss');
       expect(boss.owner.counters).to.have.property('taken', 1);
       expect(boss.owner.counters).to.have.property('discarded', 0);

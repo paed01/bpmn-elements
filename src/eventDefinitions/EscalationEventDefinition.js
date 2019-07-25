@@ -22,7 +22,7 @@ export default function EscalationEventDefinition(activity, eventDefinition) {
     const {executionId, parent} = messageContent;
     const parentExecutionId = parent && parent.executionId;
 
-    broker.subscribeTmp('api', '*.escalate.#', onEscalationApiMessage, {noAck: true, consumerTag: `_onescalate-${executionId}`, priority: 300});
+    broker.subscribeTmp('api', '*.escalate.#', onEscalationApiMessage, {noAck: true, consumerTag: `_onescalate-${executionId}`, priority: 400});
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
 
     if (completed) return stop();

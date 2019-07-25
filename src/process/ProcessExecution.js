@@ -168,6 +168,9 @@ export default function ProcessExecution(parentActivity, context) {
       flow.broker.subscribeTmp('event', '#', onActivityEvent, {consumerTag: '_process-flight-controller', noAck: true, priority: 200});
     });
 
+    startActivities.splice(0);
+    triggeredByEventActivities.splice(0);
+
     children.forEach((activity) => {
       activity.activate(processExecution);
       activity.broker.subscribeTmp('event', '#', onActivityEvent, {noAck: true, consumerTag: '_process-activity-consumer', priority: 200});

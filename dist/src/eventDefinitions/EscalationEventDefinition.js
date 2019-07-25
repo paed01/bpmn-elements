@@ -45,7 +45,7 @@ function EscalationEventDefinition(activity, eventDefinition) {
     broker.subscribeTmp('api', '*.escalate.#', onEscalationApiMessage, {
       noAck: true,
       consumerTag: `_onescalate-${executionId}`,
-      priority: 300
+      priority: 400
     });
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
       noAck: true,
