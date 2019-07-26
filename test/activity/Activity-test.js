@@ -1706,6 +1706,7 @@ describe('Activity', () => {
             activate(msg) {
               activateMessage = msg;
             },
+            deactivate() {}
           };
         },
       };
@@ -1746,6 +1747,7 @@ describe('Activity', () => {
             activate(msg) {
               activateMessage = msg;
             },
+            deactivate() {}
           };
         },
       };

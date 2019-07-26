@@ -19,11 +19,11 @@ export default function ExtensionsMapper(context) {
       return result;
     }
 
-    function activate() {
-      activityExtensions.forEach((extension) => extension.activate());
+    function activate(message) {
+      activityExtensions.forEach((extension) => extension.activate(message));
     }
-    function deactivate() {
-      activityExtensions.forEach((extension) => extension.deactivate());
+    function deactivate(message) {
+      activityExtensions.forEach((extension) => extension.deactivate(message));
     }
   }
 

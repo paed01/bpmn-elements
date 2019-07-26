@@ -1,12 +1,13 @@
 import Activity from '../activity/Activity';
 import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution';
+import {cloneContent} from '../messageHelper';
 
 export default function StartEvent(activityDef, context) {
   return Activity(StartEventBehaviour, activityDef, context);
 }
 
 export function StartEventBehaviour(activity) {
-  const {id, type, broker, eventDefinitions} = activity;
+  const {id, type = 'startevent', broker, eventDefinitions} = activity;
   const eventDefinitionExecution = eventDefinitions && EventDefinitionExecution(activity, eventDefinitions);
 
   const event = {
@@ -18,13 +19,13 @@ export function StartEventBehaviour(activity) {
   return event;
 
   function execute(executeMessage) {
-    const content = executeMessage.content;
+    const content = cloneContent(executeMessage.content);
     if (eventDefinitionExecution) {
       return eventDefinitionExecution.execute(executeMessage);
     }
 
     if (!content.form) {
-      return broker.publish('execution', 'execute.completed', {...content});
+      return broker.publish('execution', 'execute.completed', content);
     }
 
     const {executionId} = content;

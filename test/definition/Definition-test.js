@@ -608,6 +608,36 @@ describe('Definition', () => {
       expect(definition.counters).to.have.property('completed', 1);
     });
 
+    it('is resumable if stopped on enter', async () => {
+      const definition = Definition(context);
+      const stopped = definition.waitFor('stop');
+      definition.once('enter', (api) => {
+        api.stop();
+      });
+      definition.run();
+
+      await stopped;
+
+      definition.resume();
+
+      expect(definition.getPostponed()[0].id).to.equal('userTask');
+    });
+
+    it('is resumable if stopped on start', async () => {
+      const definition = Definition(context);
+      const stopped = definition.waitFor('stop');
+      definition.once('start', (api) => {
+        api.stop();
+      });
+      definition.run();
+
+      await stopped;
+
+      definition.resume();
+
+      expect(definition.getPostponed()[0].id).to.equal('userTask');
+    });
+
     it('resumes recovered with stopped state', () => {
       const startDefinition = Definition(context);
       startDefinition.run();

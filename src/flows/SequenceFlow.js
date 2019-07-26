@@ -37,7 +37,6 @@ export default function SequenceFlow(flowDef, {environment}) {
     getState,
     preFlight,
     recover,
-    resume,
     stop,
     take,
   };
@@ -139,8 +138,6 @@ export default function SequenceFlow(flowDef, {environment}) {
   function stop() {
     broker.stop();
   }
-
-  function resume() {}
 
   function evaluateCondition(message, onEvaluateError) {
     const condition = getCondition(message);

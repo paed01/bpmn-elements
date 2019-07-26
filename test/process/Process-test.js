@@ -188,6 +188,28 @@ describe('Process', () => {
       expect(task3).to.have.property('isRunning', false);
     });
 
+    it('publish one stop event when stopped', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <userTask id="task1" />
+          <userTask id="task2" />
+          <userTask id="task3" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const [bp] = context.getProcesses();
+
+      let stopped;
+      bp.on('stop', () => {
+        if (stopped) throw new Error('already stopped');
+        stopped = true;
+      });
+      bp.run();
+      bp.stop();
+    });
+
     it.skip('publish stop event when postponed start event is stopped', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">

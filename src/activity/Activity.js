@@ -3,7 +3,7 @@ import {getUniqueId, filterUndefined} from '../shared';
 import {ActivityApi} from '../Api';
 import {ActivityBroker} from '../EventBroker';
 import {getRoutingKeyPattern} from 'smqp';
-import {cloneContent, cloneParent} from '../messageHelper';
+import {cloneContent, cloneParent, cloneMessage} from '../messageHelper';
 
 export default function Activity(Behaviour, activityDef, context) {
   const {id, type = 'activity', name, parent: originalParent = {}, behaviour = {}, isParallelGateway, isSubProcess, triggeredByEvent, isThrowing} = activityDef;
@@ -226,21 +226,6 @@ export default function Activity(Behaviour, activityDef, context) {
   function stop() {
     if (!activityApi.isRunning) return;
     getApi().stop();
-  }
-
-  function onStop() {
-    if (!activityApi.isRunning) return;
-
-    stopped = true;
-
-    consumingRunQ = false;
-    broker.cancel('_activity-run');
-    broker.cancel('_activity-api');
-    broker.cancel('_activity-execution');
-    broker.cancel('_run-on-inbound');
-    broker.cancel('_format-consumer');
-
-    publishEvent('stop');
   }
 
   function activate() {
@@ -479,6 +464,7 @@ export default function Activity(Behaviour, activityDef, context) {
         const isDiscarded = status === 'discarded';
         status = undefined;
         broker.cancel('_activity-api');
+        if (extensions) extensions.deactivate(message);
 
         if (isRedelivered) break;
 
@@ -566,10 +552,27 @@ export default function Activity(Behaviour, activityDef, context) {
         break;
       }
       case 'stop': {
-        onStop();
+        onStop(message);
         break;
       }
     }
+  }
+
+  function onStop(message) {
+    if (!activityApi.isRunning) return;
+
+    stopped = true;
+
+    consumingRunQ = false;
+    broker.cancel('_activity-run');
+    broker.cancel('_activity-api');
+    broker.cancel('_activity-execution');
+    broker.cancel('_run-on-inbound');
+    broker.cancel('_format-consumer');
+
+    if (extensions) extensions.deactivate(message || createMessage());
+
+    publishEvent('stop');
   }
 
   function publishEvent(state, content, messageProperties = {}) {

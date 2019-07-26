@@ -34,7 +34,7 @@ function Process(processDef, context) {
     isExecutable
   } = behaviour;
   const logger = environment.Logger(type.toLowerCase());
-  let execution, executionId, status, stopped, postponedMessage, stateMessage, consumingRunQ;
+  let execution, initExecutionId, executionId, status, stopped, postponedMessage, stateMessage, consumingRunQ;
   let counters = {
     completed: 0,
     discarded: 0,
@@ -85,6 +85,7 @@ function Process(processDef, context) {
     getPostponed,
     getStartActivities,
     getState,
+    init,
     recover,
     resume,
     run,
@@ -109,50 +110,39 @@ function Process(processDef, context) {
   });
   return processApi;
 
-  function run() {
+  function init() {
+    initExecutionId = (0, _shared.getUniqueId)(id);
+    logger.debug(`<${id}> initialized with executionId <${initExecutionId}>`);
+    publishEvent('init', createMessage({
+      executionId: initExecutionId
+    }));
+  }
+
+  function run(runContent) {
     if (processApi.isRunning) throw new Error(`process <${id}> is already running`);
-    deactivateRunConsumers();
-    executionId = (0, _shared.getUniqueId)(id);
-    broker.publish('run', 'run.enter', createMessage({
-      executionId,
-      state: 'enter'
-    }));
-    broker.publish('run', 'run.start', createMessage({
-      executionId,
-      state: 'start'
-    }));
-    broker.publish('run', 'run.execute', createMessage({
-      executionId,
-      state: 'execute'
-    }));
+    executionId = initExecutionId || (0, _shared.getUniqueId)(id);
+    initExecutionId = undefined;
+    const content = createMessage({ ...runContent,
+      executionId
+    });
+    broker.publish('run', 'run.enter', content);
+    broker.publish('run', 'run.start', (0, _messageHelper.cloneContent)(content));
+    broker.publish('run', 'run.execute', (0, _messageHelper.cloneContent)(content));
     activateRunConsumers();
   }
 
-  function createMessage(override = {}) {
-    return {
-      id,
-      type,
-      parent: { ...parent
-      },
-      ...override
-    };
-  }
-
-  function getState() {
-    return createMessage({
-      executionId,
-      status,
-      stopped,
-      counters: { ...counters
-      },
-      broker: broker.getState(),
-      execution: execution && execution.getState()
+  function resume() {
+    if (processApi.isRunning) throw new Error(`cannot resume running process <${id}>`);
+    if (!status) return processApi;
+    stopped = false;
+    const content = createMessage({
+      executionId
     });
-  }
-
-  function stop() {
-    if (!processApi.isRunning) return;
-    getApi().stop();
+    broker.publish('run', 'run.resume', content, {
+      persistent: false
+    });
+    activateRunConsumers();
+    return processApi;
   }
 
   function recover(state) {
@@ -176,18 +166,29 @@ function Process(processDef, context) {
     return processApi;
   }
 
-  function resume() {
-    if (processApi.isRunning) throw new Error(`cannot resume running process <${id}>`);
-    if (!status) return processApi;
-    stopped = false;
-    const content = createMessage({
-      executionId
+  function activateRunConsumers() {
+    consumingRunQ = true;
+    broker.subscribeTmp('api', `process.*.${executionId}`, onApiMessage, {
+      noAck: true,
+      consumerTag: '_process-api',
+      priority: 100
     });
-    broker.publish('run', 'run.resume', content, {
-      persistent: false
+    runQ.assertConsumer(onRunMessage, {
+      exclusive: true,
+      consumerTag: '_process-run'
     });
-    activateRunConsumers();
-    return processApi;
+  }
+
+  function deactivateRunConsumers() {
+    broker.cancel('_process-api');
+    broker.cancel('_process-run');
+    broker.cancel('_process-execution');
+    consumingRunQ = false;
+  }
+
+  function stop() {
+    if (!processApi.isRunning) return;
+    getApi().stop();
   }
 
   function getApi(message) {
@@ -386,26 +387,6 @@ function Process(processDef, context) {
     return [];
   }
 
-  function activateRunConsumers() {
-    consumingRunQ = true;
-    broker.subscribeTmp('api', `process.*.${executionId}`, onApiMessage, {
-      noAck: true,
-      consumerTag: '_process-api',
-      priority: 100
-    });
-    runQ.assertConsumer(onRunMessage, {
-      exclusive: true,
-      consumerTag: '_process-run'
-    });
-  }
-
-  function deactivateRunConsumers() {
-    broker.cancel('_process-api');
-    broker.cancel('_process-run');
-    broker.cancel('_process-execution');
-    consumingRunQ = false;
-  }
-
   function onApiMessage(routingKey, message) {
     const messageType = message.properties.type;
 
@@ -423,5 +404,27 @@ function Process(processDef, context) {
     stopped = true;
     deactivateRunConsumers();
     return publishEvent('stop');
+  }
+
+  function createMessage(override = {}) {
+    return {
+      id,
+      type,
+      parent: { ...parent
+      },
+      ...override
+    };
+  }
+
+  function getState() {
+    return createMessage({
+      executionId,
+      status,
+      stopped,
+      counters: { ...counters
+      },
+      broker: broker.getState(),
+      execution: execution && execution.getState()
+    });
   }
 }

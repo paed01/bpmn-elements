@@ -44,19 +44,22 @@ describe('Definition execution', () => {
     it('completes when both are completed', () => {
       const processes = [{
         id: 'process_1',
+        parent: {id: 'Def_1'},
         broker: ProcessBroker(this).broker,
+        init() {
+          this.broker.publish('event', 'process.init', {
+            id: this.id,
+            parent: this.parent,
+          });
+        },
         run() {
           this.broker.publish('event', 'process.enter', {
-            id: 'process_1',
-            parent: {
-              id: 'Def_1',
-            }
+            id: this.id,
+            parent: this.parent,
           });
           this.broker.publish('event', 'process.leave', {
-            id: 'process_1',
-            parent: {
-              id: 'Def_1',
-            }
+            id: this.id,
+            parent: this.parent,
           });
         }
       }, {
@@ -64,12 +67,16 @@ describe('Definition execution', () => {
         broker: ProcessBroker(this).broker,
         run() {
           this.broker.publish('event', 'process.enter', {
-            id: 'process_2',
-            parent: {
-              id: 'Def_1',
-            }
+            id: this.id,
+            parent: this.parent,
           });
-        }
+        },
+        init() {
+          this.broker.publish('event', 'process.init', {
+            id: this.id,
+            parent: this.parent,
+          });
+        },
       }];
 
       const definition = {
@@ -113,13 +120,18 @@ describe('Definition execution', () => {
     it('stops other processes if one throws', () => {
       const processes = [{
         id: 'process_1',
+        parent: {id: 'Def_1'},
         broker: ProcessBroker(this).broker,
+        init() {
+          this.broker.publish('event', 'process.init', {
+            id: this.id,
+            parent: this.parent,
+          });
+        },
         run() {
           this.broker.publish('event', 'process.enter', {
-            id: 'process_1',
-            parent: {
-              id: 'Def_1',
-            }
+            id: this.id,
+            parent: this.parent,
           });
         },
         stop() {
@@ -128,12 +140,16 @@ describe('Definition execution', () => {
       }, {
         id: 'process_2',
         broker: ProcessBroker(this).broker,
+        init() {
+          this.broker.publish('event', 'process.init', {
+            id: this.id,
+            parent: this.parent,
+          });
+        },
         run() {
           this.broker.publish('event', 'process.enter', {
-            id: 'process_2',
-            parent: {
-              id: 'Def_1',
-            }
+            id: this.id,
+            parent: this.parent,
           });
         },
         stop() {

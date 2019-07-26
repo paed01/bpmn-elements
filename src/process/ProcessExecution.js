@@ -102,7 +102,6 @@ export default function ProcessExecution(parentActivity, context) {
       }
     }
 
-    flows.forEach((flow) => flow.resume());
     postponed.slice().forEach(({content}) => getActivityById(content.id).resume());
   }
 
@@ -212,9 +211,8 @@ export default function ProcessExecution(parentActivity, context) {
   }
 
   function deactivate() {
-    activated = false;
-    broker.cancel(`_process-activity-${executionId}`);
     broker.cancel(`_process-api-consumer-${executionId}`);
+    broker.cancel(`_process-activity-${executionId}`);
 
     children.forEach((activity) => {
       activity.broker.cancel('_process-activity-consumer');
@@ -228,6 +226,8 @@ export default function ProcessExecution(parentActivity, context) {
     outboundMessageFlows.forEach((flow) => {
       flow.broker.cancel('_process-message-controller');
     });
+
+    activated = false;
   }
 
   function onDelegateEvent(message) {
@@ -258,7 +258,7 @@ export default function ProcessExecution(parentActivity, context) {
     const isRedelivered = message.fields.redelivered;
     const {id: childId, type: activityType} = content;
 
-    if (message.fields.redelivered && message.properties.persistent === false) return;
+    if (isRedelivered && message.properties.persistent === false) return;
 
     switch (routingKey) {
       case 'execution.stop':
@@ -386,6 +386,7 @@ export default function ProcessExecution(parentActivity, context) {
       if (!child) return null;
       return child.broker.publish('api', routingKey, message.content, message.properties);
     }
+
     if (executionId !== message.content.executionId) return;
 
     switch (message.properties.type) {

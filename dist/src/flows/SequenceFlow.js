@@ -64,7 +64,6 @@ function SequenceFlow(flowDef, {
     getState,
     preFlight,
     recover,
-    resume,
     stop,
     take
   };
@@ -180,8 +179,6 @@ function SequenceFlow(flowDef, {
   function stop() {
     broker.stop();
   }
-
-  function resume() {}
 
   function evaluateCondition(message, onEvaluateError) {
     const condition = getCondition(message);

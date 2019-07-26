@@ -10,9 +10,9 @@ export default function DefinitionExecution(definition) {
   const executableProcesses = definition.getExecutableProcesses();
 
   const postponed = [];
-  let activityQ, executionId, initMessage, stopped, status = 'init', completed = false;
-
   broker.assertExchange('execution', 'topic', {autoDelete: false, durable: true});
+
+  let activityQ, status = 'init', executionId, stopped, activated, initMessage, completed = false;
 
   const definitionExecution = {
     id,
@@ -36,6 +36,10 @@ export default function DefinitionExecution(definition) {
     get postponedCount() {
       return postponed.length;
     },
+    get isRunning() {
+      if (activated) return true;
+      return false;
+    },
     processes,
     createMessage,
     getApi,
@@ -56,20 +60,23 @@ export default function DefinitionExecution(definition) {
 
   function execute(executeMessage) {
     if (!executeMessage) throw new Error('Definition execution requires message');
+    if (!executeMessage.content || !executeMessage.content.executionId) throw new Error('Definition execution requires execution id');
 
-    const content = executeMessage.content;
-    executionId = content.executionId;
-    if (!executionId) throw new Error('Definition execution requires execution id');
+    const isRedelivered = executeMessage.fields.redelivered;
+    executionId = executeMessage.content.executionId;
+
+    initMessage = cloneMessage(executeMessage);
+    initMessage.content = {...initMessage.content, executionId, state: 'start'};
 
     stopped = false;
 
-    const executeContent = {...content, executionId, state: 'start'};
-    initMessage = {...executeMessage, content: executeContent};
-
     activityQ = broker.assertQueue(`execute-${executionId}-q`, {durable: true, autoDelete: false});
 
-    if (executeMessage.fields.redelivered) return resume(executeMessage);
+    if (isRedelivered) {
+      return resume();
+    }
 
+    logger.debug(`<${executionId} (${id})> execute definition`);
     activate();
     start();
     return true;
@@ -82,7 +89,7 @@ export default function DefinitionExecution(definition) {
 
     activate();
     postponed.splice(0);
-    activityQ.consume(onProcessEvent, {prefetch: 1000, consumerTag: `_definition-activity-${executionId}`});
+    activityQ.consume(onProcessMessage, {prefetch: 1000, consumerTag: `_definition-activity-${executionId}`});
 
     if (completed) return complete('completed');
     switch (status) {
@@ -108,32 +115,11 @@ export default function DefinitionExecution(definition) {
 
     status = 'start';
 
-    executableProcesses.forEach(prepareProcess);
+    executableProcesses.forEach((p) => p.init());
     executableProcesses.forEach((p) => p.run());
 
     postponed.splice(0);
-    activityQ.assertConsumer(onProcessEvent, {prefetch: 1000, consumerTag: `_definition-activity-${executionId}`});
-  }
-
-  function prepareProcess(process) {
-    activityQ.queueMessage({routingKey: 'process.init'}, {id: process.id, type: process.type, parent: {id, executionId, type}});
-  }
-
-  function stop() {
-    return activityQ.queueMessage({routingKey: 'execution.stop'}, {
-      id,
-      type,
-      executionId,
-    }, {type: 'stop', persistent: false});
-  }
-
-  function getState() {
-    return {
-      executionId,
-      stopped,
-      completed,
-      processes: processes.map((p) => p.getState()),
-    };
+    activityQ.assertConsumer(onProcessMessage, {prefetch: 1000, consumerTag: `_definition-activity-${executionId}`});
   }
 
   function recover(state) {
@@ -156,21 +142,20 @@ export default function DefinitionExecution(definition) {
     return definitionExecution;
   }
 
-  function getPostponed(...args) {
-    return processes.reduce((result, p) => {
-      result = result.concat(p.getPostponed(...args));
-      return result;
-    }, []);
+  function stop() {
+    getApi().stop();
   }
 
   function activate() {
+    broker.subscribeTmp('api', '#', onApiMessage, {noAck: true, consumerTag: '_definition-api-consumer'});
+
     processes.forEach((p) => {
       p.broker.subscribeTmp('message', 'message.outbound', onMessageOutbound, {noAck: true, consumerTag: '_definition-message-consumer'});
       p.broker.subscribeTmp('event', 'activity.signal', onDelegateMessage, {noAck: true, consumerTag: '_definition-signal-consumer', priority: 200});
       p.broker.subscribeTmp('event', '#', onEvent, {noAck: true, consumerTag: '_definition-activity-consumer', priority: 100});
     });
 
-    broker.subscribeTmp('api', '#', onApiMessage, {noAck: true, consumerTag: '_definition-api-consumer'});
+    activated = true;
 
     function onEvent(routingKey, originalMessage) {
       const message = cloneMessage(originalMessage);
@@ -200,36 +185,28 @@ export default function DefinitionExecution(definition) {
       p.broker.cancel('_definition-activity-consumer');
       p.broker.cancel('_definition-signal-consumer');
     });
+
+    activated = false;
   }
 
-  function complete(completionType, content) {
-    deactivate();
-    logger.debug(`<${executionId} (${id})> definition execution ${completionType}`);
-    if (!content) content = createMessage();
-    completed = true;
-    if (status !== 'terminated') status = completionType;
-    broker.deleteQueue(activityQ.name);
-
-    return broker.publish('execution', `execution.${completionType}.${executionId}`, {
-      ...initMessage.content,
-      output: environment.output,
-      ...content,
-      state: completionType,
-    }, {type: completionType, mandatory: completionType === 'error'});
-  }
-
-  function onProcessEvent(routingKey, message) {
+  function onProcessMessage(routingKey, message) {
     const content = message.content;
     const isRedelivered = message.fields.redelivered;
     const {id: childId, type: activityType, executionId: childExecutionId} = content;
 
-    if (routingKey === 'execution.stop' && childExecutionId === executionId) {
-      message.ack();
-      return onStopped();
-    }
+    if (isRedelivered && message.properties.persistent === false) return;
 
-    if (routingKey === 'process.leave') {
-      return onChildCompleted();
+    switch (routingKey) {
+      case 'execution.stop': {
+        if (childExecutionId === executionId) {
+          message.ack();
+          return onStopped();
+        }
+        break;
+      }
+      case 'process.leave': {
+        return onChildCompleted();
+      }
     }
 
     stateChangeMessage(true);
@@ -288,6 +265,68 @@ export default function DefinitionExecution(definition) {
     }
   }
 
+  function onApiMessage(routingKey, message) {
+    const messageType = message.properties.type;
+    const delegate = message.properties.delegate;
+
+    if (delegate && id === message.content.id) {
+      const referenceId = getPropertyValue(message, 'content.message.id');
+      for (const bp of processes) {
+        if (bp.isRunning) continue;
+        if (bp.getStartActivities({referenceId, referenceType: messageType}).length) {
+          logger.debug(`<${executionId} (${id})> start <${bp.id}>`);
+          bp.run();
+        }
+      }
+    }
+
+    if (message.properties.delegate) {
+      for (const bp of processes) {
+        bp.broker.publish('api', routingKey, cloneContent(message.content), message.properties);
+      }
+    }
+
+    if (executionId !== message.content.executionId) return;
+
+    switch (messageType) {
+      case 'stop':
+        activityQ.queueMessage({routingKey: 'execution.stop'}, cloneContent(message.content), {persistent: false});
+        break;
+    }
+  }
+
+  function getState() {
+    return {
+      executionId,
+      stopped,
+      completed,
+      processes: processes.map((p) => p.getState()),
+    };
+  }
+
+  function getPostponed(...args) {
+    return processes.reduce((result, p) => {
+      result = result.concat(p.getPostponed(...args));
+      return result;
+    }, []);
+  }
+
+  function complete(completionType, content) {
+    deactivate();
+    logger.debug(`<${executionId} (${id})> definition execution ${completionType}`);
+    if (!content) content = createMessage();
+    completed = true;
+    if (status !== 'terminated') status = completionType;
+    broker.deleteQueue(activityQ.name);
+
+    return broker.publish('execution', `execution.${completionType}.${executionId}`, {
+      ...initMessage.content,
+      output: environment.output,
+      ...content,
+      state: completionType,
+    }, {type: completionType, mandatory: completionType === 'error'});
+  }
+
   function onMessageOutbound(routingKey, message) {
     const content = message.content;
     const {target, source} = content;
@@ -316,28 +355,6 @@ export default function DefinitionExecution(definition) {
     broker.publish('event', `definition.${messageType}`, createMessage({
       message: message && cloneContent(message),
     }), {type: messageType});
-  }
-
-  function onApiMessage(routingKey, message) {
-    const messageType = message.properties.type;
-    const delegate = message.properties.delegate;
-
-    if (delegate && id === message.content.id) {
-      const referenceId = getPropertyValue(message, 'content.message.id');
-      for (const bp of processes) {
-        if (bp.isRunning) continue;
-        if (bp.getStartActivities({referenceId, referenceType: messageType}).length) {
-          logger.debug(`<${executionId} (${id})> start <${bp.id}>`);
-          bp.run();
-        }
-      }
-    }
-
-    if (message.properties.delegate) {
-      for (const bp of processes) {
-        bp.broker.publish('api', routingKey, cloneContent(message.content), message.properties);
-      }
-    }
   }
 
   function getProcessById(processId) {

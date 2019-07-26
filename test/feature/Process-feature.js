@@ -1602,7 +1602,7 @@ Feature('Process', () => {
       assertMessage('activity.wait', 'activity0');
       assertMessage('activity.stop', 'activity0');
 
-      assertMessage('process.stop');
+      assertMessage('process.stop', 'theProcess');
 
       expect(messages.length).to.equal(0);
     });

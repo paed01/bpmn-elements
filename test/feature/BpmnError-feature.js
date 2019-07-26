@@ -225,24 +225,13 @@ Feature('Bpmn Error', () => {
       expect(startApi.owner.counters).to.have.property('discarded', 0);
     });
 
-    let stop;
-    When('definition is ran again and stops at throw', () => {
-      stop = definition.waitFor('stop');
-      definition.once('activity.throw', () => definition.stop());
+    When('definition is ran again', () => {
+      end = definition.waitFor('end');
       definition.run();
     });
 
     Then('error is thrown by end event', async () => {
       endApi = await thrown;
-    });
-
-    And('run is stopped', async () => {
-      await stop;
-    });
-
-    When('resumed', () => {
-      end = definition.waitFor('end');
-      definition.resume();
     });
 
     And('definition completes', () => {

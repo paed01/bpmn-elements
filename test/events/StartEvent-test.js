@@ -1,5 +1,8 @@
-import testHelpers from '../helpers/testHelpers';
+import Environment from '../../src/Environment';
 import JsExtension from '../resources/extensions/JsExtension';
+import MessageEventDefinition from '../../src/eventDefinitions/MessageEventDefinition';
+import StartEvent from '../../src/events/StartEvent';
+import testHelpers from '../helpers/testHelpers';
 
 describe('StartEvent', () => {
   describe('behaviour', () => {
@@ -66,6 +69,34 @@ describe('StartEvent', () => {
         formfield1: 1,
         formfield2: 2,
       });
+    });
+
+    it('stopped while waiting cancels all listeners', async () => {
+      const event = context.getActivityById('start');
+
+      const wait = event.waitFor('wait');
+
+      event.run();
+
+      const waitApi = await wait;
+      waitApi.stop();
+
+      expect(event.broker.getExchange('api')).to.have.property('bindingCount', 0);
+      expect(event.broker).to.have.property('consumerCount', 0);
+    });
+
+    it('discarded while waiting discards run and cancels api listeners', async () => {
+      const event = context.getActivityById('start');
+
+      const wait = event.waitFor('wait');
+
+      event.run();
+
+      const waitApi = await wait;
+      waitApi.discard();
+
+      expect(event.counters).to.have.property('discarded', 1);
+      expect(event.broker.getExchange('api')).to.have.property('bindingCount', 0);
     });
 
     it('keeps state when stopped', async () => {
@@ -291,6 +322,140 @@ describe('StartEvent', () => {
 
       expect(discarded[0].fields).to.have.property('routingKey', 'execute.discard');
       expect(discarded[0].content).to.have.property('type', 'bpmn:TimerEventDefinition');
+    });
+  });
+
+  describe('stop', () => {
+    it('on enter cancels all listeners', () => {
+      const event = StartEvent({
+        id: 'start',
+      }, {
+        environment: Environment({Logger: testHelpers.Logger}),
+        getInboundSequenceFlows() {},
+        getOutboundSequenceFlows() {},
+        loadExtensions() {},
+      });
+
+      event.once('enter', (api) => api.stop());
+
+      event.run();
+
+      expect(event.broker).to.have.property('consumerCount', 0);
+    });
+
+    it('on start cancels all listeners', () => {
+      const event = StartEvent({
+        id: 'start',
+      }, {
+        environment: Environment({Logger: testHelpers.Logger}),
+        getInboundSequenceFlows() {},
+        getOutboundSequenceFlows() {},
+        loadExtensions() {},
+      });
+
+      event.once('start', (api) => api.stop());
+
+      event.run();
+
+      expect(event.broker).to.have.property('consumerCount', 0);
+    });
+
+    it('on wait cancels all listeners', () => {
+      const event = StartEvent({
+        id: 'start',
+        behaviour: {
+          eventDefinitions: [{Behaviour: MessageEventDefinition}],
+        }
+      }, {
+        environment: Environment({Logger: testHelpers.Logger}),
+        getInboundSequenceFlows() {},
+        getOutboundSequenceFlows() {},
+        loadExtensions() {},
+      });
+
+      event.once('wait', (api) => api.stop());
+
+      event.run();
+
+      expect(event.broker).to.have.property('consumerCount', 0);
+    });
+  });
+
+  describe('discard', () => {
+    it('on enter discards run', () => {
+      const event = StartEvent({
+        id: 'start',
+      }, {
+        environment: Environment({Logger: testHelpers.Logger}),
+        getInboundSequenceFlows() {},
+        getOutboundSequenceFlows() {},
+        loadExtensions() {},
+      });
+
+      event.once('enter', (api) => api.discard());
+
+      event.run();
+
+      expect(event.counters).to.have.property('discarded', 1);
+    });
+
+    it('on start discards run', () => {
+      const event = StartEvent({
+        id: 'start',
+      }, {
+        environment: Environment({Logger: testHelpers.Logger}),
+        getInboundSequenceFlows() {},
+        getOutboundSequenceFlows() {},
+        loadExtensions() {},
+      });
+
+      event.once('start', (api) => api.discard());
+
+      event.run();
+
+      expect(event.counters).to.have.property('discarded', 1);
+    });
+
+    it('on message wait discards run and cancels api listeners', () => {
+      const event = StartEvent({
+        id: 'start',
+        behaviour: {
+          eventDefinitions: [{Behaviour: MessageEventDefinition}],
+        }
+      }, {
+        environment: Environment({Logger: testHelpers.Logger}),
+        getInboundSequenceFlows() {},
+        getOutboundSequenceFlows() {},
+        loadExtensions() {},
+      });
+
+      event.once('wait', (api) => api.discard());
+
+      event.run();
+
+      expect(event.counters).to.have.property('discarded', 1);
+      expect(event.broker.getExchange('api')).to.have.property('bindingCount', 0);
+    });
+
+    it('on form wait discards run and cancels api listeners', () => {
+      const event = StartEvent({
+        id: 'start',
+        behaviour: {
+          eventDefinitions: [{Behaviour: MessageEventDefinition}],
+        }
+      }, {
+        environment: Environment({Logger: testHelpers.Logger}),
+        getInboundSequenceFlows() {},
+        getOutboundSequenceFlows() {},
+        loadExtensions() {},
+      });
+
+      event.once('wait', (api) => api.discard());
+
+      event.run();
+
+      expect(event.counters).to.have.property('discarded', 1);
+      expect(event.broker.getExchange('api')).to.have.property('bindingCount', 0);
     });
   });
 });

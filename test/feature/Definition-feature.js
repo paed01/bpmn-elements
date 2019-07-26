@@ -48,6 +48,7 @@ Feature('Definition', () => {
     Then('the definition has the expected execution sequence', async () => {
       assertMessage('definition.enter', 'theDefinition');
       assertMessage('definition.start', 'theDefinition');
+      assertMessage('process.init', 'theProcess');
       assertMessage('process.enter', 'theProcess');
       assertMessage('process.start', 'theProcess');
       assertMessage('activity.init', 'activity');
@@ -95,6 +96,7 @@ Feature('Definition', () => {
       assertMessage('definition.enter', 'Definitions_1');
       assertMessage('definition.start', 'Definitions_1');
 
+      assertMessage('process.init', 'mainProcess');
       assertMessage('process.enter', 'mainProcess');
       assertMessage('process.start', 'mainProcess');
 
@@ -411,6 +413,9 @@ Feature('Definition', () => {
     Then('the definition has the expected execution sequence', async () => {
       assertMessage('definition.enter', 'theDefinition');
       assertMessage('definition.start', 'theDefinition');
+
+      assertMessage('process.init', 'Process_1');
+      assertMessage('process.init', 'Process_2');
 
       assertMessage('process.enter', 'Process_1');
       assertMessage('process.start', 'Process_1');

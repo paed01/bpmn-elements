@@ -293,6 +293,194 @@ describe('activity run', () => {
     expect(api.content).to.have.property('isMultiInstance', false);
     expect(api.content).to.have.property('inbound').to.be.ok.and.eql(content.inbound);
   });
+
+  describe('extensions', () => {
+    it('are activated on enter', () => {
+      let active = false;
+      const activity = Activity(TaskBehaviour, {
+        id: 'activity',
+        type: 'task',
+        parent: {
+          id: 'process1',
+        },
+      }, {
+        environment: Environment({Logger}),
+        getInboundSequenceFlows() {},
+        getOutboundSequenceFlows() {},
+        loadExtensions() {
+          return {
+            activate() {
+              active = true;
+            },
+            deactivate() {
+              active = false;
+            }
+          };
+        },
+      });
+
+      const activityEvents = [];
+
+      activity.on('enter', () => {
+        activityEvents.push(active);
+      });
+
+      activity.run();
+
+      expect(activityEvents).to.eql([true]);
+    });
+
+    it('are activated on discard', () => {
+      let active = false;
+      const activity = Activity(TaskBehaviour, {
+        id: 'activity',
+        type: 'task',
+        parent: {
+          id: 'process1',
+        },
+      }, {
+        environment: Environment({Logger}),
+        getInboundSequenceFlows() {},
+        getOutboundSequenceFlows() {},
+        loadExtensions() {
+          return {
+            activate() {
+              active = true;
+            },
+            deactivate() {
+              active = false;
+            }
+          };
+        },
+      });
+
+      const activityEvents = [];
+
+      activity.on('discard', () => {
+        activityEvents.push(active);
+      });
+
+      activity.discard();
+
+      expect(activityEvents).to.eql([true]);
+    });
+
+    it('are deactivated on activity leave', () => {
+      let active = false;
+      const activity = Activity(TaskBehaviour, {
+        id: 'activity',
+        type: 'task',
+        parent: {
+          id: 'process1',
+        },
+      }, {
+        environment: Environment({Logger}),
+        getInboundSequenceFlows() {},
+        getOutboundSequenceFlows() {},
+        loadExtensions() {
+          return {
+            activate() {
+              active = true;
+            },
+            deactivate() {
+              active = false;
+            }
+          };
+        },
+      });
+
+      const activityEvents = [];
+
+      activity.on('enter', () => {
+        activityEvents.push(active);
+      });
+      activity.on('leave', () => {
+        activityEvents.push(active);
+      });
+
+      activity.run();
+
+      expect(activityEvents).to.eql([true, false]);
+    });
+
+    it('are deactivated on stop', () => {
+      let active = false;
+      const activity = Activity(TaskBehaviour, {
+        id: 'activity',
+        type: 'task',
+        parent: {
+          id: 'process1',
+        },
+      }, {
+        environment: Environment({Logger}),
+        getInboundSequenceFlows() {},
+        getOutboundSequenceFlows() {},
+        loadExtensions() {
+          return {
+            activate() {
+              active = true;
+            },
+            deactivate() {
+              active = false;
+            }
+          };
+        },
+      });
+
+      const activityEvents = [];
+
+      activity.on('enter', (api) => {
+        activityEvents.push(active);
+        api.stop();
+      });
+      activity.on('stop', (api) => {
+        activityEvents.push(active);
+        api.stop();
+      });
+
+      activity.run();
+
+      expect(activityEvents).to.eql([true, false]);
+    });
+    it('are reactivated on next run', () => {
+      let active = false;
+      const activity = Activity(TaskBehaviour, {
+        id: 'activity',
+        type: 'task',
+        parent: {
+          id: 'process1',
+        },
+      }, {
+        environment: Environment({Logger}),
+        getInboundSequenceFlows() {},
+        getOutboundSequenceFlows() {},
+        loadExtensions() {
+          return {
+            activate() {
+              active = true;
+            },
+            deactivate() {
+              active = false;
+            }
+          };
+        },
+      });
+
+      const activityEvents = [];
+
+      activity.on('enter', () => {
+        activityEvents.push(active);
+      });
+      activity.on('leave', () => {
+        activityEvents.push(active);
+      });
+
+      activity.run();
+      activity.run();
+
+      expect(activityEvents).to.eql([true, false, true, false]);
+    });
+  });
 });
 
 function createActivity(step = true) {
@@ -311,9 +499,6 @@ function createActivity(step = true) {
     },
   }, {
     environment,
-    getActivityExtensions() {
-      return {};
-    },
     getInboundSequenceFlows() {
       return [SequenceFlow({id: 'flow0', parent: {id: 'process1'}}, {environment})];
     },

@@ -82,7 +82,7 @@ function FormKey(activity, context) {
 
   function activate() {
     if (activityConsumer) return;
-    activityConsumer = broker.subscribeTmp('event', 'activity.start', onActivityStart, {noAck: true});
+    activityConsumer = broker.subscribeTmp('event', 'activity.start', onActivityStart, {noAck: true, consumerTag: '_'});
   }
 
   function onActivityStart(_, message) {
