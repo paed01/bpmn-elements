@@ -14,12 +14,19 @@ The following elements are tested and supported.
 
 - [Definition](/docs/Definition.md): Executable BPMN 2 definition
 - [Process](/docs/Process.md): Executes and keeps track of activity elements
+- BpmnError
 - BoundaryEvent
 - ConditionalEventDefinition
 - DataObject
 - EndEvent
 - Error
 - ErrorEventDefinition
+  - throw
+  - catch
+- EscalationEventDefinition
+  - throw
+  - catch
+- EventBasedGateway
 - ExclusiveGateway
 - InclusiveGateway
 - IntermediateCatchEvent
@@ -35,6 +42,8 @@ The following elements are tested and supported.
   - SendTask: Same behaviour as ServiceTask
 - Signal
 - SignalEventDefinition
+  - throw
+  - catch
 - SignalTask
   - ManualTask
   - ReceiveTask

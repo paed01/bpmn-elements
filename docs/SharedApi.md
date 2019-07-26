@@ -8,6 +8,7 @@ The Api is composed from the element event message.
 Api properties:
 - `id`: element id
 - `type`: element type
+- `name`: element name
 - `executionId`: current execution id
 - `environment`: shared [environment](/docs/Environment.md)
 - `fields`: message fields
