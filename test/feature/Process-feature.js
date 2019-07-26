@@ -8,7 +8,7 @@ Feature('Process', () => {
     const source = `
     <?xml version="1.0" encoding="UTF-8"?>
     <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-      <process id="theProcess" isExecutable="true">
+      <process id="theProcess" name="Process" isExecutable="true">
         <startEvent id="activity" name="Start" />
       </process>
     </definitions>`;
@@ -41,9 +41,15 @@ Feature('Process', () => {
       return completed;
     });
 
-    Then('the process has the expected execution sequence', async () => {
-      assertMessage('process.enter', 'theProcess');
+    Then('the process was entered with with id and name', () => {
+      const msg = assertMessage('process.enter', 'theProcess');
+      expect(msg.content).to.have.property('id', 'theProcess');
+      expect(msg.content).to.have.property('name', 'Process');
+
       assertMessage('process.start', 'theProcess');
+    });
+
+    And('the process has the expected execution sequence', async () => {
       assertMessage('activity.init', 'activity');
       assertMessage('activity.enter', 'activity');
       assertMessage('activity.start', 'activity');

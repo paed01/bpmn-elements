@@ -10,6 +10,8 @@ var _Activity = _interopRequireDefault(require("../activity/Activity"));
 
 var _EventDefinitionExecution = _interopRequireDefault(require("../eventDefinitions/EventDefinitionExecution"));
 
+var _messageHelper = require("../messageHelper");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function StartEvent(activityDef, context) {
@@ -19,7 +21,7 @@ function StartEvent(activityDef, context) {
 function StartEventBehaviour(activity) {
   const {
     id,
-    type,
+    type = 'startevent',
     broker,
     eventDefinitions
   } = activity;
@@ -32,15 +34,14 @@ function StartEventBehaviour(activity) {
   return event;
 
   function execute(executeMessage) {
-    const content = executeMessage.content;
+    const content = (0, _messageHelper.cloneContent)(executeMessage.content);
 
     if (eventDefinitionExecution) {
       return eventDefinitionExecution.execute(executeMessage);
     }
 
     if (!content.form) {
-      return broker.publish('execution', 'execute.completed', { ...content
-      });
+      return broker.publish('execution', 'execute.completed', content);
     }
 
     const {

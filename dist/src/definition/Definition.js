@@ -234,6 +234,7 @@ function Definition(context, options) {
     return {
       id,
       type,
+      name,
       ...override
     };
   }

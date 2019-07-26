@@ -4,6 +4,24 @@ import {cloneContent} from '../src/messageHelper';
 import {Logger} from './helpers/testHelpers';
 
 describe('activity api', () => {
+  describe('properties', () => {
+    it('exposes activity id, type, and name', () => {
+      const activity = Activity(Behaviour, {id: 'task', type: 'bpmn:Task', name: 'Task'}, Context());
+
+      activity.run();
+      const api = activity.getApi();
+      expect(api).to.have.property('id', 'task');
+      expect(api).to.have.property('type', 'bpmn:Task');
+      expect(api).to.have.property('name', 'Task');
+
+      function Behaviour() {
+        return {
+          execute() {}
+        };
+      }
+    });
+  });
+
   describe('discard()', () => {
     it('discards activity', () => {
       const activity = Activity(Behaviour, {id: 'task'}, Context());

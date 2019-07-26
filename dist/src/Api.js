@@ -7,6 +7,7 @@ exports.ActivityApi = ActivityApi;
 exports.DefinitionApi = DefinitionApi;
 exports.ProcessApi = ProcessApi;
 exports.FlowApi = FlowApi;
+exports.Api = Api;
 
 var _messageHelper = require("./messageHelper");
 
@@ -36,6 +37,7 @@ function Api(pfx, broker, sourceMessage, environment) {
   return {
     id: apiContent.id,
     type: apiContent.type,
+    name: apiContent.name,
     executionId,
     environment,
     fields: apiMessage.fields,

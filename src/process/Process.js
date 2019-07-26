@@ -347,6 +347,7 @@ export function Process(processDef, context) {
     return {
       id,
       type,
+      name,
       parent: {...parent},
       ...override,
     };

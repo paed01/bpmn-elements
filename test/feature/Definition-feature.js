@@ -15,7 +15,7 @@ Feature('Definition', () => {
   Scenario('A definition with one process', () => {
     const source = `
     <?xml version="1.0" encoding="UTF-8"?>
-    <definitions id="theDefinition" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <definitions id="theDefinition" name="Definition" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <process id="theProcess" isExecutable="true">
         <startEvent id="activity" name="Start" />
       </process>
@@ -45,8 +45,13 @@ Feature('Definition', () => {
       return completed;
     });
 
-    Then('the definition has the expected execution sequence', async () => {
-      assertMessage('definition.enter', 'theDefinition');
+    Then('definition was entered with message with id and name', () => {
+      const msg = assertMessage('definition.enter', 'theDefinition');
+      expect(msg.content).to.have.property('id', 'theDefinition');
+      expect(msg.content).to.have.property('name', 'Definition');
+    });
+
+    And('the definition has the expected execution sequence', async () => {
       assertMessage('definition.start', 'theDefinition');
       assertMessage('process.init', 'theProcess');
       assertMessage('process.enter', 'theProcess');

@@ -5,6 +5,7 @@ export {
   DefinitionApi,
   ProcessApi,
   FlowApi,
+  Api,
 };
 
 function ActivityApi(broker, apiMessage, environment) {
@@ -35,6 +36,7 @@ function Api(pfx, broker, sourceMessage, environment) {
   return {
     id: apiContent.id,
     type: apiContent.type,
+    name: apiContent.name,
     executionId,
     environment,
     fields: apiMessage.fields,

@@ -3,7 +3,7 @@ import {getUniqueId, filterUndefined} from '../shared';
 import {ActivityApi} from '../Api';
 import {ActivityBroker} from '../EventBroker';
 import {getRoutingKeyPattern} from 'smqp';
-import {cloneContent, cloneParent, cloneMessage} from '../messageHelper';
+import {cloneContent, cloneParent} from '../messageHelper';
 
 export default function Activity(Behaviour, activityDef, context) {
   const {id, type = 'activity', name, parent: originalParent = {}, behaviour = {}, isParallelGateway, isSubProcess, triggeredByEvent, isThrowing} = activityDef;
@@ -153,6 +153,7 @@ export default function Activity(Behaviour, activityDef, context) {
       ...override,
       id,
       type,
+      name,
       attachedTo,
       parent: cloneParent(parent),
       isSubProcess,

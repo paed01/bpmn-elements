@@ -199,6 +199,7 @@ function Activity(Behaviour, activityDef, context) {
     return { ...override,
       id,
       type,
+      name,
       attachedTo,
       parent: (0, _messageHelper.cloneParent)(parent),
       isSubProcess,
@@ -275,18 +276,6 @@ function Activity(Behaviour, activityDef, context) {
   function stop() {
     if (!activityApi.isRunning) return;
     getApi().stop();
-  }
-
-  function onStop() {
-    if (!activityApi.isRunning) return;
-    stopped = true;
-    consumingRunQ = false;
-    broker.cancel('_activity-run');
-    broker.cancel('_activity-api');
-    broker.cancel('_activity-execution');
-    broker.cancel('_run-on-inbound');
-    broker.cancel('_format-consumer');
-    publishEvent('stop');
   }
 
   function activate() {
@@ -566,6 +555,7 @@ function Activity(Behaviour, activityDef, context) {
           const isDiscarded = status === 'discarded';
           status = undefined;
           broker.cancel('_activity-api');
+          if (extensions) extensions.deactivate(message);
           if (isRedelivered) break;
           const ignoreOutbound = content.ignoreOutbound;
           let outbound, leaveContent;
@@ -666,10 +656,23 @@ function Activity(Behaviour, activityDef, context) {
 
       case 'stop':
         {
-          onStop();
+          onStop(message);
           break;
         }
     }
+  }
+
+  function onStop(message) {
+    if (!activityApi.isRunning) return;
+    stopped = true;
+    consumingRunQ = false;
+    broker.cancel('_activity-run');
+    broker.cancel('_activity-api');
+    broker.cancel('_activity-execution');
+    broker.cancel('_run-on-inbound');
+    broker.cancel('_format-consumer');
+    if (extensions) extensions.deactivate(message || createMessage());
+    publishEvent('stop');
   }
 
   function publishEvent(state, content, messageProperties = {}) {
