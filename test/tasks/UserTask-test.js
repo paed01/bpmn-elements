@@ -56,6 +56,23 @@ describe('UserTask', () => {
       expect(api.content.output).to.eql({data: 1});
     });
 
+
+    it('can be errored out via an error message', async () => {
+      const task = context.getActivityById('task');
+
+      const waiting = task.waitFor('wait');
+      const error = task.waitFor('error');
+      task.activate();
+      task.run();
+
+      const taskApi = await waiting;
+      taskApi.sendApiMessage('error', {message: 'a user error occurred'});
+
+      const api = await error;
+
+      expect(api.content.error.message).to.eql('a user error occurred');
+    });
+
     it('runs through if discarded', async () => {
       const task = context.getActivityById('task');
 

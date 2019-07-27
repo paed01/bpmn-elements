@@ -8,6 +8,8 @@ exports.SignalTaskBehaviour = SignalTaskBehaviour;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 
+var _Errors = require("../error/Errors");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function SignalTask(activityDef, context) {
@@ -60,6 +62,14 @@ function SignalTaskBehaviour(activity) {
           return broker.publish('execution', 'execute.completed', { ...content,
             output: message.content.message,
             state: 'signal'
+          });
+
+        case 'error':
+          broker.cancel(`_api-${executionId}`);
+          return broker.publish('execution', 'execute.error', { ...content,
+            error: new _Errors.ActivityError(message.content.message, executeMessage, message.content)
+          }, {
+            mandatory: true
           });
 
         case 'discard':

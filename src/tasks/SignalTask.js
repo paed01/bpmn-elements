@@ -1,4 +1,5 @@
 import Activity from '../activity/Activity';
+import { ActivityError } from '../error/Errors';
 
 export default function SignalTask(activityDef, context) {
   return Activity(SignalTaskBehaviour, activityDef, context);
@@ -37,6 +38,9 @@ export function SignalTaskBehaviour(activity) {
         case 'signal':
           broker.cancel(`_api-${executionId}`);
           return broker.publish('execution', 'execute.completed', {...content, output: message.content.message, state: 'signal'});
+        case 'error':
+          broker.cancel(`_api-${executionId}`);
+          return broker.publish('execution', 'execute.error', {...content, error: new ActivityError(message.content.message, executeMessage, message.content)}, {mandatory: true});
         case 'discard':
           broker.cancel(`_api-${executionId}`);
           return broker.publish('execution', 'execute.discard', {...content});
