@@ -291,6 +291,41 @@ Feature('Signals', () => {
       expect(definition.counters).to.have.property('completed', 1);
     });
   });
+
+  Scenario('Flow ending with signal that completes immediately, and a catch event (issue #3)', () => {
+    let definition;
+    const logBook = [];
+    Given('a process with two flows with logging, the first flow ends with signal, the second catches signal and then logs', async () => {
+      const source = factory.resource('issue-3.bpmn');
+      const context = await testHelpers.context(source);
+
+      definition = Definition(context, {
+        services: {
+          log(...args) {
+            logBook.push(...args);
+          }
+        }
+      });
+    });
+
+    let end;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('definition completes immediately', () => {
+      return end;
+    });
+
+    And('first flow script logged', () => {
+      expect(logBook[0]).to.equal('task1');
+    });
+
+    And('second flow script logged', () => {
+      expect(logBook[1]).to.equal('task2');
+    });
+  });
 });
 
 async function prepareSource() {

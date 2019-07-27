@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_18a4j13" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.1.0">
+  <bpmn:process id="Process_0pkt3xj" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" camunda:asyncBefore="true" camunda:asyncAfter="true">
+      <bpmn:outgoing>SequenceFlow_1uguq0y</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_1uguq0y" sourceRef="StartEvent_1" targetRef="Task_1eq3n1s" />
+    <bpmn:sequenceFlow id="SequenceFlow_1xz232n" sourceRef="Task_1eq3n1s" targetRef="IntermediateThrowEvent_0wbsqd7" />
+    <bpmn:sequenceFlow id="SequenceFlow_13btpcm" sourceRef="IntermediateThrowEvent_023keng" targetRef="Task_1ldwx43" />
+    <bpmn:intermediateThrowEvent id="IntermediateThrowEvent_0wbsqd7" name="Throw">
+      <bpmn:incoming>SequenceFlow_1xz232n</bpmn:incoming>
+      <bpmn:signalEventDefinition id="SignalEventDefinition_1mifil2" signalRef="Signal_0y9ojr4" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:startEvent id="IntermediateThrowEvent_023keng" name="Catch" camunda:asyncBefore="true" camunda:asyncAfter="true">
+      <bpmn:outgoing>SequenceFlow_13btpcm</bpmn:outgoing>
+      <bpmn:signalEventDefinition signalRef="Signal_0y9ojr4" />
+    </bpmn:startEvent>
+    <bpmn:scriptTask id="Task_1eq3n1s" name="Task1" scriptFormat="javascript">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="text" value="Step 1" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_1uguq0y</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1xz232n</bpmn:outgoing>
+      <bpmn:script>environment.services.log("task1"); next()</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:scriptTask id="Task_1ldwx43" name="Task2" scriptFormat="javascript">
+      <bpmn:extensionElements>
+        <camunda:properties>
+          <camunda:property name="text" value="Step 2" />
+        </camunda:properties>
+      </bpmn:extensionElements>
+      <bpmn:incoming>SequenceFlow_13btpcm</bpmn:incoming>
+      <bpmn:script>environment.services.log("task2"); next()</bpmn:script>
+    </bpmn:scriptTask>
+  </bpmn:process>
+  <bpmn:signal id="Signal_0y9ojr4" name="Signal_39f64n8" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_0pkt3xj">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="156" y="103" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1uguq0y_di" bpmnElement="SequenceFlow_1uguq0y">
+        <di:waypoint x="192" y="121" />
+        <di:waypoint x="270" y="121" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1xz232n_di" bpmnElement="SequenceFlow_1xz232n">
+        <di:waypoint x="370" y="121" />
+        <di:waypoint x="442" y="121" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_13btpcm_di" bpmnElement="SequenceFlow_13btpcm">
+        <di:waypoint x="192" y="257" />
+        <di:waypoint x="270" y="257" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="IntermediateThrowEvent_1j8l0jt_di" bpmnElement="IntermediateThrowEvent_0wbsqd7">
+        <dc:Bounds x="442" y="103" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="445" y="146" width="31" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_16gjnhi_di" bpmnElement="IntermediateThrowEvent_023keng">
+        <dc:Bounds x="156" y="239" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="160" y="282" width="29" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_0stysw0_di" bpmnElement="Task_1eq3n1s">
+        <dc:Bounds x="270" y="81" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_0cxxw8f_di" bpmnElement="Task_1ldwx43">
+        <dc:Bounds x="270" y="217" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

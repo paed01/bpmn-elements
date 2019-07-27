@@ -60,7 +60,7 @@ describe('IntermediateThrowEvent', () => {
 
   describe('with signal event definition', () => {
     const source = `
-    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <process id="theProcess" isExecutable="true">
         <startEvent id="start" />
         <sequenceFlow id="flow1" sourceRef="start" targetRef="event" />
@@ -92,6 +92,10 @@ describe('IntermediateThrowEvent', () => {
         id: 'mySignal',
         type: 'bpmn:Signal',
         name: 'Signaled by event',
+        parent: {
+          id: 'Def_1',
+          type: 'bpmn:Definitions'
+        }
       });
 
       await leave;

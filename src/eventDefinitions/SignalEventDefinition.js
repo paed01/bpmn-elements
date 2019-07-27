@@ -1,11 +1,17 @@
-import {cloneContent, shiftParent} from '../messageHelper';
 import getPropertyValue from '../getPropertyValue';
+import {brokerSafeId} from '../shared';
+import {cloneContent, shiftParent} from '../messageHelper';
 
 export default function SignalEventDefinition(activity, eventDefinition) {
-  const {id, broker, environment, isThrowing} = activity;
+  const {id, broker, environment, isThrowing, getActivityById} = activity;
   const {type, behaviour = {}} = eventDefinition;
   const {debug} = environment.Logger(type.toLowerCase());
-  const reference = behaviour.signalRef || {};
+  const reference = behaviour.signalRef || {name: 'anonymous'};
+  const referenceElement = reference.id && getActivityById(reference.id);
+  const signalId = referenceElement ? referenceElement.id : 'anonymous';
+  const signalQueueName = `signal-${brokerSafeId(id)}-${brokerSafeId(signalId)}-q`;
+
+  if (!isThrowing) setupCatchSignal();
 
   const source = {
     id,
@@ -23,25 +29,25 @@ export default function SignalEventDefinition(activity, eventDefinition) {
     const {executionId, parent} = messageContent;
     const parentExecutionId = parent && parent.executionId;
 
+    const {message: referenceMessage, description} = resolveMessage(executeMessage);
+    broker.consume(signalQueueName, onSignalApiMessage, {noAck: true, consumerTag: `_api-signal-${executionId}`});
+
     if (completed) return;
 
-    broker.subscribeTmp('api', '*.signal.#', onSignalApiMessage, {noAck: true, consumerTag: `_api-signal-${executionId}`});
     broker.subscribeTmp('api', `activity.stop.${parentExecutionId}`, onApiMessage, {noAck: true, consumerTag: `_api-parent-${parentExecutionId}`});
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
 
-    const signalMessage = getSignal(executeMessage);
-
-    debug(`<${executionId} (${id})>`, reference.id ? `waiting for signal <${reference.id}> with name: ${signalMessage.name}` : 'wait for anonymous signal event');
+    debug(`<${executionId} (${id})> expect ${description}`);
 
     broker.publish('event', 'activity.wait', {
       ...messageContent,
       executionId: parentExecutionId,
       parent: shiftParent(parent),
-      signal: {...signalMessage},
+      signal: {...referenceMessage},
     });
 
     function onSignalApiMessage(routingKey, message) {
-      if (getPropertyValue(message, 'content.message.id') !== signalMessage.id) return;
+      if (getPropertyValue(message, 'content.message.id') !== referenceMessage.id) return;
       completed = true;
       stop();
       return signal(routingKey, {message: message.content.message});
@@ -68,14 +74,15 @@ export default function SignalEventDefinition(activity, eventDefinition) {
 
     function signal(_, {message}) {
       completed = true;
-      debug(`<${executionId} (${id})>`, reference.id ? `signaled with <${reference.id}> named ${message.name}` : 'signaled with anaonymous signal');
+      debug(`<${executionId} (${id})> signaled with`, description);
       return broker.publish('execution', 'execute.completed', {...messageContent, output: message, state: 'signal'});
     }
 
     function stop() {
+      broker.cancel(`_api-signal-${executionId}`);
       broker.cancel(`_api-parent-${parentExecutionId}`);
       broker.cancel(`_api-${executionId}`);
-      broker.cancel(`_api-signal-${executionId}`);
+      broker.purgeQueue(signalQueueName);
     }
   }
 
@@ -84,25 +91,40 @@ export default function SignalEventDefinition(activity, eventDefinition) {
     const {executionId, parent} = messageContent;
     const parentExecutionId = parent && parent.executionId;
 
-    const signalMessage = getSignal(executeMessage);
+    const {message: referenceMessage, description} = resolveMessage(executeMessage);
 
-    debug(`<${executionId} (${id})> throw signal <${reference.id}> named ${signalMessage.name}`);
-    debug(`<${executionId} (${id})>`, reference.id ? `throw signal <${reference.id}> with name: ${signalMessage.name}` : 'throw anonymous signal');
+    debug(`<${executionId} (${id})> throw ${description}`);
 
     broker.publish('event', 'activity.signal', {
       ...cloneContent(messageContent),
       executionId: parentExecutionId,
       parent: shiftParent(parent),
-      message: {...signalMessage},
+      message: {...referenceMessage},
       state: 'throw',
     }, {type: 'signal'});
 
     return broker.publish('execution', 'execute.completed', messageContent);
   }
 
-  function getSignal(message) {
-    const result = {...reference};
-    if (result.name) result.name = environment.resolveExpression(reference.name, message);
+  function resolveMessage(message) {
+    if (!referenceElement) {
+      return {
+        message: {...reference},
+        description: 'anonymous signal',
+      };
+    }
+
+    const result = {
+      message: referenceElement.resolve(message),
+    };
+
+    result.description = `${result.message.name} <${result.message.id}>`;
+
     return result;
+  }
+
+  function setupCatchSignal() {
+    broker.assertQueue(signalQueueName, {autoDelete: false, durable: true});
+    broker.bindQueue(signalQueueName, 'api', '*.signal.#', {durable: true});
   }
 }

@@ -389,6 +389,10 @@ Feature('Bpmn Error', () => {
         id: 'EscalatedSignal',
         type: 'bpmn:Signal',
         name: 'Too big signal',
+        parent: {
+          id: 'Definition_0',
+          type: 'bpmn:Definitions',
+        }
       });
     });
 
