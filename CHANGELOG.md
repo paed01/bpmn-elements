@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 0.5.0
+
+- allow a waiting UserTask to trigger an execution error
+- catch signal fired before event execution
+
 # 0.4.0
 
 ## Breaking
