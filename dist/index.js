@@ -123,6 +123,12 @@ Object.defineProperty(exports, "InputOutputSpecification", {
     return _InputOutputSpecification.default;
   }
 });
+Object.defineProperty(exports, "LinkEventDefinition", {
+  enumerable: true,
+  get: function () {
+    return _LinkEventDefinition.default;
+  }
+});
 Object.defineProperty(exports, "MessageEventDefinition", {
   enumerable: true,
   get: function () {
@@ -283,6 +289,8 @@ var _IntermediateCatchEvent = _interopRequireDefault(require("./src/events/Inter
 var _IntermediateThrowEvent = _interopRequireDefault(require("./src/events/IntermediateThrowEvent"));
 
 var _InputOutputSpecification = _interopRequireDefault(require("./src/io/InputOutputSpecification"));
+
+var _LinkEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/LinkEventDefinition"));
 
 var _MessageEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/MessageEventDefinition"));
 

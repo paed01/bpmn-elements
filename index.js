@@ -18,6 +18,7 @@ import InclusiveGateway from './src/gateways/InclusiveGateway';
 import IntermediateCatchEvent from './src/events/IntermediateCatchEvent';
 import IntermediateThrowEvent from './src/events/IntermediateThrowEvent';
 import InputOutputSpecification from './src/io/InputOutputSpecification';
+import LinkEventDefinition from './src/eventDefinitions/LinkEventDefinition';
 import MessageEventDefinition from './src/eventDefinitions/MessageEventDefinition';
 import MessageFlow from './src/flows/MessageFlow';
 import ParallelGateway from './src/gateways/ParallelGateway';
@@ -55,6 +56,7 @@ export {
   InclusiveGateway,
   IntermediateCatchEvent,
   IntermediateThrowEvent,
+  LinkEventDefinition,
   SignalTask as ManualTask,
   MessageEventDefinition,
   MessageFlow,

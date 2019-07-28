@@ -349,7 +349,8 @@ export default function DefinitionExecution(definition) {
     logger.debug(`<${executionId} (${id})>`, reference ? `${messageType} <${delegateMessage.id}>` : `anonymous ${messageType}`, `event received from <${content.parent.id}.${content.id}>. Delegating.`);
 
     getApi().sendApiMessage(messageType, {
-      message,
+      message: message,
+      originalMessage: content.message,
     }, {delegate: true, type: messageType});
 
     broker.publish('event', `definition.${messageType}`, createMessage({

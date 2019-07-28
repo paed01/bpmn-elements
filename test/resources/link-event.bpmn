@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1ilc9bz" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.2.1">
+  <bpmn:process id="theProcess" isExecutable="true" implementation="">
+    <bpmn:startEvent id="start">
+      <bpmn:outgoing>flow1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:scriptTask id="task1" scriptFormat="javascript">
+      <bpmn:incoming>flow1</bpmn:incoming>
+      <bpmn:outgoing>flow2</bpmn:outgoing>
+      <bpmn:script>environment.services.log("task1"); next()</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:endEvent id="end">
+      <bpmn:incoming>flow4</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:intermediateCatchEvent id="catch">
+      <bpmn:outgoing>flow3</bpmn:outgoing>
+      <bpmn:linkEventDefinition name="LINKA" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:scriptTask id="task2" scriptFormat="javascript">
+      <bpmn:incoming>flow3</bpmn:incoming>
+      <bpmn:outgoing>flow4</bpmn:outgoing>
+      <bpmn:script>environment.services.log("task2"); next()</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:intermediateThrowEvent id="throw">
+      <bpmn:incoming>flow2</bpmn:incoming>
+      <bpmn:linkEventDefinition name="LINKA" />
+    </bpmn:intermediateThrowEvent>
+    <bpmn:sequenceFlow id="flow1" sourceRef="start" targetRef="task1" />
+    <bpmn:sequenceFlow id="flow2" sourceRef="task1" targetRef="throw" />
+    <bpmn:sequenceFlow id="flow3" sourceRef="catch" targetRef="task2" />
+    <bpmn:sequenceFlow id="flow4" sourceRef="task2" targetRef="end" />
+  </bpmn:process>
+</bpmn:definitions>
