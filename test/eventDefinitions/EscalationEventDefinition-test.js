@@ -1,9 +1,9 @@
-import SignalEventDefinition from '../../src/eventDefinitions/SignalEventDefinition';
+import EscalationEventDefinition from '../../src/eventDefinitions/EscalationEventDefinition';
 import Environment from '../../src/Environment';
 import {ActivityBroker} from '../../src/EventBroker';
 import {Logger} from '../helpers/testHelpers';
 
-describe('SignalEventDefinition', () => {
+describe('EscalationEventDefinition', () => {
   let event;
   beforeEach(() => {
     event = {
@@ -15,8 +15,8 @@ describe('SignalEventDefinition', () => {
 
   describe('catching', () => {
     it('publishes wait event on parent broker', () => {
-      const catchSignal = SignalEventDefinition(event, {
-        type: 'bpmn:SignalEventDefinition',
+      const catchSignal = EscalationEventDefinition(event, {
+        type: 'bpmn:EscalationEventDefinition',
       });
 
       const messages = [];
@@ -47,9 +47,9 @@ describe('SignalEventDefinition', () => {
       expect(messages[0].content.parent).to.have.property('executionId', 'theProcess_0');
     });
 
-    it('completes and clears listeners when signal is caught', () => {
-      const catchSignal = SignalEventDefinition(event, {
-        type: 'bpmn:SignalEventDefinition',
+    it('completes and clears listeners when escalation is caught', () => {
+      const catchSignal = EscalationEventDefinition(event, {
+        type: 'bpmn:EscalationEventDefinition',
       });
 
       const messages = [];
@@ -73,7 +73,7 @@ describe('SignalEventDefinition', () => {
         },
       });
 
-      event.broker.publish('api', 'activity.signal.event_1', {});
+      event.broker.publish('api', 'activity.escalate.event_1', {});
       event.broker.cancel('_test-tag');
 
       expect(messages).to.have.length(1);
@@ -81,12 +81,12 @@ describe('SignalEventDefinition', () => {
       expect(event.broker).to.have.property('consumerCount', 0);
     });
 
-    it('completes and clears listeners if signaled before execution', () => {
-      const catchSignal = SignalEventDefinition(event, {
-        type: 'bpmn:SignalEventDefinition',
+    it('completes and clears listeners if escalated before execution', () => {
+      const catchSignal = EscalationEventDefinition(event, {
+        type: 'bpmn:EscalationEventDefinition',
       });
 
-      event.broker.publish('api', 'activity.signal.event_1', {});
+      event.broker.publish('api', 'activity.escalate.event_1', {});
 
       const messages = [];
       event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
@@ -117,8 +117,8 @@ describe('SignalEventDefinition', () => {
     });
 
     it('completes and clears listeners if discarded', () => {
-      const catchSignal = SignalEventDefinition(event, {
-        type: 'bpmn:SignalEventDefinition',
+      const catchSignal = EscalationEventDefinition(event, {
+        type: 'bpmn:EscalationEventDefinition',
       });
 
       const messages = [];
@@ -152,8 +152,8 @@ describe('SignalEventDefinition', () => {
     });
 
     it('stops and clears listeners if stopped', () => {
-      const catchSignal = SignalEventDefinition(event, {
-        type: 'bpmn:SignalEventDefinition',
+      const catchSignal = EscalationEventDefinition(event, {
+        type: 'bpmn:EscalationEventDefinition',
       });
 
       const messages = [];
@@ -188,11 +188,11 @@ describe('SignalEventDefinition', () => {
   });
 
   describe('throwing', () => {
-    it('publishes signal event on parent broker', () => {
+    it('publishes escalation event on parent broker', () => {
       event.isThrowing = true;
 
-      const definition = SignalEventDefinition(event, {
-        type: 'bpmn:SignalEventDefinition',
+      const definition = EscalationEventDefinition(event, {
+        type: 'bpmn:EscalationEventDefinition',
       });
 
       const messages = [];
@@ -217,7 +217,7 @@ describe('SignalEventDefinition', () => {
       });
 
       expect(messages).to.have.length(1);
-      expect(messages[0].fields).to.have.property('routingKey', 'activity.signal');
+      expect(messages[0].fields).to.have.property('routingKey', 'activity.escalate');
       expect(messages[0].content).to.have.property('executionId', 'event_1');
       expect(messages[0].content.parent).to.have.property('id', 'theProcess');
       expect(messages[0].content.parent).to.have.property('executionId', 'theProcess_0');

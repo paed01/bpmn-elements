@@ -1,10 +1,17 @@
+import getPropertyValue from '../getPropertyValue';
+import {brokerSafeId} from '../shared';
 import {cloneContent, shiftParent} from '../messageHelper';
 
 export default function EscalationEventDefinition(activity, eventDefinition) {
-  const {id, broker, environment, isThrowing} = activity;
+  const {id, broker, environment, isThrowing, getActivityById} = activity;
   const {type, behaviour = {}} = eventDefinition;
   const {debug} = environment.Logger(type.toLowerCase());
   const reference = behaviour.escalationRef || {name: 'anonymous'};
+  const referenceElement = reference.id && getActivityById(reference.id);
+  const escalationId = referenceElement ? referenceElement.id : 'anonymous';
+  const escalationQueueName = `escalate-${brokerSafeId(id)}-${brokerSafeId(escalationId)}-q`;
+
+  if (!isThrowing) setupCatch();
 
   const source = {
     id,
@@ -22,29 +29,33 @@ export default function EscalationEventDefinition(activity, eventDefinition) {
     const {executionId, parent} = messageContent;
     const parentExecutionId = parent && parent.executionId;
 
-    broker.subscribeTmp('api', '*.escalate.#', onEscalationApiMessage, {noAck: true, consumerTag: `_onescalate-${executionId}`, priority: 400});
+    const {message: referenceMessage, description} = resolveMessage(executeMessage);
+    broker.consume(escalationQueueName, onEscalationApiMessage, {noAck: true, consumerTag: `_onescalate-${executionId}`});
+
+    if (completed) return;
+
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
 
     if (completed) return stop();
 
-    const escalationMessage = getEscalation(executeMessage);
-    debug(`<${executionId} (${id})>`, reference.id ? `waiting for escalation <${reference.id}> with name: ${escalationMessage.name}` : 'wait for anonymous escalation event');
+    debug(`<${executionId} (${id})> expect ${description}`);
 
     broker.publish('event', 'activity.wait', {
       ...messageContent,
       executionId: parentExecutionId,
       parent: shiftParent(parent),
-      escalation: {...escalationMessage},
+      escalation: {...referenceMessage},
     });
 
     function onEscalationApiMessage(routingKey, message) {
+      if (getPropertyValue(message, 'content.message.id') !== referenceMessage.id) return;
+
       const output = message.content.message;
-      if (output && output.id !== escalationMessage.id) return;
       completed = true;
 
       stop();
 
-      debug(`<${executionId} (${id})> catch escalated`, reference.id ? `<${reference.id}> with name: ${escalationMessage.name}` : 'anonymous event');
+      debug(`<${executionId} (${id})> caught ${description}`);
       broker.publish('event', 'activity.catch', {
         ...messageContent,
         message: {...output},
@@ -85,24 +96,40 @@ export default function EscalationEventDefinition(activity, eventDefinition) {
     const {executionId, parent} = messageContent;
     const parentExecutionId = parent && parent.executionId;
 
-    const escalationMessage = getEscalation(executeMessage);
+    const {message: referenceMessage, description} = resolveMessage(executeMessage);
 
-    debug(`<${executionId} (${id})> escalate`, reference.id ? `<${reference.id}> with name: ${escalationMessage.name}` : 'anonymous event');
+    debug(`<${executionId} (${id})> escalate ${description}`);
 
     broker.publish('event', 'activity.escalate', {
       ...cloneContent(messageContent),
       executionId: parentExecutionId,
       parent: shiftParent(parent),
-      message: {...escalationMessage},
+      message: {...referenceMessage},
       state: 'throw',
     }, {type: 'escalate', delegate: true});
 
     return broker.publish('execution', 'execute.completed', {...messageContent});
   }
 
-  function getEscalation(message) {
-    const result = {...reference};
-    if (result.name) result.name = environment.resolveExpression(reference.name, message);
+  function resolveMessage(message) {
+    if (!referenceElement) {
+      return {
+        message: {...reference},
+        description: 'anonymous escalation',
+      };
+    }
+
+    const result = {
+      message: referenceElement.resolve(message),
+    };
+
+    result.description = `${result.message.name} <${result.message.id}>`;
+
     return result;
+  }
+
+  function setupCatch() {
+    broker.assertQueue(escalationQueueName, {autoDelete: false, durable: true});
+    broker.bindQueue(escalationQueueName, 'api', '*.escalate.#', {durable: true, priority: 400});
   }
 }

@@ -27,6 +27,10 @@ Feature('Escalate', () => {
         id: 'AmountEscalation',
         type: 'bpmn:Escalation',
         name: 'Escalate amount too big',
+        parent: {
+          id: 'Definition_0',
+          type: 'bpmn:Definitions'
+        }
       });
     });
 

@@ -5,6 +5,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = ErrorEventDefinition;
 
+var _shared = require("../shared");
+
 var _messageHelper = require("../messageHelper");
 
 function ErrorEventDefinition(activity, eventDefinition) {
@@ -26,6 +28,9 @@ function ErrorEventDefinition(activity, eventDefinition) {
     name: 'anonymous'
   };
   const referenceElement = reference.id && getActivityById(reference.id);
+  const errorId = referenceElement ? referenceElement.id : 'anonymous';
+  const errorQueueName = `error-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(errorId)}-q`;
+  if (!isThrowing) setupCatch();
   const source = {
     type,
     reference: { ...reference,
@@ -43,19 +48,19 @@ function ErrorEventDefinition(activity, eventDefinition) {
       parent
     } = messageContent;
     const parentExecutionId = parent && parent.executionId;
-    broker.subscribeTmp('api', '*.throw.#', onThrowApiMessage, {
-      noAck: true,
-      consumerTag: `_onthrow-${executionId}`,
-      priority: 300
-    });
-    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
-      noAck: true,
-      consumerTag: `_api-${executionId}`
-    });
     const {
       message: referenceMessage,
       description
     } = resolveMessage(executeMessage);
+    broker.consume(errorQueueName, onThrowApiMessage, {
+      noAck: true,
+      consumerTag: `_onthrow-${executionId}`
+    });
+    if (completed) return;
+    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
+      noAck: true,
+      consumerTag: `_api-${executionId}`
+    });
 
     if (!environment.settings.strict) {
       const expectRoutingKey = `execute.throw.${executionId}`;
@@ -136,9 +141,10 @@ function ErrorEventDefinition(activity, eventDefinition) {
     }
 
     function stop() {
-      broker.cancel(`_api-${executionId}`);
       broker.cancel(`_onthrow-${executionId}`);
       broker.cancel(`_onerror-${executionId}`);
+      broker.cancel(`_api-${executionId}`);
+      broker.purgeQueue(errorQueueName);
     }
   }
 
@@ -174,7 +180,7 @@ function ErrorEventDefinition(activity, eventDefinition) {
       return {
         message: { ...reference
         },
-        description: 'any error'
+        description: 'anonymous error'
       };
     }
 
@@ -184,5 +190,16 @@ function ErrorEventDefinition(activity, eventDefinition) {
     result.description = `${result.message.name} <${result.message.id}>`;
     if (result.message.code) result.description += ` code ${result.message.code}`;
     return result;
+  }
+
+  function setupCatch() {
+    broker.assertQueue(errorQueueName, {
+      autoDelete: false,
+      durable: true
+    });
+    broker.bindQueue(errorQueueName, 'api', '*.throw.#', {
+      durable: true,
+      priority: 300
+    });
   }
 }

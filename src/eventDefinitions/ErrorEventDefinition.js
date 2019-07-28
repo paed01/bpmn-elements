@@ -1,3 +1,4 @@
+import {brokerSafeId} from '../shared';
 import {cloneContent, shiftParent} from '../messageHelper';
 
 export default function ErrorEventDefinition(activity, eventDefinition) {
@@ -6,6 +7,10 @@ export default function ErrorEventDefinition(activity, eventDefinition) {
   const {debug} = environment.Logger(type.toLowerCase());
   const reference = behaviour.errorRef || {name: 'anonymous'};
   const referenceElement = reference.id && getActivityById(reference.id);
+  const errorId = referenceElement ? referenceElement.id : 'anonymous';
+  const errorQueueName = `error-${brokerSafeId(id)}-${brokerSafeId(errorId)}-q`;
+
+  if (!isThrowing) setupCatch();
 
   const source = {
     type,
@@ -22,10 +27,13 @@ export default function ErrorEventDefinition(activity, eventDefinition) {
     const {executionId, parent} = messageContent;
     const parentExecutionId = parent && parent.executionId;
 
-    broker.subscribeTmp('api', '*.throw.#', onThrowApiMessage, {noAck: true, consumerTag: `_onthrow-${executionId}`, priority: 300});
+    const {message: referenceMessage, description} = resolveMessage(executeMessage);
+    broker.consume(errorQueueName, onThrowApiMessage, {noAck: true, consumerTag: `_onthrow-${executionId}`});
+
+    if (completed) return;
+
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
 
-    const {message: referenceMessage, description} = resolveMessage(executeMessage);
     if (!environment.settings.strict) {
       const expectRoutingKey = `execute.throw.${executionId}`;
       broker.publish('execution', 'execute.expect', {...cloneContent(messageContent), expectRoutingKey, expect: {...referenceMessage}});
@@ -100,9 +108,10 @@ export default function ErrorEventDefinition(activity, eventDefinition) {
     }
 
     function stop() {
-      broker.cancel(`_api-${executionId}`);
       broker.cancel(`_onthrow-${executionId}`);
       broker.cancel(`_onerror-${executionId}`);
+      broker.cancel(`_api-${executionId}`);
+      broker.purgeQueue(errorQueueName);
     }
   }
 
@@ -130,7 +139,7 @@ export default function ErrorEventDefinition(activity, eventDefinition) {
     if (!referenceElement) {
       return {
         message: {...reference},
-        description: 'any error',
+        description: 'anonymous error',
       };
     }
 
@@ -142,5 +151,10 @@ export default function ErrorEventDefinition(activity, eventDefinition) {
     if (result.message.code) result.description += ` code ${result.message.code}`;
 
     return result;
+  }
+
+  function setupCatch() {
+    broker.assertQueue(errorQueueName, {autoDelete: false, durable: true});
+    broker.bindQueue(errorQueueName, 'api', '*.throw.#', {durable: true, priority: 300});
   }
 }

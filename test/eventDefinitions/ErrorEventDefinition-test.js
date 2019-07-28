@@ -5,23 +5,16 @@ import testHelpers from '../helpers/testHelpers';
 import {ActivityBroker} from '../../src/EventBroker';
 
 describe('ErrorEventDefinition', () => {
-  describe('catch', () => {
-    let event, activity;
+  describe('catching', () => {
+    let event;
     beforeEach(() => {
-      activity = {
-        id: 'errorProne',
-        type: 'bpmn:ServiceTask',
-        broker: ActivityBroker(this).broker,
-      };
-
       const environment = Environment({ Logger: testHelpers.Logger });
 
       event = {
         id: 'bound',
         type: 'bpmn:Event',
-        broker: ActivityBroker().broker,
+        broker: ActivityBroker(this).broker,
         environment,
-        attachedTo: activity,
         getActivityById(id) {
           if (id !== 'error_1') return;
 
@@ -35,6 +28,180 @@ describe('ErrorEventDefinition', () => {
           }, {environment});
         },
       };
+    });
+
+    it('publishes wait event on parent broker', () => {
+      const catchError = ErrorEventDefinition(event, {
+        type: 'bpmn:ErrorEventDefinition',
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      catchError.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0'
+            }]
+          },
+        },
+      });
+
+      expect(messages).to.have.length(1);
+      expect(messages[0].fields).to.have.property('routingKey', 'activity.wait');
+      expect(messages[0].content).to.have.property('executionId', 'event_1');
+      expect(messages[0].content.parent).to.have.property('id', 'theProcess');
+      expect(messages[0].content.parent).to.have.property('executionId', 'theProcess_0');
+    });
+
+    it('completes and clears listeners when error is caught', () => {
+      const catchError = ErrorEventDefinition(event, {
+        type: 'bpmn:ErrorEventDefinition',
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true, consumerTag: '_test-tag'});
+
+      catchError.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0'
+            }]
+          },
+        },
+      });
+
+      event.broker.publish('api', 'activity.throw.event_1', {});
+
+      expect(messages).to.have.length(1);
+
+      event.broker.cancel('_test-tag');
+
+      expect(event.broker).to.have.property('consumerCount', 0);
+    });
+
+
+    it('completes and clears listeners if caught before execution', () => {
+      const catchError = ErrorEventDefinition(event, {
+        type: 'bpmn:ErrorEventDefinition',
+      });
+
+      event.broker.publish('api', 'activity.throw.event_1', {});
+
+      const messages = [];
+      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true, consumerTag: '_test-tag'});
+
+      catchError.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0'
+            }]
+          },
+        },
+      });
+
+      event.broker.cancel('_test-tag');
+
+      expect(messages).to.have.length(1);
+
+      expect(event.broker).to.have.property('consumerCount', 0);
+    });
+
+    it('completes and clears listeners if discarded', () => {
+      const catchError = ErrorEventDefinition(event, {
+        type: 'bpmn:ErrorEventDefinition',
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('execution', 'execute.discard', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true, consumerTag: '_test-tag'});
+
+      catchError.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0'
+            }]
+          },
+        },
+      });
+
+      event.broker.publish('api', 'activity.discard.event_1_0', {}, {type: 'discard'});
+
+      event.broker.cancel('_test-tag');
+
+      expect(messages).to.have.length(1);
+
+      expect(event.broker).to.have.property('consumerCount', 0);
+    });
+
+    it('stops and clears listeners if stopped', () => {
+      const catchError = ErrorEventDefinition(event, {
+        type: 'bpmn:ErrorEventDefinition',
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('execution', 'execute.discard', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true, consumerTag: '_test-tag'});
+
+      catchError.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0'
+            }]
+          },
+        },
+      });
+
+      event.broker.publish('api', 'activity.discard.event_1_0', {}, {type: 'discard'});
+
+      event.broker.cancel('_test-tag');
+
+      expect(messages).to.have.length(1);
+
+      expect(event.broker).to.have.property('consumerCount', 0);
     });
 
     describe('thrown error', () => {
@@ -119,28 +286,6 @@ describe('ErrorEventDefinition', () => {
           name: 'CatchError',
         });
         expect(tryMessage.content).to.have.property('index', 0);
-      });
-
-      it('listens for api calls on parent', () => {
-        const definition = ErrorEventDefinition(event, {
-          type: 'bpmn:ErrorEventDefinition',
-        });
-
-        expect(event.broker.getExchange('api')).to.have.property('bindingCount', 0);
-
-        definition.execute({
-          fields: {},
-          content: {
-            executionId: 'bound_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'bound_1',
-            },
-          },
-        });
-
-        expect(event.broker.getExchange('api')).to.have.property('bindingCount', 2);
       });
 
       it('publishes catch message with source and error when expected routingKey is published', () => {
@@ -567,80 +712,6 @@ describe('ErrorEventDefinition', () => {
         }});
 
         expect(message).to.not.be.ok;
-      });
-
-      it('discards and releases listeners if discarded by api', () => {
-        const definition = ErrorEventDefinition(event, {
-          type: 'bpmn:ErrorEventDefinition',
-        });
-
-        const messages = [];
-        event.broker.subscribeTmp('execution', 'execute.#', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
-
-        definition.execute({
-          fields: {},
-          content: {
-            executionId: 'bound_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'bound_1',
-            },
-          },
-        });
-
-        event.broker.publish('api', 'activity.discard.bound_1_0', {}, {type: 'discard'});
-
-        expect(event.broker.getExchange('execution')).to.have.property('bindingCount', 2);
-        expect(event.broker.getExchange('api')).to.have.property('bindingCount', 0);
-
-        expect(messages.pop()).to.have.property('fields').with.property('routingKey', 'execute.discard');
-      });
-
-      it('stops and releases execution error listener if stopped', () => {
-        const definition = ErrorEventDefinition(event, {
-          type: 'bpmn:ErrorEventDefinition',
-        });
-
-        definition.execute({
-          fields: {},
-          content: {
-            executionId: 'bound_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'bound_1',
-            },
-          },
-        });
-
-        event.broker.publish('api', 'activity.stop.bound_1_0', {}, {type: 'stop'});
-
-        expect(activity.broker.getExchange('execution')).to.have.property('bindingCount', 1);
-      });
-
-      it('stops and releases parent api listener if stopped', () => {
-        const definition = ErrorEventDefinition(event, {
-          type: 'bpmn:ErrorEventDefinition',
-        });
-
-        definition.execute({
-          fields: {},
-          content: {
-            executionId: 'bound_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'bound_1',
-            },
-          },
-        });
-
-        event.broker.publish('api', 'activity.stop.bound_1_0', {}, {type: 'stop'});
-
-        expect(event.broker.getExchange('api')).to.have.property('bindingCount', 0);
       });
     });
   });

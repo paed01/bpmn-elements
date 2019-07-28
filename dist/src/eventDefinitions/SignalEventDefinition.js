@@ -34,7 +34,7 @@ function SignalEventDefinition(activity, eventDefinition) {
   const referenceElement = reference.id && getActivityById(reference.id);
   const signalId = referenceElement ? referenceElement.id : 'anonymous';
   const signalQueueName = `signal-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(signalId)}-q`;
-  if (!isThrowing) setupCatchSignal();
+  if (!isThrowing) setupCatch();
   const source = {
     id,
     type,
@@ -171,7 +171,7 @@ function SignalEventDefinition(activity, eventDefinition) {
     return result;
   }
 
-  function setupCatchSignal() {
+  function setupCatch() {
     broker.assertQueue(signalQueueName, {
       autoDelete: false,
       durable: true

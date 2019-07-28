@@ -244,47 +244,6 @@ describe('BoundaryEvent', () => {
         expect(attachedTo.broker.getExchange('execution')).to.have.property('bindingCount', 1);
       });
 
-      it('adds api listener on execute', () => {
-        const attachedTo = {
-          id: 'task',
-          broker: ActivityBroker(this).broker
-        };
-        const broker = ActivityBroker().broker;
-        const environment = Environment({Logger: testHelpers.Logger});
-        const activity = {
-          id: 'event',
-          broker,
-          environment,
-          logger: environment.Logger('BoundaryEvent'),
-          attachedTo,
-          get eventDefinitions() {
-            const self = this;
-            return self._eds || (self._eds = [ErrorEventDefinition(self, {})]);
-          }
-        };
-
-        const behaviour = BoundaryEventBehaviour(activity);
-
-        const apiExchange = broker.getExchange('api');
-        expect(apiExchange).to.have.property('bindingCount', 0);
-
-        broker.subscribeTmp('execution', 'execute.start', (_, msg) => behaviour.execute(msg));
-
-        behaviour.execute({
-          fields: {},
-          content: {
-            id: 'bound',
-            executionId: 'bound_1',
-            isRootScope: true,
-            parent: {
-              id: 'theProcess',
-            },
-          },
-        });
-
-        expect(apiExchange).to.have.property('bindingCount', 4);
-      });
-
       it('discards event and cancels listeners on attachedTo end', () => {
         const attachedTo = {
           id: 'task',
