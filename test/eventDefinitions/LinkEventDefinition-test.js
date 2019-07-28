@@ -75,7 +75,7 @@ describe('LinkEventDefinition', () => {
         },
       });
 
-      event.broker.publish('api', 'activity.signal.event_1', {message: {linkName: 'LINKA'}});
+      event.broker.publish('api', 'activity.signal.event_1', {originalMessage: {linkName: 'LINKA'}});
       event.broker.cancel('_test-tag');
 
       expect(messages).to.have.length(1);
@@ -89,7 +89,7 @@ describe('LinkEventDefinition', () => {
         behaviour: { name: 'LINKA' }
       });
 
-      event.broker.publish('api', 'activity.signal.event_1', {message: {linkName: 'LINKA'}});
+      event.broker.publish('api', 'activity.signal.event_1', {originalMessage: {linkName: 'LINKA'}});
 
       const messages = [];
       event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
