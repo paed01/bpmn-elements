@@ -290,7 +290,7 @@ describe('activity run', () => {
     expect(api.content).to.not.have.property('attachedTo');
     expect(api.content).to.have.property('executionId', content.executionId);
     expect(api.content).to.not.have.property('isSubProcess');
-    expect(api.content).to.have.property('isMultiInstance', false);
+    expect(api.content).to.not.have.property('isMultiInstance');
     expect(api.content).to.have.property('inbound').to.be.ok.and.eql(content.inbound);
   });
 

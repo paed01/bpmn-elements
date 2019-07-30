@@ -3,7 +3,7 @@ import {getUniqueId, filterUndefined} from '../shared';
 import {ActivityApi} from '../Api';
 import {ActivityBroker} from '../EventBroker';
 import {getRoutingKeyPattern} from 'smqp';
-import {cloneContent, cloneParent} from '../messageHelper';
+import {cloneContent, cloneParent, cloneMessage} from '../messageHelper';
 
 export default function Activity(Behaviour, activityDef, context) {
   const {id, type = 'activity', name, parent: originalParent = {}, behaviour = {}, isParallelGateway, isSubProcess, triggeredByEvent, isThrowing} = activityDef;
@@ -25,6 +25,7 @@ export default function Activity(Behaviour, activityDef, context) {
   const outboundSequenceFlows = getOutboundSequenceFlows(id) || [];
 
   const isStart = inboundSequenceFlows.length === 0 && !attachedTo && !triggeredByEvent;
+  const isEnd = outboundSequenceFlows.length === 0;
   const isParallelJoin = inboundSequenceFlows.length > 1 && isParallelGateway;
   const isMultiInstance = !!behaviour.loopCharacteristics;
 
@@ -42,6 +43,7 @@ export default function Activity(Behaviour, activityDef, context) {
     id,
     type,
     name,
+    isEnd,
     isStart,
     isSubProcess,
     isThrowing,
@@ -81,6 +83,7 @@ export default function Activity(Behaviour, activityDef, context) {
     recover,
     resume,
     run,
+    shake,
     stop,
     next: step && next,
   };
@@ -128,10 +131,10 @@ export default function Activity(Behaviour, activityDef, context) {
 
   return activityApi;
 
-  function init() {
-    initExecutionId = getUniqueId(id);
+  function init(initContent) {
+    initExecutionId = initExecutionId || getUniqueId(id);
     logger.debug(`<${id}> initialized with executionId <${initExecutionId}>`);
-    publishEvent('init', createMessage({executionId: initExecutionId}));
+    publishEvent('init', createMessage({...initContent, executionId: initExecutionId}));
   }
 
   function run(runContent) {
@@ -149,16 +152,22 @@ export default function Activity(Behaviour, activityDef, context) {
   }
 
   function createMessage(override = {}) {
-    return {
+    const result = {
       ...override,
       id,
       type,
       name,
-      attachedTo,
       parent: cloneParent(parent),
-      isSubProcess,
-      isMultiInstance,
     };
+
+    const flags = {isEnd, isStart, isSubProcess, isMultiInstance};
+    for (const flag in flags) {
+      if (flags[flag]) result[flag] = true;
+    }
+
+    if (attachedTo) result.attachedTo = {...attachedTo};
+
+    return result;
   }
 
   function recover(state) {
@@ -217,7 +226,9 @@ export default function Activity(Behaviour, activityDef, context) {
   }
 
   function runDiscard(discardContent = {}) {
-    executionId = getUniqueId(id);
+    executionId = initExecutionId || getUniqueId(id);
+    initExecutionId = undefined;
+
     const content = createMessage({...discardContent, executionId});
     broker.publish('run', 'run.discard', content);
 
@@ -255,13 +266,18 @@ export default function Activity(Behaviour, activityDef, context) {
     consumingRunQ = false;
   }
 
-  function onInboundEvent(routingKey, {fields, content, properties}) {
+  function onInboundEvent(routingKey, message) {
+    const {fields, content, properties} = message;
     switch (routingKey) {
       case 'activity.enter':
       case 'activity.discard': {
         if (content.id === attachedToActivity.id) {
           inboundQ.queueMessage(fields, content, properties);
         }
+        break;
+      }
+      case 'flow.shake': {
+        shakeOutbound(message);
         break;
       }
       case 'flow.take':
@@ -308,7 +324,7 @@ export default function Activity(Behaviour, activityDef, context) {
     const allTouched = inboundJoinFlows.length === inboundTriggers.length;
     const remaining = inboundSequenceFlows.length - inboundJoinFlows.length;
     logger.debug(`<${id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
-    if (!allTouched) return;
+    if (!allTouched) return init({inbound: inboundJoinFlows.map((f) => cloneContent(f.content))});
 
     const evaluatedInbound = inboundJoinFlows.splice(0);
 
@@ -556,7 +572,27 @@ export default function Activity(Behaviour, activityDef, context) {
         onStop(message);
         break;
       }
+      case 'shake': {
+        shakeOutbound(message);
+        break;
+      }
     }
+  }
+
+  function shake() {
+    shakeOutbound({content: createMessage()});
+  }
+
+  function shakeOutbound(sourceMessage) {
+    const message = cloneMessage(sourceMessage);
+    message.content.sequence = message.content.sequence || [];
+    message.content.sequence.push({id, type});
+
+    if (!outboundSequenceFlows.length) {
+      return broker.publish('event', 'activity.shake.end', message.content, {persistent: false, type: 'shake'});
+    }
+
+    outboundSequenceFlows.forEach((f) => f.shake(message));
   }
 
   function onStop(message) {

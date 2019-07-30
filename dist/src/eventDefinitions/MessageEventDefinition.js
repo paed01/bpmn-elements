@@ -10,14 +10,27 @@ var _messageHelper = require("../messageHelper");
 function MessageEventDefinition(activity, eventDefinition) {
   const {
     id,
-    broker
+    broker,
+    environment,
+    getActivityById
   } = activity;
   const {
-    type
+    type = 'MessageEventDefinition',
+    behaviour = {}
   } = eventDefinition;
+  const {
+    debug
+  } = environment.Logger(type.toLowerCase());
+  const reference = behaviour.messageRef || {
+    name: 'anonymous'
+  };
+  const referenceElement = reference.id && getActivityById(reference.id);
   const source = {
     id,
     type,
+    reference: { ...reference,
+      referenceType: 'message'
+    },
     execute
   };
   return source;
@@ -30,6 +43,10 @@ function MessageEventDefinition(activity, eventDefinition) {
       parent
     } = messageContent;
     const parentExecutionId = parent && parent.executionId;
+    const {
+      message: referenceMessage,
+      description
+    } = resolveReference(executeMessage);
     const messagesQ = broker.assertQueue('messages', {
       autoDelete: false,
       durable: true
@@ -47,9 +64,12 @@ function MessageEventDefinition(activity, eventDefinition) {
     broker.subscribeOnce('api', `activity.signal.${parentExecutionId}`, onApiMessage, {
       consumerTag: `_parent-signal-${executionId}`
     });
+    debug(`<${executionId} (${id})> expect ${description}`);
     broker.publish('event', 'activity.wait', { ...messageContent,
       executionId: parentExecutionId,
-      parent: (0, _messageHelper.shiftParent)(parent)
+      parent: (0, _messageHelper.shiftParent)(parent),
+      message: { ...referenceMessage
+      }
     });
 
     function onApiMessage(routingKey, message) {
@@ -84,6 +104,13 @@ function MessageEventDefinition(activity, eventDefinition) {
       message
     }) {
       completed = true;
+      debug(`<${executionId} (${id})> caught ${description}`);
+      broker.publish('event', 'activity.catch', { ...messageContent,
+        executionId: parentExecutionId,
+        parent: (0, _messageHelper.shiftParent)(executeMessage.content.parent)
+      }, {
+        type: 'catch'
+      });
       return broker.publish('execution', 'execute.completed', { ...messageContent,
         output: message,
         state: 'signal'
@@ -104,5 +131,21 @@ function MessageEventDefinition(activity, eventDefinition) {
         message: content
       });
     }
+  }
+
+  function resolveReference(message) {
+    if (!referenceElement) {
+      return {
+        message: { ...reference
+        },
+        description: 'anonymous message'
+      };
+    }
+
+    const result = {
+      message: referenceElement.resolve(message)
+    };
+    result.description = `${result.message.name} <${result.message.id}>`;
+    return result;
   }
 }

@@ -303,6 +303,7 @@ Feature('Process', () => {
       assertMessage('activity.start', 'start1');
       assertMessage('activity.end', 'start1');
       assertMessage('activity.leave', 'start1');
+      assertMessage('activity.init', 'join');
       assertMessage('activity.enter', 'start2');
       assertMessage('activity.start', 'start2');
       assertMessage('activity.end', 'start2');
@@ -378,6 +379,7 @@ Feature('Process', () => {
       assertMessage('activity.start', 'decision');
       assertMessage('activity.end', 'decision');
       assertMessage('activity.leave', 'decision');
+      assertMessage('activity.init', 'join');
       assertMessage('activity.enter', 'join');
       assertMessage('activity.start', 'join');
       assertMessage('activity.end', 'join');
@@ -665,6 +667,7 @@ Feature('Process', () => {
       assertMessage('activity.start', 'immediate');
       assertMessage('activity.end', 'immediate');
       assertMessage('activity.leave', 'immediate');
+      assertMessage('activity.init', 'join');
     });
 
     And('before the timeout event completes', () => {
@@ -749,6 +752,7 @@ Feature('Process', () => {
     Then('the process continuous execution and completes', async () => {
       await completed;
 
+      assertMessage('activity.catch', 'receive');
       assertMessage('activity.end', 'receive');
       assertMessage('activity.leave', 'receive');
       assertMessage('activity.enter', 'end');
@@ -823,6 +827,7 @@ Feature('Process', () => {
       assertMessage('activity.start', 'immediate');
       assertMessage('activity.end', 'immediate');
       assertMessage('activity.leave', 'immediate');
+      assertMessage('activity.init', 'join');
     });
 
     And('before the timeout event completes', () => {
@@ -869,6 +874,8 @@ Feature('Process', () => {
     });
 
     Then('the combined event completes', () => {
+      assertMessage('activity.init', 'join');
+      assertMessage('activity.catch', 'postponed');
       assertMessage('activity.end', 'postponed');
       assertMessage('activity.leave', 'postponed');
     });

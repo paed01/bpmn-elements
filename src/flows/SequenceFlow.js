@@ -1,5 +1,5 @@
 import ExecutionScope from '../activity/ExecutionScope';
-import {cloneParent} from '../messageHelper';
+import {cloneParent, cloneContent} from '../messageHelper';
 import {getUniqueId} from '../shared';
 import {EventBroker} from '../EventBroker';
 import {FlowApi} from '../Api';
@@ -37,6 +37,7 @@ export default function SequenceFlow(flowDef, {environment}) {
     getState,
     preFlight,
     recover,
+    shake,
     stop,
     take,
   };
@@ -137,6 +138,18 @@ export default function SequenceFlow(flowDef, {environment}) {
 
   function stop() {
     broker.stop();
+  }
+
+  function shake(message) {
+    const content = cloneContent(message.content);
+    content.sequence = content.sequence || [];
+    content.sequence.push({id, type, isSequenceFlow: true, targetId});
+
+    for (const s of message.content.sequence) {
+      if (s.id === id) return broker.publish('event', 'flow.shake.loop', content, {persistent: false, type: 'shake'});
+    }
+
+    broker.publish('event', 'flow.shake', content, {persistent: false, type: 'shake'});
   }
 
   function evaluateCondition(message, onEvaluateError) {

@@ -26,6 +26,7 @@ function ProcessExecution(parentActivity, context) {
   const startActivities = [];
   const triggeredByEventActivities = [];
   const postponed = [];
+  const startSequences = {};
   const exchangeName = isSubProcess ? 'subprocess-execution' : 'execution';
   broker.assertExchange(exchangeName, 'topic', {
     autoDelete: false,
@@ -36,7 +37,7 @@ function ProcessExecution(parentActivity, context) {
       executionId,
       stopped,
       activated,
-      initMessage,
+      stateMessage,
       completed = false;
   const processExecution = {
     id,
@@ -90,8 +91,8 @@ function ProcessExecution(parentActivity, context) {
     if (!executeMessage.content || !executeMessage.content.executionId) throw new Error('Process execution requires execution id');
     const isRedelivered = executeMessage.fields.redelivered;
     executionId = executeMessage.content.executionId;
-    initMessage = (0, _messageHelper.cloneMessage)(executeMessage);
-    initMessage.content = { ...initMessage.content,
+    stateMessage = (0, _messageHelper.cloneMessage)(executeMessage);
+    stateMessage.content = { ...stateMessage.content,
       executionId,
       state: 'start'
     };
@@ -145,10 +146,15 @@ function ProcessExecution(parentActivity, context) {
     }
 
     status = 'start';
-    const executeContent = { ...initMessage.content,
+    const executeContent = { ...stateMessage.content,
       state: status
     };
     broker.publish(exchangeName, 'execute.start', (0, _messageHelper.cloneContent)(executeContent));
+
+    if (startActivities.length > 1) {
+      startActivities.forEach(a => a.shake());
+    }
+
     startActivities.forEach(activity => activity.init());
     startActivities.forEach(activity => activity.run());
     postponed.splice(0);
@@ -229,6 +235,7 @@ function ProcessExecution(parentActivity, context) {
       const content = message.content;
       const parent = content.parent = content.parent || {};
       let delegate = message.properties.delegate;
+      const shaking = message.properties.type === 'shake';
       const isDirectChild = content.parent.id === id;
 
       if (isDirectChild) {
@@ -246,6 +253,7 @@ function ProcessExecution(parentActivity, context) {
         delegate,
         mandatory: false
       });
+      if (shaking) return onShookEnd(message);
       if (!isDirectChild) return;
 
       switch (routingKey) {
@@ -313,9 +321,10 @@ function ProcessExecution(parentActivity, context) {
     const isRedelivered = message.fields.redelivered;
     const {
       id: childId,
-      type: activityType
+      type: activityType,
+      isEnd
     } = content;
-    if (isRedelivered && message.properties.persistent === false) return;
+    if (isRedelivered && message.properties.persistent === false) return message.ack();
 
     switch (routingKey) {
       case 'execution.stop':
@@ -333,12 +342,6 @@ function ProcessExecution(parentActivity, context) {
       case 'flow.looped':
       case 'activity.leave':
         return onChildCompleted();
-
-      default:
-        if (!message.properties.persistent) {
-          return message.ack();
-        }
-
     }
 
     stateChangeMessage(true);
@@ -348,15 +351,13 @@ function ProcessExecution(parentActivity, context) {
       case 'activity.enter':
         {
           status = 'executing';
+          popInbound();
+          break;
+        }
 
-          if (content.inbound) {
-            content.inbound.forEach(trigger => {
-              if (!trigger.isSequenceFlow) return;
-              const msg = popPostponed(trigger);
-              if (msg) msg.ack();
-            });
-          }
-
+      case 'activity.end':
+        {
+          if (isEnd) discardStartIfConformed();
           break;
         }
 
@@ -381,6 +382,15 @@ function ProcessExecution(parentActivity, context) {
       if (postponeMessage) postponed.push(message);
     }
 
+    function popInbound() {
+      if (!content.inbound) return;
+      content.inbound.forEach(trigger => {
+        if (!trigger.isSequenceFlow) return;
+        const msg = popPostponed(trigger);
+        if (msg) msg.ack();
+      });
+    }
+
     function popPostponed(byContent) {
       const idx = postponed.findIndex(msg => {
         if (msg.content.isSequenceFlow) return msg.content.sequenceId === byContent.sequenceId;
@@ -399,7 +409,21 @@ function ProcessExecution(parentActivity, context) {
 
       if (!postponed.length) {
         message.ack();
-        complete('completed');
+        return complete('completed');
+      }
+    }
+
+    function discardStartIfConformed() {
+      for (const p of postponed) {
+        const postponedId = p.content.id;
+        const startSequence = startSequences[postponedId];
+        if (!startSequence) continue;
+
+        if (startSequence.content.sequence.some(({
+          id: sid
+        }) => sid === childId)) {
+          getApi(p).discard();
+        }
       }
     }
 
@@ -411,7 +435,7 @@ function ProcessExecution(parentActivity, context) {
       });
       deactivate();
       stopped = true;
-      return broker.publish(exchangeName, `execution.stopped.${executionId}`, { ...initMessage.content,
+      return broker.publish(exchangeName, `execution.stopped.${executionId}`, { ...stateMessage.content,
         ...content
       }, {
         type: 'stopped',
@@ -491,7 +515,7 @@ function ProcessExecution(parentActivity, context) {
     completed = true;
     if (status !== 'terminated') status = completionType;
     broker.deleteQueue(activityQ.name);
-    return broker.publish(exchangeName, `execution.${completionType}.${executionId}`, { ...initMessage.content,
+    return broker.publish(exchangeName, `execution.${completionType}.${executionId}`, { ...stateMessage.content,
       output: environment.output,
       ...content,
       state: completionType
@@ -566,7 +590,7 @@ function ProcessExecution(parentActivity, context) {
   }
 
   function getApi(message) {
-    if (!message) return (0, _Api.ProcessApi)(broker, initMessage);
+    if (!message) return (0, _Api.ProcessApi)(broker, stateMessage);
     const content = message.content;
 
     if (content.executionId !== executionId) {
@@ -605,5 +629,11 @@ function ProcessExecution(parentActivity, context) {
       if (!child) return;
       return child.getApi(message);
     }
+  }
+
+  function onShookEnd(message) {
+    const routingKey = message.fields.routingKey;
+    if (routingKey !== 'activity.shake.end') return;
+    startSequences[message.content.id] = (0, _messageHelper.cloneMessage)(message);
   }
 }

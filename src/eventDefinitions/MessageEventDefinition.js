@@ -1,12 +1,16 @@
 import {cloneContent, shiftParent} from '../messageHelper';
 
 export default function MessageEventDefinition(activity, eventDefinition) {
-  const {id, broker} = activity;
-  const {type} = eventDefinition;
+  const {id, broker, environment, getActivityById} = activity;
+  const {type = 'MessageEventDefinition', behaviour = {}} = eventDefinition;
+  const {debug} = environment.Logger(type.toLowerCase());
+  const reference = behaviour.messageRef || {name: 'anonymous'};
+  const referenceElement = reference.id && getActivityById(reference.id);
 
   const source = {
     id,
     type,
+    reference: {...reference, referenceType: 'message'},
     execute,
   };
 
@@ -19,14 +23,23 @@ export default function MessageEventDefinition(activity, eventDefinition) {
     const {executionId, parent} = messageContent;
     const parentExecutionId = parent && parent.executionId;
 
+    const {message: referenceMessage, description} = resolveReference(executeMessage);
     const messagesQ = broker.assertQueue('messages', {autoDelete: false, durable: true});
     messagesQ.consume(onMessage, {noAck: true, consumerTag: `_message-${executionId}`});
+
     if (completed) return;
 
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`, priority: 300});
     broker.subscribeOnce('api', `activity.signal.${parentExecutionId}`, onApiMessage, {consumerTag: `_parent-signal-${executionId}`});
 
-    broker.publish('event', 'activity.wait', {...messageContent, executionId: parentExecutionId, parent: shiftParent(parent)});
+    debug(`<${executionId} (${id})> expect ${description}`);
+
+    broker.publish('event', 'activity.wait', {
+      ...messageContent,
+      executionId: parentExecutionId,
+      parent: shiftParent(parent),
+      message: {...referenceMessage},
+    });
 
     function onApiMessage(routingKey, message) {
       const messageType = message.properties.type;
@@ -49,6 +62,14 @@ export default function MessageEventDefinition(activity, eventDefinition) {
 
     function signal(_, {message}) {
       completed = true;
+
+      debug(`<${executionId} (${id})> caught ${description}`);
+      broker.publish('event', 'activity.catch', {
+        ...messageContent,
+        executionId: parentExecutionId,
+        parent: shiftParent(executeMessage.content.parent),
+      }, {type: 'catch'});
+
       return broker.publish('execution', 'execute.completed', {...messageContent, output: message, state: 'signal'});
     }
 
@@ -64,5 +85,22 @@ export default function MessageEventDefinition(activity, eventDefinition) {
         message: content,
       });
     }
+  }
+
+  function resolveReference(message) {
+    if (!referenceElement) {
+      return {
+        message: {...reference},
+        description: 'anonymous message',
+      };
+    }
+
+    const result = {
+      message: referenceElement.resolve(message),
+    };
+
+    result.description = `${result.message.name} <${result.message.id}>`;
+
+    return result;
   }
 }
