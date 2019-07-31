@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0gb2asv" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.1.0">
+  <bpmn:process id="Process_1e62o0s" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Start">
+      <bpmn:outgoing>SequenceFlow_1dbu5gr</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:endEvent id="EndEvent_0mjqgw6">
+      <bpmn:incoming>SequenceFlow_0l74gai</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="SequenceFlow_0l74gai" sourceRef="Task_1tomcsq" targetRef="EndEvent_0mjqgw6" />
+    <bpmn:manualTask id="Task_1tomcsq" name="Notify escalated">
+      <bpmn:incoming>SequenceFlow_1r57ppx</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_10eqs8z</bpmn:incoming>
+      <bpmn:incoming>SequenceFlow_1t54x7o</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0l74gai</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:sequenceFlow id="SequenceFlow_1dbu5gr" sourceRef="StartEvent_1" targetRef="ExclusiveGateway_1ac2697" />
+    <bpmn:exclusiveGateway id="ExclusiveGateway_0b7b4st" default="SequenceFlow_1t54x7o">
+      <bpmn:incoming>SequenceFlow_00dkftk</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1r57ppx</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_1t54x7o</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_1r57ppx" sourceRef="ExclusiveGateway_0b7b4st" targetRef="Task_1tomcsq">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="ExclusiveGateway_1ac2697">
+      <bpmn:incoming>SequenceFlow_1dbu5gr</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_00dkftk</bpmn:outgoing>
+      <bpmn:outgoing>SequenceFlow_10eqs8z</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="SequenceFlow_00dkftk" sourceRef="ExclusiveGateway_1ac2697" targetRef="ExclusiveGateway_0b7b4st">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="SequenceFlow_10eqs8z" sourceRef="ExclusiveGateway_1ac2697" targetRef="Task_1tomcsq">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="SequenceFlow_1t54x7o" sourceRef="ExclusiveGateway_0b7b4st" targetRef="Task_1tomcsq" />
+  </bpmn:process>
+</bpmn:definitions>

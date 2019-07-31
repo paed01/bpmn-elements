@@ -265,6 +265,7 @@ function Activity(Behaviour, activityDef, context) {
   }
 
   function runDiscard(discardContent = {}) {
+    deactivateRunConsumers();
     executionId = (0, _shared.getUniqueId)(id);
     const content = createMessage({ ...discardContent,
       executionId
