@@ -1,24 +1,27 @@
-import factory from '../helpers/factory';
 import testHelpers from '../helpers/testHelpers';
 
 describe('IntermediateCatchEvent', () => {
-  it('without event definitions completes immediately', async () => {
-    const source = `
-    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-      <process id="theProcess" isExecutable="true">
-        <intermediateCatchEvent id="emptyEvent" />
-      </process>
-    </definitions>`;
+  describe('without event definitions', () => {
+    it('completes when signaled', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <intermediateCatchEvent id="emptyEvent" />
+        </process>
+      </definitions>`;
 
-    const context = await testHelpers.context(source);
-    const event = context.getActivityById('emptyEvent');
-    const leave = event.waitFor('leave');
+      const context = await testHelpers.context(source);
+      const event = context.getActivityById('emptyEvent');
+      const wait = event.waitFor('wait');
+      const leave = event.waitFor('leave');
 
-    event.run();
+      event.run();
+      (await wait).signal();
 
-    await leave;
+      await leave;
 
-    expect(event.counters).to.have.property('taken', 1);
+      expect(event.counters).to.have.property('taken', 1);
+    });
   });
 
   describe('with event definitions', () => {
@@ -53,6 +56,7 @@ describe('IntermediateCatchEvent', () => {
       event.run();
 
       const api = await wait;
+
       api.signal();
 
       await leave;
@@ -190,43 +194,6 @@ describe('IntermediateCatchEvent', () => {
       await leave;
 
       expect(event.counters).to.have.property('taken', 1);
-    });
-  });
-
-  describe('IntermediateCatchEvent in lanes', () => {
-    let context;
-    before(async () => {
-      context = await testHelpers.context(factory.resource('lanes.bpmn').toString());
-    });
-
-    it('completes when message is received after execute', async () => {
-      const event = context.getActivityById('intermediate');
-
-      event.activate();
-
-      const leave = event.waitFor('leave');
-      event.inbound[0].take();
-
-      event.message({});
-
-      await leave;
-
-      expect(event.broker.getQueue('messages').consumerCount).to.equal(0);
-      expect(event.broker.getQueue('messages').messageCount).to.equal(0);
-    });
-
-    it('completes when message is received before execution', async () => {
-      const event = context.getActivityById('intermediate');
-      event.activate();
-
-      event.message({});
-      expect(event.broker.getQueue('messages').messageCount).to.equal(1);
-
-      const leave = event.waitFor('leave');
-      event.inbound[0].take();
-
-
-      await leave;
     });
   });
 

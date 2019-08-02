@@ -29,6 +29,7 @@ function Escalation(signalDef, context) {
     return {
       id,
       type,
+      messageType: 'escalation',
       name: name && environment.resolveExpression(name, executionMessage),
       parent: { ...parent
       }

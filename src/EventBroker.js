@@ -11,7 +11,6 @@ export {
 
 function ActivityBroker(activity) {
   const executionBroker = ExecutionBroker(activity, 'activity');
-  executionBroker.broker.assertQueue('messages', {autoDelete: false, durable: true});
   return executionBroker;
 }
 

@@ -29,6 +29,7 @@ function Message(messageDef, context) {
     return {
       id,
       type,
+      messageType: 'message',
       name: name && environment.resolveExpression(name, executionMessage),
       parent: { ...parent
       }

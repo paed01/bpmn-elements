@@ -297,7 +297,7 @@ export function Process(processDef, context) {
 
     if (!status) run();
 
-    logger.debug(`<${id}> got message to <${messageContent.target.id}>`);
+    logger.debug(`<${id}> message to <${messageContent.target.id}>`);
     activity.message(messageContent);
   }
 

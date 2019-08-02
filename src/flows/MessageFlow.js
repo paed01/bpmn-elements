@@ -1,9 +1,12 @@
+import {brokerSafeId} from '../shared';
+import {cloneParent} from '../messageHelper';
 import {MessageFlowBroker} from '../EventBroker';
-import {cloneContent, cloneParent} from '../messageHelper';
 
 export default function MessageFlow(flowDef, context) {
   const {id, type = 'message', target, source, behaviour, parent} = flowDef;
   const sourceActivity = context.getActivityById(source.id);
+  const sourceConsumerTag = `_message-on-end-${brokerSafeId(id)}`;
+  const {debug} = context.environment.Logger(type.toLowerCase());
 
   if (!sourceActivity) return;
 
@@ -21,13 +24,16 @@ export default function MessageFlow(flowDef, context) {
     get counters() {
       return {...counters};
     },
+    activate,
+    deactivate,
     getApi,
+    getState,
     recover,
     resume,
     stop,
   };
 
-  const {broker, on, once, emit, waitFor} = MessageFlowBroker(flowApi, {prefix: 'messageflow', durable: true, autoDelete: false});
+  const {broker, on, once, emit, waitFor} = MessageFlowBroker(flowApi);
 
   flowApi.on = on;
   flowApi.once = once;
@@ -39,13 +45,12 @@ export default function MessageFlow(flowDef, context) {
     get: () => broker,
   });
 
-  sourceActivity.broker.subscribeTmp('event', 'activity.end', onSourceEnd, {noAck: true});
-
   return flowApi;
 
-  function onSourceEnd(routingKey, message) {
+  function onSourceEnd(_, {content}) {
     ++counters.messages;
-    broker.publish('event', 'message.outbound', createMessage(cloneContent(message.content)));
+    debug(`<${id}> sending message from <${source.processId}.${source.id}> to <${target.processId}.${target.id}>`);
+    broker.publish('event', 'message.outbound', createMessage(content.message));
   }
 
   function createMessage(message) {
@@ -60,7 +65,16 @@ export default function MessageFlow(flowDef, context) {
   }
 
   function stop() {
+    deactivate();
     broker.stop();
+  }
+
+  function getState() {
+    return {
+      id,
+      type,
+      counters: {...counters},
+    };
   }
 
   function recover(state) {
@@ -74,5 +88,13 @@ export default function MessageFlow(flowDef, context) {
 
   function getApi() {
     return flowApi;
+  }
+
+  function activate() {
+    sourceActivity.broker.subscribeTmp('event', 'activity.end', onSourceEnd, {consumerTag: sourceConsumerTag, noAck: true});
+  }
+
+  function deactivate() {
+    sourceActivity.broker.cancel(sourceConsumerTag);
   }
 }

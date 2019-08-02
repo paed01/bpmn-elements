@@ -1129,14 +1129,20 @@ describe('Process', () => {
       [bp] = context.getProcesses();
     });
 
-    it('publishes message to activity queue', () => {
+    it('publishes message on activity api exchange', () => {
       const activity = bp.getActivityById('task');
+      const messages = [];
+      activity.broker.subscribeTmp('api', '#', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
 
       expect(bp.sendMessage({
+        id: 'messageFlow',
         target: {id: 'task'},
       }));
 
-      expect(activity.broker.getQueue('messages').messageCount).to.equal(1);
+      expect(messages).to.have.length(1);
+      expect(messages[0].fields).to.have.property('routingKey', 'activity.message.messageFlow');
     });
 
     it('is ignored if activity is not found', () => {

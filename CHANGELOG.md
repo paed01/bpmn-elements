@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 0.6.0
+
+## Breaking
+- IntermediateCatchEvent that for some reason has no event definitions now waits to be signaled
+
 # 0.5.0
 
 - allow a waiting UserTask to trigger an execution error

@@ -341,6 +341,7 @@ Feature('Bpmn Error', () => {
       expect(boundCatch.content).to.have.property('expect').that.eql({
         id: 'Error_1',
         type: 'bpmn:Error',
+        messageType: 'throw',
         name: 'ScamError',
         code: 'AmountTooBig',
       });
@@ -388,6 +389,7 @@ Feature('Bpmn Error', () => {
       expect(endSignal.content).to.have.property('message').that.eql({
         id: 'EscalatedSignal',
         type: 'bpmn:Signal',
+        messageType: 'signal',
         name: 'Too big signal',
         parent: {
           id: 'Definition_0',

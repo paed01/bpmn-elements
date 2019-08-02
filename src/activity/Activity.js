@@ -683,8 +683,7 @@ export default function Activity(Behaviour, activityDef, context) {
   }
 
   function inboundMessage(messageContent) {
-    const messagesQ = broker.assertQueue('messages', {autoDelete: false, durable: true});
-    messagesQ.queueMessage({routingKey: 'message'}, messageContent);
+    broker.publish('api', `activity.message.${messageContent.id}`, messageContent);
   }
 
   function next() {

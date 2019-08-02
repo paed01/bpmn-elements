@@ -634,7 +634,6 @@ describe('Process execution', () => {
 
       const stop = new Promise((resolve) => {
         bp.broker.subscribeOnce('event', 'activity.wait', () => {
-          expect(activity.broker.getQueue('messages')).to.have.property('consumerCount', 1);
           execution.stop();
           resolve();
         });
@@ -659,8 +658,6 @@ describe('Process execution', () => {
       expect(execution.getPostponed()).to.have.length(1);
 
       expect(activity).to.have.property('stopped', true);
-
-      expect(activity.broker.getQueue('messages')).to.have.property('consumerCount', 0);
     });
 
     it('stops running sub process', async () => {
@@ -701,7 +698,6 @@ describe('Process execution', () => {
 
       const stop = new Promise((resolve) => {
         bp.broker.subscribeOnce('event', 'activity.wait', () => {
-          expect(subActivity.broker.getQueue('messages')).to.have.property('consumerCount', 1);
           execution.stop();
           resolve();
         });
@@ -726,8 +722,6 @@ describe('Process execution', () => {
       expect(execution.getPostponed()).to.have.length(1);
 
       expect(subActivity).to.have.property('stopped', true);
-
-      expect(subActivity.broker.getQueue('messages')).to.have.property('consumerCount', 0);
     });
   });
 
@@ -826,7 +820,6 @@ describe('Process execution', () => {
 
       const discard = new Promise((resolve) => {
         bp.broker.subscribeOnce('event', 'activity.wait', () => {
-          expect(subActivity.broker.getQueue('messages')).to.have.property('consumerCount', 1);
           execution.discard();
           resolve();
         });
@@ -849,8 +842,6 @@ describe('Process execution', () => {
 
       expect(activity.counters).to.have.property('discarded', 1);
       expect(subActivity.counters).to.have.property('discarded', 1);
-
-      expect(subActivity.broker.getQueue('messages')).to.have.property('consumerCount', 0);
     });
   });
 

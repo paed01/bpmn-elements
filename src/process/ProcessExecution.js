@@ -138,6 +138,14 @@ export default function ProcessExecution(parentActivity, context) {
 
     logger.debug(`<${executionId} (${id})> recover`, status, 'process execution');
 
+    if (state.messageFlows) {
+      state.messageFlows.forEach((flowState) => {
+        const flow = getMessageFlowById(flowState.id);
+        if (!flow) return;
+        flow.recover(flowState);
+      });
+    }
+
     if (state.flows) {
       state.flows.forEach((flowState) => {
         const flow = getFlowById(flowState.id);
@@ -145,6 +153,7 @@ export default function ProcessExecution(parentActivity, context) {
         flow.recover(flowState);
       });
     }
+
     if (state.children) {
       state.children.forEach((childState) => {
         const child = getActivityById(childState.id);
@@ -165,7 +174,8 @@ export default function ProcessExecution(parentActivity, context) {
     broker.subscribeTmp('api', '#', onApiMessage, {noAck: true, consumerTag: `_process-api-consumer-${executionId}`, priority: 200});
 
     outboundMessageFlows.forEach((flow) => {
-      flow.broker.subscribeTmp('event', '#', onMessageFlowEvent, {consumerTag: '_process-message-controller', noAck: true, priority: 200});
+      flow.activate();
+      flow.broker.subscribeTmp('event', '#', onMessageFlowEvent, {consumerTag: '_process-message-consumer', noAck: true, priority: 200});
     });
 
     flows.forEach((flow) => {
@@ -231,7 +241,8 @@ export default function ProcessExecution(parentActivity, context) {
     });
 
     outboundMessageFlows.forEach((flow) => {
-      flow.broker.cancel('_process-message-controller');
+      flow.deactivate();
+      flow.broker.cancel('_process-message-consumer');
     });
 
     activated = false;
@@ -483,6 +494,7 @@ export default function ProcessExecution(parentActivity, context) {
       status,
       children: children.map((activity) => activity.getState()),
       flows: flows.map((f) => f.getState()),
+      messageFlows: outboundMessageFlows.map((f) => f.getState()),
     };
   }
 
@@ -496,6 +508,10 @@ export default function ProcessExecution(parentActivity, context) {
 
   function getFlowById(flowId) {
     return flows.find((f) => f.id === flowId);
+  }
+
+  function getMessageFlowById(flowId) {
+    return outboundMessageFlows.find((f) => f.id === flowId);
   }
 
   function getChildById(childId) {

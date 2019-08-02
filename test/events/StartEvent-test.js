@@ -429,20 +429,21 @@ describe('StartEvent', () => {
         loadExtensions() {},
       });
 
+      const apiExchange = event.broker.getExchange('api');
+      const bindingCount = apiExchange.bindingCount;
+
       event.once('wait', (api) => api.discard());
 
       event.run();
 
       expect(event.counters).to.have.property('discarded', 1);
-      expect(event.broker.getExchange('api')).to.have.property('bindingCount', 0);
+      expect(apiExchange).to.have.property('bindingCount', bindingCount);
     });
 
     it('on form wait discards run and cancels api listeners', () => {
       const event = StartEvent({
         id: 'start',
-        behaviour: {
-          eventDefinitions: [{Behaviour: MessageEventDefinition}],
-        }
+        behaviour: {}
       }, {
         environment: Environment({Logger: testHelpers.Logger}),
         getInboundSequenceFlows() {},
@@ -450,6 +451,7 @@ describe('StartEvent', () => {
         loadExtensions() {},
       });
 
+      event.once('enter', () => event.broker.publish('format', 'run.enter', {form: {key: 1}}));
       event.once('wait', (api) => api.discard());
 
       event.run();

@@ -34,11 +34,11 @@ function StartEventBehaviour(activity) {
   return event;
 
   function execute(executeMessage) {
-    const content = (0, _messageHelper.cloneContent)(executeMessage.content);
-
     if (eventDefinitionExecution) {
       return eventDefinitionExecution.execute(executeMessage);
     }
+
+    const content = (0, _messageHelper.cloneContent)(executeMessage.content);
 
     if (!content.form) {
       return broker.publish('execution', 'execute.completed', content);
@@ -49,9 +49,11 @@ function StartEventBehaviour(activity) {
     } = content;
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
       noAck: true,
-      consumerTag: `_api-${executionId}`
+      consumerTag: `_api-${executionId}`,
+      priority: 300
     });
     broker.publish('event', 'activity.wait', { ...content,
+      executionId,
       state: 'wait'
     });
 

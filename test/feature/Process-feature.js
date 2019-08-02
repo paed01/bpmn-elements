@@ -66,8 +66,8 @@ Feature('Process', () => {
     <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <process id="theProcess" isExecutable="true">
         <startEvent id="start" />
-        <sequenceFlow id="flow" sourceRef="start" targetRef="activity" />
-        <intermediateCatchEvent id="activity" />
+        <sequenceFlow id="flow" sourceRef="start" targetRef="end" />
+        <endEvent id="end" />
       </process>
     </definitions>`;
 
@@ -107,10 +107,10 @@ Feature('Process', () => {
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
       assertMessage('activity.leave', 'start');
-      assertMessage('activity.enter', 'activity');
-      assertMessage('activity.start', 'activity');
-      assertMessage('activity.end', 'activity');
-      assertMessage('activity.leave', 'activity');
+      assertMessage('activity.enter', 'end');
+      assertMessage('activity.start', 'end');
+      assertMessage('activity.end', 'end');
+      assertMessage('activity.leave', 'end');
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
     });
@@ -123,9 +123,9 @@ Feature('Process', () => {
       <process id="theProcess" isExecutable="true">
         <startEvent id="start1" />
         <startEvent id="start2" />
-        <intermediateCatchEvent id="activity" />
-        <sequenceFlow id="flow1" sourceRef="start1" targetRef="activity" />
-        <sequenceFlow id="flow2" sourceRef="start2" targetRef="activity" />
+        <endEvent id="end" />
+        <sequenceFlow id="flow1" sourceRef="start1" targetRef="end" />
+        <sequenceFlow id="flow2" sourceRef="start2" targetRef="end" />
       </process>
     </definitions>`;
 
@@ -157,7 +157,7 @@ Feature('Process', () => {
       return completed;
     });
 
-    Then('the process has the expected execution sequence', () => {
+    Then('the process has the expected start sequence', () => {
       assertMessage('process.enter', 'theProcess');
       assertMessage('process.start', 'theProcess');
       assertMessage('activity.init', 'start1');
@@ -166,18 +166,21 @@ Feature('Process', () => {
       assertMessage('activity.start', 'start1');
       assertMessage('activity.end', 'start1');
       assertMessage('activity.leave', 'start1');
-      assertMessage('activity.enter', 'activity');
-      assertMessage('activity.start', 'activity');
-      assertMessage('activity.end', 'activity');
-      assertMessage('activity.leave', 'activity');
+    });
+
+    And('the activity with two inbound completes twice', () => {
+      assertMessage('activity.enter', 'end');
+      assertMessage('activity.start', 'end');
+      assertMessage('activity.end', 'end');
+      assertMessage('activity.leave', 'end');
       assertMessage('activity.enter', 'start2');
       assertMessage('activity.start', 'start2');
       assertMessage('activity.end', 'start2');
       assertMessage('activity.leave', 'start2');
-      assertMessage('activity.enter', 'activity');
-      assertMessage('activity.start', 'activity');
-      assertMessage('activity.end', 'activity');
-      assertMessage('activity.leave', 'activity');
+      assertMessage('activity.enter', 'end');
+      assertMessage('activity.start', 'end');
+      assertMessage('activity.end', 'end');
+      assertMessage('activity.leave', 'end');
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
     });
@@ -406,7 +409,7 @@ Feature('Process', () => {
           </timerEventDefinition>
         </intermediateCatchEvent>
         <sequenceFlow id="flow2" sourceRef="activity1" targetRef="activity2" />
-        <intermediateCatchEvent id="activity2" />
+        <task id="activity2" />
         <sequenceFlow id="flow3" sourceRef="activity2" targetRef="decision" />
         <exclusiveGateway id="decision" default="flow4" />
         <sequenceFlow id="flow4" sourceRef="decision" targetRef="activity1">
@@ -617,7 +620,7 @@ Feature('Process', () => {
             <timeDuration xsi:type="tFormalExpression">PT0.01S</timeDuration>
           </timerEventDefinition>
         </intermediateCatchEvent>
-        <intermediateCatchEvent id="immediate" />
+        <task id="immediate" />
         <sequenceFlow id="flow3" sourceRef="postponed" targetRef="join" />
         <sequenceFlow id="flow4" sourceRef="immediate" targetRef="join" />
         <parallelGateway id="join" />
@@ -776,7 +779,7 @@ Feature('Process', () => {
             <timeDuration xsi:type="tFormalExpression">\${environment.variables.timeout}</timeDuration>
           </timerEventDefinition>
         </intermediateCatchEvent>
-        <intermediateCatchEvent id="immediate" />
+        <task id="immediate" />
         <sequenceFlow id="flow3" sourceRef="postponed" targetRef="join" />
         <sequenceFlow id="flow4" sourceRef="immediate" targetRef="join" />
         <parallelGateway id="join" />
@@ -1554,7 +1557,7 @@ Feature('Process', () => {
           </timerEventDefinition>
         </intermediateCatchEvent>
         <sequenceFlow id="flow2" sourceRef="activity1" targetRef="activity2" />
-        <intermediateCatchEvent id="activity2" />
+        <task id="activity2" />
         <sequenceFlow id="flow3" sourceRef="activity2" targetRef="decision" />
         <exclusiveGateway id="decision" default="flow4" />
         <sequenceFlow id="flow4" sourceRef="decision" targetRef="activity0">

@@ -19,18 +19,18 @@ export function StartEventBehaviour(activity) {
   return event;
 
   function execute(executeMessage) {
-    const content = cloneContent(executeMessage.content);
     if (eventDefinitionExecution) {
       return eventDefinitionExecution.execute(executeMessage);
     }
 
+    const content = cloneContent(executeMessage.content);
     if (!content.form) {
       return broker.publish('execution', 'execute.completed', content);
     }
 
     const {executionId} = content;
-    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
-    broker.publish('event', 'activity.wait', {...content, state: 'wait'});
+    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`, priority: 300});
+    broker.publish('event', 'activity.wait', {...content, executionId, state: 'wait'});
 
     function onApiMessage(routingKey, message) {
       const messageType = message.properties.type;

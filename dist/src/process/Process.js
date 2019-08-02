@@ -359,7 +359,7 @@ function Process(processDef, context) {
     const activity = getActivityById(messageContent.target.id);
     if (!activity) return logger.debug(`<${id}> message delivery canceled, <${messageContent.target.id}> not found`);
     if (!status) run();
-    logger.debug(`<${id}> got message to <${messageContent.target.id}>`);
+    logger.debug(`<${id}> message to <${messageContent.target.id}>`);
     activity.message(messageContent);
   }
 

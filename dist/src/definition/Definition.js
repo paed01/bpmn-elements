@@ -83,6 +83,7 @@ function Definition(context, options) {
     getProcesses,
     getExecutableProcesses,
     getProcessById,
+    sendMessage,
     recover,
     resume,
     signal,
@@ -458,6 +459,28 @@ function Definition(context, options) {
 
   function signal(message) {
     return getApi().signal(message, {
+      delegate: true
+    });
+  }
+
+  function sendMessage(message) {
+    const messageContent = {
+      message
+    };
+    let messageType = 'message';
+    const reference = message && message.id && getElementById(message.id);
+
+    if (reference && reference.resolve) {
+      const resolvedReference = reference.resolve(createMessage({
+        message
+      }));
+      messageType = resolvedReference.messageType || messageType;
+      messageContent.message = { ...message,
+        ...resolvedReference
+      };
+    }
+
+    return getApi().sendApiMessage(messageType, messageContent, {
       delegate: true
     });
   }

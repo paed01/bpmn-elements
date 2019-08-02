@@ -172,6 +172,14 @@ function ProcessExecution(parentActivity, context) {
     status = state.status;
     logger.debug(`<${executionId} (${id})> recover`, status, 'process execution');
 
+    if (state.messageFlows) {
+      state.messageFlows.forEach(flowState => {
+        const flow = getMessageFlowById(flowState.id);
+        if (!flow) return;
+        flow.recover(flowState);
+      });
+    }
+
     if (state.flows) {
       state.flows.forEach(flowState => {
         const flow = getFlowById(flowState.id);
@@ -202,8 +210,9 @@ function ProcessExecution(parentActivity, context) {
       priority: 200
     });
     outboundMessageFlows.forEach(flow => {
+      flow.activate();
       flow.broker.subscribeTmp('event', '#', onMessageFlowEvent, {
-        consumerTag: '_process-message-controller',
+        consumerTag: '_process-message-consumer',
         noAck: true,
         priority: 200
       });
@@ -287,7 +296,8 @@ function ProcessExecution(parentActivity, context) {
       flow.broker.cancel('_process-flight-controller');
     });
     outboundMessageFlows.forEach(flow => {
-      flow.broker.cancel('_process-message-controller');
+      flow.deactivate();
+      flow.broker.cancel('_process-message-consumer');
     });
     activated = false;
   }
@@ -565,7 +575,8 @@ function ProcessExecution(parentActivity, context) {
       completed,
       status,
       children: children.map(activity => activity.getState()),
-      flows: flows.map(f => f.getState())
+      flows: flows.map(f => f.getState()),
+      messageFlows: outboundMessageFlows.map(f => f.getState())
     };
   }
 
@@ -579,6 +590,10 @@ function ProcessExecution(parentActivity, context) {
 
   function getFlowById(flowId) {
     return flows.find(f => f.id === flowId);
+  }
+
+  function getMessageFlowById(flowId) {
+    return outboundMessageFlows.find(f => f.id === flowId);
   }
 
   function getChildById(childId) {
