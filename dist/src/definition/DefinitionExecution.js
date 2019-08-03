@@ -186,11 +186,16 @@ function DefinitionExecution(definition) {
     processes.forEach(p => {
       p.broker.subscribeTmp('message', 'message.outbound', onMessageOutbound, {
         noAck: true,
-        consumerTag: '_definition-message-consumer'
+        consumerTag: '_definition-outbound-message-consumer'
       });
       p.broker.subscribeTmp('event', 'activity.signal', onDelegateMessage, {
         noAck: true,
         consumerTag: '_definition-signal-consumer',
+        priority: 200
+      });
+      p.broker.subscribeTmp('event', 'activity.message', onDelegateMessage, {
+        noAck: true,
+        consumerTag: '_definition-message-consumer',
         priority: 200
       });
       p.broker.subscribeTmp('event', '#', onEvent, {
@@ -229,9 +234,10 @@ function DefinitionExecution(definition) {
     broker.cancel('_definition-api-consumer');
     broker.cancel(`_definition-activity-${executionId}`);
     processes.forEach(p => {
-      p.broker.cancel('_definition-message-consumer');
+      p.broker.cancel('_definition-outbound-message-consumer');
       p.broker.cancel('_definition-activity-consumer');
       p.broker.cancel('_definition-signal-consumer');
+      p.broker.cancel('_definition-message-consumer');
     });
     activated = false;
   }

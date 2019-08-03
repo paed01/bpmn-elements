@@ -150,8 +150,9 @@ export default function DefinitionExecution(definition) {
     broker.subscribeTmp('api', '#', onApiMessage, {noAck: true, consumerTag: '_definition-api-consumer'});
 
     processes.forEach((p) => {
-      p.broker.subscribeTmp('message', 'message.outbound', onMessageOutbound, {noAck: true, consumerTag: '_definition-message-consumer'});
+      p.broker.subscribeTmp('message', 'message.outbound', onMessageOutbound, {noAck: true, consumerTag: '_definition-outbound-message-consumer'});
       p.broker.subscribeTmp('event', 'activity.signal', onDelegateMessage, {noAck: true, consumerTag: '_definition-signal-consumer', priority: 200});
+      p.broker.subscribeTmp('event', 'activity.message', onDelegateMessage, {noAck: true, consumerTag: '_definition-message-consumer', priority: 200});
       p.broker.subscribeTmp('event', '#', onEvent, {noAck: true, consumerTag: '_definition-activity-consumer', priority: 100});
     });
 
@@ -181,9 +182,10 @@ export default function DefinitionExecution(definition) {
     broker.cancel(`_definition-activity-${executionId}`);
 
     processes.forEach((p) => {
-      p.broker.cancel('_definition-message-consumer');
+      p.broker.cancel('_definition-outbound-message-consumer');
       p.broker.cancel('_definition-activity-consumer');
       p.broker.cancel('_definition-signal-consumer');
+      p.broker.cancel('_definition-message-consumer');
     });
 
     activated = false;

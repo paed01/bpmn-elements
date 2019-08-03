@@ -256,9 +256,9 @@ Feature('Bpmn Error', () => {
   });
 
   Scenario('error with error code', () => {
-    let definition, serviceCallback;
+    let definition, serviceCallback, source;
     Given('a service task with a catch error boundary event', async () => {
-      const source = `
+      source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="Process_0" isExecutable="true">
           <serviceTask id="service" implementation="\${environment.services.get}" />
@@ -318,6 +318,84 @@ Feature('Bpmn Error', () => {
 
     Then('definition is errored', () => {
       return errored;
+    });
+
+    And('boundary event was discarded', async () => {
+      const catchError = definition.getActivityById('catchError');
+      expect(catchError.counters).to.have.property('taken', 1);
+      expect(catchError.counters).to.have.property('discarded', 1);
+    });
+
+    When('definition is ran again', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Given('and definition is stopped', () => {
+      definition.stop();
+    });
+
+    When('definition is resumed', () => {
+      definition.resume();
+    });
+
+    And('service encounters error with error code that match known error', () => {
+      serviceCallback(new BpmnError('Not found', {
+        errorCode: 404
+      }));
+    });
+
+    And('definition completes', () => {
+      return end;
+    });
+
+    And('error was caught', async () => {
+      const catchError = definition.getActivityById('catchError');
+      expect(catchError.counters).to.have.property('taken', 2);
+      expect(catchError.counters).to.have.property('discarded', 1);
+    });
+
+    When('definition is ran again', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    let state;
+    Given('and definition is stopped and state is saved', () => {
+      definition.stop();
+      state = JSON.stringify(definition.getState());
+    });
+
+    let recoveredDefinition;
+    When('definition is recovered somewhere else', async () => {
+      const context = await testHelpers.context(source);
+      context.environment.addService('get', function get(_, next) {
+        serviceCallback = next;
+      });
+
+      recoveredDefinition = Definition(context);
+      recoveredDefinition.recover(JSON.parse(state));
+    });
+
+    And('resumed', () => {
+      end = recoveredDefinition.waitFor('end');
+      recoveredDefinition.resume();
+    });
+
+    And('recovered service encounters error with error code that match known error', () => {
+      serviceCallback(new BpmnError('Not found', {
+        errorCode: 404
+      }));
+    });
+
+    And('recovered definition completes', () => {
+      return end;
+    });
+
+    And('error was caught', async () => {
+      const catchError = recoveredDefinition.getActivityById('catchError');
+      expect(catchError.counters).to.have.property('taken', 3);
+      expect(catchError.counters).to.have.property('discarded', 1);
     });
   });
 
