@@ -254,6 +254,186 @@ Feature('Process', () => {
     });
   });
 
+  Scenario('A process with multiple start activities conforming to the same flow', () => {
+    let bp;
+    Given('a process with two user tasks both arriving at the same end event', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <userTask id="start1" />
+          <userTask id="start2" />
+          <sequenceFlow id="flow1" sourceRef="start1" targetRef="end" />
+          <sequenceFlow id="flow3" sourceRef="start2" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+      bp = context.getProcessById('theProcess');
+    });
+
+    let completed;
+    When('run', () => {
+      completed = bp.waitFor('leave');
+      bp.run();
+    });
+
+    let start1, start2;
+    When('second user task is signaled', () => {
+      [start1, start2] = bp.getPostponed();
+      start2.signal();
+    });
+
+    Then('the process completes', () => {
+      expect(bp.isRunning).to.be.false;
+      return completed;
+    });
+
+    And('second user task was taken', () => {
+      expect(start2.owner.counters).to.have.property('taken', 1);
+      expect(start2.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('first user task was discarded', () => {
+      expect(start1.owner.counters).to.have.property('discarded', 1);
+      expect(start1.owner.counters).to.have.property('taken', 0);
+    });
+
+    Given('a process with two user tasks both arriving at a join', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <userTask id="start1" />
+          <userTask id="start2" />
+          <sequenceFlow id="flow1" sourceRef="start1" targetRef="join" />
+          <sequenceFlow id="flow3" sourceRef="start2" targetRef="join" />
+          <parallelGateway id="join" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+      bp = context.getProcessById('theProcess');
+    });
+
+    When('run', () => {
+      completed = bp.waitFor('leave');
+      bp.run();
+    });
+
+    When('first user task is signaled', () => {
+      [start1, start2] = bp.getPostponed();
+      start1.signal();
+    });
+
+    Then('the process is still running', () => {
+      expect(bp.isRunning).to.be.true;
+    });
+
+    When('second user task is signaled', () => {
+      start2.signal();
+    });
+
+    Then('the process completes', () => {
+      return completed;
+    });
+
+    And('first user task was taken', () => {
+      expect(start1.owner.counters).to.have.property('taken', 1);
+      expect(start1.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('second user task was taken', () => {
+      expect(start2.owner.counters).to.have.property('taken', 1);
+      expect(start2.owner.counters).to.have.property('discarded', 0);
+    });
+
+    Given('a process with two tasks conforming to an end activity', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <task id="start1" />
+          <task id="start2" />
+          <sequenceFlow id="flow1" sourceRef="start1" targetRef="end" />
+          <sequenceFlow id="flow2" sourceRef="start2" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+      bp = context.getProcessById('theProcess');
+    });
+
+    When('run', () => {
+      completed = bp.waitFor('leave');
+      bp.run();
+    });
+
+    Then('the process completes', () => {
+      return completed;
+    });
+
+    And('first task was taken', () => {
+      expect(start1.owner.counters).to.have.property('taken', 1);
+      expect(start1.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('second task was taken', () => {
+      expect(start2.owner.counters).to.have.property('taken', 1);
+      expect(start2.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('end activity was taken twice', () => {
+      expect(bp.getActivityById('end').counters).to.have.property('taken', 2);
+      expect(bp.getActivityById('end').counters).to.have.property('discarded', 0);
+    });
+
+    Given('a process with two tasks conforming to separate end activities', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <task id="start1" />
+          <task id="start2" />
+          <sequenceFlow id="flow1" sourceRef="start1" targetRef="end1" />
+          <sequenceFlow id="flow2" sourceRef="start2" targetRef="end2" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+      bp = context.getProcessById('theProcess');
+    });
+
+    When('run', () => {
+      completed = bp.waitFor('leave');
+      bp.run();
+    });
+
+    Then('the process completes', () => {
+      return completed;
+    });
+
+    And('first task was taken', () => {
+      expect(start1.owner.counters).to.have.property('taken', 1);
+      expect(start1.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('second task was taken', () => {
+      expect(start2.owner.counters).to.have.property('taken', 1);
+      expect(start2.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('first end activity was taken', () => {
+      expect(bp.getActivityById('end1').counters).to.have.property('taken', 1);
+      expect(bp.getActivityById('end1').counters).to.have.property('discarded', 0);
+    });
+
+    And('second end activity was taken', () => {
+      expect(bp.getActivityById('end2').counters).to.have.property('taken', 1);
+      expect(bp.getActivityById('end2').counters).to.have.property('discarded', 0);
+    });
+  });
+
   Scenario('A process with a join', () => {
     const source = `
     <?xml version="1.0" encoding="UTF-8"?>
