@@ -217,6 +217,8 @@ export default function Activity(Behaviour, activityDef, context) {
   }
 
   function runDiscard(discardContent = {}) {
+    deactivateRunConsumers();
+
     executionId = getUniqueId(id);
     const content = createMessage({...discardContent, executionId});
     broker.publish('run', 'run.discard', content);

@@ -326,6 +326,27 @@ Feature('Signals', () => {
       expect(logBook[1]).to.equal('task2');
     });
   });
+
+  Scenario('When a task is discarded by multiple flows', () => {
+    let definition;
+
+    Given('a process', async () => {
+      const source = factory.resource('consumer_error.bpmn');
+      const context = await testHelpers.context(source);
+
+      definition = Definition(context);
+    });
+
+    let wait;
+    When('definition is run', () => {
+      wait = definition.getActivityById('Task_1tomcsq').waitFor('wait');
+      definition.run();
+    });
+
+    Then('manual task executes and waits', () => {
+      return wait;
+    });
+  });
 });
 
 async function prepareSource() {
