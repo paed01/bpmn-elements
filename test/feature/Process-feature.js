@@ -868,7 +868,7 @@ Feature('Process', () => {
     });
   });
 
-  Scenario('A process with a catch message event', () => {
+  Scenario('A process with a catch anonymous message event', () => {
     const source = `
     <?xml version="1.0" encoding="UTF-8"?>
     <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -925,11 +925,11 @@ Feature('Process', () => {
     });
 
     When('a message is received', () => {
-      bp.sendMessage({
+      bp.getApi().sendApiMessage('message', {
         target: {
           id: 'receive',
         },
-      });
+      }, {delegate: true});
     });
 
     Then('the process continuous execution and completes', async () => {

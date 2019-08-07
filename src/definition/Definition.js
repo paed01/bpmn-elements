@@ -407,6 +407,7 @@ export function Definition(context, options) {
       const resolvedReference = reference.resolve(createMessage({message}));
       messageType = resolvedReference.messageType || messageType;
       messageContent.message = {...message, ...resolvedReference};
+
     }
 
     return getApi().sendApiMessage(messageType, messageContent, {delegate: true});

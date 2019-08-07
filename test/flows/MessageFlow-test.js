@@ -25,7 +25,7 @@ describe('MessageFlow', () => {
     }, context);
   });
 
-  it('listens for run end messages from source activity', () => {
+  it('listens for run end, and message messages from source activity', () => {
     const activity = ActivityBroker();
     const context = {
       environment: Environment(),
@@ -46,7 +46,7 @@ describe('MessageFlow', () => {
 
     flow.activate();
 
-    expect(activity.broker).to.have.property('consumerCount', 1);
+    expect(activity.broker).to.have.property('consumerCount', 2);
   });
 
   it('when source activity ends a message is sent with forwarded message, source, and target', async () => {

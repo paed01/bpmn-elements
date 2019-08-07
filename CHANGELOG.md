@@ -6,6 +6,7 @@ Changelog
 Focused on messaging.
 
 ## Breaking
+- ReceiveTask expects referenced message, it can still be signaled
 - IntermediateCatchEvent that lacks event definitions now expects to be signaled
 - Catching MessageEventDefinition expects referenced message. or at least a matching message id
 

@@ -5,7 +5,8 @@ import {MessageFlowBroker} from '../EventBroker';
 export default function MessageFlow(flowDef, context) {
   const {id, type = 'message', target, source, behaviour, parent} = flowDef;
   const sourceActivity = context.getActivityById(source.id);
-  const sourceConsumerTag = `_message-on-end-${brokerSafeId(id)}`;
+  const sourceEndConsumerTag = `_message-on-end-${brokerSafeId(id)}`;
+  const sourceMessageConsumerTag = `_message-on-message-${brokerSafeId(id)}`;
   const {debug} = context.environment.Logger(type.toLowerCase());
 
   if (!sourceActivity) return;
@@ -49,8 +50,12 @@ export default function MessageFlow(flowDef, context) {
 
   function onSourceEnd(_, {content}) {
     ++counters.messages;
-    debug(`<${id}> sending message from <${source.processId}.${source.id}> to <${target.processId}.${target.id}>`);
+    debug(`<${id}> sending message from <${source.processId}.${source.id}> to`, target.id ? `<${target.processId}.${target.id}>` : `<${target.processId}>`);
     broker.publish('event', 'message.outbound', createMessage(content.message));
+  }
+
+  function onSourceMessage() {
+    deactivate();
   }
 
   function createMessage(message) {
@@ -91,10 +96,12 @@ export default function MessageFlow(flowDef, context) {
   }
 
   function activate() {
-    sourceActivity.broker.subscribeTmp('event', 'activity.end', onSourceEnd, {consumerTag: sourceConsumerTag, noAck: true});
+    sourceActivity.broker.subscribeTmp('event', 'activity.message', onSourceMessage, {consumerTag: sourceMessageConsumerTag, noAck: true});
+    sourceActivity.broker.subscribeTmp('event', 'activity.end', onSourceEnd, {consumerTag: sourceEndConsumerTag, noAck: true});
   }
 
   function deactivate() {
-    sourceActivity.broker.cancel(sourceConsumerTag);
+    sourceActivity.broker.cancel(sourceMessageConsumerTag);
+    sourceActivity.broker.cancel(sourceEndConsumerTag);
   }
 }

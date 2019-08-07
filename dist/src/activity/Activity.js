@@ -122,7 +122,6 @@ function Activity(Behaviour, activityDef, context) {
     getActivityById,
     getState,
     init,
-    message: inboundMessage,
     recover,
     resume,
     run,
@@ -803,10 +802,6 @@ function Activity(Behaviour, activityDef, context) {
       broker: broker.getState(),
       execution: execution && execution.getState()
     };
-  }
-
-  function inboundMessage(messageContent) {
-    broker.publish('api', `activity.message.${messageContent.id}`, messageContent);
   }
 
   function next() {

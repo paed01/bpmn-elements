@@ -22,6 +22,7 @@ import Message from './src/activity/Message';
 import MessageEventDefinition from './src/eventDefinitions/MessageEventDefinition';
 import MessageFlow from './src/flows/MessageFlow';
 import ParallelGateway from './src/gateways/ParallelGateway';
+import ReceiveTask from './src/tasks/ReceiveTask';
 import ScriptTask from './src/tasks/ScriptTask';
 import SequenceFlow from './src/flows/SequenceFlow';
 import ServiceImplementation from './src/tasks/ServiceImplementation';
@@ -61,7 +62,7 @@ export {
   MessageEventDefinition,
   MessageFlow,
   ParallelGateway,
-  SignalTask as ReceiveTask,
+  ReceiveTask,
   ScriptTask,
   SequenceFlow,
   ServiceImplementation,

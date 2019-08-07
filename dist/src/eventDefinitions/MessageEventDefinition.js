@@ -67,14 +67,14 @@ function MessageEventDefinition(activity, eventDefinition) {
       consumerTag: `_api-${executionId}`,
       priority: 400
     });
-    broker.subscribeTmp('api', `activity.#.${parentExecutionId}`, onApiMessage, {
+    if (parentExecutionId) broker.subscribeTmp('api', `activity.#.${parentExecutionId}`, onApiMessage, {
       noAck: true,
       consumerTag: `_api-parent-${executionId}`,
       priority: 400
     });
     debug(`<${executionId} (${id})> expect ${description}`);
     broker.publish('event', 'activity.wait', { ...messageContent,
-      executionId: parentExecutionId,
+      executionId: parentExecutionId || executionId,
       parent: (0, _messageHelper.shiftParent)(parent),
       message: { ...referenceMessage
       }
@@ -117,7 +117,7 @@ function MessageEventDefinition(activity, eventDefinition) {
       broker.publish('event', 'activity.catch', { ...messageContent,
         message: { ...output
         },
-        executionId: parentExecutionId,
+        executionId: parentExecutionId || executionId,
         parent: (0, _messageHelper.shiftParent)(executeMessage.content.parent)
       }, {
         type: 'catch'
@@ -149,7 +149,7 @@ function MessageEventDefinition(activity, eventDefinition) {
     } = resolveReference(executeMessage);
     debug(`<${executionId} (${id})> message ${description}`);
     broker.publish('event', 'activity.message', { ...(0, _messageHelper.cloneContent)(messageContent),
-      executionId: parentExecutionId,
+      executionId: parentExecutionId || executionId,
       parent: (0, _messageHelper.shiftParent)(parent),
       message: { ...referenceMessage
       },

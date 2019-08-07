@@ -35,13 +35,13 @@ export default function MessageEventDefinition(activity, eventDefinition) {
     if (completed) return;
 
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`, priority: 400});
-    broker.subscribeTmp('api', `activity.#.${parentExecutionId}`, onApiMessage, {noAck: true, consumerTag: `_api-parent-${executionId}`, priority: 400});
+    if (parentExecutionId) broker.subscribeTmp('api', `activity.#.${parentExecutionId}`, onApiMessage, {noAck: true, consumerTag: `_api-parent-${executionId}`, priority: 400});
 
     debug(`<${executionId} (${id})> expect ${description}`);
 
     broker.publish('event', 'activity.wait', {
       ...messageContent,
-      executionId: parentExecutionId,
+      executionId: parentExecutionId || executionId,
       parent: shiftParent(parent),
       message: {...referenceMessage},
     });
@@ -78,7 +78,7 @@ export default function MessageEventDefinition(activity, eventDefinition) {
       broker.publish('event', 'activity.catch', {
         ...messageContent,
         message: {...output},
-        executionId: parentExecutionId,
+        executionId: parentExecutionId || executionId,
         parent: shiftParent(executeMessage.content.parent),
       }, {type: 'catch'});
 
@@ -104,7 +104,7 @@ export default function MessageEventDefinition(activity, eventDefinition) {
 
     broker.publish('event', 'activity.message', {
       ...cloneContent(messageContent),
-      executionId: parentExecutionId,
+      executionId: parentExecutionId || executionId,
       parent: shiftParent(parent),
       message: {...referenceMessage},
       state: 'throw',

@@ -21,7 +21,8 @@ function MessageFlow(flowDef, context) {
     parent
   } = flowDef;
   const sourceActivity = context.getActivityById(source.id);
-  const sourceConsumerTag = `_message-on-end-${(0, _shared.brokerSafeId)(id)}`;
+  const sourceEndConsumerTag = `_message-on-end-${(0, _shared.brokerSafeId)(id)}`;
+  const sourceMessageConsumerTag = `_message-on-message-${(0, _shared.brokerSafeId)(id)}`;
   const {
     debug
   } = context.environment.Logger(type.toLowerCase());
@@ -71,8 +72,12 @@ function MessageFlow(flowDef, context) {
     content
   }) {
     ++counters.messages;
-    debug(`<${id}> sending message from <${source.processId}.${source.id}> to <${target.processId}.${target.id}>`);
+    debug(`<${id}> sending message from <${source.processId}.${source.id}> to`, target.id ? `<${target.processId}.${target.id}>` : `<${target.processId}>`);
     broker.publish('event', 'message.outbound', createMessage(content.message));
+  }
+
+  function onSourceMessage() {
+    deactivate();
   }
 
   function createMessage(message) {
@@ -116,13 +121,18 @@ function MessageFlow(flowDef, context) {
   }
 
   function activate() {
+    sourceActivity.broker.subscribeTmp('event', 'activity.message', onSourceMessage, {
+      consumerTag: sourceMessageConsumerTag,
+      noAck: true
+    });
     sourceActivity.broker.subscribeTmp('event', 'activity.end', onSourceEnd, {
-      consumerTag: sourceConsumerTag,
+      consumerTag: sourceEndConsumerTag,
       noAck: true
     });
   }
 
   function deactivate() {
-    sourceActivity.broker.cancel(sourceConsumerTag);
+    sourceActivity.broker.cancel(sourceMessageConsumerTag);
+    sourceActivity.broker.cancel(sourceEndConsumerTag);
   }
 }

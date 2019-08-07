@@ -147,6 +147,12 @@ Object.defineProperty(exports, "ParallelGateway", {
     return _ParallelGateway.default;
   }
 });
+Object.defineProperty(exports, "ReceiveTask", {
+  enumerable: true,
+  get: function () {
+    return _ReceiveTask.default;
+  }
+});
 Object.defineProperty(exports, "ScriptTask", {
   enumerable: true,
   get: function () {
@@ -190,12 +196,6 @@ Object.defineProperty(exports, "SignalEventDefinition", {
   }
 });
 Object.defineProperty(exports, "ManualTask", {
-  enumerable: true,
-  get: function () {
-    return _SignalTask.default;
-  }
-});
-Object.defineProperty(exports, "ReceiveTask", {
   enumerable: true,
   get: function () {
     return _SignalTask.default;
@@ -297,6 +297,8 @@ var _MessageEventDefinition = _interopRequireDefault(require("./src/eventDefinit
 var _MessageFlow = _interopRequireDefault(require("./src/flows/MessageFlow"));
 
 var _ParallelGateway = _interopRequireDefault(require("./src/gateways/ParallelGateway"));
+
+var _ReceiveTask = _interopRequireDefault(require("./src/tasks/ReceiveTask"));
 
 var _ScriptTask = _interopRequireDefault(require("./src/tasks/ScriptTask"));
 

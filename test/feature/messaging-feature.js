@@ -170,13 +170,67 @@ Feature('Messaging', () => {
     });
   });
 
-  Scenario('A participant process that expect inbound message flow to start', () => {
+  Scenario('A participant process that expects thrown message to start', () => {
+    let definition;
+    Given('a intermediate throw event with message, and participant process with a start event waiting for that message', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="mainProcess" isExecutable="true">
+          <startEvent id="start1" />
+          <sequenceFlow id="toTask" sourceRef="start" targetRef="task" />
+          <intermediateThrowEvent id="send">
+            <messageEventDefinition messageRef="Message1" />
+          </intermediateThrowEvent>
+        </process>
+        <process id="participantProcess">
+          <startEvent id="start2">
+            <messageEventDefinition messageRef="Message1" />
+          </startEvent>
+          <sequenceFlow id="toEnd" sourceRef="start2" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+        <message id="Message1" name="Start message" />
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    let end;
+    let main, participant;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      [main, participant] = definition.getProcesses();
+      definition.run();
+    });
+
+    Then('definition completes', () => {
+      return end;
+    });
+
+    And('main process completed', async () => {
+      expect(main.counters).to.have.property('completed', 1);
+    });
+
+    And('participant process completed', async () => {
+      expect(participant.counters).to.have.property('completed', 1);
+    });
+
+    And('all activities were taken', () => {
+      expect(definition.getActivityById('start1').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('send').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('start2').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
+    });
+  });
+
+  Scenario('Message flow targets participant process start activity', () => {
     let definition;
     Given('a task with formatted end message and message flow to participant process, and a start event waiting for that message', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
-        <collaboration id="Collaboration_051sqjx">
+        <collaboration id="Collaboration_0">
           <messageFlow id="fromMainToParticipant" sourceRef="send" targetRef="start2" />
         </collaboration>
         <process id="mainProcess" isExecutable="true">
@@ -230,14 +284,78 @@ Feature('Messaging', () => {
     });
   });
 
-  Scenario('A participant process that expects thrown message to start', () => {
+  Scenario('Message flow targets participant lane', () => {
     let definition;
-    Given('a intermediate throw event with message, and participant process with a start event waiting for that message', async () => {
+    Given('a task with formatted end message and message flow to participant process, and a start event waiting for that message', async () => {
       const source = `
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
+        <collaboration id="Collaboration_0">
+          <messageFlow id="fromMainToParticipant" sourceRef="send" targetRef="lane2" />
+          <participant id="lane2" name="Participant" processRef="participantProcess" />
+        </collaboration>
         <process id="mainProcess" isExecutable="true">
           <startEvent id="start1" />
           <sequenceFlow id="toTask" sourceRef="start" targetRef="task" />
+          <task id="send" js:messageRef="Message1" />
+        </process>
+        <process id="participantProcess">
+          <startEvent id="start2">
+            <messageEventDefinition messageRef="Message1" />
+          </startEvent>
+          <sequenceFlow id="toEnd" sourceRef="start2" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+        <message id="Message1" name="Start message" />
+      </definitions>`;
+
+      const context = await testHelpers.context(source, {
+        extensions: {
+          js: JsExtension
+        }
+      });
+      definition = Definition(context);
+    });
+
+    let end;
+    let main, participant;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      [main, participant] = definition.getProcesses();
+      definition.run();
+    });
+
+    Then('definition completes', () => {
+      return end;
+    });
+
+    And('main process completed', async () => {
+      expect(main.counters).to.have.property('completed', 1);
+    });
+
+    And('participant process completed', async () => {
+      expect(participant.counters).to.have.property('completed', 1);
+    });
+
+    And('all activities were taken', () => {
+      expect(definition.getActivityById('start1').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('send').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('start2').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
+    });
+  });
+
+  Scenario('Both message flow and throw message targeting the same activity', () => {
+    let definition;
+    Given('a intermediate throw event with message, and message flow to an participant process with a start event waiting for that message', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <collaboration id="Collaboration_0">
+          <messageFlow id="fromMainToParticipant" sourceRef="send" targetRef="start2" />
+        </collaboration>
+        <process id="mainProcess" isExecutable="true">
+          <startEvent id="start1" />
+          <sequenceFlow id="toSend" sourceRef="start1" targetRef="send" />
           <intermediateThrowEvent id="send">
             <messageEventDefinition messageRef="Message1" />
           </intermediateThrowEvent>
@@ -276,11 +394,151 @@ Feature('Messaging', () => {
       expect(participant.counters).to.have.property('completed', 1);
     });
 
-    And('all activities were taken', () => {
+    And('all activities were taken once', () => {
       expect(definition.getActivityById('start1').counters).to.have.property('taken', 1);
       expect(definition.getActivityById('send').counters).to.have.property('taken', 1);
       expect(definition.getActivityById('start2').counters).to.have.property('taken', 1);
       expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
+    });
+  });
+
+  Scenario('A receive task', () => {
+    let context, definition;
+    Given('a receive task waiting for message', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="mainProcess" isExecutable="true">
+          <receiveTask id="receive" messageRef="Message1" />
+          <sequenceFlow id="toEnd" sourceRef="receive" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+        <message id="Message1" name="Start message" />
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    let end;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    let receive;
+    Then('definition is waiting for receive task to complete', () => {
+      expect(definition.isRunning).to.be.true;
+      [receive] = definition.getPostponed();
+      expect(receive).to.have.property('id', 'receive');
+    });
+
+    When('message is sent', async () => {
+      definition.sendMessage({
+        id: 'Message1'
+      });
+    });
+
+    Then('definition completed', () => {
+      return end;
+    });
+
+    And('receive task completes', () => {
+      expect(receive.owner.counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
+    });
+
+    When('definition is ran again', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('definition is waiting for receive task to complete', () => {
+      expect(definition.isRunning).to.be.true;
+      [receive] = definition.getPostponed();
+      expect(receive).to.have.property('id', 'receive');
+    });
+
+    When('receive task is signaled', async () => {
+      receive.signal();
+    });
+
+    Then('definition completed', () => {
+      return end;
+    });
+
+    And('receive task completes', () => {
+      expect(receive.owner.counters).to.have.property('taken', 2);
+      expect(definition.getActivityById('end').counters).to.have.property('taken', 2);
+    });
+
+    When('definition is ran again', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('definition is waiting for receive task to complete', () => {
+      expect(definition.isRunning).to.be.true;
+      [receive] = definition.getPostponed();
+      expect(receive).to.have.property('id', 'receive');
+    });
+
+    When('receive task is discarded', async () => {
+      receive.discard();
+    });
+
+    Then('definition completed', () => {
+      return end;
+    });
+
+    And('receive task is discarded', () => {
+      expect(receive.owner.counters).to.have.property('discarded', 1);
+      expect(receive.owner.counters).to.have.property('taken', 2);
+      expect(definition.getActivityById('end').counters).to.have.property('discarded', 1);
+      expect(definition.getActivityById('end').counters).to.have.property('taken', 2);
+    });
+
+    When('definition is ran again', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('definition is waiting for receive task to complete', () => {
+      expect(definition.isRunning).to.be.true;
+      [receive] = definition.getPostponed();
+      expect(receive).to.have.property('id', 'receive');
+    });
+
+    let state;
+    Given('definition is stopped and state is saved', async () => {
+      definition.stop();
+      state = definition.getState();
+    });
+
+    And('recovered', () => {
+      definition = Definition(context.clone());
+      definition.recover(JSON.parse(JSON.stringify(state)));
+    });
+
+    When('resumed', () => {
+      end = definition.waitFor('end');
+      definition.resume();
+    });
+
+    And('message is sent', () => {
+      definition.sendMessage({
+        id: 'Message1'
+      });
+    });
+
+    Then('resumed definition completes', () => {
+      return end;
+    });
+
+    And('recovered receive task is taken', () => {
+      expect(definition.getActivityById('receive').counters).to.have.property('taken', 3);
+      expect(definition.getActivityById('receive').counters).to.have.property('discarded', 1);
+      expect(definition.getActivityById('end').counters).to.have.property('taken', 3);
+      expect(definition.getActivityById('end').counters).to.have.property('discarded', 1);
     });
   });
 });

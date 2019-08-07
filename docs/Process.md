@@ -93,15 +93,6 @@ Returns process.
 
 Run process.
 
-### `sendMessage(messageContent)`
-
-Send message to activity based on message content. Used by message flows to trigger process run.
-
-Arguments:
-- `messageContent`:
-  - `target`: message target
-    - `id`: required message target activity id
-
 ### `stop()`
 
 Stop process run.

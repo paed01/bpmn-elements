@@ -375,6 +375,7 @@ function DefinitionExecution(definition) {
       executionId,
       stopped,
       completed,
+      status,
       processes: processes.map(p => p.getState())
     };
   }
@@ -409,9 +410,9 @@ function DefinitionExecution(definition) {
       target,
       source
     } = content;
-    logger.debug(`<${executionId} (${id})> conveying message from <${source.processId}.${source.id}> to <${target.processId}.${target.id}>`);
+    logger.debug(`<${executionId} (${id})> conveying message from <${source.processId}.${source.id}> to`, target.id ? `<${target.processId}.${target.id}>` : `<${target.processId}>`);
     const targetProcess = getProcessById(target.processId);
-    targetProcess.sendMessage(content);
+    targetProcess.sendMessage(message);
   }
 
   function onDelegateMessage(routingKey, executeMessage) {
@@ -458,7 +459,9 @@ function DefinitionExecution(definition) {
   }
 
   function getApi(apiMessage) {
-    if (!apiMessage) apiMessage = initMessage;
+    if (!apiMessage) apiMessage = initMessage || {
+      content: createMessage()
+    };
     const content = apiMessage.content;
 
     if (content.executionId !== executionId) {
