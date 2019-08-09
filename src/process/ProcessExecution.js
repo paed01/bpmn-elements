@@ -102,7 +102,10 @@ export default function ProcessExecution(parentActivity, context) {
       }
     }
 
-    postponed.slice().forEach(({content}) => getActivityById(content.id).resume());
+    postponed.slice().forEach(({content}) => {
+      content = getActivityById(content.id);
+      if (content) content.resume();
+    });
   }
 
   function start() {

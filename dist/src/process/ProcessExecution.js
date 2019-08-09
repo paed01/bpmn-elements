@@ -136,7 +136,10 @@ function ProcessExecution(parentActivity, context) {
 
     postponed.slice().forEach(({
       content
-    }) => getActivityById(content.id).resume());
+    }) => {
+      content = getActivityById(content.id);
+      if (content) content.resume();
+    });
   }
 
   function start() {
