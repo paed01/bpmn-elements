@@ -35,6 +35,7 @@ The following elements are tested and supported.
 - MessageEventDefinition
 - MessageFlow
 - ParallelGateway
+- ReceiveTask
 - ScriptTask
 - SequenceFlow
 - ServiceImplementation: ServiceTask implementation attribute behaviour
@@ -46,7 +47,6 @@ The following elements are tested and supported.
   - catch
 - SignalTask
   - ManualTask
-  - ReceiveTask
   - UserTask
 - StartEvent
 - SubProcess
