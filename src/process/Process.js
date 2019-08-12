@@ -291,14 +291,20 @@ export function Process(processDef, context) {
     broker.publish('event', `process.${state}`, {...content, state}, {type: state, mandatory: state === 'error'});
   }
 
-  function sendMessage(messageContent) {
-    const activity = getActivityById(messageContent.target.id);
-    if (!activity) return logger.debug(`<${id}> message delivery canceled, <${messageContent.target.id}> not found`);
+  function sendMessage(message) {
+    const messageContent = message.content;
+    if (!messageContent) return;
+
+    let targetsFound = false;
+    if (messageContent.target && messageContent.target.id && getActivityById(messageContent.target.id)) {
+      targetsFound = true;
+    } else if (messageContent.message && getStartActivities({referenceId: messageContent.message.id, referenceType: messageContent.message.messageType}).length) {
+      targetsFound = true;
+    }
+    if (!targetsFound) return;
 
     if (!status) run();
-
-    logger.debug(`<${id}> got message to <${messageContent.target.id}>`);
-    activity.message(messageContent);
+    getApi().sendApiMessage(message.properties.type || 'message', cloneContent(messageContent), {delegate: true});
   }
 
   function getActivityById(childId) {

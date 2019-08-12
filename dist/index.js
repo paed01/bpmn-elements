@@ -123,6 +123,12 @@ Object.defineProperty(exports, "InputOutputSpecification", {
     return _InputOutputSpecification.default;
   }
 });
+Object.defineProperty(exports, "Message", {
+  enumerable: true,
+  get: function () {
+    return _Message.default;
+  }
+});
 Object.defineProperty(exports, "MessageEventDefinition", {
   enumerable: true,
   get: function () {
@@ -139,6 +145,12 @@ Object.defineProperty(exports, "ParallelGateway", {
   enumerable: true,
   get: function () {
     return _ParallelGateway.default;
+  }
+});
+Object.defineProperty(exports, "ReceiveTask", {
+  enumerable: true,
+  get: function () {
+    return _ReceiveTask.default;
   }
 });
 Object.defineProperty(exports, "ScriptTask", {
@@ -184,12 +196,6 @@ Object.defineProperty(exports, "SignalEventDefinition", {
   }
 });
 Object.defineProperty(exports, "ManualTask", {
-  enumerable: true,
-  get: function () {
-    return _SignalTask.default;
-  }
-});
-Object.defineProperty(exports, "ReceiveTask", {
   enumerable: true,
   get: function () {
     return _SignalTask.default;
@@ -284,11 +290,15 @@ var _IntermediateThrowEvent = _interopRequireDefault(require("./src/events/Inter
 
 var _InputOutputSpecification = _interopRequireDefault(require("./src/io/InputOutputSpecification"));
 
+var _Message = _interopRequireDefault(require("./src/activity/Message"));
+
 var _MessageEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/MessageEventDefinition"));
 
 var _MessageFlow = _interopRequireDefault(require("./src/flows/MessageFlow"));
 
 var _ParallelGateway = _interopRequireDefault(require("./src/gateways/ParallelGateway"));
+
+var _ReceiveTask = _interopRequireDefault(require("./src/tasks/ReceiveTask"));
 
 var _ScriptTask = _interopRequireDefault(require("./src/tasks/ScriptTask"));
 

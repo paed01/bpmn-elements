@@ -16,6 +16,11 @@
         "name": "result",
         "isAttr": true,
         "type": "String"
+      },
+      {
+        "name": "messageRef",
+        "isAttr": true,
+        "type": "String"
       }
     ]
   }, {

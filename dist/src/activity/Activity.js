@@ -56,6 +56,7 @@ function Activity(Behaviour, activityDef, context) {
   const inboundSequenceFlows = getInboundSequenceFlows(id) || [];
   const outboundSequenceFlows = getOutboundSequenceFlows(id) || [];
   const isStart = inboundSequenceFlows.length === 0 && !attachedTo && !triggeredByEvent;
+  const isEnd = outboundSequenceFlows.length === 0;
   const isParallelJoin = inboundSequenceFlows.length > 1 && isParallelGateway;
   const isMultiInstance = !!behaviour.loopCharacteristics;
   let execution,
@@ -76,6 +77,7 @@ function Activity(Behaviour, activityDef, context) {
     id,
     type,
     name,
+    isEnd,
     isStart,
     isSubProcess,
     isThrowing,
@@ -120,10 +122,10 @@ function Activity(Behaviour, activityDef, context) {
     getActivityById,
     getState,
     init,
-    message: inboundMessage,
     recover,
     resume,
     run,
+    shake,
     stop,
     next: step && next
   };
@@ -175,10 +177,10 @@ function Activity(Behaviour, activityDef, context) {
   });
   return activityApi;
 
-  function init() {
-    initExecutionId = (0, _shared.getUniqueId)(id);
+  function init(initContent) {
+    initExecutionId = initExecutionId || (0, _shared.getUniqueId)(id);
     logger.debug(`<${id}> initialized with executionId <${initExecutionId}>`);
-    publishEvent('init', createMessage({
+    publishEvent('init', createMessage({ ...initContent,
       executionId: initExecutionId
     }));
   }
@@ -196,15 +198,26 @@ function Activity(Behaviour, activityDef, context) {
   }
 
   function createMessage(override = {}) {
-    return { ...override,
+    const result = { ...override,
       id,
       type,
       name,
-      attachedTo,
-      parent: (0, _messageHelper.cloneParent)(parent),
+      parent: (0, _messageHelper.cloneParent)(parent)
+    };
+    const flags = {
+      isEnd,
+      isStart,
       isSubProcess,
       isMultiInstance
     };
+
+    for (const flag in flags) {
+      if (flags[flag]) result[flag] = true;
+    }
+
+    if (attachedTo) result.attachedTo = { ...attachedTo
+    };
+    return result;
   }
 
   function recover(state) {
@@ -266,7 +279,8 @@ function Activity(Behaviour, activityDef, context) {
 
   function runDiscard(discardContent = {}) {
     deactivateRunConsumers();
-    executionId = (0, _shared.getUniqueId)(id);
+    executionId = initExecutionId || (0, _shared.getUniqueId)(id);
+    initExecutionId = undefined;
     const content = createMessage({ ...discardContent,
       executionId
     });
@@ -317,11 +331,13 @@ function Activity(Behaviour, activityDef, context) {
     consumingRunQ = false;
   }
 
-  function onInboundEvent(routingKey, {
-    fields,
-    content,
-    properties
-  }) {
+  function onInboundEvent(routingKey, message) {
+    const {
+      fields,
+      content,
+      properties
+    } = message;
+
     switch (routingKey) {
       case 'activity.enter':
       case 'activity.discard':
@@ -330,6 +346,12 @@ function Activity(Behaviour, activityDef, context) {
             inboundQ.queueMessage(fields, content, properties);
           }
 
+          break;
+        }
+
+      case 'flow.shake':
+        {
+          shakeOutbound(message);
           break;
         }
 
@@ -377,7 +399,9 @@ function Activity(Behaviour, activityDef, context) {
     const allTouched = inboundJoinFlows.length === inboundTriggers.length;
     const remaining = inboundSequenceFlows.length - inboundJoinFlows.length;
     logger.debug(`<${id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
-    if (!allTouched) return;
+    if (!allTouched) return init({
+      inbound: inboundJoinFlows.map(f => (0, _messageHelper.cloneContent)(f.content))
+    });
     const evaluatedInbound = inboundJoinFlows.splice(0);
     let taken;
     const inbound = evaluatedInbound.map(im => {
@@ -660,7 +684,37 @@ function Activity(Behaviour, activityDef, context) {
           onStop(message);
           break;
         }
+
+      case 'shake':
+        {
+          shakeOutbound(message);
+          break;
+        }
     }
+  }
+
+  function shake() {
+    shakeOutbound({
+      content: createMessage()
+    });
+  }
+
+  function shakeOutbound(sourceMessage) {
+    const message = (0, _messageHelper.cloneMessage)(sourceMessage);
+    message.content.sequence = message.content.sequence || [];
+    message.content.sequence.push({
+      id,
+      type
+    });
+
+    if (!outboundSequenceFlows.length) {
+      return broker.publish('event', 'activity.shake.end', message.content, {
+        persistent: false,
+        type: 'shake'
+      });
+    }
+
+    outboundSequenceFlows.forEach(f => f.shake(message));
   }
 
   function onStop(message) {
@@ -749,16 +803,6 @@ function Activity(Behaviour, activityDef, context) {
       broker: broker.getState(),
       execution: execution && execution.getState()
     };
-  }
-
-  function inboundMessage(messageContent) {
-    const messagesQ = broker.assertQueue('messages', {
-      autoDelete: false,
-      durable: true
-    });
-    messagesQ.queueMessage({
-      routingKey: 'message'
-    }, messageContent);
   }
 
   function next() {

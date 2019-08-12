@@ -59,7 +59,7 @@ function TimerEventDefinition(activity, eventDefinition) {
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
       noAck: true,
       consumerTag: `_api-${executionId}`,
-      priority: 300
+      priority: 400
     });
     let timerContent;
     return isResumed ? resumeTimer() : executeTimer();

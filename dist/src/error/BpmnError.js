@@ -30,6 +30,7 @@ function BpmnErrorActivity(errorDef, context) {
     const result = {
       id,
       type,
+      messageType: 'throw',
       name: name && environment.resolveExpression(name, resolveCtx),
       code: behaviour.errorCode && environment.resolveExpression(behaviour.errorCode, resolveCtx)
     };

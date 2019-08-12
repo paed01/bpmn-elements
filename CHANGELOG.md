@@ -1,6 +1,19 @@
 Changelog
 =========
 
+# 0.6.0
+
+Focused on messaging.
+
+## Breaking
+- ReceiveTask expects referenced message, it can still be signaled
+- IntermediateCatchEvent that lacks event definitions now expects to be signaled
+- Catching MessageEventDefinition expects referenced message. or at least a matching message id
+
+## Additions
+- IntermediateThrowEvent with MessageEventDefinition now throws Message
+- Start activities conforming to the same flow is discarded when the flow reaches an end activity, unless a join is put in between
+
 # 0.5.0
 
 - allow a waiting UserTask to trigger an execution error

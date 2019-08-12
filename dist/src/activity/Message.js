@@ -3,15 +3,15 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Signal;
+exports.default = Message;
 
-function Signal(signalDef, context) {
+function Message(messageDef, context) {
   const {
     id,
     type,
     name,
     parent: originalParent
-  } = signalDef;
+  } = messageDef;
   const {
     environment
   } = context;
@@ -29,7 +29,7 @@ function Signal(signalDef, context) {
     return {
       id,
       type,
-      messageType: 'signal',
+      messageType: 'message',
       name: name && environment.resolveExpression(name, executionMessage),
       parent: { ...parent
       }

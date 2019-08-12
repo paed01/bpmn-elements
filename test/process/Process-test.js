@@ -1113,15 +1113,17 @@ describe('Process', () => {
     });
   });
 
-  describe('sendMessage(content)', () => {
+  describe('sendMessage(message)', () => {
     let bp;
     beforeEach('setup proc', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="theProcess" isExecutable="true">
-          <startEvent id="start" />
+          <startEvent id="start">
+            <messageEventDefinition />
+          </startEvent>
           <sequenceFlow id="flow1" sourceRef="start" targetRef="task" />
-          <receiveTask id="task" />
+          <userTask id="task" />
         </process>
       </definitions>`;
 
@@ -1129,20 +1131,30 @@ describe('Process', () => {
       [bp] = context.getProcesses();
     });
 
-    it('publishes message to activity queue', () => {
-      const activity = bp.getActivityById('task');
+    it('starts process if message content target id is found', () => {
+      bp.sendMessage({
+        fields: {},
+        content: {
+          id: 'messageFlow',
+          target: {id: 'start'},
+        },
+        properties: {}
+      });
 
-      expect(bp.sendMessage({
-        target: {id: 'task'},
-      }));
-
-      expect(activity.broker.getQueue('messages').messageCount).to.equal(1);
+      expect(bp.isRunning).to.be.true;
     });
 
-    it('is ignored if activity is not found', () => {
-      expect(bp.sendMessage({
-        target: {id: 'notask'},
-      }));
+    it('is ignored if message content target id is not found', () => {
+      bp.sendMessage({
+        fields: {},
+        content: {
+          id: 'messageFlow',
+          target: {id: 'start2'},
+        },
+        properties: {}
+      });
+
+      expect(bp.isRunning).to.be.false;
     });
   });
 

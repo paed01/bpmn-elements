@@ -1092,10 +1092,9 @@ describe('Activity', () => {
       expect(messages[0].fields).to.have.property('routingKey', 'activity.init');
       expect(messages[0].content).to.have.property('executionId').that.is.ok;
       expect(messages[1].fields).to.have.property('routingKey', 'activity.init');
-      expect(messages[1].content).to.have.property('executionId').that.is.ok.and.not.equal(messages[0].content.executionId);
+      expect(messages[1].content).to.have.property('executionId').that.is.ok.and.equal(messages[0].content.executionId);
       expect(messages[2].fields).to.have.property('routingKey', 'activity.init');
     });
-
   });
 
   describe('error', () => {

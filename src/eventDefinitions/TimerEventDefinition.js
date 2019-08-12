@@ -37,7 +37,7 @@ export default function TimerEventDefinition(activity, eventDefinition) {
       return debug(`<${executionId} (${id})> resumed, waiting for timer message`);
     }
 
-    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`, priority: 300});
+    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`, priority: 400});
 
     let timerContent;
 

@@ -127,6 +127,9 @@ Feature('Definition', () => {
       assertMessage('activity.enter', 'messageStartEvent');
       assertMessage('activity.start', 'messageStartEvent');
       assertMessage('activity.wait', 'messageStartEvent');
+
+      assertMessage('activity.catch', 'messageStartEvent');
+
       assertMessage('activity.execution.completed', 'messageStartEvent');
       assertMessage('activity.end', 'messageStartEvent');
       assertMessage('flow.pre-flight', 'flow-p-1');
@@ -168,6 +171,7 @@ Feature('Definition', () => {
 
       assertMessage('activity.enter', 'intermediate');
       assertMessage('activity.start', 'intermediate');
+      assertMessage('activity.catch', 'intermediate');
       assertMessage('activity.execution.completed', 'intermediate');
       assertMessage('activity.end', 'intermediate');
       assertMessage('flow.pre-flight', 'flow3');

@@ -5,9 +5,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = MessageFlow;
 
-var _EventBroker = require("../EventBroker");
+var _shared = require("../shared");
 
 var _messageHelper = require("../messageHelper");
+
+var _EventBroker = require("../EventBroker");
 
 function MessageFlow(flowDef, context) {
   const {
@@ -19,6 +21,11 @@ function MessageFlow(flowDef, context) {
     parent
   } = flowDef;
   const sourceActivity = context.getActivityById(source.id);
+  const sourceEndConsumerTag = `_message-on-end-${(0, _shared.brokerSafeId)(id)}`;
+  const sourceMessageConsumerTag = `_message-on-message-${(0, _shared.brokerSafeId)(id)}`;
+  const {
+    debug
+  } = context.environment.Logger(type.toLowerCase());
   if (!sourceActivity) return;
   const counters = {
     messages: 0,
@@ -36,7 +43,10 @@ function MessageFlow(flowDef, context) {
       };
     },
 
+    activate,
+    deactivate,
     getApi,
+    getState,
     recover,
     resume,
     stop
@@ -47,11 +57,7 @@ function MessageFlow(flowDef, context) {
     once,
     emit,
     waitFor
-  } = (0, _EventBroker.MessageFlowBroker)(flowApi, {
-    prefix: 'messageflow',
-    durable: true,
-    autoDelete: false
-  });
+  } = (0, _EventBroker.MessageFlowBroker)(flowApi);
   flowApi.on = on;
   flowApi.once = once;
   flowApi.emit = emit;
@@ -60,14 +66,18 @@ function MessageFlow(flowDef, context) {
     enumerable: true,
     get: () => broker
   });
-  sourceActivity.broker.subscribeTmp('event', 'activity.end', onSourceEnd, {
-    noAck: true
-  });
   return flowApi;
 
-  function onSourceEnd(routingKey, message) {
+  function onSourceEnd(_, {
+    content
+  }) {
     ++counters.messages;
-    broker.publish('event', 'message.outbound', createMessage((0, _messageHelper.cloneContent)(message.content)));
+    debug(`<${id}> sending message from <${source.processId}.${source.id}> to`, target.id ? `<${target.processId}.${target.id}>` : `<${target.processId}>`);
+    broker.publish('event', 'message.outbound', createMessage(content.message));
+  }
+
+  function onSourceMessage() {
+    deactivate();
   }
 
   function createMessage(message) {
@@ -84,7 +94,17 @@ function MessageFlow(flowDef, context) {
   }
 
   function stop() {
+    deactivate();
     broker.stop();
+  }
+
+  function getState() {
+    return {
+      id,
+      type,
+      counters: { ...counters
+      }
+    };
   }
 
   function recover(state) {
@@ -98,5 +118,21 @@ function MessageFlow(flowDef, context) {
 
   function getApi() {
     return flowApi;
+  }
+
+  function activate() {
+    sourceActivity.broker.subscribeTmp('event', 'activity.message', onSourceMessage, {
+      consumerTag: sourceMessageConsumerTag,
+      noAck: true
+    });
+    sourceActivity.broker.subscribeTmp('event', 'activity.end', onSourceEnd, {
+      consumerTag: sourceEndConsumerTag,
+      noAck: true
+    });
+  }
+
+  function deactivate() {
+    sourceActivity.broker.cancel(sourceMessageConsumerTag);
+    sourceActivity.broker.cancel(sourceEndConsumerTag);
   }
 }

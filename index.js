@@ -18,9 +18,11 @@ import InclusiveGateway from './src/gateways/InclusiveGateway';
 import IntermediateCatchEvent from './src/events/IntermediateCatchEvent';
 import IntermediateThrowEvent from './src/events/IntermediateThrowEvent';
 import InputOutputSpecification from './src/io/InputOutputSpecification';
+import Message from './src/activity/Message';
 import MessageEventDefinition from './src/eventDefinitions/MessageEventDefinition';
 import MessageFlow from './src/flows/MessageFlow';
 import ParallelGateway from './src/gateways/ParallelGateway';
+import ReceiveTask from './src/tasks/ReceiveTask';
 import ScriptTask from './src/tasks/ScriptTask';
 import SequenceFlow from './src/flows/SequenceFlow';
 import ServiceImplementation from './src/tasks/ServiceImplementation';
@@ -56,10 +58,11 @@ export {
   IntermediateCatchEvent,
   IntermediateThrowEvent,
   SignalTask as ManualTask,
+  Message,
   MessageEventDefinition,
   MessageFlow,
   ParallelGateway,
-  SignalTask as ReceiveTask,
+  ReceiveTask,
   ScriptTask,
   SequenceFlow,
   ServiceImplementation,

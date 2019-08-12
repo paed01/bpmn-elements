@@ -30,11 +30,11 @@ export default function SignalEventDefinition(activity, eventDefinition) {
     const parentExecutionId = parent && parent.executionId;
 
     const {message: referenceMessage, description} = resolveMessage(executeMessage);
-    broker.consume(signalQueueName, onSignalApiMessage, {noAck: true, consumerTag: `_api-signal-${executionId}`});
+    broker.consume(signalQueueName, onCatchSignal, {noAck: true, consumerTag: `_api-signal-${executionId}`});
 
     if (completed) return;
 
-    broker.subscribeTmp('api', `activity.stop.${parentExecutionId}`, onApiMessage, {noAck: true, consumerTag: `_api-parent-${parentExecutionId}`});
+    broker.subscribeTmp('api', `activity.#.${parentExecutionId}`, onApiMessage, {noAck: true, consumerTag: `_api-parent-${parentExecutionId}`});
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
 
     debug(`<${executionId} (${id})> expect ${description}`);
@@ -46,11 +46,11 @@ export default function SignalEventDefinition(activity, eventDefinition) {
       signal: {...referenceMessage},
     });
 
-    function onSignalApiMessage(routingKey, message) {
+    function onCatchSignal(routingKey, message) {
       if (getPropertyValue(message, 'content.message.id') !== referenceMessage.id) return;
       completed = true;
       stop();
-      return signal(routingKey, {message: message.content.message});
+      return complete(message.content.message);
     }
 
     function onApiMessage(routingKey, message) {
@@ -58,7 +58,7 @@ export default function SignalEventDefinition(activity, eventDefinition) {
 
       switch (messageType) {
         case 'signal': {
-          return onSignalApiMessage(routingKey, message);
+          return complete(message.content.message);
         }
         case 'discard': {
           completed = true;
@@ -72,10 +72,11 @@ export default function SignalEventDefinition(activity, eventDefinition) {
       }
     }
 
-    function signal(_, {message}) {
+    function complete(output) {
       completed = true;
+      stop();
       debug(`<${executionId} (${id})> signaled with`, description);
-      return broker.publish('execution', 'execute.completed', {...messageContent, output: message, state: 'signal'});
+      return broker.publish('execution', 'execute.completed', {...messageContent, output, state: 'signal'});
     }
 
     function stop() {

@@ -26,6 +26,7 @@ Feature('Escalate', () => {
       expect(escalated.content).to.have.property('escalation').that.eql({
         id: 'AmountEscalation',
         type: 'bpmn:Escalation',
+        messageType: 'escalation',
         name: 'Escalate amount too big',
         parent: {
           id: 'Definition_0',
@@ -56,6 +57,7 @@ Feature('Escalate', () => {
       expect(endSignal.content).to.have.property('message').that.deep.include({
         id: 'EscalatedSignal',
         type: 'bpmn:Signal',
+        messageType: 'signal',
         name: 'Too big signal',
         parent: {
           id: 'Definition_0',

@@ -91,6 +91,7 @@ describe('IntermediateThrowEvent', () => {
       expect(api.content.message).to.eql({
         id: 'mySignal',
         type: 'bpmn:Signal',
+        messageType: 'signal',
         name: 'Signaled by event',
         parent: {
           id: 'Def_1',

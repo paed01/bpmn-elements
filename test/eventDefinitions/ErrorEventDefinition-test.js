@@ -237,6 +237,7 @@ describe('ErrorEventDefinition', () => {
         expect(tryMessage).to.have.property('content').with.property('expect').to.eql({
           id: 'error_1',
           type: 'bpmn:Error',
+          messageType: 'throw',
           code: 'ERR_MINE',
           name: 'CatchError',
         });
@@ -272,6 +273,7 @@ describe('ErrorEventDefinition', () => {
             expect: {
               id: 'error_1',
               type: 'bpmn:Error',
+              messageType: 'throw',
               code: 'ERR_MINE',
               name: 'CatchError',
             },
@@ -282,6 +284,7 @@ describe('ErrorEventDefinition', () => {
         expect(tryMessage).to.have.property('content').with.property('expect').to.eql({
           id: 'error_1',
           type: 'bpmn:Error',
+          messageType: 'throw',
           code: 'ERR_MINE',
           name: 'CatchError',
         });

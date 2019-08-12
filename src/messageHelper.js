@@ -8,7 +8,7 @@ export {
 };
 
 function cloneContent(content) {
-  const {discardSequence, inbound, outbound, parent} = content;
+  const {discardSequence, inbound, outbound, parent, sequence} = content;
 
   const clone = {
     ...content,
@@ -25,6 +25,9 @@ function cloneContent(content) {
   }
   if (outbound) {
     clone.outbound = outbound.map((c) => cloneContent(c));
+  }
+  if (sequence) {
+    clone.sequence = sequence.map((c) => cloneContent(c));
   }
 
   return clone;

@@ -57,12 +57,12 @@ function SignalEventDefinition(activity, eventDefinition) {
       message: referenceMessage,
       description
     } = resolveMessage(executeMessage);
-    broker.consume(signalQueueName, onSignalApiMessage, {
+    broker.consume(signalQueueName, onCatchSignal, {
       noAck: true,
       consumerTag: `_api-signal-${executionId}`
     });
     if (completed) return;
-    broker.subscribeTmp('api', `activity.stop.${parentExecutionId}`, onApiMessage, {
+    broker.subscribeTmp('api', `activity.#.${parentExecutionId}`, onApiMessage, {
       noAck: true,
       consumerTag: `_api-parent-${parentExecutionId}`
     });
@@ -78,13 +78,11 @@ function SignalEventDefinition(activity, eventDefinition) {
       }
     });
 
-    function onSignalApiMessage(routingKey, message) {
+    function onCatchSignal(routingKey, message) {
       if ((0, _getPropertyValue.default)(message, 'content.message.id') !== referenceMessage.id) return;
       completed = true;
       stop();
-      return signal(routingKey, {
-        message: message.content.message
-      });
+      return complete(message.content.message);
     }
 
     function onApiMessage(routingKey, message) {
@@ -93,7 +91,7 @@ function SignalEventDefinition(activity, eventDefinition) {
       switch (messageType) {
         case 'signal':
           {
-            return onSignalApiMessage(routingKey, message);
+            return complete(message.content.message);
           }
 
         case 'discard':
@@ -112,13 +110,12 @@ function SignalEventDefinition(activity, eventDefinition) {
       }
     }
 
-    function signal(_, {
-      message
-    }) {
+    function complete(output) {
       completed = true;
+      stop();
       debug(`<${executionId} (${id})> signaled with`, description);
       return broker.publish('execution', 'execute.completed', { ...messageContent,
-        output: message,
+        output,
         state: 'signal'
       });
     }

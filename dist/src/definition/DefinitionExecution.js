@@ -186,11 +186,16 @@ function DefinitionExecution(definition) {
     processes.forEach(p => {
       p.broker.subscribeTmp('message', 'message.outbound', onMessageOutbound, {
         noAck: true,
-        consumerTag: '_definition-message-consumer'
+        consumerTag: '_definition-outbound-message-consumer'
       });
       p.broker.subscribeTmp('event', 'activity.signal', onDelegateMessage, {
         noAck: true,
         consumerTag: '_definition-signal-consumer',
+        priority: 200
+      });
+      p.broker.subscribeTmp('event', 'activity.message', onDelegateMessage, {
+        noAck: true,
+        consumerTag: '_definition-message-consumer',
         priority: 200
       });
       p.broker.subscribeTmp('event', '#', onEvent, {
@@ -229,9 +234,10 @@ function DefinitionExecution(definition) {
     broker.cancel('_definition-api-consumer');
     broker.cancel(`_definition-activity-${executionId}`);
     processes.forEach(p => {
-      p.broker.cancel('_definition-message-consumer');
+      p.broker.cancel('_definition-outbound-message-consumer');
       p.broker.cancel('_definition-activity-consumer');
       p.broker.cancel('_definition-signal-consumer');
+      p.broker.cancel('_definition-message-consumer');
     });
     activated = false;
   }
@@ -369,6 +375,7 @@ function DefinitionExecution(definition) {
       executionId,
       stopped,
       completed,
+      status,
       processes: processes.map(p => p.getState())
     };
   }
@@ -403,9 +410,9 @@ function DefinitionExecution(definition) {
       target,
       source
     } = content;
-    logger.debug(`<${executionId} (${id})> conveying message from <${source.processId}.${source.id}> to <${target.processId}.${target.id}>`);
+    logger.debug(`<${executionId} (${id})> conveying message from <${source.processId}.${source.id}> to`, target.id ? `<${target.processId}.${target.id}>` : `<${target.processId}>`);
     const targetProcess = getProcessById(target.processId);
-    targetProcess.sendMessage(content);
+    targetProcess.sendMessage(message);
   }
 
   function onDelegateMessage(routingKey, executeMessage) {
@@ -452,7 +459,9 @@ function DefinitionExecution(definition) {
   }
 
   function getApi(apiMessage) {
-    if (!apiMessage) apiMessage = initMessage;
+    if (!apiMessage) apiMessage = initMessage || {
+      content: createMessage()
+    };
     const content = apiMessage.content;
 
     if (content.executionId !== executionId) {

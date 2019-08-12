@@ -66,8 +66,8 @@ Feature('Process', () => {
     <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <process id="theProcess" isExecutable="true">
         <startEvent id="start" />
-        <sequenceFlow id="flow" sourceRef="start" targetRef="activity" />
-        <intermediateCatchEvent id="activity" />
+        <sequenceFlow id="flow" sourceRef="start" targetRef="end" />
+        <endEvent id="end" />
       </process>
     </definitions>`;
 
@@ -107,10 +107,10 @@ Feature('Process', () => {
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
       assertMessage('activity.leave', 'start');
-      assertMessage('activity.enter', 'activity');
-      assertMessage('activity.start', 'activity');
-      assertMessage('activity.end', 'activity');
-      assertMessage('activity.leave', 'activity');
+      assertMessage('activity.enter', 'end');
+      assertMessage('activity.start', 'end');
+      assertMessage('activity.end', 'end');
+      assertMessage('activity.leave', 'end');
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
     });
@@ -123,9 +123,9 @@ Feature('Process', () => {
       <process id="theProcess" isExecutable="true">
         <startEvent id="start1" />
         <startEvent id="start2" />
-        <intermediateCatchEvent id="activity" />
-        <sequenceFlow id="flow1" sourceRef="start1" targetRef="activity" />
-        <sequenceFlow id="flow2" sourceRef="start2" targetRef="activity" />
+        <endEvent id="end" />
+        <sequenceFlow id="flow1" sourceRef="start1" targetRef="end" />
+        <sequenceFlow id="flow2" sourceRef="start2" targetRef="end" />
       </process>
     </definitions>`;
 
@@ -157,7 +157,7 @@ Feature('Process', () => {
       return completed;
     });
 
-    Then('the process has the expected execution sequence', () => {
+    Then('the process has the expected start sequence', () => {
       assertMessage('process.enter', 'theProcess');
       assertMessage('process.start', 'theProcess');
       assertMessage('activity.init', 'start1');
@@ -166,18 +166,21 @@ Feature('Process', () => {
       assertMessage('activity.start', 'start1');
       assertMessage('activity.end', 'start1');
       assertMessage('activity.leave', 'start1');
-      assertMessage('activity.enter', 'activity');
-      assertMessage('activity.start', 'activity');
-      assertMessage('activity.end', 'activity');
-      assertMessage('activity.leave', 'activity');
+    });
+
+    And('the activity with two inbound completes twice', () => {
+      assertMessage('activity.enter', 'end');
+      assertMessage('activity.start', 'end');
+      assertMessage('activity.end', 'end');
+      assertMessage('activity.leave', 'end');
       assertMessage('activity.enter', 'start2');
       assertMessage('activity.start', 'start2');
       assertMessage('activity.end', 'start2');
       assertMessage('activity.leave', 'start2');
-      assertMessage('activity.enter', 'activity');
-      assertMessage('activity.start', 'activity');
-      assertMessage('activity.end', 'activity');
-      assertMessage('activity.leave', 'activity');
+      assertMessage('activity.enter', 'end');
+      assertMessage('activity.start', 'end');
+      assertMessage('activity.end', 'end');
+      assertMessage('activity.leave', 'end');
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
     });
@@ -251,6 +254,186 @@ Feature('Process', () => {
     });
   });
 
+  Scenario('A process with multiple start activities conforming to the same flow', () => {
+    let bp;
+    Given('a process with two user tasks both arriving at the same end event', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <userTask id="start1" />
+          <userTask id="start2" />
+          <sequenceFlow id="flow1" sourceRef="start1" targetRef="end" />
+          <sequenceFlow id="flow3" sourceRef="start2" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+      bp = context.getProcessById('theProcess');
+    });
+
+    let completed;
+    When('run', () => {
+      completed = bp.waitFor('leave');
+      bp.run();
+    });
+
+    let start1, start2;
+    When('second user task is signaled', () => {
+      [start1, start2] = bp.getPostponed();
+      start2.signal();
+    });
+
+    Then('the process completes', () => {
+      expect(bp.isRunning).to.be.false;
+      return completed;
+    });
+
+    And('second user task was taken', () => {
+      expect(start2.owner.counters).to.have.property('taken', 1);
+      expect(start2.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('first user task was discarded', () => {
+      expect(start1.owner.counters).to.have.property('discarded', 1);
+      expect(start1.owner.counters).to.have.property('taken', 0);
+    });
+
+    Given('a process with two user tasks both arriving at a join', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <userTask id="start1" />
+          <userTask id="start2" />
+          <sequenceFlow id="flow1" sourceRef="start1" targetRef="join" />
+          <sequenceFlow id="flow3" sourceRef="start2" targetRef="join" />
+          <parallelGateway id="join" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+      bp = context.getProcessById('theProcess');
+    });
+
+    When('run', () => {
+      completed = bp.waitFor('leave');
+      bp.run();
+    });
+
+    When('first user task is signaled', () => {
+      [start1, start2] = bp.getPostponed();
+      start1.signal();
+    });
+
+    Then('the process is still running', () => {
+      expect(bp.isRunning).to.be.true;
+    });
+
+    When('second user task is signaled', () => {
+      start2.signal();
+    });
+
+    Then('the process completes', () => {
+      return completed;
+    });
+
+    And('first user task was taken', () => {
+      expect(start1.owner.counters).to.have.property('taken', 1);
+      expect(start1.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('second user task was taken', () => {
+      expect(start2.owner.counters).to.have.property('taken', 1);
+      expect(start2.owner.counters).to.have.property('discarded', 0);
+    });
+
+    Given('a process with two tasks conforming to an end activity', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <task id="start1" />
+          <task id="start2" />
+          <sequenceFlow id="flow1" sourceRef="start1" targetRef="end" />
+          <sequenceFlow id="flow2" sourceRef="start2" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+      bp = context.getProcessById('theProcess');
+    });
+
+    When('run', () => {
+      completed = bp.waitFor('leave');
+      bp.run();
+    });
+
+    Then('the process completes', () => {
+      return completed;
+    });
+
+    And('first task was taken', () => {
+      expect(start1.owner.counters).to.have.property('taken', 1);
+      expect(start1.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('second task was taken', () => {
+      expect(start2.owner.counters).to.have.property('taken', 1);
+      expect(start2.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('end activity was taken twice', () => {
+      expect(bp.getActivityById('end').counters).to.have.property('taken', 2);
+      expect(bp.getActivityById('end').counters).to.have.property('discarded', 0);
+    });
+
+    Given('a process with two tasks conforming to separate end activities', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <task id="start1" />
+          <task id="start2" />
+          <sequenceFlow id="flow1" sourceRef="start1" targetRef="end1" />
+          <sequenceFlow id="flow2" sourceRef="start2" targetRef="end2" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+      bp = context.getProcessById('theProcess');
+    });
+
+    When('run', () => {
+      completed = bp.waitFor('leave');
+      bp.run();
+    });
+
+    Then('the process completes', () => {
+      return completed;
+    });
+
+    And('first task was taken', () => {
+      expect(start1.owner.counters).to.have.property('taken', 1);
+      expect(start1.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('second task was taken', () => {
+      expect(start2.owner.counters).to.have.property('taken', 1);
+      expect(start2.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('first end activity was taken', () => {
+      expect(bp.getActivityById('end1').counters).to.have.property('taken', 1);
+      expect(bp.getActivityById('end1').counters).to.have.property('discarded', 0);
+    });
+
+    And('second end activity was taken', () => {
+      expect(bp.getActivityById('end2').counters).to.have.property('taken', 1);
+      expect(bp.getActivityById('end2').counters).to.have.property('discarded', 0);
+    });
+  });
+
   Scenario('A process with a join', () => {
     const source = `
     <?xml version="1.0" encoding="UTF-8"?>
@@ -303,6 +486,7 @@ Feature('Process', () => {
       assertMessage('activity.start', 'start1');
       assertMessage('activity.end', 'start1');
       assertMessage('activity.leave', 'start1');
+      assertMessage('activity.init', 'join');
       assertMessage('activity.enter', 'start2');
       assertMessage('activity.start', 'start2');
       assertMessage('activity.end', 'start2');
@@ -378,6 +562,7 @@ Feature('Process', () => {
       assertMessage('activity.start', 'decision');
       assertMessage('activity.end', 'decision');
       assertMessage('activity.leave', 'decision');
+      assertMessage('activity.init', 'join');
       assertMessage('activity.enter', 'join');
       assertMessage('activity.start', 'join');
       assertMessage('activity.end', 'join');
@@ -404,7 +589,7 @@ Feature('Process', () => {
           </timerEventDefinition>
         </intermediateCatchEvent>
         <sequenceFlow id="flow2" sourceRef="activity1" targetRef="activity2" />
-        <intermediateCatchEvent id="activity2" />
+        <task id="activity2" />
         <sequenceFlow id="flow3" sourceRef="activity2" targetRef="decision" />
         <exclusiveGateway id="decision" default="flow4" />
         <sequenceFlow id="flow4" sourceRef="decision" targetRef="activity1">
@@ -615,7 +800,7 @@ Feature('Process', () => {
             <timeDuration xsi:type="tFormalExpression">PT0.01S</timeDuration>
           </timerEventDefinition>
         </intermediateCatchEvent>
-        <intermediateCatchEvent id="immediate" />
+        <task id="immediate" />
         <sequenceFlow id="flow3" sourceRef="postponed" targetRef="join" />
         <sequenceFlow id="flow4" sourceRef="immediate" targetRef="join" />
         <parallelGateway id="join" />
@@ -665,6 +850,7 @@ Feature('Process', () => {
       assertMessage('activity.start', 'immediate');
       assertMessage('activity.end', 'immediate');
       assertMessage('activity.leave', 'immediate');
+      assertMessage('activity.init', 'join');
     });
 
     And('before the timeout event completes', () => {
@@ -682,7 +868,7 @@ Feature('Process', () => {
     });
   });
 
-  Scenario('A process with a catch message event', () => {
+  Scenario('A process with a catch anonymous message event', () => {
     const source = `
     <?xml version="1.0" encoding="UTF-8"?>
     <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -739,16 +925,17 @@ Feature('Process', () => {
     });
 
     When('a message is received', () => {
-      bp.sendMessage({
+      bp.getApi().sendApiMessage('message', {
         target: {
           id: 'receive',
         },
-      });
+      }, {delegate: true});
     });
 
     Then('the process continuous execution and completes', async () => {
       await completed;
 
+      assertMessage('activity.catch', 'receive');
       assertMessage('activity.end', 'receive');
       assertMessage('activity.leave', 'receive');
       assertMessage('activity.enter', 'end');
@@ -772,7 +959,7 @@ Feature('Process', () => {
             <timeDuration xsi:type="tFormalExpression">\${environment.variables.timeout}</timeDuration>
           </timerEventDefinition>
         </intermediateCatchEvent>
-        <intermediateCatchEvent id="immediate" />
+        <task id="immediate" />
         <sequenceFlow id="flow3" sourceRef="postponed" targetRef="join" />
         <sequenceFlow id="flow4" sourceRef="immediate" targetRef="join" />
         <parallelGateway id="join" />
@@ -823,6 +1010,7 @@ Feature('Process', () => {
       assertMessage('activity.start', 'immediate');
       assertMessage('activity.end', 'immediate');
       assertMessage('activity.leave', 'immediate');
+      assertMessage('activity.init', 'join');
     });
 
     And('before the timeout event completes', () => {
@@ -869,6 +1057,8 @@ Feature('Process', () => {
     });
 
     Then('the combined event completes', () => {
+      assertMessage('activity.init', 'join');
+      assertMessage('activity.catch', 'postponed');
       assertMessage('activity.end', 'postponed');
       assertMessage('activity.leave', 'postponed');
     });
@@ -1547,7 +1737,7 @@ Feature('Process', () => {
           </timerEventDefinition>
         </intermediateCatchEvent>
         <sequenceFlow id="flow2" sourceRef="activity1" targetRef="activity2" />
-        <intermediateCatchEvent id="activity2" />
+        <task id="activity2" />
         <sequenceFlow id="flow3" sourceRef="activity2" targetRef="decision" />
         <exclusiveGateway id="decision" default="flow4" />
         <sequenceFlow id="flow4" sourceRef="decision" targetRef="activity0">

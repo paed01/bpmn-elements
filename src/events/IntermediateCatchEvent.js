@@ -19,11 +19,40 @@ export function IntermediateCatchEventBehaviour(activity) {
   return source;
 
   function execute(executeMessage) {
-    const content = executeMessage.content;
     if (eventDefinitionExecution) {
       return eventDefinitionExecution.execute(executeMessage);
     }
 
-    return broker.publish('execution', 'execute.completed', cloneContent(content));
+    const messageContent = cloneContent(executeMessage.content);
+    const {executionId} = messageContent;
+    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
+
+    return broker.publish('event', 'activity.wait', cloneContent(messageContent));
+
+    function onApiMessage(routingKey, message) {
+      const messageType = message.properties.type;
+      switch (messageType) {
+        case 'message':
+        case 'signal': {
+          return complete(message.content.message);
+        }
+        case 'discard': {
+          stop();
+          return broker.publish('execution', 'execute.discard', {...messageContent});
+        }
+        case 'stop': {
+          return stop();
+        }
+      }
+    }
+
+    function complete(output) {
+      stop();
+      return broker.publish('execution', 'execute.completed', {...messageContent, output});
+    }
+
+    function stop() {
+      broker.cancel(`_api-${executionId}`);
+    }
   }
 }

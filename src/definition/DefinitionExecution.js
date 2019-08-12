@@ -150,8 +150,9 @@ export default function DefinitionExecution(definition) {
     broker.subscribeTmp('api', '#', onApiMessage, {noAck: true, consumerTag: '_definition-api-consumer'});
 
     processes.forEach((p) => {
-      p.broker.subscribeTmp('message', 'message.outbound', onMessageOutbound, {noAck: true, consumerTag: '_definition-message-consumer'});
+      p.broker.subscribeTmp('message', 'message.outbound', onMessageOutbound, {noAck: true, consumerTag: '_definition-outbound-message-consumer'});
       p.broker.subscribeTmp('event', 'activity.signal', onDelegateMessage, {noAck: true, consumerTag: '_definition-signal-consumer', priority: 200});
+      p.broker.subscribeTmp('event', 'activity.message', onDelegateMessage, {noAck: true, consumerTag: '_definition-message-consumer', priority: 200});
       p.broker.subscribeTmp('event', '#', onEvent, {noAck: true, consumerTag: '_definition-activity-consumer', priority: 100});
     });
 
@@ -181,9 +182,10 @@ export default function DefinitionExecution(definition) {
     broker.cancel(`_definition-activity-${executionId}`);
 
     processes.forEach((p) => {
-      p.broker.cancel('_definition-message-consumer');
+      p.broker.cancel('_definition-outbound-message-consumer');
       p.broker.cancel('_definition-activity-consumer');
       p.broker.cancel('_definition-signal-consumer');
+      p.broker.cancel('_definition-message-consumer');
     });
 
     activated = false;
@@ -300,6 +302,7 @@ export default function DefinitionExecution(definition) {
       executionId,
       stopped,
       completed,
+      status,
       processes: processes.map((p) => p.getState()),
     };
   }
@@ -331,11 +334,11 @@ export default function DefinitionExecution(definition) {
     const content = message.content;
     const {target, source} = content;
 
-    logger.debug(`<${executionId} (${id})> conveying message from <${source.processId}.${source.id}> to <${target.processId}.${target.id}>`);
+    logger.debug(`<${executionId} (${id})> conveying message from <${source.processId}.${source.id}> to`, target.id ? `<${target.processId}.${target.id}>` : `<${target.processId}>`);
 
     const targetProcess = getProcessById(target.processId);
 
-    targetProcess.sendMessage(content);
+    targetProcess.sendMessage(message);
   }
 
   function onDelegateMessage(routingKey, executeMessage) {
@@ -379,7 +382,7 @@ export default function DefinitionExecution(definition) {
   }
 
   function getApi(apiMessage) {
-    if (!apiMessage) apiMessage = initMessage;
+    if (!apiMessage) apiMessage = initMessage || {content: createMessage()};
 
     const content = apiMessage.content;
     if (content.executionId !== executionId) {

@@ -64,6 +64,7 @@ function SequenceFlow(flowDef, {
     getState,
     preFlight,
     recover,
+    shake,
     stop,
     take
   };
@@ -178,6 +179,29 @@ function SequenceFlow(flowDef, {
 
   function stop() {
     broker.stop();
+  }
+
+  function shake(message) {
+    const content = (0, _messageHelper.cloneContent)(message.content);
+    content.sequence = content.sequence || [];
+    content.sequence.push({
+      id,
+      type,
+      isSequenceFlow: true,
+      targetId
+    });
+
+    for (const s of message.content.sequence) {
+      if (s.id === id) return broker.publish('event', 'flow.shake.loop', content, {
+        persistent: false,
+        type: 'shake'
+      });
+    }
+
+    broker.publish('event', 'flow.shake', content, {
+      persistent: false,
+      type: 'shake'
+    });
   }
 
   function evaluateCondition(message, onEvaluateError) {
