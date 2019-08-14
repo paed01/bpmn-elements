@@ -423,7 +423,8 @@ function DefinitionExecution(definition) {
     const message = reference && reference.resolve(executeMessage);
     logger.debug(`<${executionId} (${id})>`, reference ? `${messageType} <${delegateMessage.id}>` : `anonymous ${messageType}`, `event received from <${content.parent.id}.${content.id}>. Delegating.`);
     getApi().sendApiMessage(messageType, {
-      message
+      message: message,
+      originalMessage: content.message
     }, {
       delegate: true,
       type: messageType
