@@ -137,8 +137,8 @@ function ProcessExecution(parentActivity, context) {
     postponed.slice().forEach(({
       content
     }) => {
-      content = getActivityById(content.id);
-      if (content) content.resume();
+      const activity = getActivityById(content.id);
+      if (activity) activity.resume();
     });
   }
 
