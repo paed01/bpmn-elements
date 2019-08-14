@@ -55,16 +55,16 @@ export default function Environment(options = {}) {
       Logger,
       extensions,
       settings: {
-        ...state.settings || {},
+        ...state.settings,
         ...settings,
       },
       variables: {
         ...variables,
-        ...state.variables || {},
+        ...state.variables,
       },
       output: {
         ...output,
-        ...state.output || {},
+        ...state.output,
       },
     };
 

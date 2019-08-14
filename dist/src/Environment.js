@@ -66,14 +66,14 @@ function Environment(options = {}) {
       scripts,
       Logger,
       extensions,
-      settings: { ...(state.settings || {}),
+      settings: { ...state.settings,
         ...settings
       },
       variables: { ...variables,
-        ...(state.variables || {})
+        ...state.variables
       },
       output: { ...output,
-        ...(state.output || {})
+        ...state.output
       }
     };
     return Environment(recoverOptions);

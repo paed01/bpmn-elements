@@ -130,7 +130,7 @@ Feature('Linking', () => {
 
   Scenario('Stop and resume', () => {
     let context, definition;
-    Given('a user takes decision if an intermediate catch event is discarded', async () => {
+    Given('a user is asked to take decision if an intermediate catch event is discarded or not', async () => {
       const source = `
       <definitions id="Def" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn"
         xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
@@ -178,7 +178,7 @@ Feature('Linking', () => {
     });
 
     let user;
-    Then('definition waits for user task', async () => {
+    Then('definition waits for user to decide', async () => {
       user = await wait;
       expect(user).to.have.property('id', 'start');
     });
@@ -219,7 +219,7 @@ Feature('Linking', () => {
       definition.run();
     });
 
-    Then('definition waits for user task', async () => {
+    Then('definition waits for user to decide', async () => {
       user = await wait;
       expect(user).to.have.property('id', 'start');
     });
@@ -250,13 +250,12 @@ Feature('Linking', () => {
       definition.resume();
     });
 
-
-    Then('definition waits for user task', async () => {
+    Then('definition waits for user to decide', async () => {
       user = await wait;
       expect(user).to.have.property('id', 'start');
     });
 
-    When('user takes decision to discard', () => {
+    When('user takes decision to proceed', () => {
       user.signal(true);
     });
 
