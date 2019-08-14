@@ -393,6 +393,34 @@ describe('Process', () => {
   });
 
   describe('resume()', () => {
+    it('resumes with dangling sequence flow error', async () => {
+      const source = factory.resource('resume_error.bpmn');
+      const context = await testHelpers.context(source);
+      const [bp] = context.getProcesses();
+
+      bp.on('activity.start', (api) => {
+        if (api.type === 'bpmn:UserTask') {
+          bp.once('activity.wait', () => bp.stop());
+        }
+      });
+
+      bp.run();
+
+      bp.resume();
+      bp.getPostponed().forEach(p => {
+        if (p.type === 'bpmn:UserTask') {
+          p.signal();
+        }
+      });
+
+      bp.resume();
+      bp.getPostponed().forEach(p => {
+        if (p.type === 'bpmn:UserTask') {
+          p.signal();
+        }
+      });
+    });
+
     it('resumes after stopped', async () => {
       const bp = Process({id: 'theProcess'}, Context());
 
