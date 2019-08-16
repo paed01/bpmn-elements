@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 0.7.0
+
+- Support LinkEventDefinition
+
 # 0.6.1
 
 - Defensive resume #8

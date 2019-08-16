@@ -32,7 +32,12 @@ The following elements are tested and supported.
 - IntermediateCatchEvent
 - IntermediateThrowEvent
 - IoSpecification
+- LinkEventDefinition
+  - throw
+  - catch
 - MessageEventDefinition
+  - throw
+  - catch
 - MessageFlow
 - ParallelGateway
 - ReceiveTask
