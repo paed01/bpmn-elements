@@ -1,17 +1,20 @@
+import Environment from '../../src/Environment';
+import IntermediateCatchEvent from '../../src/events/IntermediateCatchEvent';
 import testHelpers from '../helpers/testHelpers';
 
 describe('IntermediateCatchEvent', () => {
   describe('without event definitions', () => {
-    it('completes when signaled', async () => {
-      const source = `
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <process id="theProcess" isExecutable="true">
-          <intermediateCatchEvent id="emptyEvent" />
-        </process>
-      </definitions>`;
+    let event;
+    beforeEach(() => {
+      event = IntermediateCatchEvent({id: 'emptyEvent'}, {
+        environment: Environment({Logger: testHelpers.Logger}),
+        getInboundSequenceFlows() {},
+        getOutboundSequenceFlows() {},
+        loadExtensions() {},
+      });
+    });
 
-      const context = await testHelpers.context(source);
-      const event = context.getActivityById('emptyEvent');
+    it('completes when signaled', async () => {
       const wait = event.waitFor('wait');
       const leave = event.waitFor('leave');
 
@@ -21,6 +24,27 @@ describe('IntermediateCatchEvent', () => {
       await leave;
 
       expect(event.counters).to.have.property('taken', 1);
+    });
+
+    it('leaves when discarded by api', async () => {
+      const wait = event.waitFor('wait');
+      const leave = event.waitFor('leave');
+
+      event.run();
+      (await wait).discard();
+
+      await leave;
+
+      expect(event.counters).to.have.property('discarded', 1);
+    });
+
+    it('clears listeners when stopped', async () => {
+      const wait = event.waitFor('wait');
+
+      event.run();
+      (await wait).stop();
+
+      expect(event.broker).to.have.property('consumerCount', 0);
     });
   });
 

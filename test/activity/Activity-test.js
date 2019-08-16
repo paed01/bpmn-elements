@@ -179,7 +179,7 @@ describe('Activity', () => {
       expect(activity.broker.getQueue('inbound-q')).to.have.property('consumerCount', 0);
     });
 
-    it('starts next run when completed with first', () => {
+    it('immediate activity starts next run when completed with first', () => {
       const sequenceFlows = [];
       const context = {
         environment: Environment({Logger}),
@@ -215,6 +215,132 @@ describe('Activity', () => {
       sequenceFlow.take();
 
       expect(activity.counters).to.have.property('taken', 2);
+    });
+
+    it('postponed activity starts next run when completed with first', () => {
+      const sequenceFlows = [];
+      const context = {
+        environment: Environment({Logger}),
+        getInboundSequenceFlows() {
+          return sequenceFlows;
+        },
+        getOutboundSequenceFlows() {
+          return [];
+        },
+        loadExtensions() {},
+      };
+
+      const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      sequenceFlows.push(sequenceFlow);
+
+      const executeMessages = [];
+      const activity = Activity(() => {
+        return {
+          execute(message) {
+            executeMessages.push(message);
+          },
+        };
+      }, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+      }, context);
+
+      activity.activate();
+
+      sequenceFlow.take();
+      sequenceFlow.take();
+
+      expect(executeMessages).to.have.length(1);
+      expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 1);
+      activity.broker.publish('execution', 'execute.completed', executeMessages.pop().content);
+
+      expect(executeMessages).to.have.length(1);
+      expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 0);
+    });
+
+    it('postponed activity starts next run when first two were discarded', () => {
+      const sequenceFlows = [];
+      const context = {
+        environment: Environment({Logger}),
+        getInboundSequenceFlows() {
+          return sequenceFlows;
+        },
+        getOutboundSequenceFlows() {
+          return [];
+        },
+        loadExtensions() {},
+      };
+
+      const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      sequenceFlows.push(sequenceFlow);
+
+      const executeMessages = [];
+      const activity = Activity(() => {
+        return {
+          execute(message) {
+            executeMessages.push(message);
+          },
+        };
+      }, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+      }, context);
+
+      activity.activate();
+
+      sequenceFlow.discard();
+      sequenceFlow.discard();
+      sequenceFlow.take();
+
+      expect(executeMessages).to.have.length(1);
+      expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 0);
+    });
+
+    it('discards next run when completed with first', () => {
+      const sequenceFlows = [];
+      const context = {
+        environment: Environment({Logger}),
+        getInboundSequenceFlows() {
+          return sequenceFlows;
+        },
+        getOutboundSequenceFlows() {
+          return [];
+        },
+        loadExtensions() {},
+      };
+
+      const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      sequenceFlows.push(sequenceFlow);
+
+      const activity = Activity(({broker}) => {
+        return {
+          execute({content}) {
+            broker.publish('execution', 'execute.completed', {...content});
+          },
+        };
+      }, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+      }, context);
+
+      activity.activate();
+
+      sequenceFlow.take();
+      sequenceFlow.discard();
+      sequenceFlow.discard();
+      sequenceFlow.discard();
+
+      expect(activity.counters).to.have.property('taken', 1);
+      expect(activity.counters).to.have.property('discarded', 3);
     });
 
     it('forwards message from inbound to execution', () => {

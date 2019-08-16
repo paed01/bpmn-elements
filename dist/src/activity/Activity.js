@@ -188,13 +188,14 @@ function Activity(Behaviour, activityDef, context) {
   function run(runContent) {
     if (activityApi.isRunning) throw new Error(`activity <${id}> is already running`);
     executionId = initExecutionId || (0, _shared.getUniqueId)(id);
+    consumeApi();
     initExecutionId = undefined;
     const content = createMessage({ ...runContent,
       executionId
     });
     broker.publish('run', 'run.enter', content);
     broker.publish('run', 'run.start', (0, _messageHelper.cloneContent)(content));
-    activateRunConsumers();
+    consumeRunQ();
   }
 
   function createMessage(override = {}) {
@@ -244,11 +245,12 @@ function Activity(Behaviour, activityDef, context) {
 
     if (!status) return activate();
     stopped = false;
+    consumeApi();
     const content = createMessage();
     broker.publish('run', 'run.resume', content, {
       persistent: false
     });
-    activateRunConsumers();
+    consumeRunQ();
   }
 
   function discard(discardContent) {
@@ -257,7 +259,7 @@ function Activity(Behaviour, activityDef, context) {
     deactivateRunConsumers();
     runQ.purge();
     broker.publish('run', 'run.discard', (0, _messageHelper.cloneContent)(stateMessage.content));
-    activateRunConsumers();
+    consumeRunQ();
   }
 
   function discardRun() {
@@ -274,18 +276,18 @@ function Activity(Behaviour, activityDef, context) {
     deactivateRunConsumers();
     runQ.purge();
     broker.publish('run', 'run.discard', (0, _messageHelper.cloneContent)(stateMessage.content));
-    activateRunConsumers();
+    consumeRunQ();
   }
 
   function runDiscard(discardContent = {}) {
-    deactivateRunConsumers();
     executionId = initExecutionId || (0, _shared.getUniqueId)(id);
+    consumeApi();
     initExecutionId = undefined;
     const content = createMessage({ ...discardContent,
       executionId
     });
     broker.publish('run', 'run.discard', content);
-    activateRunConsumers();
+    consumeRunQ();
   }
 
   function stop() {
@@ -311,16 +313,22 @@ function Activity(Behaviour, activityDef, context) {
     broker.cancel('_format-consumer');
   }
 
-  function activateRunConsumers() {
-    broker.subscribeTmp('api', `activity.*.${executionId}`, onApiMessage, {
-      noAck: true,
-      consumerTag: '_activity-api',
-      priority: 100
-    });
+  function consumeRunQ() {
+    if (consumingRunQ) return;
     consumingRunQ = true;
     runQ.assertConsumer(onRunMessage, {
       exclusive: true,
       consumerTag: '_activity-run'
+    });
+  }
+
+  function consumeApi() {
+    if (!executionId) return;
+    broker.cancel('_activity-api');
+    broker.subscribeTmp('api', `activity.*.${executionId}`, onApiMessage, {
+      noAck: true,
+      consumerTag: '_activity-api',
+      priority: 100
     });
   }
 
@@ -343,7 +351,7 @@ function Activity(Behaviour, activityDef, context) {
       case 'activity.discard':
         {
           if (content.id === attachedToActivity.id) {
-            inboundQ.queueMessage(fields, content, properties);
+            inboundQ.queueMessage(fields, (0, _messageHelper.cloneContent)(content), properties);
           }
 
           break;
@@ -357,15 +365,15 @@ function Activity(Behaviour, activityDef, context) {
 
       case 'flow.take':
       case 'flow.discard':
-        inboundQ.queueMessage(fields, content, properties);
+        inboundQ.queueMessage(fields, (0, _messageHelper.cloneContent)(content), properties);
         break;
     }
   }
 
   function onInbound(routingKey, message) {
     message.ack();
-    const content = message.content;
     broker.cancel('_run-on-inbound');
+    const content = message.content;
     const inbound = [(0, _messageHelper.cloneContent)(content)];
 
     switch (routingKey) {
