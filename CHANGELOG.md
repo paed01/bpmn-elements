@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 0.6.1
+
+- Defensive resume #8
+
 # 0.6.0
 
 Focused on messaging.
