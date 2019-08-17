@@ -38,10 +38,6 @@ Get all [activity instances](/docs/Activity.md) scoped to id.
 
 Get [activity instance](/docs/Activity.md) by id.
 
-### `getErrorById(id)`
-
-Get error by id.
-
 ### `getExecutableProcesses()`
 
 Get executable processes.

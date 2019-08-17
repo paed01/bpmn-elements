@@ -35,7 +35,7 @@ Activity properties:
 - `isRunning`: boolean indicating if the activity is running
 - `isStart`: boolean indicating if the activity a start activity
 - `isSubProcess`:  boolean indicating if the activity is a sub process
-- `logger`: activity [logger](/docs/Environmnt.md#logger) instance
+- `logger`: activity [logger](/docs/Environment.md#logger) instance
 - `outbound`: list of outbound sequence flows
 - `parent`: activity parent
   - `id`: id of parent
@@ -64,9 +64,9 @@ Arguments:
 
 Returns activity [api](/docs/SharedApi.md)
 
-### `getErrorById(id)`
+### `getActivityById(id)`
 
-Utility function that fetches Bpmn Error from context.
+Get [activity](/docs/Activity.md) by id from context.
 
 ### `getState()`
 
@@ -113,7 +113,7 @@ Resume recovered or stopped activity.
 Run activity.
 
 Arguments:
-- `runContent`: optional object containing extra content for the broker messages.
+- `runContent`: optional object containing extra content for the broker run messages.
 
 ### `stop()`
 

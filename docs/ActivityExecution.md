@@ -3,9 +3,17 @@ Activity execution
 
 Shared activity execution.
 
+## `ActivityExecution(activity, context)`
+
+Activity execution ctorish.
+
+Arguments:
+- `activity`: parent [activity](/docs/Activity.md) function
+- `context`: [shared context](/docs/Context.md)
+
 Properties:
 - `completed`: has execution completed
-- `source`: intance of [activity](/docs/Activity.md) [behaviour](/docs/Extend.md)
+- `source`: instance of activity [behaviour](/docs/Extend.md)
 
 ### `discard()`
 
