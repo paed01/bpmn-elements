@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1cy7qf0" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.2.1">
+  <bpmn:process id="ActivityLifecycle" name="Activity Lifecycle" isExecutable="true">
+    <bpmn:sequenceFlow id="toQueueInbound" sourceRef="inboundStart" targetRef="queueInbound" />
+    <bpmn:sendTask id="activityEnter" name="activity.enter">
+      <bpmn:incoming>isTaken</bpmn:incoming>
+      <bpmn:outgoing>toActivityStart</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:startEvent id="inboundStart" name="inbound message">
+      <bpmn:outgoing>toQueueInbound</bpmn:outgoing>
+      <bpmn:messageEventDefinition messageRef="SequenceFlowMessage" />
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="inboundType">
+      <bpmn:incoming>toInboundDecision</bpmn:incoming>
+      <bpmn:outgoing>isTaken</bpmn:outgoing>
+      <bpmn:outgoing>isDiscarded</bpmn:outgoing>
+      <bpmn:outgoing>isPendingJoin</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="isTaken" name="flow.take" sourceRef="inboundType" targetRef="activityEnter" />
+    <bpmn:sequenceFlow id="toActivityStart" sourceRef="activityEnter" targetRef="activityStart" />
+    <bpmn:sendTask id="activityStart" name="activity.start">
+      <bpmn:incoming>toActivityStart</bpmn:incoming>
+      <bpmn:outgoing>toBehaviourExecute</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="toBehaviourExecute" sourceRef="activityStart" targetRef="behaviourExecute" />
+    <bpmn:sequenceFlow id="toActivityEnd" sourceRef="behaviourExecute" targetRef="activityEnd" />
+    <bpmn:sendTask id="activityEnd" name="activity.end">
+      <bpmn:incoming>toActivityEnd</bpmn:incoming>
+      <bpmn:outgoing>toTakeOutbound</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="toTakeOutbound" sourceRef="activityEnd" targetRef="takeOutbound" />
+    <bpmn:sendTask id="activityLeave" name="activity.leave">
+      <bpmn:incoming>toActivityLeave</bpmn:incoming>
+      <bpmn:outgoing>fromActivityLeave</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="toGetInbound" sourceRef="queueInbound" targetRef="getInbound" />
+    <bpmn:sequenceFlow id="toInboundDecision" sourceRef="getInbound" targetRef="inboundType" />
+    <bpmn:sequenceFlow id="fromTakeOutbound" sourceRef="takeOutbound" targetRef="pendingLeave" />
+    <bpmn:exclusiveGateway id="hasQueuedInbound" name="queued inbound?" default="toEnd">
+      <bpmn:incoming>fromActivityLeave</bpmn:incoming>
+      <bpmn:outgoing>toEnd</bpmn:outgoing>
+      <bpmn:outgoing>backToGetInbound</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="fromActivityLeave" sourceRef="activityLeave" targetRef="hasQueuedInbound" />
+    <bpmn:endEvent id="waitForNextInbound" name="wait for next inbound">
+      <bpmn:incoming>toEnd</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="toEnd" sourceRef="hasQueuedInbound" targetRef="waitForNextInbound" />
+    <bpmn:sequenceFlow id="isDiscarded" name="flow.discard" sourceRef="inboundType" targetRef="activityDiscard" />
+    <bpmn:sendTask id="activityDiscard" name="activity.discard">
+      <bpmn:incoming>isDiscarded</bpmn:incoming>
+      <bpmn:outgoing>toDiscardOutbound</bpmn:outgoing>
+    </bpmn:sendTask>
+    <bpmn:sequenceFlow id="toDiscardOutbound" sourceRef="activityDiscard" targetRef="discardOutbound" />
+    <bpmn:sequenceFlow id="toActivityLeave" sourceRef="pendingLeave" targetRef="activityLeave" />
+    <bpmn:sequenceFlow id="fromDiscardOutbound" sourceRef="discardOutbound" targetRef="pendingLeave" />
+    <bpmn:parallelGateway id="pendingLeave">
+      <bpmn:incoming>fromTakeOutbound</bpmn:incoming>
+      <bpmn:incoming>fromDiscardOutbound</bpmn:incoming>
+      <bpmn:outgoing>toActivityLeave</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="backToGetInbound" name="yes" sourceRef="hasQueuedInbound" targetRef="getInbound">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${environment.services.hasPendingInbound}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="pendingJoinEnd" name="wait for more inbound">
+      <bpmn:incoming>isPendingJoin</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="isPendingJoin" name="pending parallel join" sourceRef="inboundType" targetRef="pendingJoinEnd" />
+    <bpmn:serviceTask id="queueInbound" name="queue inbound message">
+      <bpmn:incoming>toQueueInbound</bpmn:incoming>
+      <bpmn:outgoing>toGetInbound</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="getInbound" name="get inbound message">
+      <bpmn:incoming>toGetInbound</bpmn:incoming>
+      <bpmn:incoming>backToGetInbound</bpmn:incoming>
+      <bpmn:outgoing>toInboundDecision</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="behaviourExecute" name="Behaviour execute()">
+      <bpmn:incoming>toBehaviourExecute</bpmn:incoming>
+      <bpmn:outgoing>toActivityEnd</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="takeOutbound" name="take outbound">
+      <bpmn:incoming>toTakeOutbound</bpmn:incoming>
+      <bpmn:outgoing>fromTakeOutbound</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="discardOutbound" name="discard outbound">
+      <bpmn:incoming>toDiscardOutbound</bpmn:incoming>
+      <bpmn:outgoing>fromDiscardOutbound</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmn:message id="SequenceFlowMessage" name="FlowMessage" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="ActivityLifecycle">
+      <bpmndi:BPMNEdge id="SequenceFlow_1ia3qtj_di" bpmnElement="toQueueInbound">
+        <di:waypoint x="198" y="210" />
+        <di:waypoint x="259" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="SendTask_12tfbpy_di" bpmnElement="activityEnter">
+        <dc:Bounds x="669" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="StartEvent_10lqbao_di" bpmnElement="inboundStart">
+        <dc:Bounds x="162" y="192" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="137" y="235" width="87" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_1hw3m31_di" bpmnElement="inboundType" isMarkerVisible="true">
+        <dc:Bounds x="544" y="185" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="298" y="209" width="25" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_02stbbz_di" bpmnElement="isTaken">
+        <di:waypoint x="594" y="210" />
+        <di:waypoint x="669" y="210" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="597" y="192" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1lkuxhk_di" bpmnElement="toActivityStart">
+        <di:waypoint x="769" y="210" />
+        <di:waypoint x="800" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="SendTask_08tzlno_di" bpmnElement="activityStart">
+        <dc:Bounds x="800" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0b1bx2s_di" bpmnElement="toBehaviourExecute">
+        <di:waypoint x="900" y="210" />
+        <di:waypoint x="930" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_12dk3qu_di" bpmnElement="toActivityEnd">
+        <di:waypoint x="1030" y="210" />
+        <di:waypoint x="1060" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="SendTask_1it1m97_di" bpmnElement="activityEnd">
+        <dc:Bounds x="1060" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1w0hn8n_di" bpmnElement="toTakeOutbound">
+        <di:waypoint x="1160" y="210" />
+        <di:waypoint x="1190" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="SendTask_0g4xclc_di" bpmnElement="activityLeave">
+        <dc:Bounds x="1430" y="223" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_11jx0y7_di" bpmnElement="toGetInbound">
+        <di:waypoint x="359" y="210" />
+        <di:waypoint x="409" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1pow86j_di" bpmnElement="toInboundDecision">
+        <di:waypoint x="509" y="210" />
+        <di:waypoint x="544" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0d96pxi_di" bpmnElement="fromTakeOutbound">
+        <di:waypoint x="1290" y="210" />
+        <di:waypoint x="1350" y="210" />
+        <di:waypoint x="1350" y="238" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_0rhy0q0_di" bpmnElement="hasQueuedInbound" isMarkerVisible="true">
+        <dc:Bounds x="1575" y="238" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1557" y="212" width="86" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0yky89v_di" bpmnElement="fromActivityLeave">
+        <di:waypoint x="1530" y="263" />
+        <di:waypoint x="1575" y="263" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_0jqqj9r_di" bpmnElement="waitForNextInbound">
+        <dc:Bounds x="1682" y="245" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1671" y="288" width="60" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1c997a0_di" bpmnElement="toEnd">
+        <di:waypoint x="1625" y="263" />
+        <di:waypoint x="1682" y="263" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1640" y="245" width="29" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0cbegl4_di" bpmnElement="isDiscarded">
+        <di:waypoint x="569" y="235" />
+        <di:waypoint x="569" y="323" />
+        <di:waypoint x="669" y="323" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="590" y="306" width="58" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="SendTask_0iqy4fu_di" bpmnElement="activityDiscard">
+        <dc:Bounds x="669" y="283" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1e8gns8_di" bpmnElement="toDiscardOutbound">
+        <di:waypoint x="769" y="323" />
+        <di:waypoint x="1190" y="323" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_00ijgdj_di" bpmnElement="toActivityLeave">
+        <di:waypoint x="1375" y="263" />
+        <di:waypoint x="1430" y="263" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_105bd4d_di" bpmnElement="fromDiscardOutbound">
+        <di:waypoint x="1290" y="323" />
+        <di:waypoint x="1350" y="323" />
+        <di:waypoint x="1350" y="288" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ParallelGateway_05ps6l4_di" bpmnElement="pendingLeave">
+        <dc:Bounds x="1325" y="238" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1mwofab_di" bpmnElement="backToGetInbound">
+        <di:waypoint x="1600" y="288" />
+        <di:waypoint x="1600" y="390" />
+        <di:waypoint x="459" y="390" />
+        <di:waypoint x="459" y="250" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1612" y="294" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_1pceuim_di" bpmnElement="pendingJoinEnd">
+        <dc:Bounds x="551" y="81" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="539" y="51" width="64" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_17pku6s_di" bpmnElement="isPendingJoin">
+        <di:waypoint x="569" y="185" />
+        <di:waypoint x="569" y="117" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="580" y="135" width="78" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ServiceTask_1v2wcxz_di" bpmnElement="queueInbound">
+        <dc:Bounds x="259" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_15lvzso_di" bpmnElement="getInbound">
+        <dc:Bounds x="409" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_0xwl29x_di" bpmnElement="behaviourExecute">
+        <dc:Bounds x="930" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_1d4hgyx_di" bpmnElement="takeOutbound">
+        <dc:Bounds x="1190" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_18p83tx_di" bpmnElement="discardOutbound">
+        <dc:Bounds x="1190" y="283" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

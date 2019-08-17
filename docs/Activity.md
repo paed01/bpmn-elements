@@ -3,6 +3,12 @@ Activity
 
 Shared activity behaviour.
 
+## Activity lifecycle
+
+All activities except EventBasedGateway share this lifecycle. The EventBasedGateway takes care of it's own outbound in the Behaviour.
+
+![Activity lifecycle](https://raw.github.com/paed01/bpmn-elements/master/docs/activity-lifecycle.png)
+
 ## `Activity(Behaviour, activityDefinition, context)`
 
 Activity ctorish.
