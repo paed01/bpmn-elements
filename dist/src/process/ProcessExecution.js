@@ -22,9 +22,11 @@ function ProcessExecution(parentActivity, context) {
   } = context;
   const children = context.getActivities(id) || [];
   const flows = context.getSequenceFlows(id) || [];
+  const associations = context.getAssociations(id) || [];
   const outboundMessageFlows = context.getMessageFlows(id) || [];
   const startActivities = [];
   const triggeredByEventActivities = [];
+  const detachedActivities = [];
   const postponed = [];
   const startSequences = {};
   const exchangeName = isSubProcess ? 'subprocess-execution' : 'execution';
@@ -118,6 +120,7 @@ function ProcessExecution(parentActivity, context) {
     if (completed) return complete('completed');
     activate();
     postponed.splice(0);
+    detachedActivities.splice(0);
     activityQ.consume(onChildMessage, {
       prefetch: 1000,
       consumerTag: `_process-activity-${executionId}`
@@ -139,7 +142,9 @@ function ProcessExecution(parentActivity, context) {
       content
     }) => {
       const activity = getActivityById(content.id);
-      if (activity) activity.resume();
+      if (!activity) return;
+      if (content.placeholder) return;
+      activity.resume();
     });
   }
 
@@ -161,6 +166,7 @@ function ProcessExecution(parentActivity, context) {
     startActivities.forEach(activity => activity.init());
     startActivities.forEach(activity => activity.run());
     postponed.splice(0);
+    detachedActivities.splice(0);
     activityQ.assertConsumer(onChildMessage, {
       prefetch: 1000,
       consumerTag: `_process-activity-${executionId}`
@@ -180,6 +186,14 @@ function ProcessExecution(parentActivity, context) {
         const flow = getMessageFlowById(flowState.id);
         if (!flow) return;
         flow.recover(flowState);
+      });
+    }
+
+    if (state.associations) {
+      state.associations.forEach(associationState => {
+        const association = getAssociationById(associationState.id);
+        if (!association) return;
+        association.recover(associationState);
       });
     }
 
@@ -230,6 +244,7 @@ function ProcessExecution(parentActivity, context) {
     startActivities.splice(0);
     triggeredByEventActivities.splice(0);
     children.forEach(activity => {
+      if (activity.placeholder) return;
       activity.activate(processExecution);
       activity.broker.subscribeTmp('event', '#', onActivityEvent, {
         noAck: true,
@@ -292,6 +307,7 @@ function ProcessExecution(parentActivity, context) {
     broker.cancel(`_process-api-consumer-${executionId}`);
     broker.cancel(`_process-activity-${executionId}`);
     children.forEach(activity => {
+      if (activity.placeholder) return;
       activity.broker.cancel('_process-activity-consumer');
       activity.deactivate();
     });
@@ -352,6 +368,7 @@ function ProcessExecution(parentActivity, context) {
         message.ack();
         return onDiscard(message);
 
+      case 'activity.compensation.end':
       case 'flow.looped':
       case 'activity.leave':
         return onChildCompleted();
@@ -360,7 +377,14 @@ function ProcessExecution(parentActivity, context) {
     stateChangeMessage(true);
 
     switch (routingKey) {
+      case 'activity.detach':
+        {
+          detachedActivities.push((0, _messageHelper.cloneMessage)(message));
+          break;
+        }
+
       case 'activity.discard':
+      case 'activity.compensation.start':
       case 'activity.enter':
         {
           status = 'executing';
@@ -370,7 +394,7 @@ function ProcessExecution(parentActivity, context) {
 
       case 'activity.end':
         {
-          if (isEnd) discardStartIfConformed();
+          if (isEnd) discardPostponedIfNecessary();
           break;
         }
 
@@ -399,43 +423,52 @@ function ProcessExecution(parentActivity, context) {
       if (!content.inbound) return;
       content.inbound.forEach(trigger => {
         if (!trigger.isSequenceFlow) return;
-        const msg = popPostponed(trigger);
+        const msg = popPostponed(trigger, postponed);
         if (msg) msg.ack();
       });
     }
 
     function popPostponed(byContent) {
-      const idx = postponed.findIndex(msg => {
+      const postponedIdx = postponed.findIndex(msg => {
         if (msg.content.isSequenceFlow) return msg.content.sequenceId === byContent.sequenceId;
         return msg.content.executionId === byContent.executionId;
       });
+      let postponedMsg;
 
-      if (idx > -1) {
-        return postponed.splice(idx, 1)[0];
+      if (postponedIdx > -1) {
+        postponedMsg = postponed.splice(postponedIdx, 1)[0];
       }
+
+      const detachedIdx = detachedActivities.findIndex(msg => msg.content.executionId === byContent.executionId);
+      if (detachedIdx > -1) detachedActivities.splice(detachedIdx, 1);
+      return postponedMsg;
     }
 
     function onChildCompleted() {
       stateChangeMessage(false);
       if (isRedelivered) return message.ack();
       logger.debug(`<${executionId} (${id})> left <${childId}> (${activityType}), pending runs ${postponed.length}`, postponed.map(a => a.content.id));
+      const postponedLength = postponed.length;
 
-      if (!postponed.length) {
+      if (!postponedLength) {
         message.ack();
         return complete('completed');
+      } else if (postponedLength === detachedActivities.length) {
+        getPostponed().forEach(api => api.discard());
       }
     }
 
-    function discardStartIfConformed() {
+    function discardPostponedIfNecessary() {
       for (const p of postponed) {
         const postponedId = p.content.id;
         const startSequence = startSequences[postponedId];
-        if (!startSequence) continue;
 
-        if (startSequence.content.sequence.some(({
-          id: sid
-        }) => sid === childId)) {
-          getApi(p).discard();
+        if (startSequence) {
+          if (startSequence.content.sequence.some(({
+            id: sid
+          }) => sid === childId)) {
+            getApi(p).discard();
+          }
         }
       }
     }
@@ -481,6 +514,7 @@ function ProcessExecution(parentActivity, context) {
   function onApiMessage(routingKey, message) {
     if (message.properties.delegate) {
       for (const child of children) {
+        if (child.placeholder) continue;
         child.broker.publish('api', routingKey, (0, _messageHelper.cloneContent)(message.content), message.properties);
       }
 
@@ -579,7 +613,8 @@ function ProcessExecution(parentActivity, context) {
       status,
       children: children.map(activity => activity.getState()),
       flows: flows.map(f => f.getState()),
-      messageFlows: outboundMessageFlows.map(f => f.getState())
+      messageFlows: outboundMessageFlows.map(f => f.getState()),
+      associations: associations.map(f => f.getState())
     };
   }
 
@@ -593,6 +628,10 @@ function ProcessExecution(parentActivity, context) {
 
   function getFlowById(flowId) {
     return flows.find(f => f.id === flowId);
+  }
+
+  function getAssociationById(associationId) {
+    return associations.find(a => a.id === associationId);
   }
 
   function getMessageFlowById(flowId) {

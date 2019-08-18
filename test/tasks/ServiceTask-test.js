@@ -1,7 +1,8 @@
+import JsExtension from '../resources/extensions/JsExtension';
 import nock from 'nock';
 import request from 'request';
+import ServiceTask from '../../src/tasks/ServiceTask';
 import testHelpers from '../helpers/testHelpers';
-import JsExtension from '../resources/extensions/JsExtension';
 import { ActivityError } from '../../src/error/Errors';
 
 describe('ServiceTask', () => {
@@ -70,6 +71,93 @@ describe('ServiceTask', () => {
       const leave = task.waitFor('leave');
       task.run();
       await leave;
+    });
+  });
+
+  describe('recover and resume', () => {
+    it('run stop resume while executing service function', () => {
+      const task = ServiceTask({
+        id: 'service',
+        behaviour: {
+          Service() {
+            return {
+              execute() {}
+            };
+          }
+        }
+      }, testHelpers.emptyContext());
+
+      task.run();
+      task.stop();
+      task.resume();
+    });
+
+    it('run stop recover resume while executing service function', () => {
+      const task = ServiceTask({
+        id: 'service',
+        behaviour: {
+          Service() {
+            return {
+              execute() {}
+            };
+          }
+        }
+      }, testHelpers.emptyContext());
+
+      task.run();
+      task.stop();
+
+      const state = task.getState();
+      const recovered = ServiceTask({
+        id: 'service',
+        behaviour: {
+          Service() {
+            return {
+              execute(...args) {
+                args.pop()();
+              }
+            };
+          }
+        }
+      }, testHelpers.emptyContext()).recover(JSON.parse(JSON.stringify(state)));
+
+      recovered.resume();
+      expect(recovered.counters).to.have.property('taken', 1);
+    });
+
+    it('stop in service function, recover resume', () => {
+      let state;
+      const task = ServiceTask({
+        id: 'service',
+        behaviour: {
+          Service(activity) {
+            return {
+              execute() {
+                activity.stop();
+                state = activity.getState();
+              }
+            };
+          }
+        }
+      }, testHelpers.emptyContext());
+
+      task.run();
+
+      const recovered = ServiceTask({
+        id: 'service',
+        behaviour: {
+          Service() {
+            return {
+              execute(...args) {
+                args.pop()();
+              }
+            };
+          }
+        }
+      }, testHelpers.emptyContext()).recover(state);
+
+      recovered.resume();
+      expect(recovered.counters).to.have.property('taken', 1);
     });
   });
 

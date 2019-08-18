@@ -10,6 +10,8 @@ var _Activity = _interopRequireDefault(require("../activity/Activity"));
 
 var _Errors = require("../error/Errors");
 
+var _messageHelper = require("../messageHelper");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function ServiceTask(activityDef, context) {
@@ -64,7 +66,8 @@ function ServiceTaskBehaviour(activity) {
       }
 
       return broker.publish('execution', 'execute.completed', { ...executeMessage.content,
-        output
+        output,
+        state: 'complete'
       });
     });
 
@@ -86,14 +89,14 @@ function ServiceTaskBehaviour(activity) {
     }
   }
 
-  function getService() {
+  function getService(message) {
     const Service = behaviour.Service;
 
     if (!Service) {
       return environment.settings.enableDummyService ? DummyService(activity) : null;
     }
 
-    return Service(activity);
+    return Service(activity, (0, _messageHelper.cloneMessage)(message));
   }
 
   function DummyService() {

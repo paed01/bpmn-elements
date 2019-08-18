@@ -1551,7 +1551,10 @@ function createProcess(override, step) {
   ];
   const context = {
     environment,
+    getAssociations() {},
+    getInboundAssociations() {},
     getInboundSequenceFlows,
+    getOutboundAssociations() {},
     getOutboundSequenceFlows,
     loadExtensions,
     getSequenceFlows,

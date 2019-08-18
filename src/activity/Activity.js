@@ -1,5 +1,5 @@
 import ActivityExecution from './ActivityExecution';
-import {getUniqueId, filterUndefined} from '../shared';
+import {brokerSafeId, getUniqueId, filterUndefined} from '../shared';
 import {ActivityApi} from '../Api';
 import {ActivityBroker} from '../EventBroker';
 import {getRoutingKeyPattern} from 'smqp';
@@ -7,8 +7,10 @@ import {cloneContent, cloneParent, cloneMessage} from '../messageHelper';
 
 export default function Activity(Behaviour, activityDef, context) {
   const {id, type = 'activity', name, parent: originalParent = {}, behaviour = {}, isParallelGateway, isSubProcess, triggeredByEvent, isThrowing} = activityDef;
+  const isForCompensation = behaviour.isForCompensation;
+
   const parent = cloneParent(originalParent);
-  const {environment, getInboundSequenceFlows, getOutboundSequenceFlows} = context;
+  const {environment, getInboundSequenceFlows, getOutboundSequenceFlows, getInboundAssociations} = context;
 
   const logger = environment.Logger(type.toLowerCase());
   const {step} = environment.settings;
@@ -23,8 +25,9 @@ export default function Activity(Behaviour, activityDef, context) {
 
   const inboundSequenceFlows = getInboundSequenceFlows(id) || [];
   const outboundSequenceFlows = getOutboundSequenceFlows(id) || [];
+  const inboundAssociations = getInboundAssociations(id) || [];
 
-  const isStart = inboundSequenceFlows.length === 0 && !attachedTo && !triggeredByEvent;
+  const isStart = inboundSequenceFlows.length === 0 && !attachedTo && !triggeredByEvent && !isForCompensation;
   const isEnd = outboundSequenceFlows.length === 0;
   const isParallelJoin = inboundSequenceFlows.length > 1 && isParallelGateway;
   const isMultiInstance = !!behaviour.loopCharacteristics;
@@ -47,6 +50,7 @@ export default function Activity(Behaviour, activityDef, context) {
     isStart,
     isSubProcess,
     isThrowing,
+    isForCompensation,
     triggeredByEvent,
     parent: cloneParent(parent),
     behaviour: {...behaviour, eventDefinitions},
@@ -99,10 +103,16 @@ export default function Activity(Behaviour, activityDef, context) {
   const formatRunQ = broker.getQueue('format-run-q');
   const inboundQ = broker.assertQueue('inbound-q', {durable: true, autoDelete: false});
 
-  inboundTriggers.forEach((trigger) => {
-    if (trigger.isSequenceFlow) trigger.broker.subscribeTmp('event', 'flow.#', onInboundEvent, {noAck: true, consumerTag: `_inbound-${id}`});
-    else trigger.broker.subscribeTmp('event', 'activity.#', onInboundEvent, {noAck: true, consumerTag: `_inbound-${id}`});
-  });
+  if (isForCompensation) {
+    inboundAssociations.forEach((trigger) => {
+      trigger.broker.subscribeTmp('event', '#', onInboundEvent, {noAck: true, consumerTag: `_inbound-${id}`});
+    });
+  } else {
+    inboundTriggers.forEach((trigger) => {
+      if (trigger.isSequenceFlow) trigger.broker.subscribeTmp('event', 'flow.#', onInboundEvent, {noAck: true, consumerTag: `_inbound-${id}`});
+      else trigger.broker.subscribeTmp('event', 'activity.#', onInboundEvent, {noAck: true, consumerTag: `_inbound-${id}`});
+    });
+  }
 
   Object.defineProperty(activityApi, 'broker', {
     enumerable: true,
@@ -140,10 +150,9 @@ export default function Activity(Behaviour, activityDef, context) {
     if (activityApi.isRunning) throw new Error(`activity <${id}> is already running`);
 
     executionId = initExecutionId || getUniqueId(id);
+    initExecutionId = undefined;
 
     consumeApi();
-
-    initExecutionId = undefined;
 
     const content = createMessage({...runContent, executionId});
 
@@ -162,12 +171,10 @@ export default function Activity(Behaviour, activityDef, context) {
       parent: cloneParent(parent),
     };
 
-    const flags = {isEnd, isStart, isSubProcess, isMultiInstance};
+    const flags = {isEnd, isStart, isSubProcess, isMultiInstance, isForCompensation, attachedTo};
     for (const flag in flags) {
-      if (flags[flag]) result[flag] = true;
+      if (flags[flag]) result[flag] = flags[flag];
     }
-
-    if (attachedTo) result.attachedTo = {...attachedTo};
 
     return result;
   }
@@ -186,6 +193,7 @@ export default function Activity(Behaviour, activityDef, context) {
     }
 
     broker.recover(state.broker);
+    return activityApi;
   }
 
   function resume() {
@@ -215,6 +223,7 @@ export default function Activity(Behaviour, activityDef, context) {
 
   function discardRun() {
     if (!status) return;
+
     if (execution && !execution.completed) return;
     switch (status) {
       case 'executing':
@@ -248,11 +257,8 @@ export default function Activity(Behaviour, activityDef, context) {
   }
 
   function activate() {
-    if (isParallelJoin) {
-      return inboundQ.consume(onJoinInbound, {consumerTag: '_run-on-inbound', prefetch: 1000});
-    }
-
-    return inboundQ.consume(onInbound, {consumerTag: '_run-on-inbound'});
+    if (isForCompensation) return;
+    return consumeInbound();
   }
 
   function deactivate() {
@@ -274,6 +280,14 @@ export default function Activity(Behaviour, activityDef, context) {
     broker.subscribeTmp('api', `activity.*.${executionId}`, onApiMessage, {noAck: true, consumerTag: '_activity-api', priority: 100});
   }
 
+  function consumeInbound() {
+    if (isParallelJoin) {
+      return inboundQ.consume(onJoinInbound, {consumerTag: '_run-on-inbound', prefetch: 1000});
+    }
+
+    return inboundQ.consume(onInbound, {consumerTag: '_run-on-inbound'});
+  }
+
   function deactivateRunConsumers() {
     broker.cancel('_activity-api');
     broker.cancel('_activity-run');
@@ -283,6 +297,7 @@ export default function Activity(Behaviour, activityDef, context) {
 
   function onInboundEvent(routingKey, message) {
     const {fields, content, properties} = message;
+
     switch (routingKey) {
       case 'activity.enter':
       case 'activity.discard': {
@@ -295,10 +310,32 @@ export default function Activity(Behaviour, activityDef, context) {
         shakeOutbound(message);
         break;
       }
+      case 'association.take':
       case 'flow.take':
       case 'flow.discard':
         inboundQ.queueMessage(fields, cloneContent(content), properties);
         break;
+      case 'association.discard': {
+        logger.debug(`<${id}> compensation discarded`);
+        inboundQ.purge();
+        break;
+      }
+      case 'association.complete': {
+        if (!isForCompensation) break;
+
+        inboundQ.queueMessage(fields, cloneContent(content), properties);
+
+        const compensationId = `${brokerSafeId(id)}_${brokerSafeId(content.sequenceId)}`;
+        publishEvent('compensation.start', createMessage({
+          executionId: compensationId,
+          placeholder: true,
+        }));
+
+        logger.debug(`<${id}> start compensation with id <${compensationId}>`);
+
+        consumeInbound();
+        break;
+      }
     }
   }
 
@@ -310,6 +347,7 @@ export default function Activity(Behaviour, activityDef, context) {
     const inbound = [cloneContent(content)];
 
     switch (routingKey) {
+      case 'association.take':
       case 'flow.take':
       case 'activity.enter':
         run({
@@ -322,6 +360,17 @@ export default function Activity(Behaviour, activityDef, context) {
         let discardSequence;
         if (content.discardSequence) discardSequence = content.discardSequence.slice();
         runDiscard({inbound, discardSequence});
+        break;
+      }
+      case 'association.complete': {
+        broker.cancel('_run-on-inbound');
+
+        const compensationId = `${brokerSafeId(id)}_${brokerSafeId(content.sequenceId)}`;
+        logger.debug(`<${id}> completed compensation with id <${compensationId}>`);
+
+        publishEvent('compensation.end', createMessage({
+          executionId: compensationId,
+        }));
         break;
       }
     }
@@ -419,7 +468,7 @@ export default function Activity(Behaviour, activityDef, context) {
           execution = undefined;
         }
 
-        if (extensions) extensions.activate(message);
+        if (extensions) extensions.activate(cloneMessage(message), activityApi);
         if (ioSpecification) ioSpecification.activate(message);
 
         if (!isRedelivered) publishEvent('enter', content);
@@ -431,7 +480,7 @@ export default function Activity(Behaviour, activityDef, context) {
         status = 'discard';
         execution = undefined;
 
-        if (extensions) extensions.activate(message);
+        if (extensions) extensions.activate(cloneMessage(message), activityApi);
         if (ioSpecification) ioSpecification.activate(message);
 
         if (!isRedelivered) {
@@ -455,7 +504,7 @@ export default function Activity(Behaviour, activityDef, context) {
         executeMessage = message;
 
         if (isRedelivered) {
-          if (extensions) extensions.activate(message);
+          if (extensions) extensions.activate(cloneMessage(message), activityApi);
           if (ioSpecification) ioSpecification.activate(message);
         }
 
@@ -516,7 +565,7 @@ export default function Activity(Behaviour, activityDef, context) {
         break;
       }
       case 'run.next':
-        activate();
+        consumeInbound();
         break;
     }
 

@@ -13,7 +13,7 @@ function ContextInstance(definitionContext, environment) {
   const {id = 'Def', name, type = 'context'} = definitionContext;
   const sid = getUniqueId(id);
 
-  const activityRefs = {}, dataObjectRefs = {}, messageFlows = [], processes = [], processRefs = {}, sequenceFlowRefs = {}, sequenceFlows = [];
+  const activityRefs = {}, dataObjectRefs = {}, messageFlows = [], processes = [], processRefs = {}, sequenceFlowRefs = {}, sequenceFlows = [], associationRefs = [];
 
   const context = {
     id,
@@ -25,11 +25,14 @@ function ContextInstance(definitionContext, environment) {
     clone,
     getActivities,
     getActivityById,
+    getAssociations,
     getExecutableProcesses,
     getDataObjectById,
+    getInboundAssociations,
     getInboundSequenceFlows,
     getMessageFlows,
     getOutboundSequenceFlows,
+    getOutboundAssociations,
     getProcessById,
     getProcesses,
     getSequenceFlowById,
@@ -72,20 +75,27 @@ function ContextInstance(definitionContext, environment) {
   }
 
   function getInboundSequenceFlows(activityId) {
-    return definitionContext.getInboundSequenceFlows(activityId).map((flow) => upsertSequenceFlow(flow));
+    return (definitionContext.getInboundSequenceFlows(activityId) || []).map((flow) => upsertSequenceFlow(flow));
   }
 
   function getOutboundSequenceFlows(activityId) {
-    return definitionContext.getOutboundSequenceFlows(activityId).map((flow) => upsertSequenceFlow(flow));
+    return (definitionContext.getOutboundSequenceFlows(activityId) || []).map((flow) => upsertSequenceFlow(flow));
+  }
+
+  function getInboundAssociations(activityId) {
+    return (definitionContext.getInboundAssociations(activityId) || []).map((association) => upsertAssociation(association));
+  }
+
+  function getOutboundAssociations(activityId) {
+    return (definitionContext.getOutboundAssociations(activityId) || []).map((association) => upsertAssociation(association));
   }
 
   function getActivities(scopeId) {
-    const activities = definitionContext.getActivities(scopeId);
-    return activities.map((activityDef) => upsertActivity(activityDef));
+    return (definitionContext.getActivities(scopeId) || []).map((activityDef) => upsertActivity(activityDef));
   }
 
   function getSequenceFlows(scopeId) {
-    return definitionContext.getSequenceFlows(scopeId).map((flow) => upsertSequenceFlow(flow));
+    return (definitionContext.getSequenceFlows(scopeId) || []).map((flow) => upsertSequenceFlow(flow));
   }
 
   function upsertSequenceFlow(flowDefinition) {
@@ -96,6 +106,19 @@ function ContextInstance(definitionContext, environment) {
     sequenceFlows.push(flowInstance);
 
     return flowInstance;
+  }
+
+  function getAssociations(scopeId) {
+    return (definitionContext.getAssociations(scopeId) || []).map((association) => upsertAssociation(association));
+  }
+
+  function upsertAssociation(associationDefinition) {
+    let instance = associationRefs[associationDefinition.id];
+    if (instance) return instance;
+
+    instance = associationRefs[associationDefinition.id] = associationDefinition.Behaviour(associationDefinition, context);
+
+    return instance;
   }
 
   function clone(newEnvironment) {
@@ -124,7 +147,7 @@ function ContextInstance(definitionContext, environment) {
 
   function getMessageFlows(sourceId) {
     if (!messageFlows.length) {
-      const flows = definitionContext.getMessageFlows();
+      const flows = definitionContext.getMessageFlows() || [];
       messageFlows.push(...flows.map((flow) => MessageFlow(flow, context)));
     }
 

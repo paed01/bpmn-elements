@@ -1,6 +1,8 @@
 import Activity from './src/activity/Activity';
+import Association from './src/flows/Association';
 import BoundaryEvent from './src/events/BoundaryEvent';
 import BpmnError from './src/error/BpmnError';
+import CompensateEventDefinition from './src/eventDefinitions/CompensateEventDefinition';
 import ConditionalEventDefinition from './src/eventDefinitions/ConditionalEventDefinition';
 import Context from './src/Context';
 import DataObject from './src/io/EnvironmentDataObject';
@@ -40,14 +42,17 @@ import TerminateEventDefinition from './src/eventDefinitions/TerminateEventDefin
 import TimerEventDefinition from './src/eventDefinitions/TimerEventDefinition';
 
 export {
+  Association,
   Activity,
   BoundaryEvent,
   BpmnError,
+  CompensateEventDefinition,
   ConditionalEventDefinition,
   Context,
   DataObject,
   Definition,
   Dummy,
+  Dummy as TextAnnotation,
   EndEvent,
   Environment,
   ErrorEventDefinition,

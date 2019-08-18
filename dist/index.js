@@ -9,6 +9,12 @@ Object.defineProperty(exports, "Activity", {
     return _Activity.default;
   }
 });
+Object.defineProperty(exports, "Association", {
+  enumerable: true,
+  get: function () {
+    return _Association.default;
+  }
+});
 Object.defineProperty(exports, "BoundaryEvent", {
   enumerable: true,
   get: function () {
@@ -19,6 +25,12 @@ Object.defineProperty(exports, "BpmnError", {
   enumerable: true,
   get: function () {
     return _BpmnError.default;
+  }
+});
+Object.defineProperty(exports, "CompensateEventDefinition", {
+  enumerable: true,
+  get: function () {
+    return _CompensateEventDefinition.default;
   }
 });
 Object.defineProperty(exports, "ConditionalEventDefinition", {
@@ -46,6 +58,12 @@ Object.defineProperty(exports, "Definition", {
   }
 });
 Object.defineProperty(exports, "Dummy", {
+  enumerable: true,
+  get: function () {
+    return _Dummy.default;
+  }
+});
+Object.defineProperty(exports, "TextAnnotation", {
   enumerable: true,
   get: function () {
     return _Dummy.default;
@@ -264,9 +282,13 @@ Object.defineProperty(exports, "TimerEventDefinition", {
 
 var _Activity = _interopRequireDefault(require("./src/activity/Activity"));
 
+var _Association = _interopRequireDefault(require("./src/flows/Association"));
+
 var _BoundaryEvent = _interopRequireDefault(require("./src/events/BoundaryEvent"));
 
 var _BpmnError = _interopRequireDefault(require("./src/error/BpmnError"));
+
+var _CompensateEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/CompensateEventDefinition"));
 
 var _ConditionalEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/ConditionalEventDefinition"));
 

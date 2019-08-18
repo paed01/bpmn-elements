@@ -303,10 +303,7 @@ describe('activity run', () => {
         parent: {
           id: 'process1',
         },
-      }, {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
+      }, getContext({
         loadExtensions() {
           return {
             activate() {
@@ -317,7 +314,7 @@ describe('activity run', () => {
             }
           };
         },
-      });
+      }));
 
       const activityEvents = [];
 
@@ -338,10 +335,7 @@ describe('activity run', () => {
         parent: {
           id: 'process1',
         },
-      }, {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
+      }, getContext({
         loadExtensions() {
           return {
             activate() {
@@ -352,7 +346,7 @@ describe('activity run', () => {
             }
           };
         },
-      });
+      }));
 
       const activityEvents = [];
 
@@ -373,10 +367,7 @@ describe('activity run', () => {
         parent: {
           id: 'process1',
         },
-      }, {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
+      }, getContext({
         loadExtensions() {
           return {
             activate() {
@@ -387,7 +378,7 @@ describe('activity run', () => {
             }
           };
         },
-      });
+      }));
 
       const activityEvents = [];
 
@@ -411,10 +402,7 @@ describe('activity run', () => {
         parent: {
           id: 'process1',
         },
-      }, {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
+      }, getContext({
         loadExtensions() {
           return {
             activate() {
@@ -425,7 +413,7 @@ describe('activity run', () => {
             }
           };
         },
-      });
+      }));
 
       const activityEvents = [];
 
@@ -442,6 +430,7 @@ describe('activity run', () => {
 
       expect(activityEvents).to.eql([true, false]);
     });
+
     it('are reactivated on next run', () => {
       let active = false;
       const activity = Activity(TaskBehaviour, {
@@ -450,10 +439,7 @@ describe('activity run', () => {
         parent: {
           id: 'process1',
         },
-      }, {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
+      }, getContext({
         loadExtensions() {
           return {
             activate() {
@@ -464,7 +450,7 @@ describe('activity run', () => {
             }
           };
         },
-      });
+      }));
 
       const activityEvents = [];
 
@@ -497,7 +483,7 @@ function createActivity(step = true) {
     parent: {
       id: 'process1',
     },
-  }, {
+  }, getContext({
     environment,
     getInboundSequenceFlows() {
       return [SequenceFlow({id: 'flow0', parent: {id: 'process1'}}, {environment})];
@@ -505,6 +491,22 @@ function createActivity(step = true) {
     getOutboundSequenceFlows() {
       return [SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, {environment})];
     },
+  }));
+}
+
+function getContext(override) {
+  return {
+    environment: Environment({
+      Logger,
+    }),
+    getInboundSequenceFlows() {
+      return [];
+    },
+    getOutboundSequenceFlows() {
+      return [];
+    },
     loadExtensions() {},
-  });
+    getInboundAssociations() {},
+    ...override,
+  };
 }

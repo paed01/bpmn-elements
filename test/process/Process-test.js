@@ -1,4 +1,3 @@
-import Environment from '../../src/Environment';
 import factory from '../helpers/factory';
 import testHelpers from '../helpers/testHelpers';
 import SignalTask from '../../src/tasks/SignalTask';
@@ -8,32 +7,18 @@ import { Process } from '../../src/process/Process';
 describe('Process', () => {
   describe('requirements', () => {
     it('requires a process definition with id and a context with an environment', () => {
-      const bp = Process({id: 'theProcess'}, {
-        environment: Environment(),
-      });
+      const bp = Process({id: 'theProcess'}, testHelpers.emptyContext());
       expect(bp.run).to.be.a('function');
     });
 
     it('requires context with getActivities(), and getSequenceFlows() to run', () => {
-      const bp = Process({id: 'theProcess'}, {
-        environment: Environment( { Logger: testHelpers.Logger }),
-        getActivities() {},
-        getSequenceFlows() {},
-        getDataObjects() {},
-        getMessageFlows() {},
-      });
+      const bp = Process({id: 'theProcess'}, testHelpers.emptyContext());
       bp.run();
       expect(bp.counters).to.have.property('completed', 1);
     });
 
     it('maps isExecutable behaviour to process', () => {
-      const bp = Process({id: 'theProcess', behaviour: {isExecutable: true} }, {
-        environment: Environment( { Logger: testHelpers.Logger }),
-        getActivities() {},
-        getSequenceFlows() {},
-        getDataObjects() {},
-        getMessageFlows() {},
-      });
+      const bp = Process({id: 'theProcess', behaviour: {isExecutable: true} }, testHelpers.emptyContext());
       expect(bp.isExecutable).to.be.true;
     });
   });
@@ -1358,13 +1343,7 @@ describe('Process', () => {
 
   describe('waitFor()', () => {
     it('returns promise that resolves when event occur', async () => {
-      const bp = Process({id: 'theProcess'}, {
-        environment: Environment( { Logger: testHelpers.Logger }),
-        getActivities() {},
-        getSequenceFlows() {},
-        getDataObjects() {},
-        getMessageFlows() {},
-      });
+      const bp = Process({id: 'theProcess'}, testHelpers.emptyContext());
 
       const leave = bp.waitFor('leave');
 
@@ -1374,13 +1353,7 @@ describe('Process', () => {
     });
 
     it('rejects if process error is published', (done) => {
-      const bp = Process({id: 'theProcess'}, {
-        environment: Environment( { Logger: testHelpers.Logger }),
-        getActivities() {},
-        getSequenceFlows() {},
-        getDataObjects() {},
-        getMessageFlows() {},
-      });
+      const bp = Process({id: 'theProcess'}, testHelpers.emptyContext());
 
       bp.once('end', () => {
         bp.broker.publish('event', 'process.error', new Error('unstable'), {mandatory: true});
@@ -1395,29 +1368,7 @@ describe('Process', () => {
     });
 
     it('rejects if execution error occur', (done) => {
-      const context = {
-        environment: Environment( { Logger: testHelpers.Logger }),
-        getActivities() {
-          return this.activities || (this.activities = [SignalTask({
-            id: 'task',
-            type: 'manualtask',
-            Behaviour: SignalTask,
-            parent: {
-              id: 'theProcess',
-            },
-          }, this)]);
-        },
-        getSequenceFlows() {},
-        getDataObjects() {},
-        getMessageFlows() {},
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
-        getActivityById(id) {
-          return this.activities.find((a) => a.id === id);
-        },
-        loadExtensions() {},
-      };
-      const bp = Process({id: 'theProcess'}, context);
+      const bp = Process({id: 'theProcess'}, Context());
 
       bp.once('wait', () => {
         bp.broker.publish('execution', 'execution.error', {error: new Error('unstable')}, {mandatory: true, type: 'error'});
@@ -1434,28 +1385,24 @@ describe('Process', () => {
 });
 
 function Context() {
-  return {
-    environment: Environment( { Logger: testHelpers.Logger }),
-    getActivities() {
-      return this.activities || (this.activities = [SignalTask({
-        id: 'task',
-        type: 'bpmn:ManualTask',
-        Behaviour: SignalTask,
-        parent: {
-          id: 'theProcess',
-        },
-      }, this)]);
-    },
-    getSequenceFlows() {},
-    getInboundSequenceFlows() {},
-    getOutboundSequenceFlows() {},
-    getDataObjects() {},
-    getMessageFlows() {},
-    getActivityById(id) {
-      return this.activities.find((a) => a.id === id);
-    },
-    loadExtensions() {},
+  const context = testHelpers.emptyContext();
+
+  let activities;
+  context.getActivities = () => {
+    return activities || (activities = [SignalTask({
+      id: 'task',
+      type: 'bpmn:ManualTask',
+      Behaviour: SignalTask,
+      parent: {
+        id: 'theProcess',
+      },
+    }, context)]);
   };
+  context.getActivityById = (id) => {
+    return activities.find((a) => a.id === id);
+  };
+
+  return context;
 }
 
 function multiContext() {

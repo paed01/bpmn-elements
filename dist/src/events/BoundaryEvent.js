@@ -65,12 +65,13 @@ function BoundaryEventBehaviour(activity) {
         consumerTag: `_bound-listener-${parentExecutionId}`,
         priority: 300
       });
-      broker.subscribeOnce('api', `activity.stop.${parentExecutionId}`, stop, {
-        noAck: true,
-        consumerTag: `_api-stop-${parentExecutionId}`
+      broker.subscribeOnce('execution', 'execute.detach', onDetachMessage, {
+        consumerTag: '_detach-tag'
+      });
+      broker.subscribeOnce('api', `activity.#.${parentExecutionId}`, onApiMessage, {
+        consumerTag: `_api-${parentExecutionId}`
       });
       broker.subscribeOnce('execution', 'execute.bound.completed', onCompleted, {
-        noAck: true,
         consumerTag: `_execution-completed-${parentExecutionId}`
       });
     }
@@ -115,13 +116,53 @@ function BoundaryEventBehaviour(activity) {
       };
     }
 
-    function stop() {
+    function onDetachMessage(_, {
+      content
+    }) {
+      logger.debug(`<${parentExecutionId} (${id})> detach from activity <${attachedTo.id}>`);
+      stop(true);
+      const bindExchange = content.bindExchange;
+      attachedTo.broker.subscribeTmp('execution', '#', onAttachedExecuteMessage, {
+        noAck: true,
+        consumerTag: `_bound-listener-${parentExecutionId}`
+      });
+      broker.subscribeOnce('execution', 'execute.bound.completed', onDetachedCompleted, {
+        consumerTag: `_execution-completed-${parentExecutionId}`
+      });
+
+      function onAttachedExecuteMessage(routingKey, message) {
+        broker.publish(bindExchange, routingKey, (0, _messageHelper.cloneContent)(message.content), message.properties);
+      }
+    }
+
+    function onDetachedCompleted(_, message) {
+      stop();
+      return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(message.content));
+    }
+
+    function onApiMessage(_, message) {
+      const messageType = message.properties.type;
+
+      switch (messageType) {
+        case 'discard':
+          stop();
+          break;
+
+        case 'stop':
+          stop();
+          break;
+      }
+    }
+
+    function stop(detach) {
       attachedTo.broker.cancel(`_bound-listener-${parentExecutionId}`);
       attachedTo.broker.cancel(`_bound-error-listener-${parentExecutionId}`);
       errorConsumerTags.forEach(tag => attachedTo.broker.cancel(tag));
       broker.cancel('_expect-tag');
-      broker.cancel(`_api-stop-${parentExecutionId}`);
+      broker.cancel('_detach-tag');
       broker.cancel(`_execution-completed-${parentExecutionId}`);
+      if (detach) return;
+      broker.cancel(`_api-${parentExecutionId}`);
     }
   }
 }

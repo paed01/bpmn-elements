@@ -16,6 +16,8 @@ describe('BoundaryEvent', () => {
         const behaviour = BoundaryEventBehaviour({
           broker: ActivityBroker(this).broker,
           attachedTo,
+        }, {
+          getOutboundAssociations() {},
         });
 
         expect(attachedTo.broker.getExchange('event')).to.have.property('bindingCount', 0);
@@ -41,6 +43,8 @@ describe('BoundaryEvent', () => {
         const behaviour = BoundaryEventBehaviour({
           broker,
           attachedTo,
+        }, {
+          getOutboundAssociations() {},
         });
 
         expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
@@ -66,6 +70,8 @@ describe('BoundaryEvent', () => {
         const behaviour = BoundaryEventBehaviour({
           broker,
           attachedTo,
+        }, {
+          getOutboundAssociations() {},
         });
 
         behaviour.execute({
@@ -101,6 +107,8 @@ describe('BoundaryEvent', () => {
         const behaviour = BoundaryEventBehaviour({
           broker,
           attachedTo,
+        }, {
+          getOutboundAssociations() {},
         });
 
         behaviour.execute({
@@ -135,6 +143,8 @@ describe('BoundaryEvent', () => {
         const behaviour = BoundaryEventBehaviour({
           broker,
           attachedTo,
+        }, {
+          getOutboundAssociations() {},
         });
 
         behaviour.execute({
@@ -146,7 +156,7 @@ describe('BoundaryEvent', () => {
           },
         });
 
-        broker.publish('api', 'activity.stop.bound_1');
+        broker.publish('api', 'activity.stop.bound_1', {}, {type: 'stop'});
 
         expect(attachedTo.broker.getExchange('execution')).to.have.property('bindingCount', 1);
         expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
@@ -178,6 +188,8 @@ describe('BoundaryEvent', () => {
           },
           environment: Environment(),
           logger: testHelpers.Logger('boundaryevent')
+        }, {
+          getOutboundAssociations() {},
         });
 
         behaviour.execute({
@@ -224,7 +236,9 @@ describe('BoundaryEvent', () => {
             return self._eds || (self._eds = [ErrorEventDefinition(self, {}), MessageEventDefinition(self, {})]);
           }
         };
-        const behaviour = BoundaryEventBehaviour(activity);
+        const behaviour = BoundaryEventBehaviour(activity, {
+          getOutboundAssociations() {},
+        });
         expect(attachedTo.broker.getExchange('event')).to.have.property('bindingCount', 0);
 
         broker.subscribeTmp('event', 'execute.start', (_, msg) => behaviour.execute(msg));
@@ -262,6 +276,8 @@ describe('BoundaryEvent', () => {
               Behaviour: ErrorEventDefinition,
             }],
           },
+        }, {
+          getOutboundAssociations() {},
         });
 
         behaviour.execute({
@@ -307,6 +323,8 @@ describe('BoundaryEvent', () => {
               Behaviour: MessageEventDefinition,
             }],
           },
+        }, {
+          getOutboundAssociations() {},
         });
 
         behaviour.execute({
@@ -352,6 +370,8 @@ describe('BoundaryEvent', () => {
               Behaviour: ErrorEventDefinition,
             }],
           },
+        }, {
+          getOutboundAssociations() {},
         });
 
         behaviour.execute({
@@ -366,10 +386,76 @@ describe('BoundaryEvent', () => {
           },
         });
 
-        broker.publish('api', 'activity.stop.bound_1');
+        broker.publish('api', 'activity.stop.bound_1', {}, {type: 'stop'});
 
         expect(attachedTo.broker.getExchange('execution')).to.have.property('bindingCount', 1);
         expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
+      });
+    });
+
+    describe('detached', () => {
+      let behaviour, broker;
+      beforeEach(() => {
+        const attachedTo = {
+          id: 'task',
+          broker: ActivityBroker(this).broker
+        };
+        broker = ActivityBroker().broker;
+        const environment = Environment({Logger: testHelpers.Logger});
+        behaviour = BoundaryEventBehaviour({
+          id: 'event',
+          broker,
+          environment,
+          logger: environment.Logger('BoundaryEvent'),
+          attachedTo,
+          behaviour: {
+            eventDefinitions: [{
+              Behaviour: ErrorEventDefinition,
+            }],
+          },
+        }, {
+          getOutboundAssociations() {},
+        });
+      });
+
+      it('clears listeners if stopped', () => {
+        behaviour.execute({
+          fields: {},
+          content: {
+            id: 'bound',
+            executionId: 'bound_1',
+            isRootScope: true,
+            parent: {
+              id: 'theProcess',
+            },
+          },
+        });
+
+        broker.publish('execution', 'execute.detach', {listenExchange: 'execution', listenRoutingKey: '#'});
+        broker.publish('api', 'activity.stop.bound_1', {}, {type: 'stop'});
+
+        expect(behaviour.attachedTo.broker).to.have.property('consumerCount', 0);
+        expect(broker).to.have.property('consumerCount', 0);
+      });
+
+      it('clears listeners if discarded', () => {
+        behaviour.execute({
+          fields: {},
+          content: {
+            id: 'bound',
+            executionId: 'bound_1',
+            isRootScope: true,
+            parent: {
+              id: 'theProcess',
+            },
+          },
+        });
+
+        broker.publish('execution', 'execute.detach', {listenExchange: 'execution', listenRoutingKey: '#'});
+        broker.publish('api', 'activity.discard.bound_1', {}, {type: 'discard'});
+
+        expect(behaviour.attachedTo.broker).to.have.property('consumerCount', 0);
+        expect(broker).to.have.property('consumerCount', 0);
       });
     });
   });

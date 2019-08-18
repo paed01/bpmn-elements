@@ -331,6 +331,7 @@ describe('StartEvent', () => {
         id: 'start',
       }, {
         environment: Environment({Logger: testHelpers.Logger}),
+        getInboundAssociations() {},
         getInboundSequenceFlows() {},
         getOutboundSequenceFlows() {},
         loadExtensions() {},
@@ -348,6 +349,7 @@ describe('StartEvent', () => {
         id: 'start',
       }, {
         environment: Environment({Logger: testHelpers.Logger}),
+        getInboundAssociations() {},
         getInboundSequenceFlows() {},
         getOutboundSequenceFlows() {},
         loadExtensions() {},
@@ -368,6 +370,7 @@ describe('StartEvent', () => {
         }
       }, {
         environment: Environment({Logger: testHelpers.Logger}),
+        getInboundAssociations() {},
         getInboundSequenceFlows() {},
         getOutboundSequenceFlows() {},
         loadExtensions() {},
@@ -387,6 +390,7 @@ describe('StartEvent', () => {
         id: 'start',
       }, {
         environment: Environment({Logger: testHelpers.Logger}),
+        getInboundAssociations() {},
         getInboundSequenceFlows() {},
         getOutboundSequenceFlows() {},
         loadExtensions() {},
@@ -404,6 +408,7 @@ describe('StartEvent', () => {
         id: 'start',
       }, {
         environment: Environment({Logger: testHelpers.Logger}),
+        getInboundAssociations() {},
         getInboundSequenceFlows() {},
         getOutboundSequenceFlows() {},
         loadExtensions() {},
@@ -424,6 +429,7 @@ describe('StartEvent', () => {
         }
       }, {
         environment: Environment({Logger: testHelpers.Logger}),
+        getInboundAssociations() {},
         getInboundSequenceFlows() {},
         getOutboundSequenceFlows() {},
         loadExtensions() {},
@@ -446,6 +452,7 @@ describe('StartEvent', () => {
         behaviour: {}
       }, {
         environment: Environment({Logger: testHelpers.Logger}),
+        getInboundAssociations() {},
         getInboundSequenceFlows() {},
         getOutboundSequenceFlows() {},
         loadExtensions() {},

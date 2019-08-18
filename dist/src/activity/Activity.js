@@ -31,11 +31,13 @@ function Activity(Behaviour, activityDef, context) {
     triggeredByEvent,
     isThrowing
   } = activityDef;
+  const isForCompensation = behaviour.isForCompensation;
   const parent = (0, _messageHelper.cloneParent)(originalParent);
   const {
     environment,
     getInboundSequenceFlows,
-    getOutboundSequenceFlows
+    getOutboundSequenceFlows,
+    getInboundAssociations
   } = context;
   const logger = environment.Logger(type.toLowerCase());
   const {
@@ -55,7 +57,8 @@ function Activity(Behaviour, activityDef, context) {
 
   const inboundSequenceFlows = getInboundSequenceFlows(id) || [];
   const outboundSequenceFlows = getOutboundSequenceFlows(id) || [];
-  const isStart = inboundSequenceFlows.length === 0 && !attachedTo && !triggeredByEvent;
+  const inboundAssociations = getInboundAssociations(id) || [];
+  const isStart = inboundSequenceFlows.length === 0 && !attachedTo && !triggeredByEvent && !isForCompensation;
   const isEnd = outboundSequenceFlows.length === 0;
   const isParallelJoin = inboundSequenceFlows.length > 1 && isParallelGateway;
   const isMultiInstance = !!behaviour.loopCharacteristics;
@@ -81,6 +84,7 @@ function Activity(Behaviour, activityDef, context) {
     isStart,
     isSubProcess,
     isThrowing,
+    isForCompensation,
     triggeredByEvent,
     parent: (0, _messageHelper.cloneParent)(parent),
     behaviour: { ...behaviour,
@@ -147,15 +151,26 @@ function Activity(Behaviour, activityDef, context) {
     durable: true,
     autoDelete: false
   });
-  inboundTriggers.forEach(trigger => {
-    if (trigger.isSequenceFlow) trigger.broker.subscribeTmp('event', 'flow.#', onInboundEvent, {
-      noAck: true,
-      consumerTag: `_inbound-${id}`
-    });else trigger.broker.subscribeTmp('event', 'activity.#', onInboundEvent, {
-      noAck: true,
-      consumerTag: `_inbound-${id}`
+
+  if (isForCompensation) {
+    inboundAssociations.forEach(trigger => {
+      trigger.broker.subscribeTmp('event', '#', onInboundEvent, {
+        noAck: true,
+        consumerTag: `_inbound-${id}`
+      });
     });
-  });
+  } else {
+    inboundTriggers.forEach(trigger => {
+      if (trigger.isSequenceFlow) trigger.broker.subscribeTmp('event', 'flow.#', onInboundEvent, {
+        noAck: true,
+        consumerTag: `_inbound-${id}`
+      });else trigger.broker.subscribeTmp('event', 'activity.#', onInboundEvent, {
+        noAck: true,
+        consumerTag: `_inbound-${id}`
+      });
+    });
+  }
+
   Object.defineProperty(activityApi, 'broker', {
     enumerable: true,
     get: () => broker
@@ -188,8 +203,8 @@ function Activity(Behaviour, activityDef, context) {
   function run(runContent) {
     if (activityApi.isRunning) throw new Error(`activity <${id}> is already running`);
     executionId = initExecutionId || (0, _shared.getUniqueId)(id);
-    consumeApi();
     initExecutionId = undefined;
+    consumeApi();
     const content = createMessage({ ...runContent,
       executionId
     });
@@ -209,15 +224,15 @@ function Activity(Behaviour, activityDef, context) {
       isEnd,
       isStart,
       isSubProcess,
-      isMultiInstance
+      isMultiInstance,
+      isForCompensation,
+      attachedTo
     };
 
     for (const flag in flags) {
-      if (flags[flag]) result[flag] = true;
+      if (flags[flag]) result[flag] = flags[flag];
     }
 
-    if (attachedTo) result.attachedTo = { ...attachedTo
-    };
     return result;
   }
 
@@ -236,6 +251,7 @@ function Activity(Behaviour, activityDef, context) {
     }
 
     broker.recover(state.broker);
+    return activityApi;
   }
 
   function resume() {
@@ -296,16 +312,8 @@ function Activity(Behaviour, activityDef, context) {
   }
 
   function activate() {
-    if (isParallelJoin) {
-      return inboundQ.consume(onJoinInbound, {
-        consumerTag: '_run-on-inbound',
-        prefetch: 1000
-      });
-    }
-
-    return inboundQ.consume(onInbound, {
-      consumerTag: '_run-on-inbound'
-    });
+    if (isForCompensation) return;
+    return consumeInbound();
   }
 
   function deactivate() {
@@ -329,6 +337,19 @@ function Activity(Behaviour, activityDef, context) {
       noAck: true,
       consumerTag: '_activity-api',
       priority: 100
+    });
+  }
+
+  function consumeInbound() {
+    if (isParallelJoin) {
+      return inboundQ.consume(onJoinInbound, {
+        consumerTag: '_run-on-inbound',
+        prefetch: 1000
+      });
+    }
+
+    return inboundQ.consume(onInbound, {
+      consumerTag: '_run-on-inbound'
     });
   }
 
@@ -363,10 +384,32 @@ function Activity(Behaviour, activityDef, context) {
           break;
         }
 
+      case 'association.take':
       case 'flow.take':
       case 'flow.discard':
         inboundQ.queueMessage(fields, (0, _messageHelper.cloneContent)(content), properties);
         break;
+
+      case 'association.discard':
+        {
+          logger.debug(`<${id}> compensation discarded`);
+          inboundQ.purge();
+          break;
+        }
+
+      case 'association.complete':
+        {
+          if (!isForCompensation) break;
+          inboundQ.queueMessage(fields, (0, _messageHelper.cloneContent)(content), properties);
+          const compensationId = `${(0, _shared.brokerSafeId)(id)}_${(0, _shared.brokerSafeId)(content.sequenceId)}`;
+          publishEvent('compensation.start', createMessage({
+            executionId: compensationId,
+            placeholder: true
+          }));
+          logger.debug(`<${id}> start compensation with id <${compensationId}>`);
+          consumeInbound();
+          break;
+        }
     }
   }
 
@@ -377,6 +420,7 @@ function Activity(Behaviour, activityDef, context) {
     const inbound = [(0, _messageHelper.cloneContent)(content)];
 
     switch (routingKey) {
+      case 'association.take':
       case 'flow.take':
       case 'activity.enter':
         run({
@@ -394,6 +438,17 @@ function Activity(Behaviour, activityDef, context) {
             inbound,
             discardSequence
           });
+          break;
+        }
+
+      case 'association.complete':
+        {
+          broker.cancel('_run-on-inbound');
+          const compensationId = `${(0, _shared.brokerSafeId)(id)}_${(0, _shared.brokerSafeId)(content.sequenceId)}`;
+          logger.debug(`<${id}> completed compensation with id <${compensationId}>`);
+          publishEvent('compensation.end', createMessage({
+            executionId: compensationId
+          }));
           break;
         }
     }
@@ -496,7 +551,7 @@ function Activity(Behaviour, activityDef, context) {
             execution = undefined;
           }
 
-          if (extensions) extensions.activate(message);
+          if (extensions) extensions.activate((0, _messageHelper.cloneMessage)(message), activityApi);
           if (ioSpecification) ioSpecification.activate(message);
           if (!isRedelivered) publishEvent('enter', content);
           break;
@@ -507,7 +562,7 @@ function Activity(Behaviour, activityDef, context) {
           logger.debug(`<${id}> discard`, isRedelivered ? 'redelivered' : '');
           status = 'discard';
           execution = undefined;
-          if (extensions) extensions.activate(message);
+          if (extensions) extensions.activate((0, _messageHelper.cloneMessage)(message), activityApi);
           if (ioSpecification) ioSpecification.activate(message);
 
           if (!isRedelivered) {
@@ -537,7 +592,7 @@ function Activity(Behaviour, activityDef, context) {
           executeMessage = message;
 
           if (isRedelivered) {
-            if (extensions) extensions.activate(message);
+            if (extensions) extensions.activate((0, _messageHelper.cloneMessage)(message), activityApi);
             if (ioSpecification) ioSpecification.activate(message);
           }
 
@@ -609,7 +664,7 @@ function Activity(Behaviour, activityDef, context) {
         }
 
       case 'run.next':
-        activate();
+        consumeInbound();
         break;
     }
 

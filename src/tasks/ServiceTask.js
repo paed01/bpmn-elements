@@ -1,5 +1,6 @@
 import Activity from '../activity/Activity';
 import { ActivityError } from '../error/Errors';
+import {cloneMessage} from '../messageHelper';
 
 export default function ServiceTask(activityDef, context) {
   return Activity(ServiceTaskBehaviour, activityDef, context);
@@ -37,7 +38,7 @@ export function ServiceTaskBehaviour(activity) {
         logger.error(`<${content.executionId} (${id})>`, err);
         return broker.publish('execution', 'execute.error', {...executeMessage.content, error: new ActivityError(err.message, executeMessage, err)}, {mandatory: true});
       }
-      return broker.publish('execution', 'execute.completed', {...executeMessage.content, output});
+      return broker.publish('execution', 'execute.completed', {...executeMessage.content, output, state: 'complete'});
     });
 
     function onApiMessage(_, message) {
@@ -55,12 +56,12 @@ export function ServiceTaskBehaviour(activity) {
     }
   }
 
-  function getService() {
+  function getService(message) {
     const Service = behaviour.Service;
     if (!Service) {
       return environment.settings.enableDummyService ? DummyService(activity) : null;
     }
-    return Service(activity);
+    return Service(activity, cloneMessage(message));
   }
 
   function DummyService() {

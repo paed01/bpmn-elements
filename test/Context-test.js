@@ -106,6 +106,9 @@ describe('Context', () => {
         getSequenceFlows() {
           return [];
         },
+        getInboundAssociations() {
+          return [];
+        },
       });
 
       expect(ctx.getActivityById('id')).to.have.property('broker');

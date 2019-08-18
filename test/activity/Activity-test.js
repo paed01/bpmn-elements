@@ -1,4 +1,5 @@
 import Activity from '../../src/activity/Activity';
+import Association from '../../src/flows/Association';
 import Environment from '../../src/Environment';
 import SequenceFlow from '../../src/flows/SequenceFlow';
 import testHelpers from '../helpers/testHelpers';
@@ -6,22 +7,15 @@ import {ActivityBroker} from '../../src/EventBroker';
 import {TaskBehaviour} from '../../src/tasks/Task';
 import {SignalTaskBehaviour} from '../../src/tasks/SignalTask';
 
-const Logger = testHelpers.Logger;
-
 describe('Activity', () => {
   describe('run on inbound', () => {
     it('starts run when inbound sequence flow is taken', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getInboundSequenceFlows() {
           return sequenceFlows;
         },
-        getOutboundSequenceFlows() {
-          return [];
-        },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -50,16 +44,11 @@ describe('Activity', () => {
 
     it('publishes activity enter with taken flow', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getInboundSequenceFlows() {
           return sequenceFlows;
         },
-        getOutboundSequenceFlows() {
-          return [];
-        },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -97,16 +86,11 @@ describe('Activity', () => {
 
     it('publishes activity discard with discarded flow', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getInboundSequenceFlows() {
           return sequenceFlows;
         },
-        getOutboundSequenceFlows() {
-          return [];
-        },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -144,16 +128,11 @@ describe('Activity', () => {
 
     it('queues inbound message if already running', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getInboundSequenceFlows() {
           return sequenceFlows;
         },
-        getOutboundSequenceFlows() {
-          return [];
-        },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -181,16 +160,11 @@ describe('Activity', () => {
 
     it('immediate activity starts next run when completed with first', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getInboundSequenceFlows() {
           return sequenceFlows;
         },
-        getOutboundSequenceFlows() {
-          return [];
-        },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -219,16 +193,11 @@ describe('Activity', () => {
 
     it('postponed activity starts next run when completed with first', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getInboundSequenceFlows() {
           return sequenceFlows;
         },
-        getOutboundSequenceFlows() {
-          return [];
-        },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -263,16 +232,11 @@ describe('Activity', () => {
 
     it('postponed activity starts next run when first two were discarded', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getInboundSequenceFlows() {
           return sequenceFlows;
         },
-        getOutboundSequenceFlows() {
-          return [];
-        },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -304,16 +268,11 @@ describe('Activity', () => {
 
     it('discards next run when completed with first', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getInboundSequenceFlows() {
           return sequenceFlows;
         },
-        getOutboundSequenceFlows() {
-          return [];
-        },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -345,16 +304,11 @@ describe('Activity', () => {
 
     it('forwards message from inbound to execution', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getInboundSequenceFlows() {
           return sequenceFlows;
         },
-        getOutboundSequenceFlows() {
-          return [];
-        },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -385,17 +339,11 @@ describe('Activity', () => {
     describe('parallel gateway join', () => {
       it('publishes activity enter with taken flows', () => {
         const sequenceFlows = [];
-        const context = {
-          environment: Environment({Logger}),
+        const context = getContext({
           getInboundSequenceFlows() {
             return sequenceFlows;
           },
-          getOutboundSequenceFlows() {
-            return [];
-          },
-          loadExtensions() {},
-        };
-
+        });
         const sequenceFlow1 = SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
         const sequenceFlow2 = SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
 
@@ -442,17 +390,11 @@ describe('Activity', () => {
 
       it('publishes activity enter if at least one flow is taken', () => {
         const sequenceFlows = [];
-        const context = {
-          environment: Environment({Logger}),
+        const context = getContext({
           getInboundSequenceFlows() {
             return sequenceFlows;
           },
-          getOutboundSequenceFlows() {
-            return [];
-          },
-          loadExtensions() {},
-        };
-
+        });
         const sequenceFlow1 = SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
         const sequenceFlow2 = SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
 
@@ -498,17 +440,11 @@ describe('Activity', () => {
 
       it('publishes activity enter if at least one flow is taken, regardless of order', () => {
         const sequenceFlows = [];
-        const context = {
-          environment: Environment({Logger}),
+        const context = getContext({
           getInboundSequenceFlows() {
             return sequenceFlows;
           },
-          getOutboundSequenceFlows() {
-            return [];
-          },
-          loadExtensions() {},
-        };
-
+        });
         const sequenceFlow1 = SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
         const sequenceFlow2 = SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
 
@@ -554,17 +490,11 @@ describe('Activity', () => {
 
       it('publishes activity discard if all flows were discarded', () => {
         const sequenceFlows = [];
-        const context = {
-          environment: Environment({Logger}),
+        const context = getContext({
           getInboundSequenceFlows() {
             return sequenceFlows;
           },
-          getOutboundSequenceFlows() {
-            return [];
-          },
-          loadExtensions() {},
-        };
-
+        });
         const sequenceFlow1 = SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
         const sequenceFlow2 = SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
 
@@ -610,17 +540,11 @@ describe('Activity', () => {
 
       it('queues inbound before each inbound flow is taken', () => {
         const sequenceFlows = [];
-        const context = {
-          environment: Environment({Logger}),
+        const context = getContext({
           getInboundSequenceFlows() {
             return sequenceFlows;
           },
-          getOutboundSequenceFlows() {
-            return [];
-          },
-          loadExtensions() {},
-        };
-
+        });
         const sequenceFlow1 = SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
         const sequenceFlow2 = SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
 
@@ -660,17 +584,11 @@ describe('Activity', () => {
 
       it('takes next when all inbound flows have been evaluated', async () => {
         const sequenceFlows = [];
-        const context = {
-          environment: Environment({Logger}),
+        const context = getContext({
           getInboundSequenceFlows() {
             return sequenceFlows;
           },
-          getOutboundSequenceFlows() {
-            return [];
-          },
-          loadExtensions() {},
-        };
-
+        });
         const sequenceFlow1 = SequenceFlow({id: 'flow1', targetId: 'activity', parent: {id: 'process1'}}, context);
         const sequenceFlow2 = SequenceFlow({id: 'flow2', targetId: 'activity', parent: {id: 'process1'}}, context);
 
@@ -727,16 +645,11 @@ describe('Activity', () => {
   describe('run()', () => {
     it('completes run when execution completed message is received', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getInboundSequenceFlows() {
           return sequenceFlows;
         },
-        getOutboundSequenceFlows() {
-          return [];
-        },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -764,16 +677,11 @@ describe('Activity', () => {
 
     it('assigns execution completed message to run end message', async () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {
-          return [];
-        },
+      const context = getContext({
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -816,16 +724,11 @@ describe('Activity', () => {
   describe('discard()', () => {
     it('discards run', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {
-          return [];
-        },
+      const context = getContext({
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -853,16 +756,11 @@ describe('Activity', () => {
 
     it('discards execution if executing', async () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {
-          return [];
-        },
+      const context = getContext({
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -891,16 +789,11 @@ describe('Activity', () => {
 
     it('discards on end', async () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {
-          return [];
-        },
+      const context = getContext({
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -1279,16 +1172,11 @@ describe('Activity', () => {
   describe('outbound', () => {
     it('takes outbound when completed', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {
-          return [];
-        },
+      const context = getContext({
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -1319,16 +1207,11 @@ describe('Activity', () => {
 
     it('forwards execute completed message', async () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {
-          return [];
-        },
+      const context = getContext({
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -1367,16 +1250,11 @@ describe('Activity', () => {
 
     it('takes all outbound when completed', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {
-          return [];
-        },
+      const context = getContext({
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow1 = SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
       const sequenceFlow2 = SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
@@ -1409,16 +1287,11 @@ describe('Activity', () => {
 
     it('respects outbound actions during execution', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {
-          return [];
-        },
+      const context = getContext({
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow1 = SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
       const sequenceFlow2 = SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
@@ -1460,16 +1333,11 @@ describe('Activity', () => {
 
     it('discards outbound when discarded', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {
-          return [];
-        },
+      const context = getContext({
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow = SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
       sequenceFlows.push(sequenceFlow);
@@ -1499,16 +1367,11 @@ describe('Activity', () => {
 
     it('respects all outbound discarded during execution', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {
-          return [];
-        },
+      const context = getContext({
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow1 = SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
       const sequenceFlow2 = SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
@@ -1550,16 +1413,11 @@ describe('Activity', () => {
 
     it('uses last action from evaluated flows during execution', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {
-          return [];
-        },
+      const context = getContext({
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow1 = SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
       const sequenceFlow2 = SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
@@ -1604,16 +1462,11 @@ describe('Activity', () => {
 
     it('discards flows and adds activity id to discard sequence when discarded', () => {
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {
-          return [];
-        },
+      const context = getContext({
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow1 = SequenceFlow({id: 'flow1', sourceId: 'activity', parent: {id: 'process1'}}, context);
       const sequenceFlow2 = SequenceFlow({id: 'flow2', sourceId: 'activity', parent: {id: 'process1'}}, context);
@@ -1665,16 +1518,14 @@ describe('Activity', () => {
     it('discards flows and appends activity id to discard sequence if discarded', () => {
       const inboundFlows = [];
       const outboundFlows = [];
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getInboundSequenceFlows() {
           return inboundFlows;
         },
         getOutboundSequenceFlows() {
           return outboundFlows;
         },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow0 = SequenceFlow({id: 'flow0', sourceId: 'start', targetId: 'activity', parent: {id: 'process1'}}, context);
       inboundFlows.push(sequenceFlow0);
@@ -1718,16 +1569,14 @@ describe('Activity', () => {
     it('join activity concats discard sequence when discarded', () => {
       const inboundFlows = [];
       const outboundFlows = [];
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getInboundSequenceFlows() {
           return inboundFlows;
         },
         getOutboundSequenceFlows() {
           return outboundFlows;
         },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow1 = SequenceFlow({id: 'flow1', sourceId: 'start1', parent: {id: 'process1'}}, context);
       const sequenceFlow2 = SequenceFlow({id: 'flow2', sourceId: 'task', parent: {id: 'process1'}}, context);
@@ -1778,14 +1627,7 @@ describe('Activity', () => {
       attachedTo.id = 'task';
 
       let activateMessage;
-      const context = {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {
-          return [];
-        },
-        getOutboundSequenceFlows() {
-          return [];
-        },
+      const context = getContext({
         loadExtensions() {
           return {
             activate(msg) {
@@ -1793,7 +1635,7 @@ describe('Activity', () => {
             },
           };
         },
-      };
+      });
 
       const activity = Activity(() => {
         return {
@@ -1818,14 +1660,7 @@ describe('Activity', () => {
       attachedTo.id = 'task';
 
       let activateMessage;
-      const context = {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {
-          return [];
-        },
-        getOutboundSequenceFlows() {
-          return [];
-        },
+      const context = getContext({
         loadExtensions() {
           return {
             activate(msg) {
@@ -1834,7 +1669,7 @@ describe('Activity', () => {
             deactivate() {}
           };
         },
-      };
+      });
 
       const activity = Activity(() => {
         return {
@@ -1859,14 +1694,7 @@ describe('Activity', () => {
       attachedTo.id = 'task';
 
       let activateMessage;
-      const context = {
-        environment: Environment({Logger}),
-        getInboundSequenceFlows() {
-          return [];
-        },
-        getOutboundSequenceFlows() {
-          return [];
-        },
+      const context = getContext({
         loadExtensions() {
           return {
             activate(msg) {
@@ -1875,7 +1703,7 @@ describe('Activity', () => {
             deactivate() {}
           };
         },
-      };
+      });
 
       const activity = Activity(() => {
         return {
@@ -1909,19 +1737,11 @@ describe('Activity', () => {
         broker: ActivityBroker().broker,
       };
 
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getActivityById(id) {
           if (id === 'task') return attachedTo;
         },
-        getInboundSequenceFlows() {
-          return [];
-        },
-        getOutboundSequenceFlows() {
-          return [];
-        },
-        loadExtensions() {},
-      };
+      });
 
       const activity = Activity(() => {
         return {
@@ -1957,19 +1777,11 @@ describe('Activity', () => {
         broker: ActivityBroker().broker,
       };
 
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getActivityById(id) {
           if (id === 'task') return attachedTo;
         },
-        getInboundSequenceFlows() {
-          return [];
-        },
-        getOutboundSequenceFlows() {
-          return [];
-        },
-        loadExtensions() {},
-      };
+      });
 
       const activity = Activity(() => {
         return {
@@ -2015,19 +1827,11 @@ describe('Activity', () => {
         broker: ActivityBroker().broker,
       };
 
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getActivityById(id) {
           if (id === 'task') return attachedTo;
         },
-        getInboundSequenceFlows() {
-          return [];
-        },
-        getOutboundSequenceFlows() {
-          return [];
-        },
-        loadExtensions() {},
-      };
+      });
 
       const activity = Activity(() => {
         return {
@@ -2075,19 +1879,14 @@ describe('Activity', () => {
       };
 
       const sequenceFlows = [];
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getActivityById(id) {
           if (id === 'task') return attachedTo;
-        },
-        getInboundSequenceFlows() {
-          return [];
         },
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
-        loadExtensions() {},
-      };
+      });
 
       const sequenceFlow1 = SequenceFlow({id: 'flow1', sourceId: 'activity', parent: {id: 'process1'}}, context);
       const sequenceFlow2 = SequenceFlow({id: 'flow2', sourceId: 'activity', parent: {id: 'process1'}}, context);
@@ -2135,19 +1934,11 @@ describe('Activity', () => {
         id: 'task',
         broker: ActivityBroker(this).broker,
       };
-      const context = {
-        environment: Environment({Logger}),
+      const context = getContext({
         getActivityById(id) {
           if (id === 'task') return attachedTo;
         },
-        getInboundSequenceFlows() {
-          return [];
-        },
-        getOutboundSequenceFlows() {
-          return [];
-        },
-        loadExtensions() {},
-      };
+      });
 
       const activity = Activity(() => {
         return {
@@ -2562,6 +2353,90 @@ describe('Activity', () => {
       }).to.throw('cannot resume running activity');
     });
   });
+
+  describe('inbound associations', () => {
+    it('starts compensation task run when inbound association complete', () => {
+      const associations = [];
+      const context = getContext({
+        getInboundAssociations() {
+          return associations;
+        },
+      });
+
+      const association = Association({id: 'association', parent: {id: 'process1'}}, context);
+      associations.push(association);
+
+      const activity = Activity(({broker}) => {
+        return {
+          execute({content}) {
+            broker.publish('execution', 'execute.completed', content);
+          },
+        };
+      }, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+        behaviour: {
+          isForCompensation: true,
+        }
+      }, context);
+
+      activity.activate();
+
+      association.take();
+      expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 1);
+
+      association.complete();
+
+      expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 0);
+
+      expect(activity.counters).to.have.property('taken', 1);
+    });
+
+    it('runs compensation task twice if association is taken twice', () => {
+      const associations = [];
+      const context = getContext({
+        getInboundAssociations() {
+          return associations;
+        },
+      });
+
+      const association = Association({id: 'association', parent: {id: 'process1'}}, context);
+      associations.push(association);
+
+      const activity = Activity(({broker}) => {
+        return {
+          execute({content}) {
+            broker.publish('execution', 'execute.completed', content);
+          },
+        };
+      }, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+        behaviour: {
+          isForCompensation: true,
+        }
+      }, context);
+
+      activity.activate();
+
+      association.take();
+      association.take();
+
+      expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 2);
+
+      association.complete();
+
+      expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 0);
+
+      expect(activity.counters).to.have.property('taken', 2);
+    });
+  });
 });
 
 function getActivity(override = {}, Behaviour = TaskBehaviour) {
@@ -2576,7 +2451,7 @@ function getActivity(override = {}, Behaviour = TaskBehaviour) {
   return activity;
 }
 
-function getContext() {
+function getContext(override) {
   const environment = Environment({Logger: testHelpers.Logger});
   return {
     environment,
@@ -2594,5 +2469,7 @@ function getContext() {
       return [];
     },
     loadExtensions() {},
+    getInboundAssociations() {},
+    ...override,
   };
 }

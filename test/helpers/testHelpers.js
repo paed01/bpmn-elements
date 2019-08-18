@@ -11,6 +11,7 @@ const typeResolver = TypeResolver(types);
 export default {
   AssertMessage,
   context,
+  emptyContext,
   moddleContext,
   Logger,
 };
@@ -56,6 +57,19 @@ export function Logger(scope) {
     error: Debug('bpmn-elements:error:' + scope),
     warn: Debug('bpmn-elements:warn:' + scope),
   };
+}
+
+function emptyContext(override, options) {
+  return Context({
+    getActivities() {},
+    getAssociations() {},
+    getInboundAssociations() {},
+    getInboundSequenceFlows() {},
+    getMessageFlows() {},
+    getOutboundSequenceFlows() {},
+    getSequenceFlows() {},
+    ...override,
+  }, Environment({Logger, scripts: Scripts(), settings: {enableDummyService: true}, ...options}));
 }
 
 function AssertMessage(processContext, messages, inSequence) {

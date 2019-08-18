@@ -1,4 +1,3 @@
-import Environment from '../../src/Environment';
 import factory from '../helpers/factory';
 import JsExtension from '../resources/extensions/JsExtension';
 import SignalTask from '../../src/tasks/SignalTask';
@@ -10,39 +9,13 @@ const subProcessSource = factory.resource('sub-process.bpmn');
 
 describe('SubProcess', () => {
   it('decorates activity with isSubProcess', () => {
-    const subProcess = SubProcess({id: 'sub-process', parent: {id: 'process1'}}, {
-      environment: Environment({Logger: testHelpers.Logger}),
-      getInboundSequenceFlows() {},
-      getOutboundSequenceFlows() {},
-      loadExtensions() {},
-    });
-
+    const subProcess = SubProcess({id: 'sub-process', parent: {id: 'process1'}}, testHelpers.emptyContext());
     expect(subProcess).to.have.property('isSubProcess', true);
   });
 
   it('runs process execution on separate exchange', () => {
-    const environment = Environment({Logger: testHelpers.Logger});
-    const subProcess = SubProcess({id: 'sub-process', parent: {id: 'process1'}}, {
-      environment,
-      getInboundSequenceFlows() {},
-      getOutboundSequenceFlows() {},
-      loadExtensions() {},
-      clone() {
-        const ctx = this;
-        return {
-          environment,
-          getActivities() {
-            return [SignalTask({id: 'task', parent: {id: 'sub-process'}}, ctx)];
-          },
-          getSequenceFlows() {},
-          getDataObjects() {},
-          getMessageFlows() {},
-        };
-      },
-    });
-
+    const subProcess = SubProcess({id: 'sub-process', parent: {id: 'process1'}}, testHelpers.emptyContext());
     subProcess.run();
-
     expect(subProcess.broker.getExchange('subprocess-execution')).to.be.ok;
   });
 
@@ -226,29 +199,11 @@ describe('SubProcess', () => {
 
   describe('stop()', () => {
     it('stops process execution', () => {
-      const environment = Environment({Logger: testHelpers.Logger});
-      const subProcess = SubProcess({id: 'sub-process', parent: {id: 'process1'}}, {
-        environment,
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
-        loadExtensions() {},
-        clone() {
-          const ctx = this;
-          const activity = SignalTask({id: 'task', parent: {id: 'sub-process'}}, ctx);
-          return {
-            environment,
-            getActivities() {
-              return [activity];
-            },
-            getActivityById() {
-              return activity;
-            },
-            getSequenceFlows() {},
-            getDataObjects() {},
-            getMessageFlows() {},
-          };
-        },
-      });
+      const subProcess = SubProcess({id: 'sub-process', parent: {id: 'process1'}}, testHelpers.emptyContext({
+        getActivities() {
+          return [{id: 'subTask', Behaviour: SignalTask}];
+        }
+      }));
 
       subProcess.run();
       subProcess.stop();

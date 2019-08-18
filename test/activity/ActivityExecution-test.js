@@ -1938,6 +1938,7 @@ function createActivity(Behaviour) {
       return [];
     },
     loadExtensions() {},
+    getInboundAssociations() {},
   });
 
   function ActivityBehaviour({broker}) {

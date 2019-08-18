@@ -22,6 +22,7 @@ describe('ReceiveTask', () => {
           name: 'My Message ${content.id}',
         }, {environment});
       },
+      getInboundAssociations() {},
       getInboundSequenceFlows() {},
       getOutboundSequenceFlows() {},
       loadExtensions() {},

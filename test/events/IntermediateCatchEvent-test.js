@@ -8,6 +8,7 @@ describe('IntermediateCatchEvent', () => {
     beforeEach(() => {
       event = IntermediateCatchEvent({id: 'emptyEvent'}, {
         environment: Environment({Logger: testHelpers.Logger}),
+        getInboundAssociations() {},
         getInboundSequenceFlows() {},
         getOutboundSequenceFlows() {},
         loadExtensions() {},
