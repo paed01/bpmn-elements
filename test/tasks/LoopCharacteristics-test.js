@@ -1,9 +1,9 @@
 import Environment from '../../src/Environment';
-import MultiInstanceLoopCharacteristics from '../../src/tasks/MultiInstanceLoopCharacteristics';
+import LoopCharacteristics from '../../src/tasks/LoopCharacteristics';
 import {ActivityBroker} from '../../src/EventBroker';
 import {Logger} from '../helpers/testHelpers';
 
-describe('MultiInstanceLoopCharacteristics', () => {
+describe('LoopCharacteristics', () => {
   let task;
   beforeEach(() => {
     task = ActivityBroker();
@@ -15,7 +15,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
 
   describe('ctorish(activity, loopCharacteristics)', () => {
     it('returns loop characteristics api with execute function', () => {
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -32,7 +32,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
     });
 
     it('returns NO loop characteristics if collection and cardinality is absent', () => {
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
         },
@@ -42,14 +42,14 @@ describe('MultiInstanceLoopCharacteristics', () => {
     });
 
     it('empty behaviour is ok and returns no characteristics', () => {
-      const loop = MultiInstanceLoopCharacteristics(task, {});
+      const loop = LoopCharacteristics(task, {});
       expect(loop).to.not.be.ok;
     });
   });
 
   describe('execute(executeMessage)', () => {
     it('throws if executeMessage is missing', () => {
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -60,7 +60,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
     });
 
     it('publishes error on activity broker if loopCardinality is not a number', (done) => {
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: '3 pcs',
           isSequential: true,
@@ -88,7 +88,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -123,7 +123,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -149,7 +149,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -194,7 +194,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -241,7 +241,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -282,7 +282,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
         task.broker.publish('execution', 'execute.completed', {...msg.content});
       }, {noAck: true});
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -319,7 +319,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
         }
       }, {noAck: true, consumerTag: 'completed-consumer'});
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -349,7 +349,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
 
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 10,
@@ -396,7 +396,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
         }
       }, {noAck: true});
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -425,7 +425,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
     it('root api stop message drops consumers', () => {
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           collection: '${environment.variables.items}',
@@ -451,7 +451,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
           messages.push(msg);
         }, {noAck: true});
 
-        const loop = MultiInstanceLoopCharacteristics(task, {
+        const loop = LoopCharacteristics(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -490,7 +490,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
           messages.push(msg);
         }, {noAck: true});
 
-        const loop = MultiInstanceLoopCharacteristics(task, {
+        const loop = LoopCharacteristics(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -528,7 +528,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
           messages.push(msg);
         }, {noAck: true});
 
-        const loop = MultiInstanceLoopCharacteristics(task, {
+        const loop = LoopCharacteristics(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -564,7 +564,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
           messages.push(msg);
         }, {noAck: true});
 
-        const loop = MultiInstanceLoopCharacteristics(task, {
+        const loop = LoopCharacteristics(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -624,7 +624,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
         },
@@ -697,7 +697,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
 
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           collection: '${environment.variables.items}',
         },
@@ -739,7 +739,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
         },
@@ -775,7 +775,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
         },
@@ -806,7 +806,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
           completionCondition: '${content.output.stopLoop}',
@@ -836,7 +836,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
     it('root api stop message drops consumers', () => {
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = MultiInstanceLoopCharacteristics(task, {
+      const loop = LoopCharacteristics(task, {
         behaviour: {
           collection: '${environment.variables.items}',
         },
@@ -861,7 +861,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
           messages.push(msg);
         }, {noAck: true});
 
-        const loop = MultiInstanceLoopCharacteristics(task, {
+        const loop = LoopCharacteristics(task, {
           behaviour: {
             loopCardinality: 3,
             completionCondition: '${content.output.stopLoop}',
@@ -889,7 +889,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
           messages.push(msg);
         }, {noAck: true});
 
-        const loop = MultiInstanceLoopCharacteristics(task, {
+        const loop = LoopCharacteristics(task, {
           behaviour: {
             loopCardinality: 3,
             completionCondition: '${content.output.stopLoop}',
@@ -918,7 +918,7 @@ describe('MultiInstanceLoopCharacteristics', () => {
           messages.push(msg);
         }, {noAck: true});
 
-        const loop = MultiInstanceLoopCharacteristics(task, {
+        const loop = LoopCharacteristics(task, {
           behaviour: {
             loopCardinality: 3,
           },

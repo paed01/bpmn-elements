@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 0.8.0
+
+- Support StandardLoopCondition
+
 # 0.7.0
 
 - Support LinkEventDefinition

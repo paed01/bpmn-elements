@@ -2,7 +2,7 @@ import Activity from '../../src/activity/Activity';
 import ActivityExecution from '../../src/activity/ActivityExecution';
 import Environment from '../../src/Environment';
 import EventDefinitionExecution from '../../src/eventDefinitions/EventDefinitionExecution';
-import MultiInstanceLoopCharacteristics from '../../src/tasks/MultiInstanceLoopCharacteristics';
+import LoopCharacteristics from '../../src/tasks/LoopCharacteristics';
 import SequenceFlow from '../../src/flows/SequenceFlow';
 import testHelpers from '../helpers/testHelpers';
 
@@ -1174,7 +1174,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql([0, 1, 2]);
 
       function Behaviour(activity) {
-        const loopCharacteristics = MultiInstanceLoopCharacteristics(activity, {
+        const loopCharacteristics = LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
             isSequential: true,
@@ -1218,7 +1218,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql([0, 1, 2]);
 
       function Behaviour(activity) {
-        const loopCharacteristics = MultiInstanceLoopCharacteristics(activity, {
+        const loopCharacteristics = LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
             isSequential: true,
@@ -1268,7 +1268,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql([0, 1, 2]);
 
       function Behaviour(activity) {
-        const loopCharacteristics = MultiInstanceLoopCharacteristics(activity, {
+        const loopCharacteristics = LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
           },
@@ -1315,7 +1315,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql([0]);
 
       function Behaviour(activity) {
-        const loopCharacteristics = MultiInstanceLoopCharacteristics(activity, {
+        const loopCharacteristics = LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 1,
           },
@@ -1367,7 +1367,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql([0, 1, 2]);
 
       function Behaviour(activity) {
-        const loopCharacteristics = MultiInstanceLoopCharacteristics(activity, {
+        const loopCharacteristics = LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
           },
@@ -1427,7 +1427,7 @@ describe('ActivityExecution', () => {
       expect(task.broker.getQueue('execute-q')).to.have.property('messageCount', 0);
 
       function Behaviour(activity) {
-        const loopCharacteristics = MultiInstanceLoopCharacteristics(activity, {
+        const loopCharacteristics = LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
           },
@@ -1486,7 +1486,7 @@ describe('ActivityExecution', () => {
       expect(task.broker.getQueue('execute-q')).to.have.property('messageCount', 0);
 
       function Behaviour(activity) {
-        const loopCharacteristics = MultiInstanceLoopCharacteristics(activity, {
+        const loopCharacteristics = LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
           },
@@ -1538,7 +1538,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql([0, 1]);
 
       function Behaviour(activity) {
-        const loopCharacteristics = MultiInstanceLoopCharacteristics(activity, {
+        const loopCharacteristics = LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
           },
@@ -1585,7 +1585,7 @@ describe('ActivityExecution', () => {
       expect(executeQ.messages[3].content).to.have.property('isMultiInstance', true);
 
       function Behaviour(activity) {
-        const loopCharacteristics = MultiInstanceLoopCharacteristics(activity, {
+        const loopCharacteristics = LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
           },
@@ -1630,7 +1630,7 @@ describe('ActivityExecution', () => {
       expect(executeQ.messages[3].content).to.have.property('isMultiInstance', true);
 
       function Behaviour(activity) {
-        const loopCharacteristics = MultiInstanceLoopCharacteristics(activity, {
+        const loopCharacteristics = LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
           },

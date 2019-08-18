@@ -9,36 +9,6 @@ Object.defineProperty(exports, "Activity", {
     return _Activity.default;
   }
 });
-Object.defineProperty(exports, "Environment", {
-  enumerable: true,
-  get: function () {
-    return _Environment.default;
-  }
-});
-Object.defineProperty(exports, "Escalation", {
-  enumerable: true,
-  get: function () {
-    return _Escalation.default;
-  }
-});
-Object.defineProperty(exports, "Context", {
-  enumerable: true,
-  get: function () {
-    return _Context.default;
-  }
-});
-Object.defineProperty(exports, "Definition", {
-  enumerable: true,
-  get: function () {
-    return _Definition.default;
-  }
-});
-Object.defineProperty(exports, "Process", {
-  enumerable: true,
-  get: function () {
-    return _Process.default;
-  }
-});
 Object.defineProperty(exports, "BoundaryEvent", {
   enumerable: true,
   get: function () {
@@ -57,10 +27,22 @@ Object.defineProperty(exports, "ConditionalEventDefinition", {
     return _ConditionalEventDefinition.default;
   }
 });
+Object.defineProperty(exports, "Context", {
+  enumerable: true,
+  get: function () {
+    return _Context.default;
+  }
+});
 Object.defineProperty(exports, "DataObject", {
   enumerable: true,
   get: function () {
     return _EnvironmentDataObject.default;
+  }
+});
+Object.defineProperty(exports, "Definition", {
+  enumerable: true,
+  get: function () {
+    return _Definition.default;
   }
 });
 Object.defineProperty(exports, "Dummy", {
@@ -75,10 +57,22 @@ Object.defineProperty(exports, "EndEvent", {
     return _EndEvent.default;
   }
 });
+Object.defineProperty(exports, "Environment", {
+  enumerable: true,
+  get: function () {
+    return _Environment.default;
+  }
+});
 Object.defineProperty(exports, "ErrorEventDefinition", {
   enumerable: true,
   get: function () {
     return _ErrorEventDefinition.default;
+  }
+});
+Object.defineProperty(exports, "Escalation", {
+  enumerable: true,
+  get: function () {
+    return _Escalation.default;
   }
 });
 Object.defineProperty(exports, "EscalationEventDefinition", {
@@ -105,6 +99,12 @@ Object.defineProperty(exports, "InclusiveGateway", {
     return _InclusiveGateway.default;
   }
 });
+Object.defineProperty(exports, "InputOutputSpecification", {
+  enumerable: true,
+  get: function () {
+    return _InputOutputSpecification.default;
+  }
+});
 Object.defineProperty(exports, "IntermediateCatchEvent", {
   enumerable: true,
   get: function () {
@@ -117,16 +117,16 @@ Object.defineProperty(exports, "IntermediateThrowEvent", {
     return _IntermediateThrowEvent.default;
   }
 });
-Object.defineProperty(exports, "InputOutputSpecification", {
-  enumerable: true,
-  get: function () {
-    return _InputOutputSpecification.default;
-  }
-});
 Object.defineProperty(exports, "LinkEventDefinition", {
   enumerable: true,
   get: function () {
     return _LinkEventDefinition.default;
+  }
+});
+Object.defineProperty(exports, "MultiInstanceLoopCharacteristics", {
+  enumerable: true,
+  get: function () {
+    return _LoopCharacteristics.default;
   }
 });
 Object.defineProperty(exports, "Message", {
@@ -151,6 +151,12 @@ Object.defineProperty(exports, "ParallelGateway", {
   enumerable: true,
   get: function () {
     return _ParallelGateway.default;
+  }
+});
+Object.defineProperty(exports, "Process", {
+  enumerable: true,
+  get: function () {
+    return _Process.default;
   }
 });
 Object.defineProperty(exports, "ReceiveTask", {
@@ -207,16 +213,22 @@ Object.defineProperty(exports, "ManualTask", {
     return _SignalTask.default;
   }
 });
+Object.defineProperty(exports, "UserTask", {
+  enumerable: true,
+  get: function () {
+    return _SignalTask.default;
+  }
+});
 Object.defineProperty(exports, "SignalTask", {
   enumerable: true,
   get: function () {
     return _SignalTask.default;
   }
 });
-Object.defineProperty(exports, "UserTask", {
+Object.defineProperty(exports, "StandardLoopCharacteristics", {
   enumerable: true,
   get: function () {
-    return _SignalTask.default;
+    return _StandardLoopCharacteristics.default;
   }
 });
 Object.defineProperty(exports, "StartEvent", {
@@ -249,24 +261,8 @@ Object.defineProperty(exports, "TimerEventDefinition", {
     return _TimerEventDefinition.default;
   }
 });
-Object.defineProperty(exports, "MultiInstanceLoopCharacteristics", {
-  enumerable: true,
-  get: function () {
-    return _MultiInstanceLoopCharacteristics.default;
-  }
-});
 
 var _Activity = _interopRequireDefault(require("./src/activity/Activity"));
-
-var _Environment = _interopRequireDefault(require("./src/Environment"));
-
-var _Escalation = _interopRequireDefault(require("./src/activity/Escalation"));
-
-var _Context = _interopRequireDefault(require("./src/Context"));
-
-var _Definition = _interopRequireDefault(require("./src/definition/Definition"));
-
-var _Process = _interopRequireDefault(require("./src/process/Process"));
 
 var _BoundaryEvent = _interopRequireDefault(require("./src/events/BoundaryEvent"));
 
@@ -274,13 +270,21 @@ var _BpmnError = _interopRequireDefault(require("./src/error/BpmnError"));
 
 var _ConditionalEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/ConditionalEventDefinition"));
 
+var _Context = _interopRequireDefault(require("./src/Context"));
+
 var _EnvironmentDataObject = _interopRequireDefault(require("./src/io/EnvironmentDataObject"));
+
+var _Definition = _interopRequireDefault(require("./src/definition/Definition"));
 
 var _Dummy = _interopRequireDefault(require("./src/activity/Dummy"));
 
 var _EndEvent = _interopRequireDefault(require("./src/events/EndEvent"));
 
+var _Environment = _interopRequireDefault(require("./src/Environment"));
+
 var _ErrorEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/ErrorEventDefinition"));
+
+var _Escalation = _interopRequireDefault(require("./src/activity/Escalation"));
 
 var _EscalationEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/EscalationEventDefinition"));
 
@@ -290,13 +294,15 @@ var _ExclusiveGateway = _interopRequireDefault(require("./src/gateways/Exclusive
 
 var _InclusiveGateway = _interopRequireDefault(require("./src/gateways/InclusiveGateway"));
 
+var _InputOutputSpecification = _interopRequireDefault(require("./src/io/InputOutputSpecification"));
+
 var _IntermediateCatchEvent = _interopRequireDefault(require("./src/events/IntermediateCatchEvent"));
 
 var _IntermediateThrowEvent = _interopRequireDefault(require("./src/events/IntermediateThrowEvent"));
 
-var _InputOutputSpecification = _interopRequireDefault(require("./src/io/InputOutputSpecification"));
-
 var _LinkEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/LinkEventDefinition"));
+
+var _LoopCharacteristics = _interopRequireDefault(require("./src/tasks/LoopCharacteristics"));
 
 var _Message = _interopRequireDefault(require("./src/activity/Message"));
 
@@ -305,6 +311,8 @@ var _MessageEventDefinition = _interopRequireDefault(require("./src/eventDefinit
 var _MessageFlow = _interopRequireDefault(require("./src/flows/MessageFlow"));
 
 var _ParallelGateway = _interopRequireDefault(require("./src/gateways/ParallelGateway"));
+
+var _Process = _interopRequireDefault(require("./src/process/Process"));
 
 var _ReceiveTask = _interopRequireDefault(require("./src/tasks/ReceiveTask"));
 
@@ -322,6 +330,8 @@ var _SignalEventDefinition = _interopRequireDefault(require("./src/eventDefiniti
 
 var _SignalTask = _interopRequireDefault(require("./src/tasks/SignalTask"));
 
+var _StandardLoopCharacteristics = _interopRequireDefault(require("./src/tasks/StandardLoopCharacteristics"));
+
 var _StartEvent = _interopRequireDefault(require("./src/events/StartEvent"));
 
 var _SubProcess = _interopRequireDefault(require("./src/tasks/SubProcess"));
@@ -331,7 +341,5 @@ var _Task = _interopRequireDefault(require("./src/tasks/Task"));
 var _TerminateEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/TerminateEventDefinition"));
 
 var _TimerEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/TimerEventDefinition"));
-
-var _MultiInstanceLoopCharacteristics = _interopRequireDefault(require("./src/tasks/MultiInstanceLoopCharacteristics"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }

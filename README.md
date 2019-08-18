@@ -53,6 +53,7 @@ The following elements are tested and supported.
 - SignalTask
   - ManualTask
   - UserTask
+- StandardLoopCharacteristics
 - StartEvent
 - SubProcess
 - Task

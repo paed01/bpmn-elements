@@ -1,10 +1,23 @@
 import {ActivityError} from '../error/Errors';
-import {cloneContent, unshiftParent} from '../messageHelper';
+import {cloneContent, cloneMessage, unshiftParent} from '../messageHelper';
 
-export default function MultiInstanceLoopCharacteristics(activity, loopCharacteristics) {
+export default function LoopCharacteristics(activity, loopCharacteristics) {
   const {id, broker, environment} = activity;
-  const {type = 'MultiInstanceLoopCharacteristics', behaviour = {}} = loopCharacteristics;
-  const {isSequential = false, collection: collectionExpression, completionCondition, elementVariable = 'item', loopCardinality} = behaviour;
+  const {type = 'LoopCharacteristics', behaviour = {}} = loopCharacteristics;
+  const {isSequential = false, collection: collectionExpression, elementVariable = 'item'} = behaviour;
+
+  let completionCondition, startCondition, loopCardinality;
+  if ('loopCardinality' in behaviour) loopCardinality = behaviour.loopCardinality;
+  if ('loopMaximum' in behaviour) loopCardinality = behaviour.loopMaximum;
+
+  if (behaviour.loopCondition) {
+    if (behaviour.testBefore) startCondition = behaviour.loopCondition;
+    else completionCondition = behaviour.loopCondition;
+  }
+  if (behaviour.completionCondition) {
+    completionCondition = behaviour.completionCondition;
+  }
+
   const loopType = getLoopType();
 
   if (!loopType) return;
@@ -18,7 +31,7 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
 
   let loopSettings;
 
-  const characteristics = {
+  const characteristicsApi = {
     type,
     loopType,
     collection: collectionExpression,
@@ -28,15 +41,17 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
     execute,
   };
 
-  return characteristics;
+  return characteristicsApi;
 
   function getLoopType() {
     if (collectionExpression) return 'collection';
+    if (completionCondition) return 'complete condition';
+    if (startCondition) return 'start condition';
     if (loopCardinality) return 'cardinality';
   }
 
   function execute(executeMessage) {
-    if (!executeMessage) throw new Error('MultiInstanceLoop execution requires message');
+    if (!executeMessage) throw new Error('LoopCharacteristics execution requires message');
     const {routingKey: executeRoutingKey, redelivered: isRedelivered} = executeMessage.fields || {};
     const {executionId: parentExecutionId} = executeMessage.content;
     getCharacteristics();
@@ -57,13 +72,19 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
         const content = next(index);
         if (!content) return;
 
+        const characteristics = getCharacteristics();
+        if (startCondition && isConditionMet(startCondition, {content})) {
+          debug(`<${parentExecutionId} (${id})> start condition met`);
+          return;
+        }
+
         debug(`<${content.executionId} (${id})>`, ignoreIfExecuting ? 'resume' : 'start', `sequential iteration index ${content.index}`);
         broker.publish('execution', 'execute.iteration.next', {
           ...content,
-          ...getCharacteristics().getContent(),
+          ...characteristics.getContent(),
           index,
           preventComplete: true,
-          output: getCharacteristics().output.slice(),
+          output: characteristics.output.slice(),
           state: 'iteration.next',
         });
 
@@ -88,7 +109,7 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
           state: 'iteration.completed',
         });
 
-        if (completionCondition && environment.resolveExpression(completionCondition, message)) {
+        if (isConditionMet(completionCondition, message, loopOutput)) {
           debug(`<${parentExecutionId} (${id})> complete condition met`);
         } else if (startNext(content.index + 1)) return;
 
@@ -130,7 +151,7 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
           state: 'iteration.completed',
         });
 
-        if (environment.resolveExpression(completionCondition, message)) {
+        if (isConditionMet(completionCondition, message)) {
           stop();
 
           return broker.publish('execution', 'execute.completed', {
@@ -237,6 +258,13 @@ export default function MultiInstanceLoopCharacteristics(activity, loopCharacter
   function stop() {
     broker.cancel(executeConsumerTag);
     broker.cancel(apiConsumerTag);
+  }
+
+
+  function isConditionMet(condition, message, loopOutput) {
+    if (!condition) return false;
+    const testContext = {...cloneMessage(message), loopOutput};
+    return environment.resolveExpression(condition, testContext);
   }
 }
 
