@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 0.8.1
+
+- Expose SequenceFlow name in published events and in api
+
 # 0.8.0
 
 - Support StandardLoopCondition

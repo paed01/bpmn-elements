@@ -156,7 +156,7 @@ describe('SequenceFlow', () => {
           <task id="task" />
           <endEvent id="end1" />
           <endEvent id="end2" />
-          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
+          <sequenceFlow id="flow1" name="to decision" sourceRef="theStart" targetRef="decision" />
           <sequenceFlow id="flow2" sourceRef="decision" targetRef="end1" />
           <sequenceFlow id="flow3withExpression" sourceRef="decision" targetRef="end2">
             <conditionExpression>\${services.isBelow(variables.input,2)}</conditionExpression>
@@ -168,13 +168,23 @@ describe('SequenceFlow', () => {
 
     it('emits take when take', (done) => {
       const flow = context.getSequenceFlowById('flow1');
-      flow.once('take', () => done());
+      flow.once('take', (msg) => {
+        expect(msg).to.have.property('id', 'flow1');
+        expect(msg).to.have.property('type', 'bpmn:SequenceFlow');
+        expect(msg).to.have.property('name', 'to decision');
+        return done();
+      });
       flow.take();
     });
 
     it('emits discard when discard', (done) => {
       const flow = context.getSequenceFlowById('flow1');
-      flow.once('discard', () => done());
+      flow.once('discard', (msg) => {
+        expect(msg).to.have.property('id', 'flow1');
+        expect(msg).to.have.property('type', 'bpmn:SequenceFlow');
+        expect(msg).to.have.property('name', 'to decision');
+        return done();
+      });
       flow.discard();
     });
   });
@@ -191,7 +201,7 @@ describe('SequenceFlow', () => {
           <task id="task" />
           <endEvent id="end1" />
           <endEvent id="end2" />
-          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
+          <sequenceFlow id="flow1" name="first flow" sourceRef="theStart" targetRef="decision" />
           <sequenceFlow id="flow2" sourceRef="decision" targetRef="end1" />
           <sequenceFlow id="flow3withExpression" sourceRef="decision" targetRef="end2">
             <conditionExpression>\${services.isBelow(variables.input,2)}</conditionExpression>
@@ -208,6 +218,7 @@ describe('SequenceFlow', () => {
       expect(flow.getState()).to.deep.include({
         id: 'flow1',
         type: 'bpmn:SequenceFlow',
+        name: 'first flow',
         counters: {
           discard: 0,
           looped: 0,

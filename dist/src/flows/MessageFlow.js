@@ -15,6 +15,7 @@ function MessageFlow(flowDef, context) {
   const {
     id,
     type = 'message',
+    name,
     target,
     source,
     behaviour,
@@ -34,6 +35,7 @@ function MessageFlow(flowDef, context) {
   const flowApi = {
     id,
     type,
+    name,
     target,
     source,
     behaviour,
@@ -84,6 +86,7 @@ function MessageFlow(flowDef, context) {
     return {
       id,
       type,
+      name,
       source: { ...source
       },
       target: { ...target

@@ -23,6 +23,7 @@ function SequenceFlow(flowDef, {
   const {
     id,
     type = 'sequenceflow',
+    name,
     parent: originalParent,
     targetId,
     sourceId,
@@ -44,6 +45,7 @@ function SequenceFlow(flowDef, {
   const flowApi = {
     id,
     type,
+    name,
     parent,
     behaviour,
     sourceId,
@@ -144,6 +146,7 @@ function SequenceFlow(flowDef, {
     return { ...override,
       id,
       type,
+      name,
       sourceId,
       targetId,
       isSequenceFlow: true,
@@ -156,6 +159,7 @@ function SequenceFlow(flowDef, {
     const result = {
       id,
       type,
+      name,
       sourceId,
       targetId,
       isDefault,

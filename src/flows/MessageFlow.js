@@ -3,7 +3,7 @@ import {cloneParent} from '../messageHelper';
 import {MessageFlowBroker} from '../EventBroker';
 
 export default function MessageFlow(flowDef, context) {
-  const {id, type = 'message', target, source, behaviour, parent} = flowDef;
+  const {id, type = 'message', name, target, source, behaviour, parent} = flowDef;
   const sourceActivity = context.getActivityById(source.id);
   const sourceEndConsumerTag = `_message-on-end-${brokerSafeId(id)}`;
   const sourceMessageConsumerTag = `_message-on-message-${brokerSafeId(id)}`;
@@ -19,6 +19,7 @@ export default function MessageFlow(flowDef, context) {
   const flowApi = {
     id,
     type,
+    name,
     target,
     source,
     behaviour,
@@ -62,6 +63,7 @@ export default function MessageFlow(flowDef, context) {
     return {
       id,
       type,
+      name,
       source: {...source},
       target: {...target},
       parent: parent && cloneParent(parent),

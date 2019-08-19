@@ -5,7 +5,7 @@ import {EventBroker} from '../EventBroker';
 import {FlowApi} from '../Api';
 
 export default function SequenceFlow(flowDef, {environment}) {
-  const {id, type = 'sequenceflow', parent: originalParent, targetId, sourceId, isDefault, behaviour = {}} = flowDef;
+  const {id, type = 'sequenceflow', name, parent: originalParent, targetId, sourceId, isDefault, behaviour = {}} = flowDef;
   const parent = cloneParent(originalParent);
   const logger = environment.Logger(type.toLowerCase());
 
@@ -20,6 +20,7 @@ export default function SequenceFlow(flowDef, {environment}) {
   const flowApi = {
     id,
     type,
+    name,
     parent,
     behaviour,
     sourceId,
@@ -106,6 +107,7 @@ export default function SequenceFlow(flowDef, {environment}) {
       ...override,
       id,
       type,
+      name,
       sourceId,
       targetId,
       isSequenceFlow: true,
@@ -118,6 +120,7 @@ export default function SequenceFlow(flowDef, {environment}) {
     const result = {
       id,
       type,
+      name,
       sourceId,
       targetId,
       isDefault,
