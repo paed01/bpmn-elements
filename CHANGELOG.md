@@ -1,6 +1,14 @@
 Changelog
 =========
 
+# 0.9.0
+
+## Addition
+- Compensation is now supported, but only by association
+
+## Bugfix
+- Fix weird code where context ignores passed SequenceFlow and MessageFlow Behaviour function when making new instances
+
 # 0.8.1
 
 - Expose SequenceFlow name in published events and in api

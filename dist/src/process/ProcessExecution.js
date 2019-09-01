@@ -20,10 +20,10 @@ function ProcessExecution(parentActivity, context) {
   const {
     environment
   } = context;
-  const children = context.getActivities(id) || [];
-  const flows = context.getSequenceFlows(id) || [];
-  const associations = context.getAssociations(id) || [];
-  const outboundMessageFlows = context.getMessageFlows(id) || [];
+  const children = context.getActivities(id);
+  const flows = context.getSequenceFlows(id);
+  const associations = context.getAssociations(id);
+  const outboundMessageFlows = context.getMessageFlows(id);
   const startActivities = [];
   const triggeredByEventActivities = [];
   const detachedActivities = [];
@@ -241,6 +241,13 @@ function ProcessExecution(parentActivity, context) {
         priority: 200
       });
     });
+    associations.forEach(association => {
+      association.broker.subscribeTmp('event', '#', onActivityEvent, {
+        consumerTag: '_process-association-controller',
+        noAck: true,
+        priority: 200
+      });
+    });
     startActivities.splice(0);
     triggeredByEventActivities.splice(0);
     children.forEach(activity => {
@@ -282,6 +289,7 @@ function ProcessExecution(parentActivity, context) {
       });
       if (shaking) return onShookEnd(message);
       if (!isDirectChild) return;
+      if (content.isAssociation) return;
 
       switch (routingKey) {
         case 'process.terminate':
@@ -313,6 +321,9 @@ function ProcessExecution(parentActivity, context) {
     });
     flows.forEach(flow => {
       flow.broker.cancel('_process-flight-controller');
+    });
+    associations.forEach(association => {
+      association.broker.cancel('_process-association-controller');
     });
     outboundMessageFlows.forEach(flow => {
       flow.deactivate();

@@ -1,7 +1,5 @@
 import Environment from './Environment';
 import ExtensionsMapper from './ExtensionsMapper';
-import SequenceFlow from './flows/SequenceFlow';
-import MessageFlow from './flows/MessageFlow';
 import {getUniqueId} from './shared';
 
 export default function Context(definitionContext, environment) {
@@ -63,15 +61,12 @@ function ContextInstance(definitionContext, environment) {
   }
 
   function getSequenceFlowById(sequenceFlowId) {
-    let flowInstance = sequenceFlowRefs[sequenceFlowId];
+    const flowInstance = sequenceFlowRefs[sequenceFlowId];
     if (flowInstance) return flowInstance;
 
-    const flow = definitionContext.getSequenceFlowById(sequenceFlowId);
-    if (!flow) return null;
-    flowInstance = sequenceFlowRefs[sequenceFlowId] = SequenceFlow(flow, context);
-    sequenceFlows.push(flow);
-
-    return flowInstance;
+    const flowDef = definitionContext.getSequenceFlowById(sequenceFlowId);
+    if (!flowDef) return null;
+    return upsertSequenceFlow(flowDef);
   }
 
   function getInboundSequenceFlows(activityId) {
@@ -148,7 +143,7 @@ function ContextInstance(definitionContext, environment) {
   function getMessageFlows(sourceId) {
     if (!messageFlows.length) {
       const flows = definitionContext.getMessageFlows() || [];
-      messageFlows.push(...flows.map((flow) => MessageFlow(flow, context)));
+      messageFlows.push(...flows.map((flow) => flow.Behaviour(flow, context)));
     }
 
     return messageFlows.filter((flow) => flow.source.processId === sourceId);

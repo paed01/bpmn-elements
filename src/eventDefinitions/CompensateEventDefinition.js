@@ -3,12 +3,9 @@ import {cloneContent, cloneMessage, shiftParent} from '../messageHelper';
 
 export default function CompensationEventDefinition(activity, eventDefinition, context) {
   const {id, broker, environment, isThrowing} = activity;
-  const {type, behaviour = {}} = eventDefinition;
+  const {type} = eventDefinition;
   const {debug} = environment.Logger(type.toLowerCase());
-  const reference = behaviour.escalationRef || {name: 'anonymous'};
-  const referenceElement = reference.id && context.getActivityById(reference.id);
-  const compensationId = referenceElement ? referenceElement.id : 'anonymous';
-  const compensationQueueName = `compensate-${brokerSafeId(id)}-${brokerSafeId(compensationId)}-q`;
+  const compensationQueueName = `compensate-${brokerSafeId(id)}-q`;
   const associations = context.getOutboundAssociations(id) || [];
 
   if (!isThrowing) setupCatch();
@@ -16,7 +13,7 @@ export default function CompensationEventDefinition(activity, eventDefinition, c
   const source = {
     id,
     type,
-    reference: {...reference, referenceType: 'compensate'},
+    reference: {referenceType: 'compensate'},
     execute: isThrowing ? executeThrow : executeCatch,
   };
 
@@ -29,7 +26,6 @@ export default function CompensationEventDefinition(activity, eventDefinition, c
     const {executionId, parent} = messageContent;
     const parentExecutionId = parent && parent.executionId;
 
-    const {message: referenceMessage, description} = resolveMessage(executeMessage);
     broker.consume(compensationQueueName, onCompensateApiMessage, {noAck: true, consumerTag: `_oncompensate-${executionId}`});
 
     if (completed) return;
@@ -38,7 +34,7 @@ export default function CompensationEventDefinition(activity, eventDefinition, c
 
     if (completed) return stop();
 
-    debug(`<${executionId} (${id})> expect ${description}`);
+    debug(`<${executionId} (${id})> expect compensate`);
 
     broker.assertExchange('compensate', 'topic');
     const compensateQ = broker.assertQueue('compensate-q', {durable: true, autoDelete: false});
@@ -54,7 +50,6 @@ export default function CompensationEventDefinition(activity, eventDefinition, c
       executionId: parentExecutionId,
       parent: shiftParent(parent),
       bindExchange: 'compensate',
-      expect: {...referenceMessage},
     });
 
     function onCollect(routingKey, message) {
@@ -72,7 +67,7 @@ export default function CompensationEventDefinition(activity, eventDefinition, c
 
       stop();
 
-      debug(`<${executionId} (${id})> caught ${description}`);
+      debug(`<${executionId} (${id})> caught compensate event`);
       broker.publish('event', 'activity.catch', {
         ...messageContent,
         message: {...output},
@@ -134,36 +129,16 @@ export default function CompensationEventDefinition(activity, eventDefinition, c
     const {executionId, parent} = messageContent;
     const parentExecutionId = parent && parent.executionId;
 
-    const {message: referenceMessage, description} = resolveMessage(executeMessage);
-
-    debug(`<${executionId} (${id})> throw ${description}`);
+    debug(`<${executionId} (${id})> throw compensate`);
 
     broker.publish('event', 'activity.compensate', {
       ...cloneContent(messageContent),
       executionId: parentExecutionId,
       parent: shiftParent(parent),
-      message: {...referenceMessage},
       state: 'throw',
     }, {type: 'compensate', delegate: true});
 
     return broker.publish('execution', 'execute.completed', {...messageContent});
-  }
-
-  function resolveMessage(message) {
-    if (!referenceElement) {
-      return {
-        message: {...reference},
-        description: 'anonymous compensation',
-      };
-    }
-
-    const result = {
-      message: referenceElement.resolve(message),
-    };
-
-    result.description = `${result.message.name} <${result.message.id}>`;
-
-    return result;
   }
 
   function setupCatch() {

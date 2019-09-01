@@ -9,10 +9,6 @@ var _Environment = _interopRequireDefault(require("./Environment"));
 
 var _ExtensionsMapper = _interopRequireDefault(require("./ExtensionsMapper"));
 
-var _SequenceFlow = _interopRequireDefault(require("./flows/SequenceFlow"));
-
-var _MessageFlow = _interopRequireDefault(require("./flows/MessageFlow"));
-
 var _shared = require("./shared");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -81,13 +77,11 @@ function ContextInstance(definitionContext, environment) {
   }
 
   function getSequenceFlowById(sequenceFlowId) {
-    let flowInstance = sequenceFlowRefs[sequenceFlowId];
+    const flowInstance = sequenceFlowRefs[sequenceFlowId];
     if (flowInstance) return flowInstance;
-    const flow = definitionContext.getSequenceFlowById(sequenceFlowId);
-    if (!flow) return null;
-    flowInstance = sequenceFlowRefs[sequenceFlowId] = (0, _SequenceFlow.default)(flow, context);
-    sequenceFlows.push(flow);
-    return flowInstance;
+    const flowDef = definitionContext.getSequenceFlowById(sequenceFlowId);
+    if (!flowDef) return null;
+    return upsertSequenceFlow(flowDef);
   }
 
   function getInboundSequenceFlows(activityId) {
@@ -162,7 +156,7 @@ function ContextInstance(definitionContext, environment) {
   function getMessageFlows(sourceId) {
     if (!messageFlows.length) {
       const flows = definitionContext.getMessageFlows() || [];
-      messageFlows.push(...flows.map(flow => (0, _MessageFlow.default)(flow, context)));
+      messageFlows.push(...flows.map(flow => flow.Behaviour(flow, context)));
     }
 
     return messageFlows.filter(flow => flow.source.processId === sourceId);

@@ -17,6 +17,8 @@ The following elements are tested and supported.
 - BpmnError
 - BoundaryEvent
 - ConditionalEventDefinition
+- CompensateEventDefinition
+  - compensate by outbound Association
 - DataObject
 - EndEvent
 - Error

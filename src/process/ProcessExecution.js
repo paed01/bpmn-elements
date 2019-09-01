@@ -5,10 +5,10 @@ export default function ProcessExecution(parentActivity, context) {
   const {id, type, broker, logger, isSubProcess} = parentActivity;
   const {environment} = context;
 
-  const children = context.getActivities(id) || [];
-  const flows = context.getSequenceFlows(id) || [];
-  const associations = context.getAssociations(id) || [];
-  const outboundMessageFlows = context.getMessageFlows(id) || [];
+  const children = context.getActivities(id);
+  const flows = context.getSequenceFlows(id);
+  const associations = context.getAssociations(id);
+  const outboundMessageFlows = context.getMessageFlows(id);
 
   const startActivities = [];
   const triggeredByEventActivities = [];
@@ -199,6 +199,10 @@ export default function ProcessExecution(parentActivity, context) {
       flow.broker.subscribeTmp('event', '#', onActivityEvent, {consumerTag: '_process-flight-controller', noAck: true, priority: 200});
     });
 
+    associations.forEach((association) => {
+      association.broker.subscribeTmp('event', '#', onActivityEvent, {consumerTag: '_process-association-controller', noAck: true, priority: 200});
+    });
+
     startActivities.splice(0);
     triggeredByEventActivities.splice(0);
 
@@ -233,6 +237,7 @@ export default function ProcessExecution(parentActivity, context) {
       broker.publish('event', routingKey, content, {...message.properties, delegate, mandatory: false});
       if (shaking) return onShookEnd(message);
       if (!isDirectChild) return;
+      if (content.isAssociation) return;
 
       switch (routingKey) {
         case 'process.terminate':
@@ -257,6 +262,10 @@ export default function ProcessExecution(parentActivity, context) {
 
     flows.forEach((flow) => {
       flow.broker.cancel('_process-flight-controller');
+    });
+
+    associations.forEach((association) => {
+      association.broker.cancel('_process-association-controller');
     });
 
     outboundMessageFlows.forEach((flow) => {

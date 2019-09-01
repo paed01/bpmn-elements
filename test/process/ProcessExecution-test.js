@@ -1,6 +1,5 @@
 import BoundaryEvent from '../../src/events/BoundaryEvent';
 import EndEvent from '../../src/events/EndEvent';
-import Environment from '../../src/Environment';
 import ErrorEventDefinition from '../../src/eventDefinitions/ErrorEventDefinition';
 import MessageEventDefinition from '../../src/eventDefinitions/MessageEventDefinition';
 import TimerEventDefinition from '../../src/eventDefinitions/TimerEventDefinition';
@@ -280,14 +279,15 @@ describe('Process execution', () => {
         },
       });
 
-      const activity = ServiceTask({
+      const activity = {
         id: 'service',
         type: 'bpmn:ServiceTask',
         parent: {
           id: 'process1',
         },
+        Behaviour: ServiceTask,
         behaviour: {
-          Service: () => {
+          Service() {
             return {
               execute(_, next) {
                 return next(new Error('Shaky'));
@@ -295,19 +295,20 @@ describe('Process execution', () => {
             };
           },
         },
-      }, bp.context);
+      };
       activities.push(activity);
 
-      const boundEvent = BoundaryEvent({
+      const boundEvent = {
         id: 'boundEvent',
         parent: {
           id: 'process1',
         },
+        Behaviour: BoundaryEvent,
         behaviour: {
           attachedTo: {id: 'service'},
           eventDefinitions: [{Behaviour: ErrorEventDefinition}],
         },
-      }, bp.context);
+      };
       activities.push(boundEvent);
 
       const execution = ProcessExecution(bp, bp.context);
@@ -332,8 +333,7 @@ describe('Process execution', () => {
 
   describe('execution flow', () => {
     it('completes immediately if no activities', async () => {
-      const bp = createProcess();
-      bp.context.getActivities = () => {};
+      const bp = createProcess({getActivities() {}});
 
       const execution = ProcessExecution(bp, bp.context);
       execution.execute({
@@ -349,18 +349,17 @@ describe('Process execution', () => {
     it('completes when activity leaves', async () => {
       const bp = createProcess({
         getSequenceFlows() {},
+        getActivities() {
+          return [{
+            id: 'end2',
+            type: 'bpmn:EndEvent',
+            Behaviour: EndEvent,
+            parent: {
+              id: 'process1',
+            },
+          }];
+        }
       });
-
-      const activity = EndEvent({
-        id: 'end2',
-        type: 'bpmn:EndEvent',
-        parent: {
-          id: 'process1',
-        },
-      }, bp.context);
-      bp.context.getActivities = () => {
-        return [activity];
-      };
 
       const execution = ProcessExecution(bp, bp.context);
       execution.execute({
@@ -370,6 +369,8 @@ describe('Process execution', () => {
           executionId: 'process1_1',
         },
       });
+      const [activity] = execution.getActivities();
+
       activity.broker.publish('event', 'activity.enter', {id: 'end'});
       activity.broker.publish('event', 'activity.leave', {id: 'end'});
 
@@ -406,12 +407,14 @@ describe('Process execution', () => {
     });
 
     it('multiple start activities completes when last activity leaves', async () => {
-      const bp = createProcess();
-      const activity1 = SignalTask({id: 'task1', type: 'bpmn:Task', parent: {id: 'process1'}}, bp.context);
-      const activity2 = SignalTask({id: 'task2', type: 'bpmn:Task', parent: {id: 'process1'}}, bp.context);
-      bp.context.getActivities = () => {
-        return [activity1, activity2];
-      };
+      const bp = createProcess({
+        getActivities() {
+          return [
+            {id: 'task1', type: 'bpmn:Task', parent: {id: 'process1'}, Behaviour: SignalTask},
+            {id: 'task2', type: 'bpmn:Task', parent: {id: 'process1'}, Behaviour: SignalTask},
+          ];
+        }
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       execution.execute({
@@ -421,6 +424,8 @@ describe('Process execution', () => {
           executionId: 'process1_1',
         },
       });
+      const [activity1, activity2] = execution.getActivities();
+
       activity1.broker.publish('event', 'activity.enter', {id: activity1.id, executionId: activity1.executionId, parent: {id: 'process1'}});
       activity2.broker.publish('event', 'activity.enter', {id: activity2.id, executionId: activity2.executionId, parent: {id: 'process1'}});
 
@@ -459,12 +464,14 @@ describe('Process execution', () => {
     });
 
     it('deletes execution queue when completed', async () => {
-      const bp = createProcess();
-      const activity1 = SignalTask({id: 'task1', type: 'bpmn:Task', parent: {id: 'process1'}}, bp.context);
-      const activity2 = SignalTask({id: 'task2', type: 'bpmn:Task', parent: {id: 'process1'}}, bp.context);
-      bp.context.getActivities = () => {
-        return [activity1, activity2];
-      };
+      const bp = createProcess({
+        getActivities() {
+          return [
+            {id: 'task1', type: 'bpmn:Task', parent: {id: 'process1'}, Behaviour: SignalTask},
+            {id: 'task2', type: 'bpmn:Task', parent: {id: 'process1'}, Behaviour: SignalTask},
+          ];
+        }
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       execution.execute({
@@ -474,6 +481,9 @@ describe('Process execution', () => {
           executionId: 'process1_1',
         },
       });
+
+      const [activity1, activity2] = execution.getActivities();
+
       activity1.broker.publish('event', 'activity.enter', {id: activity1.id, executionId: activity1.executionId, parent: {id: 'process1'}});
       activity2.broker.publish('event', 'activity.enter', {id: activity2.id, executionId: activity2.executionId, parent: {id: 'process1'}});
 
@@ -491,19 +501,21 @@ describe('Process execution', () => {
 
   describe('termination event', () => {
     it('terminates execution', () => {
-      const bp = createProcess();
-      bp.context.getActivities = () => {
-        return [
-          SignalTask({id: 'start', parent: {id: 'process1'}}, bp.context),
-          EndEvent({
-            id: 'terminate',
-            parent: {id: 'process1'},
-            behaviour: {
-              eventDefinitions: [{Behaviour: TerminateEventDefinition}],
-            },
-          }, bp.context)
-        ];
-      };
+      const bp = createProcess({
+        getActivities() {
+          return [
+            {id: 'start', parent: {id: 'process1'}, Behaviour: SignalTask},
+            {
+              id: 'terminate',
+              parent: {id: 'process1'},
+              behaviour: {
+                eventDefinitions: [{Behaviour: TerminateEventDefinition}],
+              },
+              Behaviour: EndEvent,
+            }
+          ];
+        }
+      });
 
       const execution = ProcessExecution(bp, bp.context);
 
@@ -522,11 +534,11 @@ describe('Process execution', () => {
 
   describe('stop()', () => {
     it('stops all activity', async () => {
-      const bp = createProcess();
-      const activity = SignalTask({id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}}, bp.context);
-      bp.context.getActivities = () => {
-        return [activity];
-      };
+      const bp = createProcess({
+        getActivities() {
+          return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
+        }
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       execution.execute({
@@ -545,15 +557,15 @@ describe('Process execution', () => {
       expect(execution).to.have.property('stopped', true);
       expect(execution.getPostponed()).to.have.length(1);
 
-      expect(activity).to.have.property('stopped', true);
+      expect(execution.getActivityById('start')).to.have.property('stopped', true);
     });
 
     it('stop on activity wait stops all activity', async () => {
-      const bp = createProcess();
-      const activity = SignalTask({id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}}, bp.context);
-      bp.context.getActivities = () => {
-        return [activity];
-      };
+      const bp = createProcess({
+        getActivities() {
+          return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
+        }
+      });
 
       const stop = new Promise((resolve) => {
         bp.broker.subscribeOnce('event', 'activity.wait', () => {
@@ -580,15 +592,15 @@ describe('Process execution', () => {
       expect(execution).to.have.property('stopped', true);
       expect(execution.getPostponed()).to.have.length(1);
 
-      expect(activity).to.have.property('stopped', true);
+      expect(execution.getActivityById('start')).to.have.property('stopped', true);
     });
 
     it('closes execution queue and keeps messages', async () => {
-      const bp = createProcess();
-      const activity = SignalTask({id: 'start', type: 'bpmn:StartEvent', isStart: true, parent: {id: 'process1'}}, bp.context);
-      bp.context.getActivities = () => {
-        return [activity];
-      };
+      const bp = createProcess({
+        getActivities() {
+          return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
+        }
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       execution.execute({
@@ -610,27 +622,27 @@ describe('Process execution', () => {
     });
 
     it('stops running event eventDefinitions', async () => {
-      const bp = createProcess();
-      const activity = StartEvent({
-        id: 'start',
-        type: 'bpmn:StartEvent',
-        isStart: true,
-        parent: {id: 'process1'},
-        behaviour: {
-          eventDefinitions: [{
-            Behaviour: MessageEventDefinition,
-          }, {
-            Behaviour: TimerEventDefinition,
+      const bp = createProcess({
+        getActivities() {
+          return [{
+            id: 'start',
+            type: 'bpmn:StartEvent',
+            isStart: true,
+            parent: {id: 'process1'},
             behaviour: {
-              timeDuration: 'PT1M'
-            }
-          }]
+              eventDefinitions: [{
+                Behaviour: MessageEventDefinition,
+              }, {
+                Behaviour: TimerEventDefinition,
+                behaviour: {
+                  timeDuration: 'PT1M'
+                }
+              }]
+            },
+            Behaviour: StartEvent
+          }];
         }
-      }, bp.context);
-
-      bp.context.getActivities = () => {
-        return [activity];
-      };
+      });
 
       const stop = new Promise((resolve) => {
         bp.broker.subscribeOnce('event', 'activity.wait', () => {
@@ -657,17 +669,16 @@ describe('Process execution', () => {
       expect(execution).to.have.property('stopped', true);
       expect(execution.getPostponed()).to.have.length(1);
 
-      expect(activity).to.have.property('stopped', true);
+      expect(execution.getActivityById('start')).to.have.property('stopped', true);
     });
 
     it('stops running sub process', async () => {
-      const bp = createProcess();
-
-      const subActivity = StartEvent({
+      const activities = [{
         id: 'start',
         type: 'bpmn:StartEvent',
         isStart: true,
         parent: {id: 'activity'},
+        Behaviour: StartEvent,
         behaviour: {
           eventDefinitions: [{
             Behaviour: MessageEventDefinition,
@@ -677,24 +688,27 @@ describe('Process execution', () => {
               timeDuration: 'PT1M'
             }
           }]
-        }
-      }, bp.context);
-
-      const activity = SubProcess({
+        },
+      }, {
         id: 'activity',
         type: 'bpmn:SubProcess',
         isStart: true,
         parent: {id: 'process1'},
-        behaviour: {}
-      }, bp.context);
+        Behaviour: SubProcess,
+      }];
 
-      bp.context.getActivities = (id) => {
-        if (id === 'activity') return [subActivity];
-        return [activity];
-      };
-      bp.context.getSequenceFlows = () => {
-        return [];
-      };
+      const bp = createProcess({
+        getActivities(scopeId) {
+          if (scopeId === 'activity') {
+            return [activities[0]];
+          } else if (scopeId === 'process1') {
+            return [activities[1]];
+          }
+
+          return activities;
+        },
+        getSequenceFlows() {}
+      });
 
       const stop = new Promise((resolve) => {
         bp.broker.subscribeOnce('event', 'activity.wait', () => {
@@ -721,17 +735,20 @@ describe('Process execution', () => {
       expect(execution).to.have.property('stopped', true);
       expect(execution.getPostponed()).to.have.length(1);
 
-      expect(subActivity).to.have.property('stopped', true);
+      const [subProcess] = execution.getPostponed();
+      const [, start] = subProcess.getPostponed();
+      expect(start.owner).to.have.property('id', 'start');
+      expect(start.owner).to.have.property('stopped', true);
     });
   });
 
   describe('discard()', () => {
     it('discards all running activities', async () => {
-      const bp = createProcess();
-      const activity = SignalTask({id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}}, bp.context);
-      bp.context.getActivities = () => {
-        return [activity];
-      };
+      const bp = createProcess({
+        getActivities() {
+          return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
+        }
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       execution.execute({
@@ -750,16 +767,17 @@ describe('Process execution', () => {
       expect(execution).to.have.property('status', 'discard');
       expect(execution.getPostponed()).to.have.length(0);
 
+      const [activity] = execution.getActivities();
       expect(activity.counters).to.have.property('discarded', 1);
       expect(activity.counters).to.have.property('taken', 0);
     });
 
     it('api.discard() discards all running activities', async () => {
-      const bp = createProcess();
-      const activity = SignalTask({id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}}, bp.context);
-      bp.context.getActivities = () => {
-        return [activity];
-      };
+      const bp = createProcess({
+        getActivities() {
+          return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
+        }
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       execution.execute({
@@ -778,18 +796,18 @@ describe('Process execution', () => {
       expect(execution).to.have.property('status', 'discard');
       expect(execution.getPostponed()).to.have.length(0);
 
+      const [activity] = execution.getActivities();
       expect(activity.counters).to.have.property('discarded', 1);
       expect(activity.counters).to.have.property('taken', 0);
     });
 
     it('discards running sub process', async () => {
-      const bp = createProcess();
-
-      const subActivity = StartEvent({
+      const activities = [{
         id: 'start',
         type: 'bpmn:StartEvent',
         isStart: true,
         parent: {id: 'activity'},
+        Behaviour: StartEvent,
         behaviour: {
           eventDefinitions: [{
             Behaviour: MessageEventDefinition,
@@ -799,24 +817,27 @@ describe('Process execution', () => {
               timeDuration: 'PT1M'
             }
           }]
-        }
-      }, bp.context);
-
-      const activity = SubProcess({
+        },
+      }, {
         id: 'activity',
         type: 'bpmn:SubProcess',
         isStart: true,
         parent: {id: 'process1'},
-        behaviour: {}
-      }, bp.context);
+        Behaviour: SubProcess,
+      }];
 
-      bp.context.getActivities = (id) => {
-        if (id === 'activity') return [subActivity];
-        return [activity];
-      };
-      bp.context.getSequenceFlows = () => {
-        return [];
-      };
+      const bp = createProcess({
+        getActivities(scopeId) {
+          if (scopeId === 'activity') {
+            return [activities[0]];
+          } else if (scopeId === 'process1') {
+            return [activities[1]];
+          }
+
+          return activities;
+        },
+        getSequenceFlows() {}
+      });
 
       const discard = new Promise((resolve) => {
         bp.broker.subscribeOnce('event', 'activity.wait', () => {
@@ -840,18 +861,20 @@ describe('Process execution', () => {
       expect(execution).to.have.property('completed', true);
       expect(execution).to.have.property('status', 'discard');
 
-      expect(activity.counters).to.have.property('discarded', 1);
-      expect(subActivity.counters).to.have.property('discarded', 1);
+      const [subProcess] = execution.getActivities();
+      expect(subProcess.counters).to.have.property('discarded', 1);
+
+      expect(subProcess.execution.source.execution.getActivityById('start').counters).to.have.property('discarded', 1);
     });
   });
 
   describe('getState()', () => {
     it('returns child states', () => {
-      const bp = createProcess();
-      const activity = SignalTask({id: 'start', type: 'bpmn:StartEvent', isStart: true, parent: {id: 'process1'}}, bp.context);
-      bp.context.getActivities = () => {
-        return [activity];
-      };
+      const bp = createProcess({
+        getActivities() {
+          return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
+        }
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       const state = execution.getState();
@@ -861,11 +884,11 @@ describe('Process execution', () => {
     });
 
     it('returns completed false if not completed', () => {
-      const bp = createProcess();
-      const activity = SignalTask({id: 'start', type: 'bpmn:StartEvent', isStart: true, parent: {id: 'process1'}}, bp.context);
-      bp.context.getActivities = () => {
-        return [activity];
-      };
+      const bp = createProcess({
+        getActivities() {
+          return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
+        }
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       const state = execution.getState();
@@ -874,11 +897,11 @@ describe('Process execution', () => {
     });
 
     it('returns completed true if completed', () => {
-      const bp = createProcess();
-      const activity = StartEvent({id: 'start1', type: 'bpmn:StartEvent', isStart: true, parent: {id: 'process1'}}, bp.context);
-      bp.context.getActivities = () => {
-        return [activity];
-      };
+      const bp = createProcess({
+        getActivities() {
+          return [{id: 'start1', type: 'bpmn:StartEvent', isStart: true, parent: {id: 'process1'}, Behaviour: StartEvent}];
+        }
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       execution.execute({
@@ -998,11 +1021,11 @@ describe('Process execution', () => {
     });
 
     it('resume completed execution publishes complete message', () => {
-      const bp = createProcess();
-      const activity = StartEvent({id: 'start1', type: 'bpmn:StartEvent', isStart: true, parent: {id: 'process1'}}, bp.context);
-      bp.context.getActivities = () => {
-        return [activity];
-      };
+      const bp = createProcess({
+        getActivities() {
+          return [{id: 'start1', type: 'bpmn:StartEvent', isStart: true, parent: {id: 'process1'}, Behaviour: StartEvent}];
+        }
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       execution.execute({
@@ -1037,11 +1060,11 @@ describe('Process execution', () => {
     });
 
     it('resume recovered completed execution publishes complete message', () => {
-      const bp = createProcess();
-      const activity = StartEvent({id: 'start1', type: 'bpmn:StartEvent', isStart: true, parent: {id: 'process1'}}, bp.context);
-      bp.context.getActivities = () => {
-        return [activity];
-      };
+      const bp = createProcess({
+        getActivities() {
+          return [{id: 'start1', type: 'bpmn:StartEvent', isStart: true, parent: {id: 'process1'}, Behaviour: StartEvent}];
+        }
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       execution.execute({
@@ -1080,11 +1103,11 @@ describe('Process execution', () => {
     });
 
     it('resume recovered completed execution publishes complete message', () => {
-      const bp = createProcess();
-      const activity = StartEvent({id: 'start1', type: 'bpmn:StartEvent', isStart: true, parent: {id: 'process1'}}, bp.context);
-      bp.context.getActivities = () => {
-        return [activity];
-      };
+      const bp = createProcess({
+        getActivities() {
+          return [{id: 'start1', type: 'bpmn:StartEvent', isStart: true, parent: {id: 'process1'}, Behaviour: StartEvent}];
+        }
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       execution.execute({
@@ -1252,21 +1275,30 @@ describe('Process execution', () => {
 
   describe('sub process', () => {
     it('forwards events from sub process activities', () => {
-      const bp = createProcess({
-        getSequenceFlows() {},
-      });
-      const activity = SubProcess({
+      const activities = [{
+        id: 'subtask',
+        parent: {id: 'subp'},
+        Behaviour: SignalTask,
+      }, {
         id: 'subp',
         type: 'bpmn:SubProcess',
-        parent: {
-          id: 'process1',
-        },
-      }, bp.context);
+        isStart: true,
+        parent: {id: 'process1'},
+        Behaviour: SubProcess,
+      }];
 
-      bp.context.getActivities = (id) => {
-        if (id === 'subp') return [SignalTask({id: 'subtask', parent: {id: 'subp'}}, bp.context)];
-        return [activity];
-      };
+      const bp = createProcess({
+        getActivities(scopeId) {
+          if (scopeId === 'subp') {
+            return [activities[0]];
+          } else if (scopeId === 'process1') {
+            return [activities[1]];
+          }
+
+          return activities;
+        },
+        getSequenceFlows() {}
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       const messages = [];
@@ -1307,21 +1339,30 @@ describe('Process execution', () => {
     });
 
     it('reports child activity activities but only tracks sub process', () => {
-      const bp = createProcess({
-        getSequenceFlows() {},
-      });
-      const activity = SubProcess({
+      const activities = [{
+        id: 'subtask',
+        parent: {id: 'subp'},
+        Behaviour: SignalTask,
+      }, {
         id: 'subp',
         type: 'bpmn:SubProcess',
-        parent: {
-          id: 'process1',
-        },
-      }, bp.context);
+        isStart: true,
+        parent: {id: 'process1'},
+        Behaviour: SubProcess,
+      }];
 
-      bp.context.getActivities = (id) => {
-        if (id === 'subp') return [SignalTask({id: 'subtask', parent: {id: 'subp'}}, bp.context)];
-        return [activity];
-      };
+      const bp = createProcess({
+        getActivities(scopeId) {
+          if (scopeId === 'subp') {
+            return [activities[0]];
+          } else if (scopeId === 'process1') {
+            return [activities[1]];
+          }
+
+          return activities;
+        },
+        getSequenceFlows() {}
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       const messages = [];
@@ -1349,21 +1390,30 @@ describe('Process execution', () => {
     });
 
     it('getApi() with child message return child api', () => {
-      const bp = createProcess({
-        getSequenceFlows() {},
-      });
-      const activity = SubProcess({
+      const activities = [{
+        id: 'subtask',
+        parent: {id: 'subp'},
+        Behaviour: SignalTask,
+      }, {
         id: 'subp',
         type: 'bpmn:SubProcess',
-        parent: {
-          id: 'process1',
-        },
-      }, bp.context);
+        isStart: true,
+        parent: {id: 'process1'},
+        Behaviour: SubProcess,
+      }];
 
-      bp.context.getActivities = (id) => {
-        if (id === 'subp') return [SignalTask({id: 'subtask', parent: {id: 'subp'}}, bp.context)];
-        return [activity];
-      };
+      const bp = createProcess({
+        getActivities(scopeId) {
+          if (scopeId === 'subp') {
+            return [activities[0]];
+          } else if (scopeId === 'process1') {
+            return [activities[1]];
+          }
+
+          return activities;
+        },
+        getSequenceFlows() {}
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       const messages = [];
@@ -1389,31 +1439,32 @@ describe('Process execution', () => {
       expect(childApi.owner === execution.getActivityById('subp').execution.source.getPostponed()[0].owner, 'same subtask ref').to.be.true;
     });
 
-    it('getApi() with sub process child message return child api', () => {
-      const bp = createProcess({
-        getSequenceFlows() {},
-      });
-      const activity1 = SubProcess({
+    it('getApi() with sub process´ sub process child message return child api', () => {
+      const activities = [{
         id: 'subp1',
         type: 'bpmn:SubProcess',
-        parent: {
-          id: 'process1',
-        },
-      }, bp.context);
-
-      const activity2 = SubProcess({
+        isStart: true,
+        parent: {id: 'process1'},
+        Behaviour: SubProcess,
+      }, {
         id: 'subp2',
         type: 'bpmn:SubProcess',
-        parent: {
-          id: 'subp1',
-        },
-      }, bp.context);
+        isStart: true,
+        parent: {id: 'subp1'},
+        Behaviour: SubProcess,
+      }, {
+        id: 'subtask',
+        parent: {id: 'subp2'},
+        Behaviour: SignalTask,
+      }];
 
-      bp.context.getActivities = (id) => {
-        if (id === 'subp1') return [activity2];
-        if (id === 'subp2') return [SignalTask({id: 'subtask', parent: {id: 'subp2'}}, bp.context)];
-        return [activity1];
-      };
+      const bp = createProcess({
+        getActivities(scopeId) {
+          if (scopeId) return activities.filter((a) => a.parent.id === scopeId);
+          return activities;
+        },
+        getSequenceFlows() {}
+      });
 
       const execution = ProcessExecution(bp, bp.context);
       const messages = [];
@@ -1447,30 +1498,28 @@ describe('Process execution', () => {
     });
 
     it('terminated sub process terminates only terminates sub process', () => {
-      const bp = createProcess({
-        getSequenceFlows() {},
-      });
-      const activity = SubProcess({
-        id: 'subp',
+      const activities = [{
+        id: 'subp1',
         type: 'bpmn:SubProcess',
-        parent: {
-          id: 'process1',
+        isStart: true,
+        parent: {id: 'process1'},
+        Behaviour: SubProcess,
+      }, {
+        id: 'subend',
+        parent: {id: 'subp1'},
+        Behaviour: EndEvent,
+        behaviour: {
+          eventDefinitions: [{Behaviour: TerminateEventDefinition}],
         },
-      }, bp.context);
+      }];
 
-      bp.context.getActivities = (id) => {
-        if (id === 'subp') {
-          return [EndEvent({
-            id: 'subend',
-            type: 'endevent',
-            parent: {id: 'subp'},
-            behaviour: {
-              eventDefinitions: [{Behaviour: TerminateEventDefinition}],
-            },
-          }, bp.context)];
-        }
-        return [activity];
-      };
+      const bp = createProcess({
+        getActivities(scopeId) {
+          if (scopeId) return activities.filter((a) => a.parent.id === scopeId);
+          return activities;
+        },
+        getSequenceFlows() {}
+      });
 
       const execution = ProcessExecution(bp, bp.context);
 
@@ -1488,25 +1537,26 @@ describe('Process execution', () => {
 
   describe('two start activities', () => {
     it('completes when both activities are completed', () => {
-      const bp = createProcess({
-        getSequenceFlows() {},
-      });
-      const activity1 = StartEvent({
+      const activities = [{
         id: 'start1',
         parent: {
           id: 'process1',
         },
-      }, bp.context);
-      const activity2 = SignalTask({
+        Behaviour: StartEvent,
+      }, {
         id: 'start2',
         parent: {
           id: 'process1',
         },
-      }, bp.context);
+        Behaviour: SignalTask,
+      }];
 
-      bp.context.getActivities = () => {
-        return [activity1, activity2];
-      };
+      const bp = createProcess({
+        getActivities() {
+          return activities;
+        },
+        getSequenceFlows() {},
+      });
 
       const execution = ProcessExecution(bp, bp.context);
 
@@ -1524,6 +1574,8 @@ describe('Process execution', () => {
 
       expect(completed, 'completed before second activity is complete').to.not.be.ok;
 
+      const [, activity2] = execution.getActivities();
+
       activity2.broker.publish('event', 'activity.leave', {
         id: 'start2',
         executionId: activity2.executionId,
@@ -1538,38 +1590,35 @@ describe('Process execution', () => {
 });
 
 function createProcess(override, step) {
-  const environment = Environment({
-    Logger: testHelpers.Logger,
-    settings: {
-      step,
-    },
-  });
-
   const sequenceFlows = [
-    SequenceFlow({id: 'flow1', sourceId: 'start', targetId: 'task', parent: {id: 'process1'}}, {environment}),
-    SequenceFlow({id: 'flow2', sourceId: 'task', targetId: 'end', parent: {id: 'process1'}}, {environment})
+    {id: 'flow1', sourceId: 'start', targetId: 'task', parent: {id: 'process1'}, Behaviour: SequenceFlow},
+    {id: 'flow2', sourceId: 'task', targetId: 'end', parent: {id: 'process1'}, Behaviour: SequenceFlow},
   ];
-  const context = {
-    environment,
-    getAssociations() {},
-    getInboundAssociations() {},
-    getInboundSequenceFlows,
-    getOutboundAssociations() {},
-    getOutboundSequenceFlows,
-    loadExtensions,
-    getSequenceFlows,
-    clone(newEnv) {
-      if (newEnv) return {...this, environment: newEnv};
-      return {...this};
-    },
-    ...override,
-  };
 
   const activities = [
-    StartEvent({id: 'start', type: 'startEvent', parent: {id: 'process1'}}, context),
-    SignalTask({id: 'task', type: 'signalTask', parent: {id: 'process1'}}, context),
-    EndEvent({id: 'end', type: 'endEvent', parent: {id: 'process1'}}, context)
+    {id: 'start', type: 'startEvent', parent: {id: 'process1'}, Behaviour: StartEvent},
+    {id: 'task', type: 'signalTask', parent: {id: 'process1'}, Behaviour: SignalTask},
+    {id: 'end', type: 'endEvent', parent: {id: 'process1'}, Behaviour: EndEvent},
   ];
+
+  const context = testHelpers.emptyContext({
+    getSequenceFlows() {
+      return sequenceFlows;
+    },
+    getActivities() {
+      return activities;
+    },
+    getOutboundSequenceFlows(id) {
+      return (this.getSequenceFlows() || []).filter(({sourceId}) => sourceId === id);
+    },
+    getInboundSequenceFlows(id) {
+      return (this.getSequenceFlows() || []).filter(({targetId}) => targetId === id);
+    },
+    getActivityById(id) {
+      return (this.getActivities() || []).find((a) => a.id === id);
+    },
+    ...override
+  }, {step});
 
   return Process({
     id: 'process1',
@@ -1585,16 +1634,4 @@ function createProcess(override, step) {
     getMessageFlows() {},
     ...context,
   });
-
-  function loadExtensions() {}
-
-  function getSequenceFlows() {
-    return sequenceFlows;
-  }
-  function getOutboundSequenceFlows(id) {
-    return sequenceFlows.filter(({sourceId}) => sourceId === id);
-  }
-  function getInboundSequenceFlows(id) {
-    return sequenceFlows.filter(({targetId}) => targetId === id);
-  }
 }
