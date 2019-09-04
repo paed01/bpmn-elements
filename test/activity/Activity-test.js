@@ -575,11 +575,13 @@ describe('Activity', () => {
         sequenceFlow2.take();
 
         expect(message).to.be.ok;
-        expect(message.content.inbound).to.have.length(2);
+        expect(message.content.inbound).to.have.length(4);
         expect(message.content.inbound[0]).to.have.property('id', 'flow1');
-        expect(message.content.inbound[1]).to.have.property('id', 'flow2');
+        expect(message.content.inbound[1]).to.have.property('id', 'flow1');
+        expect(message.content.inbound[2]).to.have.property('id', 'flow1');
+        expect(message.content.inbound[3]).to.have.property('id', 'flow2');
 
-        expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 2);
+        expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 0);
       });
 
       it('takes next when all inbound flows have been evaluated', async () => {
@@ -621,23 +623,26 @@ describe('Activity', () => {
         sequenceFlow1.take();
         sequenceFlow1.take();
         sequenceFlow2.take();
+        sequenceFlow2.take();
 
         expect(message).to.be.ok;
-        expect(message.content.inbound).to.have.length(2);
+        expect(message.content.inbound).to.have.length(4);
         expect(message.content.inbound[0]).to.have.property('id', 'flow1');
-        expect(message.content.inbound[1]).to.have.property('id', 'flow2');
+        expect(message.content.inbound[1]).to.have.property('id', 'flow1');
+        expect(message.content.inbound[2]).to.have.property('id', 'flow1');
+        expect(message.content.inbound[3]).to.have.property('id', 'flow2');
 
-        expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 2);
+        expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 1);
 
         await leave;
 
         leave = activity.waitFor('leave');
 
-        sequenceFlow2.discard();
+        sequenceFlow1.discard();
 
         await leave;
 
-        expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 1);
+        expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 0);
       });
     });
   });

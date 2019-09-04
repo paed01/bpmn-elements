@@ -149,6 +149,54 @@ Feature('Compensation', () => {
       const task = definition.getActivityById('undoService');
       expect(task.counters).to.have.property('taken', 1);
     });
+
+    When('definition is ran again', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('service awaits to finish', () => {
+      expect(execService).to.have.length(1);
+    });
+
+    Given('definition is stopped', () => {
+      definition.stop();
+    });
+
+    When('resumed', () => {
+      definition.resume();
+    });
+
+    Then('service awaits callback to be called again', () => {
+      expect(execService).to.have.length(2);
+    });
+
+    When('callback is called', () => {
+      const [, callback] = execService.pop();
+      callback(null, {condition: true});
+    });
+
+    Then('compensation service is waiting for callback', () => {
+      expect(undoService).to.have.length(1);
+    });
+
+    When('compansated', () => {
+      undoService.pop()[1]();
+    });
+
+    And('definition completes', () => {
+      return end;
+    });
+
+    And('service was taken again', () => {
+      service = definition.getActivityById('service');
+      expect(service.counters).to.have.property('taken', 3);
+    });
+
+    And('compensation service was also taken', () => {
+      const task = definition.getActivityById('undoService');
+      expect(task.counters).to.have.property('taken', 2);
+    });
   });
 
   Scenario('A service task with bound compensate- and error event', () => {

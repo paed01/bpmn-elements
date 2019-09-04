@@ -41,7 +41,7 @@ The following elements are tested and supported.
   - throw
   - catch
 - MessageFlow
-- ParallelGateway
+- [ParallelGateway](/docs/ParallelGateway.md)
 - ReceiveTask
 - ScriptTask
 - SequenceFlow

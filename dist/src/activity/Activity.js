@@ -455,16 +455,22 @@ function Activity(Behaviour, activityDef, context) {
   }
 
   function onJoinInbound(routingKey, message) {
-    const touchedIds = inboundJoinFlows.map(msg => msg.content.id);
-    const idx = touchedIds.indexOf(message.content.id);
-    if (idx > -1) return;
+    const {
+      content
+    } = message;
+    const idx = inboundJoinFlows.findIndex(msg => msg.content.id === content.id);
     inboundJoinFlows.push(message);
-    const allTouched = inboundJoinFlows.length === inboundTriggers.length;
-    const remaining = inboundSequenceFlows.length - inboundJoinFlows.length;
-    logger.debug(`<${id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
-    if (!allTouched) return init({
-      inbound: inboundJoinFlows.map(f => (0, _messageHelper.cloneContent)(f.content))
-    });
+    if (idx > -1) return;
+    const allTouched = inboundJoinFlows.length >= inboundTriggers.length;
+
+    if (!allTouched) {
+      const remaining = inboundSequenceFlows.filter((inb, i, list) => list.indexOf(inb) === i).length - inboundJoinFlows.length;
+      logger.debug(`<${id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
+      return init({
+        inbound: inboundJoinFlows.map(f => (0, _messageHelper.cloneContent)(f.content))
+      });
+    }
+
     const evaluatedInbound = inboundJoinFlows.splice(0);
     let taken;
     const inbound = evaluatedInbound.map(im => {

@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1ecqhzd" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.3.1">
+  <bpmn:process id="Process_08w6lcm" isExecutable="true">
+    <bpmn:startEvent id="start">
+      <bpmn:outgoing>toDecision</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="decision" name="decision" default="toJoin2">
+      <bpmn:incoming>toDecision</bpmn:incoming>
+      <bpmn:outgoing>toTask2</bpmn:outgoing>
+      <bpmn:outgoing>toJoin2</bpmn:outgoing>
+      <bpmn:outgoing>toTask1</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="toDecision" sourceRef="start" targetRef="decision" />
+    <bpmn:task id="task" name="Immediate task">
+      <bpmn:incoming>toTask2</bpmn:incoming>
+      <bpmn:incoming>toTask1</bpmn:incoming>
+      <bpmn:outgoing>toJoin1</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="toTask1" name="take" sourceRef="decision" targetRef="task">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="toTask2" name="discard" sourceRef="decision" targetRef="task">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${false}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="toJoin2" name="default" sourceRef="decision" targetRef="join" />
+    <bpmn:parallelGateway id="join" name="join">
+      <bpmn:incoming>toJoin2</bpmn:incoming>
+      <bpmn:incoming>toJoin1</bpmn:incoming>
+      <bpmn:outgoing>toEnd</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="toJoin1" name="toJoin" sourceRef="task" targetRef="join" />
+    <bpmn:endEvent id="end">
+      <bpmn:incoming>toEnd</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="toEnd" sourceRef="join" targetRef="end" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_08w6lcm">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="start">
+        <dc:Bounds x="179" y="189" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_1w8egjy_di" bpmnElement="decision" isMarkerVisible="true">
+        <dc:Bounds x="265" y="182" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="269" y="242" width="41" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0vsy73c_di" bpmnElement="toDecision">
+        <di:waypoint x="215" y="207" />
+        <di:waypoint x="265" y="207" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_0a3wx9g_di" bpmnElement="task">
+        <dc:Bounds x="360" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0rrdutg_di" bpmnElement="toTask2">
+        <di:waypoint x="293" y="185" />
+        <di:waypoint x="300" y="140" />
+        <di:waypoint x="360" y="140" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="302" y="120" width="36" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1avvyl5_di" bpmnElement="toJoin2">
+        <di:waypoint x="315" y="207" />
+        <di:waypoint x="505" y="207" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="393" y="189" width="34" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ParallelGateway_0d2rk9c_di" bpmnElement="join">
+        <dc:Bounds x="505" y="182" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="521" y="242" width="17" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0x9iuu5_di" bpmnElement="toTask1">
+        <di:waypoint x="290" y="182" />
+        <di:waypoint x="290" y="100" />
+        <di:waypoint x="360" y="100" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="303" y="80" width="21" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0jk5ejq_di" bpmnElement="toJoin1">
+        <di:waypoint x="460" y="120" />
+        <di:waypoint x="530" y="120" />
+        <di:waypoint x="530" y="182" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="480" y="102" width="30" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_0tqom15_di" bpmnElement="end">
+        <dc:Bounds x="602" y="189" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1nptapr_di" bpmnElement="toEnd">
+        <di:waypoint x="555" y="207" />
+        <di:waypoint x="602" y="207" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

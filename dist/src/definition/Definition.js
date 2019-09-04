@@ -129,6 +129,7 @@ function Definition(context, options) {
     broker.publish('run', 'run.enter', content);
     broker.publish('run', 'run.start', (0, _messageHelper.cloneContent)(content));
     broker.publish('run', 'run.execute', (0, _messageHelper.cloneContent)(content));
+    logger.debug(`<${executionId} (${id})> run`);
     activateRunConsumers();
   }
 
@@ -142,6 +143,7 @@ function Definition(context, options) {
     stopped = false;
     if (!status) return definitionApi;
     addConsumerCallbacks(callback);
+    logger.debug(`<${executionId} (${id})> resume`);
     const content = createMessage({
       executionId
     });
@@ -264,7 +266,7 @@ function Definition(context, options) {
     switch (routingKey) {
       case 'run.enter':
         {
-          logger.debug(`<${id}> enter`);
+          logger.debug(`<${executionId} (${id})> enter`);
           status = 'entered';
           if (fields.redelivered) break;
           execution = undefined;
@@ -274,7 +276,7 @@ function Definition(context, options) {
 
       case 'run.start':
         {
-          logger.debug(`<${id}> start`);
+          logger.debug(`<${executionId} (${id})> start`);
           status = 'start';
           publishEvent('start', content);
           break;
@@ -308,7 +310,7 @@ function Definition(context, options) {
         {
           if (status === 'end') break;
           counters.completed++;
-          logger.debug(`<${id}>`, 'completed');
+          logger.debug(`<${executionId} (${id})> completed`);
           status = 'end';
           broker.publish('run', 'run.leave', content);
           publishEvent('end', content);

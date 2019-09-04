@@ -22,6 +22,8 @@ const activities = [
   'bpmn:ParallelGateway'
 ];
 
+const cache = {};
+
 const moddle = new BpmnModdle();
 
 export default {
@@ -121,7 +123,11 @@ function multipleInbound() {
 }
 
 function resource(name) {
-  return fs.readFileSync(path.join(__dirname, '..', 'resources', name));
+  const sourcePath = path.join(__dirname, '..', 'resources', name);
+  if (sourcePath in cache) return cache[sourcePath];
+  const source = fs.readFileSync(sourcePath);
+  cache[sourcePath] = source;
+  return source;
 }
 
 async function create(activityType) {
@@ -164,7 +170,6 @@ async function create(activityType) {
 
   return toXml(definitions);
 }
-
 
 function fromXML(source) {
   return new Promise((resolve, reject) => {

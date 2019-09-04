@@ -17,8 +17,13 @@ export default {
 };
 
 async function context(source, ...args) {
+  const logger = Logger('test-helpers:context');
+
   const [options, callback] = getOptionsAndCallback(...args);
+  logger.debug('moddle context load');
   const moddleCtx = await moddleContext(source, options);
+  logger.debug('moddle context complete');
+
   const serializer = Serializer(moddleCtx, typeResolver);
 
   const extensions = options && options.extensions && Object.keys(options.extensions).reduce((result, name) => {
@@ -28,6 +33,7 @@ async function context(source, ...args) {
   }, {});
 
   const ctx = Context(serializer, Environment({Logger, scripts: Scripts(), settings: {enableDummyService: true}, ...options, extensions}));
+  logger.debug('context complete');
   if (callback) {
     callback(null, ctx);
   }
