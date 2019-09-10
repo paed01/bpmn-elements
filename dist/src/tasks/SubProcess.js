@@ -69,7 +69,7 @@ function SubProcessBehaviour(activity, context) {
   return source;
 
   function execute(executeMessage) {
-    const content = (0, _messageHelper.cloneContent)(executeMessage.content);
+    const content = executeMessage.content;
 
     if (content.isRootScope) {
       rootExecutionId = content.executionId;

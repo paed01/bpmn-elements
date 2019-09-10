@@ -26,12 +26,12 @@ export function ScriptTaskBehaviour(activity) {
   return source;
 
   function execute(executeMessage) {
-    const content = cloneContent(executeMessage.content);
+    const content = executeMessage.content;
     if (loopCharacteristics && content.isRootScope) {
       return loopCharacteristics.execute(executeMessage);
     }
 
-    if (!scriptBody) return broker.publish('execution', 'execute.completed', content);
+    if (!scriptBody) return broker.publish('execution', 'execute.completed', cloneContent(content));
 
     const script = environment.getScript(scriptFormat, activity);
     if (!script) {
@@ -43,9 +43,9 @@ export function ScriptTaskBehaviour(activity) {
     function scriptCallback(err, output) {
       if (err) {
         logger.error(`<${content.executionId} (${id})>`, err);
-        return broker.publish('execution', 'execute.error', {...content, error: new ActivityError(err.message, executeMessage, err)}, {mandatory: true});
+        return broker.publish('execution', 'execute.error', cloneContent(content, {error: new ActivityError(err.message, executeMessage, err)}, {mandatory: true}));
       }
-      return broker.publish('execution', 'execute.completed', {...content, output});
+      return broker.publish('execution', 'execute.completed', cloneContent(content, {output}));
     }
   }
 }

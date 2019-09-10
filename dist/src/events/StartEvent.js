@@ -66,15 +66,14 @@ function StartEventBehaviour(activity) {
 
         case 'signal':
           broker.cancel(`_api-${executionId}`);
-          return broker.publish('execution', 'execute.completed', { ...content,
+          return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
             output: message.content.message,
             state: 'signal'
-          });
+          }));
 
         case 'discard':
           broker.cancel(`_api-${executionId}`);
-          return broker.publish('execution', 'execute.discard', { ...content
-          });
+          return broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(content));
       }
     }
   }

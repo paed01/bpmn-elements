@@ -23,11 +23,11 @@ export function IntermediateCatchEventBehaviour(activity) {
       return eventDefinitionExecution.execute(executeMessage);
     }
 
-    const messageContent = cloneContent(executeMessage.content);
-    const {executionId} = messageContent;
+    const content = cloneContent(executeMessage.content);
+    const {executionId} = content;
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
 
-    return broker.publish('event', 'activity.wait', cloneContent(messageContent));
+    return broker.publish('event', 'activity.wait', cloneContent(content));
 
     function onApiMessage(routingKey, message) {
       const messageType = message.properties.type;
@@ -38,7 +38,7 @@ export function IntermediateCatchEventBehaviour(activity) {
         }
         case 'discard': {
           stop();
-          return broker.publish('execution', 'execute.discard', {...messageContent});
+          return broker.publish('execution', 'execute.discard', cloneContent(content));
         }
         case 'stop': {
           return stop();
@@ -48,7 +48,7 @@ export function IntermediateCatchEventBehaviour(activity) {
 
     function complete(output) {
       stop();
-      return broker.publish('execution', 'execute.completed', {...messageContent, output});
+      return broker.publish('execution', 'execute.completed', cloneContent(content, {output}));
     }
 
     function stop() {

@@ -193,11 +193,12 @@ export default function Activity(Behaviour, activityDef, context) {
     }
 
     broker.recover(state.broker);
+
     return activityApi;
   }
 
   function resume() {
-    if (activityApi.isRunning) {
+    if (consumingRunQ) {
       throw new Error(`cannot resume running activity <${id}>`);
     }
     if (!status) return activate();
@@ -281,6 +282,7 @@ export default function Activity(Behaviour, activityDef, context) {
   }
 
   function consumeInbound() {
+    if (status) return;
     if (isParallelJoin) {
       return inboundQ.consume(onJoinInbound, {consumerTag: '_run-on-inbound', prefetch: 1000});
     }

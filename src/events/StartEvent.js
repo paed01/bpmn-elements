@@ -40,10 +40,10 @@ export function StartEventBehaviour(activity) {
           return broker.cancel(`_api-${executionId}`);
         case 'signal':
           broker.cancel(`_api-${executionId}`);
-          return broker.publish('execution', 'execute.completed', {...content, output: message.content.message, state: 'signal'});
+          return broker.publish('execution', 'execute.completed', cloneContent(content, {output: message.content.message, state: 'signal'}));
         case 'discard':
           broker.cancel(`_api-${executionId}`);
-          return broker.publish('execution', 'execute.discard', {...content});
+          return broker.publish('execution', 'execute.discard', cloneContent(content));
       }
     }
   }

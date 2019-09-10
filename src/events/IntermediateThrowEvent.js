@@ -19,11 +19,10 @@ export function IntermediateThrowEventBehaviour(activity) {
   return source;
 
   function execute(executeMessage) {
-    const content = executeMessage.content;
     if (eventDefinitionExecution) {
       return eventDefinitionExecution.execute(executeMessage);
     }
 
-    return broker.publish('execution', 'execute.completed', cloneContent(content));
+    return broker.publish('execution', 'execute.completed', cloneContent(executeMessage.content));
   }
 }

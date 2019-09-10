@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_17yz3ra" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.3.1">
+  <bpmn:process id="Process_0ji5wxo" isExecutable="true">
+    <bpmn:startEvent id="start">
+      <bpmn:outgoing>toUsertask1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="toUsertask1" sourceRef="start" targetRef="usertaskA" />
+    <bpmn:userTask id="usertaskA" name="User task A">
+      <bpmn:incoming>toUsertask1</bpmn:incoming>
+      <bpmn:incoming>looback2</bpmn:incoming>
+      <bpmn:incoming>loopback1</bpmn:incoming>
+      <bpmn:outgoing>fromUsertask1</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:task id="middletask" name="Going to B">
+      <bpmn:incoming>fromUsertask1</bpmn:incoming>
+      <bpmn:outgoing>toUsertask2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="fromUsertask1" sourceRef="usertaskA" targetRef="middletask" />
+    <bpmn:sequenceFlow id="toUsertask2" sourceRef="middletask" targetRef="usertask2" />
+    <bpmn:userTask id="usertask2" name="User Task B">
+      <bpmn:incoming>toUsertask2</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_06rr8dy</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="SequenceFlow_06rr8dy" sourceRef="usertask2" targetRef="decision1" />
+    <bpmn:exclusiveGateway id="decision1">
+      <bpmn:incoming>SequenceFlow_06rr8dy</bpmn:incoming>
+      <bpmn:outgoing>toDecision2</bpmn:outgoing>
+      <bpmn:outgoing>toFinish1</bpmn:outgoing>
+      <bpmn:outgoing>loopback1</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="toDecision2" name="Never true 2" sourceRef="decision1" targetRef="decision2">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">1==2</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:task id="finishtask" name="Finish">
+      <bpmn:incoming>toFinish1</bpmn:incoming>
+      <bpmn:incoming>toFinish2</bpmn:incoming>
+      <bpmn:outgoing>toEnd</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="toFinish1" name="Never true" sourceRef="decision1" targetRef="finishtask">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">1==3</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="end">
+      <bpmn:incoming>toEnd</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="toEnd" sourceRef="finishtask" targetRef="end" />
+    <bpmn:exclusiveGateway id="decision2">
+      <bpmn:incoming>toDecision2</bpmn:incoming>
+      <bpmn:outgoing>looback2</bpmn:outgoing>
+      <bpmn:outgoing>toFinish2</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="looback2" name="Never true 3" sourceRef="decision2" targetRef="usertaskA">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">1==2</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="toFinish2" name="Never true" sourceRef="decision2" targetRef="finishtask">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">1==9</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="loopback1" name="Always true" sourceRef="decision1" targetRef="usertaskA">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">1==1</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_0ji5wxo">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="start">
+        <dc:Bounds x="179" y="167" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_02zuo8c_di" bpmnElement="toUsertask1">
+        <di:waypoint x="215" y="185" />
+        <di:waypoint x="310" y="185" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="UserTask_0p8ubtd_di" bpmnElement="usertaskA">
+        <dc:Bounds x="310" y="145" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_19poi2m_di" bpmnElement="middletask">
+        <dc:Bounds x="510" y="145" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1kjwr1z_di" bpmnElement="fromUsertask1">
+        <di:waypoint x="410" y="185" />
+        <di:waypoint x="510" y="185" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0o7ngda_di" bpmnElement="toUsertask2">
+        <di:waypoint x="610" y="185" />
+        <di:waypoint x="710" y="185" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="UserTask_0ev55ep_di" bpmnElement="usertask2">
+        <dc:Bounds x="710" y="145" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_06rr8dy_di" bpmnElement="SequenceFlow_06rr8dy">
+        <di:waypoint x="810" y="185" />
+        <di:waypoint x="905" y="185" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_00pe4oa_di" bpmnElement="decision1" isMarkerVisible="true">
+        <dc:Bounds x="905" y="160" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0fiopl8_di" bpmnElement="toDecision2">
+        <di:waypoint x="930" y="210" />
+        <di:waypoint x="930" y="305" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="939" y="241" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Task_0k0f92b_di" bpmnElement="finishtask">
+        <dc:Bounds x="1070" y="145" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0c4mu21_di" bpmnElement="toFinish1">
+        <di:waypoint x="955" y="185" />
+        <di:waypoint x="1070" y="185" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="984" y="163" width="52" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="EndEvent_0xkgmjd_di" bpmnElement="end">
+        <dc:Bounds x="1242" y="167" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0jy2n0z_di" bpmnElement="toEnd">
+        <di:waypoint x="1170" y="185" />
+        <di:waypoint x="1242" y="185" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="ExclusiveGateway_1pdo4t1_di" bpmnElement="decision2" isMarkerVisible="true">
+        <dc:Bounds x="905" y="305" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_137bp2m_di" bpmnElement="looback2">
+        <di:waypoint x="905" y="330" />
+        <di:waypoint x="360" y="330" />
+        <di:waypoint x="360" y="225" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="348" y="343" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_07pypgb_di" bpmnElement="toFinish2">
+        <di:waypoint x="955" y="330" />
+        <di:waypoint x="1120" y="330" />
+        <di:waypoint x="1120" y="225" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1006" y="283" width="52" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_17calok_di" bpmnElement="loopback1">
+        <di:waypoint x="930" y="160" />
+        <di:waypoint x="930" y="100" />
+        <di:waypoint x="370" y="100" />
+        <di:waypoint x="370" y="145" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="736" y="83" width="57" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

@@ -58,17 +58,17 @@ function ServiceTaskBehaviour(activity) {
 
       if (err) {
         logger.error(`<${content.executionId} (${id})>`, err);
-        return broker.publish('execution', 'execute.error', { ...executeMessage.content,
+        return broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(content, {
           error: new _Errors.ActivityError(err.message, executeMessage, err)
         }, {
           mandatory: true
-        });
+        }));
       }
 
-      return broker.publish('execution', 'execute.completed', { ...executeMessage.content,
+      return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
         output,
         state: 'complete'
-      });
+      }));
     });
 
     function onApiMessage(_, message) {
@@ -76,9 +76,9 @@ function ServiceTaskBehaviour(activity) {
         broker.cancel(`_api-${executionId}`);
         if (service && service.discard) service.discard(message);
         logger.debug(`<${content.executionId} (${id})> discarded`);
-        return broker.publish('execution', 'execute.discard', { ...executeMessage.content,
+        return broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(content, {
           state: 'discard'
-        });
+        }));
       }
 
       if (message.properties.type === 'stop') {

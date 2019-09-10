@@ -58,10 +58,9 @@ function ReceiveTaskBehaviour(activity) {
     }
 
     let completed;
-    const messageContent = (0, _messageHelper.cloneContent)(executeMessage.content);
     const {
       executionId
-    } = messageContent;
+    } = content;
     const {
       message: referenceMessage,
       description
@@ -77,17 +76,17 @@ function ReceiveTaskBehaviour(activity) {
       priority: 400
     });
     logger.debug(`<${executionId} (${id})> expect ${description}`);
-    broker.publish('event', 'activity.wait', { ...messageContent,
+    broker.publish('event', 'activity.wait', (0, _messageHelper.cloneContent)(content, {
       message: { ...referenceMessage
       }
-    });
+    }));
 
     function onCatchMessage(routingKey, message) {
       if ((0, _getPropertyValue.default)(message, 'content.message.id') !== referenceMessage.id) return;
       logger.debug(`<${executionId} (${id})> caught ${description}`);
-      broker.publish('event', 'activity.catch', { ...messageContent,
+      broker.publish('event', 'activity.catch', (0, _messageHelper.cloneContent)(content, {
         message: message.content.message
-      }, {
+      }), {
         type: 'catch'
       });
       complete(message.content.message);
@@ -105,8 +104,7 @@ function ReceiveTaskBehaviour(activity) {
           {
             completed = true;
             stop();
-            return broker.publish('execution', 'execute.discard', { ...messageContent
-            });
+            return broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(content));
           }
 
         case 'stop':
@@ -119,9 +117,9 @@ function ReceiveTaskBehaviour(activity) {
     function complete(output) {
       completed = true;
       stop();
-      return broker.publish('execution', 'execute.completed', { ...messageContent,
+      return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
         output
-      });
+      }));
     }
 
     function stop() {

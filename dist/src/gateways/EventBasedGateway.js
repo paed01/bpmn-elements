@@ -34,7 +34,7 @@ function EventBasedGatewayBehaviour(activity, context) {
 
   function execute(executeMessage) {
     const isRedelivered = executeMessage.fields.redelivered;
-    const content = (0, _messageHelper.cloneContent)(executeMessage.content);
+    const content = executeMessage.content;
     const executionId = content.executionId;
     const outbound = content.outbound = [];
     const targets = [];
@@ -58,7 +58,7 @@ function EventBasedGatewayBehaviour(activity, context) {
       noAck: true,
       consumerTag: `_api-stop-${executionId}`
     });
-    if (!isRedelivered) return broker.publish('execution', 'execute.outbound.take', content);
+    if (!isRedelivered) return broker.publish('execution', 'execute.outbound.take', (0, _messageHelper.cloneContent)(content));
 
     function onTargetCompleted(_, message, owner) {
       logger.debug(`<${executionId} (${id})> <${message.content.executionId}> completed run, discarding the rest`);
@@ -67,8 +67,9 @@ function EventBasedGatewayBehaviour(activity, context) {
         target.broker.cancel(targetConsumerTag);
         target.discard();
       });
-      const completedContent = (0, _messageHelper.cloneContent)(executeMessage.content);
-      completedContent.ignoreOutbound = true;
+      const completedContent = (0, _messageHelper.cloneContent)(executeMessage.content, {
+        ignoreOutbound: true
+      });
       broker.publish('execution', 'execute.completed', completedContent);
     }
 

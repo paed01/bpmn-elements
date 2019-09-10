@@ -10,7 +10,7 @@ exports.shiftParent = shiftParent;
 exports.unshiftParent = unshiftParent;
 exports.pushParent = pushParent;
 
-function cloneContent(content) {
+function cloneContent(content, extend) {
   const {
     discardSequence,
     inbound,
@@ -18,7 +18,8 @@ function cloneContent(content) {
     parent,
     sequence
   } = content;
-  const clone = { ...content
+  const clone = { ...content,
+    ...extend
   };
 
   if (parent) {

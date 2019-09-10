@@ -36,7 +36,7 @@ export function InclusiveGatewayBehaviour(activity) {
         conditionMet = true;
         outbound.push({id: flow.id, action: 'take'});
       } else {
-        if (evaluateError) return broker.publish('execution', 'execute.error', {...content, error: evaluateError});
+        if (evaluateError) return broker.publish('execution', 'execute.error', cloneContent(content, {error: evaluateError}));
         outbound.push({id: flow.id, action: 'discard'});
       }
     }
@@ -51,13 +51,13 @@ export function InclusiveGatewayBehaviour(activity) {
     } else if (!conditionMet) {
       const err = new ActivityError(`<${id}> no conditional flow taken`, executeMessage);
       logger.error(`<${id}>`, err);
-      return broker.publish('execution', 'execute.error', {...content, error: err});
+      return broker.publish('execution', 'execute.error', cloneContent(content, {error: err}));
     }
 
     return complete();
 
     function complete() {
-      broker.publish('execution', 'execute.completed', content);
+      broker.publish('execution', 'execute.completed', cloneContent(content));
     }
 
     function onEvaluateError(err) {

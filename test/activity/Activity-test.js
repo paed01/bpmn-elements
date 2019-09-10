@@ -2357,6 +2357,46 @@ describe('Activity', () => {
         activity.resume();
       }).to.throw('cannot resume running activity');
     });
+
+    it('ignored if already consuming run queue', () => {
+      const activity = getActivity(undefined, SignalTaskBehaviour);
+      activity.run();
+      activity.stop();
+
+      activity.activate();
+      activity.resume();
+    });
+
+    it('resumes if taken once, recovered, and activated', () => {
+      const activity = getActivity(undefined, SignalTaskBehaviour);
+      activity.activate();
+      activity.inbound[0].take();
+
+      const state = activity.getState();
+
+      expect(activity.status).to.equal('executing');
+
+      const recovered = getActivity(undefined, SignalTaskBehaviour).recover(state);
+
+      recovered.activate();
+      recovered.resume();
+    });
+
+    it('resumes if taken twice, recovered, and activated', () => {
+      const activity = getActivity(undefined, SignalTaskBehaviour);
+      activity.activate();
+      activity.inbound[0].take();
+      activity.inbound[0].take();
+
+      const state = activity.getState();
+
+      expect(activity.status).to.equal('executing');
+
+      const recovered = getActivity(undefined, SignalTaskBehaviour).recover(state);
+
+      recovered.activate();
+      recovered.resume();
+    });
   });
 
   describe('inbound associations', () => {
@@ -2448,6 +2488,7 @@ function getActivity(override = {}, Behaviour = TaskBehaviour) {
   const activity = Activity(Behaviour, {
     id: 'activity',
     type: 'test:activity',
+    name: 'Test activity',
     parent: {
       id: 'process1',
     },
@@ -2465,7 +2506,7 @@ function getContext(override) {
     },
     getInboundSequenceFlows(id) {
       if (id !== 'activity') return [];
-      return [SequenceFlow({id: 'flow', parent: {id: 'process1'}}, {environment})];
+      return [SequenceFlow({id: 'flow', sourceId: 'start', targetId: 'activity', parent: {id: 'process1'}}, {environment})];
     },
     getOutboundMessageFlows() {
       return [];

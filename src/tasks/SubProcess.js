@@ -45,7 +45,7 @@ export function SubProcessBehaviour(activity, context) {
   return source;
 
   function execute(executeMessage) {
-    const content = cloneContent(executeMessage.content);
+    const content = executeMessage.content;
 
     if (content.isRootScope) {
       rootExecutionId = content.executionId;

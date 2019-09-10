@@ -45,13 +45,13 @@ function ScriptTaskBehaviour(activity) {
   return source;
 
   function execute(executeMessage) {
-    const content = (0, _messageHelper.cloneContent)(executeMessage.content);
+    const content = executeMessage.content;
 
     if (loopCharacteristics && content.isRootScope) {
       return loopCharacteristics.execute(executeMessage);
     }
 
-    if (!scriptBody) return broker.publish('execution', 'execute.completed', content);
+    if (!scriptBody) return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content));
     const script = environment.getScript(scriptFormat, activity);
 
     if (!script) {
@@ -63,16 +63,16 @@ function ScriptTaskBehaviour(activity) {
     function scriptCallback(err, output) {
       if (err) {
         logger.error(`<${content.executionId} (${id})>`, err);
-        return broker.publish('execution', 'execute.error', { ...content,
+        return broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(content, {
           error: new _Errors.ActivityError(err.message, executeMessage, err)
         }, {
           mandatory: true
-        });
+        }));
       }
 
-      return broker.publish('execution', 'execute.completed', { ...content,
+      return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
         output
-      });
+      }));
     }
   }
 }

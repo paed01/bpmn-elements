@@ -255,7 +255,7 @@ function Activity(Behaviour, activityDef, context) {
   }
 
   function resume() {
-    if (activityApi.isRunning) {
+    if (consumingRunQ) {
       throw new Error(`cannot resume running activity <${id}>`);
     }
 
@@ -341,6 +341,8 @@ function Activity(Behaviour, activityDef, context) {
   }
 
   function consumeInbound() {
+    if (status) return;
+
     if (isParallelJoin) {
       return inboundQ.consume(onJoinInbound, {
         consumerTag: '_run-on-inbound',

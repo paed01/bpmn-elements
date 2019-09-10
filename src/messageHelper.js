@@ -7,11 +7,12 @@ export {
   pushParent,
 };
 
-function cloneContent(content) {
+function cloneContent(content, extend) {
   const {discardSequence, inbound, outbound, parent, sequence} = content;
 
   const clone = {
     ...content,
+    ...extend,
   };
 
   if (parent) {

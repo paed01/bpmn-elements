@@ -36,12 +36,10 @@ function EndEventBehaviour(activity) {
   return source;
 
   function execute(executeMessage) {
-    const content = executeMessage.content;
-
     if (eventDefinitionExecution) {
       return eventDefinitionExecution.execute(executeMessage);
     }
 
-    return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content));
+    return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeMessage.content));
   }
 }

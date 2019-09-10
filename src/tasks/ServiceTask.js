@@ -1,6 +1,6 @@
 import Activity from '../activity/Activity';
 import { ActivityError } from '../error/Errors';
-import {cloneMessage} from '../messageHelper';
+import {cloneMessage, cloneContent} from '../messageHelper';
 
 export default function ServiceTask(activityDef, context) {
   return Activity(ServiceTaskBehaviour, activityDef, context);
@@ -36,9 +36,10 @@ export function ServiceTaskBehaviour(activity) {
       broker.cancel(`_api-${executionId}`);
       if (err) {
         logger.error(`<${content.executionId} (${id})>`, err);
-        return broker.publish('execution', 'execute.error', {...executeMessage.content, error: new ActivityError(err.message, executeMessage, err)}, {mandatory: true});
+        return broker.publish('execution', 'execute.error', cloneContent(content, {error: new ActivityError(err.message, executeMessage, err)}, {mandatory: true}));
       }
-      return broker.publish('execution', 'execute.completed', {...executeMessage.content, output, state: 'complete'});
+
+      return broker.publish('execution', 'execute.completed', cloneContent(content, {output, state: 'complete'}));
     });
 
     function onApiMessage(_, message) {
@@ -46,7 +47,7 @@ export function ServiceTaskBehaviour(activity) {
         broker.cancel(`_api-${executionId}`);
         if (service && service.discard) service.discard(message);
         logger.debug(`<${content.executionId} (${id})> discarded`);
-        return broker.publish('execution', 'execute.discard', {...executeMessage.content, state: 'discard'});
+        return broker.publish('execution', 'execute.discard', cloneContent(content, {state: 'discard'}));
       }
       if (message.properties.type === 'stop') {
         broker.cancel(`_api-${executionId}`);

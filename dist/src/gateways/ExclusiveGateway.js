@@ -62,9 +62,9 @@ function ExclusiveGatewayBehaviour(activity) {
           action: 'take'
         });
       } else {
-        if (evaluateError) return broker.publish('execution', 'execute.error', { ...content,
+        if (evaluateError) return broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(content, {
           error: evaluateError
-        });
+        }));
         outbound.push({
           id: flow.id,
           action: 'discard'
@@ -96,7 +96,7 @@ function ExclusiveGatewayBehaviour(activity) {
     return complete();
 
     function complete() {
-      broker.publish('execution', 'execute.completed', content);
+      broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content));
     }
 
     function onEvaluateError(err) {

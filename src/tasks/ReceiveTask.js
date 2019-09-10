@@ -34,9 +34,7 @@ export function ReceiveTaskBehaviour(activity) {
     }
 
     let completed;
-
-    const messageContent = cloneContent(executeMessage.content);
-    const {executionId} = messageContent;
+    const {executionId} = content;
 
     const {message: referenceMessage, description} = resolveReference(executeMessage);
     broker.consume('message', onCatchMessage, {noAck: true, consumerTag: `_onmessage-${executionId}`});
@@ -47,19 +45,13 @@ export function ReceiveTaskBehaviour(activity) {
 
     logger.debug(`<${executionId} (${id})> expect ${description}`);
 
-    broker.publish('event', 'activity.wait', {
-      ...messageContent,
-      message: {...referenceMessage},
-    });
+    broker.publish('event', 'activity.wait', cloneContent(content, {message: {...referenceMessage}}));
 
     function onCatchMessage(routingKey, message) {
       if (getPropertyValue(message, 'content.message.id') !== referenceMessage.id) return;
 
       logger.debug(`<${executionId} (${id})> caught ${description}`);
-      broker.publish('event', 'activity.catch', {
-        ...messageContent,
-        message: message.content.message,
-      }, {type: 'catch'});
+      broker.publish('event', 'activity.catch', cloneContent(content, {message: message.content.message}), {type: 'catch'});
 
       complete(message.content.message);
     }
@@ -73,7 +65,7 @@ export function ReceiveTaskBehaviour(activity) {
         case 'discard': {
           completed = true;
           stop();
-          return broker.publish('execution', 'execute.discard', {...messageContent});
+          return broker.publish('execution', 'execute.discard', cloneContent(content));
         }
         case 'stop': {
           return stop();
@@ -84,7 +76,7 @@ export function ReceiveTaskBehaviour(activity) {
     function complete(output) {
       completed = true;
       stop();
-      return broker.publish('execution', 'execute.completed', {...messageContent, output});
+      return broker.publish('execution', 'execute.completed', cloneContent(content, {output}));
     }
 
     function stop() {

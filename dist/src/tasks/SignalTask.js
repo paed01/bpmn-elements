@@ -10,6 +10,8 @@ var _Activity = _interopRequireDefault(require("../activity/Activity"));
 
 var _Errors = require("../error/Errors");
 
+var _messageHelper = require("../messageHelper");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function SignalTask(activityDef, context) {
@@ -46,9 +48,10 @@ function SignalTaskBehaviour(activity) {
       noAck: true,
       consumerTag: `_api-${executionId}`
     });
-    broker.publish('event', 'activity.wait', { ...content,
-      state: 'wait'
-    });
+    broker.publish('event', 'activity.wait', (0, _messageHelper.cloneContent)(content, {
+      state: 'wait',
+      isRecovered: executeMessage.fields.redelivered
+    }));
 
     function onApiMessage(routingKey, message) {
       const messageType = message.properties.type;
@@ -59,23 +62,22 @@ function SignalTaskBehaviour(activity) {
 
         case 'signal':
           broker.cancel(`_api-${executionId}`);
-          return broker.publish('execution', 'execute.completed', { ...content,
+          return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
             output: message.content.message,
             state: 'signal'
-          });
+          }));
 
         case 'error':
           broker.cancel(`_api-${executionId}`);
-          return broker.publish('execution', 'execute.error', { ...content,
+          return broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(content, {
             error: new _Errors.ActivityError(message.content.message, executeMessage, message.content)
           }, {
             mandatory: true
-          });
+          }));
 
         case 'discard':
           broker.cancel(`_api-${executionId}`);
-          return broker.publish('execution', 'execute.discard', { ...content
-          });
+          return broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(content));
       }
     }
   }
