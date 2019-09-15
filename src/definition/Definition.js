@@ -137,6 +137,7 @@ export function Definition(context, options) {
 
     stopped = state.stopped;
     status = state.status;
+
     executionId = state.executionId;
     if (state.counters) {
       counters = {...counters, ...state.counters};
@@ -253,7 +254,9 @@ export function Definition(context, options) {
         return execution.execute(executeMessage);
       }
       case 'run.error': {
-        publishEvent('error', content);
+        publishEvent('error', cloneContent(content, {
+          error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
+        }));
         break;
       }
       case 'run.end': {
@@ -310,8 +313,8 @@ export function Definition(context, options) {
   }
 
   function onExecutionMessage(routingKey, message) {
-    const content = message.content;
-    const messageType = message.properties.type;
+    const {content, properties} = message;
+    const messageType = properties.type;
 
     message.ack();
 

@@ -4,6 +4,7 @@ import {ActivityApi} from '../Api';
 import {ActivityBroker} from '../EventBroker';
 import {getRoutingKeyPattern} from 'smqp';
 import {cloneContent, cloneParent, cloneMessage} from '../messageHelper';
+import {makeErrorFromMessage} from '../error/Errors';
 
 export default function Activity(Behaviour, activityDef, context) {
   const {id, type = 'activity', name, parent: originalParent = {}, behaviour = {}, isParallelGateway, isSubProcess, triggeredByEvent, isThrowing} = activityDef;
@@ -186,7 +187,10 @@ export default function Activity(Behaviour, activityDef, context) {
     stopped = state.stopped;
     status = state.status;
     executionId = state.executionId;
-    counters = state.counters && {...counters, ...state.counters};
+
+    if (state.counters) {
+      counters = {...counters, ...state.counters};
+    }
 
     if (state.execution) {
       execution = ActivityExecution(activityApi, context).recover(state.execution);
@@ -530,7 +534,9 @@ export default function Activity(Behaviour, activityDef, context) {
         break;
       }
       case 'run.error': {
-        publishEvent('error', content);
+        publishEvent('error', cloneContent(content, {
+          error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
+        }));
         break;
       }
       case 'run.discarded': {

@@ -1,4 +1,4 @@
-import {ActivityError, BpmnError} from '../../src/error/Errors';
+import {ActivityError, BpmnError, makeErrorFromMessage} from '../../src/error/Errors';
 
 describe('Errors', () => {
   describe('ActivityError', () => {
@@ -6,22 +6,30 @@ describe('Errors', () => {
       expect(new ActivityError()).to.have.property('name', 'ActivityError');
     });
 
-    it('takes message', () => {
+    it('has type ActivityError', () => {
+      expect(new ActivityError()).to.have.property('type', 'ActivityError');
+    });
+
+    it('takes message as first argument', () => {
       expect(new ActivityError('unstable')).to.have.property('message', 'unstable');
     });
 
-    it('sets source message from activity', () => {
+    it('sets message as description for serializing reasons', () => {
+      expect(new ActivityError('unstable')).to.have.property('description', 'unstable');
+    });
+
+    it('sets source from activity message', () => {
       const err = new ActivityError('unstable', {
         fields: {},
         content: {},
         properties: {},
       });
 
-      expect(err).to.have.property('fields').that.eql({});
-      expect(err).to.have.property('content').that.eql({
-        error: undefined,
+      expect(err).to.have.property('source').that.eql({
+        fields: {},
+        content: {},
+        properties: {},
       });
-      expect(err).to.have.property('properties').that.eql({});
     });
 
     it('removes error from source message content', () => {
@@ -32,20 +40,27 @@ describe('Errors', () => {
         },
         properties: {},
       });
-      expect(err).to.have.property('fields').that.eql({});
-      expect(err).to.have.property('content').that.eql({
+      expect(err.source).to.have.property('content').that.eql({
         error: undefined,
       });
-      expect(err).to.have.property('properties').that.eql({});
     });
 
-    it('forwards error properties to activity error', () => {
+    it('sets inner error code as code', () => {
       const err = new ActivityError('unstable', {
         fields: {},
         content: {},
         properties: {},
       }, new BpmnError('Failed', {errorCode: '503'}));
       expect(err).to.have.property('code', '503');
+    });
+
+    it('sets inner error name as name', () => {
+      const err = new ActivityError('unstable', {
+        fields: {},
+        content: {},
+        properties: {},
+      }, new BpmnError('Failed', {errorCode: '503'}));
+      expect(err).to.have.property('name', 'BpmnError');
     });
   });
 
@@ -54,8 +69,16 @@ describe('Errors', () => {
       expect(new BpmnError()).to.have.property('name', 'BpmnError');
     });
 
-    it('takes message', () => {
+    it('has type BpmnError', () => {
+      expect(new BpmnError()).to.have.property('type', 'BpmnError');
+    });
+
+    it('takes message as first argument', () => {
       expect(new BpmnError('unstable')).to.have.property('message', 'unstable');
+    });
+
+    it('sets description as message', () => {
+      expect(new BpmnError('unstable')).to.have.property('description', 'unstable');
     });
 
     it('sets code from behaviour errorCode', () => {
@@ -78,33 +101,224 @@ describe('Errors', () => {
       expect(err).to.have.property('id', 'Error_0');
     });
 
-    it('sets source message from activity', () => {
-      const err = new BpmnError('unstable', undefined, {
+    it('sets source from activity message', () => {
+      const err = new BpmnError('unstable', {id: 'Error_0'}, {
         fields: {},
         content: {},
         properties: {},
       });
 
-      expect(err).to.have.property('fields').that.eql({});
-      expect(err).to.have.property('content').that.eql({
-        error: undefined,
+      expect(err).to.have.property('source').that.eql({
+        fields: {},
+        content: {},
+        properties: {},
       });
-      expect(err).to.have.property('properties').that.eql({});
     });
 
     it('removes error from source message content', () => {
-      const err = new BpmnError('unstable', undefined, {
+      const err = new BpmnError('unstable', {id: 'Error_0'}, {
         fields: {},
         content: {
           error: new Error('unstable'),
         },
         properties: {},
       });
-      expect(err).to.have.property('fields').that.eql({});
-      expect(err).to.have.property('content').that.eql({
+      expect(err.source).to.have.property('content').that.eql({
         error: undefined,
       });
-      expect(err).to.have.property('properties').that.eql({});
+    });
+  });
+
+  describe('makeErrorFromMessage(errorMessage)', () => {
+    it('returns error instance if message content is a known error', () => {
+      expect(makeErrorFromMessage({content: new ActivityError()})).to.be.instanceof(ActivityError);
+      expect(makeErrorFromMessage({content: new BpmnError()})).to.be.instanceof(BpmnError);
+      expect(makeErrorFromMessage({content: new Error()})).to.be.instanceof(Error);
+    });
+
+    it('returns error instance if message content error is a known error', () => {
+      expect(makeErrorFromMessage({content: {error: new ActivityError()}})).to.be.instanceof(ActivityError);
+      expect(makeErrorFromMessage({content: {error: new BpmnError()}})).to.be.instanceof(BpmnError);
+      expect(makeErrorFromMessage({content: {error: new Error()}})).to.be.instanceof(Error);
+    });
+
+    it('returns ActivityError instance if message content error type is ActivityError', () => {
+      expect(makeErrorFromMessage({
+        content: {
+          error: {
+            type: 'ActivityError',
+          }
+        }
+      })).to.be.instanceof(ActivityError);
+    });
+
+    it('returns ActivityError instance if with message from message', () => {
+      expect(makeErrorFromMessage({
+        content: {
+          error: {
+            type: 'ActivityError',
+            message: 'Unexpected',
+          }
+        }
+      })).to.be.instanceof(ActivityError).with.property('message', 'Unexpected');
+    });
+
+    it('returns ActivityError instance if with message from description', () => {
+      expect(makeErrorFromMessage({
+        content: {
+          error: {
+            type: 'ActivityError',
+            description: 'Unexpected',
+          }
+        }
+      })).to.be.instanceof(ActivityError).with.property('message', 'Unexpected');
+    });
+
+    it('returns ActivityError with source if any', () => {
+      expect(makeErrorFromMessage({
+        content: {
+          error: {
+            type: 'ActivityError',
+            source: {
+              fields: {},
+              content: {},
+              properties: {},
+            }
+          }
+        }
+      })).to.be.instanceof(ActivityError).and.have.property('source').that.eql({
+        fields: {},
+        content: {},
+        properties: {},
+      });
+    });
+
+    it('returns ActivityError with code if if any', () => {
+      expect(makeErrorFromMessage({
+        content: {
+          error: {
+            type: 'ActivityError',
+            code: 'ERR_CODE',
+          }
+        }
+      })).to.be.instanceof(ActivityError).and.have.property('code', 'ERR_CODE');
+    });
+
+    it('returns ActivityError with name if if any', () => {
+      expect(makeErrorFromMessage({
+        content: {
+          error: {
+            type: 'ActivityError',
+            name: 'CustomError',
+          }
+        }
+      })).to.be.instanceof(ActivityError).and.have.property('name', 'CustomError');
+    });
+
+    it('returns ActivityError with code from inner', () => {
+      expect(makeErrorFromMessage({
+        content: {
+          error: {
+            type: 'ActivityError',
+            inner: {code: 'ERR_CODE'},
+          }
+        }
+      })).to.be.instanceof(ActivityError).and.have.property('code', 'ERR_CODE');
+    });
+
+    it('returns ActivityError with name from inner', () => {
+      expect(makeErrorFromMessage({
+        content: {
+          error: {
+            type: 'ActivityError',
+            inner: {name: 'CustomError'},
+          }
+        }
+      })).to.be.instanceof(ActivityError).and.have.property('name', 'CustomError');
+    });
+
+    it('returns BpmnError instance if message content error type is BpmnError', () => {
+      expect(makeErrorFromMessage({
+        content: {
+          error: {
+            type: 'BpmnError',
+          }
+        }
+      })).to.be.instanceof(BpmnError);
+    });
+
+    it('returns BpmnError instance if with message from message', () => {
+      expect(makeErrorFromMessage({
+        content: {
+          error: {
+            type: 'BpmnError',
+            message: 'Unexpected',
+          }
+        }
+      })).to.be.instanceof(BpmnError).with.property('message', 'Unexpected');
+    });
+
+    it('returns BpmnError instance if with message from description', () => {
+      expect(makeErrorFromMessage({
+        content: {
+          error: {
+            type: 'BpmnError',
+            description: 'Unexpected',
+          }
+        }
+      })).to.be.instanceof(BpmnError).with.property('message', 'Unexpected');
+    });
+
+    it('returns BpmnError with source if any', () => {
+      expect(makeErrorFromMessage({
+        content: {
+          error: {
+            type: 'BpmnError',
+            source: {
+              fields: {},
+              content: {},
+              properties: {},
+            }
+          }
+        }
+      })).to.be.instanceof(BpmnError).and.have.property('source').that.eql({
+        fields: {},
+        content: {},
+        properties: {},
+      });
+    });
+
+    it('returns BpmnError with code if if any', () => {
+      expect(makeErrorFromMessage({
+        content: {
+          error: {
+            type: 'BpmnError',
+            code: 'ERR_CODE',
+          }
+        }
+      })).to.be.instanceof(BpmnError).and.have.property('code', 'ERR_CODE');
+    });
+
+    it('returns BpmnError with name if if any', () => {
+      expect(makeErrorFromMessage({
+        content: {
+          error: {
+            type: 'BpmnError',
+            name: 'CustomError',
+          }
+        }
+      })).to.be.instanceof(BpmnError).and.have.property('name', 'CustomError');
+    });
+
+    it('returns BpmnError with name', () => {
+      expect(makeErrorFromMessage({
+        content: {
+          error: {
+            type: 'BpmnError',
+            name: 'MyError'
+          }
+        }
+      })).to.be.instanceof(BpmnError).and.have.property('name', 'MyError');
     });
   });
 });

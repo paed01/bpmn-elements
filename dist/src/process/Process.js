@@ -16,6 +16,8 @@ var _EventBroker = require("../EventBroker");
 
 var _messageHelper = require("../messageHelper");
 
+var _Errors = require("../error/Errors");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 var _default = Process;
@@ -254,7 +256,9 @@ function Process(processDef, context) {
 
       case 'run.error':
         {
-          publishEvent('error', content);
+          publishEvent('error', (0, _messageHelper.cloneContent)(content, {
+            error: fields.redelivered ? (0, _Errors.makeErrorFromMessage)(message) : content.error
+          }));
           break;
         }
 

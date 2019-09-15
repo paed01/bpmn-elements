@@ -3,6 +3,7 @@ import {getUniqueId} from '../shared';
 import {ProcessApi} from '../Api';
 import {ProcessBroker} from '../EventBroker';
 import {cloneMessage, cloneContent} from '../messageHelper';
+import {makeErrorFromMessage} from '../error/Errors';
 
 export default Process;
 
@@ -201,7 +202,9 @@ export function Process(processDef, context) {
         return execution.execute(executeMessage);
       }
       case 'run.error': {
-        publishEvent('error', content);
+        publishEvent('error', cloneContent(content, {
+          error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
+        }));
         break;
       }
       case 'run.end': {

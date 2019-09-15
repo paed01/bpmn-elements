@@ -302,7 +302,9 @@ function Definition(context, options) {
 
       case 'run.error':
         {
-          publishEvent('error', content);
+          publishEvent('error', (0, _messageHelper.cloneContent)(content, {
+            error: fields.redelivered ? (0, _Errors.makeErrorFromMessage)(message) : content.error
+          }));
           break;
         }
 
@@ -360,8 +362,11 @@ function Definition(context, options) {
   }
 
   function onExecutionMessage(routingKey, message) {
-    const content = message.content;
-    const messageType = message.properties.type;
+    const {
+      content,
+      properties
+    } = message;
+    const messageType = properties.type;
     message.ack();
 
     switch (messageType) {

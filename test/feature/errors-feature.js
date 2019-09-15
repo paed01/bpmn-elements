@@ -2,11 +2,124 @@ import CamundaExtension from '../resources/extensions/CamundaExtension';
 import Definition from '../../src/definition/Definition';
 import factory from '../helpers/factory';
 import testHelpers from '../helpers/testHelpers';
-import {BpmnError} from '../../src/error/Errors';
+import {ActivityError, BpmnError} from '../../src/error/Errors';
 
 const bpmnErrorSource = factory.resource('bpmn-error.bpmn');
 
-Feature('Bpmn Error', () => {
+class CustomError extends Error {
+  constructor(message, code) {
+    super(message);
+    this.name = this.constructor.name;
+    this.code = code;
+  }
+}
+
+Feature('Errors', () => {
+  Scenario('Custom error is thrown', () => {
+    let context, definition, serviceCallback;
+    const options = {
+      services: {
+        volatile(_, next) {
+          serviceCallback = next;
+        }
+      }
+    };
+
+    Given('a source with a volatile service task and a catch boundary event expecting an error code', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="Process_0" isExecutable="true">
+          <serviceTask id="service" implementation="\${environment.services.volatile}" />
+          <boundaryEvent id="catchError" attachedToRef="service">
+            <errorEventDefinition errorRef="Error_0" />
+          </boundaryEvent>
+        </process>
+        <error id="Error_0" errorCode="ERR_ASSERTION" />
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = Definition(context, options);
+    });
+
+    let error;
+    When('definition is ran', () => {
+      error = definition.waitFor('error');
+      definition.run();
+    });
+
+    And('service fails without error code', () => {
+      serviceCallback(new CustomError('Unknown'));
+    });
+
+    Then('definition throws error', async () => {
+      const errApi = await error;
+      expect(errApi.content).to.have.property('error');
+      expect(errApi.content.error).to.have.property('message', 'Unknown');
+    });
+
+    And('completes', () => {
+      expect(definition.isRunning).to.be.false;
+    });
+
+    let leave;
+    When('definition is ran again', () => {
+      leave = definition.waitFor('leave');
+      definition.run();
+    });
+
+    And('service fails with caught error code', () => {
+      error = definition.waitFor('activity.error');
+      serviceCallback(new CustomError('Known', 'ERR_ASSERTION'));
+    });
+
+    Then('definition completes', async () => {
+      return leave;
+    });
+
+    And('error bubbled to definition', async () => {
+      const errApi = await error;
+      expect(errApi.content).to.have.property('error');
+      expect(errApi.content.error).to.have.property('message', 'Known');
+      expect(errApi.content.error).to.have.property('code', 'ERR_ASSERTION');
+    });
+
+    let state;
+    When('definition is ran with error listener that saves state', () => {
+      definition.on('error', () => {
+        state = definition.getState();
+      });
+      error = definition.waitFor('error');
+      definition.run();
+    });
+
+    And('service fails without error code', () => {
+      serviceCallback(new CustomError('Unknown'));
+    });
+
+    Then('state is saved', () => {
+      expect(state).to.be.ok;
+    });
+
+    let recovered;
+    Given('definition is recovered', () => {
+      recovered = Definition(context.clone(), options).recover(state);
+    });
+
+    When('resumed', () => {
+      error = recovered.waitFor('error');
+      recovered.resume();
+    });
+
+    Then('resumed definition throws error', async () => {
+      const errApi = await error;
+
+      expect(errApi.content).to.have.property('error');
+      expect(errApi.content.error).to.be.instanceof(ActivityError);
+      expect(errApi.content.error).to.have.property('name', 'CustomError');
+      expect(errApi.content.error).to.have.property('message', 'Unknown');
+    });
+  });
+
   Scenario('sub process ends with anonymous error event', () => {
     let definition;
     Given('a source with a sub process with an end error event', async () => {
@@ -256,7 +369,7 @@ Feature('Bpmn Error', () => {
   });
 
   Scenario('error with error code', () => {
-    let definition, serviceCallback, source;
+    let context, definition, serviceCallback, source;
     Given('a service task with a catch error boundary event', async () => {
       source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -269,7 +382,7 @@ Feature('Bpmn Error', () => {
         <error id="Error_0" errorCode="404" />
       </definitions>`;
 
-      const context = await testHelpers.context(source);
+      context = await testHelpers.context(source);
       context.environment.addService('get', function get(_, next) {
         serviceCallback = next;
       });
@@ -316,8 +429,13 @@ Feature('Bpmn Error', () => {
       }));
     });
 
-    Then('definition is errored', () => {
-      return errored;
+    let errApi;
+    Then('definition is errored', async () => {
+      errApi = await errored;
+      expect(errApi.content).to.have.property('error');
+      expect(errApi.content.error).to.have.property('name', 'BpmnError');
+      expect(errApi.content.error).to.have.property('code', '401');
+      expect(errApi.content.error).to.have.property('message', 'Unauthorized');
     });
 
     And('boundary event was discarded', async () => {
@@ -368,12 +486,12 @@ Feature('Bpmn Error', () => {
 
     let recoveredDefinition;
     When('definition is recovered somewhere else', async () => {
-      const context = await testHelpers.context(source);
-      context.environment.addService('get', function get(_, next) {
+      const newContext = await testHelpers.context(source);
+      newContext.environment.addService('get', function get(_, next) {
         serviceCallback = next;
       });
 
-      recoveredDefinition = Definition(context);
+      recoveredDefinition = Definition(newContext);
       recoveredDefinition.recover(JSON.parse(state));
     });
 
@@ -396,6 +514,53 @@ Feature('Bpmn Error', () => {
       const catchError = recoveredDefinition.getActivityById('catchError');
       expect(catchError.counters).to.have.property('taken', 3);
       expect(catchError.counters).to.have.property('discarded', 1);
+    });
+
+    Given('definition is ran with error listener where state is saved', () => {
+      state = undefined;
+      definition = Definition(context.clone());
+      definition.once('error', () => {
+        state = JSON.stringify(definition.getState(), null, 2);
+      });
+      context.environment.addService('get', function get(_, next) {
+        serviceCallback = next;
+      });
+
+      definition.run();
+    });
+
+    When('service call fails again uncaught error code', () => {
+      serviceCallback(new BpmnError('Unauthorized', {
+        errorCode: 401
+      }));
+    });
+
+    Then('state is saved', () => {
+      expect(state).to.be.ok;
+    });
+
+    When('definition is recovered somewhere else', async () => {
+      const newContext = context.clone();
+      newContext.environment.addService('get', function get(_, next) {
+        serviceCallback = next;
+      });
+
+      recoveredDefinition = Definition(newContext);
+      recoveredDefinition.recover(JSON.parse(state));
+    });
+
+    And('resumed', () => {
+      errored = recoveredDefinition.waitFor('error');
+      recoveredDefinition.resume();
+    });
+
+    Then('recovered definition throws', async () => {
+      errApi = await errored;
+
+      expect(errApi.content).to.have.property('error');
+      expect(errApi.content.error).to.have.property('name', 'BpmnError');
+      expect(errApi.content.error).to.have.property('code', '401');
+      expect(errApi.content.error).to.have.property('message', 'Unauthorized');
     });
   });
 

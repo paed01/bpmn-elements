@@ -17,6 +17,8 @@ var _smqp = require("smqp");
 
 var _messageHelper = require("../messageHelper");
 
+var _Errors = require("../error/Errors");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function Activity(Behaviour, activityDef, context) {
@@ -242,9 +244,12 @@ function Activity(Behaviour, activityDef, context) {
     stopped = state.stopped;
     status = state.status;
     executionId = state.executionId;
-    counters = state.counters && { ...counters,
-      ...state.counters
-    };
+
+    if (state.counters) {
+      counters = { ...counters,
+        ...state.counters
+      };
+    }
 
     if (state.execution) {
       execution = (0, _ActivityExecution.default)(activityApi, context).recover(state.execution);
@@ -628,7 +633,9 @@ function Activity(Behaviour, activityDef, context) {
 
       case 'run.error':
         {
-          publishEvent('error', content);
+          publishEvent('error', (0, _messageHelper.cloneContent)(content, {
+            error: fields.redelivered ? (0, _Errors.makeErrorFromMessage)(message) : content.error
+          }));
           break;
         }
 

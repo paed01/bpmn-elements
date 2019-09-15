@@ -1,38 +1,31 @@
 import {cloneMessage} from '../messageHelper';
 
 class ActivityError extends Error {
-  constructor(message, sourceMessage, inner) {
-    super(message);
+  constructor(description, sourceMessage, inner) {
+    super(description);
+    this.type = 'ActivityError';
     this.name = this.constructor.name;
-    if (sourceMessage) {
-      const clone = cloneMessage(sourceMessage);
-      this.fields = clone.fields && {...clone.fields};
-      this.content = {...clone.content, error: undefined};
-      this.properties = clone.properties;
+    this.description = description;
+    if (sourceMessage) this.source = cloneMessage(sourceMessage, (sourceMessage.content && sourceMessage.content.error) && {error: undefined});
+    if (inner) {
+      this.inner = inner;
+      if (inner.name) this.name = inner.name;
+      if (inner.code) this.code = inner.code;
     }
-    if (!inner) return;
-
-    this.inner = inner;
-    if (inner.name) this.name = inner.name;
-    if (inner.code) this.code = inner.code;
-    if (inner.id) this.id = inner.id;
   }
 }
 
 class BpmnError extends Error {
-  constructor(message, behaviour = {}, sourceMessage, inner) {
+  constructor(description, behaviour = {}, sourceMessage, inner) {
     const {errorCode} = behaviour;
 
-    super(message);
+    super(description);
+    this.type = 'BpmnError';
     this.name = behaviour.name || this.constructor.name;
-    this.code = 'errorCode' in behaviour && errorCode && errorCode.toString();
+    this.description = description;
+    this.code = ('errorCode' in behaviour && errorCode && errorCode.toString()) || behaviour.code;
     this.id = behaviour.id;
-    if (sourceMessage) {
-      const clone = cloneMessage(sourceMessage);
-      this.fields = clone.fields && {...clone.fields};
-      this.content = {...clone.content, error: undefined};
-      this.properties = clone.properties;
-    }
+    if (sourceMessage) this.source = cloneMessage(sourceMessage, (sourceMessage.content && sourceMessage.content.error) && {error: undefined});
     if (inner) this.inner = inner;
   }
 }
@@ -40,40 +33,29 @@ class BpmnError extends Error {
 export {
   ActivityError,
   BpmnError,
-  createMessageFromError,
   makeErrorFromMessage
 };
 
-function createMessageFromError(error) {
-  if (error instanceof BpmnError) return Object.assign({}, error);
+function makeErrorFromMessage(errorMessage) {
+  const {content} = errorMessage;
+  if (isKnownError(content)) return content;
 
-  return {
-    message: error.message,
-    name: error.name,
-    source: createSource(),
-    inner: error,
-  };
-
-  function createSource() {
-    if (!error.source) return;
-    const {id, type, executionId} = error.source;
-    return {
-      id,
-      type,
-      executionId,
-    };
-  }
-}
-
-function makeErrorFromMessage({content}, caller) {
-  if (content instanceof Error) return content;
   const {error} = content;
+  if (!error) return;
 
-  if (error instanceof Error) return error;
-  if (error instanceof ActivityError) return error;
-  if (error instanceof BpmnError) return error;
-  if (error.type === 'BpmnError') return new BpmnError(error.id, error.name, error.code, error.source, error.inner);
+  if (isKnownError(error)) return error;
+  switch (error.type) {
+    case 'ActivityError':
+      return new ActivityError(error.message || error.description, error.source, error.inner ? error.inner : {code: error.code, name: error.name});
+    case 'BpmnError':
+      return new BpmnError(error.message || error.description, error, error.source);
+  }
 
-  const {message, name, source} = error;
-  return new ActivityError(message, source || caller, name);
+  return error;
+
+  function isKnownError(test) {
+    if (test instanceof Error) return test;
+    if (test instanceof ActivityError) return test;
+    if (test instanceof BpmnError) return test;
+  }
 }

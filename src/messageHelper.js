@@ -34,10 +34,10 @@ function cloneContent(content, extend) {
   return clone;
 }
 
-function cloneMessage(message) {
+function cloneMessage(message, overrideContent) {
   return {
     fields: {...message.fields},
-    content: cloneContent(message.content),
+    content: cloneContent(message.content, overrideContent),
     properties: {...message.properties},
   };
 }
