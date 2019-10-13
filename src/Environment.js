@@ -49,26 +49,14 @@ export default function Environment(options = {}) {
   function recover(state) {
     if (!state) return environmentApi;
 
-    const recoverOptions = {
-      services,
-      scripts,
-      Logger,
-      extensions,
-      settings: {
-        ...state.settings,
-        ...settings,
-      },
-      variables: {
-        ...variables,
-        ...state.variables,
-      },
-      output: {
-        ...output,
-        ...state.output,
-      },
-    };
+    const recoverOptions = validateOptions(state);
+    Object.assign(options, recoverOptions);
 
-    return Environment(recoverOptions);
+    if (state.settings) Object.assign(settings, state.settings);
+    if (state.variables) Object.assign(variables, state.variables);
+    if (state.output) Object.assign(output, state.output);
+
+    return environmentApi;
   }
 
   function clone(overrideOptions = {}) {

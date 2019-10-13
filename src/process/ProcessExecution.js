@@ -537,7 +537,11 @@ export default function ProcessExecution(parentActivity, context) {
       stopped,
       completed,
       status,
-      children: children.map((activity) => activity.getState()),
+      children: children.reduce((result, activity) => {
+        if (activity.placeholder) return result;
+        result.push(activity.getState());
+        return result;
+      }, []),
       flows: flows.map((f) => f.getState()),
       messageFlows: outboundMessageFlows.map((f) => f.getState()),
       associations: associations.map((f) => f.getState()),

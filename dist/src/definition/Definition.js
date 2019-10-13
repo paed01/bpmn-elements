@@ -73,7 +73,10 @@ function Definition(context, options) {
       return !!status;
     },
 
-    environment,
+    get environment() {
+      return environment;
+    },
+
     run,
     getApi,
     getState,
@@ -165,6 +168,10 @@ function Definition(context, options) {
       counters = { ...counters,
         ...state.counters
       };
+    }
+
+    if (state.environment) {
+      environment.recover(state.environment);
     }
 
     if (state.execution) {

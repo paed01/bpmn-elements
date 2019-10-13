@@ -9,6 +9,7 @@ const extensions = {
   },
 };
 
+const bigSource = factory.resource('mother-of-all.bpmn');
 const AssertMessage = testHelpers.AssertMessage;
 
 Feature('Definition', () => {
@@ -199,7 +200,7 @@ Feature('Definition', () => {
     const messages = [];
 
     Given('a definition', async () => {
-      const context = await testHelpers.context(factory.resource('mother-of-all.bpmn'), {extensions});
+      const context = await testHelpers.context(bigSource, {extensions});
       definition = Definition(context, {
         Logger: testHelpers.Logger,
       });
@@ -295,9 +296,12 @@ Feature('Definition', () => {
   Scenario('Recover definition', () => {
     let definition;
     Given('a definition with user task, timer event, and loop', async () => {
-      const context = await testHelpers.context(factory.resource('mother-of-all.bpmn'), {extensions});
+      const context = await testHelpers.context(bigSource, {extensions});
       definition = Definition(context, {
         Logger: testHelpers.Logger,
+        extensions: {
+          saveAllOutputToEnvironmentExtension
+        }
       });
     });
 
@@ -322,7 +326,7 @@ Feature('Definition', () => {
 
     let recoveredDefinition;
     Then('new definition can be recovered', async () => {
-      const newContext = await testHelpers.context(factory.resource('mother-of-all.bpmn'), {extensions});
+      const newContext = await testHelpers.context(bigSource, {extensions});
       recoveredDefinition = Definition(newContext).recover(state);
     });
 
@@ -389,6 +393,74 @@ Feature('Definition', () => {
     });
 
     Then('execution completes', () => {
+      return leave;
+    });
+
+    When('ran again', () => {
+      definition.run();
+    });
+
+    And('user task is signaled with input', () => {
+      const [userTask] = definition.getPostponed();
+      expect(userTask).to.have.property('id', 'userTask1');
+
+      wait = definition.waitFor('wait', (_, {content}) => {
+        return content.type === 'bpmn:UserTask';
+      });
+
+      userTask.signal({data: 1});
+    });
+
+    And('sub user task is signaled with input', async () => {
+      const userTask = await wait;
+      expect(userTask).to.have.property('id', 'subUserTask1');
+
+      wait = definition.waitFor('wait', (_, {content}) => content.type === 'bpmn:UserTask');
+
+      userTask.signal({subdata: 1});
+    });
+
+    Then('user task postponed', async () => {
+      const userTask = await wait;
+      expect(userTask).to.have.property('id', 'userTask1');
+      state = definition.getState();
+    });
+
+    Then('new definition can be recovered', async () => {
+      const newContext = await testHelpers.context(bigSource, {extensions});
+      recoveredDefinition = Definition(newContext, {
+        myOption: true,
+        extensions: {
+          saveAllOutputToEnvironmentExtension
+        }
+      }).recover(state);
+    });
+
+    When('resumed', () => {
+      wait = recoveredDefinition.waitFor('wait', (_, {content}) => content.type === 'bpmn:UserTask');
+      leave = recoveredDefinition.waitFor('leave');
+      recoveredDefinition.resume();
+    });
+
+    Then('user task is resumed with access to recovered environment', async () => {
+      const userTask = await wait;
+      expect(userTask).to.have.property('id', 'userTask1');
+
+      expect(userTask.environment.options, 'environment option').to.have.property('myOption', true);
+      expect(userTask.environment.variables, 'environment variable').to.have.property('stopLoop', true);
+      expect(userTask.environment.output, 'environment output').to.have.property('userTask1').that.eql({data: 1});
+
+      wait = recoveredDefinition.waitFor('wait', (_, {content}) => content.type === 'bpmn:UserTask');
+      userTask.signal({data: 2});
+    });
+
+    When('sub user task is signaled', async () => {
+      const userTask = await wait;
+      expect(userTask).to.have.property('id', 'subUserTask1');
+      userTask.signal({subdata: 1});
+    });
+
+    Then('definition completes', () => {
       return leave;
     });
   });
@@ -510,7 +582,7 @@ Feature('Definition', () => {
   Scenario('Using callbacks', () => {
     let source, context;
     Given('a massive source with user task, timeouts, and the rest', async () => {
-      source = factory.resource('mother-of-all.bpmn');
+      source = bigSource;
       context = await testHelpers.context(source);
     });
 
@@ -571,3 +643,9 @@ Feature('Definition', () => {
     });
   });
 });
+
+function saveAllOutputToEnvironmentExtension(activity, {environment}) {
+  activity.on('end', (api) => {
+    if (api.content.output) environment.output[api.id] = api.content.output;
+  });
+}

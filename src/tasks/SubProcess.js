@@ -120,10 +120,11 @@ export function SubProcessBehaviour(activity, context) {
       processExecutions.splice(0);
     }
 
-    const subEnvironment = environment.recover(state.environment);
+    const subEnvironment = environment.clone().recover(state.environment);
     const subContext = context.clone(subEnvironment);
 
     const execution = ProcessExecution(activity, subContext).recover(state);
+
     processExecutions.push(execution);
     return execution;
   }

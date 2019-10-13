@@ -50,7 +50,9 @@ export function Definition(context, options) {
       if (!consumingRunQ) return false;
       return !!status;
     },
-    environment,
+    get environment() {
+      return environment;
+    },
     run,
     getApi,
     getState,
@@ -141,6 +143,10 @@ export function Definition(context, options) {
     executionId = state.executionId;
     if (state.counters) {
       counters = {...counters, ...state.counters};
+    }
+
+    if (state.environment) {
+      environment.recover(state.environment);
     }
 
     if (state.execution) {

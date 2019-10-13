@@ -1,6 +1,13 @@
 Changelog
 =========
 
+# 0.10.0
+
+- Recover now recovers environment as well
+
+## Bugfix
+- getting state no longer throws if a placeholder activity is in activities
+
 # 0.9.0
 
 ## Addition
