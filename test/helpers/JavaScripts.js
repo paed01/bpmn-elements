@@ -6,6 +6,7 @@ export function Scripts() {
   return {
     getScript,
     register,
+    compile,
   };
 
   function register({id, type, behaviour}) {
@@ -24,8 +25,14 @@ export function Scripts() {
       }
     }
 
+    const compiled = compile(language, `${type}/${id}`, scriptBody);
+    if (!compiled) return;
+    scripts[id] = compiled;
+  }
+
+  function compile(language, filename, scriptBody) {
     if (!/^javascript$/i.test(language)) return;
-    scripts[id] = new Script(scriptBody, {filename: `${type}/${id}`});
+    return new Script(scriptBody, {filename});
   }
 
   function getScript(language, {id}) {

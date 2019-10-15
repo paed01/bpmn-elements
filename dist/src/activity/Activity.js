@@ -181,16 +181,16 @@ function Activity(Behaviour, activityDef, context) {
     enumerable: true,
     get: () => execution
   });
-  const extensions = context.loadExtensions(activityApi);
-  Object.defineProperty(activityApi, 'extensions', {
-    enumerable: true,
-    get: () => extensions
-  });
   const ioSpecification = ioSpecificationDef && ioSpecificationDef.Behaviour(activityApi, ioSpecificationDef, context);
   const loaedEventDefinitions = eventDefinitions && eventDefinitions.map(ed => ed.Behaviour(activityApi, ed, context));
   Object.defineProperty(activityApi, 'eventDefinitions', {
     enumerable: true,
     get: () => loaedEventDefinitions
+  });
+  const extensions = context.loadExtensions(activityApi);
+  Object.defineProperty(activityApi, 'extensions', {
+    enumerable: true,
+    get: () => extensions
   });
   return activityApi;
 

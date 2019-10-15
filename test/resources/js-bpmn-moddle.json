@@ -6,42 +6,51 @@
     "tagAlias": "lowerCase"
   },
   "types": [{
+    "name": "Process",
+    "isAbstract": true,
+    "extends": [
+      "bpmn:Process"
+    ],
+    "properties": [{
+      "name": "candidateStarterUsers",
+      "isAttr": true,
+      "type": "String"
+    }, {
+      "name": "versionTag",
+      "isAttr": true,
+      "type": "String"
+    }]
+  }, {
     "name": "Task",
     "isAbstract": true,
     "extends": [
       "bpmn:Task"
     ],
-    "properties": [
-      {
-        "name": "result",
-        "isAttr": true,
-        "type": "String"
-      },
-      {
-        "name": "messageRef",
-        "isAttr": true,
-        "type": "String"
-      }
-    ]
+    "properties": [{
+      "name": "result",
+      "isAttr": true,
+      "type": "String"
+    }, {
+      "name": "messageRef",
+      "isAttr": true,
+      "type": "String"
+    }]
   }, {
     "name": "Output",
     "superClass": ["Element"]
   }, {
     "name": "Collectable",
     "isAbstract": true,
-    "extends": [ "bpmn:MultiInstanceLoopCharacteristics" ],
-    "properties": [
-      {
-        "name": "collection",
-        "isAttr": true,
-        "type": "String"
-      },
-      {
-        "name": "elementVariable",
-        "isAttr": true,
-        "type": "String"
-      }
-    ]
+    "extends": ["bpmn:MultiInstanceLoopCharacteristics"],
+    "properties": [{
+      "name": "collection",
+      "isAttr": true,
+      "type": "String"
+    }, {
+      "name": "elementVariable",
+      "isAttr": true,
+      "type": "String"
+    }]
   }, {
     "name": "FormSupported",
     "isAbstract": true,
@@ -49,12 +58,10 @@
       "bpmn:StartEvent",
       "bpmn:UserTask"
     ],
-    "properties": [
-      {
-        "name": "formKey",
-        "isAttr": true,
-        "type": "String"
-      }
-    ]
+    "properties": [{
+      "name": "formKey",
+      "isAttr": true,
+      "type": "String"
+    }]
   }]
 }

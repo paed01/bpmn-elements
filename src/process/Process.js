@@ -81,6 +81,12 @@ export function Process(processDef, context) {
     get: () => broker,
   });
 
+  const extensions = context.loadExtensions(processApi);
+  Object.defineProperty(processApi, 'extensions', {
+    enumerable: true,
+    get: () => extensions,
+  });
+
   return processApi;
 
   function init() {

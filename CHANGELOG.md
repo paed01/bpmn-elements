@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 0.11.0
+
+- Execute extensions when initiating process
+
 # 0.10.0
 
 - Recover now recovers environment as well
