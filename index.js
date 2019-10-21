@@ -81,6 +81,7 @@ export {
   SignalEventDefinition,
   SignalTask as ManualTask,
   SignalTask as UserTask,
+  SignalTask as BusinessRuleTask,
   SignalTask,
   StandardLoopCharacteristics,
   StartEvent,
