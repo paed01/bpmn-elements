@@ -76,6 +76,7 @@ export {
   SequenceFlow,
   ServiceImplementation,
   ServiceTask as SendTask,
+  ServiceTask as BusinessRuleTask,
   ServiceTask,
   Signal,
   SignalEventDefinition,
