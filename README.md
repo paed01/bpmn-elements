@@ -47,6 +47,7 @@ The following elements are tested and supported.
 - SequenceFlow
 - ServiceImplementation: ServiceTask implementation attribute behaviour
 - [ServiceTask](/docs/ServiceTask.md)
+  - BusinessRuleTask: Same behaviour as ServiceTask
   - SendTask: Same behaviour as ServiceTask
 - Signal
 - SignalEventDefinition

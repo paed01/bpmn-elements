@@ -104,8 +104,7 @@ function FormKey(activity, context) {
 function MessageRef(activity, context) {
   const {id, logger, behaviour} = activity;
   const {messageRef} = behaviour;
-  if (typeof messageRef !== 'string') return;
-
+  if (!messageRef || !messageRef.id) return;
 
   const {broker} = activity;
 
@@ -127,10 +126,10 @@ function MessageRef(activity, context) {
   }
 
   function onActivityExecutionCompleted(_, completeMessage) {
-    const messageElement = context.getActivityById(messageRef);
-    logger.debug(`<${id}> send message <${messageRef}>`);
+    const messageElement = context.getActivityById(messageRef.id);
+    logger.debug(`<${id}> send message <${messageRef.id}>`);
 
-    const message = messageElement ? messageElement.resolve(completeMessage) : {id: messageRef};
+    const message = messageElement ? messageElement.resolve(completeMessage) : {...messageRef};
 
     broker.publish('format', `run.${safeType}.message`, {
       message,

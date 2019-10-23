@@ -32,8 +32,9 @@
       "type": "String"
     }, {
       "name": "messageRef",
+      "type": "Message",
       "isAttr": true,
-      "type": "String"
+      "isReference": true
     }]
   }, {
     "name": "Output",

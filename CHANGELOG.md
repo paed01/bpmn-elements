@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 0.12.0
+
+- Map BusinessRuleTask to ServiceTask
+
 # 0.11.0
 
 - Execute extensions when initiating process

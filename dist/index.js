@@ -207,6 +207,12 @@ Object.defineProperty(exports, "SendTask", {
     return _ServiceTask.default;
   }
 });
+Object.defineProperty(exports, "BusinessRuleTask", {
+  enumerable: true,
+  get: function () {
+    return _ServiceTask.default;
+  }
+});
 Object.defineProperty(exports, "ServiceTask", {
   enumerable: true,
   get: function () {
