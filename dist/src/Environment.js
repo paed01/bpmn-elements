@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Environment;
 
-var _expressions = _interopRequireDefault(require("./expressions"));
+var _Expressions = _interopRequireDefault(require("./Expressions"));
 
 var _Scripts = require("./Scripts");
 
@@ -21,10 +21,12 @@ function Environment(options = {}) {
   const output = options.output || {};
   const services = options.services || {};
   const scripts = options.scripts || (0, _Scripts.Scripts)();
+  const expressions = options.expressions || (0, _Expressions.default)();
   const Logger = options.Logger || DummyLogger;
   const extensions = options.extensions;
   const environmentApi = {
     options: initialOptions,
+    expressions,
     extensions,
     output,
     scripts,
@@ -80,6 +82,7 @@ function Environment(options = {}) {
       Logger,
       extensions,
       scripts,
+      expressions,
       ...initialOptions,
       ...overrideOptions,
       services
@@ -114,7 +117,7 @@ function Environment(options = {}) {
       environment: environmentApi,
       ...message
     };
-    return (0, _expressions.default)(expression, from, expressionFnContext);
+    return expressions.resolveExpression(expression, from, expressionFnContext);
   }
 
   function addService(name, fn) {

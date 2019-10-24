@@ -1,10 +1,11 @@
-import expressions from '../src/expressions';
-import {isExpression, hasExpression} from '../src/expressions';
+import Expressions from '../src/Expressions';
 
-describe('expressions', () => {
+const expressions = Expressions();
+
+describe('Expressions', () => {
   describe('addressing variables', () => {
     it('extracts variable value', () => {
-      expect(expressions('${variables.input}', {
+      expect(expressions.resolveExpression('${variables.input}', {
         variables: {
           input: 1,
         },
@@ -12,7 +13,7 @@ describe('expressions', () => {
     });
 
     it('returns undefined if not found', () => {
-      expect(expressions('${variables.input}', {
+      expect(expressions.resolveExpression('${variables.input}', {
         variables: {
           output: 1,
         },
@@ -20,7 +21,7 @@ describe('expressions', () => {
     });
 
     it('misspelled varailbes returns undefined', () => {
-      expect(expressions('${varailbes.input}', {
+      expect(expressions.resolveExpression('${varailbes.input}', {
         variables: {
           input: 1,
         },
@@ -28,7 +29,7 @@ describe('expressions', () => {
     });
 
     it('addressing arrays returns value', () => {
-      expect(expressions('${variables.input[1]}', {
+      expect(expressions.resolveExpression('${variables.input[1]}', {
         variables: {
           input: [0, 1],
         },
@@ -36,7 +37,7 @@ describe('expressions', () => {
     });
 
     it('addressing array without index returns undefined', () => {
-      expect(expressions('${variables.input[]}', {
+      expect(expressions.resolveExpression('${variables.input[]}', {
         variables: {
           input: [0, 1],
         },
@@ -44,7 +45,7 @@ describe('expressions', () => {
     });
 
     it('addressing named property returns value', () => {
-      expect(expressions('${variables.input[#complexName]}', {
+      expect(expressions.resolveExpression('${variables.input[#complexName]}', {
         variables: {
           input: {
             '#complexName': 1,
@@ -54,7 +55,7 @@ describe('expressions', () => {
     });
 
     it('deep property path returns value', () => {
-      expect(expressions('${variables.input[#complexName].list[0]}', {
+      expect(expressions.resolveExpression('${variables.input[#complexName].list[0]}', {
         variables: {
           input: {
             '#complexName': {
@@ -67,7 +68,7 @@ describe('expressions', () => {
 
     describe('inline', () => {
       it('variables in string', () => {
-        expect(expressions('PT${variables.input}S', {
+        expect(expressions.resolveExpression('PT${variables.input}S', {
           variables: {
             input: 0.1,
           },
@@ -75,7 +76,7 @@ describe('expressions', () => {
       });
 
       it('expression in expression is not supported and returns weird value', () => {
-        expect(expressions('PT${variables[${variables.property}]}S', {
+        expect(expressions.resolveExpression('PT${variables[${variables.property}]}S', {
           variables: {
             input: 0.1,
             property: 'input',
@@ -84,7 +85,7 @@ describe('expressions', () => {
       });
 
       it('combined', () => {
-        expect(expressions('http://${variables.host}${variables.pathname}', {
+        expect(expressions.resolveExpression('http://${variables.host}${variables.pathname}', {
           variables: {
             host: 'example.com',
             pathname: '/api/v1',
@@ -93,7 +94,7 @@ describe('expressions', () => {
       });
 
       it('inserts nothing if variable is found but undefined', () => {
-        expect(expressions('http://${variables.host}${variables.pathname}', {
+        expect(expressions.resolveExpression('http://${variables.host}${variables.pathname}', {
           variables: {
             host: 'example.com',
             pathname: undefined,
@@ -105,7 +106,7 @@ describe('expressions', () => {
 
   describe('services', () => {
     it('returns service function', () => {
-      expect(expressions('${services.get}', {
+      expect(expressions.resolveExpression('${services.get}', {
         services: {
           get: () => {
             return 'PT0.1S';
@@ -115,7 +116,7 @@ describe('expressions', () => {
     });
 
     it('service accessing variables returns value', () => {
-      expect(expressions('${services.get()}', {
+      expect(expressions.resolveExpression('${services.get()}', {
         variables: {
           timeout: 'PT0.1S',
         },
@@ -128,7 +129,7 @@ describe('expressions', () => {
     });
 
     it('expression with argument returns value', () => {
-      expect(expressions('${services.get(200)}', {
+      expect(expressions.resolveExpression('${services.get(200)}', {
         services: {
           get: (statusCode) => {
             return statusCode;
@@ -138,7 +139,7 @@ describe('expressions', () => {
     });
 
     it('expression with empty arguments returns value', () => {
-      expect(expressions('${services.get()}', {
+      expect(expressions.resolveExpression('${services.get()}', {
         services: {
           get: () => {
             return '200';
@@ -148,7 +149,7 @@ describe('expressions', () => {
     });
 
     it('expression with argument adressing variables returns value', () => {
-      expect(expressions('${services.get(variables.input[0])}', {
+      expect(expressions.resolveExpression('${services.get(variables.input[0])}', {
         variables: {
           input: [200],
         },
@@ -161,7 +162,7 @@ describe('expressions', () => {
     });
 
     it('expression with arguments adressing variables returns value', () => {
-      expect(expressions('${services.get(variables.input[0],variables.add)}', {
+      expect(expressions.resolveExpression('${services.get(variables.input[0],variables.add)}', {
         variables: {
           input: [200],
           add: 1,
@@ -175,63 +176,63 @@ describe('expressions', () => {
     });
 
     it('expression ${true} return true', () => {
-      expect(expressions('${true}')).to.be.true;
+      expect(expressions.resolveExpression('${true}')).to.be.true;
     });
 
     it('expression ${false} return false', () => {
-      expect(expressions('${false}')).to.be.false;
+      expect(expressions.resolveExpression('${false}')).to.be.false;
     });
   });
 
   describe('isExpression(text)', () => {
     it('returns true if expression', () => {
-      expect(isExpression('${input}')).to.be.true;
-      expect(isExpression('${variables.input[#complexName].list[0]}')).to.be.true;
-      expect(isExpression('${services.get()}')).to.be.true;
+      expect(expressions.isExpression('${input}')).to.be.true;
+      expect(expressions.isExpression('${variables.input[#complexName].list[0]}')).to.be.true;
+      expect(expressions.isExpression('${services.get()}')).to.be.true;
     });
 
     it('returns false if the string is not an explicit expression', () => {
-      expect(isExpression('return `${input}`;')).to.be.false;
-      expect(isExpression('`${input}`;')).to.be.false;
-      expect(isExpression('`${input}`')).to.be.false;
+      expect(expressions.isExpression('return `${input}`;')).to.be.false;
+      expect(expressions.isExpression('`${input}`;')).to.be.false;
+      expect(expressions.isExpression('`${input}`')).to.be.false;
     });
 
     it('returns false if not expression', () => {
-      expect(isExpression('{input}')).to.be.false;
+      expect(expressions.isExpression('{input}')).to.be.false;
     });
 
     it('returns false if empty expression', () => {
-      expect(isExpression('${}')).to.be.false;
+      expect(expressions.isExpression('${}')).to.be.false;
     });
 
     it('returns false if no argument is passed', () => {
-      expect(isExpression()).to.be.false;
+      expect(expressions.isExpression()).to.be.false;
     });
   });
 
   describe('hasExpression(text)', () => {
     it('returns true if expression', () => {
-      expect(hasExpression('${input}')).to.be.true;
-      expect(hasExpression('${variables.input[#complexName].list[0]}')).to.be.true;
-      expect(hasExpression('${services.get()}')).to.be.true;
+      expect(expressions.hasExpression('${input}')).to.be.true;
+      expect(expressions.hasExpression('${variables.input[#complexName].list[0]}')).to.be.true;
+      expect(expressions.hasExpression('${services.get()}')).to.be.true;
     });
 
     it('returns true if the string is not an explicit expression', () => {
-      expect(hasExpression('return `${input}`;')).to.be.true;
-      expect(hasExpression('`${input}`;')).to.be.true;
-      expect(hasExpression('`${input}`')).to.be.true;
+      expect(expressions.hasExpression('return `${input}`;')).to.be.true;
+      expect(expressions.hasExpression('`${input}`;')).to.be.true;
+      expect(expressions.hasExpression('`${input}`')).to.be.true;
     });
 
     it('returns false if not expression', () => {
-      expect(hasExpression('{input}')).to.be.false;
+      expect(expressions.hasExpression('{input}')).to.be.false;
     });
 
     it('returns false if empty expression', () => {
-      expect(hasExpression('${}')).to.be.false;
+      expect(expressions.hasExpression('${}')).to.be.false;
     });
 
     it('returns false if no argument is passed', () => {
-      expect(hasExpression()).to.be.false;
+      expect(expressions.hasExpression()).to.be.false;
     });
   });
 });

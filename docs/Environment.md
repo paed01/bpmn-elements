@@ -15,17 +15,19 @@ Arguments:
     - `enableDummyService`: boolean, true returns dummy service function for service task
     - `strict`: boolean, [strict mode](#strict_mode) defaults to false
   - `scripts`: [Scripts instance](/docs/Scripts.md)
+  - `expressions`: expressions handler, defaults to [Expressions instance](/docs/Expressions.md)
   - `Logger`: optional [Logger](#logger) defaults to a dummy logger that does basically nothing but supply the required log functions
-  - `extensions`: [extensions](/docs/Extension.md) object with functions
+  - `extensions`: [extensions](/docs/Extension.md) object
 
 Properties:
 - `options`: initial options
 - `extensions`: extensions
 - `output`: output object
 - `scripts`: [Scripts instance](/docs/Scripts.md)
+- `expressions`: expressions handler
 - `services`: services
 - `settings`: settings object
-- `variables`: variables object
+- `variables`: getter for variables object
 - `Logger`: passed logger initiator
 
 ### `addService(name, serviceFn)`
@@ -33,9 +35,20 @@ Properties:
 ### `clone([overrideOptions])`
 ### `getScript(scriptType, activity)`
 ### `getServiceByName(name)`
+
+Get service by name
+
 ### `getState()`
 ### `registerScript(activity)`
 ### `resolveExpression(expression[, message = {}, expressionFnContext])`
+
+Resolve expression.
+
+Arguments:
+- `expression`: expression string
+- `message`: optional object from where to resolve expressions, the environment instance is added by default
+- `expressionFnContext`: optional call context (this)
+
 ### `recover(state)`
 
 ## Strict mode

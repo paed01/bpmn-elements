@@ -3,9 +3,15 @@ import getPropertyValue from './getPropertyValue';
 const isExpressionPattern = /^\${(.+?)}$/;
 const expressionPattern = /\${(.+?)}/;
 
-export default resolveExpressions;
+export default function Expressions() {
+  return {
+    resolveExpression,
+    isExpression,
+    hasExpression,
+  };
+}
 
-function resolveExpressions(templatedString, context, expressionFnContext) {
+function resolveExpression(templatedString, context, expressionFnContext) {
   let result = templatedString;
 
   while (expressionPattern.test(result)) {
@@ -29,12 +35,12 @@ function resolveExpressions(templatedString, context, expressionFnContext) {
   return result;
 }
 
-export function isExpression(text) {
+function isExpression(text) {
   if (!text) return false;
   return isExpressionPattern.test(text);
 }
 
-export function hasExpression(text) {
+function hasExpression(text) {
   if (!text) return false;
   return expressionPattern.test(text);
 }

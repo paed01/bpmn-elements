@@ -1,7 +1,33 @@
-Expression
-==========
+Expressions
+===========
 
-Expressions come in the form of `${<variables or services>.<property name>}`.
+Expressions handler interface.
+
+- `Expressions`
+  - `resolveExpression(expression[, context, fnContext])`: resolve expression
+  - `isExpression(testString)`: optional function to evaluate if string is an expression
+  - `hasExpression(testString)`: optional function to evaluate if the string contains an expression
+
+## `resolveExpression(expression[, context, fnContext])`
+
+Resolve expression.
+
+Arguments:
+- `expression`: expresion templated string
+- `context`: optional context from where to resolve expressions
+- `fnContext`: optional call context
+
+## `isExpression(testString)`
+
+Evaluate if a string is an expression, and only an expression, e.g. `${environment.variables.supersecret}`.
+
+## `hasExpression(testString)`
+
+Evaluate if a string contains an expression, e.g. `${environment.variables.username}:${environment.variables.supersecret}`.
+
+## Default expression handling
+
+Default expressions come in the form of `${<variables or services>.<property name>}`.
 
 The following expressions are supported:
 

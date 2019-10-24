@@ -1,4 +1,4 @@
-import expressions from './expressions';
+import Expressions from './Expressions';
 import {Scripts as IScripts} from './Scripts';
 
 const defaultOptions = ['extensions', 'output', 'services', 'scripts', 'settings', 'variables', 'Logger'];
@@ -11,11 +11,13 @@ export default function Environment(options = {}) {
   const output = options.output || {};
   const services = options.services || {};
   const scripts = options.scripts || IScripts();
+  const expressions = options.expressions || Expressions();
   const Logger = options.Logger || DummyLogger;
   const extensions = options.extensions;
 
   const environmentApi = {
     options: initialOptions,
+    expressions,
     extensions,
     output,
     scripts,
@@ -67,6 +69,7 @@ export default function Environment(options = {}) {
       Logger,
       extensions,
       scripts,
+      expressions,
       ...initialOptions,
       ...overrideOptions,
       services,
@@ -104,7 +107,7 @@ export default function Environment(options = {}) {
       ...message,
     };
 
-    return expressions(expression, from, expressionFnContext);
+    return expressions.resolveExpression(expression, from, expressionFnContext);
   }
 
   function addService(name, fn) {

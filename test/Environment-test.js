@@ -183,7 +183,7 @@ describe('Environment', () => {
   });
 
   describe('clone()', () => {
-    it('clones variables, settings, output, and options but keeps services, scripts and Logger', () => {
+    it('clones variables, settings, output, and options but keeps services, scripts, expressions, and Logger', () => {
       const variables = {
         init: true,
       };
@@ -193,10 +193,12 @@ describe('Environment', () => {
       const listener = {
         emit() {}
       };
+      const expressions = {};
       const environment = Environment({
         listener,
         settings,
         variables,
+        expressions,
         services: {
           get() {},
         },
@@ -217,6 +219,7 @@ describe('Environment', () => {
       expect(clone.getServiceByName('get')).to.be.a('function');
       expect(clone.Logger).to.be.a('function');
       expect(clone.scripts === environment.scripts).to.be.true;
+      expect(clone.expressions === environment.expressions).to.be.true;
     });
 
     it('extends options', () => {
@@ -265,6 +268,18 @@ describe('Environment', () => {
       expect(clone.scripts).to.be.ok.and.an('object').that.equal(myScripts);
     });
 
+    it('allows override of expressions', () => {
+      const expressions = {};
+      const environment = Environment({
+        expressions
+      });
+
+      const newExpressions = {};
+      const clone = environment.clone({expressions: newExpressions});
+
+      expect(clone.expressions).to.be.ok.and.an('object').that.equal(newExpressions);
+    });
+
     it('extends services', () => {
       const environment = Environment({
         variables: {init: true},
@@ -285,6 +300,69 @@ describe('Environment', () => {
       expect(clone.services).to.have.property('initSvc1').that.is.a('function');
       expect(clone.services).to.have.property('cloneSvc').that.is.a('function');
       expect(clone.services).to.have.property('initSvc2').that.is.a('function').that.is.not.equal(environment.services.initSvc2);
+    });
+  });
+
+  describe('expressions', () => {
+    it('resolveExpression() resolves expression', () => {
+      const variables = {
+        init: true,
+      };
+      const settings = {
+        init: true,
+      };
+      const environment = Environment({
+        settings,
+        variables,
+        services: {
+          get() {
+            return true;
+          },
+        },
+        Logger() {},
+      });
+
+      expect(environment.resolveExpression('${environment.settings.init}')).to.be.true;
+      expect(environment.resolveExpression('${environment.variables.init}')).to.be.true;
+      expect(environment.resolveExpression('${environment.services.get}')).to.be.a('function');
+      expect(environment.resolveExpression('${environment.services.get()}')).to.be.true;
+    });
+
+    it('resolveExpression() with overridden expressions', () => {
+      const variables = {
+        init: true,
+      };
+      const settings = {
+        init: true,
+      };
+      const expressions = {
+        resolveExpression(...args) {
+          return args;
+        },
+        isExpression() {
+          return true;
+        },
+        hasExpression() {
+          return true;
+        },
+      };
+      const environment = Environment({
+        settings,
+        variables,
+        expressions,
+        services: {
+          get() {
+            return true;
+          },
+        },
+        Logger() {},
+      });
+
+      expect(environment.resolveExpression('${environment.settings.init}')).to.eql([
+        '${environment.settings.init}',
+        {environment},
+        undefined,
+      ]);
     });
   });
 });

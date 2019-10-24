@@ -3,9 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.isExpression = isExpression;
-exports.hasExpression = hasExpression;
-exports.default = void 0;
+exports.default = Expressions;
 
 var _getPropertyValue = _interopRequireDefault(require("./getPropertyValue"));
 
@@ -13,10 +11,16 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 const isExpressionPattern = /^\${(.+?)}$/;
 const expressionPattern = /\${(.+?)}/;
-var _default = resolveExpressions;
-exports.default = _default;
 
-function resolveExpressions(templatedString, context, expressionFnContext) {
+function Expressions() {
+  return {
+    resolveExpression,
+    isExpression,
+    hasExpression
+  };
+}
+
+function resolveExpression(templatedString, context, expressionFnContext) {
   let result = templatedString;
 
   while (expressionPattern.test(result)) {

@@ -3,6 +3,7 @@ Changelog
 
 # 0.12.0
 
+- Allow override of default expression handling and parsing
 - Map BusinessRuleTask to ServiceTask
 
 # 0.11.0
