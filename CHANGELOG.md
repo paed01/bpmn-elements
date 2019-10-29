@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 0.12.1
+
+- Patch `moddle-context-serializer` to relieve project from nasty bug where message flows sourcing from empty lane threw find of undefined
+
 # 0.12.0
 
 - Allow override of default expression handling and parsing

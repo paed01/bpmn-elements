@@ -296,7 +296,7 @@ Feature('Messaging', () => {
         </collaboration>
         <process id="mainProcess" isExecutable="true">
           <startEvent id="start1" />
-          <sequenceFlow id="toTask" sourceRef="start" targetRef="task" />
+          <sequenceFlow id="toTask" sourceRef="start1" targetRef="send" />
           <task id="send" js:messageRef="Message1" />
         </process>
         <process id="participantProcess">
@@ -342,6 +342,74 @@ Feature('Messaging', () => {
       expect(definition.getActivityById('send').counters).to.have.property('taken', 1);
       expect(definition.getActivityById('start2').counters).to.have.property('taken', 1);
       expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
+    });
+  });
+
+  Scenario('Message flow targets empty participant lane', () => {
+    let definition;
+    Given('a task with formatted end message and message flow to participant process, and a start event waiting for that message', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
+        <collaboration id="Collaboration_0">
+          <messageFlow id="fromMain2Participant" sourceRef="send" targetRef="lane2" />
+          <messageFlow id="fromParticipant2Main" sourceRef="lane2" targetRef="receive" />
+          <participant id="lane1" name="Main" processRef="mainProcess" />
+          <participant id="lane2" name="Participant" processRef="participantProcess" />
+        </collaboration>
+        <process id="mainProcess" isExecutable="true">
+          <startEvent id="start1" />
+          <sequenceFlow id="toTask" sourceRef="start1" targetRef="send" />
+          <intermediateThrowEvent id="send">
+            <messageEventDefinition messageRef="Message1" />
+          </intermediateThrowEvent>
+          <sequenceFlow id="toReceive" sourceRef="send" targetRef="receive" />
+          <intermediateCatchEvent id="receive">
+            <messageEventDefinition messageRef="Message2" />
+          </intermediateCatchEvent>
+        </process>
+        <process id="participantProcess" />
+        <message id="Message1" name="Start message" />
+        <message id="Message2" name="Second message" />
+      </definitions>`;
+
+      const context = await testHelpers.context(source, {
+        extensions: {
+          js: JsExtension
+        }
+      });
+      definition = Definition(context);
+    });
+
+    let end;
+    let main, participant;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      [main, participant] = definition.getProcesses();
+      definition.run();
+    });
+
+    Then('main process waits for message from participant', async () => {
+      expect(main.counters).to.have.property('completed', 0);
+      expect(main.getPostponed()[0]).to.have.property('id', 'receive');
+    });
+
+    And('participant process is postponed since nothing happened', async () => {
+      expect(participant.counters).to.have.property('completed', 0);
+    });
+
+    When('a manual procedure is ran to send message to complete main process', () => {
+      main.getPostponed()[0].signal();
+    });
+
+    Then('definition completes', () => {
+      return end;
+    });
+
+    And('all activities were taken', () => {
+      expect(definition.getActivityById('start1').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('send').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('receive').counters).to.have.property('taken', 1);
     });
   });
 
