@@ -3,7 +3,7 @@ ServiceTask
 
 Service task behaviour.
 
-To define service task service function you can use an expression in the implementation atttribute. The value of the implementation attribute will be picked up by the service task and resolved as an [expression](/docs/Expression.md).
+To define service task service function you can use an expression in the implementation attribute. The value of the implementation attribute will be picked up by the service task and resolved as an [expression](/docs/Expression.md).
 
 Example source:
 ```xml
@@ -35,3 +35,5 @@ Environment({
 ```
 
 The expressions will be resolved when the service task executes.
+
+The service function is called with an [execution context](/docs/ExecutionScope.md) and a callback.

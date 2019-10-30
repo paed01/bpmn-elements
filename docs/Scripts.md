@@ -25,7 +25,7 @@ Arguments:
 
 Must return interface with one required function that is named `execute`.
 
-The execute function will receive an execution context and a callback that should be called when the execution is completed.
+The execute function will receive an [execution context](/docs/ExecutionScope.md) and a callback that should be called when the execution is completed.
 
 ## Example implementation for nodejs
 

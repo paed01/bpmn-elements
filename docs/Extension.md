@@ -28,16 +28,48 @@ function saveAllOutputToEnvironmentExtension(activity, {environment}) {
 
 ## Formatting
 
-In some cases it may be required to fetch some extra data when an activity executes.
+In some cases it may be required to add some extra data when an activity executes.
 
-The basic flow is the publish a formatting message on the activity format queue. If an asynchronous operation is required pass an end routing key to formatting message. When the call is completed publish the end routing key.
+The basic flow is to publish a formatting message on the activity format queue.
+
+```js
+import {Definition} from 'bpmn-elements';
+
+const definition = Definition(context, {
+  variables: {
+    remoteFormUrl: 'https://exmple.com'
+  },
+  extensions: {
+    addFormExtension,
+  }
+});
+
+definition.once('activity.start', (api) => {
+  console.log(api.content.form);
+});
+
+definition.run();
+
+function addFormExtension(activity) {
+  const {formKey} = activity.behaviour;
+  if (!formKey) return;
+
+  const {broker} = activity;
+  const form = formKey === 'whatsYourName' ? {givenName: {type: 'string'}} : {age: {type: 'int'}};
+
+  broker.subscribeTmp('event', 'activity.enter', () => {
+    broker.publish('format', 'run.input', { form });
+  }, {noAck: true});
+}
+```
+
+If an asynchronous operation is required pass an end routing key to formatting message. When the call is completed publish the end routing key.
 
 Example:
 ```js
 import bent from 'bent';
+import {Definition} from 'bpmn-elements';
 import {resolve} from 'url';
-
-const {Definition} = elements;
 
 const getJSON = bent('json');
 
