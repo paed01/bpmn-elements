@@ -41,13 +41,7 @@ async function run() {
 
 function getModdleContext(sourceXml) {
   const bpmnModdle = new BpmnModdle();
-
-  return new Promise((resolve, reject) => {
-    bpmnModdle.fromXML(sourceXml.trim(), (err, definitions, moddleCtx) => {
-      if (err) return reject(err);
-      resolve(moddleCtx);
-    });
-  });
+  return bpmnModdle.fromXML(sourceXml.trim());
 }
 
 function Logger(scope) {

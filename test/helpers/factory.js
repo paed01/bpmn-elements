@@ -1,4 +1,3 @@
-import BpmnModdle from 'bpmn-moddle';
 import fs from 'fs';
 import path from 'path';
 
@@ -24,8 +23,6 @@ const activities = [
 
 const cache = {};
 
-const moddle = new BpmnModdle();
-
 export default {
   activities,
   gateways,
@@ -35,7 +32,7 @@ export default {
   userTask,
   multipleInbound,
   resource,
-  create,
+  // create,
 };
 
 const invalidProcess = `
@@ -128,66 +125,4 @@ function resource(name) {
   const source = fs.readFileSync(sourcePath);
   cache[sourcePath] = source;
   return source;
-}
-
-async function create(activityType) {
-  const source = `
-  <?xml version="1.0" encoding="UTF-8"?>
-  <bpmn2:definitions id="task-definitions" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
-  </bpmn2:definitions>'`;
-
-  const {definitions} = await fromXML(source);
-
-  const flowElements = [
-    moddle.create('bpmn:StartEvent', {id: 'start'}),
-    moddle.create(activityType, { id: 'activity' }),
-    moddle.create('bpmn:EndEvent', {id: 'end1'})
-  ];
-
-  const [start, activity, end] = flowElements;
-
-  const flows = [
-    moddle.create('bpmn:SequenceFlow', {id: 'flow1', sourceRef: start, targetRef: activity}),
-    moddle.create('bpmn:SequenceFlow', {id: 'flow2', sourceRef: activity, targetRef: end})
-  ];
-  const [, flow2, flow3] = flows;
-
-  if (gateways.includes(activityType)) {
-    activity.set('default', flow2);
-    const conditionExpression = moddle.create('bpmn:FormalExpression', {
-      body: '${variables.take}',
-    });
-    flow3.set('conditionExpression', conditionExpression);
-  }
-
-  const bpmnProcess = moddle.create('bpmn:Process', {
-    id: 'Process_1',
-    isExecutable: true,
-    flowElements: flowElements.concat(flows),
-  });
-
-  definitions.get('rootElements').push(bpmnProcess);
-
-  return toXml(definitions);
-}
-
-function fromXML(source) {
-  return new Promise((resolve, reject) => {
-    moddle.fromXML(source, (err, definitions, moddleContext) => {
-      if (err) return reject(err);
-      return resolve({
-        definitions,
-        moddleContext,
-      });
-    });
-  });
-}
-
-function toXml(definitions) {
-  return new Promise((resolve, reject) => {
-    moddle.toXML(definitions, (err, source) => {
-      if (err) return reject(err);
-      return resolve(source);
-    });
-  });
 }

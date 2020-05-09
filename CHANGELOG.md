@@ -1,5 +1,10 @@
-Changelog
+1Changelog
 =========
+
+# 0.13.1
+
+- Bump to smqp@2
+- Bump dev dependencies
 
 # 0.12.1
 

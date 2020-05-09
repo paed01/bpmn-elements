@@ -1463,25 +1463,17 @@ async function LoopDefinition(activityType, isSequential) {
   return toXml(definitions);
 }
 
-function fromXML(source) {
-  return new Promise((resolve, reject) => {
-    moddle.fromXML(source, (err, definitions, moddleContext) => {
-      if (err) return reject(err);
-      return resolve({
-        definitions,
-        moddleContext,
-      });
-    });
-  });
+async function fromXML(source) {
+  const moddleContext = await moddle.fromXML(source);
+  return {
+    definitions: moddleContext.rootElement,
+    moddleContext,
+  };
 }
 
-function toXml(definitions) {
-  return new Promise((resolve, reject) => {
-    moddle.toXML(definitions, (err, source) => {
-      if (err) return reject(err);
-      return resolve(source);
-    });
-  });
+async function toXml(definitions) {
+  const {xml} = await moddle.toXML(definitions);
+  return xml;
 }
 
 function assertApi(activity, message, compareState) {

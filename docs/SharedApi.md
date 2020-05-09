@@ -54,3 +54,12 @@ Resolve expression.
 ### `createMessage([overrideContent])`
 
 Utility function to create new message content from the api message.
+
+### `sendApiMessage(action[, content, options])`
+
+Utility function to publish message with element broker.
+
+Arguments:
+- `action`: message action, will be prefixed with the element type, e.g. `signal` will be sent as `activity.signal` if used to signal activity
+- `content`: optional message content
+- `options`: optional object with broker message options
