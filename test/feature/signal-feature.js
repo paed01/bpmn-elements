@@ -326,6 +326,364 @@ Feature('Signals', () => {
       expect(logBook[1]).to.equal('task2');
     });
   });
+
+  Scenario('Signal elements from definition', () => {
+    let definition;
+    Given('a process with user task, looped user task, receive task, signal events, and message events', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <signal id="namedSignal" name="NamedSignal" />
+        <message id="namedMessage" name="NamedMessage" />
+        <process id="signalProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="toTask1" sourceRef="start" targetRef="task1" />
+          <userTask id="task1" />
+          <sequenceFlow id="toLoopTask" sourceRef="task1" targetRef="loopTask" />
+          <userTask id="loopTask">
+            <multiInstanceLoopCharacteristics isSequential="false">
+              <loopCardinality>3</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+          </userTask>
+          <sequenceFlow id="toReceiveAnon" sourceRef="loopTask" targetRef="receiveAnon" />
+          <receiveTask id="receiveAnon" />
+          <sequenceFlow id="toReceive" sourceRef="receiveAnon" targetRef="receive" />
+          <receiveTask id="receive" messageRef="namedMessage" />
+          <sequenceFlow id="toLoopReceive" sourceRef="receive" targetRef="loopReceive" />
+          <receiveTask id="loopReceive" messageRef="namedMessage">
+            <multiInstanceLoopCharacteristics isSequential="false">
+              <loopCardinality>3</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+          </receiveTask>
+          <sequenceFlow id="toAnonSignal" sourceRef="loopReceive" targetRef="anonSignalEvent" />
+          <intermediateCatchEvent id="anonSignalEvent">
+            <signalEventDefinition />
+          </intermediateCatchEvent>
+          <sequenceFlow id="toSecondAnonSignal" sourceRef="anonSignalEvent" targetRef="secondAnonSignalEvent" />
+          <intermediateCatchEvent id="secondAnonSignalEvent">
+            <signalEventDefinition />
+          </intermediateCatchEvent>
+          <sequenceFlow id="toNamedSignalEvent" sourceRef="secondAnonSignalEvent" targetRef="namedSignalEvent" />
+          <intermediateCatchEvent id="namedSignalEvent">
+            <signalEventDefinition signalRef="namedSignal" />
+          </intermediateCatchEvent>
+          <sequenceFlow id="toAnonMessageEvent" sourceRef="namedSignalEvent" targetRef="anonMessageEvent" />
+          <intermediateCatchEvent id="anonMessageEvent">
+            <messageEventDefinition />
+          </intermediateCatchEvent>
+          <sequenceFlow id="toNamedMessageEvent" sourceRef="anonMessageEvent" targetRef="namedMessageEvent" />
+          <intermediateCatchEvent id="namedMessageEvent">
+            <messageEventDefinition id="messageDef" messageRef="namedMessage" />
+          </intermediateCatchEvent>
+          <sequenceFlow id="toEnd" sourceRef="namedMessageEvent" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    let end;
+    const output = {};
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+
+      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
+        output[msg.content.id] = msg.content.output;
+      }, {noAck: true});
+    });
+
+    let activity;
+    Then('execution stops at first user task', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'task1');
+    });
+
+    When('definition signals without message', () => {
+      definition.signal();
+    });
+
+    Then('task is still running', () => {
+      expect(activity.owner.status).to.equal('executing');
+    });
+
+    When('definition signals with unknown id', () => {
+      definition.signal({id: 'hittepa'});
+    });
+
+    Then('task is still running', () => {
+      expect(activity.owner.isRunning).to.be.true;
+      expect(activity.owner.status).to.equal('executing');
+    });
+
+    When('definition signals with task id and some input', () => {
+      definition.signal({id: 'task1', input: 1});
+    });
+
+    Then('task completes', () => {
+      expect(activity.owner.isRunning).to.be.false;
+    });
+
+    And('task output is set', () => {
+      expect(output).to.have.property('task1').with.property('input', 1);
+    });
+
+    And('looped task is executing', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'loopTask');
+    });
+
+    When('definition signals with looped task id only', () => {
+      definition.signal({id: 'loopTask', input: 1});
+    });
+
+    Then('looped task is still running', () => {
+      expect(activity.owner.isRunning).to.be.true;
+      expect(activity.owner.status).to.equal('executing');
+    });
+
+    When('definition signals with unknown execution id', () => {
+      definition.signal({id: 'loopTask', executionId: 'hittepa', input: 1});
+    });
+
+    Then('looped task is still running', () => {
+      expect(activity.owner.isRunning).to.be.true;
+      expect(activity.owner.status).to.equal('executing');
+    });
+
+    When('definition signals with first iteration execution id', () => {
+      const [iteration] = activity.getExecuting();
+      definition.signal({id: 'loopTask', executionId: iteration.executionId, input: 1});
+    });
+
+    Then('looped task is still running', () => {
+      expect(activity.owner.isRunning).to.be.true;
+      expect(activity.owner.status).to.equal('executing');
+    });
+
+    When('definition signals with second iteration execution id', () => {
+      const [iteration] = activity.getExecuting();
+      definition.signal({id: 'loopTask', executionId: iteration.executionId, input: 2});
+    });
+
+    Then('looped task is still running', () => {
+      expect(activity.owner.isRunning).to.be.true;
+      expect(activity.owner.status).to.equal('executing');
+    });
+
+    When('definition signals with third iteration execution id', () => {
+      const [iteration] = activity.getExecuting();
+      definition.signal({id: 'loopTask', executionId: iteration.executionId, input: 3});
+    });
+
+    Then('looped task completes', () => {
+      expect(activity.owner.isRunning).to.be.false;
+    });
+
+    And('task output is set', () => {
+      expect(output).to.have.property('loopTask').that.have.length(3);
+      expect(output.loopTask[0]).to.have.property('input', 1);
+      expect(output.loopTask[1]).to.have.property('input', 2);
+      expect(output.loopTask[2]).to.have.property('input', 3);
+    });
+
+    And('anonymous receive task is executing', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'receiveAnon');
+    });
+
+    When('definition signals without message', () => {
+      definition.signal();
+    });
+
+    Then('anonymous receive task completes', () => {
+      expect(activity.owner.isRunning).to.be.false;
+    });
+
+    And('receive task with message is waiting to be signaled', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'receive');
+    });
+
+    When('definition sends signal with incorrect message id', () => {
+      definition.signal({id: 'hittepa'});
+    });
+
+    Then('receive task is still running', () => {
+      expect(activity.owner.isRunning).to.be.true;
+      expect(activity.owner.status).to.equal('executing');
+    });
+
+    When('definition sends signal with correct message ref id', () => {
+      definition.signal({id: 'namedMessage', input: 15});
+    });
+
+    Then('receive task completes with output', () => {
+      expect(activity.owner.isRunning).to.be.false;
+      expect(output).to.have.property('receive').with.property('input', 15);
+    });
+
+    And('looped receive task is executing', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'loopReceive');
+    });
+
+    When('definition sends signal with incorrect message id', () => {
+      definition.signal({id: 'hittepa'});
+    });
+
+    Then('looped receive task is still running', () => {
+      expect(activity.owner.isRunning).to.be.true;
+      expect(activity.owner.status).to.equal('executing');
+    });
+
+    When('definition sends signal with correct message ref id', () => {
+      definition.signal({id: 'namedMessage', input: 1});
+    });
+
+    Then('loop receive task iteration completes', () => {
+      expect(activity.owner.isRunning).to.be.true;
+    });
+
+    And('looped receive still has iterations', () => {
+      expect(activity.getExecuting()).to.have.length(2);
+    });
+
+    When('definition sends signal with correct message ref id', () => {
+      definition.signal({id: 'namedMessage', input: 2});
+    });
+
+    Then('loop receive task iteration completes', () => {
+      expect(activity.owner.isRunning).to.be.true;
+    });
+
+    And('looped receive still has iterations', () => {
+      expect(activity.getExecuting()).to.have.length(1);
+    });
+
+    When('definition sends signal with correct message ref id', () => {
+      definition.signal({id: 'namedMessage', input: 3});
+    });
+
+    Then('loop receive task completes with output', () => {
+      expect(activity.owner.isRunning).to.be.false;
+      expect(output).to.have.property('loopReceive').that.have.length(3);
+      expect(output.loopReceive[0]).to.have.property('input', 1);
+      expect(output.loopReceive[1]).to.have.property('input', 2);
+      expect(output.loopReceive[2]).to.have.property('input', 3);
+    });
+
+    And('anonymous signal event is executing', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'anonSignalEvent');
+    });
+
+    When('definition signals without message', () => {
+      definition.signal();
+    });
+
+    Then('anonymous signal event completes', () => {
+      expect(activity.owner.isRunning).to.be.false;
+    });
+
+    And('second anonymous signal event is waiting to be signaled', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'secondAnonSignalEvent');
+    });
+
+    When('definition signals with message', () => {
+      definition.signal({input: 6});
+    });
+
+    Then('second anonymous signal event completes with output', () => {
+      expect(activity.owner.isRunning).to.be.false;
+      expect(output).to.have.property('secondAnonSignalEvent').with.property('input', 6);
+    });
+
+    And('named signal event is waiting to be signaled', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'namedSignalEvent');
+    });
+
+    When('definition send anonymous signal', () => {
+      definition.signal();
+    });
+
+    Then('named signal event is still running', () => {
+      expect(activity.owner.isRunning).to.be.true;
+      expect(activity.owner.status).to.equal('executing');
+    });
+
+    When('definition sends signal with incorrect signal id', () => {
+      definition.signal({id: 'hittepa'});
+    });
+
+    Then('named signal event is still running', () => {
+      expect(activity.owner.isRunning).to.be.true;
+      expect(activity.owner.status).to.equal('executing');
+    });
+
+    When('definition sends signal with correct signal ref id', () => {
+      definition.signal({id: 'namedSignal', input: 5});
+    });
+
+    Then('named signal event completes with output', () => {
+      expect(activity.owner.isRunning).to.be.false;
+      expect(output).to.have.property('namedSignalEvent').with.property('input', 5);
+    });
+
+    And('anonymous message event is waiting to be signaled', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'anonMessageEvent');
+    });
+
+    When('definition signals with message', () => {
+      definition.signal({input: 7});
+    });
+
+    Then('anonymous message event completes with output', () => {
+      expect(activity.owner.isRunning).to.be.false;
+      expect(output).to.have.property('anonMessageEvent').with.property('input', 7);
+    });
+
+    And('anonymous message event is waiting to be signaled', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'namedMessageEvent');
+    });
+
+
+    When('definition send anonymous signal', () => {
+      definition.signal();
+    });
+
+    Then('named signal event is still running', () => {
+      expect(activity.owner.isRunning).to.be.true;
+      expect(activity.owner.status).to.equal('executing');
+    });
+
+    When('definition sends signal with incorrect signal id', () => {
+      definition.signal({id: 'hittepa'});
+    });
+
+    Then('named signal event is still running', () => {
+      expect(activity.owner.isRunning).to.be.true;
+      expect(activity.owner.status).to.equal('executing');
+    });
+
+    When('definition sends signal with correct signal ref id', () => {
+      definition.signal({id: 'namedMessage', input: 8});
+    });
+
+    Then('named signal event completes with output', () => {
+      expect(activity.owner.isRunning).to.be.false;
+      expect(output).to.have.property('namedMessageEvent').with.property('input', 8);
+    });
+
+    And('execution completes', () => {
+      return end;
+    });
+  });
 });
 
 async function prepareSource() {

@@ -38,6 +38,16 @@ Arguments:
 
 Get activity by id
 
+### `signal(message)`
+
+Delegate a signal message to all interested parties, usually MessageEventDefinition, SignalEventDefinition, SignalTask (user, manual), and ReceiveTask.
+
+Arguments:
+  - `message`: optional object
+    - `id`: optional task/element id to signal, also matched with Message and Signal id. If not passed only anonymous Signal- and MessageEventDefinitions will pick up the signal.
+    - `executionId`: optional execution id to signal, specially for looped tasks, also works for signal tasks that are not looped
+    - `[name]*`: any other properties will be forwarded as message to activity
+
 ### `getPostponed()`
 
 Get list of elements that are in a postponed state.

@@ -81,8 +81,8 @@ describe('SignalEventDefinition', () => {
       expect(event.broker).to.have.property('consumerCount', 0);
     });
 
-    it('completes and clears listeners if signaled before execution', () => {
-      const catchSignal = SignalEventDefinition(event, {
+    it('completes and clears listeners if event is a start event and signaled before execution', () => {
+      const catchSignal = SignalEventDefinition({...event, isStart: true}, {
         type: 'bpmn:SignalEventDefinition',
       });
 

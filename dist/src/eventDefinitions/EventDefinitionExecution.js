@@ -89,6 +89,10 @@ function EventDefinitionExecution(activity, eventDefinitions, completedRoutingKe
     }
 
     function onExecuteMessage(routingKey, message) {
+      const {
+        correlationId
+      } = message.properties;
+
       switch (routingKey) {
         case 'execute.completed':
           {
@@ -118,6 +122,8 @@ function EventDefinitionExecution(activity, eventDefinitions, completedRoutingKe
           executionId: parentExecutionId,
           isRootScope: true,
           parent: (0, _messageHelper.shiftParent)(content.parent)
+        }, {
+          correlationId
         });
       }
     }

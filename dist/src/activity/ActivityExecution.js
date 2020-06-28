@@ -181,7 +181,11 @@ function ActivityExecution(activity, context) {
       executionId: cexid,
       error
     } = content;
-    if (isRedelivered && properties.persistent === false) return message.ack();
+    const {
+      persistent,
+      correlationId
+    } = properties;
+    if (isRedelivered && persistent === false) return message.ack();
 
     switch (routingKey) {
       case 'execute.resume.execution':
@@ -297,6 +301,8 @@ function ActivityExecution(activity, context) {
 
         if (postponed.length === 1 && postponed[0].content.isRootScope) {
           return broker.publish('execution', 'execute.discard', { ...postponed[0].content
+          }, {
+            correlationId
           });
         }
 
@@ -317,7 +323,8 @@ function ActivityExecution(activity, context) {
       broker.publish('execution', `execution.${completionType}`, { ...completeContent,
         state: completionType
       }, {
-        type: completionType
+        type: completionType,
+        correlationId
       });
     }
   }

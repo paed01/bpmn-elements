@@ -11,6 +11,8 @@ exports.Api = Api;
 
 var _messageHelper = require("./messageHelper");
 
+var _shared = require("./shared");
+
 function ActivityApi(broker, apiMessage, environment) {
   return Api('activity', broker, apiMessage, environment);
 }
@@ -31,13 +33,18 @@ function Api(pfx, broker, sourceMessage, environment) {
   if (!sourceMessage) throw new Error('Api requires message');
   const apiMessage = (0, _messageHelper.cloneMessage)(sourceMessage);
   const apiContent = apiMessage.content;
+  const {
+    id,
+    type,
+    name
+  } = apiContent;
   const executionId = apiContent.executionId;
   const owner = broker.owner;
   environment = environment || broker.owner.environment;
   return {
-    id: apiContent.id,
-    type: apiContent.type,
-    name: apiContent.name,
+    id,
+    type,
+    name,
     executionId,
     environment,
     fields: apiMessage.fields,
@@ -56,7 +63,10 @@ function Api(pfx, broker, sourceMessage, environment) {
       sendApiMessage('discard');
     },
 
-    signal(message, options) {
+    signal(message, options = {}) {
+      if (!options.correlationId) options = { ...options,
+        correlationId: (0, _shared.getUniqueId)(`${id || pfx}_signal`)
+      };
       sendApiMessage('signal', {
         message
       }, options);

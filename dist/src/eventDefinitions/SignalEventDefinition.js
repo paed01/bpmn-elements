@@ -18,6 +18,7 @@ function SignalEventDefinition(activity, eventDefinition) {
     id,
     broker,
     environment,
+    isStart,
     isThrowing,
     getActivityById
   } = activity;
@@ -34,7 +35,7 @@ function SignalEventDefinition(activity, eventDefinition) {
   const referenceElement = reference.id && getActivityById(reference.id);
   const signalId = referenceElement ? referenceElement.id : 'anonymous';
   const signalQueueName = `signal-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(signalId)}-q`;
-  if (!isThrowing) setupCatch();
+  if (!isThrowing && isStart) setupCatch();
   const source = {
     id,
     type,
@@ -57,7 +58,7 @@ function SignalEventDefinition(activity, eventDefinition) {
       message: referenceMessage,
       description
     } = resolveMessage(executeMessage);
-    broker.consume(signalQueueName, onCatchSignal, {
+    if (isStart) broker.consume(signalQueueName, onCatchSignal, {
       noAck: true,
       consumerTag: `_api-signal-${executionId}`
     });
@@ -69,6 +70,10 @@ function SignalEventDefinition(activity, eventDefinition) {
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
       noAck: true,
       consumerTag: `_api-${executionId}`
+    });
+    broker.subscribeTmp('api', '#.signal.*', onCatchSignal, {
+      noAck: true,
+      consumerTag: `_api-delegated-${executionId}`
     });
     debug(`<${executionId} (${id})> expect ${description}`);
     broker.publish('event', 'activity.wait', { ...messageContent,
@@ -82,16 +87,32 @@ function SignalEventDefinition(activity, eventDefinition) {
       if ((0, _getPropertyValue.default)(message, 'content.message.id') !== referenceMessage.id) return;
       completed = true;
       stop();
-      return complete(message.content.message);
+      const {
+        type: messageType,
+        correlationId
+      } = message.properties;
+      broker.publish('event', 'activity.consumed', (0, _messageHelper.cloneContent)(messageContent, {
+        message: { ...message.content.message
+        }
+      }), {
+        correlationId,
+        type: messageType
+      });
+      return complete(message.content.message, message.properties);
     }
 
     function onApiMessage(routingKey, message) {
-      const messageType = message.properties.type;
+      const {
+        type: messageType,
+        correlationId
+      } = message.properties;
 
       switch (messageType) {
         case 'signal':
           {
-            return complete(message.content.message);
+            return complete(message.content.message, {
+              correlationId
+            });
           }
 
         case 'discard':
@@ -99,6 +120,8 @@ function SignalEventDefinition(activity, eventDefinition) {
             completed = true;
             stop();
             return broker.publish('execution', 'execute.discard', { ...messageContent
+            }, {
+              correlationId
             });
           }
 
@@ -110,21 +133,22 @@ function SignalEventDefinition(activity, eventDefinition) {
       }
     }
 
-    function complete(output) {
+    function complete(output, options) {
       completed = true;
       stop();
       debug(`<${executionId} (${id})> signaled with`, description);
       return broker.publish('execution', 'execute.completed', { ...messageContent,
         output,
         state: 'signal'
-      });
+      }, options);
     }
 
     function stop() {
       broker.cancel(`_api-signal-${executionId}`);
       broker.cancel(`_api-parent-${parentExecutionId}`);
       broker.cancel(`_api-${executionId}`);
-      broker.purgeQueue(signalQueueName);
+      broker.cancel(`_api-delegated-${executionId}`);
+      if (isStart) broker.purgeQueue(signalQueueName);
     }
   }
 

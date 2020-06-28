@@ -52,15 +52,16 @@ function ReceiveTaskBehaviour(activity) {
 
   function execute(executeMessage) {
     const content = executeMessage.content;
+    const {
+      executionId
+    } = content;
+    if (content.isRootScope) setupMessageHandling(executionId);
 
     if (loopCharacteristics && content.isRootScope) {
       return loopCharacteristics.execute(executeMessage);
     }
 
     let completed;
-    const {
-      executionId
-    } = content;
     const {
       message: referenceMessage,
       description
@@ -83,28 +84,51 @@ function ReceiveTaskBehaviour(activity) {
 
     function onCatchMessage(routingKey, message) {
       if ((0, _getPropertyValue.default)(message, 'content.message.id') !== referenceMessage.id) return;
+      const {
+        type: messageType,
+        correlationId
+      } = message.properties;
+      broker.publish('event', 'activity.consumed', (0, _messageHelper.cloneContent)(content, {
+        message: { ...message.content.message
+        }
+      }), {
+        correlationId,
+        type: messageType
+      });
       logger.debug(`<${executionId} (${id})> caught ${description}`);
       broker.publish('event', 'activity.catch', (0, _messageHelper.cloneContent)(content, {
         message: message.content.message
       }), {
-        type: 'catch'
+        type: 'catch',
+        correlationId
       });
-      complete(message.content.message);
+      complete(message.content.message, {
+        correlationId
+      });
     }
 
     function onApiMessage(routingKey, message) {
-      switch (message.properties.type) {
+      const {
+        type: messageType,
+        correlationId
+      } = message.properties;
+
+      switch (messageType) {
         case 'message':
         case 'signal':
           {
-            return complete(message.content.message);
+            return complete(message.content.message, {
+              correlationId
+            });
           }
 
         case 'discard':
           {
             completed = true;
             stop();
-            return broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(content));
+            return broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(content), {
+              correlationId
+            });
           }
 
         case 'stop':
@@ -114,18 +138,67 @@ function ReceiveTaskBehaviour(activity) {
       }
     }
 
-    function complete(output) {
+    function complete(output, options) {
       completed = true;
       stop();
       return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
         output
-      }));
+      }), options);
     }
 
     function stop() {
       broker.cancel(`_onmessage-${executionId}`);
       broker.cancel(`_api-${executionId}`);
-      broker.purgeQueue('message');
+    }
+  }
+
+  function setupMessageHandling(executionId) {
+    broker.subscribeTmp('api', '#.signal.*', onDelegateMessage, {
+      noAck: true,
+      consumerTag: `_api-delegated-${executionId}`
+    }, {
+      noAck: true
+    });
+    broker.subscribeTmp('api', `activity.stop.${executionId}`, onStopApiMessage, {
+      noAck: true,
+      consumerTag: `_api-stop-${executionId}`,
+      priority: 400
+    });
+    broker.subscribeTmp('execution', 'execute.#', onComplete, {
+      noAck: true,
+      consumerTag: `_execution-complete-${executionId}`
+    }, {
+      noAck: true
+    });
+
+    function onDelegateMessage(_, message) {
+      if (!message.properties.delegate) return;
+      broker.sendToQueue('message', message.content, message.properties);
+    }
+
+    function onStopApiMessage() {
+      stop(true);
+    }
+
+    function onComplete(routingKey, {
+      content
+    }) {
+      if (!content.isRootScope) return;
+
+      switch (routingKey) {
+        case 'execute.completed':
+        case 'execute.error':
+        case 'execute.discard':
+          stop();
+          break;
+      }
+    }
+
+    function stop(keepMessageQ) {
+      broker.cancel(`_api-delegated-${executionId}`);
+      broker.cancel(`_api-stop-${executionId}`);
+      broker.cancel(`_execution-complete-${executionId}`);
+      if (!keepMessageQ) broker.purgeQueue('message');
     }
   }
 

@@ -468,6 +468,7 @@ function Definition(context, options) {
 
   function getApi(message) {
     if (execution) return execution.getApi(message);
+    if (!message || !stateMessage) throw new Error('Definition is not running');
     return (0, _Api.DefinitionApi)(broker, message || stateMessage);
   }
 

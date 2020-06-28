@@ -1,5 +1,6 @@
 import {ProcessApi} from '../Api';
 import {cloneContent, cloneMessage, pushParent} from '../messageHelper';
+import {getUniqueId} from '../shared';
 
 export default function ProcessExecution(parentActivity, context) {
   const {id, type, broker, logger, isSubProcess} = parentActivity;
@@ -19,7 +20,7 @@ export default function ProcessExecution(parentActivity, context) {
   const exchangeName = isSubProcess ? 'subprocess-execution' : 'execution';
   broker.assertExchange(exchangeName, 'topic', {autoDelete: false, durable: true});
 
-  let activityQ, status = 'init', executionId, stopped, activated, stateMessage, completed = false;
+  let activityQ, status = 'init', executionId, stopped, activated, stateMessage, completed = false, executionName;
 
   const processExecution = {
     id,
@@ -67,6 +68,7 @@ export default function ProcessExecution(parentActivity, context) {
 
     const isRedelivered = executeMessage.fields.redelivered;
     executionId = executeMessage.content.executionId;
+    executionName = `${executionId} (${id})`;
 
     stateMessage = cloneMessage(executeMessage);
     stateMessage.content = {...stateMessage.content, executionId, state: 'start'};
@@ -80,14 +82,14 @@ export default function ProcessExecution(parentActivity, context) {
       return resume();
     }
 
-    logger.debug(`<${executionId} (${id})> execute`, isSubProcess ? 'sub process' : 'process');
+    logger.debug(`<${executionName}> execute`, isSubProcess ? 'sub process' : 'process');
     activate();
     start();
     return true;
   }
 
   function resume() {
-    logger.debug(`<${executionId} (${id})> resume`, status, 'process execution');
+    logger.debug(`<${executionName}> resume`, status, 'process execution');
 
     if (completed) return complete('completed');
 
@@ -145,7 +147,7 @@ export default function ProcessExecution(parentActivity, context) {
     completed = state.completed;
     status = state.status;
 
-    logger.debug(`<${executionId} (${id})> recover`, status, 'process execution');
+    logger.debug(`<${executionName}> recover`, status, 'process execution');
 
     if (state.messageFlows) {
       state.messageFlows.forEach((flowState) => {
@@ -281,7 +283,7 @@ export default function ProcessExecution(parentActivity, context) {
     let delegate = true;
 
     const content = message.content;
-    logger.debug(`<${executionId} (${id})> delegate`, eventType, content.message && content.message.id ? `event with id <${content.message.id}>` : 'anonymous event');
+    logger.debug(`<${executionName}> delegate`, eventType, content.message && content.message.id ? `event with id <${content.message.id}>` : 'anonymous event');
 
     triggeredByEventActivities.forEach((activity) => {
       if (activity.getStartActivities({referenceId: content.message && content.message.id, referenceType: eventType}).length) {
@@ -303,8 +305,9 @@ export default function ProcessExecution(parentActivity, context) {
     const content = message.content;
     const isRedelivered = message.fields.redelivered;
     const {id: childId, type: activityType, isEnd} = content;
+    const {persistent} = message.properties;
 
-    if (isRedelivered && message.properties.persistent === false) return message.ack();
+    if (isRedelivered && persistent === false) return message.ack();
 
     switch (routingKey) {
       case 'execution.stop':
@@ -343,7 +346,7 @@ export default function ProcessExecution(parentActivity, context) {
       case 'flow.error':
       case 'activity.error': {
         if (isEventCaught()) {
-          logger.debug(`<${executionId} (${id})> error was caught`);
+          logger.debug(`<${executionName}> error was caught`);
           break;
         }
         complete('error', {error: content.error});
@@ -388,7 +391,7 @@ export default function ProcessExecution(parentActivity, context) {
       stateChangeMessage(false);
       if (isRedelivered) return message.ack();
 
-      logger.debug(`<${executionId} (${id})> left <${childId}> (${activityType}), pending runs ${postponed.length}`, postponed.map((a) => a.content.id));
+      logger.debug(`<${executionName}> left <${childId}> (${activityType}), pending runs ${postponed.length}`, postponed.map((a) => a.content.id));
 
       const postponedLength = postponed.length;
       if (!postponedLength) {
@@ -413,7 +416,7 @@ export default function ProcessExecution(parentActivity, context) {
 
     function stopExecution() {
       if (stopped) return;
-      logger.debug(`<${executionId} (${id})> stop process execution (stop child executions ${postponed.length})`);
+      logger.debug(`<${executionName}> stop process execution (stop child executions ${postponed.length})`);
       getPostponed().forEach((api) => {
         api.stop();
       });
@@ -428,7 +431,7 @@ export default function ProcessExecution(parentActivity, context) {
     function onDiscard() {
       deactivate();
       const running = postponed.splice(0);
-      logger.debug(`<${executionId} (${id})> discard process execution (discard child executions ${running.length})`);
+      logger.debug(`<${executionName}> discard process execution (discard child executions ${running.length})`);
 
       getSequenceFlows().forEach((flow) => {
         flow.stop();
@@ -452,11 +455,7 @@ export default function ProcessExecution(parentActivity, context) {
 
   function onApiMessage(routingKey, message) {
     if (message.properties.delegate) {
-      for (const child of children) {
-        if (child.placeholder) continue;
-        child.broker.publish('api', routingKey, cloneContent(message.content), message.properties);
-      }
-      return;
+      return delegateApiMessage();
     }
 
     if (id !== message.content.id) {
@@ -474,6 +473,27 @@ export default function ProcessExecution(parentActivity, context) {
         activityQ.queueMessage({routingKey: 'execution.stop'}, cloneContent(message.content), {persistent: false});
         break;
     }
+
+    function delegateApiMessage() {
+      const {correlationId} = message.properties || getUniqueId(executionId);
+      logger.debug(`<${executionName}> delegate api`, routingKey, `message to children, with correlationId <${correlationId}>`);
+
+      let consumed = false;
+      broker.subscribeTmp('event', 'activity.consumed', (_, msg) => {
+        if (msg.properties.correlationId === correlationId) {
+          consumed = true;
+          logger.debug(`<${executionName}> delegated api message was consumed by`, msg.content ? msg.content.executionId : 'unknown');
+        }
+      }, {consumerTag: `_ct-delegate-${correlationId}`, noAck: true});
+
+      for (const child of children) {
+        if (child.placeholder) continue;
+        child.broker.publish('api', routingKey, cloneContent(message.content), message.properties);
+        if (consumed) break;
+      }
+
+      broker.cancel(`_ct-delegate-${correlationId}`);
+    }
   }
 
   function getPostponed(filterFn) {
@@ -489,7 +509,7 @@ export default function ProcessExecution(parentActivity, context) {
 
   function complete(completionType, content = {}) {
     deactivate();
-    logger.debug(`<${executionId} (${id})> process execution ${completionType}`);
+    logger.debug(`<${executionName}> process execution ${completionType}`);
     completed = true;
     if (status !== 'terminated') status = completionType;
     broker.deleteQueue(activityQ.name);
@@ -513,7 +533,7 @@ export default function ProcessExecution(parentActivity, context) {
 
   function terminate(message) {
     status = 'terminated';
-    logger.debug(`<${executionId} (${id})> terminating process execution`);
+    logger.debug(`<${executionName}> terminating process execution`);
 
     const running = postponed.splice(0);
     getSequenceFlows().forEach((flow) => {

@@ -544,6 +544,53 @@ describe('Definition', () => {
     });
   });
 
+  describe('signal()', () => {
+    const source = factory.userTask('userTask', 'signalDef');
+    let context;
+    beforeEach(async () => {
+      context = await testHelpers.context(source);
+    });
+
+    it('throws if not executing and called without message', () => {
+      const definition = Definition(context);
+      expect(() => {
+        definition.signal();
+      }).to.throw('Definition is not running');
+    });
+
+    it('signal with id of running user task completes task', () => {
+      const definition = Definition(context);
+      definition.run();
+      definition.signal({id: 'userTask'});
+
+      expect(definition.getActivityById('userTask').counters).to.have.property('taken', 1);
+    });
+
+    it('signal without id of running user task is ignored', () => {
+      const definition = Definition(context);
+      definition.run();
+      definition.signal({});
+
+      expect(definition.getActivityById('userTask').counters).to.have.property('taken', 0);
+    });
+
+    it('signal with unknown id is ignored', () => {
+      const definition = Definition(context);
+      definition.run();
+      definition.signal({id: 'hittepa'});
+
+      expect(definition.getActivityById('userTask').counters).to.have.property('taken', 0);
+    });
+
+    it('signal without message is ignored', () => {
+      const definition = Definition(context);
+      definition.run();
+      definition.signal();
+
+      expect(definition.getActivityById('userTask').counters).to.have.property('taken', 0);
+    });
+  });
+
   describe('recover()', () => {
     const source = factory.userTask(undefined, 'recoverDef');
     let context;

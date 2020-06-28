@@ -65,6 +65,7 @@ export default function EventDefinitionExecution(activity, eventDefinitions, com
     }
 
     function onExecuteMessage(routingKey, message) {
+      const {correlationId} = message.properties;
       switch (routingKey) {
         case 'execute.completed': {
           stop();
@@ -93,7 +94,7 @@ export default function EventDefinitionExecution(activity, eventDefinitions, com
           executionId: parentExecutionId,
           isRootScope: true,
           parent: shiftParent(content.parent),
-        });
+        }, {correlationId});
       }
     }
 

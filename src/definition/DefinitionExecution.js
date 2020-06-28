@@ -271,6 +271,7 @@ export default function DefinitionExecution(definition) {
     const messageType = message.properties.type;
     const delegate = message.properties.delegate;
 
+
     if (delegate && id === message.content.id) {
       const referenceId = getPropertyValue(message, 'content.message.id');
       for (const bp of processes) {
@@ -282,7 +283,7 @@ export default function DefinitionExecution(definition) {
       }
     }
 
-    if (message.properties.delegate) {
+    if (delegate) {
       for (const bp of processes) {
         bp.broker.publish('api', routingKey, cloneContent(message.content), message.properties);
       }

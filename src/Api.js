@@ -1,4 +1,5 @@
 import {cloneMessage} from './messageHelper';
+import {getUniqueId} from './shared';
 
 export {
   ActivityApi,
@@ -29,14 +30,15 @@ function Api(pfx, broker, sourceMessage, environment) {
 
   const apiMessage = cloneMessage(sourceMessage);
   const apiContent = apiMessage.content;
+  const {id, type, name} = apiContent;
   const executionId = apiContent.executionId;
   const owner = broker.owner;
   environment = environment || broker.owner.environment;
 
   return {
-    id: apiContent.id,
-    type: apiContent.type,
-    name: apiContent.name,
+    id,
+    type,
+    name,
     executionId,
     environment,
     fields: apiMessage.fields,
@@ -51,7 +53,8 @@ function Api(pfx, broker, sourceMessage, environment) {
     discard() {
       sendApiMessage('discard');
     },
-    signal(message, options) {
+    signal(message, options = {}) {
+      if (!options.correlationId) options = {...options, correlationId: getUniqueId(`${id || pfx}_signal`)};
       sendApiMessage('signal', {message}, options);
     },
     stop() {

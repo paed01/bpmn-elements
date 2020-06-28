@@ -15,7 +15,7 @@ Arguments:
     - `enableDummyService`: boolean, true returns dummy service function for service task
     - `strict`: boolean, [strict mode](#strict-mode) defaults to false
   - `scripts`: [Scripts instance](/docs/Scripts.md)
-  - `expressions`: expressions handler, defaults to [Expressions instance](/docs/Expressions.md)
+  - `expressions`: expressions handler, defaults to [Expressions instance](/docs/Expression.md)
   - `Logger`: optional [Logger](#logger) defaults to a dummy logger that does basically nothing but supply the required log functions
   - `extensions`: [extensions](/docs/Extension.md) object
 

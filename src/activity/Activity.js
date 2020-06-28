@@ -464,6 +464,7 @@ export default function Activity(Behaviour, activityDef, context) {
     const {fields, content: originalContent, ack} = message;
     const isRedelivered = fields.redelivered;
     const content = cloneContent(originalContent);
+    const {correlationId} = message.properties;
 
     stateMessage = message;
 
@@ -479,7 +480,7 @@ export default function Activity(Behaviour, activityDef, context) {
         if (extensions) extensions.activate(cloneMessage(message), activityApi);
         if (ioSpecification) ioSpecification.activate(message);
 
-        if (!isRedelivered) publishEvent('enter', content);
+        if (!isRedelivered) publishEvent('enter', content, {correlationId});
         break;
       }
       case 'run.discard': {
@@ -492,7 +493,7 @@ export default function Activity(Behaviour, activityDef, context) {
         if (ioSpecification) ioSpecification.activate(message);
 
         if (!isRedelivered) {
-          broker.publish('run', 'run.discarded', content);
+          broker.publish('run', 'run.discarded', content, {correlationId});
           publishEvent('discard', content);
         }
         break;
@@ -501,8 +502,8 @@ export default function Activity(Behaviour, activityDef, context) {
         logger.debug(`<${id}> start`, isRedelivered ? 'redelivered' : '');
         status = 'started';
         if (!isRedelivered) {
-          broker.publish('run', 'run.execute', content);
-          publishEvent('start', content);
+          broker.publish('run', 'run.execute', content, {correlationId});
+          publishEvent('start', content, {correlationId});
         }
 
         break;
@@ -528,15 +529,15 @@ export default function Activity(Behaviour, activityDef, context) {
 
         status = 'end';
         if (!isRedelivered) {
-          broker.publish('run', 'run.leave', content);
-          publishEvent('end', content);
+          broker.publish('run', 'run.leave', content, {correlationId});
+          publishEvent('end', content, {correlationId});
         }
         break;
       }
       case 'run.error': {
         publishEvent('error', cloneContent(content, {
           error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
-        }));
+        }), {correlationId});
         break;
       }
       case 'run.discarded': {
@@ -570,7 +571,7 @@ export default function Activity(Behaviour, activityDef, context) {
         }
 
         broker.publish('run', 'run.next', content);
-        publishEvent('leave', leaveContent);
+        publishEvent('leave', leaveContent, {correlationId});
         if (!ignoreOutbound) doOutbound(outbound);
         break;
       }
@@ -590,6 +591,7 @@ export default function Activity(Behaviour, activityDef, context) {
       parent: {...parent},
     });
 
+    const {correlationId} = message.properties;
     publishEvent(routingKey, content, message.properties);
 
     switch (routingKey) {
@@ -603,27 +605,27 @@ export default function Activity(Behaviour, activityDef, context) {
         deactivate();
         deactivateRunConsumers();
         broker.cancel('_activity-execution');
-        return publishEvent('stop');
+        return publishEvent('stop', null, {correlationId});
       }
       case 'execution.error': {
         status = 'error';
-        broker.publish('run', 'run.error', content);
-        broker.publish('run', 'run.discarded', content);
+        broker.publish('run', 'run.error', content, {correlationId});
+        broker.publish('run', 'run.discarded', content, {correlationId});
         break;
       }
       case 'execution.discard':
         status = 'discarded';
-        broker.publish('run', 'run.discarded', content);
+        broker.publish('run', 'run.discarded', content, {correlationId});
         break;
       default: {
         if (content.outbound && content.outbound.discarded === outboundSequenceFlows.length) {
           status = 'discarded';
-          broker.publish('run', 'run.discarded', content);
+          broker.publish('run', 'run.discarded', content, {correlationId});
           break;
         }
 
         status = 'executed';
-        broker.publish('run', 'run.end', content);
+        broker.publish('run', 'run.end', content, {correlationId});
       }
     }
 

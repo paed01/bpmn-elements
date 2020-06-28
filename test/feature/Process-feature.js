@@ -935,6 +935,7 @@ Feature('Process', () => {
     Then('the process continuous execution and completes', async () => {
       await completed;
 
+      assertMessage('activity.consumed', 'receive');
       assertMessage('activity.catch', 'receive');
       assertMessage('activity.end', 'receive');
       assertMessage('activity.leave', 'receive');

@@ -351,7 +351,7 @@ function DefinitionExecution(definition) {
       }
     }
 
-    if (message.properties.delegate) {
+    if (delegate) {
       for (const bp of processes) {
         bp.broker.publish('api', routingKey, (0, _messageHelper.cloneContent)(message.content), message.properties);
       }

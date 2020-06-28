@@ -1,5 +1,19 @@
-1Changelog
+Changelog
 =========
+
+# 1.0.0
+
+Make it easier and possible to signal activities from [definition](/docs/Definition.md) by calling `definition.signal(message)`.
+
+## Breaking
+- MessageEventDefinition and SignalEventDefinition will only listens for pre-execution messages if contained in a starting event
+
+## Bugfix
+- Parallel looped ReceiveTask iterations all completed with one message, that was not intended and doesn't anymore. One message equals one completed iteration
+
+## Minor
+- Bump to smqp@2.2
+- Bump dev dependencies
 
 # 0.13.1
 

@@ -3,7 +3,7 @@ import {brokerSafeId} from '../shared';
 import {cloneContent, shiftParent} from '../messageHelper';
 
 export default function SignalEventDefinition(activity, eventDefinition) {
-  const {id, broker, environment, isThrowing, getActivityById} = activity;
+  const {id, broker, environment, isStart, isThrowing, getActivityById} = activity;
   const {type, behaviour = {}} = eventDefinition;
   const {debug} = environment.Logger(type.toLowerCase());
   const reference = behaviour.signalRef || {name: 'anonymous'};
@@ -11,7 +11,7 @@ export default function SignalEventDefinition(activity, eventDefinition) {
   const signalId = referenceElement ? referenceElement.id : 'anonymous';
   const signalQueueName = `signal-${brokerSafeId(id)}-${brokerSafeId(signalId)}-q`;
 
-  if (!isThrowing) setupCatch();
+  if (!isThrowing && isStart) setupCatch();
 
   const source = {
     id,
@@ -30,12 +30,13 @@ export default function SignalEventDefinition(activity, eventDefinition) {
     const parentExecutionId = parent && parent.executionId;
 
     const {message: referenceMessage, description} = resolveMessage(executeMessage);
-    broker.consume(signalQueueName, onCatchSignal, {noAck: true, consumerTag: `_api-signal-${executionId}`});
+    if (isStart) broker.consume(signalQueueName, onCatchSignal, {noAck: true, consumerTag: `_api-signal-${executionId}`});
 
     if (completed) return;
 
     broker.subscribeTmp('api', `activity.#.${parentExecutionId}`, onApiMessage, {noAck: true, consumerTag: `_api-parent-${parentExecutionId}`});
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
+    broker.subscribeTmp('api', '#.signal.*', onCatchSignal, {noAck: true, consumerTag: `_api-delegated-${executionId}`});
 
     debug(`<${executionId} (${id})> expect ${description}`);
 
@@ -50,20 +51,24 @@ export default function SignalEventDefinition(activity, eventDefinition) {
       if (getPropertyValue(message, 'content.message.id') !== referenceMessage.id) return;
       completed = true;
       stop();
-      return complete(message.content.message);
+
+      const {type: messageType, correlationId} = message.properties;
+      broker.publish('event', 'activity.consumed', cloneContent(messageContent, {message: {...message.content.message}}), {correlationId, type: messageType});
+
+      return complete(message.content.message, message.properties);
     }
 
     function onApiMessage(routingKey, message) {
-      const messageType = message.properties.type;
+      const {type: messageType, correlationId} = message.properties;
 
       switch (messageType) {
         case 'signal': {
-          return complete(message.content.message);
+          return complete(message.content.message, {correlationId});
         }
         case 'discard': {
           completed = true;
           stop();
-          return broker.publish('execution', 'execute.discard', {...messageContent});
+          return broker.publish('execution', 'execute.discard', {...messageContent}, {correlationId});
         }
         case 'stop': {
           stop();
@@ -72,18 +77,19 @@ export default function SignalEventDefinition(activity, eventDefinition) {
       }
     }
 
-    function complete(output) {
+    function complete(output, options) {
       completed = true;
       stop();
       debug(`<${executionId} (${id})> signaled with`, description);
-      return broker.publish('execution', 'execute.completed', {...messageContent, output, state: 'signal'});
+      return broker.publish('execution', 'execute.completed', {...messageContent, output, state: 'signal'}, options);
     }
 
     function stop() {
       broker.cancel(`_api-signal-${executionId}`);
       broker.cancel(`_api-parent-${parentExecutionId}`);
       broker.cancel(`_api-${executionId}`);
-      broker.purgeQueue(signalQueueName);
+      broker.cancel(`_api-delegated-${executionId}`);
+      if (isStart) broker.purgeQueue(signalQueueName);
     }
   }
 
