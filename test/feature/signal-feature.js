@@ -684,6 +684,304 @@ Feature('Signals', () => {
       return end;
     });
   });
+
+  Scenario('Signal immediately after resume execution', () => {
+    let context;
+    Given('a process with user task, looped user task, receive task, signal events, and message events', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <signal id="namedSignal" name="NamedSignal" />
+        <message id="namedMessage" name="NamedMessage" />
+        <process id="signalProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="toTask1" sourceRef="start" targetRef="task1" />
+          <userTask id="task1" />
+          <sequenceFlow id="toReceiveAnon" sourceRef="task1" targetRef="receiveAnon" />
+          <receiveTask id="receiveAnon" />
+          <sequenceFlow id="toReceive" sourceRef="receiveAnon" targetRef="receive" />
+          <receiveTask id="receive" messageRef="namedMessage" />
+          <sequenceFlow id="toAnonSignal" sourceRef="receive" targetRef="anonSignalEvent" />
+          <intermediateCatchEvent id="anonSignalEvent">
+            <signalEventDefinition />
+          </intermediateCatchEvent>
+          <sequenceFlow id="toSecondAnonSignal" sourceRef="anonSignalEvent" targetRef="secondAnonSignalEvent" />
+          <intermediateCatchEvent id="secondAnonSignalEvent">
+            <signalEventDefinition />
+          </intermediateCatchEvent>
+          <sequenceFlow id="toNamedSignalEvent" sourceRef="secondAnonSignalEvent" targetRef="namedSignalEvent" />
+          <intermediateCatchEvent id="namedSignalEvent">
+            <signalEventDefinition signalRef="namedSignal" />
+          </intermediateCatchEvent>
+          <sequenceFlow id="toAnonMessageEvent" sourceRef="namedSignalEvent" targetRef="anonMessageEvent" />
+          <intermediateCatchEvent id="anonMessageEvent">
+            <messageEventDefinition />
+          </intermediateCatchEvent>
+          <sequenceFlow id="toNamedMessageEvent" sourceRef="anonMessageEvent" targetRef="namedMessageEvent" />
+          <intermediateCatchEvent id="namedMessageEvent">
+            <messageEventDefinition id="messageDef" messageRef="namedMessage" />
+          </intermediateCatchEvent>
+          <sequenceFlow id="toEnd" sourceRef="namedMessageEvent" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    let end, state, definition;
+    const output = {};
+    When('definition is ran', () => {
+      definition = Definition(context);
+      definition.run();
+
+      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
+        output[msg.content.id] = msg.content.output;
+      }, {noAck: true});
+    });
+
+    let activity;
+    Then('execution stops at first user task', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'task1');
+    });
+
+    Given('execution state is saved', () => {
+      state = definition.getState();
+    });
+
+    When('definition is resumed and immediately signaled', () => {
+      definition = Definition(context.clone());
+      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
+        output[msg.content.id] = msg.content.output;
+      }, {noAck: true});
+      definition.recover(state);
+      definition.resume();
+      definition.signal({id: activity.id, input: 1});
+    });
+
+    Then('activity output is set signal message', () => {
+      expect(output).to.have.property('task1').with.property('input', 1);
+    });
+
+    And('next activity is running', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'receiveAnon');
+    });
+
+    Given('execution state is saved', () => {
+      state = definition.getState();
+    });
+
+    When('definition is resumed and immediately signaled', () => {
+      definition = Definition(context.clone());
+      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
+        output[msg.content.id] = msg.content.output;
+      }, {noAck: true});
+      definition.recover(state);
+      definition.resume();
+      definition.signal({
+        id: activity.content.message ? activity.content.message.id : undefined,
+        input: 1,
+      });
+    });
+
+    Then('activity output is set signal message', () => {
+      expect(output).to.have.property('receiveAnon').with.property('input', 1);
+    });
+
+    And('next activity is running', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'receive');
+    });
+
+    Given('execution state is saved', () => {
+      state = definition.getState();
+    });
+
+    When('definition is resumed and immediately signaled', () => {
+      definition = Definition(context.clone());
+      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
+        output[msg.content.id] = msg.content.output;
+      }, {noAck: true});
+      definition.recover(state);
+      definition.resume();
+
+      definition.signal({
+        id: activity.content.message ? activity.content.message.id : undefined,
+        input: 1,
+      });
+    });
+
+    Then('activity output is set to signal message', () => {
+      expect(output).to.have.property('receive').with.property('input', 1);
+    });
+
+    And('next activity is running', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'anonSignalEvent');
+    });
+
+    Given('execution state is saved', () => {
+      state = definition.getState();
+    });
+
+    When('definition is resumed and immediately signaled', () => {
+      definition = Definition(context.clone());
+      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
+        output[msg.content.id] = msg.content.output;
+      }, {noAck: true});
+      definition.recover(state);
+      definition.resume();
+
+      definition.signal({
+        id: activity.content.message ? activity.content.message.id : undefined,
+        input: 1,
+      });
+    });
+
+    Then('activity output is set to signal message', () => {
+      expect(output).to.have.property('anonSignalEvent').with.property('input', 1);
+    });
+
+    And('next activity is running', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'secondAnonSignalEvent');
+    });
+
+    Given('execution state is saved', () => {
+      state = definition.getState();
+    });
+
+    When('definition is resumed and immediately signaled', () => {
+      definition = Definition(context.clone());
+      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
+        output[msg.content.id] = msg.content.output;
+      }, {noAck: true});
+      definition.recover(state);
+      definition.resume();
+
+      definition.signal({
+        id: activity.content.message ? activity.content.message.id : undefined,
+        input: 1,
+      });
+    });
+
+    Then('activity output is set to signal message', () => {
+      expect(output).to.have.property('secondAnonSignalEvent').with.property('input', 1);
+    });
+
+    And('next activity is running', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'namedSignalEvent');
+    });
+
+    Given('execution state is saved', () => {
+      state = definition.getState();
+    });
+
+    When('definition is resumed and immediately signaled', () => {
+      definition = Definition(context.clone());
+      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
+        output[msg.content.id] = msg.content.output;
+      }, {noAck: true});
+      definition.recover(state);
+      definition.resume();
+
+      definition.signal({
+        id: activity.content.message ? activity.content.message.id : undefined,
+        input: 1,
+      });
+    });
+
+    Then('activity output is set to signal message', () => {
+      expect(output).to.have.property('secondAnonSignalEvent').with.property('input', 1);
+    });
+
+    And('next activity is running', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'namedSignalEvent');
+    });
+
+    Given('execution state is saved', () => {
+      state = definition.getState();
+    });
+
+    When('definition is resumed and immediately signaled', () => {
+      definition = Definition(context.clone());
+      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
+        output[msg.content.id] = msg.content.output;
+      }, {noAck: true});
+      definition.recover(state);
+      definition.resume();
+
+      definition.signal({
+        id: activity.content.signal ? activity.content.signal.id : undefined,
+        input: 1,
+      });
+    });
+
+    Then('activity output is set to signal message', () => {
+      expect(output).to.have.property('namedSignalEvent').with.property('input', 1);
+    });
+
+    And('next activity is running', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'anonMessageEvent');
+    });
+
+    Given('execution state is saved', () => {
+      state = definition.getState();
+    });
+
+    When('definition is resumed and immediately signaled', () => {
+      definition = Definition(context.clone());
+      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
+        output[msg.content.id] = msg.content.output;
+      }, {noAck: true});
+      definition.recover(state);
+      definition.resume();
+
+      definition.signal({
+        id: activity.content.message ? activity.content.message.id : undefined,
+        input: 1,
+      });
+    });
+
+    Then('activity output is set to signal message', () => {
+      expect(output).to.have.property('namedSignalEvent').with.property('input', 1);
+    });
+
+    And('next activity is running', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'namedMessageEvent');
+    });
+
+    Given('execution state is saved', () => {
+      state = definition.getState();
+    });
+
+    When('definition is resumed and immediately signaled', () => {
+      definition = Definition(context.clone());
+      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
+        output[msg.content.id] = msg.content.output;
+      }, {noAck: true});
+      definition.recover(state);
+      definition.resume();
+
+      definition.signal({
+        id: activity.content.message ? activity.content.message.id : undefined,
+        input: 1,
+      });
+    });
+
+    Then('activity output is set to signal message', () => {
+      expect(output).to.have.property('namedMessageEvent').with.property('input', 1);
+    });
+
+    And('execution completes', () => {
+      return end;
+    });
+  });
 });
 
 async function prepareSource() {

@@ -265,7 +265,7 @@ describe('TimerEventDefinition', () => {
 
         broker.subscribeOnce('event', 'activity.timeout', (_, msg) => {
           expect(timerMsg.content).to.have.property('state', 'timer');
-          expect(msg.content.runningTime).to.be.at.least(100).and.below(200);
+          expect(msg.content.runningTime).to.be.at.least(99).and.below(200);
           done();
         });
 

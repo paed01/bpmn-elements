@@ -38,15 +38,25 @@ Arguments:
 
 Get activity by id
 
+### `shake([activityId])`
+
+Shake out the sequences in processes starting with start events, or by declaring an activity.
+
+Arguments:
+- `activityId`: optional activity id to shake out sequences from
+
+Returns:
+Object with activity id(s) as property and sequences. The sequence property is an array since there can be looped sequences.
+
 ### `signal(message)`
 
 Delegate a signal message to all interested parties, usually MessageEventDefinition, SignalEventDefinition, SignalTask (user, manual), and ReceiveTask.
 
 Arguments:
-  - `message`: optional object
-    - `id`: optional task/element id to signal, also matched with Message and Signal id. If not passed only anonymous Signal- and MessageEventDefinitions will pick up the signal.
-    - `executionId`: optional execution id to signal, specially for looped tasks, also works for signal tasks that are not looped
-    - `[name]*`: any other properties will be forwarded as message to activity
+- `message`: optional object
+  - `id`: optional task/element id to signal, also matched with Message and Signal id. If not passed only anonymous Signal- and MessageEventDefinitions will pick up the signal.
+  - `executionId`: optional execution id to signal, specially for looped tasks, also works for signal tasks that are not looped
+  - `[name]*`: any other properties will be forwarded as message to activity
 
 ### `getPostponed()`
 

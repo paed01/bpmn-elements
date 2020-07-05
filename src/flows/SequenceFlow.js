@@ -148,6 +148,8 @@ export default function SequenceFlow(flowDef, {environment}) {
     content.sequence = content.sequence || [];
     content.sequence.push({id, type, isSequenceFlow: true, targetId});
 
+    if (content.id === targetId) return broker.publish('event', 'flow.shake.loop', content, {persistent: false, type: 'shake'});
+
     for (const s of message.content.sequence) {
       if (s.id === id) return broker.publish('event', 'flow.shake.loop', content, {persistent: false, type: 'shake'});
     }

@@ -1,6 +1,15 @@
 Changelog
 =========
 
+# 1.1.0
+
+## Additions
+- Add shake functionality to [definition](/docs/Definition.md) to facilitate getting the run sequences of an activity or processes by calling `definition.shake([activityId])`
+
+## Patch
+- Bump to smqp@3
+- Patch copyright year
+
 # 1.0.0
 
 Make it easier and possible to signal activities from [definition](/docs/Definition.md) by calling `definition.signal(message)`.

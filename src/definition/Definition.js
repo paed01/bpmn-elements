@@ -65,6 +65,7 @@ export function Definition(context, options) {
     sendMessage,
     recover,
     resume,
+    shake,
     signal,
     stop,
   };
@@ -156,6 +157,44 @@ export function Definition(context, options) {
     broker.recover(state.broker);
 
     return definitionApi;
+  }
+
+  function shake(startId) {
+    let result = {};
+
+    let bps;
+    if (startId) {
+      const startActivity = getActivityById(startId);
+      if (!startActivity) return;
+      const bp = getProcessById(startActivity.parent.id);
+      if (!bp) return;
+      bps = [bp];
+    } else bps = getProcesses();
+
+    bps.forEach(shakeProcess);
+
+    return result;
+
+    function shakeProcess(shakeBp) {
+      let shovel;
+      if (!shakeBp.isRunning) {
+        shovel = shakeBp.broker.createShovel('shaker', {
+          exchange: 'event',
+          pattern: '*.shake*',
+        }, {
+          broker,
+          exchange: 'event',
+        });
+      }
+
+      const shakeResult = shakeBp.shake(startId);
+      if (shovel) shakeBp.broker.closeShovel('shaker');
+
+      result = {
+        ...result,
+        ...shakeResult,
+      };
+    }
   }
 
   function activateRunConsumers() {

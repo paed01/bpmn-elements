@@ -1,3 +1,4 @@
+import Definition from '../../src/definition/Definition';
 import factory from '../helpers/factory';
 import testHelpers from '../helpers/testHelpers';
 
@@ -41,6 +42,100 @@ Feature('EventBasedGateway', () => {
     And('process completes run', async () => {
       return end;
     });
+  });
+
+  Scenario('recovered gateway with intermediate timer and message event', () => {
+    let definition, context;
+    Given('a definition with user task, gateway, timeout and intermediate catch message event', async () => {
+      const source = `
+      <definitions id="EventBasedGateway" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <message id="Message_1" name="Continue Message" />
+        <process id="Process_0" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-userTask" sourceRef="start" targetRef="userTask" />
+          <userTask id="userTask" />
+          <sequenceFlow id="to-gateway" sourceRef="userTask" targetRef="gateway" />
+          <eventBasedGateway id="gateway" />
+          <sequenceFlow id="to-messageEvent" sourceRef="gateway" targetRef="messageEvent" />
+          <sequenceFlow id="to-timerEvent" sourceRef="gateway" targetRef="timerEvent" />
+          <intermediateCatchEvent id="messageEvent">
+            <messageEventDefinition messageRef="Message_1" />
+          </intermediateCatchEvent>
+          <intermediateCatchEvent id="timerEvent">
+            <timerEventDefinition>
+              <timeDuration xsi:type="tFormalExpression">PT1M</timeDuration>
+            </timerEventDefinition>
+          </intermediateCatchEvent>
+          <sequenceFlow id="to-task1" sourceRef="messageEvent" targetRef="task1" />
+          <task id="task1" />
+          <sequenceFlow id="to-end" sourceRef="task1" targetRef="end" />
+          <sequenceFlow id="to-timedout" sourceRef="timerEvent" targetRef="timedout" />
+          <endEvent id="end" />
+          <endEvent id="timedout">
+            <bpmn:errorEventDefinition id="ErrorEventDefinition_1ugekgz" />
+          </endEvent>
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    let wait, timer, state;
+    When('definition is ran with state saving at wait and timer', () => {
+      definition.on('activity.wait', () => {
+        state = definition.getState();
+      });
+      definition.on('activity.timer', () => {
+        state = definition.getState();
+      });
+
+      wait = definition.waitFor('activity.wait');
+      timer = definition.waitFor('activity.timer');
+
+      definition.run();
+    });
+
+    And('user task is signaled', () => {
+      definition.signal({
+        id: 'userTask'
+      });
+    });
+
+    // let timerApi;
+    Then('message event is waiting and timer is started', async () => {
+      await timer;
+      await wait;
+    });
+
+    // let signalApi;
+    // And('signal event is waiting for signal', async () => {
+    //   signalApi = await wait;
+    // });
+
+    // let state;
+    Given('state is saved', (done) => {
+      process.nextTick(done);
+    });
+
+    let end;
+    When('definition is resumed and signaled', async () => {
+      definition.stop();
+      definition = Definition(context.clone());
+      end = definition.waitFor('end');
+      definition.recover(state);
+      definition.resume();
+
+      definition.signal({id: 'Message_1'});
+    });
+
+    Then('definition completes run', async () => {
+      return end;
+    });
+
+    // And('timer was discarded', async () => {
+    //   expect(timerApi.owner.counters).to.have.property('discarded', 1);
+    // });
   });
 
   Scenario('Resuming EventBasedGateway with attached intermediate timer and signal event', () => {

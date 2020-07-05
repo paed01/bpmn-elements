@@ -63,6 +63,7 @@ export function Process(processDef, context) {
     resume,
     run,
     sendMessage,
+    shake,
     signal,
     stop,
   };
@@ -140,6 +141,11 @@ export function Process(processDef, context) {
     broker.recover(state.broker);
 
     return processApi;
+  }
+
+  function shake(startId) {
+    if (processApi.isRunning) return execution.shake(startId);
+    return ProcessExecution(processApi, context).shake(startId);
   }
 
   function activateRunConsumers() {

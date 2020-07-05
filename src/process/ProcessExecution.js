@@ -57,6 +57,7 @@ export default function ProcessExecution(parentActivity, context) {
     getSequenceFlows,
     getState,
     recover,
+    shake,
     stop,
   };
 
@@ -68,7 +69,7 @@ export default function ProcessExecution(parentActivity, context) {
 
     const isRedelivered = executeMessage.fields.redelivered;
     executionId = executeMessage.content.executionId;
-    executionName = `${executionId} (${id})`;
+    prepare();
 
     stateMessage = cloneMessage(executeMessage);
     stateMessage.content = {...stateMessage.content, executionId, state: 'start'};
@@ -89,7 +90,7 @@ export default function ProcessExecution(parentActivity, context) {
   }
 
   function resume() {
-    logger.debug(`<${executionName}> resume`, status, 'process execution');
+    logger.debug(`<${executionName}> resume process execution at`, status);
 
     if (completed) return complete('completed');
 
@@ -142,12 +143,13 @@ export default function ProcessExecution(parentActivity, context) {
   function recover(state) {
     if (!state) return processExecution;
     executionId = state.executionId;
+    prepare();
 
     stopped = state.stopped;
     completed = state.completed;
     status = state.status;
 
-    logger.debug(`<${executionName}> recover`, status, 'process execution');
+    logger.debug(`<${executionName}> recover process execution at`, status);
 
     if (state.messageFlows) {
       state.messageFlows.forEach((flowState) => {
@@ -183,6 +185,37 @@ export default function ProcessExecution(parentActivity, context) {
     }
 
     return processExecution;
+  }
+
+  function shake(startId) {
+    let executing = true;
+    if (!processExecution.isRunning) {
+      executing = false;
+      executionId = getUniqueId(id);
+      prepare();
+      activate();
+    }
+    const toShake = startId ? [getActivityById(startId)].filter(Boolean) : startActivities;
+
+    const result = {};
+    broker.subscribeTmp('event', '*.shake.*', (routingKey, {content}) => {
+      let isLooped = false;
+      switch (routingKey) {
+        case 'flow.shake.loop':
+          isLooped = true;
+        case 'activity.shake.end':
+          result[content.id] = result[content.id] || [];
+          result[content.id].push({...content, isLooped});
+          break;
+      }
+    }, {noAck: true, consumerTag: `_shaker-${executionId}`});
+
+    toShake.forEach((a) => a.shake());
+
+    if (!executing) deactivate();
+    broker.cancel(`_shaker-${executionId}`);
+
+    return result;
   }
 
   function stop() {
@@ -646,5 +679,9 @@ export default function ProcessExecution(parentActivity, context) {
     const routingKey = message.fields.routingKey;
     if (routingKey !== 'activity.shake.end') return;
     startSequences[message.content.id] = cloneMessage(message);
+  }
+
+  function prepare() {
+    executionName = `${executionId} (${id})`;
   }
 }
