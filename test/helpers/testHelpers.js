@@ -19,12 +19,12 @@ export default {
 async function context(source, ...args) {
   const logger = Logger('test-helpers:context');
 
-  const [options, callback] = getOptionsAndCallback(...args);
+  const [options = {}, callback] = getOptionsAndCallback(...args);
   logger.debug('moddle context load');
   const moddleCtx = await moddleContext(source, options);
   logger.debug('moddle context complete');
 
-  const serializer = Serializer(moddleCtx, typeResolver);
+  const serializer = Serializer(moddleCtx, typeResolver, options.extendFn);
 
   const extensions = options && options.extensions && Object.keys(options.extensions).reduce((result, name) => {
     const extension = options.extensions[name].extension;

@@ -1,7 +1,7 @@
 import nock from 'nock';
 import testHelpers from '../helpers/testHelpers';
 import js from '../resources/extensions/JsExtension';
-import request from 'request';
+import request from 'got';
 import { ActivityError } from '../../src/error/Errors';
 
 const extensions = {
@@ -152,13 +152,10 @@ describe('ScriptTask', () => {
           <script>
             <![CDATA[
               const request = environment.getServiceByName('request');
-
-              const self = this;
-
-              request.get('http://example.com/test', (err, resp, body) => {
-                if (err) return next(err);
-                next(null, JSON.parse(body));
-              })
+              request('http://example.com/test')
+                .json()
+                .then((body) => next(null, body))
+                .catch(next);
             ]]>
           </script>
         </scriptTask>
@@ -172,6 +169,8 @@ describe('ScriptTask', () => {
         .get('/test')
         .reply(200, {
           data: 2,
+        }, {
+          'content-type': 'application/json',
         });
 
       const context = await testHelpers.context(source);
@@ -199,14 +198,12 @@ describe('ScriptTask', () => {
           <script>
             <![CDATA[
               const require = environment.getServiceByName('require');
-              const request = require('request');
+              const request = require('got');
 
-              const self = this;
-
-              request.get('http://example.com/test', (err, resp, body) => {
-                if (err) return next(err);
-                next(null, JSON.parse(body));
-              })
+              request('http://example.com/test')
+                .json()
+                .then((body) => next(null, body))
+                .catch(next);
             ]]>
           </script>
         </scriptTask>

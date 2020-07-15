@@ -1,6 +1,6 @@
 import JsExtension from '../resources/extensions/JsExtension';
 import nock from 'nock';
-import request from 'request';
+import got from 'got';
 import ServiceTask from '../../src/tasks/ServiceTask';
 import testHelpers from '../helpers/testHelpers';
 import { ActivityError } from '../../src/error/Errors';
@@ -619,12 +619,18 @@ async function getLoopContext(isSequential) {
 
   context.environment.variables.paths = ['/pal', '/franz', '/immanuel'];
   context.environment.addService('get', () => {
-    return function getService(scope, next) {
+    return async function getService(scope, next) {
       const {item, index} = scope.content;
       const callUrl = `http://example.com/api${item}?version=${index}`;
-      request.get({url: callUrl, json: true}, (getErr, resp, body) => {
-        next(getErr, resp && {statusCode: resp.statusCode, body});
-      });
+
+      try {
+        const call = got(callUrl, {throwHttpErrors: false});
+        const resp = await call;
+        const body = await call.json();
+        return next(null, {statusCode: resp.statusCode, body});
+      } catch (err) {
+        return next(err);
+      }
     };
   });
 
