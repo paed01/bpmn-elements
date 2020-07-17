@@ -711,7 +711,7 @@ Feature('Process', () => {
     <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <process id="theProcess" isExecutable="true">
         <startEvent id="start" />
-        <sequenceFlow id="flow1" sourceRef="start" targetRef="decision" />
+        <sequenceFlow id="flow1" sourceRef="start" targetRef="fork" />
         <parallelGateway id="fork" />
         <sequenceFlow id="flow2" sourceRef="fork" targetRef="timer" />
         <sequenceFlow id="flow3" sourceRef="fork" targetRef="end1" />
@@ -760,7 +760,6 @@ Feature('Process', () => {
       assertMessage('process.enter', 'theProcess');
       assertMessage('process.start', 'theProcess');
       assertMessage('activity.init', 'start');
-      assertMessage('activity.init', 'fork');
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');

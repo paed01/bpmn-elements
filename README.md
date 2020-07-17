@@ -3,10 +3,11 @@ bpmn-elements
 
 [![Build Status](https://travis-ci.org/paed01/bpmn-elements.svg?branch=master)](https://travis-ci.org/paed01/bpmn-elements)
 
-Isomorphic JavaScript BPMN workflow elements suitable for bundling into frontend script or just required into your nodejs project.
+Isomorphic JavaScript BPMN 2.0 workflow elements suitable for bundling into frontend script or just required into your nodejs project.
 
 - [Examples](/docs/Examples.md)
-- [Extending behaviour](/docs/Extend.md)
+- [Handle extensions](/docs/Extension.md)
+- [Write your own behaviour](/docs/Extend.md)
 
 # Supported elements
 
@@ -41,6 +42,7 @@ The following elements are tested and supported.
   - throw
   - catch
 - MessageFlow
+- [MultiInstanceLoopCharacteristics](/docs/MultiInstanceLoopCharacteristics.md)
 - [ParallelGateway](/docs/ParallelGateway.md)
 - ReceiveTask
 - ScriptTask
@@ -63,6 +65,5 @@ The following elements are tested and supported.
 - TerminateEventDefinition
 - TimerEventDefinition
   - duration only
-- [MultiInstanceLoopCharacteristics](/docs/MultiInstanceLoopCharacteristics.md)
 
 All activities share the same [base](/docs/Activity.md) and and [api](/docs/SharedApi.md).

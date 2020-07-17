@@ -1,5 +1,4 @@
 import Definition from '../../src/definition/Definition';
-import JsExtension from '../resources/extensions/JsExtension';
 import testHelpers from '../helpers/testHelpers';
 
 Feature('Messaging', () => {
@@ -177,7 +176,7 @@ Feature('Messaging', () => {
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="mainProcess" isExecutable="true">
           <startEvent id="start1" />
-          <sequenceFlow id="toTask" sourceRef="start" targetRef="task" />
+          <sequenceFlow id="toTask" sourceRef="start1" targetRef="send" />
           <intermediateThrowEvent id="send">
             <messageEventDefinition messageRef="Message1" />
           </intermediateThrowEvent>
@@ -235,8 +234,10 @@ Feature('Messaging', () => {
         </collaboration>
         <process id="mainProcess" isExecutable="true">
           <startEvent id="start1" />
-          <sequenceFlow id="toTask" sourceRef="start" targetRef="task" />
-          <task id="send" js:messageRef="Message1" />
+          <sequenceFlow id="toTask" sourceRef="start1" targetRef="send" />
+          <endEvent id="send">
+            <messageEventDefinition messageRef="Message1" />
+          </endEvent>
         </process>
         <process id="participantProcess">
           <startEvent id="start2">
@@ -248,11 +249,7 @@ Feature('Messaging', () => {
         <message id="Message1" name="Start message" />
       </definitions>`;
 
-      const context = await testHelpers.context(source, {
-        extensions: {
-          js: JsExtension
-        }
-      });
+      const context = await testHelpers.context(source);
       definition = Definition(context);
     });
 
@@ -288,8 +285,7 @@ Feature('Messaging', () => {
     let definition;
     Given('a task with formatted end message and message flow to participant process, and a start event waiting for that message', async () => {
       const source = `
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <collaboration id="Collaboration_0">
           <messageFlow id="fromMainToParticipant" sourceRef="send" targetRef="lane2" />
           <participant id="lane2" name="Participant" processRef="participantProcess" />
@@ -297,7 +293,9 @@ Feature('Messaging', () => {
         <process id="mainProcess" isExecutable="true">
           <startEvent id="start1" />
           <sequenceFlow id="toTask" sourceRef="start1" targetRef="send" />
-          <task id="send" js:messageRef="Message1" />
+          <endEvent id="send">
+            <messageEventDefinition messageRef="Message1" />
+          </endEvent>
         </process>
         <process id="participantProcess">
           <startEvent id="start2">
@@ -309,11 +307,7 @@ Feature('Messaging', () => {
         <message id="Message1" name="Start message" />
       </definitions>`;
 
-      const context = await testHelpers.context(source, {
-        extensions: {
-          js: JsExtension
-        }
-      });
+      const context = await testHelpers.context(source);
       definition = Definition(context);
     });
 
@@ -349,8 +343,7 @@ Feature('Messaging', () => {
     let definition;
     Given('a task with formatted end message and message flow to participant process, and a start event waiting for that message', async () => {
       const source = `
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <collaboration id="Collaboration_0">
           <messageFlow id="fromMain2Participant" sourceRef="send" targetRef="lane2" />
           <messageFlow id="fromParticipant2Main" sourceRef="lane2" targetRef="receive" />
@@ -373,11 +366,7 @@ Feature('Messaging', () => {
         <message id="Message2" name="Second message" />
       </definitions>`;
 
-      const context = await testHelpers.context(source, {
-        extensions: {
-          js: JsExtension
-        }
-      });
+      const context = await testHelpers.context(source);
       definition = Definition(context);
     });
 

@@ -1,5 +1,6 @@
 import Definition from '../../src/definition/Definition';
 import factory from '../helpers/factory';
+import JsExtension from '../resources/extensions/JsExtension';
 import testHelpers from '../helpers/testHelpers';
 
 const signalsSource = factory.resource('signals.bpmn');
@@ -329,13 +330,15 @@ Feature('Signals', () => {
 
   Scenario('Signal elements from definition', () => {
     let definition;
-    Given('a process with user task, looped user task, receive task, signal events, and message events', async () => {
+    Given('a process with form start event, user task, looped user task, receive task, signal events, and message events', async () => {
       const source = `
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
         <signal id="namedSignal" name="NamedSignal" />
         <message id="namedMessage" name="NamedMessage" />
         <process id="signalProcess" isExecutable="true">
-          <startEvent id="start" />
+          <startEvent id="start" js:formKey="start-form" />
           <sequenceFlow id="toTask1" sourceRef="start" targetRef="task1" />
           <userTask id="task1" />
           <sequenceFlow id="toLoopTask" sourceRef="task1" targetRef="loopTask" />
@@ -379,7 +382,11 @@ Feature('Signals', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, {
+        extensions: {
+          js: JsExtension,
+        }
+      });
       definition = Definition(context);
     });
 
@@ -395,6 +402,17 @@ Feature('Signals', () => {
     });
 
     let activity;
+    Then('execution stops at form start event', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'start');
+    });
+
+    When('definition signals form start event', () => {
+      definition.signal({
+        id: 'start'
+      });
+    });
+
     Then('execution stops at first user task', () => {
       [activity] = definition.getPostponed();
       expect(activity).to.have.property('id', 'task1');
@@ -687,7 +705,7 @@ Feature('Signals', () => {
 
   Scenario('Signal immediately after resume execution', () => {
     let context;
-    Given('a process with user task, looped user task, receive task, signal events, and message events', async () => {
+    Given('a process with start event with form, user task, looped user task, receive task, signal events, and message events', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <signal id="namedSignal" name="NamedSignal" />

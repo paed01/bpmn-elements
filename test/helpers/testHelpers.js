@@ -24,6 +24,13 @@ async function context(source, ...args) {
   const moddleCtx = await moddleContext(source, options);
   logger.debug('moddle context complete');
 
+  if (moddleCtx.warnings) {
+    moddleCtx.warnings.forEach(({error, message, element, property}) => {
+      if (error) return logger.error(message);
+      logger.error(`<${element.id}> ${property}:`, message);
+    });
+  }
+
   const serializer = Serializer(moddleCtx, typeResolver, options.extendFn);
 
   const extensions = options && options.extensions && Object.keys(options.extensions).reduce((result, name) => {

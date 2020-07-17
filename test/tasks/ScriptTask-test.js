@@ -51,7 +51,7 @@ describe('ScriptTask', () => {
               ]]>
             </script>
           </scriptTask>
-          <endEvent id="end" />scriptTask
+          <endEvent id="end" />
           <sequenceFlow id="flow1" sourceRef="start" targetRef="scriptTask" />
           <sequenceFlow id="flow2" sourceRef="scriptTask" targetRef="end" />
         </process>

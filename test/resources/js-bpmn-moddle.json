@@ -6,7 +6,7 @@
     "tagAlias": "lowerCase"
   },
   "types": [{
-    "name": "Process",
+    "name": "ProcessProperties",
     "isAbstract": true,
     "extends": [
       "bpmn:Process"
@@ -21,7 +21,7 @@
       "type": "String"
     }]
   }, {
-    "name": "Task",
+    "name": "TaskResult",
     "isAbstract": true,
     "extends": [
       "bpmn:Task"
@@ -30,11 +30,6 @@
       "name": "result",
       "isAttr": true,
       "type": "String"
-    }, {
-      "name": "messageRef",
-      "type": "Message",
-      "isAttr": true,
-      "isReference": true
     }]
   }, {
     "name": "Output",
@@ -61,8 +56,8 @@
     ],
     "properties": [{
       "name": "formKey",
-      "isAttr": true,
-      "type": "String"
+      "type": "String",
+      "isAttr": true
     }]
   }]
 }

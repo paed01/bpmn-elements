@@ -205,8 +205,8 @@ describe('InputOutputSpecification', () => {
         <dataObject id="infoData" />
         <userTask id="userTask">
           <ioSpecification id="inputSpec">
-            <dataInput id="userInput" name="input" value="lkJH">user info</dataInput>
-            <dataInput id="userInfo" name="info" value="lkJH">user info</dataInput>
+            <dataInput id="userInput" name="input">user info</dataInput>
+            <dataInput id="userInfo" name="info">user info</dataInput>
             <dataOutput id="userOutput" name="input" />
           </ioSpecification>
           <dataInputAssociation id="dia_1" sourceRef="dor_1" targetRef="userInput" />

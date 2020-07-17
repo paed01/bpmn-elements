@@ -9,7 +9,6 @@ export default {
 function Js(activity, context) {
   const resultVariable = ResultVariableIo(activity, context);
   const formKey = FormKey(activity, context);
-  const messageRef = MessageRef(activity, context);
 
   return {
     type: 'js:extension',
@@ -17,12 +16,10 @@ function Js(activity, context) {
     activate(msg) {
       if (resultVariable) resultVariable.activate(msg);
       if (formKey) formKey.activate(msg);
-      if (messageRef) messageRef.activate(msg);
     },
     deactivate() {
       if (resultVariable) resultVariable.deactivate();
       if (formKey) formKey.deactivate();
-      if (messageRef) messageRef.deactivate();
     },
   };
 }
@@ -55,7 +52,7 @@ function ResultVariableIo(activity, context) {
 
   function onActivityEnd(_, message) {
     const resultName = environment.resolveExpression(result, message.content);
-    logger.debug(`<${id}>`, 'js:extension save to', `"${resultName}"`);
+    logger.debug(`<${id}> js:extension save to "${resultName}"`);
 
     environment.output[resultName] = message.content.output;
   }
@@ -99,41 +96,4 @@ function FormKey(activity, context) {
       },
     });
   }
-}
-
-function MessageRef(activity, context) {
-  const {id, logger, behaviour} = activity;
-  const {messageRef} = behaviour;
-  if (!messageRef || !messageRef.id) return;
-
-  const {broker} = activity;
-
-  const type = 'js:messageRef';
-  const safeType = brokerSafeId(type).toLowerCase();
-
-  return {
-    type,
-    activate,
-    deactivate,
-  };
-
-  function deactivate() {
-    broker.cancel('_task-message-ref');
-  }
-
-  function activate() {
-    broker.subscribeTmp('event', 'activity.execution.completed', onActivityExecutionCompleted, {noAck: true, consumerTag: '_task-message-ref', priority: 400});
-  }
-
-  function onActivityExecutionCompleted(_, completeMessage) {
-    const messageElement = context.getActivityById(messageRef.id);
-    logger.debug(`<${id}> send message <${messageRef.id}>`);
-
-    const message = messageElement ? messageElement.resolve(completeMessage) : {...messageRef};
-
-    broker.publish('format', `run.${safeType}.message`, {
-      message,
-    });
-  }
-
 }

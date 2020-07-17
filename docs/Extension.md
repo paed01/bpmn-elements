@@ -1,7 +1,7 @@
 Extension
 =========
 
-Extend activity behaviour.
+The element behaviours in this project only support elements and attributed defined in the BPMN 2.0 scheme, but can be extended to understand other schemas.
 
 ## `extension(activity, context)`
 
@@ -26,7 +26,7 @@ function saveAllOutputToEnvironmentExtension(activity, {environment}) {
 }
 ```
 
-## Formatting
+## Extension with formatting
 
 In some cases it may be required to add some extra data when an activity executes.
 
