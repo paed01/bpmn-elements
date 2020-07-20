@@ -513,7 +513,7 @@ Feature('Process', () => {
         <sequenceFlow id="flow1" sourceRef="start" targetRef="decision" />
         <exclusiveGateway id="decision" default="flow3" />
         <sequenceFlow id="flow2" sourceRef="decision" targetRef="join">
-          <conditionExpression xsi:type="tFormalExpression">\${variables.condition1}</conditionExpression>
+          <conditionExpression xsi:type="tFormalExpression">\${environment.variables.condition1}</conditionExpression>
         </sequenceFlow>
         <sequenceFlow id="flow3" sourceRef="decision" targetRef="join" />
         <parallelGateway id="join" />
@@ -593,7 +593,7 @@ Feature('Process', () => {
         <sequenceFlow id="flow3" sourceRef="activity2" targetRef="decision" />
         <exclusiveGateway id="decision" default="flow4" />
         <sequenceFlow id="flow4" sourceRef="decision" targetRef="activity1">
-          <conditionExpression xsi:type="tFormalExpression">\${variables.condition1}</conditionExpression>
+          <conditionExpression xsi:type="tFormalExpression">\${environment.variables.condition1}</conditionExpression>
         </sequenceFlow>
         <sequenceFlow id="flow5" sourceRef="decision" targetRef="end" />
         <endEvent id="end" />

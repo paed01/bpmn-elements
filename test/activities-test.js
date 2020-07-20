@@ -1355,7 +1355,7 @@ async function SingleFlowDefinition(activityType) {
   if (decisionGateways.includes(activityType)) {
     activity.set('default', flow2);
     const conditionExpression = moddle.create('bpmn:FormalExpression', {
-      body: '${variables.take}',
+      body: '${environment.variables.take}',
     });
     flow3.set('conditionExpression', conditionExpression);
   }
@@ -1400,14 +1400,14 @@ async function MultipleFlowDefinition(activityType) {
 
   decision.set('default', flow2);
   const decisionExpression = moddle.create('bpmn:FormalExpression', {
-    body: '${variables.take}',
+    body: '${environment.variables.take}',
   });
   flow3.set('conditionExpression', decisionExpression);
 
   if (decisionGateways.includes(activityType)) {
     activity.set('default', flow4);
     const conditionExpression = moddle.create('bpmn:FormalExpression', {
-      body: '${variables.take}',
+      body: '${environment.variables.take}',
     });
     flow5.set('conditionExpression', conditionExpression);
   }

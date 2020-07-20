@@ -58,6 +58,16 @@ Arguments:
   - `executionId`: optional execution id to signal, specially for looped tasks, also works for signal tasks that are not looped
   - `[name]*`: any other properties will be forwarded as message to activity
 
+### `cancelActivity(message)`
+
+Delegate a cancel message to all interested parties.
+
+Arguments:
+- `message`: optional object
+  - `id`: optional task/element id to cancel
+  - `executionId`: optional execution id to cancel
+  - `[name]*`: any other properties will be forwarded as message to activity
+
 ### `getPostponed()`
 
 Get list of elements that are in a postponed state.

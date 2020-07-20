@@ -1,6 +1,20 @@
 Changelog
 =========
 
+# 1.3.0
+
+[TimerEventDefinition](/docs/TimerEventDefinition.md) `timeDate` and `timeCycle`.
+
+## Additions
+- Add support for TimerEventDefinition `timeDate`. Will behave like `timeDuration` unless the date is due - timeout
+- TimerEventDefinition `timeCycle` is recognized but no timer is started. The non-action is due to uncertainty regarding cycle format. The event definition is stalled and waits for cancel
+- New [`cancelActivity`](/docs/Definition.md#cancelactivitymessage) function is added to definition
+- TimerEventDefinition now recognises api cancel calls. Which comes in handy if a time cycle is identified and needs to continue
+
+# 1.2.0
+
+- a start event with form that is waiting for input can now also be signaled from definition
+
 # 1.1.0
 
 ## Additions

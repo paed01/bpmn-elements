@@ -7,8 +7,8 @@
     <bpmn:task id="task" name="Task">
       <bpmn:extensionElements>
         <camunda:inputOutput>
-          <camunda:outputParameter name="tookCondition1">${variables.condition1}</camunda:outputParameter>
-          <camunda:outputParameter name="tookCondition2">${variables.condition2}</camunda:outputParameter>
+          <camunda:outputParameter name="tookCondition1">${environment.variables.condition1}</camunda:outputParameter>
+          <camunda:outputParameter name="tookCondition2">${environment.variables.condition2}</camunda:outputParameter>
         </camunda:inputOutput>
       </bpmn:extensionElements>
       <bpmn:incoming>SequenceFlow_0q2oaww</bpmn:incoming>

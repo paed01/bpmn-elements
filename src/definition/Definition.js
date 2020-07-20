@@ -67,6 +67,7 @@ export function Definition(context, options) {
     resume,
     shake,
     signal,
+    cancelActivity,
     stop,
   };
 
@@ -450,6 +451,10 @@ export function Definition(context, options) {
 
   function signal(message) {
     return getApi().signal(message, {delegate: true});
+  }
+
+  function cancelActivity(message) {
+    return getApi().cancel(message, {delegate: true});
   }
 
   function sendMessage(message) {

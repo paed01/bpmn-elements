@@ -285,7 +285,7 @@ describe('StartEvent', () => {
       <process id="theProcess" isExecutable="true">
         <startEvent id="start">
           <timerEventDefinition>
-            <timeDuration xsi:type="tFormalExpression">\${variables.timeout}</timeDuration>
+            <timeDuration xsi:type="tFormalExpression">\${environment.variables.timeout}</timeDuration>
           </timerEventDefinition>
           <messageEventDefinition />
         </startEvent>

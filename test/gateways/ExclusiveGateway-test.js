@@ -238,10 +238,10 @@ describe('ExclusiveGateway', () => {
         <task id="task" />
         <sequenceFlow id="defaultFlow" sourceRef="decision" targetRef="end2" />
         <sequenceFlow id="condFlow1" sourceRef="decision" targetRef="end1">
-          <conditionExpression xsi:type="tFormalExpression">\${variables.condition1}</conditionExpression>
+          <conditionExpression xsi:type="tFormalExpression">\${environment.variables.condition1}</conditionExpression>
         </sequenceFlow>
         <sequenceFlow id="condFlow2" sourceRef="decision" targetRef="task">
-          <conditionExpression xsi:type="tFormalExpression">\${variables.condition2}</conditionExpression>
+          <conditionExpression xsi:type="tFormalExpression">\${environment.variables.condition2}</conditionExpression>
         </sequenceFlow>
         <sequenceFlow id="flow2" sourceRef="task" targetRef="end3" />
         <endEvent id="end1" />

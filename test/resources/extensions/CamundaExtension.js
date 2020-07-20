@@ -22,6 +22,7 @@ function Camunda(activity) {
   function deactivate() {
     broker.cancel('_camunda_form');
     broker.cancel('_camunda_io');
+    broker.cancel('_camunda_due_date');
   }
 
   function camundaExtension() {
@@ -39,6 +40,9 @@ function Camunda(activity) {
     }
     if (activity.behaviour.expression) {
       activity.behaviour.Service = ServiceExpression;
+    }
+    if (activity.behaviour.dueDate) {
+      dueDateFormatting(activity.behaviour.dueDate);
     }
     if (activity.behaviour.resultVariable) {
       activity.on('end', (api) => {
@@ -74,6 +78,18 @@ function Camunda(activity) {
       });
       broker.publish('format', 'run.form', { form });
     }, {noAck: true, consumerTag: '_camunda_form'});
+  }
+
+  function dueDateFormatting(dueDate) {
+    broker.subscribeTmp('event', 'activity.enter', (_, message) => {
+      const dueDateMs = Date.parse(environment.resolveExpression(dueDate, message));
+
+      if (isNaN(dueDateMs)) return;
+
+      broker.publish('format', 'run.duedate', {
+        dueDate: new Date(dueDateMs),
+      });
+    }, {noAck: true, consumerTag: '_camunda_due_date'});
   }
 
   function ioFormatting(ioData) {

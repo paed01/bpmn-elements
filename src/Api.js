@@ -47,14 +47,13 @@ function Api(pfx, broker, sourceMessage, environment) {
     get owner() {
       return owner;
     },
-    cancel() {
-      sendApiMessage('cancel');
+    cancel(message, options) {
+      sendApiMessage('cancel', {message}, options);
     },
     discard() {
       sendApiMessage('discard');
     },
-    signal(message, options = {}) {
-      if (!options.correlationId) options = {...options, correlationId: getUniqueId(`${id || pfx}_signal`)};
+    signal(message, options) {
       sendApiMessage('signal', {message}, options);
     },
     stop() {
@@ -69,6 +68,7 @@ function Api(pfx, broker, sourceMessage, environment) {
   };
 
   function sendApiMessage(action, content, options = {}) {
+    if (!options.correlationId) options = {...options, correlationId: getUniqueId(`${id || pfx}_signal`)};
     let key = `${pfx}.${action}`;
     if (executionId) key += `.${executionId}`;
     broker.publish('api', key, createMessage(content), {...options, type: action});

@@ -8,9 +8,9 @@
     <bpmn:scriptTask id="recurring" name="Recurring" scriptFormat="JavaScript" camunda:resultVariable="">
       <bpmn:incoming>SequenceFlow_00cfpc8</bpmn:incoming>
       <bpmn:outgoing>SequenceFlow_0givraz</bpmn:outgoing>
-      <bpmn:multiInstanceLoopCharacteristics camunda:collection="${variables.list}" camunda:elementVariable="item">
+      <bpmn:multiInstanceLoopCharacteristics camunda:collection="${environment.variables.list}" camunda:elementVariable="item">
         <bpmn:loopCardinality xsi:type="bpmn:tFormalExpression">10</bpmn:loopCardinality>
-        <bpmn:completionCondition xsi:type="bpmn:tFormalExpression">${services.loopCondition}</bpmn:completionCondition>
+        <bpmn:completionCondition xsi:type="bpmn:tFormalExpression">${environment.services.loopCondition}</bpmn:completionCondition>
       </bpmn:multiInstanceLoopCharacteristics>
       <bpmn:script><![CDATA[this.variables.input++;
 next()]]></bpmn:script>

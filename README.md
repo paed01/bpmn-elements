@@ -63,7 +63,9 @@ The following elements are tested and supported.
 - SubProcess
 - Task
 - TerminateEventDefinition
-- TimerEventDefinition
-  - duration only
+- [TimerEventDefinition](/docs/TimerEventDefinition.md)
+  - timeDuration
+  - timeDate
+  - timeCycle
 
 All activities share the same [base](/docs/Activity.md) and and [api](/docs/SharedApi.md).

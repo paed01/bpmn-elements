@@ -23,7 +23,7 @@
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="SequenceFlow_14a3u6g" sourceRef="join1" targetRef="join2" />
     <bpmn:sequenceFlow id="flow-up-join1" sourceRef="decision1" targetRef="join1">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${variables.takeJoin1}</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${environment.variables.takeJoin1}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:exclusiveGateway id="decision2" default="SequenceFlow_01624fc">
       <bpmn:incoming>SequenceFlow_0kfqg1l</bpmn:incoming>

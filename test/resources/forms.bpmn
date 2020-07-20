@@ -23,7 +23,7 @@
           <camunda:formField id="startDate" label="When to start" type="date" defaultValue="${defaultStartDate}" />
         </camunda:formData>
         <camunda:inputOutput>
-          <camunda:inputParameter name="defaultStartDate">${variables.suggestedStartDate}</camunda:inputParameter>
+          <camunda:inputParameter name="defaultStartDate">${environment.variables.suggestedStartDate}</camunda:inputParameter>
           <camunda:outputParameter name="startDate" />
         </camunda:inputOutput>
       </bpmn:extensionElements>

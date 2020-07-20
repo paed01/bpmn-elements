@@ -27,9 +27,14 @@ Api properties:
 - `owner`: api owner, i.e. the owning element instance
   - `broker`: element [broker](https://github.com/paed01/smqp)
 
-### `cancel()`
+### `cancel([message, options])`
 
 Cancel run. Publishes cancel message via element broker on element broker `api` exchange.
+
+Arguments:
+- `message`: optional object sent as message
+- `options`: optional object with broker message options
+  - `delegate`: optional boolean to delegate the cancel to all interested parties
 
 ### `discard()`
 
@@ -42,6 +47,7 @@ Signal activity. Publishes signal message on element broker `api` exchange.
 Arguments:
 - `message`: signal message
 - `options`: optional object with broker message options
+  - `delegate`: optional boolean to delegate the signal to all interested parties
 
 ### `stop()`
 
