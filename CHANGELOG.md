@@ -1,6 +1,13 @@
 Changelog
 =========
 
+# 1.4.0
+
+Run a non-executable process.
+
+## Additions
+- Add support for runnning a process that is NOT marked as executable by calling `definition.run({processId})`
+
 # 1.3.0
 
 [TimerEventDefinition](/docs/TimerEventDefinition.md) `timeDate` and `timeCycle`.

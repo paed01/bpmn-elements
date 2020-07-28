@@ -119,7 +119,9 @@ function Definition(context, options) {
   });
   return definitionApi;
 
-  function run(callback) {
+  function run(optionsOrCallback, optionalCallback) {
+    const [runOptions, callback] = (0, _shared.getOptionsAndCallback)(optionsOrCallback, optionalCallback);
+
     if (definitionApi.isRunning) {
       const err = new Error('definition is already running');
       if (callback) return callback(err);
@@ -128,7 +130,7 @@ function Definition(context, options) {
 
     addConsumerCallbacks(callback);
     executionId = (0, _shared.getUniqueId)(id);
-    const content = createMessage({
+    const content = createMessage({ ...runOptions,
       executionId
     });
     broker.publish('run', 'run.enter', content);
@@ -345,14 +347,6 @@ function Definition(context, options) {
           return execution.execute(executeMessage);
         }
 
-      case 'run.error':
-        {
-          publishEvent('error', (0, _messageHelper.cloneContent)(content, {
-            error: fields.redelivered ? (0, _Errors.makeErrorFromMessage)(message) : content.error
-          }));
-          break;
-        }
-
       case 'run.end':
         {
           if (status === 'end') break;
@@ -373,11 +367,21 @@ function Definition(context, options) {
           break;
         }
 
+      case 'run.error':
+        {
+          publishEvent('error', (0, _messageHelper.cloneContent)(content, {
+            error: fields.redelivered ? (0, _Errors.makeErrorFromMessage)(message) : content.error
+          }), {
+            mandatory: true
+          });
+          break;
+        }
+
       case 'run.leave':
         {
-          status = undefined;
-          broker.cancel('_definition-api');
           ack();
+          status = undefined;
+          deactivateRunConsumers();
           publishEvent('leave');
           break;
         }
@@ -441,12 +445,11 @@ function Definition(context, options) {
     }
   }
 
-  function publishEvent(action, content = {}) {
-    const msgOpts = {
+  function publishEvent(action, content = {}, msgOpts) {
+    broker.publish('event', `definition.${action}`, execution ? execution.createMessage(content) : content, {
       type: action,
-      mandatory: action === 'error'
-    };
-    broker.publish('event', `definition.${action}`, execution ? execution.createMessage(content) : content, msgOpts);
+      ...msgOpts
+    });
   }
 
   function getState() {

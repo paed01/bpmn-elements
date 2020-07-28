@@ -7,7 +7,7 @@ export default function DefinitionExecution(definition) {
 
   const processes = definition.getProcesses();
   const processIds = processes.map(({id: childId}) => childId);
-  const executableProcesses = definition.getExecutableProcesses();
+  let executableProcesses = definition.getExecutableProcesses();
 
   const postponed = [];
   broker.assertExchange('execution', 'topic', {autoDelete: false, durable: true});
@@ -60,13 +60,13 @@ export default function DefinitionExecution(definition) {
 
   function execute(executeMessage) {
     if (!executeMessage) throw new Error('Definition execution requires message');
-    if (!executeMessage.content || !executeMessage.content.executionId) throw new Error('Definition execution requires execution id');
+    const {content, fields} = executeMessage;
+    if (!content || !content.executionId) throw new Error('Definition execution requires execution id');
 
-    const isRedelivered = executeMessage.fields.redelivered;
-    executionId = executeMessage.content.executionId;
+    const isRedelivered = fields.redelivered;
+    executionId = content.executionId;
 
-    initMessage = cloneMessage(executeMessage);
-    initMessage.content = {...initMessage.content, executionId, state: 'start'};
+    initMessage = cloneMessage(executeMessage, {executionId, state: 'start'});
 
     stopped = false;
 
@@ -74,6 +74,11 @@ export default function DefinitionExecution(definition) {
 
     if (isRedelivered) {
       return resume();
+    }
+
+    if (content.processId) {
+      const startWithProcess = definition.getProcessById(content.processId);
+      if (startWithProcess) executableProcesses = [startWithProcess];
     }
 
     logger.debug(`<${executionId} (${id})> execute definition`);
@@ -109,8 +114,7 @@ export default function DefinitionExecution(definition) {
       return publishCompletionMessage('completed');
     }
     if (!executableProcesses.length) {
-      deactivate();
-      return definition.emitFatal(new Error('No executable process'));
+      return complete('error', {error: new Error('No executable process')});
     }
 
     status = 'start';
@@ -271,7 +275,6 @@ export default function DefinitionExecution(definition) {
     const messageType = message.properties.type;
     const delegate = message.properties.delegate;
 
-
     if (delegate && id === message.content.id) {
       const referenceId = getPropertyValue(message, 'content.message.id');
       for (const bp of processes) {
@@ -315,7 +318,7 @@ export default function DefinitionExecution(definition) {
     }, []);
   }
 
-  function complete(completionType, content) {
+  function complete(completionType, content, options) {
     deactivate();
     logger.debug(`<${executionId} (${id})> definition execution ${completionType}`);
     if (!content) content = createMessage();
@@ -328,7 +331,7 @@ export default function DefinitionExecution(definition) {
       output: environment.output,
       ...content,
       state: completionType,
-    }, {type: completionType, mandatory: completionType === 'error'});
+    }, {type: completionType, mandatory: completionType === 'error', ...options});
   }
 
   function onMessageOutbound(routingKey, message) {

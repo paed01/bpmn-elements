@@ -185,7 +185,6 @@ Feature('Shaking', () => {
       context = await testHelpers.context(source);
     });
 
-
     let result;
     [true, false].forEach((run) => {
       describe(run ? 'running definition' : 'definition is not running', () => {
@@ -295,6 +294,15 @@ Feature('Shaking', () => {
           expect(sequence).to.have.property('isLooped', true);
 
           expect(result.gateway).to.have.length(2);
+        });
+
+        When('an unknown activity is shaken', () => {
+          messages.splice(0);
+          result = definition.shake('hittepa');
+        });
+
+        Then('no run sequence is returned', () => {
+          expect(result).to.be.undefined;
         });
 
         if (run) {

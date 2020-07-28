@@ -25,11 +25,13 @@ Returns api with properties:
 - `isRunning`: boolean indicating if the definition is running
 - `broker`: definition message broker
 
-### `run([callback])`
+### `run([options, callback])`
 
-Run definition with optional callback. The callback will be called on error, when run completes, or run is stopped.
+Run definition with optional options and/or callback. The callback will be called on error, when run completes, or run is stopped.
 
 Arguments:
+- `options`: optional options
+  - `processId`: string with process id, run a specific process. Also works for a non-executable process
 - `callback`: optional callback
   - `err`: occasional error
   - `api`: [api](/docs/SharedApi.md)

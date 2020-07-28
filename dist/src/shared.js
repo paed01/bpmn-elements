@@ -7,6 +7,7 @@ exports.generateId = generateId;
 exports.brokerSafeId = brokerSafeId;
 exports.getUniqueId = getUniqueId;
 exports.filterUndefined = filterUndefined;
+exports.getOptionsAndCallback = getOptionsAndCallback;
 const safePattern = /[./\\#*:\s]/g;
 
 function generateId() {
@@ -30,4 +31,16 @@ function filterUndefined(obj) {
     if (objValue !== undefined) filtered[key] = objValue;
     return filtered;
   }, {});
+}
+
+function getOptionsAndCallback(optionsOrCallback, callback) {
+  let options;
+
+  if (typeof optionsOrCallback === 'function') {
+    callback = optionsOrCallback;
+  } else {
+    options = optionsOrCallback;
+  }
+
+  return [options, callback];
 }

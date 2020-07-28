@@ -84,8 +84,8 @@ Feature('Errors', () => {
     });
 
     let state;
-    When('definition is ran with error listener that saves state', () => {
-      definition.on('error', () => {
+    When('definition is ran with listener that saves state on error', () => {
+      definition.once('error', () => {
         state = definition.getState();
       });
       error = definition.waitFor('error');

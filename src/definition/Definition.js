@@ -1,7 +1,7 @@
 import DefinitionExecution from './DefinitionExecution';
 import {DefinitionApi} from '../Api';
 import {DefinitionBroker} from '../EventBroker';
-import {getUniqueId} from '../shared';
+import {getUniqueId, getOptionsAndCallback} from '../shared';
 import {makeErrorFromMessage} from '../error/Errors';
 import {cloneMessage, cloneContent} from '../messageHelper';
 
@@ -94,7 +94,8 @@ export function Definition(context, options) {
 
   return definitionApi;
 
-  function run(callback) {
+  function run(optionsOrCallback, optionalCallback) {
+    const [runOptions, callback] = getOptionsAndCallback(optionsOrCallback, optionalCallback);
     if (definitionApi.isRunning) {
       const err = new Error('definition is already running');
       if (callback) return callback(err);
@@ -104,7 +105,7 @@ export function Definition(context, options) {
     addConsumerCallbacks(callback);
 
     executionId = getUniqueId(id);
-    const content = createMessage({executionId});
+    const content = createMessage({...runOptions, executionId});
 
     broker.publish('run', 'run.enter', content);
     broker.publish('run', 'run.start', cloneContent(content));
@@ -299,12 +300,6 @@ export function Definition(context, options) {
         execution = execution || DefinitionExecution(definitionApi, context);
         return execution.execute(executeMessage);
       }
-      case 'run.error': {
-        publishEvent('error', cloneContent(content, {
-          error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
-        }));
-        break;
-      }
       case 'run.end': {
         if (status === 'end') break;
 
@@ -325,10 +320,17 @@ export function Definition(context, options) {
         broker.publish('run', 'run.leave', content);
         break;
       }
+      case 'run.error': {
+        publishEvent('error', cloneContent(content, {
+          error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
+        }), {mandatory: true});
+        break;
+      }
       case 'run.leave': {
-        status = undefined;
-        broker.cancel('_definition-api');
         ack();
+        status = undefined;
+        deactivateRunConsumers();
+
         publishEvent('leave');
         break;
       }
@@ -386,9 +388,8 @@ export function Definition(context, options) {
     }
   }
 
-  function publishEvent(action, content = {}) {
-    const msgOpts = { type: action, mandatory: action === 'error' };
-    broker.publish('event', `definition.${action}`, execution ? execution.createMessage(content) : content, msgOpts);
+  function publishEvent(action, content = {}, msgOpts) {
+    broker.publish('event', `definition.${action}`, execution ? execution.createMessage(content) : content, {type: action, ...msgOpts});
   }
 
   function getState() {
