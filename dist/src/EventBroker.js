@@ -162,11 +162,6 @@ function EventBroker(brokerOwner, options, onBrokerReturn) {
           return `activity.${eventName}`;
         }
 
-      case 'error':
-        {
-          return `${pfx}.error`;
-        }
-
       default:
         {
           return `${pfx}.${eventName}`;

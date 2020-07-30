@@ -124,6 +124,11 @@ function ProcessExecution(parentActivity, context) {
     logger.debug(`<${executionName}> resume process execution at`, status);
     if (completed) return complete('completed');
     activate();
+
+    if (startActivities.length > 1) {
+      startActivities.forEach(a => a.shake());
+    }
+
     postponed.splice(0);
     detachedActivities.splice(0);
     activityQ.consume(onChildMessage, {
@@ -222,7 +227,7 @@ function ProcessExecution(parentActivity, context) {
     return processExecution;
   }
 
-  function shake(startId) {
+  function shake(fromId) {
     let executing = true;
 
     if (!processExecution.isRunning) {
@@ -232,7 +237,7 @@ function ProcessExecution(parentActivity, context) {
       activate();
     }
 
-    const toShake = startId ? [getActivityById(startId)].filter(Boolean) : startActivities;
+    const toShake = fromId ? [getActivityById(fromId)].filter(Boolean) : startActivities;
     const result = {};
     broker.subscribeTmp('event', '*.shake.*', (routingKey, {
       content
@@ -244,10 +249,7 @@ function ProcessExecution(parentActivity, context) {
           isLooped = true;
 
         case 'activity.shake.end':
-          result[content.id] = result[content.id] || [];
-          result[content.id].push({ ...content,
-            isLooped
-          });
+          onShakeEnd(content, isLooped);
           break;
       }
     }, {
@@ -258,6 +260,18 @@ function ProcessExecution(parentActivity, context) {
     if (!executing) deactivate();
     broker.cancel(`_shaker-${executionId}`);
     return result;
+
+    function onShakeEnd(content, isLooped) {
+      const {
+        id: shakeId,
+        parent: shakeParent
+      } = content;
+      if (shakeParent.id !== id) return;
+      result[shakeId] = result[shakeId] || [];
+      result[shakeId].push({ ...content,
+        isLooped
+      });
+    }
   }
 
   function stop() {

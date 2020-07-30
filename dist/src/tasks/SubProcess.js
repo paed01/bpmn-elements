@@ -25,7 +25,24 @@ function SubProcess(activityDef, context) {
     return context.getStartActivities(filterOptions, activityDef.id);
   };
 
+  subProcess.broker.cancel('_api-shake');
+  subProcess.broker.subscribeTmp('api', 'activity.shake.*', onShake, {
+    noAck: true,
+    consumerTag: '_api-shake'
+  });
   return subProcess;
+
+  function onShake(_, message) {
+    const {
+      startId
+    } = message.content;
+    const last = message.content.sequence.pop();
+    const sequence = (0, _ProcessExecution.default)(subProcess, context).shake(startId);
+    message.content.sequence.push({ ...last,
+      isSubProcess: true,
+      sequence
+    });
+  }
 }
 
 function SubProcessBehaviour(activity, context) {

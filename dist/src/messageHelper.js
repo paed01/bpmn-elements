@@ -38,7 +38,7 @@ function cloneContent(content, extend) {
     clone.outbound = outbound.map(c => cloneContent(c));
   }
 
-  if (sequence) {
+  if (Array.isArray(sequence)) {
     clone.sequence = sequence.map(c => cloneContent(c));
   }
 

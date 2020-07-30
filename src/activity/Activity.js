@@ -665,7 +665,9 @@ export default function Activity(Behaviour, activityDef, context) {
     message.content.sequence = message.content.sequence || [];
     message.content.sequence.push({id, type});
 
-    if (!outboundSequenceFlows.length) {
+    broker.publish('api', 'activity.shake.start', message.content, {persistent: false, type: 'shake'});
+
+    if (isEnd) {
       return broker.publish('event', 'activity.shake.end', message.content, {persistent: false, type: 'shake'});
     }
 

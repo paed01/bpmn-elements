@@ -8,6 +8,10 @@ Run a non-executable process.
 ## Additions
 - Add support for runnning a process that is NOT marked as executable by calling `definition.run({processId})`
 
+## Bugfix
+- Multiple start events were not resumed in an orderly fashion when recovered, process was stuck, but is no more
+- Include occasional sub process sequence when shaking activities
+
 # 1.3.0
 
 [TimerEventDefinition](/docs/TimerEventDefinition.md) `timeDate` and `timeCycle`.

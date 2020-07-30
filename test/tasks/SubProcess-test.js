@@ -198,7 +198,7 @@ describe('SubProcess', () => {
   });
 
   describe('stop()', () => {
-    it('stops process execution', () => {
+    it('stops process execution and closes broker', () => {
       const subProcess = SubProcess({id: 'sub-process', parent: {id: 'process1'}}, testHelpers.emptyContext({
         getActivities() {
           return [{id: 'subTask', Behaviour: SignalTask}];
@@ -214,7 +214,7 @@ describe('SubProcess', () => {
 
       const apiExchange = subProcess.broker.getExchange('api');
       expect(apiExchange).to.be.ok;
-      expect(apiExchange).to.have.property('bindingCount', 0);
+      expect(apiExchange).to.have.property('bindingCount', 1);
 
       const executeQ = subProcess.broker.getQueue('execute-q');
       expect(executeQ).to.have.property('messageCount', 1);
@@ -228,7 +228,8 @@ describe('SubProcess', () => {
       expect(executionQ).to.have.property('consumerCount', 0);
       expect(executionQ).to.have.property('messageCount', 0);
 
-      expect(subProcess.broker).to.have.property('consumerCount', 0);
+      expect(subProcess.broker).to.have.property('consumerCount', 1);
+      expect(subProcess.broker.getConsumers()[0]).to.have.property('consumerTag', '_api-shake');
     });
   });
 
@@ -665,7 +666,7 @@ describe('SubProcess', () => {
         }]);
       });
 
-      it('stop closes all consumers', async () => {
+      it('stop closes all consumers except shake', async () => {
         const task = context.getActivityById('sub-process-task');
 
         const stop = task.waitFor('stop', (_, msg) => {
@@ -681,7 +682,8 @@ describe('SubProcess', () => {
 
         await stop;
 
-        expect(task.broker).to.have.property('consumerCount', 0);
+        expect(task.broker).to.have.property('consumerCount', 1);
+        expect(task.broker.getConsumers()[0]).to.have.property('consumerTag', '_api-shake');
       });
 
       it('resumes from last completed', async () => {

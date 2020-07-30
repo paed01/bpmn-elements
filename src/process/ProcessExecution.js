@@ -95,6 +95,11 @@ export default function ProcessExecution(parentActivity, context) {
     if (completed) return complete('completed');
 
     activate();
+
+    if (startActivities.length > 1) {
+      startActivities.forEach((a) => a.shake());
+    }
+
     postponed.splice(0);
     detachedActivities.splice(0);
     activityQ.consume(onChildMessage, {prefetch: 1000, consumerTag: `_process-activity-${executionId}`});
@@ -187,7 +192,7 @@ export default function ProcessExecution(parentActivity, context) {
     return processExecution;
   }
 
-  function shake(startId) {
+  function shake(fromId) {
     let executing = true;
     if (!processExecution.isRunning) {
       executing = false;
@@ -195,7 +200,7 @@ export default function ProcessExecution(parentActivity, context) {
       prepare();
       activate();
     }
-    const toShake = startId ? [getActivityById(startId)].filter(Boolean) : startActivities;
+    const toShake = fromId ? [getActivityById(fromId)].filter(Boolean) : startActivities;
 
     const result = {};
     broker.subscribeTmp('event', '*.shake.*', (routingKey, {content}) => {
@@ -204,8 +209,7 @@ export default function ProcessExecution(parentActivity, context) {
         case 'flow.shake.loop':
           isLooped = true;
         case 'activity.shake.end':
-          result[content.id] = result[content.id] || [];
-          result[content.id].push({...content, isLooped});
+          onShakeEnd(content, isLooped);
           break;
       }
     }, {noAck: true, consumerTag: `_shaker-${executionId}`});
@@ -216,6 +220,14 @@ export default function ProcessExecution(parentActivity, context) {
     broker.cancel(`_shaker-${executionId}`);
 
     return result;
+
+    function onShakeEnd(content, isLooped) {
+      const {id: shakeId, parent: shakeParent} = content;
+      if (shakeParent.id !== id) return;
+
+      result[shakeId] = result[shakeId] || [];
+      result[shakeId].push({...content, isLooped});
+    }
   }
 
   function stop() {

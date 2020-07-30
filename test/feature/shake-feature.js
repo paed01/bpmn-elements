@@ -157,7 +157,7 @@ Feature('Shaking', () => {
 
   Scenario('manual shaking', () => {
     let context;
-    Given('two start events, the second contains a looped flow, and a user task', async () => {
+    Given('two start events, the second contains a looped flow, a user task', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="messageProcess" isExecutable="true">
@@ -316,6 +316,230 @@ Feature('Shaking', () => {
             return end;
           });
         }
+      });
+    });
+
+    describe('stopped and resumed', () => {
+      let definition;
+      Given('definition is running', () => {
+        definition = Definition(context.clone());
+        definition.run();
+        definition.once('wait', () => {
+          definition.stop();
+        });
+        definition.signal({id: 'Message2'});
+      });
+
+      And('is stopped on user task wait', () => {
+        expect(definition).to.have.property('stopped', true);
+      });
+
+      When('definition shakes user task', () => {
+        result = definition.shake('task');
+      });
+
+      Then('execution sequences are returned', () => {
+        expect(result).to.have.property('task');
+        expect(result.task).that.is.an('array').with.length(2);
+        let sequence = result.task[0];
+        expect(sequence.sequence[0]).to.have.property('id', 'task');
+        expect(sequence.sequence[1]).to.have.property('id', 'fromTask2Gateway');
+        expect(sequence.sequence[2]).to.have.property('id', 'gateway');
+        expect(sequence.sequence[3]).to.have.property('id', 'defaultFlow');
+        expect(sequence.sequence[4]).to.have.property('id', 'end');
+        expect(sequence.sequence).to.have.length(5);
+
+        sequence = result.task[1];
+        expect(sequence).to.have.property('isLooped', true);
+        expect(sequence.sequence[0]).to.have.property('id', 'task');
+        expect(sequence.sequence[1]).to.have.property('id', 'fromTask2Gateway');
+        expect(sequence.sequence[2]).to.have.property('id', 'gateway');
+        expect(sequence.sequence[3]).to.have.property('id', 'back2Task');
+        expect(sequence.sequence).to.have.length(4);
+
+        expect(Object.keys(result)).to.deep.equal(['task']);
+      });
+
+      When('definition is resumed', () => {
+        definition.resume();
+        expect(definition).to.have.property('stopped', false);
+        expect(definition).to.have.property('isRunning', true);
+      });
+
+      And('definition shakes user task', () => {
+        result = definition.shake('task');
+      });
+
+      Then('execution sequences are returned', () => {
+        expect(result).to.have.property('task');
+        expect(result.task).that.is.an('array').with.length(2);
+        let sequence = result.task[0];
+        expect(sequence.sequence[0]).to.have.property('id', 'task');
+        expect(sequence.sequence[1]).to.have.property('id', 'fromTask2Gateway');
+        expect(sequence.sequence[2]).to.have.property('id', 'gateway');
+        expect(sequence.sequence[3]).to.have.property('id', 'defaultFlow');
+        expect(sequence.sequence[4]).to.have.property('id', 'end');
+        expect(sequence.sequence).to.have.length(5);
+
+        sequence = result.task[1];
+        expect(sequence).to.have.property('isLooped', true);
+        expect(sequence.sequence[0]).to.have.property('id', 'task');
+        expect(sequence.sequence[1]).to.have.property('id', 'fromTask2Gateway');
+        expect(sequence.sequence[2]).to.have.property('id', 'gateway');
+        expect(sequence.sequence[3]).to.have.property('id', 'back2Task');
+        expect(sequence.sequence).to.have.length(4);
+
+        expect(Object.keys(result)).to.deep.equal(['task']);
+      });
+
+      let end;
+      When('user task is signaled', () => {
+        end = definition.waitFor('leave');
+        definition.signal({id: 'task'});
+      });
+
+      Then('execution completes', () => {
+        return end;
+      });
+    });
+
+    describe('stopped and recovered', () => {
+      let definition, state;
+      Given('definition is running', () => {
+        definition = Definition(context.clone());
+        definition.run();
+        definition.once('wait', () => {
+          definition.stop();
+        });
+        definition.once('stop', () => {
+          state = definition.getState();
+        });
+        definition.signal({id: 'Message2'});
+      });
+
+      And('state is saved on user task wait', () => {
+        expect(definition).to.have.property('stopped', true);
+      });
+
+      When('definition is recovered', () => {
+        definition = Definition(context.clone());
+        definition.recover(state);
+        expect(definition).to.have.property('isRunning', false);
+        expect(definition).to.have.property('stopped', true);
+      });
+
+      And('definition shakes user task', () => {
+        result = definition.shake('task');
+      });
+
+      Then('execution sequences are returned', () => {
+        expect(result).to.have.property('task');
+        expect(result.task).that.is.an('array').with.length(2);
+        let sequence = result.task[0];
+        expect(sequence.sequence[0]).to.have.property('id', 'task');
+        expect(sequence.sequence[1]).to.have.property('id', 'fromTask2Gateway');
+        expect(sequence.sequence[2]).to.have.property('id', 'gateway');
+        expect(sequence.sequence[3]).to.have.property('id', 'defaultFlow');
+        expect(sequence.sequence[4]).to.have.property('id', 'end');
+        expect(sequence.sequence).to.have.length(5);
+
+        sequence = result.task[1];
+        expect(sequence).to.have.property('isLooped', true);
+        expect(sequence.sequence[0]).to.have.property('id', 'task');
+        expect(sequence.sequence[1]).to.have.property('id', 'fromTask2Gateway');
+        expect(sequence.sequence[2]).to.have.property('id', 'gateway');
+        expect(sequence.sequence[3]).to.have.property('id', 'back2Task');
+        expect(sequence.sequence).to.have.length(4);
+
+        expect(Object.keys(result)).to.deep.equal(['task']);
+      });
+
+      let end;
+      When('definition is resumed and user task is signaled', () => {
+        end = definition.waitFor('leave');
+        definition.resume();
+        definition.signal({id: 'task'});
+      });
+
+      Then('execution completes', () => {
+        return end;
+      });
+    });
+  });
+
+  Scenario('shaking a sub process', () => {
+    let context;
+    Given('a flow with sub process', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="withSubProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-sub" sourceRef="start" targetRef="sub" />
+          <subProcess id="sub">
+            <userTask id="task" />
+            <sequenceFlow id="to-subend" sourceRef="task" targetRef="subend" />
+            <endEvent id="subend" />
+          </subProcess>
+          <sequenceFlow id="to-end" sourceRef="sub" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    let result;
+    [true, false].forEach((run) => {
+      describe(run ? 'running definition' : 'definition is not running', () => {
+        let definition;
+        Given('definition is initiated', () => {
+          definition = Definition(context.clone());
+        });
+
+        if (run) {
+          And('definition is running', () => {
+            definition.run();
+          });
+        }
+
+        const messages = [];
+        And('shake messages are collected', () => {
+          definition.broker.subscribeTmp('event', '*.shake*', (routingKey) => {
+            messages.push(routingKey);
+          }, {noAck: true});
+        });
+
+        When('start event is shook', () => {
+          messages.splice(0);
+          result = definition.shake('start');
+        });
+
+        Then('execution sequences are returned', () => {
+          expect(result).to.have.property('start');
+          expect(result.start).that.is.an('array').with.length(1);
+          const sequence = result.start[0];
+          expect(sequence.sequence[0]).to.have.property('id', 'start');
+          expect(sequence.sequence[1]).to.have.property('id', 'to-sub');
+          expect(sequence.sequence[2]).to.have.property('id', 'sub');
+          expect(sequence.sequence[3]).to.have.property('id', 'to-end');
+          expect(sequence.sequence[4]).to.have.property('id', 'end');
+          expect(sequence.sequence).to.have.length(5);
+
+          expect(Object.keys(result)).to.deep.equal(['start']);
+        });
+
+        And('sub process sequence is included', () => {
+          const subProcess = result.start[0].sequence[2];
+          expect(subProcess).to.be.an('object').with.property('sequence').that.is.an('object').with.property('task');
+          expect(subProcess.sequence.task).to.be.an('array').with.length(1);
+          expect(subProcess.sequence.task[0]).to.have.property('sequence').that.is.an('array').with.length(3);
+          const sequence = subProcess.sequence.task[0].sequence;
+          expect(subProcess.sequence.task[0]).to.have.property('sequence').that.is.an('array').with.length(3);
+
+          expect(sequence[0]).to.have.property('id', 'task');
+          expect(sequence[1]).to.have.property('id', 'to-subend');
+          expect(sequence[2]).to.have.property('id', 'subend');
+        });
       });
     });
   });

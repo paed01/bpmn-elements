@@ -10,7 +10,17 @@ export default function SubProcess(activityDef, context) {
     return context.getStartActivities(filterOptions, activityDef.id);
   };
 
+  subProcess.broker.cancel('_api-shake');
+  subProcess.broker.subscribeTmp('api', 'activity.shake.*', onShake, {noAck: true, consumerTag: '_api-shake'});
+
   return subProcess;
+
+  function onShake(_, message) {
+    const {startId} = message.content;
+    const last = message.content.sequence.pop();
+    const sequence = ProcessExecution(subProcess, context).shake(startId);
+    message.content.sequence.push({...last, isSubProcess: true, sequence});
+  }
 }
 
 export function SubProcessBehaviour(activity, context) {
@@ -63,6 +73,7 @@ export function SubProcessBehaviour(activity, context) {
 
     function onApiRootMessage(routingKey, message) {
       const messageType = message.properties.type;
+
       switch (messageType) {
         case 'stop':
           broker.cancel(`_api-${rootExecutionId}`);

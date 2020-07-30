@@ -818,8 +818,12 @@ function Activity(Behaviour, activityDef, context) {
       id,
       type
     });
+    broker.publish('api', 'activity.shake.start', message.content, {
+      persistent: false,
+      type: 'shake'
+    });
 
-    if (!outboundSequenceFlows.length) {
+    if (isEnd) {
       return broker.publish('event', 'activity.shake.end', message.content, {
         persistent: false,
         type: 'shake'
