@@ -106,7 +106,7 @@ export default function SignalEventDefinition(activity, eventDefinition) {
       ...cloneContent(messageContent),
       executionId: parentExecutionId,
       parent: shiftParent(parent),
-      message: {...referenceMessage},
+      message: {...messageContent.input, ...referenceMessage},
       state: 'throw',
     }, {type: 'signal'});
 

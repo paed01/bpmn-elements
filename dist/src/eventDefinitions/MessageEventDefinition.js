@@ -177,7 +177,8 @@ function MessageEventDefinition(activity, eventDefinition) {
     broker.publish('event', 'activity.message', { ...(0, _messageHelper.cloneContent)(messageContent),
       executionId: parentExecutionId || executionId,
       parent: (0, _messageHelper.shiftParent)(parent),
-      message: { ...referenceMessage
+      message: { ...messageContent.input,
+        ...referenceMessage
       },
       state: 'throw'
     }, {

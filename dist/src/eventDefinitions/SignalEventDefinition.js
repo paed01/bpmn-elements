@@ -167,7 +167,8 @@ function SignalEventDefinition(activity, eventDefinition) {
     broker.publish('event', 'activity.signal', { ...(0, _messageHelper.cloneContent)(messageContent),
       executionId: parentExecutionId,
       parent: (0, _messageHelper.shiftParent)(parent),
-      message: { ...referenceMessage
+      message: { ...messageContent.input,
+        ...referenceMessage
       },
       state: 'throw'
     }, {

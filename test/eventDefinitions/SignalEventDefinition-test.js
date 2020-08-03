@@ -1,5 +1,7 @@
-import SignalEventDefinition from '../../src/eventDefinitions/SignalEventDefinition';
 import Environment from '../../src/Environment';
+import SignalEventDefinition from '../../src/eventDefinitions/SignalEventDefinition';
+import testHelpers from '../helpers/testHelpers';
+import Signal from '../../src/activity/Signal';
 import {ActivityBroker} from '../../src/EventBroker';
 import {Logger} from '../helpers/testHelpers';
 
@@ -10,6 +12,10 @@ describe('SignalEventDefinition', () => {
       id: 'event',
       environment: Environment({Logger}),
       broker: ActivityBroker(this).broker,
+      getActivityById(id) {
+        if (id !== 'Signal_0') return;
+        return Signal({id}, testHelpers.emptyContext());
+      }
     };
   });
 
@@ -221,6 +227,132 @@ describe('SignalEventDefinition', () => {
       expect(messages[0].content).to.have.property('executionId', 'event_1');
       expect(messages[0].content.parent).to.have.property('id', 'theProcess');
       expect(messages[0].content.parent).to.have.property('executionId', 'theProcess_0');
+    });
+
+    it('publishes signal with input from execution message', () => {
+      event.isThrowing = true;
+
+      const definition = SignalEventDefinition(event, {
+        type: 'bpmn:SignalEventDefinition',
+        behaviour: {
+          signalRef: {
+            id: 'Signal_0',
+          }
+        }
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('event', 'activity.signal', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      definition.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          input: {
+            myMessage: 1,
+          },
+          parent: {
+            id: 'intermediate',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0'
+            }]
+          },
+        },
+      });
+
+      expect(messages).to.have.length(1);
+      expect(messages[0].content).to.have.property('message').that.deep.include({
+        id: 'Signal_0',
+        type: 'Signal',
+        myMessage: 1,
+      });
+    });
+
+    it('without signal reference publishes anonymous message', () => {
+      event.isThrowing = true;
+
+      const definition = SignalEventDefinition(event, {
+        type: 'bpmn:SignalEventDefinition',
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      definition.execute({
+        fields: {},
+        content: {
+          id: 'event_1',
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'event',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0'
+            }]
+          },
+        },
+      });
+
+      expect(messages).to.have.length(1);
+      expect(messages[0].fields).to.have.property('routingKey', 'activity.signal');
+      expect(messages[0].content).to.have.property('executionId', 'event_1');
+      expect(messages[0].content.parent).to.have.property('id', 'theProcess');
+      expect(messages[0].content.parent).to.have.property('executionId', 'theProcess_0');
+
+      expect(messages[0].content.message).to.not.have.property('id');
+      expect(messages[0].content.message).to.have.property('name', 'anonymous');
+    });
+
+    it('with unknown signal reference publishes message with unknown signal id', () => {
+      event.isThrowing = true;
+
+      const definition = SignalEventDefinition(event, {
+        type: 'bpmn:SignalEventDefinition',
+        behaviour: {
+          signalRef: {
+            id: 'Unknown_Signal',
+          }
+        },
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('event', 'activity.signal', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      definition.execute({
+        fields: {},
+        content: {
+          id: 'event_1',
+          executionId: 'event_1_0',
+          index: 0,
+          input: {
+            myMessage: 1,
+          },
+          parent: {
+            id: 'event',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0'
+            }]
+          },
+        },
+      });
+
+      expect(messages[0].content).to.have.property('message').that.deep.include({
+        id: 'Unknown_Signal',
+        myMessage: 1,
+      });
     });
   });
 });

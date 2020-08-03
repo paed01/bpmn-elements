@@ -8,7 +8,7 @@ exports.default = Signal;
 function Signal(signalDef, context) {
   const {
     id,
-    type,
+    type = 'Signal',
     name,
     parent: originalParent
   } = signalDef;
@@ -30,7 +30,9 @@ function Signal(signalDef, context) {
       id,
       type,
       messageType: 'signal',
-      name: name && environment.resolveExpression(name, executionMessage),
+      ...(name ? {
+        name: environment.resolveExpression(name, executionMessage)
+      } : undefined),
       parent: { ...parent
       }
     };

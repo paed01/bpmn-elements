@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 1.5.0
+
+- Include input when throwing signal or message
+
 # 1.4.0
 
 Run a non-executable process.

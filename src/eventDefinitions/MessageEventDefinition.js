@@ -112,7 +112,7 @@ export default function MessageEventDefinition(activity, eventDefinition) {
       ...cloneContent(messageContent),
       executionId: parentExecutionId || executionId,
       parent: shiftParent(parent),
-      message: {...referenceMessage},
+      message: {...messageContent.input, ...referenceMessage},
       state: 'throw',
     }, {type: 'message', delegate: true});
 

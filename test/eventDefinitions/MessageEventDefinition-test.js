@@ -401,7 +401,52 @@ describe('MessageEventDefinition', () => {
       expect(messages[0].content.message).to.have.property('name', 'My Message event_1');
     });
 
-    it('publishes message event on parent broker with anonymous message', () => {
+    it('publishes signal with input from execution message', () => {
+      event.isThrowing = true;
+
+      const definition = MessageEventDefinition(event, {
+        type: 'bpmn:MessageEventDefinition',
+        behaviour: {
+          messageRef: {
+            id: 'message_1',
+          }
+        }
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      definition.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          input: {
+            myMessage: 1,
+          },
+          parent: {
+            id: 'intermediate',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0'
+            }]
+          },
+        },
+      });
+
+      expect(messages).to.have.length(1);
+      expect(messages[0].fields).to.have.property('routingKey', 'activity.message');
+      expect(messages[0].content).to.have.property('message').that.deep.include({
+        id: 'message_1',
+        type: 'bpmn:Message',
+        myMessage: 1,
+      });
+    });
+
+    it('without message reference publishes anonymous message', () => {
       event.isThrowing = true;
 
       const definition = MessageEventDefinition(event, {
