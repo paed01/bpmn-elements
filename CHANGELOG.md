@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 1.6.0
+
+- Publish `definition.resume` event when Definition is resumed
+
 # 1.5.0
 
 - Include input when throwing signal or message

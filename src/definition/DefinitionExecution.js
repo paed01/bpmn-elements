@@ -51,11 +51,6 @@ export default function DefinitionExecution(definition) {
     stop,
   };
 
-  Object.defineProperty(definitionExecution, 'stopped', {
-    enumerable: true,
-    get: () => stopped,
-  });
-
   return definitionExecution;
 
   function execute(executeMessage) {

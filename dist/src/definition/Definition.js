@@ -174,9 +174,7 @@ function Definition(context, options) {
       };
     }
 
-    if (state.environment) {
-      environment.recover(state.environment);
-    }
+    environment.recover(state.environment);
 
     if (state.execution) {
       execution = (0, _DefinitionExecution.default)(definitionApi, context).recover(state.execution);
@@ -280,7 +278,7 @@ function Definition(context, options) {
     }
   }
 
-  function createMessage(override = {}) {
+  function createMessage(override) {
     return {
       id,
       type,
@@ -344,6 +342,11 @@ function Definition(context, options) {
             consumerTag: '_definition-execution'
           });
           execution = execution || (0, _DefinitionExecution.default)(definitionApi, context);
+
+          if (executeMessage.fields.redelivered) {
+            publishEvent('resume', content);
+          }
+
           return execution.execute(executeMessage);
         }
 

@@ -81,7 +81,7 @@ describe('Definition', () => {
     });
   });
 
-  describe('run([callback])', () => {
+  describe('run([options, callback])', () => {
     it('publishes enter on run', async () => {
       const definition = Definition({
         id: 'Def_1',
@@ -607,6 +607,32 @@ describe('Definition', () => {
       expect(definition.recover()).to.equal(definition);
     });
 
+    it('recovers with only counters', () => {
+      const definition = Definition(context);
+
+      definition.recover({
+        counters: {
+          completed: 1
+        }
+      });
+
+      expect(definition.counters).to.have.property('completed', 1);
+      expect(definition.counters).to.have.property('discarded', 0);
+    });
+
+    it('recovers with only environment', () => {
+      const definition = Definition(context);
+
+      definition.recover({
+        environment: {...definition.environment.getState(), output: {recovered: 1}},
+      });
+
+      expect(definition.environment).to.have.property('output').with.property('recovered', 1);
+
+      expect(definition.counters).to.have.property('completed', 0);
+      expect(definition.counters).to.have.property('discarded', 0);
+    });
+
     it('recovers with state', () => {
       const definition1 = Definition(context);
 
@@ -857,7 +883,7 @@ describe('Definition', () => {
 
     it('ignored if never started', () => {
       const definition = Definition(context);
-      definition.broker.subscribeTmp('event', '#', () => {
+      definition.broker.subscribeOnce('event', '#', () => {
         throw new Error('Shouldn´t happen');
       });
       expect(definition.resume()).to.equal(definition);
@@ -874,10 +900,66 @@ describe('Definition', () => {
 
       expect(definition.counters).to.have.property('completed', 1);
 
-      definition.broker.subscribeTmp('event', '#', () => {
+      definition.broker.subscribeOnce('event', '#', () => {
         throw new Error('Shouldn´t happen');
       });
       expect(definition.resume()).to.equal(definition);
+    });
+
+    it('publish resume event when resumed', () => {
+      const definition = Definition(context);
+      definition.run();
+      definition.stop();
+
+      const messages = [];
+      definition.broker.subscribeTmp('event', 'definition.resume', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      definition.resume();
+
+      expect(messages).to.have.length(1);
+    });
+
+    it('publish resume event when recovered and resumed', () => {
+      let definition = Definition(context);
+      definition.run();
+      definition.stop();
+
+      const state = definition.getState();
+
+      definition = Definition(context.clone());
+      definition.recover(state);
+
+      const messages = [];
+      definition.broker.subscribeTmp('event', 'definition.resume', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      definition.resume();
+
+      expect(messages).to.have.length(1);
+    });
+
+    it('ignores stop on resume event', async () => {
+      const definition = Definition(context);
+      definition.run();
+      definition.stop();
+
+      definition.broker.subscribeTmp('event', 'definition.resume', () => {
+        definition.stop();
+      }, {noAck: true});
+
+      definition.resume();
+
+      expect(definition.isRunning).to.be.true;
+
+      const [activity] = definition.getPostponed();
+      expect(activity.id).to.equal('userTask');
+
+      activity.signal();
+
+      expect(definition.isRunning).to.be.false;
     });
   });
 
@@ -1308,6 +1390,12 @@ describe('Definition', () => {
       definition.run();
 
       expect(api).to.be.undefined;
+    });
+
+    it('without message and running, returns current state api', () => {
+      const definition = Definition(context.clone());
+      definition.run();
+      expect(definition.getApi()).to.have.property('content').with.property('state', 'start');
     });
   });
 });

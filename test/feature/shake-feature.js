@@ -305,6 +305,15 @@ Feature('Shaking', () => {
           expect(result).to.be.undefined;
         });
 
+        When('an a message element is shaken', () => {
+          messages.splice(0);
+          result = definition.shake('Message1');
+        });
+
+        Then('no run sequence is returned', () => {
+          expect(result).to.be.undefined;
+        });
+
         if (run) {
           let end;
           When('user task is signaled', () => {

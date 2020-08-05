@@ -82,10 +82,6 @@ function DefinitionExecution(definition) {
     recover,
     stop
   };
-  Object.defineProperty(definitionExecution, 'stopped', {
-    enumerable: true,
-    get: () => stopped
-  });
   return definitionExecution;
 
   function execute(executeMessage) {

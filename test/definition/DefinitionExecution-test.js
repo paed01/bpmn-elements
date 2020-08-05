@@ -5,6 +5,39 @@ import {DefinitionBroker, ProcessBroker} from '../../src/EventBroker';
 
 describe('Definition execution', () => {
   describe('execute()', () => {
+    it('returns execution api', () => {
+      const definition = {
+        id: 'Def_1',
+        type: 'Definition',
+        environment: Environment(),
+        logger: Logger('bpmn:definition'),
+        broker: DefinitionBroker(this).broker,
+        getProcesses() {
+          return [];
+        },
+        getExecutableProcesses() {
+          return [];
+        }
+      };
+      const execution = DefinitionExecution(definition);
+      expect(execution).to.have.property('id', 'Def_1');
+      expect(execution).to.have.property('type', 'Definition');
+      expect(execution).to.have.property('broker', definition.broker);
+      expect(execution).to.have.property('environment', definition.environment);
+      expect(execution).to.have.property('executionId');
+      expect(execution).to.have.property('completed', false);
+      expect(execution).to.have.property('stopped');
+      expect(execution).to.have.property('status', 'init');
+      expect(execution).to.have.property('postponedCount', 0);
+      expect(execution).to.have.property('isRunning', false);
+      expect(execution).to.have.property('processes').that.deep.equal([]);
+      expect(execution).to.have.property('execute').that.is.a('function');
+      expect(execution).to.have.property('recover').that.is.a('function');
+      expect(execution).to.have.property('resume').that.is.a('function');
+      expect(execution).to.have.property('getApi').that.is.a('function');
+      expect(execution).to.have.property('getPostponed').that.is.a('function');
+    });
+
     it('throws if no message is passed', () => {
       const definition = {
         id: 'Def_1',

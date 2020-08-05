@@ -148,9 +148,7 @@ export function Definition(context, options) {
       counters = {...counters, ...state.counters};
     }
 
-    if (state.environment) {
-      environment.recover(state.environment);
-    }
+    environment.recover(state.environment);
 
     if (state.execution) {
       execution = DefinitionExecution(definitionApi, context).recover(state.execution);
@@ -247,7 +245,7 @@ export function Definition(context, options) {
     }
   }
 
-  function createMessage(override = {}) {
+  function createMessage(override) {
     return {
       id,
       type,
@@ -297,7 +295,13 @@ export function Definition(context, options) {
         }
         postponedMessage = message;
         executionQ.assertConsumer(onExecutionMessage, {exclusive: true, consumerTag: '_definition-execution'});
+
         execution = execution || DefinitionExecution(definitionApi, context);
+
+        if (executeMessage.fields.redelivered) {
+          publishEvent('resume', content);
+        }
+
         return execution.execute(executeMessage);
       }
       case 'run.end': {
