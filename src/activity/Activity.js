@@ -188,9 +188,7 @@ export default function Activity(Behaviour, activityDef, context) {
     status = state.status;
     executionId = state.executionId;
 
-    if (state.counters) {
-      counters = {...counters, ...state.counters};
-    }
+    counters = {...counters, ...state.counters};
 
     if (state.execution) {
       execution = ActivityExecution(activityApi, context).recover(state.execution);
@@ -570,7 +568,7 @@ export default function Activity(Behaviour, activityDef, context) {
           leaveContent = content;
         }
 
-        broker.publish('run', 'run.next', content);
+        broker.publish('run', 'run.next', content, {persistent: false});
         publishEvent('leave', leaveContent, {correlationId});
         if (!ignoreOutbound) doOutbound(outbound);
         break;

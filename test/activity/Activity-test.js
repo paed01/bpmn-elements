@@ -2401,6 +2401,22 @@ describe('Activity', () => {
       recovered.activate();
       recovered.resume();
     });
+
+    it('resumes if taken twice, recovered, and activated', () => {
+      const activity = getActivity(undefined, SignalTaskBehaviour);
+      activity.activate();
+      activity.inbound[0].take();
+      activity.inbound[0].take();
+
+      const state = activity.getState();
+
+      expect(activity.status).to.equal('executing');
+
+      const recovered = getActivity(undefined, SignalTaskBehaviour).recover(state);
+
+      recovered.activate();
+      recovered.resume();
+    });
   });
 
   describe('inbound associations', () => {

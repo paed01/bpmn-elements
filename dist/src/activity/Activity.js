@@ -244,12 +244,9 @@ function Activity(Behaviour, activityDef, context) {
     stopped = state.stopped;
     status = state.status;
     executionId = state.executionId;
-
-    if (state.counters) {
-      counters = { ...counters,
-        ...state.counters
-      };
-    }
+    counters = { ...counters,
+      ...state.counters
+    };
 
     if (state.execution) {
       execution = (0, _ActivityExecution.default)(activityApi, context).recover(state.execution);
@@ -689,7 +686,9 @@ function Activity(Behaviour, activityDef, context) {
             leaveContent = content;
           }
 
-          broker.publish('run', 'run.next', content);
+          broker.publish('run', 'run.next', content, {
+            persistent: false
+          });
           publishEvent('leave', leaveContent, {
             correlationId
           });

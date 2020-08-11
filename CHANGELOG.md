@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 1.6.1
+
+## Bugfix:
+- Resumed definition with multiple loopbacks ran towards infinity, thats now finit as expected since there is an end to the fun. Thankyou @aowakennomai for uncovering bug
+
 # 1.6.0
 
 - Publish `definition.resume` event when Definition is resumed

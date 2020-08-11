@@ -960,7 +960,7 @@ describe('TimerEventDefinition', () => {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDuration: 'PT1Y',
-          timeDate: new Date(Date.now() + 10).toISOString(),
+          timeDate: new Date(Date.now() + 50).toISOString(),
           timeCycle: 'R3/PT10H',
         },
       });
@@ -983,7 +983,7 @@ describe('TimerEventDefinition', () => {
             },
           },
         });
-      }, 10);
+      }, 60);
     });
 
     it('completes when duration expires', (done) => {
