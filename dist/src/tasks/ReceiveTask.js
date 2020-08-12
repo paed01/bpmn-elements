@@ -8,8 +8,6 @@ exports.ReceiveTaskBehaviour = ReceiveTaskBehaviour;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 
-var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue"));
-
 var _messageHelper = require("../messageHelper");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -83,7 +81,22 @@ function ReceiveTaskBehaviour(activity) {
     }));
 
     function onCatchMessage(routingKey, message) {
-      if ((0, _getPropertyValue.default)(message, 'content.message.id') !== referenceMessage.id) return;
+      const {
+        content: delegateContent
+      } = message;
+      const {
+        id: signalId,
+        executionId: signalExecutionId
+      } = delegateContent.message || {};
+
+      if (!referenceMessage.id && signalId || signalExecutionId) {
+        if (loopCharacteristics && signalExecutionId !== executionId) return;
+        if (signalId !== id && signalExecutionId !== executionId) return;
+        logger.debug(`<${executionId} (${id})> caught direct message`);
+      } else if (referenceMessage.id !== signalId) return;else {
+        logger.debug(`<${executionId} (${id})> caught ${description}`);
+      }
+
       const {
         type: messageType,
         correlationId
@@ -95,7 +108,6 @@ function ReceiveTaskBehaviour(activity) {
         correlationId,
         type: messageType
       });
-      logger.debug(`<${executionId} (${id})> caught ${description}`);
       broker.publish('event', 'activity.catch', (0, _messageHelper.cloneContent)(content, {
         message: message.content.message
       }), {

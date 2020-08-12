@@ -392,6 +392,7 @@ describe('Process', () => {
       bp.run();
 
       bp.resume();
+
       bp.getPostponed().forEach(p => {
         if (p.type === 'bpmn:UserTask') {
           p.signal();
@@ -399,6 +400,7 @@ describe('Process', () => {
       });
 
       bp.resume();
+
       bp.getPostponed().forEach(p => {
         if (p.type === 'bpmn:UserTask') {
           p.signal();

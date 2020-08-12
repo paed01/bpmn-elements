@@ -243,7 +243,7 @@ export default function ProcessExecution(parentActivity, context) {
     });
 
     flows.forEach((flow) => {
-      flow.broker.subscribeTmp('event', '#', onActivityEvent, {consumerTag: '_process-flight-controller', noAck: true, priority: 200});
+      flow.broker.subscribeTmp('event', '#', onActivityEvent, {consumerTag: '_process-flow-controller', noAck: true, priority: 200});
     });
 
     associations.forEach((association) => {
@@ -308,7 +308,7 @@ export default function ProcessExecution(parentActivity, context) {
     });
 
     flows.forEach((flow) => {
-      flow.broker.cancel('_process-flight-controller');
+      flow.broker.cancel('_process-flow-controller');
     });
 
     associations.forEach((association) => {

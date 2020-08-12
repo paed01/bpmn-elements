@@ -1,3 +1,5 @@
+import EndEvent from '../../src/events/EndEvent';
+import SequenceFlow from '../../src/flows/SequenceFlow';
 import testHelpers from '../helpers/testHelpers';
 
 describe('EndEvent', () => {
@@ -106,6 +108,62 @@ describe('EndEvent', () => {
       const err = await error;
 
       expect(err).to.be.ok;
+    });
+  });
+
+  describe('with multiple inbounds', () => {
+    it('publish enter or discard on each inbound', async () => {
+      const parent = {id: 'process'};
+      const context = testHelpers.emptyContext({
+        getInboundSequenceFlows() {
+          return [{
+            id: 'flow1',
+            parent,
+            Behaviour: SequenceFlow
+          }, {
+            id: 'flow2',
+            parent,
+            Behaviour: SequenceFlow
+          }, {
+            id: 'flow3',
+            parent,
+            Behaviour: SequenceFlow
+          }];
+        }
+      });
+
+      const event = EndEvent({
+        type: 'bpmn:EndEvent',
+        id: 'end',
+        parent,
+      }, context);
+
+      event.activate();
+
+      const messages = [];
+      event.broker.subscribeTmp('event', 'activity.enter', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+      event.broker.subscribeTmp('event', 'activity.discard', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      context.getInboundSequenceFlows()[0].discard();
+      context.getInboundSequenceFlows()[1].take();
+      context.getInboundSequenceFlows()[2].discard();
+
+      expect(event.counters).to.have.property('taken', 1);
+      expect(event.counters).to.have.property('discarded', 2);
+
+      expect(messages).to.have.length(3);
+
+      expect(messages[0].content).to.have.property('inbound').with.length(1);
+      expect(messages[0].content.inbound[0]).to.have.property('id', 'flow1');
+      expect(messages[0].content.inbound[0]).to.have.property('action', 'discard');
+      expect(messages[1].content.inbound[0]).to.have.property('id', 'flow2');
+      expect(messages[1].content.inbound[0]).to.have.property('action', 'take');
+      expect(messages[2].content.inbound[0]).to.have.property('id', 'flow3');
+      expect(messages[2].content.inbound[0]).to.have.property('action', 'discard');
     });
   });
 });

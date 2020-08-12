@@ -106,11 +106,11 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
-      assertMessage('activity.leave', 'start');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
+      assertMessage('activity.leave', 'start');
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
     });
@@ -165,7 +165,6 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start1');
       assertMessage('activity.start', 'start1');
       assertMessage('activity.end', 'start1');
-      assertMessage('activity.leave', 'start1');
     });
 
     And('the activity with two inbound completes twice', () => {
@@ -173,14 +172,15 @@ Feature('Process', () => {
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
+      assertMessage('activity.leave', 'start1');
       assertMessage('activity.enter', 'start2');
       assertMessage('activity.start', 'start2');
       assertMessage('activity.end', 'start2');
-      assertMessage('activity.leave', 'start2');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
+      assertMessage('activity.leave', 'start2');
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
     });
@@ -238,17 +238,17 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
-      assertMessage('activity.leave', 'start');
       assertMessage('activity.enter', 'decision');
       assertMessage('activity.start', 'decision');
       assertMessage('activity.end', 'decision');
-      assertMessage('activity.leave', 'decision');
       assertMessage('activity.discard', 'end1');
       assertMessage('activity.leave', 'end1');
       assertMessage('activity.enter', 'end2');
       assertMessage('activity.start', 'end2');
       assertMessage('activity.end', 'end2');
       assertMessage('activity.leave', 'end2');
+      assertMessage('activity.leave', 'decision');
+      assertMessage('activity.leave', 'start');
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
     });
@@ -485,20 +485,20 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start1');
       assertMessage('activity.start', 'start1');
       assertMessage('activity.end', 'start1');
-      assertMessage('activity.leave', 'start1');
       assertMessage('activity.init', 'join');
+      assertMessage('activity.leave', 'start1');
       assertMessage('activity.enter', 'start2');
       assertMessage('activity.start', 'start2');
       assertMessage('activity.end', 'start2');
-      assertMessage('activity.leave', 'start2');
       assertMessage('activity.enter', 'join');
       assertMessage('activity.start', 'join');
       assertMessage('activity.end', 'join');
-      assertMessage('activity.leave', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
+      assertMessage('activity.leave', 'join');
+      assertMessage('activity.leave', 'start2');
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
     });
@@ -557,20 +557,20 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
-      assertMessage('activity.leave', 'start');
       assertMessage('activity.enter', 'decision');
       assertMessage('activity.start', 'decision');
       assertMessage('activity.end', 'decision');
-      assertMessage('activity.leave', 'decision');
       assertMessage('activity.init', 'join');
       assertMessage('activity.enter', 'join');
       assertMessage('activity.start', 'join');
       assertMessage('activity.end', 'join');
-      assertMessage('activity.leave', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
+      assertMessage('activity.leave', 'join');
+      assertMessage('activity.leave', 'decision');
+      assertMessage('activity.leave', 'start');
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
     });
@@ -639,19 +639,17 @@ Feature('Process', () => {
       assertMessage('activity.start', 'start');
       assertMessage('activity.execution.completed', 'start');
       assertMessage('activity.end', 'start');
-      assertMessage('flow.pre-flight', 'flow1');
-      assertMessage('activity.leave', 'start');
 
       assertMessage('flow.take', 'flow1');
+
 
       assertMessage('activity.enter', 'activity1');
       assertMessage('activity.start', 'activity1');
       assertMessage('activity.timer', 'activity1');
+      assertMessage('activity.leave', 'start');
       assertMessage('activity.timeout', 'activity1');
       assertMessage('activity.execution.completed', 'activity1');
       assertMessage('activity.end', 'activity1');
-      assertMessage('flow.pre-flight', 'flow2');
-      assertMessage('activity.leave', 'activity1');
 
       assertMessage('flow.take', 'flow2');
 
@@ -659,8 +657,6 @@ Feature('Process', () => {
       assertMessage('activity.start', 'activity2');
       assertMessage('activity.execution.completed', 'activity2');
       assertMessage('activity.end', 'activity2');
-      assertMessage('flow.pre-flight', 'flow3');
-      assertMessage('activity.leave', 'activity2');
 
       assertMessage('flow.take', 'flow3');
 
@@ -668,9 +664,6 @@ Feature('Process', () => {
       assertMessage('activity.start', 'decision');
       assertMessage('activity.execution.completed', 'decision');
       assertMessage('activity.end', 'decision');
-      assertMessage('flow.pre-flight', 'flow4');
-      assertMessage('flow.pre-flight', 'flow5');
-      assertMessage('activity.leave', 'decision');
 
       assertMessage('flow.discard', 'flow4');
       assertMessage('flow.take', 'flow5');
@@ -681,18 +674,21 @@ Feature('Process', () => {
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
 
-      assertMessage('activity.discard', 'activity1');
-
-      assertMessage('flow.pre-flight', 'flow2');
+      assertMessage('activity.leave', 'decision');
+      assertMessage('activity.leave', 'activity2');
       assertMessage('activity.leave', 'activity1');
+
+      assertMessage('activity.discard', 'activity1');
 
       assertMessage('flow.discard', 'flow2');
 
       assertMessage('activity.discard', 'activity2');
-      assertMessage('flow.pre-flight', 'flow3');
-      assertMessage('activity.leave', 'activity2');
 
       assertMessage('flow.looped', 'flow3');
+
+      assertMessage('activity.leave', 'activity2');
+      assertMessage('activity.leave', 'activity1');
+
       assertMessage('process.end');
       assertMessage('process.leave');
 
@@ -763,11 +759,9 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
-      assertMessage('activity.leave', 'start');
       assertMessage('activity.enter', 'fork');
       assertMessage('activity.start', 'fork');
       assertMessage('activity.end', 'fork');
-      assertMessage('activity.leave', 'fork');
 
       assertMessage('activity.enter', 'timer');
       assertMessage('activity.start', 'timer');
@@ -778,7 +772,14 @@ Feature('Process', () => {
       assertMessage('process.terminate', 'end1');
       assertMessage('activity.end', 'end1');
       assertMessage('activity.leave', 'end1');
+
+      assertMessage('activity.leave', 'fork');
+
+      assertMessage('activity.leave', 'start');
+      assertMessage('activity.stop', 'start');
+      assertMessage('activity.stop', 'fork');
       assertMessage('activity.stop', 'timer');
+
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
 
@@ -838,7 +839,6 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
-      assertMessage('activity.leave', 'start');
       assertMessage('activity.enter', 'postponed');
       assertMessage('activity.start', 'postponed');
       assertMessage('activity.timer', 'postponed');
@@ -848,22 +848,24 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'immediate');
       assertMessage('activity.start', 'immediate');
       assertMessage('activity.end', 'immediate');
-      assertMessage('activity.leave', 'immediate');
       assertMessage('activity.init', 'join');
     });
 
     And('before the timeout event completes', () => {
+      assertMessage('activity.leave', 'immediate');
+      assertMessage('activity.leave', 'start');
+
       assertMessage('activity.timeout', 'postponed');
       assertMessage('activity.end', 'postponed');
-      assertMessage('activity.leave', 'postponed');
       assertMessage('activity.enter', 'join');
       assertMessage('activity.start', 'join');
       assertMessage('activity.end', 'join');
-      assertMessage('activity.leave', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
+      assertMessage('activity.leave', 'join');
+      assertMessage('activity.leave', 'postponed');
     });
   });
 
@@ -917,7 +919,6 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
-      assertMessage('activity.leave', 'start');
       assertMessage('activity.enter', 'receive');
       assertMessage('activity.start', 'receive');
       assertMessage('activity.wait', 'receive');
@@ -934,14 +935,15 @@ Feature('Process', () => {
     Then('the process continuous execution and completes', async () => {
       await completed;
 
+      assertMessage('activity.leave', 'start');
       assertMessage('activity.consumed', 'receive');
       assertMessage('activity.catch', 'receive');
       assertMessage('activity.end', 'receive');
-      assertMessage('activity.leave', 'receive');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
+      assertMessage('activity.leave', 'receive');
     });
   });
 
@@ -998,7 +1000,6 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
-      assertMessage('activity.leave', 'start');
       assertMessage('activity.enter', 'postponed');
       assertMessage('activity.start', 'postponed');
       assertMessage('activity.wait', 'postponed');
@@ -1009,22 +1010,24 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'immediate');
       assertMessage('activity.start', 'immediate');
       assertMessage('activity.end', 'immediate');
-      assertMessage('activity.leave', 'immediate');
       assertMessage('activity.init', 'join');
     });
 
     And('before the timeout event completes', () => {
+      assertMessage('activity.leave', 'immediate');
+      assertMessage('activity.leave', 'start');
+
       assertMessage('activity.timeout', 'postponed');
       assertMessage('activity.end', 'postponed');
-      assertMessage('activity.leave', 'postponed');
       assertMessage('activity.enter', 'join');
       assertMessage('activity.start', 'join');
       assertMessage('activity.end', 'join');
-      assertMessage('activity.leave', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
+      assertMessage('activity.leave', 'join');
+      assertMessage('activity.leave', 'postponed');
       expect(messages.length).to.equal(0);
     });
 
@@ -1043,7 +1046,6 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
-      assertMessage('activity.leave', 'start');
       assertMessage('activity.enter', 'postponed');
       assertMessage('activity.start', 'postponed');
       assertMessage('activity.wait', 'postponed');
@@ -1051,16 +1053,18 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'immediate');
       assertMessage('activity.start', 'immediate');
       assertMessage('activity.end', 'immediate');
-      assertMessage('activity.leave', 'immediate');
 
       api.signal();
     });
 
     Then('the combined event completes', () => {
       assertMessage('activity.init', 'join');
+
+      assertMessage('activity.leave', 'immediate');
+      assertMessage('activity.leave', 'start');
+
       assertMessage('activity.catch', 'postponed');
       assertMessage('activity.end', 'postponed');
-      assertMessage('activity.leave', 'postponed');
     });
 
     And('the timeout is discarded and process completes', async () => {
@@ -1068,11 +1072,12 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'join');
       assertMessage('activity.start', 'join');
       assertMessage('activity.end', 'join');
-      assertMessage('activity.leave', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
+      assertMessage('activity.leave', 'join');
+      assertMessage('activity.leave', 'postponed');
     });
   });
 
@@ -1183,7 +1188,6 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
-      assertMessage('activity.leave', 'start');
       assertMessage('activity.enter', 'service');
       assertMessage('activity.enter', 'attached');
       assertMessage('activity.start', 'attached');
@@ -1202,18 +1206,16 @@ Feature('Process', () => {
       assertMessage('activity.end', 'service');
     });
 
-    And('the boundary event is discarded', () => {
-      assertMessage('activity.leave', 'attached');
+    And('service task flow is taken', () => {
+      assertMessage('activity.end', 'end1');
     });
 
     And('boundary event flow is discarded', () => {
       assertMessage('activity.discard', 'end2');
-      assertMessage('activity.leave', 'end2');
     });
 
-    And('service task flow is taken', () => {
-      assertMessage('activity.end', 'end1');
-      assertMessage('activity.leave', 'end1');
+    And('service task has left', () => {
+      assertMessage('activity.leave', 'service');
       expect(messages.length, 'no more messages').to.equal(0);
     });
 
@@ -1232,11 +1234,12 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
-      assertMessage('activity.leave', 'start');
       assertMessage('activity.enter', 'service');
       assertMessage('activity.enter', 'attached');
       assertMessage('activity.start', 'attached');
       assertMessage('activity.start', 'service');
+      assertMessage('activity.leave', 'start');
+
       expect(messages.length, 'no more messages').to.equal(0);
     });
 
@@ -1252,12 +1255,12 @@ Feature('Process', () => {
       assertMessage('activity.catch', 'attached');
     });
 
-    And('the boundary event flow is taken', () => {
-      assertMessage('activity.end', 'end2');
-    });
-
     And('the service flows is discarded', () => {
       assertMessage('activity.discard', 'end1');
+    });
+
+    And('the boundary event flow is taken', () => {
+      assertMessage('activity.end', 'end2');
     });
   });
 
@@ -1315,12 +1318,12 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
-      assertMessage('activity.leave', 'start');
       assertMessage('activity.enter', 'service');
       assertMessage('activity.enter', 'attached');
       assertMessage('activity.start', 'attached');
       assertMessage('activity.timer', 'attached');
       assertMessage('activity.start', 'service');
+      assertMessage('activity.leave', 'start');
       expect(messages.length, 'no more messages').to.equal(0);
     });
 
@@ -1332,25 +1335,22 @@ Feature('Process', () => {
       await completed;
     });
 
-    And('the service task is completed', () => {
+    And('service task flow is taken', () => {
       assertMessage('activity.end', 'service');
-    });
-
-    And('the boundary event is discarded', () => {
-      assertMessage('activity.leave', 'attached');
+      assertMessage('activity.enter', 'end1');
+      assertMessage('activity.start', 'end1');
+      assertMessage('activity.end', 'end1');
+      assertMessage('activity.leave', 'end1');
     });
 
     And('boundary event flow is discarded', () => {
       assertMessage('activity.discard', 'end2');
       assertMessage('activity.leave', 'end2');
+      assertMessage('activity.leave', 'attached');
     });
 
-    And('service task flow is taken', () => {
+    And('the service task is completed', () => {
       assertMessage('activity.leave', 'service');
-      assertMessage('activity.enter', 'end1');
-      assertMessage('activity.start', 'end1');
-      assertMessage('activity.end', 'end1');
-      assertMessage('activity.leave', 'end1');
       expect(messages.length, 'no more messages').to.equal(0);
     });
 
@@ -1370,12 +1370,12 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start');
       assertMessage('activity.start', 'start');
       assertMessage('activity.end', 'start');
-      assertMessage('activity.leave', 'start');
       assertMessage('activity.enter', 'service');
       assertMessage('activity.enter', 'attached');
       assertMessage('activity.start', 'attached');
       assertMessage('activity.timer', 'attached');
       assertMessage('activity.start', 'service');
+      assertMessage('activity.leave', 'start');
     });
 
     When('the service task fails to complete within duration', () => {
@@ -1390,22 +1390,22 @@ Feature('Process', () => {
       assertMessage('activity.timeout', 'attached');
     });
 
-    And('the service task was discarded', () => {
-      assertMessage('activity.leave', 'service');
-    });
-
     And('the service task flow was discarded', () => {
       assertMessage('activity.discard', 'end1');
       assertMessage('activity.leave', 'end1');
     });
 
+    And('the service task was discarded', () => {
+      assertMessage('activity.leave', 'service');
+    });
+
     And('the boundary event flow was taken', () => {
       assertMessage('activity.end', 'attached');
-      assertMessage('activity.leave', 'attached');
       assertMessage('activity.enter', 'end2');
       assertMessage('activity.start', 'end2');
       assertMessage('activity.end', 'end2');
       assertMessage('activity.leave', 'end2');
+      assertMessage('activity.leave', 'attached');
       expect(messages.length, 'no more messages').to.equal(0);
     });
   });
@@ -1479,21 +1479,17 @@ Feature('Process', () => {
       assertMessage('activity.end', 'service');
     });
 
-    And('boundary event flow was discarded', () => {
-      assertMessage('activity.leave', 'attached');
-      assertMessage('activity.discard', 'end2');
-      assertMessage('activity.leave', 'end2');
-    });
-
-    And('the service task completed', () => {
-      assertMessage('activity.leave', 'service');
-    });
-
     And('service task flow was taken', () => {
       assertMessage('activity.enter', 'end1');
       assertMessage('activity.start', 'end1');
       assertMessage('activity.end', 'end1');
       assertMessage('activity.leave', 'end1');
+    });
+
+    And('boundary event flow was discarded', () => {
+      assertMessage('activity.discard', 'end2');
+      assertMessage('activity.leave', 'end2');
+      assertMessage('activity.leave', 'attached');
     });
 
     let timeout;
@@ -1703,21 +1699,17 @@ Feature('Process', () => {
       assertMessage('activity.end', 'userInput');
     });
 
-    And('the boundary event is discarded', () => {
-      assertMessage('activity.leave', 'attached');
+    And('user task flow were taken', () => {
+      assertMessage('activity.enter', 'end1');
+      assertMessage('activity.start', 'end1');
+      assertMessage('activity.end', 'end1');
+      assertMessage('activity.leave', 'end1');
     });
 
     And('boundary event flow were discarded', () => {
       assertMessage('activity.discard', 'end2');
       assertMessage('activity.leave', 'end2');
-    });
-
-    And('user task flow were taken', () => {
       assertMessage('activity.leave', 'userInput');
-      assertMessage('activity.enter', 'end1');
-      assertMessage('activity.start', 'end1');
-      assertMessage('activity.end', 'end1');
-      assertMessage('activity.leave', 'end1');
       expect(messages.length, 'no more messages').to.equal(0);
     });
   });
@@ -1788,14 +1780,13 @@ Feature('Process', () => {
       assertMessage('activity.start', 'start');
       assertMessage('activity.execution.completed', 'start');
       assertMessage('activity.end', 'start');
-      assertMessage('flow.pre-flight', 'flow0');
-      assertMessage('activity.leave', 'start');
 
       assertMessage('flow.take', 'flow0');
 
       assertMessage('activity.enter', 'activity0');
       assertMessage('activity.start', 'activity0');
       assertMessage('activity.wait', 'activity0');
+      assertMessage('activity.leave', 'start');
       assertMessage('activity.stop', 'activity0');
 
       assertMessage('process.stop', 'theProcess');
@@ -1829,28 +1820,24 @@ Feature('Process', () => {
     Then('process execution is completed', () => {
       assertMessage('activity.execution.completed', 'activity0');
       assertMessage('activity.end', 'activity0');
-      assertMessage('flow.pre-flight', 'flow1');
-      assertMessage('activity.leave', 'activity0');
 
       assertMessage('flow.take', 'flow1');
 
       assertMessage('activity.enter', 'activity1');
       assertMessage('activity.start', 'activity1');
       assertMessage('activity.timer', 'activity1');
+      assertMessage('activity.leave', 'activity0');
       assertMessage('activity.timeout', 'activity1');
       assertMessage('activity.execution.completed', 'activity1');
       assertMessage('activity.end', 'activity1');
-      assertMessage('flow.pre-flight', 'flow2');
-      assertMessage('activity.leave', 'activity1');
 
       assertMessage('flow.take', 'flow2');
+
 
       assertMessage('activity.enter', 'activity2');
       assertMessage('activity.start', 'activity2');
       assertMessage('activity.execution.completed', 'activity2');
       assertMessage('activity.end', 'activity2');
-      assertMessage('flow.pre-flight', 'flow3');
-      assertMessage('activity.leave', 'activity2');
 
       assertMessage('flow.take', 'flow3');
 
@@ -1858,17 +1845,14 @@ Feature('Process', () => {
       assertMessage('activity.start', 'decision');
       assertMessage('activity.execution.completed', 'decision');
       assertMessage('activity.end', 'decision');
-      assertMessage('flow.pre-flight', 'flow4');
-      assertMessage('flow.pre-flight', 'flow5');
-      assertMessage('activity.leave', 'decision');
 
       assertMessage('flow.discard', 'flow4');
 
       assertMessage('activity.discard', 'activity0');
-      assertMessage('flow.pre-flight', 'flow1');
-      assertMessage('activity.leave', 'activity0');
 
       assertMessage('flow.discard', 'flow1');
+
+      assertMessage('activity.leave', 'activity0');
 
       assertMessage('flow.take', 'flow5');
 
@@ -1878,18 +1862,20 @@ Feature('Process', () => {
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
 
-      assertMessage('activity.discard', 'activity1');
-
-      assertMessage('flow.pre-flight', 'flow2');
+      assertMessage('activity.leave', 'decision');
+      assertMessage('activity.leave', 'activity2');
       assertMessage('activity.leave', 'activity1');
+
+      assertMessage('activity.discard', 'activity1');
 
       assertMessage('flow.discard', 'flow2');
 
       assertMessage('activity.discard', 'activity2');
-      assertMessage('flow.pre-flight', 'flow3');
-      assertMessage('activity.leave', 'activity2');
-
       assertMessage('flow.looped', 'flow3');
+
+      assertMessage('activity.leave', 'activity2');
+      assertMessage('activity.leave', 'activity1');
+
       assertMessage('process.end');
       assertMessage('process.leave');
 
@@ -2042,26 +2028,9 @@ Feature('Process', () => {
 
     And('task ends', () => {
       assertMessage('activity.end', 'task');
-      assertMessage('flow.pre-flight', 'toEnd');
-    });
-
-    And('timer is discarded', () => {
-      assertMessage('activity.execution.discard', 'bound');
-    });
-
-    And('bound flow is discarded', () => {
-      assertMessage('flow.pre-flight', 'fromBoundaryEvent');
-      assertMessage('activity.leave', 'bound');
-      assertMessage('flow.discard', 'fromBoundaryEvent');
-    });
-
-    And('end event is discarded', () => {
-      assertMessage('activity.discard', 'end');
-      assertMessage('activity.leave', 'end');
     });
 
     When('task leaves takes flow to end', () => {
-      assertMessage('activity.leave', 'task');
       assertMessage('flow.take', 'toEnd');
     });
 
@@ -2073,7 +2042,22 @@ Feature('Process', () => {
       assertMessage('activity.leave', 'end');
     });
 
+    And('timer is discarded', () => {
+      assertMessage('activity.execution.discard', 'bound');
+    });
+
+    And('bound flow is discarded', () => {
+      assertMessage('flow.discard', 'fromBoundaryEvent');
+    });
+
+    And('end event is discarded', () => {
+      assertMessage('activity.discard', 'end');
+      assertMessage('activity.leave', 'end');
+      assertMessage('activity.leave', 'bound');
+    });
+
     And('process completes', () => {
+      assertMessage('activity.leave', 'task');
       assertMessage('process.end');
       assertMessage('process.leave');
     });
@@ -2110,9 +2094,10 @@ Feature('Process', () => {
       processInstance.run();
     });
 
-    Then('the process waits for user input', async () => {
+    Then('the process waits for user input and has left start event', async () => {
       await waiting;
       assertMessage('activity.wait', 'userTask1');
+      assertMessage('activity.leave', 'StartEvent_1');
       expect(messages.length).to.equal(0);
     });
 
@@ -2235,6 +2220,9 @@ Feature('Process', () => {
     Then('the process waits for user input', async () => {
       await waiting;
       assertMessage('activity.wait', 'userTask1');
+      assertMessage('activity.leave', 'scriptTask1');
+      assertMessage('activity.leave', 'StartEvent_1');
+
       expect(messages.length).to.equal(0);
     });
 

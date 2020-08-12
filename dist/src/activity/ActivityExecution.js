@@ -37,6 +37,7 @@ function ActivityExecution(activity, context) {
 
     discard,
     execute,
+    passthrough,
     getApi,
     getPostponed,
     getState,
@@ -78,6 +79,11 @@ function ActivityExecution(activity, context) {
     activate();
     source = Behaviour(activity, context);
     broker.publish('execution', 'execute.start', (0, _messageHelper.cloneContent)(initMessage.content));
+  }
+
+  function passthrough(executeMessage) {
+    if (!source) return execute(executeMessage);
+    return source.execute(executeMessage);
   }
 
   function discard() {

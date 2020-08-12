@@ -111,9 +111,6 @@ Feature('Definition', () => {
       assertMessage('activity.start', 'mainStartEvent');
       assertMessage('activity.execution.completed', 'mainStartEvent');
       assertMessage('activity.end', 'mainStartEvent');
-      assertMessage('flow.pre-flight', 'flow1');
-      assertMessage('activity.leave', 'mainStartEvent');
-
       assertMessage('flow.take', 'flow1');
 
       assertMessage('activity.enter', 'task1');
@@ -128,14 +125,10 @@ Feature('Definition', () => {
       assertMessage('activity.enter', 'messageStartEvent');
       assertMessage('activity.start', 'messageStartEvent');
       assertMessage('activity.wait', 'messageStartEvent');
-
       assertMessage('activity.consumed', 'messageStartEvent');
       assertMessage('activity.catch', 'messageStartEvent');
-
       assertMessage('activity.execution.completed', 'messageStartEvent');
       assertMessage('activity.end', 'messageStartEvent');
-      assertMessage('flow.pre-flight', 'flow-p-1');
-      assertMessage('activity.leave', 'messageStartEvent');
 
       assertMessage('flow.take', 'flow-p-1');
 
@@ -143,8 +136,6 @@ Feature('Definition', () => {
       assertMessage('activity.start', 'otherTask');
       assertMessage('activity.execution.completed', 'otherTask');
       assertMessage('activity.end', 'otherTask');
-      assertMessage('flow.pre-flight', 'flow-p-2');
-      assertMessage('activity.leave', 'otherTask');
 
       assertMessage('flow.take', 'flow-p-2');
 
@@ -152,8 +143,6 @@ Feature('Definition', () => {
       assertMessage('activity.start', 'completeTask');
       assertMessage('activity.execution.completed', 'completeTask');
       assertMessage('activity.end', 'completeTask');
-      assertMessage('flow.pre-flight', 'flow-p-3');
-      assertMessage('activity.leave', 'completeTask');
 
       assertMessage('flow.take', 'flow-p-3');
 
@@ -163,11 +152,12 @@ Feature('Definition', () => {
       assertMessage('activity.end', 'participantEndEvent');
       assertMessage('activity.leave', 'participantEndEvent');
 
+      assertMessage('activity.leave', 'completeTask');
+      assertMessage('activity.leave', 'otherTask');
+      assertMessage('activity.leave', 'messageStartEvent');
+
       assertMessage('process.end', 'participantProcess');
       assertMessage('process.leave', 'participantProcess');
-
-      assertMessage('flow.pre-flight', 'flow2');
-      assertMessage('activity.leave', 'task1');
 
       assertMessage('flow.take', 'flow2');
 
@@ -177,8 +167,6 @@ Feature('Definition', () => {
       assertMessage('activity.catch', 'intermediate');
       assertMessage('activity.execution.completed', 'intermediate');
       assertMessage('activity.end', 'intermediate');
-      assertMessage('flow.pre-flight', 'flow3');
-      assertMessage('activity.leave', 'intermediate');
 
       assertMessage('flow.take', 'flow3');
 
@@ -187,6 +175,10 @@ Feature('Definition', () => {
       assertMessage('activity.execution.completed', 'mainEndEvent');
       assertMessage('activity.end', 'mainEndEvent');
       assertMessage('activity.leave', 'mainEndEvent');
+
+      assertMessage('activity.leave', 'intermediate');
+      assertMessage('activity.leave', 'task1');
+      assertMessage('activity.leave', 'mainStartEvent');
 
       assertMessage('process.end', 'mainProcess');
       assertMessage('process.leave', 'mainProcess');
@@ -507,17 +499,19 @@ Feature('Definition', () => {
       assertMessage('activity.start', 'StartEvent_1');
       assertMessage('activity.execution.completed', 'StartEvent_1');
       assertMessage('activity.end', 'StartEvent_1');
-      assertMessage('activity.leave', 'StartEvent_1');
       assertMessage('activity.enter', 'Task_1');
       assertMessage('activity.start', 'Task_1');
       assertMessage('activity.execution.completed', 'Task_1');
       assertMessage('activity.end', 'Task_1');
-      assertMessage('activity.leave', 'Task_1');
       assertMessage('activity.enter', 'EndEvent_1');
       assertMessage('activity.start', 'EndEvent_1');
       assertMessage('activity.execution.completed', 'EndEvent_1');
       assertMessage('activity.end', 'EndEvent_1');
       assertMessage('activity.leave', 'EndEvent_1');
+
+      assertMessage('activity.leave', 'Task_1');
+      assertMessage('activity.leave', 'StartEvent_1');
+
       assertMessage('process.end', 'Process_1');
       assertMessage('process.leave', 'Process_1');
 
@@ -528,17 +522,19 @@ Feature('Definition', () => {
       assertMessage('activity.start', 'StartEvent_2');
       assertMessage('activity.execution.completed', 'StartEvent_2');
       assertMessage('activity.end', 'StartEvent_2');
-      assertMessage('activity.leave', 'StartEvent_2');
       assertMessage('activity.enter', 'Task_2');
       assertMessage('activity.start', 'Task_2');
       assertMessage('activity.execution.completed', 'Task_2');
       assertMessage('activity.end', 'Task_2');
-      assertMessage('activity.leave', 'Task_2');
       assertMessage('activity.enter', 'EndEvent_2');
       assertMessage('activity.start', 'EndEvent_2');
       assertMessage('activity.execution.completed', 'EndEvent_2');
       assertMessage('activity.end', 'EndEvent_2');
       assertMessage('activity.leave', 'EndEvent_2');
+
+      assertMessage('activity.leave', 'Task_2');
+      assertMessage('activity.leave', 'StartEvent_2');
+
       assertMessage('process.end', 'Process_2');
       assertMessage('process.leave', 'Process_2');
 

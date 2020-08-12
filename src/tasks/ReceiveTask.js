@@ -1,5 +1,4 @@
 import Activity from '../activity/Activity';
-import getPropertyValue from '../getPropertyValue';
 import {cloneContent} from '../messageHelper';
 
 export default function ReceiveTask(activityDef, context) {
@@ -50,12 +49,20 @@ export function ReceiveTaskBehaviour(activity) {
     broker.publish('event', 'activity.wait', cloneContent(content, {message: {...referenceMessage}}));
 
     function onCatchMessage(routingKey, message) {
-      if (getPropertyValue(message, 'content.message.id') !== referenceMessage.id) return;
+      const {content: delegateContent} = message;
+
+      const {id: signalId, executionId: signalExecutionId} = delegateContent.message || {};
+      if (!referenceMessage.id && signalId || signalExecutionId) {
+        if (loopCharacteristics && signalExecutionId !== executionId) return;
+        if (signalId !== id && signalExecutionId !== executionId) return;
+        logger.debug(`<${executionId} (${id})> caught direct message`);
+      } else if (referenceMessage.id !== signalId) return;
+      else {
+        logger.debug(`<${executionId} (${id})> caught ${description}`);
+      }
 
       const {type: messageType, correlationId} = message.properties;
       broker.publish('event', 'activity.consumed', cloneContent(content, {message: {...message.content.message}}), {correlationId, type: messageType});
-
-      logger.debug(`<${executionId} (${id})> caught ${description}`);
       broker.publish('event', 'activity.catch', cloneContent(content, {message: message.content.message}), {type: 'catch', correlationId});
 
       complete(message.content.message, {correlationId});

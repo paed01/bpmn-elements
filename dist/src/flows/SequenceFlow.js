@@ -37,7 +37,7 @@ function SequenceFlow(flowDef, {
     type,
     behaviour
   });
-  const counters = {
+  let counters = {
     looped: 0,
     take: 0,
     discard: 0
@@ -64,7 +64,6 @@ function SequenceFlow(flowDef, {
     getApi,
     getCondition,
     getState,
-    preFlight,
     recover,
     shake,
     stop,
@@ -104,7 +103,7 @@ function SequenceFlow(flowDef, {
 
   function discard(content = {}) {
     const {
-      sequenceId
+      sequenceId = (0, _shared.getUniqueId)(id)
     } = content;
     const discardSequence = content.discardSequence = (content.discardSequence || []).slice();
 
@@ -130,19 +129,7 @@ function SequenceFlow(flowDef, {
     });
   }
 
-  function preFlight(action) {
-    const sequenceId = (0, _shared.getUniqueId)(id);
-    broker.publish('event', 'flow.pre-flight', createMessage({
-      action,
-      sequenceId,
-      state: 'pre-flight'
-    }), {
-      type: 'pre-flight'
-    });
-    return sequenceId;
-  }
-
-  function createMessage(override = {}) {
+  function createMessage(override) {
     return { ...override,
       id,
       type,
@@ -171,7 +158,9 @@ function SequenceFlow(flowDef, {
   }
 
   function recover(state) {
-    Object.assign(counters, state.counters);
+    counters = { ...counters,
+      ...state.counters
+    };
     broker.recover(state.broker);
   }
 

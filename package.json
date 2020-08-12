@@ -50,12 +50,12 @@
     "chai": "^4.2.0",
     "chronokinesis": "^2.0.1",
     "debug": "^4.1.1",
-    "eslint": "^7.6.0",
+    "eslint": "^7.7.0",
     "got": "^11.5.2",
     "mocha": "^8.1.1",
     "mocha-cakes-2": "^3.3.0",
     "moddle-context-serializer": "^0.16.0",
-    "nock": "^13.0.3",
+    "nock": "^13.0.4",
     "nyc": "^15.1.0"
   },
   "dependencies": {

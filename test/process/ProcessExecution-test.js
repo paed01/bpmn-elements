@@ -452,12 +452,12 @@ describe('Process execution', () => {
         },
       });
       activity1.broker.publish('event', 'activity.enter', {id: activity1.id, executionId: activity1.executionId, parent: {id: 'process1'}});
-      const sequenceId = sequenceflow.preFlight();
+      sequenceflow.take({sequenceId: 'Flow_take_1'});
       activity1.broker.publish('event', 'activity.leave', {id: activity1.id, executionId: activity1.executionId, parent: {id: 'process1'}});
 
       expect(execution).to.have.property('completed', false);
 
-      activity2.broker.publish('event', 'activity.enter', {id: activity2.id, executionId: activity2.executionId, parent: {id: 'process1'}, inbound: [{id: sequenceflow.id, isSequenceFlow: true, sequenceId}]});
+      activity2.broker.publish('event', 'activity.enter', {id: activity2.id, executionId: activity2.executionId, parent: {id: 'process1'}, inbound: [{id: sequenceflow.id, isSequenceFlow: true, sequenceId: 'Flow_take_1'}]});
       activity2.broker.publish('event', 'activity.leave', {id: activity2.id, executionId: activity2.executionId, parent: {id: 'process1'}});
 
       expect(execution).to.have.property('completed', true);

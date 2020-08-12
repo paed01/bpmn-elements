@@ -100,11 +100,11 @@ describe('SubProcess', () => {
       assertMessage('activity.start', 'subUserTask');
       assertMessage('activity.wait', 'subUserTask');
       assertMessage('activity.end', 'subUserTask');
-      assertMessage('activity.leave', 'subUserTask');
       assertMessage('activity.enter', 'subScriptTask');
       assertMessage('activity.start', 'subScriptTask');
       assertMessage('activity.end', 'subScriptTask');
       assertMessage('activity.leave', 'subScriptTask');
+      assertMessage('activity.leave', 'subUserTask');
 
       assertMessage('activity.end', 'subProcess');
       assertMessage('activity.leave', 'subProcess');
@@ -137,9 +137,9 @@ describe('SubProcess', () => {
       assertMessage('activity.enter', 'subUserTask');
       assertMessage('activity.start', 'subUserTask');
       assertMessage('activity.wait', 'subUserTask');
-      assertMessage('activity.leave', 'subUserTask');
       assertMessage('activity.discard', 'subScriptTask');
       assertMessage('activity.leave', 'subScriptTask');
+      assertMessage('activity.leave', 'subUserTask');
       assertMessage('activity.end', 'subProcess');
       assertMessage('activity.leave', 'subProcess');
     });
@@ -375,11 +375,9 @@ describe('SubProcess', () => {
 
       activity.run();
 
-      expect(messages).to.have.length(4);
-      expect(messages[0].fields).to.have.property('routingKey', 'flow.pre-flight');
+      expect(messages).to.have.length(2);
+      expect(messages[0].fields).to.have.property('routingKey', 'flow.take');
       expect(messages[1].fields).to.have.property('routingKey', 'flow.take');
-      expect(messages[2].fields).to.have.property('routingKey', 'flow.pre-flight');
-      expect(messages[3].fields).to.have.property('routingKey', 'flow.take');
     });
   });
 

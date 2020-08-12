@@ -858,8 +858,6 @@ describe('Activity', () => {
       activity.discard();
 
       expect(activity.counters).to.have.property('discarded', 2);
-
-      expect(activity.broker.getExchange('api')).to.have.property('bindingCount', 0);
     });
 
     it('next run can be discarded by api', async () => {
@@ -889,8 +887,6 @@ describe('Activity', () => {
       activity.getApi(executeMessage).discard();
 
       expect(activity.counters).to.have.property('discarded', 2);
-
-      expect(activity.broker.getExchange('api')).to.have.property('bindingCount', 0);
     });
   });
 
@@ -2416,6 +2412,15 @@ describe('Activity', () => {
 
       recovered.activate();
       recovered.resume();
+
+      recovered.getApi().signal();
+      expect(recovered.counters).to.have.property('taken', 1);
+
+      recovered.getApi().signal();
+      expect(recovered.counters).to.have.property('taken', 2);
+
+      recovered.getApi().signal();
+      expect(recovered.counters).to.have.property('taken', 2);
     });
   });
 

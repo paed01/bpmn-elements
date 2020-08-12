@@ -11,7 +11,7 @@ export default function SequenceFlow(flowDef, {environment}) {
 
   environment.registerScript({id, type, behaviour});
 
-  const counters = {
+  let counters = {
     looped: 0,
     take: 0,
     discard: 0,
@@ -36,7 +36,6 @@ export default function SequenceFlow(flowDef, {environment}) {
     getApi,
     getCondition,
     getState,
-    preFlight,
     recover,
     shake,
     stop,
@@ -72,7 +71,7 @@ export default function SequenceFlow(flowDef, {environment}) {
   }
 
   function discard(content = {}) {
-    const {sequenceId} = content;
+    const {sequenceId = getUniqueId(id)} = content;
     const discardSequence = content.discardSequence = (content.discardSequence || []).slice();
     if (discardSequence.indexOf(targetId) > -1) {
       ++counters.looped;
@@ -96,13 +95,7 @@ export default function SequenceFlow(flowDef, {environment}) {
     broker.publish('event', `flow.${action}`, eventContent, {type: action});
   }
 
-  function preFlight(action) {
-    const sequenceId = getUniqueId(id);
-    broker.publish('event', 'flow.pre-flight', createMessage({action, sequenceId, state: 'pre-flight'}), {type: 'pre-flight'});
-    return sequenceId;
-  }
-
-  function createMessage(override = {}) {
+  function createMessage(override) {
     return {
       ...override,
       id,
@@ -131,7 +124,7 @@ export default function SequenceFlow(flowDef, {environment}) {
   }
 
   function recover(state) {
-    Object.assign(counters, state.counters);
+    counters = {...counters, ...state.counters};
     broker.recover(state.broker);
   }
 

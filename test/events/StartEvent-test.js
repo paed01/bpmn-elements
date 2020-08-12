@@ -85,7 +85,7 @@ describe('StartEvent', () => {
       expect(event.broker).to.have.property('consumerCount', 0);
     });
 
-    it('discarded while waiting discards run and cancels api listeners', async () => {
+    it('discarded while waiting discards run and ignores signal', async () => {
       const event = context.getActivityById('start');
 
       const wait = event.waitFor('wait');
@@ -96,7 +96,12 @@ describe('StartEvent', () => {
       waitApi.discard();
 
       expect(event.counters).to.have.property('discarded', 1);
-      expect(event.broker.getExchange('api')).to.have.property('bindingCount', 0);
+      expect(event.counters).to.have.property('taken', 0);
+
+      waitApi.signal();
+
+      expect(event.counters).to.have.property('taken', 0);
+      expect(event.counters).to.have.property('discarded', 1);
     });
 
     it('keeps state when stopped', async () => {
@@ -365,6 +370,7 @@ describe('StartEvent', () => {
     it('on wait cancels all listeners', () => {
       const event = StartEvent({
         id: 'start',
+        type: 'startevent',
         behaviour: {
           eventDefinitions: [{Behaviour: MessageEventDefinition}],
         }
@@ -421,9 +427,10 @@ describe('StartEvent', () => {
       expect(event.counters).to.have.property('discarded', 1);
     });
 
-    it('on message wait discards run and cancels api listeners', () => {
+    it('discard on message wait discards run and ignores signal', () => {
       const event = StartEvent({
         id: 'start',
+        type: 'startevent',
         behaviour: {
           eventDefinitions: [{Behaviour: MessageEventDefinition}],
         }
@@ -435,20 +442,21 @@ describe('StartEvent', () => {
         loadExtensions() {},
       });
 
-      const apiExchange = event.broker.getExchange('api');
-      const bindingCount = apiExchange.bindingCount;
-
-      event.once('wait', (api) => api.discard());
+      event.once('wait', (api) => {
+        api.discard();
+        api.signal();
+      });
 
       event.run();
 
       expect(event.counters).to.have.property('discarded', 1);
-      expect(apiExchange).to.have.property('bindingCount', bindingCount);
+      expect(event.counters).to.have.property('taken', 0);
     });
 
-    it('on form wait discards run and cancels api listeners', () => {
+    it('discard on form wait discards run and ignores signal', () => {
       const event = StartEvent({
         id: 'start',
+        type: 'startevent',
         behaviour: {}
       }, {
         environment: Environment({Logger: testHelpers.Logger}),
@@ -459,12 +467,15 @@ describe('StartEvent', () => {
       });
 
       event.once('enter', () => event.broker.publish('format', 'run.enter', {form: {key: 1}}));
-      event.once('wait', (api) => api.discard());
+      event.once('wait', (api) => {
+        api.discard();
+        api.signal();
+      });
 
       event.run();
 
       expect(event.counters).to.have.property('discarded', 1);
-      expect(event.broker.getExchange('api')).to.have.property('bindingCount', 0);
+      expect(event.counters).to.have.property('taken', 0);
     });
   });
 });

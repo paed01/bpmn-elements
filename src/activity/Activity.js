@@ -168,7 +168,8 @@ export default function Activity(Behaviour, activityDef, context) {
       ...override,
       id,
       type,
-      name,
+      ...(name ? {name} : undefined),
+      ...(status ? {status} : undefined),
       parent: cloneParent(parent),
     };
 
@@ -236,6 +237,7 @@ export default function Activity(Behaviour, activityDef, context) {
     }
 
     deactivateRunConsumers();
+    if (extensions) extensions.deactivate();
     runQ.purge();
     broker.publish('run', 'run.discard', cloneContent(stateMessage.content));
     consumeRunQ();
@@ -255,8 +257,26 @@ export default function Activity(Behaviour, activityDef, context) {
   }
 
   function stop() {
-    if (!activityApi.isRunning) return;
-    getApi().stop();
+    if (!consumingRunQ) return;
+    return getApi().stop();
+  }
+
+  function onStop(message) {
+    const running = consumingRunQ;
+
+    stopped = true;
+
+    consumingRunQ = false;
+    broker.cancel('_activity-run');
+    broker.cancel('_activity-api');
+    broker.cancel('_activity-execution');
+    broker.cancel('_run-on-inbound');
+    broker.cancel('_format-consumer');
+
+    if (running) {
+      if (extensions) extensions.deactivate(message || createMessage());
+      publishEvent('stop');
+    }
   }
 
   function activate() {
@@ -435,8 +455,8 @@ export default function Activity(Behaviour, activityDef, context) {
 
     function onResumeMessage() {
       message.ack();
-
       const {fields} = stateMessage;
+
       switch (fields.routingKey) {
         case 'run.enter':
         case 'run.start':
@@ -450,7 +470,7 @@ export default function Activity(Behaviour, activityDef, context) {
 
       if (!fields.redelivered) return;
 
-      logger.debug(`<${id}> resume from ${status}`);
+      logger.debug(`<${id}> resume from ${message.content.status}`);
 
       return broker.publish('run', fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
     }
@@ -506,6 +526,12 @@ export default function Activity(Behaviour, activityDef, context) {
 
         break;
       }
+      case 'run.execute.passthrough': {
+        if (!isRedelivered && execution) {
+          executeMessage = message;
+          return execution.passthrough(message);
+        }
+      }
       case 'run.execute': {
         status = 'executing';
         executeMessage = message;
@@ -526,10 +552,12 @@ export default function Activity(Behaviour, activityDef, context) {
         counters.taken++;
 
         status = 'end';
+
         if (!isRedelivered) {
-          broker.publish('run', 'run.leave', content, {correlationId});
+          doRunLeave();
           publishEvent('end', content, {correlationId});
         }
+
         break;
       }
       case 'run.error': {
@@ -544,33 +572,31 @@ export default function Activity(Behaviour, activityDef, context) {
 
         status = 'discarded';
         content.outbound = undefined;
-        if (!isRedelivered) {
-          broker.publish('run', 'run.leave', content);
-        }
+
+        if (!isRedelivered) doRunLeave(true);
+
         break;
       }
+      case 'run.outbound.take': {
+        const flow = getOutboundSequenceFlowById(content.flow.id);
+        ack();
+        return flow.take(content.flow);
+      }
+      case 'run.outbound.discard': {
+        const flow = getOutboundSequenceFlowById(content.flow.id);
+        ack();
+        return flow.discard(content.flow);
+      }
       case 'run.leave': {
-        const isDiscarded = status === 'discarded';
-
         status = undefined;
 
-        broker.cancel('_activity-api');
         if (extensions) extensions.deactivate(message);
 
-        if (isRedelivered) break;
-
-        const ignoreOutbound = content.ignoreOutbound;
-        let outbound, leaveContent;
-        if (!ignoreOutbound) {
-          outbound = prepareOutbound(content, isDiscarded);
-          leaveContent = {...content, outbound: outbound.slice()};
-        } else {
-          leaveContent = content;
+        if (!isRedelivered) {
+          broker.publish('run', 'run.next', cloneContent(content), {persistent: false});
+          publishEvent('leave', content, {correlationId});
         }
 
-        broker.publish('run', 'run.next', content, {persistent: false});
-        publishEvent('leave', leaveContent, {correlationId});
-        if (!ignoreOutbound) doOutbound(outbound);
         break;
       }
       case 'run.next':
@@ -579,6 +605,17 @@ export default function Activity(Behaviour, activityDef, context) {
     }
 
     if (!step) ack();
+
+    function doRunLeave(isDiscarded) {
+      const outbound = content.ignoreOutbound ? [] : prepareOutbound(content, isDiscarded);
+      broker.publish('run', 'run.leave', cloneContent(content, {
+        ...(outbound.length ? {outbound} : undefined),
+      }), {correlationId});
+    }
+  }
+
+  function getOutboundSequenceFlowById(flowId) {
+    return outboundSequenceFlows.find((flow) => flow.id === flowId);
   }
 
   function onExecutionMessage(routingKey, message) {
@@ -596,7 +633,8 @@ export default function Activity(Behaviour, activityDef, context) {
       case 'execution.outbound.take': {
         message.ack();
         const outbound = prepareOutbound(content);
-        return doOutbound(outbound);
+        broker.publish('run', 'run.execute.passthrough', cloneContent(content, {outbound}));
+        break;
       }
       case 'execution.stopped': {
         message.ack();
@@ -672,23 +710,6 @@ export default function Activity(Behaviour, activityDef, context) {
     outboundSequenceFlows.forEach((f) => f.shake(message));
   }
 
-  function onStop(message) {
-    if (!activityApi.isRunning) return;
-
-    stopped = true;
-
-    consumingRunQ = false;
-    broker.cancel('_activity-run');
-    broker.cancel('_activity-api');
-    broker.cancel('_activity-execution');
-    broker.cancel('_run-on-inbound');
-    broker.cancel('_format-consumer');
-
-    if (extensions) extensions.deactivate(message || createMessage());
-
-    publishEvent('stop');
-  }
-
   function publishEvent(state, content, messageProperties = {}) {
     if (!state) return;
     if (!content) content = createMessage();
@@ -711,8 +732,11 @@ export default function Activity(Behaviour, activityDef, context) {
 
     return outboundSequenceFlows.map((flow) => {
       const preparedFlow = getPrepared(flow.id);
-      const sequenceId = flow.preFlight(preparedFlow.action);
+      const sequenceId = getUniqueId(`${preparedFlow.id}_${preparedFlow.action}`);
       preparedFlow.sequenceId = sequenceId;
+
+      broker.publish('run', 'run.outbound.' + preparedFlow.action, cloneContent(fromContent, {flow: preparedFlow}));
+
       return preparedFlow;
     });
 
@@ -729,15 +753,6 @@ export default function Activity(Behaviour, activityDef, context) {
       if (message !== undefined && !('message' in evaluatedFlow)) evaluatedFlow.message = message;
       return evaluatedFlow;
     }
-  }
-
-  function doOutbound(preparedOutbound) {
-    if (!preparedOutbound) return;
-
-    outboundSequenceFlows.forEach((flow, idx) => {
-      const preparedFlow = preparedOutbound[idx];
-      flow[preparedFlow.action](preparedFlow);
-    });
   }
 
   function getActivityById(elementId) {

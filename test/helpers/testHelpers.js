@@ -69,6 +69,7 @@ export function Logger(scope) {
 function emptyContext(override, options) {
   return Context({
     getActivities() {},
+    getActivityExtensions() {},
     getAssociations() {},
     getInboundAssociations() {},
     getInboundSequenceFlows() {},

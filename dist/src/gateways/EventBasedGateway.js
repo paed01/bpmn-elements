@@ -25,6 +25,7 @@ function EventBasedGatewayBehaviour(activity, context) {
     logger,
     outbound: outboundSequenceFlows = []
   } = activity;
+  let executing = false;
   const source = {
     id,
     type,
@@ -35,8 +36,11 @@ function EventBasedGatewayBehaviour(activity, context) {
   function execute(executeMessage) {
     const isRedelivered = executeMessage.fields.redelivered;
     const content = executeMessage.content;
-    const executionId = content.executionId;
-    const outbound = content.outbound = [];
+    const {
+      executionId,
+      outbound = [],
+      outboundTaken
+    } = content;
     const targets = [];
 
     for (let i = 0; i < outboundSequenceFlows.length; i++) {
@@ -48,7 +52,9 @@ function EventBasedGatewayBehaviour(activity, context) {
       });
     }
 
-    const targetConsumerTag = `_gateway-listener-${executionId}`;
+    if (!targets.length) return complete(content);
+    if (executing && outboundTaken) return;
+    const targetConsumerTag = `_gateway-listener-${id}`;
     targets.forEach(target => {
       target.broker.subscribeOnce('event', 'activity.end', onTargetCompleted, {
         consumerTag: targetConsumerTag
@@ -58,22 +64,38 @@ function EventBasedGatewayBehaviour(activity, context) {
       noAck: true,
       consumerTag: `_api-stop-${executionId}`
     });
-    if (!isRedelivered) return broker.publish('execution', 'execute.outbound.take', (0, _messageHelper.cloneContent)(content));
+    executing = true;
+    if (!isRedelivered) return broker.publish('execution', 'execute.outbound.take', (0, _messageHelper.cloneContent)(content, {
+      outboundTaken: true
+    }));
 
     function onTargetCompleted(_, message, owner) {
-      logger.debug(`<${executionId} (${id})> <${message.content.executionId}> completed run, discarding the rest`);
+      const {
+        id: targetId,
+        exexutionId: targetExecutionId
+      } = message.content;
+      logger.debug(`<${executionId} (${id})> <${targetExecutionId}> completed run, discarding the rest`);
       targets.forEach(target => {
         if (target === owner) return;
         target.broker.cancel(targetConsumerTag);
         target.discard();
       });
       const completedContent = (0, _messageHelper.cloneContent)(executeMessage.content, {
+        taken: {
+          id: targetId,
+          executionId: targetExecutionId
+        },
         ignoreOutbound: true
       });
+      complete(completedContent);
+    }
+
+    function complete(completedContent) {
       broker.publish('execution', 'execute.completed', completedContent);
     }
 
     function stop() {
+      executing = false;
       targets.forEach(target => {
         target.broker.cancel(targetConsumerTag);
       });

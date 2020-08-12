@@ -1,5 +1,5 @@
 import testHelpers from '../helpers/testHelpers';
-import { ActivityError } from '../../src/error/Errors';
+import {ActivityError} from '../../src/error/Errors';
 
 describe('ExclusiveGateway', () => {
   describe('behavior', () => {
@@ -278,6 +278,97 @@ describe('ExclusiveGateway', () => {
       expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
       expect(activity.outbound[2].counters).to.have.property('discard', 1);
+    });
+  });
+
+  describe('getState()', () => {
+    it('save state on decision to usertask', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_155ehxd" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="Process" isExecutable="true">
+          <exclusiveGateway id="decision" default="to-wait">
+            <outgoing>to-end</outgoing>
+            <outgoing>to-wait</outgoing>
+          </exclusiveGateway>
+          <endEvent id="end">
+            <incoming>to-end</incoming>
+          </endEvent>
+          <sequenceFlow id="to-end" sourceRef="decision" targetRef="end">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.end}</conditionExpression>
+          </sequenceFlow>
+          <userTask id="usertask">
+            <incoming>to-wait</incoming>
+          </userTask>
+          <sequenceFlow id="to-wait" sourceRef="decision" targetRef="usertask" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const [bp1] = context.getProcesses();
+
+      let state;
+      bp1.once('wait', () => {
+        state = bp1.getState();
+      });
+
+      bp1.run();
+      bp1.signal({id: 'usertask'});
+
+      expect(bp1.counters).to.have.property('completed', 1);
+
+      const [bp2] = context.clone().getProcesses();
+      bp2.recover(state);
+      bp2.resume();
+      bp2.signal({id: 'usertask'});
+
+      expect(bp2.counters).to.have.property('completed', 1);
+      const end = bp2.getActivityById('end');
+      expect(end.counters).to.have.property('discarded', 1);
+    });
+
+    it('save state on decision to usertask regardless of sequenceFlow order in source', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_155ehxd" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="Process" isExecutable="true">
+          <exclusiveGateway id="decision" default="to-wait">
+            <outgoing>to-wait</outgoing>
+            <outgoing>to-end</outgoing>
+          </exclusiveGateway>
+          <endEvent id="end">
+            <incoming>to-end</incoming>
+          </endEvent>
+          <userTask id="usertask">
+            <incoming>to-wait</incoming>
+          </userTask>
+          <sequenceFlow id="to-wait" sourceRef="decision" targetRef="usertask" />
+          <sequenceFlow id="to-end" sourceRef="decision" targetRef="end">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.end}</conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const [bp1] = context.getProcesses();
+
+      let state;
+      bp1.once('wait', () => {
+        state = bp1.getState();
+      });
+
+      bp1.run();
+      bp1.signal({id: 'usertask'});
+
+      expect(bp1.counters).to.have.property('completed', 1);
+
+      const [bp2] = context.clone().getProcesses();
+
+      bp2.recover(state);
+      bp2.resume();
+      bp2.signal({id: 'usertask'});
+
+      expect(bp2.counters).to.have.property('completed', 1);
+      const end = bp2.getActivityById('end');
+      expect(end.counters).to.have.property('discarded', 1);
     });
   });
 });
