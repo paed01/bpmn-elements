@@ -159,12 +159,9 @@ function Process(processDef, context) {
     stopped = state.stopped;
     status = state.status;
     executionId = state.executionId;
-
-    if (state.counters) {
-      counters = { ...counters,
-        ...state.counters
-      };
-    }
+    counters = { ...counters,
+      ...state.counters
+    };
 
     if (state.execution) {
       execution = (0, _ProcessExecution.default)(processApi, context).recover(state.execution);

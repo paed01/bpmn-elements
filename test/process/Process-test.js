@@ -3,6 +3,7 @@ import testHelpers from '../helpers/testHelpers';
 import SignalTask from '../../src/tasks/SignalTask';
 import { ActivityError } from '../../src/error/Errors';
 import { Process } from '../../src/process/Process';
+import JsExtension from '../resources/extensions/JsExtension';
 
 describe('Process', () => {
   describe('requirements', () => {
@@ -24,7 +25,7 @@ describe('Process', () => {
   });
 
   describe('run()', () => {
-    it('assigns run message to environment', async () => {
+    it('assigns run message to environment variables', async () => {
       const source = `
       <?xml version="1.0" encoding="UTF-8"?>
         <definitions id="def" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -61,6 +62,31 @@ describe('Process', () => {
       expect(() => {
         bp.run();
       }).to.throw(/process .+? is already running/);
+    });
+
+    it('exposes current executionId and extensions when running', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="Definition_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
+        <process id="theProcess" isExecutable="true" js:versionTag="0.0.1" js:candidateStarterUsers="me">
+          <userTask id="task" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source, {
+        js: JsExtension,
+      });
+      const bp = context.getProcessById('theProcess');
+
+      expect(bp.executionId).to.be.undefined;
+      expect(bp.extensions).to.be.ok;
+
+      bp.run();
+
+      expect(bp.executionId).to.be.ok;
+      expect(bp.extensions).to.be.ok;
     });
   });
 
@@ -375,6 +401,11 @@ describe('Process', () => {
         bp.recover(state);
       }).to.throw('cannot recover running process');
     });
+
+    it('returns process if called without state', () => {
+      const bp = Process({id: 'theProcess'}, Context());
+      expect(bp === bp.recover()).to.be.true;
+    });
   });
 
   describe('resume()', () => {
@@ -498,6 +529,25 @@ describe('Process', () => {
 
       const bp2 = Process({id: 'theProcess'}, Context());
       bp2.recover(bp1.getState());
+
+      bp2.resume();
+
+      bp2.getPostponed()[0].signal();
+
+      expect(bp2.counters).to.have.property('completed', 1);
+    });
+
+    it('resumes on start state', async () => {
+      const bp1 = Process({id: 'theProcess'}, Context());
+      let state;
+      bp1.once('enter', () => {
+        state = bp1.getState();
+      });
+
+      bp1.run();
+
+      const bp2 = Process({id: 'theProcess'}, Context());
+      bp2.recover(state);
 
       bp2.resume();
 

@@ -59,7 +59,7 @@ The following elements are tested and supported.
   - ManualTask
   - UserTask
 - StandardLoopCharacteristics
-- StartEvent
+- [StartEvent](/docs/StartEvent.md)
 - SubProcess
 - Task
 - TerminateEventDefinition

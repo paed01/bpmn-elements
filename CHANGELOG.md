@@ -1,6 +1,14 @@
 Changelog
 =========
 
+# 2.0.0
+
+Diagram sequence flow order affects recover as per [engine issue 105](https://github.com/paed01/bpmn-engine/issues/105).
+
+- Refactored outbound flow handling to an extent that flows are now taken and discarded before leaving the activity run
+- As an effect of above - SequenceFlow pre flight event disappeared
+- Bonus: Make EventBasedGateway behave as it should
+
 # 1.6.1
 
 ## Bugfix:
