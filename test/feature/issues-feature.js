@@ -656,6 +656,44 @@ Feature('Issues', () => {
         expect(task.counters).to.have.property('taken', 1);
         expect(task.counters).to.have.property('discarded', 3);
       });
+
+      Given('definition is ran again', () => {
+        states.splice(0);
+        definition = Definition(context.clone(), {...options, variables: {passTask2: 1}});
+        wait = definition.waitFor('wait');
+        definition.run();
+      });
+
+      When('user task is waiting', () => {
+        return wait;
+      });
+
+      let state;
+      Then('state was saved', () => {
+        expect(states).to.have.length(1);
+        state = JSON.parse(states[0]);
+      });
+
+      And('end event was not discarded yet', () => {
+        expect(state.execution.processes[0].execution.children.find(({id}) => id === 'End').counters).to.deep.equal({taken: 0, discarded: 0});
+      });
+
+      When('definition is recovered with state', () => {
+        definition = Definition(context.clone(), {...options});
+        definition.recover(state);
+      });
+
+      Then('end event is still not discarded', () => {
+        expect(definition.getActivityById('End').counters).to.deep.equal({taken: 0, discarded: 0});
+      });
+
+      When('definition is resumed', () => {
+        definition.resume();
+      });
+
+      Then('end event is discarded once', () => {
+        expect(definition.getActivityById('End').counters).to.deep.equal({taken: 0, discarded: 1});
+      });
     });
   });
 });
