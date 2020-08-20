@@ -39,11 +39,7 @@ export default function CompensationEventDefinition(activity, eventDefinition, c
     broker.assertExchange('compensate', 'topic');
     const compensateQ = broker.assertQueue('compensate-q', {durable: true, autoDelete: false});
     broker.subscribeTmp('compensate', 'execute.#', onCollect, {noAck: true, consumerTag: '_oncollect-messages'});
-
-    broker.publish('execution', 'execute.detach', cloneContent({
-      ...messageContent,
-      bindExchange: 'compensate',
-    }));
+    broker.publish('execution', 'execute.detach', cloneContent(messageContent, {bindExchange: 'compensate'}));
 
     broker.publish('event', 'activity.detach', {
       ...messageContent,

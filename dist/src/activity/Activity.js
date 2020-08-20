@@ -31,7 +31,8 @@ function Activity(Behaviour, activityDef, context) {
     isParallelGateway,
     isSubProcess,
     triggeredByEvent,
-    isThrowing
+    isThrowing,
+    isTransaction
   } = activityDef;
   const isForCompensation = behaviour.isForCompensation;
   const parent = (0, _messageHelper.cloneParent)(originalParent);
@@ -233,7 +234,8 @@ function Activity(Behaviour, activityDef, context) {
       isSubProcess,
       isMultiInstance,
       isForCompensation,
-      attachedTo
+      attachedTo,
+      isTransaction
     };
 
     for (const flag in flags) {

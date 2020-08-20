@@ -1,6 +1,7 @@
 import Activity from '../activity/Activity';
 import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution';
-import {cloneContent} from '../messageHelper';
+import {cloneContent, cloneMessage} from '../messageHelper';
+import {brokerSafeId} from '../shared';
 
 export default function BoundaryEvent(activityDef, context) {
   return Activity(BoundaryEventBehaviour, activityDef, context);
@@ -27,6 +28,7 @@ export function BoundaryEventBehaviour(activity) {
 
     let parentExecutionId, completeContent;
     const errorConsumerTags = [];
+    const shovels = [];
     if (isRootScope) {
       parentExecutionId = executionId;
       if (eventDefinitionExecution && !environment.settings.strict) {
@@ -80,13 +82,21 @@ export function BoundaryEventBehaviour(activity) {
       logger.debug(`<${parentExecutionId} (${id})> detach from activity <${attachedTo.id}>`);
       stop(true);
 
-      const bindExchange = content.bindExchange;
-      attachedTo.broker.subscribeTmp('execution', '#', onAttachedExecuteMessage, {noAck: true, consumerTag: `_bound-listener-${parentExecutionId}`});
-      broker.subscribeOnce('execution', 'execute.bound.completed', onDetachedCompleted, {consumerTag: `_execution-completed-${parentExecutionId}`});
+      const {executionId: detachId, bindExchange, sourceExchange = 'execution', sourcePattern} = content;
 
-      function onAttachedExecuteMessage(routingKey, message) {
-        broker.publish(bindExchange, routingKey, cloneContent(message.content), message.properties);
-      }
+      const shovelName = `_detached-${brokerSafeId(id)}_${detachId}`;
+      shovels.push(shovelName);
+      attachedTo.broker.createShovel(shovelName, {
+        exchange: sourceExchange,
+        pattern: sourcePattern,
+      }, {
+        broker,
+        exchange: bindExchange,
+      }, {
+        cloneMessage,
+      });
+
+      broker.subscribeOnce('execution', 'execute.bound.completed', onDetachedCompleted, {consumerTag: `_execution-completed-${parentExecutionId}`});
     }
 
     function onDetachedCompleted(_, message) {
@@ -109,7 +119,8 @@ export function BoundaryEventBehaviour(activity) {
     function stop(detach) {
       attachedTo.broker.cancel(`_bound-listener-${parentExecutionId}`);
       attachedTo.broker.cancel(`_bound-error-listener-${parentExecutionId}`);
-      errorConsumerTags.forEach((tag) => attachedTo.broker.cancel(tag));
+      errorConsumerTags.splice(0).forEach((tag) => attachedTo.broker.cancel(tag));
+      shovels.splice(0).forEach((shovelName) => attachedTo.broker.closeShovel(shovelName));
 
       broker.cancel('_expect-tag');
       broker.cancel('_detach-tag');

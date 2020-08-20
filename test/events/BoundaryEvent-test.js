@@ -431,7 +431,7 @@ describe('BoundaryEvent', () => {
           },
         });
 
-        broker.publish('execution', 'execute.detach', {listenExchange: 'execution', listenRoutingKey: '#'});
+        broker.publish('execution', 'execute.detach', {bindExchange: 'execution', sourcePattern: '#', executionId: 'event_0_1'});
         broker.publish('api', 'activity.stop.bound_1', {}, {type: 'stop'});
 
         expect(behaviour.attachedTo.broker).to.have.property('consumerCount', 0);
@@ -451,7 +451,7 @@ describe('BoundaryEvent', () => {
           },
         });
 
-        broker.publish('execution', 'execute.detach', {listenExchange: 'execution', listenRoutingKey: '#'});
+        broker.publish('execution', 'execute.detach', {bindExchange: 'execution', sourcePattern: '#'});
         broker.publish('api', 'activity.discard.bound_1', {}, {type: 'discard'});
 
         expect(behaviour.attachedTo.broker).to.have.property('consumerCount', 0);

@@ -63,7 +63,7 @@ function CompensationEventDefinition(activity, eventDefinition, context) {
       noAck: true,
       consumerTag: '_oncollect-messages'
     });
-    broker.publish('execution', 'execute.detach', (0, _messageHelper.cloneContent)({ ...messageContent,
+    broker.publish('execution', 'execute.detach', (0, _messageHelper.cloneContent)(messageContent, {
       bindExchange: 'compensate'
     }));
     broker.publish('event', 'activity.detach', { ...messageContent,

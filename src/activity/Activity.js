@@ -7,7 +7,7 @@ import {cloneContent, cloneParent, cloneMessage} from '../messageHelper';
 import {makeErrorFromMessage} from '../error/Errors';
 
 export default function Activity(Behaviour, activityDef, context) {
-  const {id, type = 'activity', name, parent: originalParent = {}, behaviour = {}, isParallelGateway, isSubProcess, triggeredByEvent, isThrowing} = activityDef;
+  const {id, type = 'activity', name, parent: originalParent = {}, behaviour = {}, isParallelGateway, isSubProcess, triggeredByEvent, isThrowing, isTransaction} = activityDef;
   const isForCompensation = behaviour.isForCompensation;
 
   const parent = cloneParent(originalParent);
@@ -173,7 +173,7 @@ export default function Activity(Behaviour, activityDef, context) {
       parent: cloneParent(parent),
     };
 
-    const flags = {isEnd, isStart, isSubProcess, isMultiInstance, isForCompensation, attachedTo};
+    const flags = {isEnd, isStart, isSubProcess, isMultiInstance, isForCompensation, attachedTo, isTransaction};
     for (const flag in flags) {
       if (flags[flag]) result[flag] = flags[flag];
     }

@@ -2,6 +2,7 @@ import Activity from './src/activity/Activity';
 import Association from './src/flows/Association';
 import BoundaryEvent from './src/events/BoundaryEvent';
 import BpmnError from './src/error/BpmnError';
+import CancelEventDefinition from './src/eventDefinitions/CancelEventDefinition';
 import CompensateEventDefinition from './src/eventDefinitions/CompensateEventDefinition';
 import ConditionalEventDefinition from './src/eventDefinitions/ConditionalEventDefinition';
 import Context from './src/Context';
@@ -40,12 +41,14 @@ import SubProcess from './src/tasks/SubProcess';
 import Task from './src/tasks/Task';
 import TerminateEventDefinition from './src/eventDefinitions/TerminateEventDefinition';
 import TimerEventDefinition from './src/eventDefinitions/TimerEventDefinition';
+import Transaction from './src/tasks/Transaction';
 
 export {
   Association,
   Activity,
   BoundaryEvent,
   BpmnError,
+  CancelEventDefinition,
   CompensateEventDefinition,
   ConditionalEventDefinition,
   Context,
@@ -89,4 +92,5 @@ export {
   Task,
   TerminateEventDefinition,
   TimerEventDefinition,
+  Transaction,
 };

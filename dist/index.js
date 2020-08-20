@@ -27,6 +27,12 @@ Object.defineProperty(exports, "BpmnError", {
     return _BpmnError.default;
   }
 });
+Object.defineProperty(exports, "CancelEventDefinition", {
+  enumerable: true,
+  get: function () {
+    return _CancelEventDefinition.default;
+  }
+});
 Object.defineProperty(exports, "CompensateEventDefinition", {
   enumerable: true,
   get: function () {
@@ -285,6 +291,12 @@ Object.defineProperty(exports, "TimerEventDefinition", {
     return _TimerEventDefinition.default;
   }
 });
+Object.defineProperty(exports, "Transaction", {
+  enumerable: true,
+  get: function () {
+    return _Transaction.default;
+  }
+});
 
 var _Activity = _interopRequireDefault(require("./src/activity/Activity"));
 
@@ -293,6 +305,8 @@ var _Association = _interopRequireDefault(require("./src/flows/Association"));
 var _BoundaryEvent = _interopRequireDefault(require("./src/events/BoundaryEvent"));
 
 var _BpmnError = _interopRequireDefault(require("./src/error/BpmnError"));
+
+var _CancelEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/CancelEventDefinition"));
 
 var _CompensateEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/CompensateEventDefinition"));
 
@@ -369,5 +383,7 @@ var _Task = _interopRequireDefault(require("./src/tasks/Task"));
 var _TerminateEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/TerminateEventDefinition"));
 
 var _TimerEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/TimerEventDefinition"));
+
+var _Transaction = _interopRequireDefault(require("./src/tasks/Transaction"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
