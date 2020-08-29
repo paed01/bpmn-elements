@@ -1,6 +1,6 @@
 import testHelpers from '../helpers/testHelpers';
 
-describe('ExclusiveGateway', () => {
+describe('EventBasedGateway', () => {
   describe('behavior', () => {
     it('completes immediately if used as end', async () => {
       const source = `

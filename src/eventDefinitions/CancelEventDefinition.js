@@ -66,7 +66,7 @@ export default function CancelEventDefinition(activity, eventDefinition) {
         state: 'throw',
       }), {type: 'compensate', delegate: true});
 
-      broker.subscribeTmp('cancel', 'activity.leave', (rk, {content: msg}) => {
+      broker.subscribeTmp('cancel', 'activity.leave', (__, {content: msg}) => {
         if (msg.id !== attachedTo) return;
         return complete(message.content.message);
       }, {noAck: true, consumerTag: `_oncancelend-${executionId}`});
@@ -82,9 +82,6 @@ export default function CancelEventDefinition(activity, eventDefinition) {
     function onApiMessage(routingKey, message) {
       const messageType = message.properties.type;
       switch (messageType) {
-        case 'cancel': {
-          return onCatchMessage(routingKey, message);
-        }
         case 'discard': {
           completed = true;
           stop();
@@ -101,6 +98,7 @@ export default function CancelEventDefinition(activity, eventDefinition) {
       broker.cancel(`_api-parent-${parentExecutionId}`);
       broker.cancel(`_api-${executionId}`);
       broker.cancel(`_oncancel-${executionId}`);
+      broker.cancel(`_oncancelend-${executionId}`);
       broker.cancel(`_onattached-cancel-${executionId}`);
       broker.purgeQueue(cancelQueueName);
     }

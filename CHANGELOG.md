@@ -1,6 +1,14 @@
 Changelog
 =========
 
+# 2.1.0
+
+Transactions and compensation if canceled.
+
+## Additions
+- Add support for Transaction
+- Add support for CancelEventDefinition
+
 # 2.0.0
 
 Diagram sequence flow order affects recover as per [engine issue 105](https://github.com/paed01/bpmn-engine/issues/105).

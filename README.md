@@ -17,6 +17,7 @@ The following elements are tested and supported.
 - [Process](/docs/Process.md): Executes and keeps track of activity elements
 - BpmnError
 - BoundaryEvent
+- CancelEventDefinition
 - ConditionalEventDefinition
 - CompensateEventDefinition
   - compensate by outbound Association
@@ -67,5 +68,6 @@ The following elements are tested and supported.
   - timeDuration
   - timeDate
   - timeCycle
+- Transaction
 
 All activities share the same [base](/docs/Activity.md) and and [api](/docs/SharedApi.md).
