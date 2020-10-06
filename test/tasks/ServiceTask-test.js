@@ -472,7 +472,7 @@ describe('ServiceTask', () => {
           .delay(30)
           .reply(200, {})
           .get('/api/immanuel?version=2')
-          .reply(409, {});
+          .reply(409, {}, {'content-type': 'application/json'});
 
         const completed = task.waitFor('leave');
         task.run();
@@ -624,10 +624,8 @@ async function getLoopContext(isSequential) {
       const callUrl = `http://example.com/api${item}?version=${index}`;
 
       try {
-        const call = got(callUrl, {throwHttpErrors: false});
-        const resp = await call;
-        const body = await call.json();
-        return next(null, {statusCode: resp.statusCode, body});
+        const {statusCode, body} = await got(callUrl, {throwHttpErrors: false, responseType: 'json'});
+        return next(null, {statusCode, body});
       } catch (err) {
         return next(err);
       }
