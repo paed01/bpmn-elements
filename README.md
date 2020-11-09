@@ -47,7 +47,7 @@ The following elements are tested and supported.
 - [ParallelGateway](/docs/ParallelGateway.md)
 - ReceiveTask
 - ScriptTask
-- SequenceFlow
+- [SequenceFlow](/docs/SequenceFlow.md)
 - ServiceImplementation: ServiceTask implementation attribute behaviour
 - [ServiceTask](/docs/ServiceTask.md)
   - BusinessRuleTask: Same behaviour as ServiceTask

@@ -131,3 +131,20 @@ Arguments:
   - `owner`: message owner, in this case probably the actual activity instance
 
 Returns Promise that will resolve with [activity api](/docs/SharedApi.md) on event name or reject on error.
+
+### `evaluateOutbound(brokerMessage, discardRestAtTake, callback)`
+
+Evaluate all outbound sequence flows.
+
+Arguments:
+- `brokerMessage`: broker message that will be passed to condition
+- `discardRestAtTake`: boolean, discard all other outbound flows if one flow is taken
+- `callback`: function with signature, `(err, outbound)`
+  - `err`: occasional error
+  - `outbound`: list with flow actions, i.e. discard or take
+      - `id`: outbound flow id
+      - `action`: discard or take as string
+      - `isDefault`: boolean indicating if flow is default flow
+      - `result`: result of condition
+      - `message`: optional message passed from argument `brokerMessage.content.message`
+
