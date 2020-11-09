@@ -1,6 +1,15 @@
 Changelog
 =========
 
+# 3.0.0
+
+## Breaking
+- Outbound sequence flow with script condition requires `next(err, result)` to be called where result decides if it should be taken or discarded
+
+## Addititions
+- Outbound sequence flow conditions are evaluated for all activities, as well as default flow
+- Process now also have `cancelActivity` function for facilitation
+
 # 2.1.0
 
 Transactions and compensation if canceled.

@@ -204,7 +204,7 @@ describe('ParallelGateway', () => {
           <sequenceFlow id="flow2" sourceRef="decisions" targetRef="script" />
           <sequenceFlow id="flow4" sourceRef="decisions" targetRef="task">
             <conditionExpression xsi:type="tFormalExpression" language="JavaScript"><![CDATA[
-              environment.variables.input <= 50
+              next(null, environment.variables.input <= 50);
             ]]></conditionExpression>
           </sequenceFlow>
           <scriptTask id="script" scriptFormat="Javascript">
@@ -257,7 +257,7 @@ describe('ParallelGateway', () => {
           <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
           <sequenceFlow id="flow2" sourceRef="decision" targetRef="task">
             <conditionExpression xsi:type="tFormalExpression" language="JavaScript"><![CDATA[
-              environment.variables.input <= 50
+              next(null, environment.variables.input <= 50);
             ]]></conditionExpression>
           </sequenceFlow>
           <sequenceFlow id="flow3" sourceRef="task" targetRef="join" />
@@ -301,7 +301,7 @@ describe('ParallelGateway', () => {
           <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
           <sequenceFlow id="flow2" sourceRef="decision" targetRef="script">
             <conditionExpression xsi:type="tFormalExpression" language="JavaScript"><![CDATA[
-              environment.variables.input <= 50
+              next(null, environment.variables.input <= 50);
             ]]></conditionExpression>
           </sequenceFlow>
           <sequenceFlow id="flow3" sourceRef="script" targetRef="join" />

@@ -150,13 +150,11 @@ export default function SequenceFlow(flowDef, {environment}) {
     broker.publish('event', 'flow.shake', content, {persistent: false, type: 'shake'});
   }
 
-  function evaluateCondition(message, onEvaluateError) {
+  function evaluateCondition(message, callback) {
     const condition = getCondition(message);
-    if (!condition) return true;
+    if (!condition) return callback(null, true);
 
-    const result = condition.execute(message, onEvaluateError);
-    logger.debug(`<${id}> condition result evaluated to ${result}`);
-    return result;
+    return condition.execute(message, callback);
   }
 
   function getCondition() {
@@ -174,20 +172,20 @@ export default function SequenceFlow(flowDef, {environment}) {
   function ScriptCondition(script, language) {
     return {
       language,
-      execute: (message, onEvaluateError) => {
+      execute: (message, callback) => {
         if (!script) {
           const err = new Error(`Script format ${language} is unsupported or was not registered (<${id}>)`);
           logger.error(`<${id}>`, err);
           emitFatal(err, createMessage());
-          return onEvaluateError && onEvaluateError(err);
+          return callback && callback(err);
         }
 
         try {
-          return script.execute(ExecutionScope(flowApi, message));
+          return script.execute(ExecutionScope(flowApi, message), callback);
         } catch (err) {
-          if (!onEvaluateError) throw err;
+          if (!callback) throw err;
           logger.error(`<${id}>`, err);
-          onEvaluateError(err);
+          callback(err);
         }
       },
     };
@@ -195,8 +193,10 @@ export default function SequenceFlow(flowDef, {environment}) {
 
   function ExpressionCondition(expression) {
     return {
-      execute: (message) => {
-        return environment.resolveExpression(expression, createMessage(message));
+      execute: (message, callback) => {
+        const result = environment.resolveExpression(expression, createMessage(message));
+        if (callback) return callback(null, result);
+        return result;
       },
     };
   }

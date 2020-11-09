@@ -143,12 +143,12 @@ describe('ExclusiveGateway', () => {
           <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
           <sequenceFlow id="flow2" sourceRef="decision" targetRef="end1">
             <conditionExpression xsi:type="tFormalExpression" language="JavaScript"><![CDATA[
-            this.environment.variables.input <= 50
+            next(null, this.environment.variables.input <= 50);
             ]]></conditionExpression>
           </sequenceFlow>
           <sequenceFlow id="flow3" sourceRef="decision" targetRef="end2">
             <conditionExpression xsi:type="tFormalExpression" language="JavaScript"><![CDATA[
-            this.environment.variables.input > 50
+            next(null, this.environment.variables.input > 50);
             ]]></conditionExpression>
           </sequenceFlow>
         </process>
@@ -199,12 +199,12 @@ describe('ExclusiveGateway', () => {
           <exclusiveGateway id="decision" />
           <sequenceFlow id="flow2" sourceRef="decision" targetRef="theEnd1">
             <conditionExpression xsi:type="tFormalExpression" language="JavaScript"><![CDATA[
-            this.environment.variables.input <= 50
+            next(null, this.environment.variables.input <= 50);
             ]]></conditionExpression>
           </sequenceFlow>
           <sequenceFlow id="flow3" sourceRef="decision" targetRef="theEnd2">
             <conditionExpression xsi:type="tFormalExpression" language="JavaScript"><![CDATA[
-            this.environment.variables.input <= 20
+            next(null, this.environment.variables.input <= 20);
             ]]></conditionExpression>
           </sequenceFlow>
           <endEvent id="theEnd1" />

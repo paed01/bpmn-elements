@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1nib57s" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.1.1">
-  <bpmn:process id="Process_GeneralFlow" isExecutable="true">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1nib57s" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.3.0">
+  <bpmn:process id="Process_GeneralFlow_1" isExecutable="true">
     <bpmn:startEvent id="Start" name="Start">
       <bpmn:outgoing>Flow1</bpmn:outgoing>
     </bpmn:startEvent>
@@ -15,10 +15,10 @@
       <bpmn:incoming>FlowFalse2</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="FlowLater" name="FlowLater" sourceRef="Gateway1" targetRef="End">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">this.environment.variables.passTask2&lt;0</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">next(null, this.environment.variables.passTask2&lt;0);</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="FlowFirst" name="FlowFirst" sourceRef="Gateway1" targetRef="UserTask">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">this.environment.variables.passTask2&gt;=0</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">next(null, this.environment.variables.passTask2&gt;=0);</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:exclusiveGateway id="Gateway2" name="Gateway2">
       <bpmn:incoming>Flow4</bpmn:incoming>
@@ -27,10 +27,10 @@
     </bpmn:exclusiveGateway>
     <bpmn:sequenceFlow id="Flow4" name="Flow4" sourceRef="UserTask" targetRef="Gateway2" />
     <bpmn:sequenceFlow id="FlowFalse2" name="FlowFalse2" sourceRef="Gateway2" targetRef="End">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">false</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">next(null, false);</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="FlowTrue1" name="FlowTrue1" sourceRef="Gateway2" targetRef="Task2">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">true</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">next(null, true);</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:userTask id="UserTask" name="UserTask">
       <bpmn:incoming>FlowFirst</bpmn:incoming>
@@ -44,7 +44,14 @@
     <bpmn:sequenceFlow id="Flow1" name="Flow1" sourceRef="Start" targetRef="Task2" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_GeneralFlow">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_GeneralFlow_1">
+      <bpmndi:BPMNEdge id="Flow_1mqbz3i_di" bpmnElement="Flow1">
+        <di:waypoint x="228" y="177" />
+        <di:waypoint x="320" y="177" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="259" y="159" width="30" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0vj1bpb_di" bpmnElement="FlowTrue1">
         <di:waypoint x="485" y="490" />
         <di:waypoint x="370" y="490" />
@@ -89,13 +96,12 @@
           <dc:Bounds x="438" y="159" width="30" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1mqbz3i_di" bpmnElement="Flow1">
-        <di:waypoint x="228" y="177" />
-        <di:waypoint x="320" y="177" />
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="Start">
+        <dc:Bounds x="192" y="159" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="259" y="159" width="30" height="14" />
+          <dc:Bounds x="161" y="170" width="24" height="14" />
         </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_1o3mk1r_di" bpmnElement="Gateway1" isMarkerVisible="true">
         <dc:Bounds x="485" y="152" width="50" height="50" />
         <bpmndi:BPMNLabel>
@@ -119,12 +125,6 @@
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1bt3rcd_di" bpmnElement="Task2">
         <dc:Bounds x="320" y="137" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="Start">
-        <dc:Bounds x="192" y="159" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="161" y="170" width="24" height="14" />
-        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

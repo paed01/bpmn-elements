@@ -65,6 +65,7 @@ export function Process(processDef, context) {
     sendMessage,
     shake,
     signal,
+    cancelActivity,
     stop,
   };
 
@@ -171,6 +172,10 @@ export function Process(processDef, context) {
 
   function signal(message) {
     return getApi().signal(message, {delegate: true});
+  }
+
+  function cancelActivity(message) {
+    return getApi().cancel(message, {delegate: true});
   }
 
   function onRunMessage(routingKey, message) {

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1nexrbj" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.7.2">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_1nexrbj" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.3.0">
   <bpmn:process id="Process_0fduuzs" isExecutable="true">
     <bpmn:startEvent id="start">
       <bpmn:outgoing>Flow_1b8u4yr</bpmn:outgoing>
@@ -27,8 +27,7 @@
     <bpmn:sequenceFlow id="to-accepted" name="amount ok" sourceRef="decision" targetRef="accepted">
       <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">const rules = this.content.rules;
 const amount = this.environment.output.amount;
-rules ? rules.maxAmount &gt; amount : false;
-</bpmn:conditionExpression>
+next(null, rules ? rules.maxAmount &gt; amount : false);</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="Flow_1opo6ub" sourceRef="accepted" targetRef="join" />
     <bpmn:parallelGateway id="join">
@@ -49,13 +48,22 @@ rules ? rules.maxAmount &gt; amount : false;
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_0fduuzs">
-      <bpmndi:BPMNEdge id="Flow_1b8u4yr_di" bpmnElement="Flow_1b8u4yr">
-        <di:waypoint x="198" y="117" />
-        <di:waypoint x="250" y="117" />
+      <bpmndi:BPMNEdge id="Flow_0j2pabl_di" bpmnElement="Flow_0j2pabl">
+        <di:waypoint x="350" y="117" />
+        <di:waypoint x="395" y="117" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1vdogye_di" bpmnElement="to-denied">
-        <di:waypoint x="445" y="117" />
-        <di:waypoint x="520" y="117" />
+      <bpmndi:BPMNEdge id="Flow_0ab249e_di" bpmnElement="Flow_0ab249e">
+        <di:waypoint x="725" y="117" />
+        <di:waypoint x="762" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11yveqt_di" bpmnElement="Flow_11yveqt">
+        <di:waypoint x="620" y="117" />
+        <di:waypoint x="675" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1opo6ub_di" bpmnElement="Flow_1opo6ub">
+        <di:waypoint x="620" y="230" />
+        <di:waypoint x="700" y="230" />
+        <di:waypoint x="700" y="142" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1f4qbl5_di" bpmnElement="to-accepted">
         <di:waypoint x="420" y="142" />
@@ -65,28 +73,19 @@ rules ? rules.maxAmount &gt; amount : false;
           <dc:Bounds x="415" y="233" width="52" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1opo6ub_di" bpmnElement="Flow_1opo6ub">
-        <di:waypoint x="620" y="230" />
-        <di:waypoint x="700" y="230" />
-        <di:waypoint x="700" y="142" />
+      <bpmndi:BPMNEdge id="Flow_1vdogye_di" bpmnElement="to-denied">
+        <di:waypoint x="445" y="117" />
+        <di:waypoint x="520" y="117" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_11yveqt_di" bpmnElement="Flow_11yveqt">
-        <di:waypoint x="620" y="117" />
-        <di:waypoint x="675" y="117" />
+      <bpmndi:BPMNEdge id="Flow_1b8u4yr_di" bpmnElement="Flow_1b8u4yr">
+        <di:waypoint x="198" y="117" />
+        <di:waypoint x="250" y="117" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0ab249e_di" bpmnElement="Flow_0ab249e">
-        <di:waypoint x="725" y="117" />
-        <di:waypoint x="762" y="117" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0j2pabl_di" bpmnElement="Flow_0j2pabl">
-        <di:waypoint x="350" y="117" />
-        <di:waypoint x="395" y="117" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="Event_0nuqr8k_di" bpmnElement="end">
-        <dc:Bounds x="762" y="99" width="36" height="36" />
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="start">
+        <dc:Bounds x="162" y="99" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_02ezjan_di" bpmnElement="join">
-        <dc:Bounds x="675" y="92" width="50" height="50" />
+      <bpmndi:BPMNShape id="Gateway_18ufgwr_di" bpmnElement="decision" isMarkerVisible="true">
+        <dc:Bounds x="395" y="92" width="50" height="50" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1y9798j_di" bpmnElement="denied">
         <dc:Bounds x="520" y="77" width="100" height="80" />
@@ -94,14 +93,14 @@ rules ? rules.maxAmount &gt; amount : false;
       <bpmndi:BPMNShape id="Activity_0utvzpx_di" bpmnElement="accepted">
         <dc:Bounds x="520" y="190" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_18ufgwr_di" bpmnElement="decision" isMarkerVisible="true">
-        <dc:Bounds x="395" y="92" width="50" height="50" />
+      <bpmndi:BPMNShape id="Gateway_02ezjan_di" bpmnElement="join">
+        <dc:Bounds x="675" y="92" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0nuqr8k_di" bpmnElement="end">
+        <dc:Bounds x="762" y="99" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1h1bl3x_di" bpmnElement="require-amount">
         <dc:Bounds x="250" y="77" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="start">
-        <dc:Bounds x="162" y="99" width="36" height="36" />
       </bpmndi:BPMNShape>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

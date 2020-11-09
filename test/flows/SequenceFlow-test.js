@@ -91,7 +91,7 @@ describe('SequenceFlow', () => {
           <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
           <sequenceFlow id="flow2" sourceRef="decision" targetRef="end1" />
           <sequenceFlow id="flow3withExpression" sourceRef="decision" targetRef="end2">
-            <conditionExpression>\${services.isBelow(variables.input,2)}</conditionExpression>
+            <conditionExpression>\${environment.services.isBelow(variables.input,2)}</conditionExpression>
           </sequenceFlow>
         </process>
       </definitions>`;
@@ -110,14 +110,22 @@ describe('SequenceFlow', () => {
       expect(activity.outbound[1].counters).to.have.property('take', 0);
     });
 
-    it('script condition executes and returns result', async () => {
+    it('script condition executes and returns result in callback', async () => {
       const context = await testHelpers.context(factory.valid());
       const flow = context.getSequenceFlowById('flow3');
-      expect(flow.evaluateCondition({
-        content: {
-          parent: {},
-        },
-      })).to.equal(true);
+
+      const res = await new Promise((resolve, reject) => {
+        flow.evaluateCondition({
+          content: {
+            parent: {},
+          },
+        }, (err, result) => {
+          if (err) return reject(err);
+          return resolve(result);
+        });
+      });
+
+      expect(res).to.equal(true);
     });
 
     it('throws if script type is unsupported', async () => {

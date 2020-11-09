@@ -123,6 +123,7 @@ function Activity(Behaviour, activityDef, context) {
     Behaviour,
     activate,
     deactivate,
+    evaluateOutbound,
     logger,
     discard,
     getApi,
@@ -271,7 +272,9 @@ function Activity(Behaviour, activityDef, context) {
     if (!status) return activate();
     stopped = false;
     consumeApi();
-    const content = createMessage();
+    const content = createMessage({
+      executionId
+    });
     broker.publish('run', 'run.resume', content, {
       persistent: false
     });
@@ -662,15 +665,13 @@ function Activity(Behaviour, activityDef, context) {
           if (status === 'end') break;
           counters.taken++;
           status = 'end';
-
-          if (!isRedelivered) {
-            doRunLeave();
+          if (isRedelivered) break;
+          return doRunLeave(false, () => {
             publishEvent('end', content, {
               correlationId
             });
-          }
-
-          break;
+            if (!step) ack();
+          });
         }
 
       case 'run.error':
@@ -689,7 +690,13 @@ function Activity(Behaviour, activityDef, context) {
           counters.discarded++;
           status = 'discarded';
           content.outbound = undefined;
-          if (!isRedelivered) doRunLeave(true);
+
+          if (!isRedelivered) {
+            return doRunLeave(true, () => {
+              if (!step) ack();
+            });
+          }
+
           break;
         }
 
@@ -731,13 +738,24 @@ function Activity(Behaviour, activityDef, context) {
 
     if (!step) ack();
 
-    function doRunLeave(isDiscarded) {
-      const outbound = content.ignoreOutbound ? [] : prepareOutbound(content, isDiscarded);
-      broker.publish('run', 'run.leave', (0, _messageHelper.cloneContent)(content, { ...(outbound.length ? {
-          outbound
-        } : undefined)
-      }), {
-        correlationId
+    function doRunLeave(isDiscarded, onOutbound) {
+      if (content.ignoreOutbound) {
+        broker.publish('run', 'run.leave', (0, _messageHelper.cloneContent)(content), {
+          correlationId
+        });
+        if (onOutbound) onOutbound();
+        return;
+      }
+
+      return doOutbound((0, _messageHelper.cloneMessage)(message), isDiscarded, (err, outbound) => {
+        if (err) return emitFatal(err);
+        broker.publish('run', 'run.leave', (0, _messageHelper.cloneContent)(content, { ...(outbound.length ? {
+            outbound
+          } : undefined)
+        }), {
+          correlationId
+        });
+        if (onOutbound) onOutbound();
       });
     }
   }
@@ -761,22 +779,13 @@ function Activity(Behaviour, activityDef, context) {
     switch (routingKey) {
       case 'execution.outbound.take':
         {
-          message.ack();
-          const outbound = prepareOutbound(content);
-          broker.publish('run', 'run.execute.passthrough', (0, _messageHelper.cloneContent)(content, {
-            outbound
-          }));
-          break;
-        }
-
-      case 'execution.stopped':
-        {
-          message.ack();
-          deactivate();
-          deactivateRunConsumers();
-          broker.cancel('_activity-execution');
-          return publishEvent('stop', null, {
-            correlationId
+          return doOutbound((0, _messageHelper.cloneMessage)(message), false, (err, outbound) => {
+            message.ack();
+            if (err) return emitFatal(err);
+            broker.publish('run', 'run.execute.passthrough', (0, _messageHelper.cloneContent)(content, {
+              outbound
+            }));
+            return ackRunExecuteMessage();
           });
         }
 
@@ -801,14 +810,6 @@ function Activity(Behaviour, activityDef, context) {
 
       default:
         {
-          if (content.outbound && content.outbound.discarded === outboundSequenceFlows.length) {
-            status = 'discarded';
-            broker.publish('run', 'run.discarded', content, {
-              correlationId
-            });
-            break;
-          }
-
           status = 'executed';
           broker.publish('run', 'run.end', content, {
             correlationId
@@ -817,8 +818,11 @@ function Activity(Behaviour, activityDef, context) {
     }
 
     message.ack();
+    ackRunExecuteMessage();
 
-    if (!step && executeMessage) {
+    function ackRunExecuteMessage() {
+      if (step) return;
+      if (!executeMessage) return;
       const ackMessage = executeMessage;
       executeMessage = null;
       ackMessage.ack();
@@ -889,42 +893,177 @@ function Activity(Behaviour, activityDef, context) {
     });
   }
 
-  function prepareOutbound(fromContent, isDiscarded) {
-    if (!outboundSequenceFlows.length) return [];
-    const {
-      message,
-      outbound: evaluatedOutbound = []
-    } = fromContent;
+  function doOutbound(fromMessage, isDiscarded, callback) {
+    if (!outboundSequenceFlows.length) return callback(null, []);
+    const fromContent = fromMessage.content;
     let discardSequence = fromContent.discardSequence;
 
     if (isDiscarded && !discardSequence && attachedTo && fromContent.inbound && fromContent.inbound[0]) {
       discardSequence = [fromContent.inbound[0].id];
     }
 
-    return outboundSequenceFlows.map(flow => {
-      const preparedFlow = getPrepared(flow.id);
-      const sequenceId = (0, _shared.getUniqueId)(`${preparedFlow.id}_${preparedFlow.action}`);
-      preparedFlow.sequenceId = sequenceId;
-      broker.publish('run', 'run.outbound.' + preparedFlow.action, (0, _messageHelper.cloneContent)(fromContent, {
-        flow: preparedFlow
+    let outboundFlows;
+
+    if (isDiscarded) {
+      outboundFlows = outboundSequenceFlows.map(flow => formatFlowAction(flow, {
+        action: 'discard'
       }));
-      return preparedFlow;
+    } else if (fromContent.outbound && fromContent.outbound.length) {
+      outboundFlows = outboundSequenceFlows.map(flow => formatFlowAction(flow, fromContent.outbound.filter(f => f.id === flow.id).pop()));
+    }
+
+    if (outboundFlows) {
+      doRunOutbound(outboundFlows);
+      return callback(null, outboundFlows);
+    }
+
+    return evaluateOutbound(fromMessage, false, (err, evaluatedOutbound) => {
+      if (err) return callback(err);
+      const outbound = doRunOutbound(evaluatedOutbound);
+      return callback(null, outbound);
     });
 
-    function getPrepared(flowId) {
-      let evaluatedFlow = evaluatedOutbound.filter(flow => flow.id === flowId).pop();
-
-      if (!evaluatedFlow) {
-        evaluatedFlow = {
+    function doRunOutbound(outboundList) {
+      return outboundList.map(outboundFlow => {
+        const {
           id: flowId,
-          action: isDiscarded ? 'discard' : 'take'
-        };
-        if (message !== undefined) evaluatedFlow.message = message;
+          action
+        } = outboundFlow;
+        broker.publish('run', 'run.outbound.' + action, (0, _messageHelper.cloneContent)(fromContent, {
+          flow: { ...outboundFlow,
+            sequenceId: (0, _shared.getUniqueId)(`${flowId}_${action}`),
+            ...(discardSequence ? {
+              discardSequence: discardSequence.slice()
+            } : undefined)
+          }
+        }));
+        return outboundFlow;
+      });
+    }
+  }
+
+  function formatFlowAction(flow, options) {
+    if (!options) options = {
+      action: 'discard'
+    };
+    const action = options.action;
+    const message = options.message;
+    return { ...options,
+      id: flow.id,
+      action,
+      ...(flow.isDefault ? {
+        isDefault: true
+      } : undefined),
+      ...(message !== undefined ? {
+        message
+      } : undefined)
+    };
+  }
+
+  function evaluateOutbound(fromMessage, discardRestAtTake, callback) {
+    let conditionMet;
+    const outbound = {};
+    if (!outboundSequenceFlows.length) return completed();
+    const content = fromMessage.content;
+    const message = content.message;
+    const evaluateFlows = outboundSequenceFlows.slice();
+    const defaultFlowIdx = outboundSequenceFlows.findIndex(({
+      isDefault
+    }) => isDefault);
+
+    if (defaultFlowIdx > -1) {
+      evaluateFlows.splice(defaultFlowIdx, 1);
+      evaluateFlows.push(outboundSequenceFlows[defaultFlowIdx]);
+    }
+
+    broker.subscribeTmp('execution', 'evaluate.flow.#', (routingKey, {
+      content: evalContent,
+      ack
+    }) => {
+      const {
+        id: flowId,
+        action
+      } = evalContent;
+      if (action === 'take') conditionMet = true;
+      outbound[flowId] = evalContent;
+
+      if ('result' in evalContent) {
+        logger.debug(`<${content.executionId} (${id})> flow <${flowId}> evaluated to: ${evalContent.result}`);
       }
 
-      evaluatedFlow.discardSequence = discardSequence;
-      if (message !== undefined && !('message' in evaluatedFlow)) evaluatedFlow.message = message;
-      return evaluatedFlow;
+      let nextFlow = evaluateFlows.shift();
+      if (!nextFlow) return completed();
+
+      if (discardRestAtTake && conditionMet) {
+        do {
+          outbound[nextFlow.id] = formatFlowAction(nextFlow, {
+            action: 'discard'
+          });
+        } while (nextFlow = evaluateFlows.shift());
+
+        return completed();
+      }
+
+      if (conditionMet && nextFlow.isDefault) {
+        outbound[nextFlow.id] = formatFlowAction(nextFlow, {
+          action: 'discard'
+        });
+        return completed();
+      }
+
+      ack();
+      evaluateSequenceFlows(nextFlow);
+    }, {
+      consumerTag: `_flow-evaluation-${executionId}`
+    });
+    return evaluateSequenceFlows(evaluateFlows.shift());
+
+    function completed(err) {
+      broker.cancel(`_flow-evaluation-${executionId}`);
+      if (err) return callback(err);
+      const outboundList = Object.keys(outbound).reduce((result, flowId) => {
+        const flow = outbound[flowId];
+        result.push({ ...flow,
+          ...(message !== undefined ? {
+            message
+          } : undefined)
+        });
+        return result;
+      }, []);
+      return callback(null, outboundList);
+    }
+
+    function evaluateSequenceFlows(flow) {
+      if (!flow) return completed();
+
+      if (flow.isDefault) {
+        return broker.publish('execution', 'evaluate.flow.take', formatFlowAction(flow, {
+          action: 'take'
+        }), {
+          persistent: false
+        });
+      }
+
+      const flowCondition = flow.getCondition();
+
+      if (!flowCondition) {
+        return broker.publish('execution', 'evaluate.flow.take', formatFlowAction(flow, {
+          action: 'take'
+        }), {
+          persistent: false
+        });
+      }
+
+      flowCondition.execute((0, _messageHelper.cloneMessage)(fromMessage), (err, result) => {
+        if (err) return completed(err);
+        const action = result ? 'take' : 'discard';
+        return broker.publish('execution', 'evaluate.flow.' + action, formatFlowAction(flow, {
+          action,
+          result
+        }), {
+          persistent: false
+        });
+      });
     }
   }
 

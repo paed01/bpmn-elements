@@ -45,7 +45,7 @@ const invalidProcess = `
     <endEvent id="end2" />
     <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
     <sequenceFlow id="flow2" sourceRef="decision" targetRef="end2">
-      <conditionExpression xsi:type="tFormalExpression" language="JavaScript">true</conditionExpression>
+      <conditionExpression xsi:type="tFormalExpression" language="JavaScript">next(null, true);</conditionExpression>
     </sequenceFlow>
   </process>
 </definitions>`;
@@ -63,7 +63,7 @@ function valid(definitionId = 'Def_1') {
       <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
       <sequenceFlow id="flow2" sourceRef="decision" targetRef="end1" />
       <sequenceFlow id="flow3" sourceRef="decision" targetRef="end2">
-        <conditionExpression xsi:type="tFormalExpression" language="JavaScript">true</conditionExpression>
+        <conditionExpression xsi:type="tFormalExpression" language="JavaScript">next(null, true);</conditionExpression>
       </sequenceFlow>
     </process>
   </definitions>`;

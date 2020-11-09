@@ -42,6 +42,40 @@ Feature('EventBasedGateway', () => {
     And('process completes run', async () => {
       return end;
     });
+
+    When('process is again', () => {
+      wait = bp.waitFor('activity.wait');
+      timer = bp.waitFor('activity.timer');
+      end = bp.waitFor('end');
+
+      bp.run();
+    });
+
+    Then('timer is started', async () => {
+      timerApi = await timer;
+    });
+
+    And('signal event is waiting for signal', async () => {
+      signalApi = await wait;
+    });
+
+    When('timer is canceled', async () => {
+      bp.cancelActivity({id: timerApi.id});
+    });
+
+    Then('timer is taken', async () => {
+      expect(timerApi.owner.counters).to.have.property('taken', 1);
+      expect(timerApi.owner.counters).to.have.property('discarded', 1);
+    });
+
+    And('signal was discarded', async () => {
+      expect(signalApi.owner.counters).to.have.property('taken', 1);
+      expect(signalApi.owner.counters).to.have.property('discarded', 1);
+    });
+
+    And('process completes run', async () => {
+      return end;
+    });
   });
 
   Scenario('recovered gateway with intermediate timer and message event', () => {
@@ -108,12 +142,6 @@ Feature('EventBasedGateway', () => {
       await wait;
     });
 
-    // let signalApi;
-    // And('signal event is waiting for signal', async () => {
-    //   signalApi = await wait;
-    // });
-
-    // let state;
     Given('state is saved', (done) => {
       process.nextTick(done);
     });
@@ -123,6 +151,7 @@ Feature('EventBasedGateway', () => {
       definition.stop();
       definition = Definition(context.clone());
       end = definition.waitFor('end');
+
       definition.recover(state);
       definition.resume();
 
@@ -132,10 +161,6 @@ Feature('EventBasedGateway', () => {
     Then('definition completes run', async () => {
       return end;
     });
-
-    // And('timer was discarded', async () => {
-    //   expect(timerApi.owner.counters).to.have.property('discarded', 1);
-    // });
   });
 
   Scenario('Resuming EventBasedGateway with attached intermediate timer and signal event', () => {

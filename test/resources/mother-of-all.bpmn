@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="3.0.1">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.3.0">
   <bpmn:collaboration id="collaborationLane">
     <bpmn:participant id="Participant_0ug1o78" name="Main process" processRef="motherOfAll" />
     <bpmn:participant id="participant" name="Participant" processRef="participantProcess" />
@@ -80,7 +80,7 @@ next();</bpmn:script>
     <bpmn:sequenceFlow id="toDecision" sourceRef="join" targetRef="decision" />
     <bpmn:sequenceFlow id="toFinal" sourceRef="decision" targetRef="theEnd" />
     <bpmn:sequenceFlow id="toLoop" name="Enter loop" sourceRef="decision" targetRef="scriptTask2">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">!environment.variables.stopLoop</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, !environment.variables.stopLoop);</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="toPickMe1" sourceRef="manyDecisions" targetRef="noPickMeTask" />
     <bpmn:sequenceFlow id="toPickMe3" sourceRef="manyDecisions" targetRef="pickMeTask" />
@@ -129,87 +129,8 @@ next();</bpmn:script>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="collaborationLane">
-      <bpmndi:BPMNEdge id="SequenceFlow_1up51pb_di" bpmnElement="toSubScriptTask">
-        <di:waypoint x="730" y="292" />
-        <di:waypoint x="776" y="292" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="553" y="185" width="90" height="0" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="UserTask_1o7ooo6_di" bpmnElement="subUserTask1">
-        <dc:Bounds x="630" y="252" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="BoundaryEvent_0sob9or_di" bpmnElement="subUserTaskTimer">
-        <dc:Bounds x="661" y="314" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="479" y="268" width="90" height="0" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="SequenceFlow_0mdaw7s_di" bpmnElement="toSubScriptTaskTimeout">
-        <di:waypoint x="679" y="350" />
-        <di:waypoint x="679" y="362" />
-        <di:waypoint x="826" y="362" />
-        <di:waypoint x="826" y="332" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="553" y="255" width="90" height="0" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="ScriptTask_1yazkok_di" bpmnElement="subScriptTask1">
-        <dc:Bounds x="776" y="252" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Participant_0ug1o78_di" bpmnElement="Participant_0ug1o78" isHorizontal="true">
         <dc:Bounds x="156" y="81" width="1424" height="511" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
-        <dc:Bounds x="206" y="273" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="212" y="309" width="24" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="ScriptTask_1vylgtv_di" bpmnElement="scriptTask1">
-        <dc:Bounds x="286" y="251" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="UserTask_1a1o193_di" bpmnElement="userTask1">
-        <dc:Bounds x="427" y="251" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="SubProcess_153levg_di" bpmnElement="subProcess1" isExpanded="true">
-        <dc:Bounds x="577" y="191" width="350" height="200" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_0nofq10_di" bpmnElement="defaultTask">
-        <dc:Bounds x="1067" y="251" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="ParallelGateway_0fmzq3y_di" bpmnElement="join">
-        <dc:Bounds x="1209" y="266" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1251" y="312" width="21" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_1he29fg_di" bpmnElement="pickMeTask">
-        <dc:Bounds x="952" y="386" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Task_0d5f6aq_di" bpmnElement="noPickMeTask">
-        <dc:Bounds x="952" y="101" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="ExclusiveGateway_0s9m5h8_di" bpmnElement="decision" isMarkerVisible="true">
-        <dc:Bounds x="1397" y="266" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1443" y="312" width="31" height="14" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="ScriptTask_1qt9lqz_di" bpmnElement="scriptTask2">
-        <dc:Bounds x="837" y="492" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="InclusiveGateway_0f7ip5d_di" bpmnElement="manyDecisions">
-        <dc:Bounds x="977" y="266" width="50" height="50" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="802" y="234" width="90" height="0" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_0xzhlvu_di" bpmnElement="theEnd">
-        <dc:Bounds x="1524" y="273" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="1530" y="309" width="24" height="14" />
-        </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="SequenceFlow_0t6kfgx_di" bpmnElement="toFirstScriptTask">
         <di:waypoint x="242" y="291" />
@@ -310,18 +231,95 @@ next();</bpmn:script>
           <dc:Bounds x="1286" y="184" width="90" height="0" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1z11jq4_di" bpmnElement="toDecision">
+        <di:waypoint x="1259" y="291" />
+        <di:waypoint x="1397" y="291" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1128" y="184" width="90" height="0" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="206" y="273" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="212" y="309" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_1vylgtv_di" bpmnElement="scriptTask1">
+        <dc:Bounds x="286" y="251" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="UserTask_1a1o193_di" bpmnElement="userTask1">
+        <dc:Bounds x="427" y="251" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SubProcess_153levg_di" bpmnElement="subProcess1" isExpanded="true">
+        <dc:Bounds x="577" y="191" width="350" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_0mdaw7s_di" bpmnElement="toSubScriptTaskTimeout">
+        <di:waypoint x="679" y="350" />
+        <di:waypoint x="679" y="362" />
+        <di:waypoint x="826" y="362" />
+        <di:waypoint x="826" y="332" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="553" y="255" width="90" height="0" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1up51pb_di" bpmnElement="toSubScriptTask">
+        <di:waypoint x="730" y="292" />
+        <di:waypoint x="776" y="292" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="553" y="185" width="90" height="0" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="UserTask_1o7ooo6_di" bpmnElement="subUserTask1">
+        <dc:Bounds x="630" y="252" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_1yazkok_di" bpmnElement="subScriptTask1">
+        <dc:Bounds x="776" y="252" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BoundaryEvent_0sob9or_di" bpmnElement="subUserTaskTimer">
+        <dc:Bounds x="661" y="314" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="479" y="268" width="90" height="0" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_0nofq10_di" bpmnElement="defaultTask">
+        <dc:Bounds x="1067" y="251" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ParallelGateway_0fmzq3y_di" bpmnElement="join">
+        <dc:Bounds x="1209" y="266" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1251" y="312" width="21" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_1he29fg_di" bpmnElement="pickMeTask">
+        <dc:Bounds x="952" y="386" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_0d5f6aq_di" bpmnElement="noPickMeTask">
+        <dc:Bounds x="952" y="101" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ExclusiveGateway_0s9m5h8_di" bpmnElement="decision" isMarkerVisible="true">
+        <dc:Bounds x="1397" y="266" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1443" y="312" width="31" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ScriptTask_1qt9lqz_di" bpmnElement="scriptTask2">
+        <dc:Bounds x="837" y="492" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="InclusiveGateway_0f7ip5d_di" bpmnElement="manyDecisions">
+        <dc:Bounds x="977" y="266" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="802" y="234" width="90" height="0" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_0xzhlvu_di" bpmnElement="theEnd">
+        <dc:Bounds x="1524" y="273" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1530" y="309" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Participant_0konnuf_di" bpmnElement="participant" isHorizontal="true">
         <dc:Bounds x="156" y="645" width="610" height="292" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="MessageFlow_0poeswc_di" bpmnElement="MessageFlow_0poeswc">
-        <di:waypoint x="900" y="572" />
-        <di:waypoint x="900.0372771474879" y="662" />
-        <di:waypoint x="253.03727714748783" y="662" />
-        <di:waypoint x="253" y="754" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="377" y="565" width="90" height="0" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_1ifeyo8_di" bpmnElement="SequenceFlow_1ifeyo8">
         <di:waypoint x="274" y="771" />
         <di:waypoint x="362" y="771" />
@@ -329,17 +327,18 @@ next();</bpmn:script>
           <dc:Bounds x="118" y="674" width="90" height="0" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="EndEvent_0axbjv3_di" bpmnElement="participathEndEvent">
-        <dc:Bounds x="548" y="753" width="36" height="36" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="366" y="707" width="90" height="0" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="SequenceFlow_1uyrch1_di" bpmnElement="SequenceFlow_1uyrch1">
         <di:waypoint x="462" y="771" />
         <di:waypoint x="548" y="771" />
         <bpmndi:BPMNLabel>
           <dc:Bounds x="305" y="674" width="90" height="0" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0o4woz0_di" bpmnElement="SequenceFlow_0o4woz0">
+        <di:waypoint x="389" y="829" />
+        <di:waypoint x="388" y="872" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="189" y="754" width="90" height="0" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="StartEvent_0aheqx8_di" bpmnElement="messageStartEvent">
@@ -348,26 +347,12 @@ next();</bpmn:script>
           <dc:Bounds x="55" y="707" width="90" height="0" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="TextAnnotation_1lqy6ca_di" bpmnElement="TextAnnotation_1lqy6ca">
-        <dc:Bounds x="468" y="689" width="100" height="30" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Association_01m3i19_di" bpmnElement="Association_01m3i19">
-        <di:waypoint x="462" y="740" />
-        <di:waypoint x="494" y="719" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNShape id="BoundaryEvent_10xz7m8_di" bpmnElement="serviceBoundErrorEvent">
-        <dc:Bounds x="371" y="793" width="36" height="36" />
+      <bpmndi:BPMNShape id="EndEvent_0axbjv3_di" bpmnElement="participathEndEvent">
+        <dc:Bounds x="548" y="753" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="187" y="747" width="90" height="0" />
+          <dc:Bounds x="366" y="707" width="90" height="0" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="SequenceFlow_0o4woz0_di" bpmnElement="SequenceFlow_0o4woz0">
-        <di:waypoint x="389" y="829" />
-        <di:waypoint x="388" y="872" />
-        <bpmndi:BPMNLabel>
-          <dc:Bounds x="189" y="754" width="90" height="0" />
-        </bpmndi:BPMNLabel>
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="EndEvent_10a17wy_di" bpmnElement="participathErrorEndEvent">
         <dc:Bounds x="370" y="872" width="36" height="36" />
         <bpmndi:BPMNLabel>
@@ -377,11 +362,26 @@ next();</bpmn:script>
       <bpmndi:BPMNShape id="ServiceTask_1anuq6k_di" bpmnElement="participantServiceTask">
         <dc:Bounds x="362" y="731" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="SequenceFlow_1z11jq4_di" bpmnElement="toDecision">
-        <di:waypoint x="1259" y="291" />
-        <di:waypoint x="1397" y="291" />
+      <bpmndi:BPMNShape id="TextAnnotation_1lqy6ca_di" bpmnElement="TextAnnotation_1lqy6ca">
+        <dc:Bounds x="468" y="689" width="100" height="30" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BoundaryEvent_10xz7m8_di" bpmnElement="serviceBoundErrorEvent">
+        <dc:Bounds x="371" y="793" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="1128" y="184" width="90" height="0" />
+          <dc:Bounds x="187" y="747" width="90" height="0" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_01m3i19_di" bpmnElement="Association_01m3i19">
+        <di:waypoint x="462" y="740" />
+        <di:waypoint x="494" y="719" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="MessageFlow_0poeswc_di" bpmnElement="MessageFlow_0poeswc">
+        <di:waypoint x="900" y="572" />
+        <di:waypoint x="900.0372771474879" y="662" />
+        <di:waypoint x="253.03727714748783" y="662" />
+        <di:waypoint x="253" y="754" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="377" y="565" width="90" height="0" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>

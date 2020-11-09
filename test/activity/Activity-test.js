@@ -1210,7 +1210,7 @@ describe('Activity', () => {
       return leave;
     });
 
-    it('forwards execute completed message', async () => {
+    it('forwards execute completed message message', async () => {
       const sequenceFlows = [];
       const context = getContext({
         getOutboundSequenceFlows() {

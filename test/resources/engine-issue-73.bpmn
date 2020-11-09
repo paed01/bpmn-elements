@@ -29,7 +29,7 @@
       <bpmn:outgoing>loopback1</bpmn:outgoing>
     </bpmn:exclusiveGateway>
     <bpmn:sequenceFlow id="toDecision2" name="Never true 2" sourceRef="decision1" targetRef="decision2">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">1==2</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, 1==2)</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:task id="finishtask" name="Finish">
       <bpmn:incoming>toFinish1</bpmn:incoming>
@@ -37,7 +37,7 @@
       <bpmn:outgoing>toEnd</bpmn:outgoing>
     </bpmn:task>
     <bpmn:sequenceFlow id="toFinish1" name="Never true" sourceRef="decision1" targetRef="finishtask">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">1==3</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, 1==3)</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:endEvent id="end">
       <bpmn:incoming>toEnd</bpmn:incoming>
@@ -49,13 +49,13 @@
       <bpmn:outgoing>toFinish2</bpmn:outgoing>
     </bpmn:exclusiveGateway>
     <bpmn:sequenceFlow id="looback2" name="Never true 3" sourceRef="decision2" targetRef="usertaskA">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">1==2</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, 1==2)</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="toFinish2" name="Never true" sourceRef="decision2" targetRef="finishtask">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">1==9</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, 1==9)</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:sequenceFlow id="loopback1" name="Always true" sourceRef="decision1" targetRef="usertaskA">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">1==1</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, 1==1)</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">

@@ -164,9 +164,7 @@ describe('EventBasedGateway', () => {
             <incoming>to-wait</incoming>
           </userTask>
           <sequenceFlow id="to-wait" sourceRef="decision" targetRef="usertask" />
-          <sequenceFlow id="to-receive" sourceRef="decision" targetRef="receive">
-            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.end}</conditionExpression>
-          </sequenceFlow>
+          <sequenceFlow id="to-receive" sourceRef="decision" targetRef="receive" />
         </process>
       </definitions>`;
 

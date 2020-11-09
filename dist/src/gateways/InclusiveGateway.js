@@ -36,63 +36,32 @@ function InclusiveGatewayBehaviour(activity) {
   function execute(executeMessage) {
     const content = (0, _messageHelper.cloneContent)(executeMessage.content);
     if (!outboundSequenceFlows.length) return complete();
-    let conditionMet, defaultFlow, evaluateError;
-    const outbound = content.outbound = [];
+    return activity.evaluateOutbound((0, _messageHelper.cloneMessage)(executeMessage), false, complete);
 
-    for (let i = 0; i < outboundSequenceFlows.length; i++) {
-      const flow = outboundSequenceFlows[i];
-
-      if (flow.isDefault) {
-        defaultFlow = flow;
-        continue;
-      }
-
-      if (flow.evaluateCondition(executeMessage, onEvaluateError)) {
-        conditionMet = true;
-        outbound.push({
-          id: flow.id,
-          action: 'take'
-        });
-      } else {
-        if (evaluateError) return broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(content, {
-          error: evaluateError
-        }));
-        outbound.push({
-          id: flow.id,
-          action: 'discard'
-        });
-      }
-    }
-
-    if (defaultFlow) {
-      if (conditionMet) {
-        outbound.push({
-          id: defaultFlow.id,
-          action: 'discard'
-        });
-      } else {
-        logger.debug(`<${id}> take default flow`);
-        outbound.push({
-          id: defaultFlow.id,
-          action: 'take'
-        });
-      }
-    } else if (!conditionMet) {
-      const err = new _Errors.ActivityError(`<${id}> no conditional flow taken`, executeMessage);
-      logger.error(`<${id}>`, err);
-      return broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(content, {
+    function complete(err, outbound) {
+      if (err) return broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(content, {
         error: err
       }));
-    }
+      if (!outbound) return broker.publish('execution', 'execute.completed', content);
+      const taken = outbound.find(({
+        action
+      }) => action === 'take');
 
-    return complete();
+      if (!taken) {
+        const error = new _Errors.ActivityError(`<${id}> no conditional flow taken`, executeMessage);
+        logger.error(`<${id}>`, err);
+        return broker.publish('execution', 'execute.error', { ...content,
+          error
+        });
+      }
 
-    function complete() {
-      broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content));
-    }
+      if (taken.isDefault) {
+        logger.debug(`<${id}> take default flow <${taken.id}>`);
+      }
 
-    function onEvaluateError(err) {
-      evaluateError = err;
+      return broker.publish('execution', 'execute.completed', { ...content,
+        outbound
+      });
     }
   }
 }

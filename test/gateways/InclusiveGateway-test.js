@@ -138,12 +138,12 @@ describe('InclusiveGateway', () => {
           <sequenceFlow id="flow1" sourceRef="start" targetRef="decision" />
           <sequenceFlow id="flow2" sourceRef="decision" targetRef="theEnd1">
             <conditionExpression xsi:type="tFormalExpression" language="JavaScript"><![CDATA[
-            environment.variables.input <= 50
+            next(null, environment.variables.input <= 50);
             ]]></conditionExpression>
           </sequenceFlow>
           <sequenceFlow id="flow3" sourceRef="decision" targetRef="theEnd2">
             <conditionExpression xsi:type="tFormalExpression" language="JavaScript"><![CDATA[
-            environment.variables.input <= 20
+            next(null, environment.variables.input <= 20);
             ]]></conditionExpression>
           </sequenceFlow>
         </process>
