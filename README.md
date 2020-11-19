@@ -1,7 +1,7 @@
 bpmn-elements
 =============
 
-[![Build Status](https://travis-ci.org/paed01/bpmn-elements.svg?branch=master)](https://travis-ci.org/paed01/bpmn-elements)
+[![Build Status](https://travis-ci.com/paed01/bpmn-elements.svg?branch=master)](https://travis-ci.com/paed01/bpmn-elements)
 
 Isomorphic JavaScript BPMN 2.0 workflow elements suitable for bundling into frontend script or just required into your nodejs project.
 
