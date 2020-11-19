@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 3.1.0
+
+- All sequence flows with condition, regardless of language, can use script condition using [register function](/docs/Scripts.md#registeractivity). If condition language is stipulated then script is required.
+
 # 3.0.0
 
 ## Breaking

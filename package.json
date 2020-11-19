@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "description": "Executable workflow elements based on BPMN 2.0",
   "main": "dist/index.js",
   "module": "index.js",
@@ -49,13 +49,13 @@
     "camunda-bpmn-moddle": "^4.4.1",
     "chai": "^4.2.0",
     "chronokinesis": "^2.0.1",
-    "debug": "^4.2.0",
+    "debug": "^4.3.0",
     "eslint": "^7.13.0",
     "got": "^11.8.0",
     "mocha": "^8.2.1",
     "mocha-cakes-2": "^3.3.0",
     "moddle-context-serializer": "^0.16.0",
-    "nock": "^13.0.4",
+    "nock": "^13.0.5",
     "nyc": "^15.1.0"
   },
   "dependencies": {

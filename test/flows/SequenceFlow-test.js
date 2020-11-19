@@ -2,6 +2,7 @@ import Environment from '../../src/Environment';
 import factory from '../helpers/factory';
 import testHelpers from '../helpers/testHelpers';
 import SequenceFlow from '../../src/flows/SequenceFlow';
+import {Scripts} from '../helpers/JavaScripts';
 
 describe('SequenceFlow', () => {
   describe('properties', () => {
@@ -77,6 +78,93 @@ describe('SequenceFlow', () => {
       expect(activity.outbound[2]).to.have.property('id', 'flow4withExpression');
       expect(activity.outbound[2].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
+    });
+
+    it('can register script condition to all flows with conditions', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="theStart" />
+          <inclusiveGateway id="decision" default="flow2" />
+          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
+          <sequenceFlow id="flow2" sourceRef="decision" targetRef="end1" />
+          <endEvent id="end1" />
+          <sequenceFlow id="flowWithSyncScript" sourceRef="decision" targetRef="end2">
+            <conditionExpression xsi:type="tFormalExpression" language="sync">environment.variables.isOk</conditionExpression>
+          </sequenceFlow>
+          <endEvent id="end2" />
+          <sequenceFlow id="flowWithScript" sourceRef="decision" targetRef="end3">
+            <conditionExpression xsi:type="tFormalExpression">next(null, environment.variables.isNotOk);</conditionExpression>
+          </sequenceFlow>
+          <endEvent id="end3" />
+          <sequenceFlow id="flowWithoutCondition" sourceRef="decision" targetRef="end4" />
+          <endEvent id="end4" />
+        </process>
+      </definitions>`;
+
+      const ctx = await testHelpers.context(source, {scripts: TestScripts()});
+      ctx.environment.variables.isOk = true;
+
+      const activity = ctx.getActivityById('decision');
+      activity.run();
+
+      expect(activity.outbound[0]).to.have.property('id', 'flow2');
+      expect(activity.outbound[0].counters).to.have.property('discard', 1);
+      expect(activity.outbound[0].counters).to.have.property('take', 0);
+
+      expect(activity.outbound[1]).to.have.property('id', 'flowWithSyncScript');
+      expect(activity.outbound[1].counters).to.have.property('discard', 0);
+      expect(activity.outbound[1].counters).to.have.property('take', 1);
+
+      expect(activity.outbound[2]).to.have.property('id', 'flowWithScript');
+      expect(activity.outbound[2].counters).to.have.property('discard', 1);
+      expect(activity.outbound[2].counters).to.have.property('take', 0);
+
+      expect(activity.outbound[3]).to.have.property('id', 'flowWithoutCondition');
+      expect(activity.outbound[3].counters).to.have.property('discard', 0);
+      expect(activity.outbound[3].counters).to.have.property('take', 1);
+
+      function TestScripts() {
+        const javaScripts = Scripts();
+        const scripts = {};
+
+        return {
+          register({id, type, behaviour}) {
+            if (!behaviour.conditionExpression) return;
+
+            const scriptBody = behaviour.conditionExpression.body;
+            const sync = !/next\(/.test(scriptBody);
+
+            const script = javaScripts.register({
+              id,
+              type,
+              behaviour: {
+                conditionExpression: {
+                  ...behaviour.conditionExpression,
+                  language: 'javascript',
+                },
+              },
+            });
+
+            scripts[id] = {script, sync};
+          },
+          getScript(language, {id}) {
+            const {script, sync} = scripts[id];
+            return {
+              execute,
+            };
+
+            function execute(executionContext, callback) {
+              if (sync) {
+                const result = script.runInNewContext(executionContext);
+                return callback(null, result);
+              }
+              return script.runInNewContext({...executionContext, next: callback});
+            }
+          },
+        };
+      }
     });
 
     it('executes service expression', async () => {

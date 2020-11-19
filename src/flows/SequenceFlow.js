@@ -161,12 +161,13 @@ export default function SequenceFlow(flowDef, {environment}) {
     const conditionExpression = behaviour.conditionExpression;
     if (!conditionExpression) return null;
 
-    if (!('language' in conditionExpression)) {
-      return ExpressionCondition(conditionExpression.body);
+    const {language} = conditionExpression;
+    const script = environment.getScript(language, flowApi);
+    if (language || script) {
+      return ScriptCondition(script, language);
     }
 
-    const script = environment.getScript(conditionExpression.language, flowApi);
-    return ScriptCondition(script, conditionExpression.language);
+    return ExpressionCondition(conditionExpression.body);
   }
 
   function ScriptCondition(script, language) {
@@ -175,7 +176,7 @@ export default function SequenceFlow(flowDef, {environment}) {
       execute: (message, callback) => {
         if (!script) {
           const err = new Error(`Script format ${language} is unsupported or was not registered (<${id}>)`);
-          logger.error(`<${id}>`, err);
+          logger.error(`<${id}> ${err.message}`);
           emitFatal(err, createMessage());
           return callback && callback(err);
         }

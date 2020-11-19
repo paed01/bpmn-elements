@@ -28,6 +28,8 @@ export function Scripts() {
     const compiled = compile(language, `${type}/${id}`, scriptBody);
     if (!compiled) return;
     scripts[id] = compiled;
+
+    return compiled;
   }
 
   function compile(language, filename, scriptBody) {
