@@ -1,8 +1,13 @@
 import Environment from '../../src/Environment';
 import factory from '../helpers/factory';
+import js from '../resources/extensions/JsExtension';
 import testHelpers from '../helpers/testHelpers';
 import SequenceFlow from '../../src/flows/SequenceFlow';
 import {Scripts} from '../helpers/JavaScripts';
+
+const extensions = {
+  js,
+};
 
 describe('SequenceFlow', () => {
   describe('properties', () => {
@@ -136,7 +141,7 @@ describe('SequenceFlow', () => {
             const scriptBody = behaviour.conditionExpression.body;
             const sync = !/next\(/.test(scriptBody);
 
-            const script = javaScripts.register({
+            const registered = javaScripts.register({
               id,
               type,
               behaviour: {
@@ -147,20 +152,20 @@ describe('SequenceFlow', () => {
               },
             });
 
-            scripts[id] = {script, sync};
+            scripts[id] = {sync, registered};
           },
           getScript(language, {id}) {
-            const {script, sync} = scripts[id];
+            const {sync, registered} = scripts[id];
             return {
               execute,
             };
 
             function execute(executionContext, callback) {
               if (sync) {
-                const result = script.runInNewContext(executionContext);
+                const result = registered.script.runInNewContext(executionContext);
                 return callback(null, result);
               }
-              return script.runInNewContext({...executionContext, next: callback});
+              return registered.script.runInNewContext({...executionContext, next: callback});
             }
           },
         };
@@ -196,6 +201,62 @@ describe('SequenceFlow', () => {
       expect(activity.outbound[1]).to.have.property('id', 'flow3withExpression');
       expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
+    });
+
+    it('can handle external resource condition with custom script handler', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="theStart" />
+          <inclusiveGateway id="decision" default="flow2" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
+          <sequenceFlow id="flow2" sourceRef="decision" targetRef="end1" />
+          <sequenceFlow id="flow3withExternalResource" sourceRef="decision" targetRef="end2">
+            <conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript" js:resource="./external.js" />
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      let count = 0;
+      const ctx = await testHelpers.context(source, {
+        extensions,
+        scripts: {
+          register() {
+          },
+          getScript(_, {id, behaviour}) {
+            if (id !== 'flow3withExternalResource') return;
+            if (behaviour.conditionExpression.resource !== './external.js') return;
+            return {
+              execute(executionContext, callback) {
+                count++;
+                return callback(null, executionContext.environment.variables.input > 3);
+              }
+            };
+          },
+        }
+      });
+
+      ctx.environment.variables.input = 2;
+
+      const activity = ctx.getActivityById('decision');
+      activity.run();
+
+      expect(activity.outbound[1]).to.have.property('id', 'flow3withExternalResource');
+      expect(activity.outbound[1].counters).to.have.property('discard', 1);
+      expect(activity.outbound[1].counters).to.have.property('take', 0);
+
+      ctx.environment.variables.input = 4;
+
+      activity.run();
+
+      expect(activity.outbound[1]).to.have.property('id', 'flow3withExternalResource');
+      expect(activity.outbound[1].counters).to.have.property('discard', 1);
+      expect(activity.outbound[1].counters).to.have.property('take', 1);
+
+      expect(count).to.equal(2);
     });
 
     it('script condition executes and returns result in callback', async () => {
@@ -237,6 +298,29 @@ describe('SequenceFlow', () => {
           },
         });
       }).to.throw(Error, /Java is unsupported/i);
+    });
+
+    it('throws if condition body is empty', async () => {
+      const flowDef = {
+        id: 'flow',
+        type: 'bpmn:SequenceFlow',
+        parent: {},
+        behaviour: {
+          conditionExpression: {
+            body: '',
+          },
+        },
+      };
+
+      const flow = SequenceFlow(flowDef, {environment: Environment()});
+
+      expect(() => {
+        flow.evaluateCondition({
+          content: {
+            parent: {},
+          },
+        });
+      }).to.throw(Error, /without body is unsupported/i);
     });
   });
 

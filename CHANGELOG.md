@@ -1,6 +1,14 @@
 Changelog
 =========
 
+# 4.0.0
+
+Refactor scripts again
+
+## Breaking
+- ScriptTask now requires script. [Script handler](/docs/Scripts.md) can off course return a dummy function
+- Conditional SequnceFlow respects script if returned by script handler
+
 # 3.1.0
 
 - All sequence flows with condition, regardless of language, can use script condition using [register function](/docs/Scripts.md#registeractivity). If condition language is stipulated then script is required.

@@ -59,5 +59,31 @@
       "type": "String",
       "isAttr": true
     }]
+  }, {
+    "name": "ScriptTask",
+    "isAbstract": true,
+    "extends": [
+      "bpmn:ScriptTask"
+    ],
+    "properties": [
+      {
+        "name": "resource",
+        "isAttr": true,
+        "type": "String"
+      }
+    ]
+  }, {
+    "name": "FormalExpression",
+    "isAbstract": true,
+    "extends": [
+      "bpmn:FormalExpression"
+    ],
+    "properties": [
+      {
+        "name": "resource",
+        "isAttr": true,
+        "type": "String"
+      }
+    ]
   }]
 }

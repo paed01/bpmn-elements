@@ -1,7 +1,7 @@
 import Activity from '../activity/Activity';
 import ExecutionScope from '../activity/ExecutionScope';
 import { ActivityError } from '../error/Errors';
-import {cloneContent} from '../messageHelper';
+import {cloneContent, cloneMessage} from '../messageHelper';
 
 export default function ScriptTask(activityDef, context) {
   return Activity(ScriptTaskBehaviour, activityDef, context);
@@ -10,7 +10,7 @@ export default function ScriptTask(activityDef, context) {
 export function ScriptTaskBehaviour(activity) {
   const {id, type, behaviour, broker, logger, environment, emitFatal} = activity;
 
-  const {scriptFormat, script: scriptBody} = activity.behaviour;
+  const {scriptFormat} = activity.behaviour;
 
   const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
 
@@ -31,9 +31,7 @@ export function ScriptTaskBehaviour(activity) {
       return loopCharacteristics.execute(executeMessage);
     }
 
-    if (!scriptBody) return broker.publish('execution', 'execute.completed', cloneContent(content));
-
-    const script = environment.getScript(scriptFormat, activity);
+    const script = environment.getScript(scriptFormat, activity, cloneMessage(executeMessage));
     if (!script) {
       return emitFatal(new ActivityError(`Script format ${scriptFormat} is unsupported or was not registered for <${activity.id}>`, executeMessage), content);
     }

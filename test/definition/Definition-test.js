@@ -1050,7 +1050,7 @@ describe('Definition', () => {
       expect(definition.counters).to.have.property('discarded', 1);
     });
 
-    it('emits error on flow error', async () => {
+    it('emits error on flow condition TypeError', async () => {
       const source = `
       <?xml version="1.0" encoding="UTF-8"?>
         <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -1061,31 +1061,32 @@ describe('Definition', () => {
           <endEvent id="end2" />
           <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
           <sequenceFlow id="flow2" sourceRef="decision" targetRef="end1">
-            <conditionExpression xsi:type="tFormalExpression" language="PowerShell"><![CDATA[
-            ls | clip
+            <conditionExpression xsi:type="tFormalExpression" language="javascript"><![CDATA[
+            next(null, this.supported.unsupported);
             ]]></conditionExpression>
           </sequenceFlow>
           <sequenceFlow id="flow3" sourceRef="decision" targetRef="end2">
-            <conditionExpression xsi:type="tFormalExpression" language="PowerShell"><![CDATA[
-            ls | clip
+            <conditionExpression xsi:type="tFormalExpression" language="javascript"><![CDATA[
+            next(null, this.supported.unsupported);
             ]]></conditionExpression>
           </sequenceFlow>
         </process>
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      const definition = Definition(context);
+      const definition = Definition(context, {
+        scripts: JavaScripts(false),
+      });
 
       let error;
       definition.once('error', (err) => {
-        expect(err).to.be.instanceof(Error);
-        expect(err.message).to.match(/is unsupported/);
         error = err;
       });
 
       definition.run();
 
       expect(error).to.be.ok;
+      expect(error).to.match(/TypeError.+unsupported/);
     });
 
     describe('child error', () => {

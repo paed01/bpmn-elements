@@ -3,6 +3,7 @@ import testHelpers from '../helpers/testHelpers';
 import js from '../resources/extensions/JsExtension';
 import request from 'got';
 import { ActivityError } from '../../src/error/Errors';
+import {Scripts} from '../helpers/JavaScripts';
 
 const extensions = {
   js,
@@ -68,6 +69,44 @@ describe('ScriptTask', () => {
       expect(api.content.output).to.have.property('input', 2);
     });
 
+    it('executes external resource script on taken inbound', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <scriptTask id="scriptTask" scriptFormat="Javascript" js:resource="./external.js" />
+          <endEvent id="end" />
+          <sequenceFlow id="flow1" sourceRef="start" targetRef="scriptTask" />
+          <sequenceFlow id="flow2" sourceRef="scriptTask" targetRef="end" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source, {
+        extensions,
+        scripts: {
+          register() {
+          },
+          getScript(_, {id}) {
+            if (id !== 'scriptTask') return;
+            return {
+              execute(executionContext, callback) {
+                return callback(null, {input: 3});
+              }
+            };
+          },
+        }
+      });
+      const task = context.getActivityById('scriptTask');
+      task.activate();
+
+      const leave = task.waitFor('leave');
+      task.inbound[0].take();
+      const api = await leave;
+
+      expect(api.content.output).to.have.property('input', 3);
+    });
+
     it('behaves as task if script body is not specified', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -76,14 +115,14 @@ describe('ScriptTask', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, {extensions});
+      const context = await testHelpers.context(source, {extensions, scripts: Scripts(true)});
       const task = context.getActivityById('task');
       const leave = task.waitFor('leave');
       task.run();
       return leave;
     });
 
-    it('throws error if script format is not recognized', async () => {
+    it('throws error if script handler doesn\'t recognize script', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="theProcess" isExecutable="true">
@@ -97,7 +136,7 @@ describe('ScriptTask', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, {extensions});
+      const context = await testHelpers.context(source, {extensions, scripts: Scripts(false)});
       const task = context.getActivityById('task');
 
       const fail = task.waitFor('leave').catch(err => err);

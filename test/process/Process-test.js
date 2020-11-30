@@ -1299,7 +1299,7 @@ describe('Process', () => {
       expect(bp.counters).to.have.property('discarded', 1);
     });
 
-    it('emits error on flow error', async () => {
+    it('emits error on flow condition TypeError', async () => {
       const source = `
       <?xml version="1.0" encoding="UTF-8"?>
         <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -1310,13 +1310,13 @@ describe('Process', () => {
           <endEvent id="end2" />
           <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
           <sequenceFlow id="flow2" sourceRef="decision" targetRef="end1">
-            <conditionExpression xsi:type="tFormalExpression" language="PowerShell"><![CDATA[
-            ls | clip
+            <conditionExpression xsi:type="tFormalExpression" language="javascript"><![CDATA[
+            next(null, this.supported.unsupported);
             ]]></conditionExpression>
           </sequenceFlow>
           <sequenceFlow id="flow3" sourceRef="decision" targetRef="end2">
-            <conditionExpression xsi:type="tFormalExpression" language="PowerShell"><![CDATA[
-            ls | clip
+            <conditionExpression xsi:type="tFormalExpression" language="javascript"><![CDATA[
+            next(null, this.supported.unsupported);
             ]]></conditionExpression>
           </sequenceFlow>
         </process>
@@ -1333,11 +1333,10 @@ describe('Process', () => {
       bp.run();
 
       expect(errors).to.have.length(1);
-      expect(errors[0]).to.be.instanceof(Error);
-      expect(errors[0].message).to.match(/is unsupported/);
+      expect(errors[0]).to.match(/TypeError.+unsupported/);
     });
 
-    it('emits error if unsupported script format', async () => {
+    it('emits error if script handler throws', async () => {
       const source = `
       <?xml version="1.0" encoding="UTF-8"?>
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -1352,7 +1351,14 @@ describe('Process', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, {
+        scripts: {
+          register() {},
+          getScript(scriptFormat, activity) {
+            if (scriptFormat !== 'javascript') return activity.emitFatal(new ActivityError('unsupported'));
+          }
+        }
+      });
       const bp = context.getProcessById('theProcess');
 
       const errors = [];

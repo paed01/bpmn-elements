@@ -31,8 +31,7 @@ function ScriptTaskBehaviour(activity) {
     emitFatal
   } = activity;
   const {
-    scriptFormat,
-    script: scriptBody
+    scriptFormat
   } = activity.behaviour;
   const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   environment.registerScript(activity);
@@ -51,8 +50,7 @@ function ScriptTaskBehaviour(activity) {
       return loopCharacteristics.execute(executeMessage);
     }
 
-    if (!scriptBody) return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content));
-    const script = environment.getScript(scriptFormat, activity);
+    const script = environment.getScript(scriptFormat, activity, (0, _messageHelper.cloneMessage)(executeMessage));
 
     if (!script) {
       return emitFatal(new _Errors.ActivityError(`Script format ${scriptFormat} is unsupported or was not registered for <${activity.id}>`, executeMessage), content);

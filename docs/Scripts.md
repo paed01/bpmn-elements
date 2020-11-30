@@ -47,6 +47,7 @@ export function Scripts() {
       case 'bpmn:SequenceFlow': {
         if (!behaviour.conditionExpression) return;
         language = behaviour.conditionExpression.language;
+        if (!language) return;
         scriptBody = behaviour.conditionExpression.body;
         break;
       }
@@ -57,21 +58,26 @@ export function Scripts() {
     }
 
     if (!/^javascript$/i.test(language)) return;
-    scripts[id] = new Script(scriptBody, {filename: `${type}/${id}`});
+
+    const script = javaScript(language, `${type}/${id}`, scriptBody);
+    scripts[id] = script;
+
+    return script;
   }
 
-  function getScript(scriptType, {id}) {
-    if (!/^javascript$/i.test(scriptType)) return;
-    const script = scripts[id];
-    if (!script) return;
+  function getScript(language, {id}) {
+    return scripts[id];
+  }
 
+  function javaScript(language, filename, scriptBody) {
+    const script = new Script(scriptBody, {filename});
     return {
-      execute,
+      script,
+      language,
+      execute(executionContext, callback) {
+        return script.runInNewContext({...executionContext, next: callback});
+      },
     };
-
-    function execute(executionContext, callback) {
-      return script.runInNewContext({...executionContext, next: callback});
-    }
   }
 }
 ```

@@ -960,7 +960,7 @@ describe('TimerEventDefinition', () => {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDuration: 'PT1Y',
-          timeDate: new Date(Date.now() + 50).toISOString(),
+          timeDate: new Date(Date.now() + 100).toISOString(),
           timeCycle: 'R3/PT10H',
         },
       });

@@ -9,15 +9,8 @@ export default function SequenceFlow(flowDef, {environment}) {
   const parent = cloneParent(originalParent);
   const logger = environment.Logger(type.toLowerCase());
 
-  environment.registerScript({id, type, behaviour});
 
-  let counters = {
-    looped: 0,
-    take: 0,
-    discard: 0,
-  };
-
-  const flowApi = {
+  const flowBase = {
     id,
     type,
     name,
@@ -28,6 +21,19 @@ export default function SequenceFlow(flowDef, {environment}) {
     isDefault,
     isSequenceFlow: true,
     environment,
+    logger,
+  };
+
+  environment.registerScript({...flowBase});
+
+  let counters = {
+    looped: 0,
+    take: 0,
+    discard: 0,
+  };
+
+  const flowApi = {
+    ...flowBase,
     get counters() {
       return {...counters};
     },
@@ -163,8 +169,13 @@ export default function SequenceFlow(flowDef, {environment}) {
 
     const {language} = conditionExpression;
     const script = environment.getScript(language, flowApi);
-    if (language || script) {
+    if (script) {
       return ScriptCondition(script, language);
+    }
+
+    if (!conditionExpression.body) {
+      const msg = language ? `Condition expression script ${language} is unsupported or was not registered` : 'Condition expression without body is unsupported';
+      return emitFatal(new Error(msg), createMessage());
     }
 
     return ExpressionCondition(conditionExpression.body);
@@ -173,7 +184,7 @@ export default function SequenceFlow(flowDef, {environment}) {
   function ScriptCondition(script, language) {
     return {
       language,
-      execute: (message, callback) => {
+      execute(message, callback) {
         if (!script) {
           const err = new Error(`Script format ${language} is unsupported or was not registered (<${id}>)`);
           logger.error(`<${id}> ${err.message}`);
