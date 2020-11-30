@@ -6,7 +6,7 @@ Changelog
 Refactor scripts again
 
 ## Breaking
-- ScriptTask now requires script. [Script handler](/docs/Scripts.md) can off course return a dummy function
+- ScriptTask now requires that a script is returned by [Script handler](/docs/Scripts.md) can off course return a dummy function
 - Conditional SequnceFlow respects script if returned by script handler
 
 # 3.1.0

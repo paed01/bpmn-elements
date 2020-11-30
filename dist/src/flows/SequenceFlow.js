@@ -232,13 +232,6 @@ function SequenceFlow(flowDef, {
       language,
 
       execute(message, callback) {
-        if (!script) {
-          const err = new Error(`Script format ${language} is unsupported or was not registered (<${id}>)`);
-          logger.error(`<${id}> ${err.message}`);
-          emitFatal(err, createMessage());
-          return callback && callback(err);
-        }
-
         try {
           return script.execute((0, _ExecutionScope.default)(flowApi, message), callback);
         } catch (err) {
