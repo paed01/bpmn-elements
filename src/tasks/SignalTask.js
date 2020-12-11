@@ -29,7 +29,7 @@ export function SignalTaskBehaviour(activity) {
 
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
     broker.subscribeTmp('api', '#.signal.*', onDelegatedApiMessage, {noAck: true, consumerTag: `_api-delegated-${executionId}`});
-    broker.publish('event', 'activity.wait', cloneContent(content, {state: 'wait', isRecovered: executeMessage.fields.redelivered}));
+    broker.publish('event', 'activity.wait', cloneContent(content, {state: 'wait'}));
 
     function onDelegatedApiMessage(routingKey, message) {
       if (!message.properties.delegate) return;

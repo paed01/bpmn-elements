@@ -266,7 +266,10 @@ function ActivityExecution(activity, context) {
     }
 
     function getExecuteMessage() {
-      const result = (0, _messageHelper.cloneMessage)(message);
+      const result = (0, _messageHelper.cloneMessage)(message, { ...(isRedelivered ? {
+          isRecovered: true
+        } : undefined)
+      });
       result.content.ignoreIfExecuting = undefined;
       return result;
     }

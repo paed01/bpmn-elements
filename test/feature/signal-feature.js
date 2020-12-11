@@ -843,14 +843,17 @@ Feature('Signals', () => {
       state = definition.getState();
     });
 
-    When('definition is resumed and immediately signaled', () => {
+    let wait;
+    When('definition is resumed', () => {
       definition = Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
       definition.recover(state);
-      definition.resume();
 
+      wait = definition.waitFor('wait');
+
+      definition.resume();
       definition.signal({
         id: activity.content.message ? activity.content.message.id : undefined,
         input: 1,
@@ -859,6 +862,11 @@ Feature('Signals', () => {
 
     Then('activity output is set to signal message', () => {
       expect(output).to.have.property('anonSignalEvent').with.property('input', 1);
+    });
+
+    And('wait was emitted with resumed flag', async () => {
+      const api = await wait;
+      expect(api.content).to.have.property('isRecovered', true);
     });
 
     And('next activity is running', () => {
@@ -957,6 +965,9 @@ Feature('Signals', () => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
       definition.recover(state);
+
+      wait = definition.waitFor('wait');
+
       definition.resume();
 
       definition.signal({
@@ -972,6 +983,11 @@ Feature('Signals', () => {
     And('next activity is running', () => {
       [activity] = definition.getPostponed();
       expect(activity).to.have.property('id', 'namedMessageEvent');
+    });
+
+    And('wait was emitted with resumed flag', async () => {
+      const api = await wait;
+      expect(api.content).to.have.property('isRecovered', true);
     });
 
     Given('execution state is saved', () => {

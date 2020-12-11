@@ -476,9 +476,10 @@ Feature('Messaging', () => {
       definition = Definition(context);
     });
 
-    let end;
+    let wait, end;
     When('definition is ran', () => {
       end = definition.waitFor('end');
+      wait = definition.waitFor('wait');
       definition.run();
     });
 
@@ -487,6 +488,11 @@ Feature('Messaging', () => {
       expect(definition.isRunning).to.be.true;
       [receive] = definition.getPostponed();
       expect(receive).to.have.property('id', 'receive');
+    });
+
+    And('receive task emits wait without resumed flag', async () => {
+      const api = await wait;
+      expect(api.content).to.not.have.property('isResumed');
     });
 
     When('message is sent', async () => {
@@ -578,10 +584,16 @@ Feature('Messaging', () => {
 
     When('resumed', () => {
       end = definition.waitFor('end');
+      wait = definition.waitFor('wait');
       definition.resume();
     });
 
-    And('message is sent', () => {
+    Then('receive task emits wait with resumed flag', async () => {
+      const api = await wait;
+      expect(api.content).to.have.property('isRecovered', true);
+    });
+
+    When('message is sent', () => {
       definition.sendMessage({
         id: 'Message1'
       });

@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 4.1.0
+
+- Make sure resumed activity wait events are emitted with a flag indicating that they are resumed - `content.isRecovered`. Facilitate decisions regarding save state and stop
+
 # 4.0.0
 
 Refactor scripts again

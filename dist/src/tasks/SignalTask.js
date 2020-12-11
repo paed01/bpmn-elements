@@ -53,8 +53,7 @@ function SignalTaskBehaviour(activity) {
       consumerTag: `_api-delegated-${executionId}`
     });
     broker.publish('event', 'activity.wait', (0, _messageHelper.cloneContent)(content, {
-      state: 'wait',
-      isRecovered: executeMessage.fields.redelivered
+      state: 'wait'
     }));
 
     function onDelegatedApiMessage(routingKey, message) {

@@ -1151,7 +1151,7 @@ function Activity(Behaviour, activityDef, context) {
       }
 
       popFormattingStart(routingKey, message);
-      logger.debug(`<${id}> format ${fields.routingKey} message content`);
+      logger.debug(`<${id}> format ${fields.routingKey} message content with formatter ${routingKey}`);
       formattedContent = { ...formattedContent,
         ...message.content,
         ...fundamentals

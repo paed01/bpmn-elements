@@ -206,7 +206,7 @@ export default function ActivityExecution(activity, context) {
     }
 
     function getExecuteMessage() {
-      const result = cloneMessage(message);
+      const result = cloneMessage(message, {...(isRedelivered ? {isRecovered: true} : undefined)});
       result.content.ignoreIfExecuting = undefined;
       return result;
     }
