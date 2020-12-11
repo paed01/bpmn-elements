@@ -3,7 +3,7 @@ Changelog
 
 # 4.1.0
 
-- Make sure resumed activity wait events are emitted with a flag indicating that they are resumed - `content.isRecovered`. Facilitate decisions regarding save state and stop
+- Make sure resumed activity wait events are emitted with a flag indicating that they are resumed - `content.isRecovered`. Can facilitate decisions regarding save state and stop. A more proper name would've been `isResumed` but `isRecovered` was used by `SignalTask`. No need for a breaking major for this small addition
 
 # 4.0.0
 
