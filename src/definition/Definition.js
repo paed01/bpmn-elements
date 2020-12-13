@@ -114,6 +114,8 @@ export function Definition(context, options) {
     logger.debug(`<${executionId} (${id})> run`);
 
     activateRunConsumers();
+
+    return definitionApi;
   }
 
   function resume(callback) {

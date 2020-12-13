@@ -138,6 +138,7 @@ function Definition(context, options) {
     broker.publish('run', 'run.execute', (0, _messageHelper.cloneContent)(content));
     logger.debug(`<${executionId} (${id})> run`);
     activateRunConsumers();
+    return definitionApi;
   }
 
   function resume(callback) {

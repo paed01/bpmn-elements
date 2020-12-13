@@ -82,6 +82,18 @@ describe('Definition', () => {
   });
 
   describe('run([options, callback])', () => {
+    it('returns api', async () => {
+      const definition = Definition({
+        id: 'Def_1',
+        environment: Environment({ Logger: testHelpers.Logger }),
+        getProcesses() {},
+        getExecutableProcesses() {},
+        getMessageFlows() {},
+        getDataObjects() {},
+      });
+      expect(definition.run() === definition).to.be.true;
+    });
+
     it('publishes enter on run', async () => {
       const definition = Definition({
         id: 'Def_1',
