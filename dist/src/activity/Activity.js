@@ -528,6 +528,8 @@ function Activity(Behaviour, activityDef, context) {
 
   function onRunMessage(routingKey, message, messageProperties) {
     switch (routingKey) {
+      case 'run.outbound.discard':
+      case 'run.outbound.take':
       case 'run.next':
         return continueRunMessage(routingKey, message, messageProperties);
 

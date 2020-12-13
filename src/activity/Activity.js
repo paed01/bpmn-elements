@@ -442,6 +442,8 @@ export default function Activity(Behaviour, activityDef, context) {
 
   function onRunMessage(routingKey, message, messageProperties) {
     switch (routingKey) {
+      case 'run.outbound.discard':
+      case 'run.outbound.take':
       case 'run.next':
         return continueRunMessage(routingKey, message, messageProperties);
       case 'run.resume': {
@@ -972,6 +974,7 @@ export default function Activity(Behaviour, activityDef, context) {
     function popFormattingStart(routingKey) {
       for (let i = 0; i < pendingFormats.length; i++) {
         const pendingFormat = pendingFormats[i];
+
         if (getRoutingKeyPattern(pendingFormat.content.endRoutingKey).test(routingKey)) {
           logger.debug(`<${id}> completed formatting ${fields.routingKey} message content with formatter ${routingKey}`);
           pendingFormats.splice(i, 1);
