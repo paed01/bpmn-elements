@@ -138,6 +138,33 @@ describe('Environment', () => {
       expect(environment.resolveExpression('${environment.variables.myArray[-1]}')).to.equal(5);
     });
 
+    it('keeps extensions', () => {
+      const extensions = {extendo() {}};
+      let environment = Environment({
+        extensions,
+        settings: {
+          enableDummyService: false,
+        },
+        variables: {
+          beforeState: true,
+        },
+        services: {
+          request() {},
+        },
+      });
+
+      environment = environment.recover({
+        variables: {
+          init: 1,
+          loadedAt: new Date(),
+          myArray: [1, 2, 3, 5],
+        },
+      });
+
+      expect(environment.extensions).to.equal(extensions);
+      expect(environment.extensions).to.have.property('extendo').that.is.a('function');
+    });
+
     it('recovers without state', () => {
       const extensions = {};
       let environment = Environment({

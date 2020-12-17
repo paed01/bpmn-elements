@@ -39,9 +39,13 @@ function InclusiveGatewayBehaviour(activity) {
     return activity.evaluateOutbound((0, _messageHelper.cloneMessage)(executeMessage), false, complete);
 
     function complete(err, outbound) {
-      if (err) return broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(content, {
-        error: err
-      }));
+      if (err) {
+        const error = new _Errors.ActivityError(err.message, executeMessage, err);
+        return broker.publish('execution', 'execute.error', { ...content,
+          error
+        });
+      }
+
       if (!outbound) return broker.publish('execution', 'execute.completed', content);
       const taken = outbound.find(({
         action

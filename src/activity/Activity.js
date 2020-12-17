@@ -4,7 +4,7 @@ import {ActivityApi} from '../Api';
 import {ActivityBroker} from '../EventBroker';
 import {getRoutingKeyPattern} from 'smqp';
 import {cloneContent, cloneParent, cloneMessage} from '../messageHelper';
-import {makeErrorFromMessage} from '../error/Errors';
+import {makeErrorFromMessage, ActivityError} from '../error/Errors';
 
 export default function Activity(Behaviour, activityDef, context) {
   const {id, type = 'activity', name, parent: originalParent = {}, behaviour = {}, isParallelGateway, isSubProcess, triggeredByEvent, isThrowing, isTransaction} = activityDef;
@@ -623,7 +623,9 @@ export default function Activity(Behaviour, activityDef, context) {
       }
 
       return doOutbound(cloneMessage(message), isDiscarded, (err, outbound) => {
-        if (err) return emitFatal(err);
+        if (err) {
+          return publishEvent('error', cloneContent(content, {error: err}), {correlationId});
+        }
 
         broker.publish('run', 'run.leave', cloneContent(content, {
           ...(outbound.length ? {outbound} : undefined),
@@ -653,7 +655,7 @@ export default function Activity(Behaviour, activityDef, context) {
       case 'execution.outbound.take': {
         return doOutbound(cloneMessage(message), false, (err, outbound) => {
           message.ack();
-          if (err) return emitFatal(err);
+          if (err) return emitFatal(err, content);
           broker.publish('run', 'run.execute.passthrough', cloneContent(content, {outbound}));
           return ackRunExecuteMessage();
         });
@@ -757,7 +759,8 @@ export default function Activity(Behaviour, activityDef, context) {
     }
 
     return evaluateOutbound(fromMessage, false, (err, evaluatedOutbound) => {
-      if (err) return callback(err);
+      if (err) return callback(new ActivityError(err.message, fromMessage, err));
+
       const outbound = doRunOutbound(evaluatedOutbound);
       return callback(null, outbound);
     });

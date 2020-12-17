@@ -83,4 +83,128 @@ Feature('Outbound flows', () => {
       });
     });
   });
+
+  Scenario('conditional outbound script flow fails', () => {
+    let definition;
+    Given('an exclusive gateway with one default flow and flow with faulty script condition', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="command-definition"
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn"
+        camunda="">
+        <process id="my-process" isExecutable="true">
+          <exclusiveGateway id="decision" name="Is user admin?" default="to-superuser" />
+          <sequenceFlow id="to-superuser" sourceRef="decision" targetRef="superuser" />
+          <sequenceFlow id="to-admin" sourceRef="decision" targetRef="admin">
+            <conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">next(null, environment.form.item.type === 'computer');</conditionExpression>
+          </sequenceFlow>
+          <endEvent id="admin" name="User is admin" />
+          <endEvent id="superuser" name="Super user" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    let thrown;
+    When('definition is ran', () => {
+      thrown = definition.waitFor('error');
+      definition.run();
+    });
+
+    Then('an error was thrown', async () => {
+      const error = await thrown;
+      expect(error.content.error instanceof Error).to.be.ok;
+    });
+
+    Given('an inclusive gateway with one default flow and flow with faulty script condition', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="command-definition"
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn"
+        camunda="">
+        <process id="my-process" isExecutable="true">
+          <inclusiveGateway id="decision" name="Is user admin?" default="to-superuser" />
+          <sequenceFlow id="to-superuser" sourceRef="decision" targetRef="superuser" />
+          <sequenceFlow id="to-admin" sourceRef="decision" targetRef="admin">
+            <conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">next(null, environment.form.item.type === 'computer');</conditionExpression>
+          </sequenceFlow>
+          <endEvent id="admin" name="User is admin" />
+          <endEvent id="superuser" name="Super user" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    When('definition is ran', () => {
+      thrown = definition.waitFor('error');
+      definition.run();
+    });
+
+    Then('an error was thrown', async () => {
+      const error = await thrown;
+      expect(error.content.error instanceof Error).to.be.ok;
+    });
+
+    Given('a event based gateway with one default flow and flow with faulty script condition', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="command-definition"
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn"
+        camunda="">
+        <process id="my-process" isExecutable="true">
+          <eventBasedGateway id="decision" name="Is user admin?" default="to-superuser" />
+          <sequenceFlow id="to-superuser" sourceRef="decision" targetRef="superuser" />
+          <sequenceFlow id="to-admin" sourceRef="decision" targetRef="admin">
+            <conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">next(null, environment.form.item.type === 'computer');</conditionExpression>
+          </sequenceFlow>
+          <endEvent id="admin" name="User is admin" />
+          <endEvent id="superuser" name="Super user" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    When('definition is ran', () => {
+      thrown = definition.waitFor('error');
+      definition.run();
+    });
+
+    Then('an error was thrown', async () => {
+      const error = await thrown;
+      expect(error.content.error instanceof Error).to.be.ok;
+    });
+
+    Given('a task with one default flow and flow with faulty script condition', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="command-definition"
+        xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn"
+        camunda="">
+        <process id="my-process" isExecutable="true">
+          <task id="decision" name="Is user admin?" default="to-superuser" />
+          <sequenceFlow id="to-superuser" sourceRef="decision" targetRef="superuser" />
+          <sequenceFlow id="to-admin" sourceRef="decision" targetRef="admin">
+            <conditionExpression xsi:type="bpmn:tFormalExpression" language="javascript">next(null, environment.form.item.type === 'computer');</conditionExpression>
+          </sequenceFlow>
+          <endEvent id="admin" name="User is admin" />
+          <endEvent id="superuser" name="Super user" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    When('definition is ran', () => {
+      thrown = definition.waitFor('error');
+      definition.run();
+    });
+
+    Then('an error was thrown', async () => {
+      const error = await thrown;
+      expect(error.content.error instanceof Error).to.be.ok;
+    });
+  });
 });

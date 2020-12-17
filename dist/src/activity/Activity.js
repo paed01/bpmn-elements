@@ -750,7 +750,14 @@ function Activity(Behaviour, activityDef, context) {
       }
 
       return doOutbound((0, _messageHelper.cloneMessage)(message), isDiscarded, (err, outbound) => {
-        if (err) return emitFatal(err);
+        if (err) {
+          return publishEvent('error', (0, _messageHelper.cloneContent)(content, {
+            error: err
+          }), {
+            correlationId
+          });
+        }
+
         broker.publish('run', 'run.leave', (0, _messageHelper.cloneContent)(content, { ...(outbound.length ? {
             outbound
           } : undefined)
@@ -783,7 +790,7 @@ function Activity(Behaviour, activityDef, context) {
         {
           return doOutbound((0, _messageHelper.cloneMessage)(message), false, (err, outbound) => {
             message.ack();
-            if (err) return emitFatal(err);
+            if (err) return emitFatal(err, content);
             broker.publish('run', 'run.execute.passthrough', (0, _messageHelper.cloneContent)(content, {
               outbound
             }));
@@ -920,7 +927,7 @@ function Activity(Behaviour, activityDef, context) {
     }
 
     return evaluateOutbound(fromMessage, false, (err, evaluatedOutbound) => {
-      if (err) return callback(err);
+      if (err) return callback(new _Errors.ActivityError(err.message, fromMessage, err));
       const outbound = doRunOutbound(evaluatedOutbound);
       return callback(null, outbound);
     });
