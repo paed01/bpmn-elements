@@ -627,6 +627,7 @@ export default function Activity(Behaviour, activityDef, context) {
           return publishEvent('error', cloneContent(content, {error: err}), {correlationId});
         }
 
+
         broker.publish('run', 'run.leave', cloneContent(content, {
           ...(outbound.length ? {outbound} : undefined),
         }), {correlationId});
@@ -758,7 +759,7 @@ export default function Activity(Behaviour, activityDef, context) {
       return callback(null, outboundFlows);
     }
 
-    return evaluateOutbound(fromMessage, false, (err, evaluatedOutbound) => {
+    return evaluateOutbound(fromMessage, fromContent.outboundTakeOne, (err, evaluatedOutbound) => {
       if (err) return callback(new ActivityError(err.message, fromMessage, err));
 
       const outbound = doRunOutbound(evaluatedOutbound);
@@ -810,11 +811,15 @@ export default function Activity(Behaviour, activityDef, context) {
       evaluateFlows.splice(defaultFlowIdx, 1);
       evaluateFlows.push(outboundSequenceFlows[defaultFlowIdx]);
     }
+    let takenCount = 0;
 
     broker.subscribeTmp('execution', 'evaluate.flow.#', (routingKey, {content: evalContent, ack}) => {
       const {id: flowId, action} = evalContent;
 
-      if (action === 'take') conditionMet = true;
+      if (action === 'take') {
+        takenCount++;
+        conditionMet = true;
+      }
 
       outbound[flowId] = evalContent;
 
@@ -846,6 +851,12 @@ export default function Activity(Behaviour, activityDef, context) {
     function completed(err) {
       broker.cancel(`_flow-evaluation-${executionId}`);
       if (err) return callback(err);
+
+      if (!takenCount) {
+        const nonTakenError = new ActivityError(`<${id}> no conditional flow taken`, fromMessage);
+        logger.error(`<${id}>`, nonTakenError);
+        return callback(nonTakenError);
+      }
 
       const outboundList = Object.keys(outbound).reduce((result, flowId) => {
         const flow = outbound[flowId];

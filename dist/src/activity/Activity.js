@@ -926,7 +926,7 @@ function Activity(Behaviour, activityDef, context) {
       return callback(null, outboundFlows);
     }
 
-    return evaluateOutbound(fromMessage, false, (err, evaluatedOutbound) => {
+    return evaluateOutbound(fromMessage, fromContent.outboundTakeOne, (err, evaluatedOutbound) => {
       if (err) return callback(new _Errors.ActivityError(err.message, fromMessage, err));
       const outbound = doRunOutbound(evaluatedOutbound);
       return callback(null, outbound);
@@ -985,6 +985,7 @@ function Activity(Behaviour, activityDef, context) {
       evaluateFlows.push(outboundSequenceFlows[defaultFlowIdx]);
     }
 
+    let takenCount = 0;
     broker.subscribeTmp('execution', 'evaluate.flow.#', (routingKey, {
       content: evalContent,
       ack
@@ -993,7 +994,12 @@ function Activity(Behaviour, activityDef, context) {
         id: flowId,
         action
       } = evalContent;
-      if (action === 'take') conditionMet = true;
+
+      if (action === 'take') {
+        takenCount++;
+        conditionMet = true;
+      }
+
       outbound[flowId] = evalContent;
 
       if ('result' in evalContent) {
@@ -1030,6 +1036,13 @@ function Activity(Behaviour, activityDef, context) {
     function completed(err) {
       broker.cancel(`_flow-evaluation-${executionId}`);
       if (err) return callback(err);
+
+      if (!takenCount) {
+        const nonTakenError = new _Errors.ActivityError(`<${id}> no conditional flow taken`, fromMessage);
+        logger.error(`<${id}>`, nonTakenError);
+        return callback(nonTakenError);
+      }
+
       const outboundList = Object.keys(outbound).reduce((result, flowId) => {
         const flow = outbound[flowId];
         result.push({ ...flow,

@@ -582,20 +582,20 @@ Feature('Process', () => {
     <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <process id="theProcess" isExecutable="true">
         <startEvent id="start" />
-        <sequenceFlow id="flow1" sourceRef="start" targetRef="activity1" />
-        <intermediateCatchEvent id="activity1">
+        <sequenceFlow id="to-activity1" sourceRef="start" targetRef="activity1" />
+       <intermediateCatchEvent id="activity1">
           <timerEventDefinition>
             <timeDuration xsi:type="tFormalExpression">PT0.01S</timeDuration>
           </timerEventDefinition>
         </intermediateCatchEvent>
-        <sequenceFlow id="flow2" sourceRef="activity1" targetRef="activity2" />
+        <sequenceFlow id="to-activity2" sourceRef="activity1" targetRef="activity2" />
         <task id="activity2" />
-        <sequenceFlow id="flow3" sourceRef="activity2" targetRef="decision" />
-        <exclusiveGateway id="decision" default="flow4" />
-        <sequenceFlow id="flow4" sourceRef="decision" targetRef="activity1">
+        <sequenceFlow id="to-decision" sourceRef="activity2" targetRef="decision" />
+        <exclusiveGateway id="decision" default="back-to-activity1" />
+        <sequenceFlow id="back-to-activity1" sourceRef="decision" targetRef="activity1">
           <conditionExpression xsi:type="tFormalExpression">\${environment.variables.condition1}</conditionExpression>
         </sequenceFlow>
-        <sequenceFlow id="flow5" sourceRef="decision" targetRef="end" />
+        <sequenceFlow id="to-end" sourceRef="decision" targetRef="end" />
         <endEvent id="end" />
       </process>
     </definitions>`;
@@ -640,8 +640,7 @@ Feature('Process', () => {
       assertMessage('activity.execution.completed', 'start');
       assertMessage('activity.end', 'start');
 
-      assertMessage('flow.take', 'flow1');
-
+      assertMessage('flow.take', 'to-activity1');
 
       assertMessage('activity.enter', 'activity1');
       assertMessage('activity.start', 'activity1');
@@ -651,22 +650,21 @@ Feature('Process', () => {
       assertMessage('activity.execution.completed', 'activity1');
       assertMessage('activity.end', 'activity1');
 
-      assertMessage('flow.take', 'flow2');
+      assertMessage('flow.take', 'to-activity2');
 
       assertMessage('activity.enter', 'activity2');
       assertMessage('activity.start', 'activity2');
       assertMessage('activity.execution.completed', 'activity2');
       assertMessage('activity.end', 'activity2');
 
-      assertMessage('flow.take', 'flow3');
+      assertMessage('flow.take', 'to-decision');
 
       assertMessage('activity.enter', 'decision');
       assertMessage('activity.start', 'decision');
       assertMessage('activity.execution.completed', 'decision');
       assertMessage('activity.end', 'decision');
 
-      assertMessage('flow.discard', 'flow4');
-      assertMessage('flow.take', 'flow5');
+      assertMessage('flow.take', 'to-end');
 
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
@@ -674,17 +672,19 @@ Feature('Process', () => {
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
 
+      assertMessage('flow.discard', 'back-to-activity1');
+
       assertMessage('activity.leave', 'decision');
       assertMessage('activity.leave', 'activity2');
       assertMessage('activity.leave', 'activity1');
 
       assertMessage('activity.discard', 'activity1');
 
-      assertMessage('flow.discard', 'flow2');
+      assertMessage('flow.discard', 'to-activity2');
 
       assertMessage('activity.discard', 'activity2');
 
-      assertMessage('flow.looped', 'flow3');
+      assertMessage('flow.looped', 'to-decision');
 
       assertMessage('activity.leave', 'activity2');
       assertMessage('activity.leave', 'activity1');
@@ -1720,22 +1720,22 @@ Feature('Process', () => {
     <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <process id="theProcess" isExecutable="true">
         <startEvent id="start" />
-        <sequenceFlow id="flow0" sourceRef="start" targetRef="activity0" />
+        <sequenceFlow id="to-activity0" sourceRef="start" targetRef="activity0" />
         <userTask id="activity0" />
-        <sequenceFlow id="flow1" sourceRef="activity0" targetRef="activity1" />
+        <sequenceFlow id="to-activity1" sourceRef="activity0" targetRef="activity1" />
         <intermediateCatchEvent id="activity1">
           <timerEventDefinition>
             <timeDuration xsi:type="tFormalExpression">PT0.01S</timeDuration>
           </timerEventDefinition>
         </intermediateCatchEvent>
-        <sequenceFlow id="flow2" sourceRef="activity1" targetRef="activity2" />
+        <sequenceFlow id="to-activity2" sourceRef="activity1" targetRef="activity2" />
         <task id="activity2" />
-        <sequenceFlow id="flow3" sourceRef="activity2" targetRef="decision" />
-        <exclusiveGateway id="decision" default="flow4" />
-        <sequenceFlow id="flow4" sourceRef="decision" targetRef="activity0">
+        <sequenceFlow id="to-decision" sourceRef="activity2" targetRef="decision" />
+        <exclusiveGateway id="decision" default="back-to-activity0" />
+        <sequenceFlow id="back-to-activity0" sourceRef="decision" targetRef="activity0">
           <conditionExpression xsi:type="tFormalExpression">\${environment.variables.condition1}</conditionExpression>
         </sequenceFlow>
-        <sequenceFlow id="flow5" sourceRef="decision" targetRef="end" />
+        <sequenceFlow id="to-end" sourceRef="decision" targetRef="end" />
         <endEvent id="end" />
       </process>
     </definitions>`;
@@ -1781,7 +1781,7 @@ Feature('Process', () => {
       assertMessage('activity.execution.completed', 'start');
       assertMessage('activity.end', 'start');
 
-      assertMessage('flow.take', 'flow0');
+      assertMessage('flow.take', 'to-activity0');
 
       assertMessage('activity.enter', 'activity0');
       assertMessage('activity.start', 'activity0');
@@ -1821,7 +1821,7 @@ Feature('Process', () => {
       assertMessage('activity.execution.completed', 'activity0');
       assertMessage('activity.end', 'activity0');
 
-      assertMessage('flow.take', 'flow1');
+      assertMessage('flow.take', 'to-activity1');
 
       assertMessage('activity.enter', 'activity1');
       assertMessage('activity.start', 'activity1');
@@ -1831,30 +1831,21 @@ Feature('Process', () => {
       assertMessage('activity.execution.completed', 'activity1');
       assertMessage('activity.end', 'activity1');
 
-      assertMessage('flow.take', 'flow2');
-
+      assertMessage('flow.take', 'to-activity2');
 
       assertMessage('activity.enter', 'activity2');
       assertMessage('activity.start', 'activity2');
       assertMessage('activity.execution.completed', 'activity2');
       assertMessage('activity.end', 'activity2');
 
-      assertMessage('flow.take', 'flow3');
+      assertMessage('flow.take', 'to-decision');
 
       assertMessage('activity.enter', 'decision');
       assertMessage('activity.start', 'decision');
       assertMessage('activity.execution.completed', 'decision');
       assertMessage('activity.end', 'decision');
 
-      assertMessage('flow.discard', 'flow4');
-
-      assertMessage('activity.discard', 'activity0');
-
-      assertMessage('flow.discard', 'flow1');
-
-      assertMessage('activity.leave', 'activity0');
-
-      assertMessage('flow.take', 'flow5');
+      assertMessage('flow.take', 'to-end');
 
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
@@ -1862,16 +1853,24 @@ Feature('Process', () => {
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
 
+      assertMessage('flow.discard', 'back-to-activity0');
+
+      assertMessage('activity.discard', 'activity0');
+
+      assertMessage('flow.discard', 'to-activity1');
+
+      assertMessage('activity.leave', 'activity0');
+
       assertMessage('activity.leave', 'decision');
       assertMessage('activity.leave', 'activity2');
       assertMessage('activity.leave', 'activity1');
 
       assertMessage('activity.discard', 'activity1');
 
-      assertMessage('flow.discard', 'flow2');
+      assertMessage('flow.discard', 'to-activity2');
 
       assertMessage('activity.discard', 'activity2');
-      assertMessage('flow.looped', 'flow3');
+      assertMessage('flow.looped', 'to-decision');
 
       assertMessage('activity.leave', 'activity2');
       assertMessage('activity.leave', 'activity1');
@@ -2115,12 +2114,12 @@ Feature('Process', () => {
       return timeout;
     });
 
-    Then('end event is discarded', () => {
-      assertMessage('activity.discard', 'theEnd');
+    Then('process execution is looped back to user task', () => {
+      assertMessage('activity.wait', 'userTask1');
     });
 
-    And('process execution is looped back to user task', () => {
-      assertMessage('activity.wait', 'userTask1');
+    And('end event is discarded', () => {
+      assertMessage('activity.discard', 'theEnd');
     });
 
     When('user task is signaled again', () => {
@@ -2138,16 +2137,16 @@ Feature('Process', () => {
       return timeout;
     });
 
-    Then('end event completes', () => {
-      assertMessage('activity.end', 'theEnd');
-    });
-
-    And('looped flow is discarded', () => {
+    Then('looped flow is discarded', () => {
       assertMessage('flow.discard', 'toLoop');
     });
 
     And('user task is discarded', () => {
       assertMessage('activity.discard', 'userTask1');
+    });
+
+    And('end event completes', () => {
+      assertMessage('activity.end', 'theEnd');
     });
 
     And('flow loop is detected', () => {
@@ -2284,16 +2283,16 @@ Feature('Process', () => {
       return timeout;
     });
 
-    Then('process execution reaches end event', () => {
-      assertMessage('activity.end', 'theEnd');
-    });
-
-    And('looped flow is discarded', () => {
+    Then('looped flow is discarded', () => {
       assertMessage('flow.discard', 'toLoop');
     });
 
     And('user task is discarded', () => {
       assertMessage('activity.discard', 'userTask1');
+    });
+
+    And('end event completes', () => {
+      assertMessage('activity.end', 'theEnd');
     });
 
     And('flow loop is detected', () => {

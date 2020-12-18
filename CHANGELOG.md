@@ -1,6 +1,23 @@
 Changelog
 =========
 
+# 4.1.4
+
+Outbound sequence flows again.
+
+- Remove redundant outbound sequence flow logic in Inclusive- and ExclusiveGateway. Flag ExclusiveGateway that only one should be taken
+- If no outbound sequence was taken when activity completes the activity will throw. As it did in the above gateways. This might break stuff, but I guess it actually should
+
+# 4.1.3
+
+## Bugfix
+- Wrap conditional sequence flow script error in an Activity error
+
+# 4.1.2
+
+## Bugfix
+- Return something else than undefined when calling definition run (!). The definition is returned.
+
 # 4.1.1
 
 ## Bugfix
