@@ -4,3 +4,8 @@ node_js:
 - '12'
 - '14'
 - '15'
+before_script:
+  - npm install coveralls
+script: npm run test:lcov
+after_success:
+- cat coverage.lcov | ./node_modules/.bin/coveralls --verbose

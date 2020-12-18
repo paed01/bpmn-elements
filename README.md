@@ -1,7 +1,7 @@
 bpmn-elements
 =============
 
-[![Build Status](https://travis-ci.com/paed01/bpmn-elements.svg?branch=master)](https://travis-ci.com/paed01/bpmn-elements)
+[![Build Status](https://travis-ci.com/paed01/bpmn-elements.svg?branch=coverage)](https://travis-ci.com/paed01/bpmn-elements)[![Coverage Status](https://coveralls.io/repos/github/paed01/bpmn-elements/badge.svg?branch=coverage)](https://coveralls.io/github/paed01/bpmn-elements?branch=coverage)
 
 Isomorphic JavaScript BPMN 2.0 workflow elements suitable for bundling into frontend script or just required into your nodejs project.
 
