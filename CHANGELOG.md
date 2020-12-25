@@ -1,6 +1,13 @@
 Changelog
 =========
 
+# 4.2.0
+
+Flaky formatting
+
+- Add tests for formatting workaround by publishing directly to `format-run-q`
+- Support formatting failure by adding `errorRoutingKey` or just publish format message with routing key ending in `.error`
+
 # 4.1.4
 
 Outbound sequence flows again.

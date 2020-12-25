@@ -1,8 +1,8 @@
 import ActivityExecution from './ActivityExecution';
-import {brokerSafeId, getUniqueId, filterUndefined} from '../shared';
+import {brokerSafeId, getUniqueId} from '../shared';
 import {ActivityApi} from '../Api';
 import {ActivityBroker} from '../EventBroker';
-import {getRoutingKeyPattern} from 'smqp';
+import {Formatter} from '../MessageFormatter';
 import {cloneContent, cloneParent, cloneMessage} from '../messageHelper';
 import {makeErrorFromMessage, ActivityError} from '../error/Errors';
 
@@ -102,8 +102,10 @@ export default function Activity(Behaviour, activityDef, context) {
 
   const runQ = broker.getQueue('run-q');
   const executionQ = broker.getQueue('execution-q');
-  const formatRunQ = broker.getQueue('format-run-q');
   const inboundQ = broker.assertQueue('inbound-q', {durable: true, autoDelete: false});
+
+  const formatRunQ = broker.getQueue('format-run-q');
+  const formatter = Formatter({id, broker, logger}, formatRunQ);
 
   if (isForCompensation) {
     inboundAssociations.forEach((trigger) => {
@@ -206,7 +208,6 @@ export default function Activity(Behaviour, activityDef, context) {
       throw new Error(`cannot resume running activity <${id}>`);
     }
     if (!status) return activate();
-
 
     stopped = false;
 
@@ -451,9 +452,12 @@ export default function Activity(Behaviour, activityDef, context) {
       }
     }
 
-    return formatRunMessage(formatRunQ, message, (err, formattedContent) => {
-      if (err) return broker.publish('run', 'run.error', err);
-      message.content = formattedContent;
+    const preStatus = status;
+    status = 'formatting';
+    return formatter(message, (err, formattedContent, formatted) => {
+      if (err) return emitFatal(err, message.content);
+      if (formatted) message.content = formattedContent;
+      status = preStatus;
       continueRunMessage(routingKey, message, messageProperties);
     });
 
@@ -482,8 +486,6 @@ export default function Activity(Behaviour, activityDef, context) {
   }
 
   function continueRunMessage(routingKey, message) {
-    broker.cancel('_format-consumer');
-
     const {fields, content: originalContent, ack} = message;
     const isRedelivered = fields.redelivered;
     const content = cloneContent(originalContent);
@@ -627,7 +629,6 @@ export default function Activity(Behaviour, activityDef, context) {
           return publishEvent('error', cloneContent(content, {error: err}), {correlationId});
         }
 
-
         broker.publish('run', 'run.leave', cloneContent(content, {
           ...(outbound.length ? {outbound} : undefined),
         }), {correlationId});
@@ -650,6 +651,7 @@ export default function Activity(Behaviour, activityDef, context) {
     });
 
     const {correlationId} = message.properties;
+
     publishEvent(routingKey, content, message.properties);
 
     switch (routingKey) {
@@ -925,77 +927,5 @@ export default function Activity(Behaviour, activityDef, context) {
   function getApi(message) {
     if (execution && !execution.completed) return execution.getApi(message);
     return ActivityApi(broker, message || stateMessage);
-  }
-
-  function formatRunMessage(formatQ, runMessage, callback) {
-    const startFormatMsg = formatQ.get();
-    if (!startFormatMsg) return callback(null, runMessage.content);
-
-    const pendingFormats = [];
-    const {fields, content} = runMessage;
-    const fundamentals = {
-      id: content.id,
-      type: content.type,
-      parent: cloneParent(content.parent),
-      attachedTo: content.attachedTo,
-      executionId: content.executionId,
-      isSubProcess: content.isSubProcess,
-      isMultiInstance: content.isMultiInstance,
-    };
-    if (content.inbound) {
-      fundamentals.inbound = content.inbound.slice();
-    }
-    if (content.outbound) {
-      fundamentals.outbound = content.outbound.slice();
-    }
-
-    let formattedContent = cloneContent(content);
-
-    const depleted = formatQ.on('depleted', () => {
-      if (pendingFormats.length) return;
-      depleted.cancel();
-      logger.debug(`<${id}> completed formatting ${fields.routingKey}`);
-      broker.cancel('_format-consumer');
-      callback(null, filterUndefined(formattedContent));
-    });
-
-    status = 'formatting';
-
-    onFormatMessage(startFormatMsg.fields.routingKey, startFormatMsg);
-    formatQ.assertConsumer(onFormatMessage, { consumerTag: '_format-consumer', prefetch: 100 });
-
-    function onFormatMessage(routingKey, message) {
-      const isStartFormat = message.content.endRoutingKey;
-
-      if (isStartFormat) {
-        pendingFormats.push(message);
-        return logger.debug(`<${id}> start formatting ${fields.routingKey} message content with formatter ${routingKey}`);
-      }
-
-      popFormattingStart(routingKey, message);
-
-      logger.debug(`<${id}> format ${fields.routingKey} message content with formatter ${routingKey}`);
-
-      formattedContent = {
-        ...formattedContent,
-        ...message.content,
-        ...fundamentals,
-      };
-
-      message.ack();
-    }
-
-    function popFormattingStart(routingKey) {
-      for (let i = 0; i < pendingFormats.length; i++) {
-        const pendingFormat = pendingFormats[i];
-
-        if (getRoutingKeyPattern(pendingFormat.content.endRoutingKey).test(routingKey)) {
-          logger.debug(`<${id}> completed formatting ${fields.routingKey} message content with formatter ${routingKey}`);
-          pendingFormats.splice(i, 1);
-          pendingFormat.ack();
-          break;
-        }
-      }
-    }
   }
 }

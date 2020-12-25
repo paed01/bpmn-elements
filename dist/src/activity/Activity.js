@@ -13,7 +13,7 @@ var _Api = require("../Api");
 
 var _EventBroker = require("../EventBroker");
 
-var _smqp = require("smqp");
+var _MessageFormatter = require("../MessageFormatter");
 
 var _messageHelper = require("../messageHelper");
 
@@ -150,11 +150,16 @@ function Activity(Behaviour, activityDef, context) {
   activityApi.emitFatal = emitFatal;
   const runQ = broker.getQueue('run-q');
   const executionQ = broker.getQueue('execution-q');
-  const formatRunQ = broker.getQueue('format-run-q');
   const inboundQ = broker.assertQueue('inbound-q', {
     durable: true,
     autoDelete: false
   });
+  const formatRunQ = broker.getQueue('format-run-q');
+  const formatter = (0, _MessageFormatter.Formatter)({
+    id,
+    broker,
+    logger
+  }, formatRunQ);
 
   if (isForCompensation) {
     inboundAssociations.forEach(trigger => {
@@ -539,9 +544,12 @@ function Activity(Behaviour, activityDef, context) {
         }
     }
 
-    return formatRunMessage(formatRunQ, message, (err, formattedContent) => {
-      if (err) return broker.publish('run', 'run.error', err);
-      message.content = formattedContent;
+    const preStatus = status;
+    status = 'formatting';
+    return formatter(message, (err, formattedContent, formatted) => {
+      if (err) return emitFatal(err, message.content);
+      if (formatted) message.content = formattedContent;
+      status = preStatus;
       continueRunMessage(routingKey, message, messageProperties);
     });
 
@@ -570,7 +578,6 @@ function Activity(Behaviour, activityDef, context) {
   }
 
   function continueRunMessage(routingKey, message) {
-    broker.cancel('_format-consumer');
     const {
       fields,
       content: originalContent,
@@ -1121,77 +1128,5 @@ function Activity(Behaviour, activityDef, context) {
   function getApi(message) {
     if (execution && !execution.completed) return execution.getApi(message);
     return (0, _Api.ActivityApi)(broker, message || stateMessage);
-  }
-
-  function formatRunMessage(formatQ, runMessage, callback) {
-    const startFormatMsg = formatQ.get();
-    if (!startFormatMsg) return callback(null, runMessage.content);
-    const pendingFormats = [];
-    const {
-      fields,
-      content
-    } = runMessage;
-    const fundamentals = {
-      id: content.id,
-      type: content.type,
-      parent: (0, _messageHelper.cloneParent)(content.parent),
-      attachedTo: content.attachedTo,
-      executionId: content.executionId,
-      isSubProcess: content.isSubProcess,
-      isMultiInstance: content.isMultiInstance
-    };
-
-    if (content.inbound) {
-      fundamentals.inbound = content.inbound.slice();
-    }
-
-    if (content.outbound) {
-      fundamentals.outbound = content.outbound.slice();
-    }
-
-    let formattedContent = (0, _messageHelper.cloneContent)(content);
-    const depleted = formatQ.on('depleted', () => {
-      if (pendingFormats.length) return;
-      depleted.cancel();
-      logger.debug(`<${id}> completed formatting ${fields.routingKey}`);
-      broker.cancel('_format-consumer');
-      callback(null, (0, _shared.filterUndefined)(formattedContent));
-    });
-    status = 'formatting';
-    onFormatMessage(startFormatMsg.fields.routingKey, startFormatMsg);
-    formatQ.assertConsumer(onFormatMessage, {
-      consumerTag: '_format-consumer',
-      prefetch: 100
-    });
-
-    function onFormatMessage(routingKey, message) {
-      const isStartFormat = message.content.endRoutingKey;
-
-      if (isStartFormat) {
-        pendingFormats.push(message);
-        return logger.debug(`<${id}> start formatting ${fields.routingKey} message content with formatter ${routingKey}`);
-      }
-
-      popFormattingStart(routingKey, message);
-      logger.debug(`<${id}> format ${fields.routingKey} message content with formatter ${routingKey}`);
-      formattedContent = { ...formattedContent,
-        ...message.content,
-        ...fundamentals
-      };
-      message.ack();
-    }
-
-    function popFormattingStart(routingKey) {
-      for (let i = 0; i < pendingFormats.length; i++) {
-        const pendingFormat = pendingFormats[i];
-
-        if ((0, _smqp.getRoutingKeyPattern)(pendingFormat.content.endRoutingKey).test(routingKey)) {
-          logger.debug(`<${id}> completed formatting ${fields.routingKey} message content with formatter ${routingKey}`);
-          pendingFormats.splice(i, 1);
-          pendingFormat.ack();
-          break;
-        }
-      }
-    }
   }
 }

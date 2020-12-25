@@ -252,7 +252,9 @@ describe('activity run', () => {
 
     expect(api.content).to.have.property('formatting').that.eql([
       'activity.enter',
-      'activity.execution.completed'
+      'activity.start',
+      'activity.execution.completed',
+      'activity.end',
     ]);
   });
 

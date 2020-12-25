@@ -15,8 +15,8 @@ Example:
 ```js
 const definition = Definition(context, {
   extensions: {
-    saveAllOutputToEnvironmentExtension
-  }
+    saveAllOutputToEnvironmentExtension,
+  },
 });
 
 function saveAllOutputToEnvironmentExtension(activity, {environment}) {
@@ -96,10 +96,13 @@ function fetchAsyncFormExtension(activity, {environment}) {
 
   broker.subscribeTmp('event', 'activity.enter', (_, message) => {
     const endRoutingKey = 'run.input.end';
-    broker.publish('format', 'run.input.start', { endRoutingKey });
+    const errorRoutingKey = 'run.input.error';
+    broker.publish('format', 'run.input.start', { endRoutingKey, errorRoutingKey });
 
     getFormData(activity.behaviour.formKey, message.content.id).then((form) => {
       broker.publish('format', endRoutingKey, { form });
+    }).catch((error) => {
+      broker.publish('format', errorRoutingKey, { error });
     });
   }, {noAck: true});
 

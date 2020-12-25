@@ -8,10 +8,6 @@ import {TaskBehaviour} from '../../src/tasks/Task';
 import {SignalTaskBehaviour} from '../../src/tasks/SignalTask';
 
 describe('Activity', () => {
-  describe('properties', () => {
-
-  });
-
   describe('run on inbound', () => {
     it('starts run when inbound sequence flow is taken', () => {
       const sequenceFlows = [];
@@ -1653,6 +1649,8 @@ describe('Activity', () => {
           id: 'process1',
         },
       }, context);
+
+      expect(activity.extensions).to.be.ok;
 
       activity.run();
 
