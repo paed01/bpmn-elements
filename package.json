@@ -51,7 +51,7 @@
     "chai": "^4.2.0",
     "chronokinesis": "^3.0.0",
     "debug": "^4.3.1",
-    "eslint": "^7.16.0",
+    "eslint": "^7.17.0",
     "got": "^11.8.1",
     "mocha": "^8.2.1",
     "mocha-cakes-2": "^3.3.0",

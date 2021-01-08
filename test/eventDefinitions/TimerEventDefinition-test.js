@@ -1093,16 +1093,19 @@ describe('TimerEventDefinition', () => {
     });
 
     it('completes when time date is due', (done) => {
+      ck.reset();
+
       const definition = TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
-          timeDuration: 'PT1Y',
-          timeDate: new Date(Date.now() + 100).toISOString(),
+          timeDuration: 'P1Y',
+          timeDate: new Date(Date.now() + 150).toISOString(),
           timeCycle: 'R3/PT10H',
         },
       });
 
       event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
+        expect(msg.content).to.have.property('timerType', 'timeDate');
         expect(msg.content).to.have.property('runningTime').that.is.above(0);
         done();
       }, {noAck: true});
@@ -1135,6 +1138,7 @@ describe('TimerEventDefinition', () => {
       });
 
       event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
+        expect(msg.content).to.have.property('timerType', 'timeDuration');
         expect(msg.content).to.have.property('runningTime').that.is.above(0);
         done();
       }, {noAck: true});
