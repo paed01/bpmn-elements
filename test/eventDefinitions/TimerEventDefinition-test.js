@@ -4,6 +4,7 @@ import testHelpers from '../helpers/testHelpers';
 import TimerEventDefinition from '../../src/eventDefinitions/TimerEventDefinition';
 import {ActivityApi, DefinitionApi} from '../../src/Api';
 import {ActivityBroker} from '../../src/EventBroker';
+import {Timers} from '../../src/Timers';
 
 describe('TimerEventDefinition', () => {
   let event;
@@ -14,6 +15,10 @@ describe('TimerEventDefinition', () => {
       environment: Environment({Logger: testHelpers.Logger}),
     };
     event.broker = ActivityBroker(event).broker;
+  });
+  afterEach(() => {
+    expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
+    ck.reset();
   });
 
   describe('timeDuration', () => {
@@ -29,7 +34,6 @@ describe('TimerEventDefinition', () => {
       event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
         messages.push(msg);
       }, {noAck: true});
-
 
       definition.execute({
         fields: {},
@@ -47,6 +51,7 @@ describe('TimerEventDefinition', () => {
       });
 
       expect(messages).to.have.length(1);
+
       expect(messages[0].fields).to.have.property('routingKey', 'activity.timer');
       expect(messages[0].content).to.have.property('timeDuration', 'PT0.1S');
       expect(messages[0].content).to.have.property('timeout').that.is.above(0);
@@ -54,6 +59,8 @@ describe('TimerEventDefinition', () => {
       expect(messages[0].content).to.have.property('parent').with.property('id', 'bound');
 
       definition.stop();
+
+      expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
     });
 
     it('completes when timed out', (done) => {
@@ -106,7 +113,33 @@ describe('TimerEventDefinition', () => {
       });
     });
 
-    it('invalid ISO duration ignores the duration and stalls execution', () => {
+    it('unresolved time duration completes at once', (done) => {
+      const definition = TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: '${environment.variables.myDuration}',
+        },
+      });
+
+      event.broker.subscribeOnce('event', 'activity.timeout', (_, msg) => {
+        expect(msg.content).to.have.property('state', 'timeout');
+        done();
+      });
+
+      definition.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+          },
+        },
+      });
+    });
+
+    it('invalid ISO duration executes with error', () => {
       const definition = TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
@@ -116,6 +149,11 @@ describe('TimerEventDefinition', () => {
 
       event.broker.subscribeTmp('execution', 'execute.completed', () => {
         throw new Error('Should not complete');
+      }, {noAck: true});
+
+      let errMsg;
+      event.broker.subscribeTmp('execution', 'execute.error', (_, msg) => {
+        errMsg = msg;
       }, {noAck: true});
 
       definition.execute({
@@ -130,7 +168,8 @@ describe('TimerEventDefinition', () => {
         },
       });
 
-      expect(definition.timer).to.not.be.ok;
+      expect(event.environment.timers.executing).to.be.empty;
+      expect(errMsg).to.be.ok;
     });
 
     describe('resume execution', () => {
@@ -166,6 +205,7 @@ describe('TimerEventDefinition', () => {
         const definition = TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
+            id: 'recover_1',
             timeDuration: 'PT0.1S',
           },
         });
@@ -193,6 +233,7 @@ describe('TimerEventDefinition', () => {
 
         setTimeout(() => {
           ActivityApi(broker, timerMessage).stop();
+          expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
 
           let timerMsg;
           broker.subscribeOnce('event', 'activity.timer', (_, msg) => {
@@ -208,6 +249,97 @@ describe('TimerEventDefinition', () => {
           timerMessage.fields.redelivered = true;
           definition.execute(timerMessage);
         }, 20);
+      });
+
+      it('completes once', () => {
+        ck.freeze();
+
+        const definition = TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            timeDuration: 'PT0.1S',
+          },
+        });
+
+        const broker = event.broker;
+
+        const timers = [];
+        function fakeSetTimeout(callback, delay, ...args) {
+          const ref = {callback, delay, args};
+          timers.push(ref);
+          return ref;
+        }
+
+        function fakeClearTimeout(ref) {
+          const idx = timers.indexOf(ref);
+          if (idx > -1) timers.splice(idx, 1);
+        }
+
+        event.environment.timers = Timers({
+          setTimeout: fakeSetTimeout,
+          clearTimeout: fakeClearTimeout,
+        });
+
+        let timerMessage;
+        broker.subscribeOnce('execution', 'execute.timer', (_, msg) => {
+          timerMessage = msg;
+        });
+
+        const timerMsgs = [];
+        broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
+          timerMsgs.push(msg);
+        });
+
+        definition.execute({
+          fields: {
+            routingKey: 'execute.start',
+          },
+          content: {
+            executionId: 'event_1_0',
+            index: 0,
+            parent: {
+              id: 'bound',
+              executionId: 'event_1',
+            },
+          },
+        });
+
+        expect(definition, 'timer ref is exposed').to.have.property('timer').with.property('timerId');
+
+        expect(timers).to.have.length(1);
+        expect(timers[0]).to.have.property('delay', 100);
+        expect(event.environment.timers.executing, 'no of executing timers').to.have.length(1);
+
+        ActivityApi(broker, timerMessage).stop();
+
+        expect(timers).to.have.length(0);
+        expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
+
+        ck.travel(Date.now() + 10);
+
+        timerMessage.fields.redelivered = true;
+
+        expect(timerMsgs).to.have.length(1);
+        expect(timerMsgs[0].fields).to.have.property('routingKey', 'activity.timer');
+
+        definition.execute(timerMessage);
+
+        expect(timers).to.have.length(1);
+        expect(timers[0]).to.have.property('delay', 90);
+
+        broker.subscribeTmp('event', 'activity.timeout', (_, msg) => {
+          timerMsgs.push(msg);
+        });
+
+        timers[0].callback(...timers[0].args);
+
+        expect(timerMsgs).to.have.length(2);
+        expect(timerMsgs[1].fields).to.have.property('routingKey', 'activity.timeout');
+
+        expect(definition, 'timer ref is reset').to.have.property('timer').that.is.undefined;
+
+        expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
+        expect(timers, 'no need to call clear timeout since callback has been called').to.have.length(1);
       });
 
       it('completes immediately if timeout has passed', (done) => {
@@ -257,6 +389,7 @@ describe('TimerEventDefinition', () => {
         const definition = TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
+            id: 'stopped_again',
             timeDuration: 'PT0.1S',
           },
         });
@@ -272,13 +405,15 @@ describe('TimerEventDefinition', () => {
 
         setTimeout(() => {
           ActivityApi(broker, timerMessage).stop();
+          expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
 
           timerMessage.fields.redelivered = true;
           definition.execute(timerMessage);
+          expect(event.environment.timers.executing, 'no of executing timers').to.have.length(1);
 
           ActivityApi(broker, timerMessage).stop();
+          expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
 
-          expect(definition.timer).to.not.be.ok;
           expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
           done();
         }, 10);
@@ -305,13 +440,12 @@ describe('TimerEventDefinition', () => {
           ActivityApi(broker, timerMessage).stop();
 
           broker.subscribeOnce('execution', 'execute.discard', () => {
-            expect(definition.timer).to.not.be.ok;
+            expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
             done();
           });
 
           timerMessage.fields.redelivered = true;
           definition.execute(timerMessage);
-          expect(definition.timer).to.be.ok;
 
           ActivityApi(broker, timerMessage).discard();
         }, 10);
@@ -448,10 +582,10 @@ describe('TimerEventDefinition', () => {
         },
       });
 
-      expect(definition.timer).to.not.be.ok;
+      expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
     });
 
-    it('invalid date stalls the execution', () => {
+    it('invalid date throws', () => {
       const definition = TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
@@ -468,6 +602,11 @@ describe('TimerEventDefinition', () => {
         throw new Error('Should not complete');
       }, {noAck: true});
 
+      let errMsg;
+      event.broker.subscribeTmp('execution', 'execute.error', (_, msg) => {
+        errMsg = msg;
+      }, {noAck: true});
+
       definition.execute({
         fields: {},
         content: {
@@ -480,7 +619,8 @@ describe('TimerEventDefinition', () => {
         },
       });
 
-      expect(definition.timer).to.not.be.ok;
+      expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
+      expect(errMsg).to.be.ok;
     });
 
     describe('resume execution', () => {
@@ -523,7 +663,7 @@ describe('TimerEventDefinition', () => {
         });
 
         event.broker.subscribeOnce('event', 'activity.timer', (_, message) => {
-          expect(message.content).to.have.property('timeDate').that.deep.equal(new Date('1993-06-28'));
+          expect(message.content).to.have.property('expireAt').that.deep.equal(new Date('1993-06-28'));
           done();
         });
 
@@ -555,7 +695,7 @@ describe('TimerEventDefinition', () => {
         });
 
         event.broker.subscribeOnce('event', 'activity.timer', (_, message) => {
-          expect(message.content).to.have.property('timeDate').that.deep.equal(new Date('1993-06-27'));
+          expect(message.content).to.have.property('expireAt').that.deep.equal(new Date('1993-06-27'));
           done();
         });
 
@@ -651,9 +791,8 @@ describe('TimerEventDefinition', () => {
           },
         });
 
-        expect(definition.timer).to.not.be.ok;
+        expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
       });
-
     });
   });
 
@@ -808,7 +947,6 @@ describe('TimerEventDefinition', () => {
 
         ActivityApi(broker, timerMessage).stop();
 
-        expect(definition.timer).to.not.be.ok;
         expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
         done();
       });
@@ -874,12 +1012,9 @@ describe('TimerEventDefinition', () => {
   });
 
   describe('a definition with timeDuration, timeDate, and timeCycle', () => {
-    before(() => {
-      ck.travel('1993-06-26T10:00Z');
-    });
-    after(ck.reset);
-
     it('publishes one execute timer message', () => {
+      ck.freeze('1993-06-26T10:00Z');
+
       const definition = TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
@@ -910,8 +1045,9 @@ describe('TimerEventDefinition', () => {
 
       expect(messages[0].content).to.deep.include({
         timeDuration: 'PT1M',
-        timeDate: new Date('1993-06-27'),
+        timeDate: '1993-06-27',
         timeCycle: 'R3/PT10H',
+        expireAt: new Date('1993-06-26T10:01Z')
       });
 
       definition.stop();
@@ -948,8 +1084,9 @@ describe('TimerEventDefinition', () => {
 
       expect(messages[0].content).to.deep.include({
         timeDuration: 'PT1M',
-        timeDate: new Date('1993-06-27'),
+        timeDate: '1993-06-27',
         timeCycle: 'R3/PT10H',
+        expireAt: new Date('1993-06-27T00:00Z')
       });
 
       definition.stop();
@@ -967,7 +1104,6 @@ describe('TimerEventDefinition', () => {
 
       event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
         expect(msg.content).to.have.property('runningTime').that.is.above(0);
-        expect(definition.timer).to.not.be.ok;
         done();
       }, {noAck: true});
 
@@ -987,6 +1123,8 @@ describe('TimerEventDefinition', () => {
     });
 
     it('completes when duration expires', (done) => {
+      ck.travel('1993-06-24T10:00Z');
+
       const definition = TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
@@ -998,7 +1136,6 @@ describe('TimerEventDefinition', () => {
 
       event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
         expect(msg.content).to.have.property('runningTime').that.is.above(0);
-        expect(definition.timer).to.not.be.ok;
         done();
       }, {noAck: true});
 
@@ -1051,7 +1188,6 @@ describe('TimerEventDefinition', () => {
           event.broker.subscribeOnce('execution', 'execute.completed', () => {
             expect(messages[1].fields).to.have.property('routingKey', 'activity.timeout');
             expect(messages[1].content).to.have.property('runningTime');
-            expect(definition.timer).to.not.be.ok;
             done();
           });
 
@@ -1072,7 +1208,6 @@ describe('TimerEventDefinition', () => {
 
         it('completes when parent is canceled on activity timer event', (done) => {
           event.broker.subscribeOnce('execution', 'execute.completed', () => {
-            expect(definition.timer).to.not.be.ok;
             done();
           });
 
@@ -1099,7 +1234,6 @@ describe('TimerEventDefinition', () => {
           }, {noAck: true});
 
           event.broker.subscribeTmp('execution', 'execute.completed', () => {
-            expect(definition.timer).to.not.be.ok;
             done();
           }, {noAck: true});
 
@@ -1124,7 +1258,6 @@ describe('TimerEventDefinition', () => {
 
           event.broker.subscribeOnce('execution', 'execute.completed', () => {
             expect(messages[0].content).to.have.property('runningTime');
-            expect(definition.timer).to.not.be.ok;
             done();
           });
 
@@ -1177,7 +1310,6 @@ describe('TimerEventDefinition', () => {
 
           event.broker.subscribeOnce('execution', 'execute.completed', () => {
             expect(messages[0].content).to.have.property('runningTime');
-            expect(definition.timer).to.not.be.ok;
             done();
           });
 
@@ -1251,13 +1383,11 @@ describe('TimerEventDefinition', () => {
 
           ActivityApi(broker, timerMessage).discard();
 
-          expect(definition.timer).to.not.be.ok;
           expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
         });
 
         it('completes when discarded on activity timer event', (done) => {
           event.broker.subscribeOnce('execution', 'execute.discard', () => {
-            expect(definition.timer).to.not.be.ok;
             done();
           });
 
@@ -1301,7 +1431,6 @@ describe('TimerEventDefinition', () => {
             },
           });
 
-          expect(definition.timer).to.not.be.ok;
           expect(executeQ).to.have.property('messageCount', 1);
           expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
         });
@@ -1326,7 +1455,6 @@ describe('TimerEventDefinition', () => {
 
             ActivityApi(broker, timerMessage).stop();
 
-            expect(definition.timer).to.not.be.ok;
             expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
             done();
           });
@@ -1379,8 +1507,8 @@ describe('TimerEventDefinition', () => {
     });
   });
 
-  describe('start message with timeout', () => {
-    it('completes when timed out', (done) => {
+  describe('formatted message', () => {
+    it('with timeout completes when timed out', (done) => {
       const definition = TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {},
@@ -1399,6 +1527,33 @@ describe('TimerEventDefinition', () => {
           executionId: 'event_1_0',
           index: 0,
           timeout: 50,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+          },
+        },
+      });
+    });
+
+    it('with expireAt completes when timed out', (done) => {
+      const definition = TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {},
+      });
+
+      event.broker.subscribeOnce('execution', 'execute.completed', (_, msg) => {
+        expect(msg.content).to.have.property('timeout', 50);
+        expect(msg.content).to.have.property('startedAt');
+        expect(msg.content).to.have.property('runningTime').that.is.above(45);
+        done();
+      });
+
+      definition.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          expireAt: new Date(Date.now() + 50),
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -1457,7 +1612,9 @@ describe('TimerEventDefinition', () => {
           },
         },
       });
-      const timer = definition.timer;
+
+      const timer = event.environment.timers.executing[0];
+      expect(event.environment.timers.executing.length).to.equal(1);
 
       definition.execute({
         fields: {},
@@ -1470,7 +1627,9 @@ describe('TimerEventDefinition', () => {
           },
         },
       });
-      expect(timer === definition.timer).to.be.false;
+
+      expect(event.environment.timers.executing.length).to.equal(1);
+      expect(timer === event.environment.timers.executing[0], 'new timer ref').to.be.false;
 
       definition.stop();
     });

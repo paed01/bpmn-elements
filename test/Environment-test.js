@@ -1,4 +1,5 @@
 import Environment from '../src/Environment';
+import {Timers} from '../src/Timers';
 
 describe('Environment', () => {
   describe('ctor', () => {
@@ -182,6 +183,42 @@ describe('Environment', () => {
       expect(environment.extensions).to.equal(extensions);
       expect(environment.getServiceByName('request')).to.be.a('function');
     });
+
+    it('recovers variables only', () => {
+      const extensions = {};
+      let environment = Environment({
+        extensions,
+        services: {
+          request() {},
+        },
+        variables: {
+          beforeState: true,
+        },
+      });
+
+      environment = environment.recover({
+        variables: {beforeState: false},
+      });
+
+      expect(environment.variables).to.have.property('beforeState', false);
+    });
+
+    it('recovers with empty object', () => {
+      const extensions = {};
+      let environment = Environment({
+        extensions,
+        services: {
+          request() {},
+        },
+        variables: {
+          beforeState: true,
+        },
+      });
+
+      environment = environment.recover({});
+
+      expect(environment.variables).to.have.property('beforeState', true);
+    });
   });
 
   describe('assignVariables()', () => {
@@ -210,7 +247,7 @@ describe('Environment', () => {
   });
 
   describe('clone()', () => {
-    it('clones variables, settings, output, and options but keeps services, scripts, expressions, and Logger', () => {
+    it('clones variables, settings, output, and options but keeps services, scripts, expressions, timers, and Logger', () => {
       const variables = {
         init: true,
       };
@@ -226,6 +263,11 @@ describe('Environment', () => {
         settings,
         variables,
         expressions,
+        timers: {
+          register() {},
+          setTimeout() {},
+          clearTimeout() {},
+        },
         services: {
           get() {},
         },
@@ -245,8 +287,9 @@ describe('Environment', () => {
 
       expect(clone.getServiceByName('get')).to.be.a('function');
       expect(clone.Logger).to.be.a('function');
-      expect(clone.scripts === environment.scripts).to.be.true;
-      expect(clone.expressions === environment.expressions).to.be.true;
+      expect(clone.scripts === environment.scripts, 'keeps scripts').to.be.true;
+      expect(clone.timers === environment.timers, 'keeps timers').to.be.true;
+      expect(clone.expressions === environment.expressions, 'keeps expressions').to.be.true;
     });
 
     it('extends options', () => {
@@ -390,6 +433,334 @@ describe('Environment', () => {
         {environment},
         undefined,
       ]);
+    });
+  });
+
+  describe('timers', () => {
+    it('timers.setTimeout adds timer to executing', () => {
+      const {timers} = Environment({
+        timers: Timers({
+          setTimeout() {},
+        })
+      });
+
+      timers.setTimeout(() => {}, 11);
+
+      expect(timers.executing).to.have.length(1);
+      expect(timers.executing[0]).to.have.property('delay', 11);
+      expect(timers.executing[0].owner === timers, 'timers instance as owner').to.be.true;
+    });
+
+    it('removes timer from executing when timed out', () => {
+      let onTimeout;
+      const {timers} = Environment({
+        timers: Timers({
+          setTimeout(callback) {
+            onTimeout = callback;
+          },
+        })
+      });
+
+      timers.setTimeout(() => {}, 11);
+
+      expect(timers.executing).to.have.length(1);
+
+      onTimeout();
+
+      expect(timers.executing).to.have.length(0);
+    });
+
+    it('callback called twice is ignored', () => {
+      let onTimeout;
+      const {timers} = Environment({
+        timers: Timers({
+          setTimeout(callback) {
+            onTimeout = callback;
+          },
+        })
+      });
+
+      timers.setTimeout(() => {}, 11);
+
+      expect(timers.executing).to.have.length(1);
+
+      onTimeout();
+      onTimeout();
+
+      expect(timers.executing).to.have.length(0);
+    });
+
+    it('timers.clearTimeout removes timer from executing', () => {
+      const {timers} = Environment({
+        timers: Timers({
+          setTimeout() {},
+          clearTimeout() {},
+        })
+      });
+
+      const ref = timers.setTimeout(() => {}, 12);
+
+      expect(timers.executing).to.have.length(1);
+
+      timers.clearTimeout(ref);
+
+      expect(timers.executing).to.have.length(0);
+    });
+
+    it('timers.clearTimeout can be called twice', () => {
+      const {timers} = Environment({
+        timers: Timers({
+          setTimeout() {},
+          clearTimeout() {},
+        })
+      });
+
+      const ref = timers.setTimeout(() => {}, 12);
+
+      expect(timers.executing).to.have.length(1);
+
+      timers.clearTimeout(ref);
+      timers.clearTimeout(ref);
+
+      expect(timers.executing).to.have.length(0);
+    });
+
+    describe('.register(owner)', () => {
+      it('.register(owner) returns timers', () => {
+        const environment = Environment();
+
+        const timer = environment.timers.register({id: 'a'});
+
+        expect(timer).to.have.property('setTimeout').that.is.a('function');
+        expect(timer).to.have.property('clearTimeout').that.is.a('function');
+      });
+
+      it('.register() returns timers', () => {
+        const environment = Environment();
+
+        const timer = environment.timers.register();
+
+        expect(timer).to.have.property('setTimeout').that.is.a('function');
+        expect(timer).to.have.property('clearTimeout').that.is.a('function');
+      });
+
+      it('registered executes timer function with owner', (done) => {
+        const owner = {id: 'a'};
+
+        const {timers} = Environment({
+          timers: Timers({
+            setTimeout: function fakeSetTimeout() {
+              expect(this === owner).to.be.true;
+              done();
+            },
+          })
+        });
+
+        const timer = timers.register(owner);
+
+        timer.setTimeout();
+      });
+
+      it('setTimeout adds timer to executing', () => {
+        const {timers} = Environment({
+          timers: Timers({
+            setTimeout() {},
+          })
+        });
+
+        const owner = {id: 'a'};
+        const timer = timers.register(owner);
+
+        timer.setTimeout(() => {}, 10);
+
+        expect(timers.executing).to.have.length(1);
+        expect(timers.executing[0]).to.have.property('delay', 10);
+        expect(timers.executing[0].owner === owner, 'owner as owner').to.be.true;
+      });
+
+      it('registered executes timer function with owner', (done) => {
+        const owner = {id: 'a'};
+
+        const {timers} = Environment({
+          timers: Timers({
+            setTimeout: function fakeSetTimeout() {
+              expect(this === owner).to.be.true;
+              done();
+            },
+          })
+        });
+
+        const timer = timers.register(owner);
+
+        timer.setTimeout();
+      });
+
+      it('setTimeout adds timer to executing', () => {
+        const {timers} = Environment({
+          timers: Timers({
+            setTimeout() {},
+          })
+        });
+
+        const owner = {id: 'a'};
+        const timer = timers.register(owner);
+
+        timer.setTimeout(() => {}, 10);
+
+        expect(timers.executing).to.have.length(1);
+        expect(timers.executing[0]).to.have.property('delay', 10);
+        expect(timers.executing[0].owner === owner, 'owner as owner').to.be.true;
+      });
+
+      it('multiple setTimeout adds timers to executing', () => {
+        const {timers} = Environment({
+          timers: Timers({
+            setTimeout() {},
+          })
+        });
+
+        const owner = {id: 'a'};
+        const timer = timers.register(owner);
+
+        timer.setTimeout(() => {}, 20);
+        timer.setTimeout(() => {}, 21);
+        timer.setTimeout(() => {}, 22);
+
+        expect(timers.executing).to.have.length(3);
+        expect(timers.executing[0]).to.have.property('delay', 20);
+        expect(timers.executing[0].owner === owner, 'owner as owner').to.be.true;
+        expect(timers.executing[1]).to.have.property('delay', 21);
+        expect(timers.executing[1].owner === owner, 'owner as owner').to.be.true;
+        expect(timers.executing[2]).to.have.property('delay', 22);
+        expect(timers.executing[2].owner === owner, 'owner as owner').to.be.true;
+      });
+
+      it('clearTimeout removes timer from executing', () => {
+        const {timers} = Environment({
+          timers: Timers({
+            setTimeout() {},
+            clearTimeout() {},
+          })
+        });
+
+        const owner = {id: 'a'};
+        const timer = timers.register(owner);
+        const ref = timer.setTimeout(() => {}, 12);
+
+        expect(timers.executing).to.have.length(1);
+
+        timer.clearTimeout(ref);
+
+        expect(timers.executing).to.have.length(0);
+      });
+
+      it('clearTimeout removes only ref from executing', () => {
+        const {timers} = Environment({
+          timers: Timers({
+            setTimeout() {},
+          })
+        });
+
+        const owner = {id: 'a'};
+        const timer = timers.register(owner);
+
+        timer.setTimeout(() => {}, 20);
+        const ref = timer.setTimeout(() => {}, 21);
+        timer.setTimeout(() => {}, 22);
+
+        timer.clearTimeout(ref);
+
+        expect(timers.executing).to.have.length(2);
+        expect(timers.executing[0]).to.have.property('delay', 20);
+        expect(timers.executing[1]).to.have.property('delay', 22);
+      });
+
+      it('timers.clearTimeout removes registered timer from executing', () => {
+        const {timers} = Environment({
+          timers: Timers({
+            setTimeout() {},
+            clearTimeout() {},
+          })
+        });
+
+        const owner = {id: 'a'};
+        const timer = timers.register(owner);
+        const ref = timer.setTimeout(() => {}, 12);
+
+        expect(timers.executing).to.have.length(1);
+
+        timers.clearTimeout(ref);
+
+        expect(timers.executing).to.have.length(0);
+      });
+
+      it('clearTimeout can be called twice', () => {
+        const {timers} = Environment({
+          timers: Timers({
+            setTimeout() {},
+            clearTimeout() {},
+          })
+        });
+
+        const owner = {id: 'a'};
+        const timer = timers.register(owner);
+        const ref = timer.setTimeout(() => {}, 12);
+
+        expect(timers.executing).to.have.length(1);
+
+        timer.clearTimeout(ref);
+        timer.clearTimeout(ref);
+
+        expect(timers.executing).to.have.length(0);
+      });
+
+      it('clearTimeout can be called with unknown ref', () => {
+        const {timers} = Environment({
+          timers: Timers({
+            setTimeout() {},
+            clearTimeout() {},
+          })
+        });
+
+        const owner = {id: 'a'};
+        const timer = timers.register(owner);
+        timer.setTimeout(() => {}, 12);
+
+        expect(timers.executing).to.have.length(1);
+
+        timer.clearTimeout({});
+
+        expect(timers.executing).to.have.length(1);
+      });
+    });
+
+    describe('custom timer', () => {
+      it('throws if interface not met', () => {
+        expect(() => {
+          Environment({timers: {}});
+        }).to.throw(/register is not a function/);
+
+        expect(() => {
+          Environment({timers: {register: 1}});
+        }).to.throw(/register is not a function/);
+
+        expect(() => {
+          Environment({
+            timers: {
+              register() {},
+            }
+          });
+        }).to.throw(/setTimeout is not a function/);
+
+        expect(() => {
+          Environment({
+            timers: {
+              register() {},
+              setTimeout() {},
+            }
+          });
+        }).to.throw(/clearTimeout is not a function/);
+      });
     });
   });
 });

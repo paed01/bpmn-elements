@@ -1,9 +1,10 @@
-import nock from 'nock';
-import testHelpers from '../helpers/testHelpers';
 import js from '../resources/extensions/JsExtension';
+import nock from 'nock';
 import request from 'got';
-import { ActivityError } from '../../src/error/Errors';
+import testHelpers from '../helpers/testHelpers';
+import {ActivityError} from '../../src/error/Errors';
 import {Scripts} from '../helpers/JavaScripts';
+import {Timers} from '../../src/Timers';
 
 const extensions = {
   js,
@@ -312,6 +313,49 @@ describe('ScriptTask', () => {
       await leave;
 
       expect(context.environment.variables).to.have.property('stopLoop', true);
+    });
+
+    it('script with setTimeout that uses environment.timers', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="from-start" sourceRef="start" targetRef="scriptTask" />
+          <scriptTask id="scriptTask" scriptFormat="Javascript">
+            <script>
+              <![CDATA[
+                setTimeout(next, 1);
+              ]]>
+            </script>
+          </scriptTask>
+          <sequenceFlow id="to-end" sourceRef="scriptTask" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      let callback;
+
+      const context = await testHelpers.context(source, {
+        timers: Timers({
+          setTimeout(next) {
+            callback = next;
+          }
+        })
+      });
+      context.environment.assignVariables({data: 1});
+
+      const task = context.getActivityById('scriptTask');
+      task.activate();
+
+      const leave = task.waitFor('leave');
+      task.inbound[0].take();
+
+      expect(callback).to.be.a('function');
+
+      callback();
+
+      return leave;
     });
   });
 

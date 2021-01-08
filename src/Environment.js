@@ -1,5 +1,6 @@
 import Expressions from './Expressions';
 import {Scripts as IScripts} from './Scripts';
+import {Timers} from './Timers';
 
 const defaultOptions = ['extensions', 'output', 'services', 'scripts', 'settings', 'variables', 'Logger'];
 
@@ -11,6 +12,7 @@ export default function Environment(options = {}) {
   const output = options.output || {};
   const services = options.services || {};
   const scripts = options.scripts || IScripts();
+  const timers = options.timers || Timers();
   const expressions = options.expressions || Expressions();
   const Logger = options.Logger || DummyLogger;
   const extensions = options.extensions;
@@ -23,6 +25,7 @@ export default function Environment(options = {}) {
     scripts,
     services,
     settings,
+    timers,
     get variables() {
       return variables;
     },
@@ -69,6 +72,7 @@ export default function Environment(options = {}) {
       Logger,
       extensions,
       scripts,
+      timers,
       expressions,
       ...initialOptions,
       ...overrideOptions,
@@ -121,6 +125,12 @@ function validateOptions(input) {
     if (defaultOptions.indexOf(key) === -1) {
       options[key] = input[key];
     }
+  }
+
+  if (input.timers) {
+    if (typeof input.timers.register !== 'function') throw new Error('timers.register is not a function');
+    if (typeof input.timers.setTimeout !== 'function') throw new Error('timers.setTimeout is not a function');
+    if (typeof input.timers.clearTimeout !== 'function') throw new Error('timers.clearTimeout is not a function');
   }
 
   if (input.scripts) {

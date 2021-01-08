@@ -9,6 +9,8 @@ var _Expressions = _interopRequireDefault(require("./Expressions"));
 
 var _Scripts = require("./Scripts");
 
+var _Timers = require("./Timers");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 const defaultOptions = ['extensions', 'output', 'services', 'scripts', 'settings', 'variables', 'Logger'];
@@ -21,6 +23,7 @@ function Environment(options = {}) {
   const output = options.output || {};
   const services = options.services || {};
   const scripts = options.scripts || (0, _Scripts.Scripts)();
+  const timers = options.timers || (0, _Timers.Timers)();
   const expressions = options.expressions || (0, _Expressions.default)();
   const Logger = options.Logger || DummyLogger;
   const extensions = options.extensions;
@@ -32,6 +35,7 @@ function Environment(options = {}) {
     scripts,
     services,
     settings,
+    timers,
 
     get variables() {
       return variables;
@@ -82,6 +86,7 @@ function Environment(options = {}) {
       Logger,
       extensions,
       scripts,
+      timers,
       expressions,
       ...initialOptions,
       ...overrideOptions,
@@ -132,6 +137,12 @@ function validateOptions(input) {
     if (defaultOptions.indexOf(key) === -1) {
       options[key] = input[key];
     }
+  }
+
+  if (input.timers) {
+    if (typeof input.timers.register !== 'function') throw new Error('timers.register is not a function');
+    if (typeof input.timers.setTimeout !== 'function') throw new Error('timers.setTimeout is not a function');
+    if (typeof input.timers.clearTimeout !== 'function') throw new Error('timers.clearTimeout is not a function');
   }
 
   if (input.scripts) {

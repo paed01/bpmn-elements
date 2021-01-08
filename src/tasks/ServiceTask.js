@@ -1,5 +1,5 @@
 import Activity from '../activity/Activity';
-import { ActivityError } from '../error/Errors';
+import {ActivityError} from '../error/Errors';
 import {cloneMessage, cloneContent} from '../messageHelper';
 
 export default function ServiceTask(activityDef, context) {

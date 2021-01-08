@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 4.3.0
+
+Timetracking
+
+- New [environment](/docs/Environment.md) [timers]((/docs/Timers.md)) property with tracked `setTimeout` and `clearTimeout`. Used by TimerEventDefinition and by inline scripts if necessary
+
 # 4.2.0
 
 Flaky formatting

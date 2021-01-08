@@ -9,7 +9,7 @@ export function Scripts(enableDummy = true) {
     compile,
   };
 
-  function register({id, type, behaviour, logger}) {
+  function register({id, type, behaviour, logger, environment}) {
     let scriptBody, language;
 
     switch (type) {
@@ -26,7 +26,6 @@ export function Scripts(enableDummy = true) {
       }
     }
 
-
     if (!language || !scriptBody) {
       if (!enableDummy) return;
       const script = dummyScript(language, `${type}/${id}`, logger);
@@ -36,7 +35,7 @@ export function Scripts(enableDummy = true) {
 
     if (!/^javascript$/i.test(language)) return;
 
-    const script = javaScript(language, `${type}/${id}`, scriptBody);
+    const script = javaScript(language, `${type}/${id}`, scriptBody, environment);
     scripts[id] = script;
 
     return script;
@@ -50,13 +49,14 @@ export function Scripts(enableDummy = true) {
     return scripts[id];
   }
 
-  function javaScript(language, filename, scriptBody) {
+  function javaScript(language, filename, scriptBody, environment) {
     const script = new Script(scriptBody, {filename});
     return {
       script,
       language,
       execute(executionContext, callback) {
-        return script.runInNewContext({...executionContext, next: callback});
+        const timers = environment.timers.register(executionContext);
+        return script.runInNewContext({...executionContext, ...timers, next: callback});
       }
     };
   }
