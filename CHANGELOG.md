@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 4.3.1
+
+- Stop throwing errors when failing to parse `timeDuration` or `timeDate` as it was before and still should've been before someone changed it
+
 # 4.3.0
 
 Timetracking

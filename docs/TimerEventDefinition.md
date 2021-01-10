@@ -18,6 +18,7 @@ Object with properties. A subset:
   - [`timeDate`](#timedate): the resolved expire date if any
   - [`timeCycle`](#timecycle): the resolved time cycle if any
   - `startedAt`: timer started at date
+  - `expireAt`: timer expires at date
 
 ## `activity.timeout`
 
@@ -47,4 +48,6 @@ The shortest timeout will be picked to start the timer.
 
 # Set your own timeout
 
-If the parent event start message has a `timeout` positive integer property a timer will be started. See how to format these messages [here](/docs/Extension.md).
+If the parent event start message has an `expireAt` date or `timeout` positive integer property a timer will be started.
+
+See how to format these messages [here](/docs/Extension.md).

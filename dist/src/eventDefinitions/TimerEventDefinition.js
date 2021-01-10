@@ -5,8 +5,6 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = TimerEventDefinition;
 
-var _Errors = require("../error/Errors");
-
 var _messageHelper = require("../messageHelper");
 
 var _iso8601Duration = require("iso8601-duration");
@@ -71,18 +69,7 @@ function TimerEventDefinition(activity, eventDefinition) {
 
     const messageContent = executeMessage.content;
     const startedAt = 'startedAt' in messageContent ? new Date(messageContent.startedAt) : new Date();
-
-    try {
-      var resolvedTimer = getTimers(foundTimers, environment, executeMessage); // eslint-disable-line no-var
-    } catch (err) {
-      logger.error(`<${executionId} (${id})>`, err);
-      return broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(messageContent, {
-        error: new _Errors.ActivityError(err.message, executeMessage, err)
-      }, {
-        mandatory: true
-      }));
-    }
-
+    const resolvedTimer = getTimers(foundTimers, executeMessage);
     const timerContent = (0, _messageHelper.cloneContent)(messageContent, { ...resolvedTimer,
       ...(isResumed ? {
         isResumed
@@ -194,72 +181,85 @@ function TimerEventDefinition(activity, eventDefinition) {
       broker.cancel(`_api-delegated-${executionId}`);
     }
   }
-}
 
-function getTimers(timers, environment, executionMessage) {
-  const content = executionMessage.content;
-  let expireAt;
+  function getTimers(timers, executionMessage) {
+    const content = executionMessage.content;
+    let expireAt;
 
-  if ('expireAt' in content) {
-    expireAt = new Date(content.expireAt);
-  }
-
-  const now = Date.now();
-  const timerContent = ['timeDuration', 'timeDate', 'timeCycle'].reduce((result, t) => {
-    if (t in content) result[t] = content[t];else if (t in timers) result[t] = environment.resolveExpression(timers[t], executionMessage);else return result;
-    let expireAtDate;
-
-    switch (t) {
-      case 'timeDuration':
-        {
-          const durationStr = result[t];
-
-          if (durationStr) {
-            const delay = (0, _iso8601Duration.toSeconds)((0, _iso8601Duration.parse)(durationStr)) * 1000;
-            expireAtDate = new Date(now + delay);
-          } else {
-            expireAtDate = new Date(now);
-          }
-
-          break;
-        }
-
-      case 'timeDate':
-        {
-          const dateStr = result[t];
-
-          if (dateStr) {
-            const ms = Date.parse(dateStr);
-            if (isNaN(ms)) throw new Error(`invalid timeDate >${dateStr}<`);
-            expireAtDate = new Date(ms);
-          } else {
-            expireAtDate = new Date(now);
-          }
-
-          break;
-        }
+    if ('expireAt' in content) {
+      expireAt = new Date(content.expireAt);
     }
 
-    if (!expireAtDate) return result;
+    const now = Date.now();
+    const timerContent = ['timeDuration', 'timeDate', 'timeCycle'].reduce((result, t) => {
+      if (t in content) result[t] = content[t];else if (t in timers) result[t] = environment.resolveExpression(timers[t], executionMessage);else return result;
+      let expireAtDate;
 
-    if (!('expireAt' in result) || result.expireAt > expireAtDate) {
-      result.timerType = t;
-      result.expireAt = expireAtDate;
+      switch (t) {
+        case 'timeDuration':
+          {
+            const durationStr = result[t];
+
+            if (durationStr) {
+              const delay = getDurationInMilliseconds(durationStr);
+              if (delay !== undefined) expireAtDate = new Date(now + delay);
+            } else {
+              expireAtDate = new Date(now);
+            }
+
+            break;
+          }
+
+        case 'timeDate':
+          {
+            const dateStr = result[t];
+
+            if (dateStr) {
+              const ms = Date.parse(dateStr);
+
+              if (isNaN(ms)) {
+                logger.warn(`<${content.executionId} (${id})> invalid timeDate >${dateStr}<`);
+                break;
+              }
+
+              expireAtDate = new Date(ms);
+            } else {
+              expireAtDate = new Date(now);
+            }
+
+            break;
+          }
+      }
+
+      if (!expireAtDate) return result;
+
+      if (!('expireAt' in result) || result.expireAt > expireAtDate) {
+        result.timerType = t;
+        result.expireAt = expireAtDate;
+      }
+
+      return result;
+    }, { ...(expireAt ? {
+        expireAt
+      } : undefined)
+    });
+
+    if ('expireAt' in timerContent) {
+      timerContent.timeout = timerContent.expireAt - now;
+    } else if ('timeout' in content) {
+      timerContent.timeout = content.timeout;
+    } else if (!Object.keys(timerContent).length) {
+      timerContent.timeout = 0;
     }
 
-    return result;
-  }, { ...(expireAt ? {
-      expireAt
-    } : undefined)
-  });
+    return timerContent;
 
-  if ('expireAt' in timerContent) {
-    timerContent.timeout = timerContent.expireAt - now;
-  } else if ('timeout' in content) {
-    timerContent.timeout = content.timeout;
-  } else if (!Object.keys(timerContent).length) {
-    timerContent.timeout = 0;
+    function getDurationInMilliseconds(duration) {
+      try {
+        return (0, _iso8601Duration.toSeconds)((0, _iso8601Duration.parse)(duration)) * 1000;
+      } catch (err) {
+        logger.warn(`<${content.executionId} (${id})> failed to parse timeDuration >${duration}<: ${err.message}`);
+      }
+    }
   }
-
-  return timerContent;
 }

@@ -40,7 +40,7 @@ export function Scripts() {
     register,
   };
 
-  function register({id, type, behaviour}) {
+  function register({id, type, behaviour, environment}) {
     let scriptBody, language;
 
     switch (type) {
@@ -59,7 +59,7 @@ export function Scripts() {
 
     if (!/^javascript$/i.test(language)) return;
 
-    const script = javaScript(language, `${type}/${id}`, scriptBody);
+    const script = javaScript(language, `${type}/${id}`, scriptBody, environment);
     scripts[id] = script;
 
     return script;
@@ -69,14 +69,15 @@ export function Scripts() {
     return scripts[id];
   }
 
-  function javaScript(language, filename, scriptBody) {
+  function javaScript(language, filename, scriptBody, environment) {
     const script = new Script(scriptBody, {filename});
     return {
       script,
       language,
       execute(executionContext, callback) {
-        return script.runInNewContext({...executionContext, next: callback});
-      },
+        const timers = environment.timers.register(executionContext);
+        return script.runInNewContext({...executionContext, ...timers, next: callback});
+      }
     };
   }
 }

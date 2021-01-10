@@ -139,7 +139,7 @@ describe('TimerEventDefinition', () => {
       });
     });
 
-    it('invalid ISO duration executes with error', () => {
+    it('invalid ISO duration executes stalls execution', () => {
       const definition = TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
@@ -151,9 +151,8 @@ describe('TimerEventDefinition', () => {
         throw new Error('Should not complete');
       }, {noAck: true});
 
-      let errMsg;
-      event.broker.subscribeTmp('execution', 'execute.error', (_, msg) => {
-        errMsg = msg;
+      event.broker.subscribeTmp('execution', 'execute.error', () => {
+        throw new Error('Should not throw');
       }, {noAck: true});
 
       definition.execute({
@@ -169,7 +168,6 @@ describe('TimerEventDefinition', () => {
       });
 
       expect(event.environment.timers.executing).to.be.empty;
-      expect(errMsg).to.be.ok;
     });
 
     describe('resume execution', () => {
@@ -585,7 +583,7 @@ describe('TimerEventDefinition', () => {
       expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
     });
 
-    it('invalid date throws', () => {
+    it('invalid date stalls', () => {
       const definition = TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
@@ -602,9 +600,8 @@ describe('TimerEventDefinition', () => {
         throw new Error('Should not complete');
       }, {noAck: true});
 
-      let errMsg;
-      event.broker.subscribeTmp('execution', 'execute.error', (_, msg) => {
-        errMsg = msg;
+      event.broker.subscribeTmp('execution', 'execute.error', () => {
+        throw new Error('Should not throw');
       }, {noAck: true});
 
       definition.execute({
@@ -620,7 +617,6 @@ describe('TimerEventDefinition', () => {
       });
 
       expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
-      expect(errMsg).to.be.ok;
     });
 
     describe('resume execution', () => {

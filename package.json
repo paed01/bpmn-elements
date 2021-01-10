@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "4.3.0",
+  "version": "4.3.1",
   "description": "Executable workflow elements based on BPMN 2.0",
   "main": "dist/index.js",
   "module": "index.js",
@@ -10,7 +10,9 @@
     "prepare": "npm run dist",
     "cov:html": "nyc mocha -R dot && nyc report --reporter=html",
     "test:lcov": "nyc mocha -R dot && nyc report --reporter lcov && npm run posttest",
-    "dist": "babel index.js -d dist && rm -rf dist/src && babel src -d dist/src"
+    "dist": "babel index.js -d dist && rm -rf dist/src && babel src -d dist/src",
+    "test-md": "node scripts/test-markdown ./API.md && node scripts/test-markdown ./docs/Examples.md",
+    "toc": "node scripts/generate-api-toc ./API.md,./docs/Examples.md,./docs/Form.md"
   },
   "repository": {
     "type": "git",
