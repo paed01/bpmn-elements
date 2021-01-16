@@ -1542,7 +1542,7 @@ describe('TimerEventDefinition', () => {
       });
 
       event.broker.subscribeOnce('execution', 'execute.completed', (_, msg) => {
-        expect(msg.content).to.have.property('timeout', 50);
+        expect(msg.content).to.have.property('timeout').that.is.within(45, 55);
         expect(msg.content).to.have.property('startedAt');
         expect(msg.content).to.have.property('runningTime').that.is.above(45);
         done();

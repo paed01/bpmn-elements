@@ -485,7 +485,6 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start1');
       assertMessage('activity.start', 'start1');
       assertMessage('activity.end', 'start1');
-      assertMessage('activity.init', 'join');
       assertMessage('activity.leave', 'start1');
       assertMessage('activity.enter', 'start2');
       assertMessage('activity.start', 'start2');
@@ -560,7 +559,6 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'decision');
       assertMessage('activity.start', 'decision');
       assertMessage('activity.end', 'decision');
-      assertMessage('activity.init', 'join');
       assertMessage('activity.enter', 'join');
       assertMessage('activity.start', 'join');
       assertMessage('activity.end', 'join');
@@ -848,7 +846,6 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'immediate');
       assertMessage('activity.start', 'immediate');
       assertMessage('activity.end', 'immediate');
-      assertMessage('activity.init', 'join');
     });
 
     And('before the timeout event completes', () => {
@@ -1010,7 +1007,6 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'immediate');
       assertMessage('activity.start', 'immediate');
       assertMessage('activity.end', 'immediate');
-      assertMessage('activity.init', 'join');
     });
 
     And('before the timeout event completes', () => {
@@ -1058,8 +1054,6 @@ Feature('Process', () => {
     });
 
     Then('the combined event completes', () => {
-      assertMessage('activity.init', 'join');
-
       assertMessage('activity.leave', 'immediate');
       assertMessage('activity.leave', 'start');
 

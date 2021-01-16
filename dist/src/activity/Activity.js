@@ -501,10 +501,7 @@ function Activity(Behaviour, activityDef, context) {
 
     if (!allTouched) {
       const remaining = inboundSequenceFlows.filter((inb, i, list) => list.indexOf(inb) === i).length - inboundJoinFlows.length;
-      logger.debug(`<${id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
-      return init({
-        inbound: inboundJoinFlows.map(f => (0, _messageHelper.cloneContent)(f.content))
-      });
+      return logger.debug(`<${id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
     }
 
     const evaluatedInbound = inboundJoinFlows.splice(0);

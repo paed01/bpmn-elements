@@ -77,7 +77,7 @@ export function Scripts() {
       execute(executionContext, callback) {
         const timers = environment.timers.register(executionContext);
         return script.runInNewContext({...executionContext, ...timers, next: callback});
-      }
+      },
     };
   }
 }

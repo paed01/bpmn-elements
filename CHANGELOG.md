@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 4.3.2
+
+- For some anxious reason parallel join gateways were initialized over and over again when inbound flows were touched. This stops now. A recovered and resumed run can now continue instead of waiting for neurotic joins. Thankyou @mdwheele for this discovery.
+
 # 4.3.1
 
 - Stop throwing errors when failing to parse `timeDuration` or `timeDate` as it was before and still should've been before someone changed it

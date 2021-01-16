@@ -414,8 +414,7 @@ export default function Activity(Behaviour, activityDef, context) {
     const allTouched = inboundJoinFlows.length >= inboundTriggers.length;
     if (!allTouched) {
       const remaining = inboundSequenceFlows.filter((inb, i, list) => list.indexOf(inb) === i).length - inboundJoinFlows.length;
-      logger.debug(`<${id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
-      return init({inbound: inboundJoinFlows.map((f) => cloneContent(f.content))});
+      return logger.debug(`<${id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
     }
 
     const evaluatedInbound = inboundJoinFlows.splice(0);

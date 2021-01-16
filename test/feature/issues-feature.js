@@ -696,4 +696,121 @@ Feature('Issues', () => {
       });
     });
   });
+
+  Scenario('engine issue 125', () => {
+    let context;
+    Given('fork two user tasks and then join', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Issue_125" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="parallel" isExecutable="true">
+          <startEvent id="start" name="START" />
+          <sequenceFlow id="to-fork" sourceRef="start" targetRef="fork" />
+          <parallelGateway id="fork" name="FORK" />
+          <sequenceFlow id="to-a" sourceRef="fork" targetRef="A" />
+          <sequenceFlow id="to-b" sourceRef="fork" targetRef="B" />
+          <sequenceFlow id="from-a" sourceRef="A" targetRef="join" />
+          <parallelGateway id="join" name="JOIN" />
+          <sequenceFlow id="from-b" sourceRef="B" targetRef="join" />
+          <userTask id="A" name="A" />
+          <userTask id="B" name="B" />
+          <sequenceFlow id="to-end" sourceRef="join" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+      context = await testHelpers.context(source);
+    });
+
+    let definition, state;
+    When('run and then stop', () => {
+      definition = Definition(context);
+      definition.run();
+      definition.stop();
+
+      state = definition.getState();
+    });
+
+    Then('user tasks are in waiting', () => {
+      const postponed = definition.getPostponed();
+      expect(postponed).to.have.length(2);
+      expect(postponed[0].id).to.equal('A');
+      expect(postponed[1].id).to.equal('B');
+    });
+
+    When('recovered and resumed', () => {
+      definition = Definition(context);
+      definition.recover(state);
+      definition.resume();
+    });
+
+    Then('user tasks are still waiting', () => {
+      const postponed = definition.getPostponed();
+      expect(postponed).to.have.length(2);
+      expect(postponed[0].id).to.equal('A');
+      expect(postponed[1].id).to.equal('B');
+    });
+
+    When('first user task is signaled', () => {
+      definition.signal({id: 'A'});
+    });
+
+    And('run is stopped', () => {
+      definition.stop();
+      state = definition.getState();
+    });
+
+    Then('second user task is waiting', () => {
+      const postponed = definition.getPostponed();
+      expect(postponed.find(({id}) => id === 'B')).to.be.ok;
+    });
+
+    When('recovered and resumed', () => {
+      definition = Definition(context);
+      definition.recover(state);
+      definition.resume();
+    });
+
+    Then('second user task is still waiting', () => {
+      const postponed = definition.getPostponed();
+      expect(postponed.find(({id}) => id === 'B')).to.be.ok;
+    });
+
+    When('second user task is signaled', () => {
+      definition.signal({id: 'B'});
+    });
+
+    Then('run completes', () => {
+      expect(definition.isRunning).to.be.false;
+      expect(definition.counters).to.deep.equal({
+        completed: 1,
+        discarded: 0,
+      });
+    });
+
+    And('all activities where taken accordingly', () => {
+      expect(definition.getActivityById('start').counters).to.deep.equal({
+        taken: 1,
+        discarded: 0,
+      });
+      expect(definition.getActivityById('fork').counters).to.deep.equal({
+        taken: 1,
+        discarded: 0,
+      });
+      expect(definition.getActivityById('A').counters).to.deep.equal({
+        taken: 1,
+        discarded: 0,
+      });
+      expect(definition.getActivityById('B').counters).to.deep.equal({
+        taken: 1,
+        discarded: 0,
+      });
+      expect(definition.getActivityById('join').counters).to.deep.equal({
+        taken: 1,
+        discarded: 0,
+      });
+      expect(definition.getActivityById('end').counters).to.deep.equal({
+        taken: 1,
+        discarded: 0,
+      });
+    });
+  });
 });

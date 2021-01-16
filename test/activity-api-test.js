@@ -120,6 +120,37 @@ describe('activity api', () => {
       }
     });
   });
+
+  describe('getPostponed()', () => {
+    it('returns empty array', () => {
+      const activity = Activity(Behaviour, {id: 'task'}, getContext());
+
+      activity.run();
+      expect(activity.getApi().getPostponed()).to.be.empty;
+
+      function Behaviour() {
+        return {
+          execute() {}
+        };
+      }
+    });
+
+    it('calls behaviour getPostponed if sub process', () => {
+      const activity = Activity(Behaviour, {id: 'task', isSubProcess: true}, getContext());
+
+      activity.run();
+      expect(activity.getApi().getPostponed()).to.not.be.empty;
+
+      function Behaviour() {
+        return {
+          execute() {},
+          getPostponed() {
+            return [1];
+          },
+        };
+      }
+    });
+  });
 });
 
 function getContext() {
