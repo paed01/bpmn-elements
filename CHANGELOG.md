@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 4.3.3
+
+- Bump `smqp@3.2`
+
 # 4.3.2
 
 - For some anxious reason parallel join gateways were initialized over and over again when inbound flows were touched. This stops now. A recovered and resumed run can now continue instead of waiting for neurotic joins. Thankyou @mdwheele for this discovery.
