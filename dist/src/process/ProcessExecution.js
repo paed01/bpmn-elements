@@ -463,12 +463,11 @@ function ProcessExecution(parentActivity, context) {
           popInbound();
           break;
         }
-
-      case 'activity.end':
-        {
-          if (isEnd) discardPostponedIfNecessary();
-          break;
-        }
+      // case 'activity.leave':
+      // case 'activity.end': {
+      //   if (isEnd) discardPostponedIfNecessary();
+      //   break;
+      // }
 
       case 'flow.error':
       case 'activity.error':
@@ -527,6 +526,8 @@ function ProcessExecution(parentActivity, context) {
         return complete('completed');
       } else if (postponedLength === detachedActivities.length) {
         getPostponed().forEach(api => api.discard());
+      } else if (isEnd && startActivities.length) {
+        discardPostponedIfNecessary();
       }
     }
 

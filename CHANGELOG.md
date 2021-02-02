@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 4.3.4
+
+- Fix multiple start events not completing process. Diverging flows to different ends stalled execution
+
 # 4.3.3
 
 - Bump `smqp@3.2`
