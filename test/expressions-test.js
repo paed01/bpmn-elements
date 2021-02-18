@@ -208,6 +208,14 @@ describe('Expressions', () => {
         },
       })).to.deep.equal([true, 'bar']);
 
+      expect(expressions.resolveExpression('${services.get(  false, "bar")}', {
+        services: {
+          get(...args) {
+            return args;
+          },
+        },
+      })).to.deep.equal([false, 'bar']);
+
       expect(expressions.resolveExpression('${services.get(null,"bar")}', {
         services: {
           get(...args) {
