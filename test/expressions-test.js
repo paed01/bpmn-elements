@@ -175,12 +175,68 @@ describe('Expressions', () => {
       })).to.equal(201);
     });
 
+    it('expression with string arguments returns result', () => {
+      expect(expressions.resolveExpression('${services.get("foo","bar")}', {
+        services: {
+          get(...args) {
+            return args.toString();
+          },
+        },
+      })).to.equal('foo,bar');
+
+      expect(expressions.resolveExpression('${services.get("foo", "bar")}', {
+        services: {
+          get(...args) {
+            return args.toString();
+          },
+        },
+      })).to.equal('foo,bar');
+
+      expect(expressions.resolveExpression('${services.get(  "foo",    "bar")}', {
+        services: {
+          get(...args) {
+            return args.toString();
+          },
+        },
+      })).to.equal('foo,bar');
+
+      expect(expressions.resolveExpression('${services.get(true, "bar")}', {
+        services: {
+          get(...args) {
+            return args;
+          },
+        },
+      })).to.deep.equal([true, 'bar']);
+
+      expect(expressions.resolveExpression('${services.get(null,"bar")}', {
+        services: {
+          get(...args) {
+            return args;
+          },
+        },
+      })).to.deep.equal([null, 'bar']);
+    });
+  });
+
+  describe('specials', () => {
+    it('expression ${null} return null', () => {
+      expect(expressions.resolveExpression('${null}')).to.be.null;
+    });
+
     it('expression ${true} return true', () => {
       expect(expressions.resolveExpression('${true}')).to.be.true;
     });
 
     it('expression ${false} return false', () => {
       expect(expressions.resolveExpression('${false}')).to.be.false;
+    });
+
+    it('expression ${0...} return number', () => {
+      expect(expressions.resolveExpression('${0}')).to.equal(0);
+      expect(expressions.resolveExpression('${1}')).to.equal(1);
+      expect(expressions.resolveExpression('${010}')).to.equal(10);
+      expect(expressions.resolveExpression('${010.1}')).to.equal(10.1);
+      expect(expressions.resolveExpression('${010,1}')).to.be.undefined;
     });
   });
 

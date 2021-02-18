@@ -54,7 +54,7 @@ function getPropertyValue(inputContext, propertyPath, fnScope) {
     if (args) {
       callArguments = callArguments.concat(args.split(','));
       callArguments = callArguments.map(argument => {
-        return getFunctionArgument(base, argument, fnScope);
+        return getFunctionArgument(base, argument.trim(), fnScope);
       });
     } else {
       callArguments.push(base);
@@ -77,7 +77,19 @@ function getFunctionArgument(obj, argument, fnScope) {
     return Number(argument);
   }
 
-  return getPropertyValue(obj, argument, fnScope);
+  switch (argument) {
+    case 'true':
+      return true;
+
+    case 'false':
+      return false;
+
+    case 'null':
+      return null;
+
+    default:
+      return getPropertyValue(obj, argument, fnScope);
+  }
 }
 
 function getNamedValue(obj, property) {

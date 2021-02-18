@@ -463,11 +463,6 @@ function ProcessExecution(parentActivity, context) {
           popInbound();
           break;
         }
-      // case 'activity.leave':
-      // case 'activity.end': {
-      //   if (isEnd) discardPostponedIfNecessary();
-      //   break;
-      // }
 
       case 'flow.error':
       case 'activity.error':

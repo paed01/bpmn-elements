@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "4.3.4",
+  "version": "4.4.0",
   "description": "Executable workflow elements based on BPMN 2.0",
   "main": "dist/index.js",
   "module": "index.js",
@@ -49,7 +49,7 @@
     "@babel/preset-env": "^7.12.11",
     "@babel/register": "^7.12.10",
     "bpmn-moddle": "^7.0.4",
-    "camunda-bpmn-moddle": "^4.5.0",
+    "camunda-bpmn-moddle": "^5.0.0",
     "chai": "^4.2.0",
     "chronokinesis": "^3.0.0",
     "debug": "^4.3.1",

@@ -31,6 +31,11 @@ function resolveExpression(templatedString, context, expressionFnContext) {
       return true;
     } else if (innerProperty === 'false') {
       return false;
+    } else if (innerProperty === 'null') {
+      return null;
+    } else {
+      const n = Number(innerProperty);
+      if (!isNaN(n)) return n;
     }
 
     const contextValue = (0, _getPropertyValue.default)(context, innerProperty, expressionFnContext);
