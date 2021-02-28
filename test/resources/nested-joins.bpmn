@@ -1,0 +1,794 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1ytp8z4" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.6.0">
+  <bpmn:process id="nested-joins" isExecutable="true">
+    <bpmn:startEvent id="start">
+      <bpmn:outgoing>to-decision-1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="decision-3" name="Decision 3" default="default-3">
+      <bpmn:incoming>to-decision-3</bpmn:incoming>
+      <bpmn:outgoing>to-service-5</bpmn:outgoing>
+      <bpmn:outgoing>default-3</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="to-service-5" sourceRef="decision-3" targetRef="service-5">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-3'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="default-3" sourceRef="decision-3" targetRef="join-decision-3" />
+    <bpmn:parallelGateway id="join-decision-3">
+      <bpmn:incoming>default-3</bpmn:incoming>
+      <bpmn:incoming>from-service-5</bpmn:incoming>
+      <bpmn:outgoing>to-decision-4</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="from-service-5" sourceRef="service-5" targetRef="join-decision-3" />
+    <bpmn:endEvent id="end">
+      <bpmn:incoming>to-end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="service-5" name="Service 5">
+      <bpmn:incoming>to-service-5</bpmn:incoming>
+      <bpmn:outgoing>from-service-5</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="to-decision-4" sourceRef="join-decision-3" targetRef="decision-4" />
+    <bpmn:exclusiveGateway id="decision-2" name="Decision 2" default="default-2">
+      <bpmn:incoming>to-decision-2</bpmn:incoming>
+      <bpmn:outgoing>default-2</bpmn:outgoing>
+      <bpmn:outgoing>to-decision-2-1</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="default-2" sourceRef="decision-2" targetRef="join-decision-2" />
+    <bpmn:sequenceFlow id="to-decision-2-1" sourceRef="decision-2" targetRef="decision-2-1">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-2-1'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:serviceTask id="service-4" name="Service 4">
+      <bpmn:incoming>to-service-4</bpmn:incoming>
+      <bpmn:outgoing>from-service-4</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="to-decision-3" sourceRef="join-decision-2" targetRef="decision-3" />
+    <bpmn:parallelGateway id="join-decision-2">
+      <bpmn:incoming>default-2</bpmn:incoming>
+      <bpmn:incoming>from-service-4</bpmn:incoming>
+      <bpmn:incoming>default-2-3</bpmn:incoming>
+      <bpmn:outgoing>to-decision-3</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="to-decision-2-3" sourceRef="service-3" targetRef="decision-2-3" />
+    <bpmn:exclusiveGateway id="decision-2-3" default="default-2-3">
+      <bpmn:incoming>to-decision-2-3</bpmn:incoming>
+      <bpmn:outgoing>to-service-4</bpmn:outgoing>
+      <bpmn:outgoing>default-2-3</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="to-service-4" sourceRef="decision-2-3" targetRef="service-4">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-2-3'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="decision-1" name="Decision 1" default="default-1">
+      <bpmn:incoming>to-decision-1</bpmn:incoming>
+      <bpmn:outgoing>default-1</bpmn:outgoing>
+      <bpmn:outgoing>to-service-0</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="default-1" sourceRef="decision-1" targetRef="join-decision-1" />
+    <bpmn:sequenceFlow id="to-service-0" sourceRef="decision-1" targetRef="service-0">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-1'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:parallelGateway id="join-decision-1">
+      <bpmn:incoming>default-1</bpmn:incoming>
+      <bpmn:incoming>from-service-0</bpmn:incoming>
+      <bpmn:outgoing>to-decision-2</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="from-service-0" sourceRef="service-0" targetRef="join-decision-1" />
+    <bpmn:serviceTask id="service-0" name="Service 0">
+      <bpmn:incoming>to-service-0</bpmn:incoming>
+      <bpmn:outgoing>from-service-0</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="to-decision-1" sourceRef="start" targetRef="decision-1" />
+    <bpmn:exclusiveGateway id="decision-4" name="Decision 4" default="default-4">
+      <bpmn:incoming>to-decision-4</bpmn:incoming>
+      <bpmn:outgoing>to-service-6</bpmn:outgoing>
+      <bpmn:outgoing>default-4</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="to-service-6" sourceRef="decision-4" targetRef="service-6">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-4'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="decision-4-1" name="Decision 4.1" default="default-4-1">
+      <bpmn:incoming>to-decision-4-1</bpmn:incoming>
+      <bpmn:outgoing>to-service-8</bpmn:outgoing>
+      <bpmn:outgoing>default-4-1</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="to-service-8" sourceRef="decision-4-1" targetRef="service-8">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-4-1'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="from-service-8" sourceRef="service-8" targetRef="join-decision-4" />
+    <bpmn:sequenceFlow id="to-decision-5" sourceRef="join-decision-4" targetRef="decision-5" />
+    <bpmn:parallelGateway id="join-decision-4">
+      <bpmn:incoming>default-4</bpmn:incoming>
+      <bpmn:incoming>default-4-1</bpmn:incoming>
+      <bpmn:incoming>from-service-8</bpmn:incoming>
+      <bpmn:outgoing>to-decision-5</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="default-4-1" sourceRef="decision-4-1" targetRef="join-decision-4" />
+    <bpmn:sequenceFlow id="toAddPremiumAddOn" sourceRef="service-6" targetRef="service-7" />
+    <bpmn:serviceTask id="service-8" name="Service 8">
+      <bpmn:incoming>to-service-8</bpmn:incoming>
+      <bpmn:outgoing>from-service-8</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="to-decision-4-1" sourceRef="service-7" targetRef="decision-4-1" />
+    <bpmn:sequenceFlow id="default-4" sourceRef="decision-4" targetRef="join-decision-4" />
+    <bpmn:exclusiveGateway id="decision-5" name="Decision 5" default="default-5">
+      <bpmn:incoming>to-decision-5</bpmn:incoming>
+      <bpmn:outgoing>default-5</bpmn:outgoing>
+      <bpmn:outgoing>to-service-9</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="default-5" sourceRef="decision-5" targetRef="join-decision-5" />
+    <bpmn:sequenceFlow id="to-service-9" sourceRef="decision-5" targetRef="service-9">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-5'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="to-decision-6" sourceRef="join-decision-5" targetRef="decision-6" />
+    <bpmn:parallelGateway id="join-decision-5">
+      <bpmn:incoming>default-5</bpmn:incoming>
+      <bpmn:incoming>default-5-1</bpmn:incoming>
+      <bpmn:incoming>from-service-10</bpmn:incoming>
+      <bpmn:outgoing>to-decision-6</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="from-service-10" sourceRef="service-10" targetRef="join-decision-5" />
+    <bpmn:serviceTask id="service-10" name="Service 10">
+      <bpmn:incoming>to-service-10</bpmn:incoming>
+      <bpmn:outgoing>from-service-10</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="service-9" name="Service 9">
+      <bpmn:incoming>to-service-9</bpmn:incoming>
+      <bpmn:outgoing>to-decision-5-1</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="decision-5-1" name="Decision 5.1" default="default-5-1">
+      <bpmn:incoming>to-decision-5-1</bpmn:incoming>
+      <bpmn:outgoing>default-5-1</bpmn:outgoing>
+      <bpmn:outgoing>to-service-10</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="default-5-1" sourceRef="decision-5-1" targetRef="join-decision-5" />
+    <bpmn:sequenceFlow id="to-service-10" sourceRef="decision-5-1" targetRef="service-10">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-5-1'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="to-decision-5-1" sourceRef="service-9" targetRef="decision-5-1" />
+    <bpmn:exclusiveGateway id="decision-6" name="Decision 6" default="default-6">
+      <bpmn:incoming>to-decision-6</bpmn:incoming>
+      <bpmn:outgoing>default-6</bpmn:outgoing>
+      <bpmn:outgoing>to-decision-6-1</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="default-6" sourceRef="decision-6" targetRef="join-decision-6" />
+    <bpmn:sequenceFlow id="to-decision-6-1" sourceRef="decision-6" targetRef="decision-6-1">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-6'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="to-decision-7" sourceRef="join-decision-6" targetRef="decison-7" />
+    <bpmn:parallelGateway id="join-decision-6">
+      <bpmn:incoming>default-6</bpmn:incoming>
+      <bpmn:incoming>default-6-2</bpmn:incoming>
+      <bpmn:incoming>from-service-12</bpmn:incoming>
+      <bpmn:outgoing>to-decision-7</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:exclusiveGateway id="decision-6-1" name="Decision 6.1" default="default-6-1">
+      <bpmn:incoming>to-decision-6-1</bpmn:incoming>
+      <bpmn:outgoing>to-service-11</bpmn:outgoing>
+      <bpmn:outgoing>default-6-1</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="to-service-11" sourceRef="decision-6-1" targetRef="service-11">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-6-1'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="from-service-11" sourceRef="service-11" targetRef="join-decision-6-1" />
+    <bpmn:sequenceFlow id="default-6-1" sourceRef="decision-6-1" targetRef="join-decision-6-1" />
+    <bpmn:serviceTask id="service-11" name="Service 11">
+      <bpmn:incoming>to-service-11</bpmn:incoming>
+      <bpmn:outgoing>from-service-11</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:parallelGateway id="join-decision-6-1">
+      <bpmn:incoming>from-service-11</bpmn:incoming>
+      <bpmn:incoming>default-6-1</bpmn:incoming>
+      <bpmn:outgoing>to-decision-6-2</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:exclusiveGateway id="decision-6-2" name="Decision 6.2" default="default-6-2">
+      <bpmn:incoming>to-decision-6-2</bpmn:incoming>
+      <bpmn:outgoing>to-service-12</bpmn:outgoing>
+      <bpmn:outgoing>default-6-2</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="to-decision-6-2" sourceRef="join-decision-6-1" targetRef="decision-6-2" />
+    <bpmn:sequenceFlow id="to-service-12" sourceRef="decision-6-2" targetRef="service-12">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-6-2'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="default-6-2" sourceRef="decision-6-2" targetRef="join-decision-6" />
+    <bpmn:sequenceFlow id="from-service-12" sourceRef="service-12" targetRef="join-decision-6" />
+    <bpmn:serviceTask id="service-12" name="Service 12">
+      <bpmn:incoming>to-service-12</bpmn:incoming>
+      <bpmn:outgoing>from-service-12</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="decision-2-1" name="Decision 2.1" default="default-2-1">
+      <bpmn:incoming>to-decision-2-1</bpmn:incoming>
+      <bpmn:outgoing>default-2-1</bpmn:outgoing>
+      <bpmn:outgoing>to-service-1</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="default-2-1" sourceRef="decision-2-1" targetRef="join-decision-2-1" />
+    <bpmn:sequenceFlow id="to-service-1" sourceRef="decision-2-1" targetRef="service-1">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-2-1'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="decision-2-2" default="default-2-2">
+      <bpmn:incoming>to-decision-2-2</bpmn:incoming>
+      <bpmn:outgoing>default-2-2</bpmn:outgoing>
+      <bpmn:outgoing>to-service-2</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="to-decision-2-2" sourceRef="service-1" targetRef="decision-2-2" />
+    <bpmn:sequenceFlow id="default-2-2" sourceRef="decision-2-2" targetRef="join-decision-2-1" />
+    <bpmn:sequenceFlow id="to-service-2" sourceRef="decision-2-2" targetRef="service-2">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-2-2'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0320uyl" sourceRef="join-decision-2-1" targetRef="service-3" />
+    <bpmn:parallelGateway id="join-decision-2-1">
+      <bpmn:incoming>from-service-2</bpmn:incoming>
+      <bpmn:incoming>default-2-2</bpmn:incoming>
+      <bpmn:incoming>default-2-1</bpmn:incoming>
+      <bpmn:outgoing>Flow_0320uyl</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="from-service-2" sourceRef="service-2" targetRef="join-decision-2-1" />
+    <bpmn:serviceTask id="service-2" name="Service 2">
+      <bpmn:incoming>to-service-2</bpmn:incoming>
+      <bpmn:outgoing>from-service-2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="default-2-3" sourceRef="decision-2-3" targetRef="join-decision-2" />
+    <bpmn:sequenceFlow id="from-service-4" sourceRef="service-4" targetRef="join-decision-2" />
+    <bpmn:exclusiveGateway id="decison-7" name="Decision 7" default="default-7">
+      <bpmn:incoming>to-decision-7</bpmn:incoming>
+      <bpmn:outgoing>to-service-13</bpmn:outgoing>
+      <bpmn:outgoing>default-7</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="to-service-13" sourceRef="decison-7" targetRef="service-13">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-7'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="default-7" sourceRef="decison-7" targetRef="join-decision-7" />
+    <bpmn:sequenceFlow id="to-end" sourceRef="join-decision-7" targetRef="end" />
+    <bpmn:parallelGateway id="join-decision-7">
+      <bpmn:incoming>default-7</bpmn:incoming>
+      <bpmn:incoming>default-7-2</bpmn:incoming>
+      <bpmn:incoming>from-service-16</bpmn:incoming>
+      <bpmn:outgoing>to-end</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:serviceTask id="service-14" name="Service 14">
+      <bpmn:incoming>to-service-14</bpmn:incoming>
+      <bpmn:outgoing>from-service-14</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="from-service-14" sourceRef="service-14" targetRef="join-decision-7-1" />
+    <bpmn:sequenceFlow id="to-decision-7-1" sourceRef="service-13" targetRef="decision-7-1" />
+    <bpmn:exclusiveGateway id="decision-7-1" name="Decision 7.1" default="default-7-1">
+      <bpmn:incoming>to-decision-7-1</bpmn:incoming>
+      <bpmn:outgoing>to-service-14</bpmn:outgoing>
+      <bpmn:outgoing>default-7-1</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="to-service-14" sourceRef="decision-7-1" targetRef="service-14">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-7-1'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="default-7-1" sourceRef="decision-7-1" targetRef="join-decision-7-1" />
+    <bpmn:parallelGateway id="join-decision-7-1">
+      <bpmn:incoming>from-service-14</bpmn:incoming>
+      <bpmn:incoming>default-7-1</bpmn:incoming>
+      <bpmn:outgoing>to-service-15</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:sequenceFlow id="to-service-15" sourceRef="join-decision-7-1" targetRef="service-15" />
+    <bpmn:exclusiveGateway id="decision-7-2" name="Decision 7.2" default="default-7-2">
+      <bpmn:incoming>to-decision-7-2</bpmn:incoming>
+      <bpmn:outgoing>default-7-2</bpmn:outgoing>
+      <bpmn:outgoing>to-service-16</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="to-decision-7-2" sourceRef="service-15" targetRef="decision-7-2" />
+    <bpmn:sequenceFlow id="default-7-2" sourceRef="decision-7-2" targetRef="join-decision-7" />
+    <bpmn:sequenceFlow id="to-service-16" sourceRef="decision-7-2" targetRef="service-16">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="JavaScript">next(null, environment.variables['decision-7'])</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:serviceTask id="service-16" name="Service 16">
+      <bpmn:incoming>to-service-16</bpmn:incoming>
+      <bpmn:outgoing>from-service-16</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="from-service-16" sourceRef="service-16" targetRef="join-decision-7" />
+    <bpmn:sequenceFlow id="to-decision-2" sourceRef="join-decision-1" targetRef="decision-2" />
+    <bpmn:serviceTask id="service-1" name="Service 1">
+      <bpmn:incoming>to-service-1</bpmn:incoming>
+      <bpmn:outgoing>to-decision-2-2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="service-3" name="Service 3">
+      <bpmn:incoming>Flow_0320uyl</bpmn:incoming>
+      <bpmn:outgoing>to-decision-2-3</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="service-6" name="Service 6">
+      <bpmn:incoming>to-service-6</bpmn:incoming>
+      <bpmn:outgoing>toAddPremiumAddOn</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="service-7" name="Service 7">
+      <bpmn:incoming>toAddPremiumAddOn</bpmn:incoming>
+      <bpmn:outgoing>to-decision-4-1</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="service-13" name="Service 13">
+      <bpmn:incoming>to-service-13</bpmn:incoming>
+      <bpmn:outgoing>to-decision-7-1</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:serviceTask id="service-15" name="Service 15">
+      <bpmn:incoming>to-service-15</bpmn:incoming>
+      <bpmn:outgoing>to-decision-7-2</bpmn:outgoing>
+    </bpmn:serviceTask>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="nested-joins">
+      <bpmndi:BPMNEdge id="Flow_0sh1gh9_di" bpmnElement="to-decision-2">
+        <di:waypoint x="465" y="100" />
+        <di:waypoint x="655" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0tf4dk8_di" bpmnElement="from-service-16">
+        <di:waypoint x="2380" y="970" />
+        <di:waypoint x="2500" y="970" />
+        <di:waypoint x="2500" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1g3gii8_di" bpmnElement="to-service-16">
+        <di:waypoint x="2330" y="845" />
+        <di:waypoint x="2330" y="930" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2239" y="860" width="81" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1rz5xkt_di" bpmnElement="default-7-2">
+        <di:waypoint x="2355" y="820" />
+        <di:waypoint x="2470" y="820" />
+        <di:waypoint x="2499" y="124" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0j2nnpr_di" bpmnElement="to-decision-7-2">
+        <di:waypoint x="2330" y="730" />
+        <di:waypoint x="2330" y="795" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1moovdr_di" bpmnElement="to-service-15">
+        <di:waypoint x="2330" y="565" />
+        <di:waypoint x="2330" y="650" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1tnlb9h_di" bpmnElement="default-7-1">
+        <di:waypoint x="2330" y="375" />
+        <di:waypoint x="2330" y="515" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1n2p4b1_di" bpmnElement="to-service-14">
+        <di:waypoint x="2305" y="350" />
+        <di:waypoint x="2240" y="350" />
+        <di:waypoint x="2240" y="400" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2216" y="316" width="87" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1tpwmjs_di" bpmnElement="to-decision-7-1">
+        <di:waypoint x="2330" y="280" />
+        <di:waypoint x="2330" y="325" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0fgmx07_di" bpmnElement="from-service-14">
+        <di:waypoint x="2240" y="480" />
+        <di:waypoint x="2240" y="540" />
+        <di:waypoint x="2305" y="540" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1iokv0v_di" bpmnElement="to-end">
+        <di:waypoint x="2525" y="100" />
+        <di:waypoint x="2652" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0rpcfat_di" bpmnElement="default-7">
+        <di:waypoint x="2355" y="100" />
+        <di:waypoint x="2475" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12aip0f_di" bpmnElement="to-service-13">
+        <di:waypoint x="2330" y="125" />
+        <di:waypoint x="2330" y="200" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2244" y="131" width="72" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0j25hhm_di" bpmnElement="from-service-4">
+        <di:waypoint x="730" y="920" />
+        <di:waypoint x="800" y="920" />
+        <di:waypoint x="800" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1alc1ym_di" bpmnElement="default-2-3">
+        <di:waypoint x="705" y="760" />
+        <di:waypoint x="770" y="760" />
+        <di:waypoint x="800" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1tb99dz_di" bpmnElement="from-service-2">
+        <di:waypoint x="590" y="520" />
+        <di:waypoint x="655" y="520" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0320uyl_di" bpmnElement="Flow_0320uyl">
+        <di:waypoint x="680" y="545" />
+        <di:waypoint x="680" y="600" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0g5sosm_di" bpmnElement="to-service-2">
+        <di:waypoint x="540" y="435" />
+        <di:waypoint x="540" y="480" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="454" y="436" width="71" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_062o1kq_di" bpmnElement="default-2-2">
+        <di:waypoint x="565" y="410" />
+        <di:waypoint x="620" y="410" />
+        <di:waypoint x="674" y="501" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11rxji9_di" bpmnElement="to-decision-2-2">
+        <di:waypoint x="540" y="350" />
+        <di:waypoint x="540" y="385" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_028n6q8_di" bpmnElement="to-service-1">
+        <di:waypoint x="655" y="230" />
+        <di:waypoint x="540" y="230" />
+        <di:waypoint x="540" y="270" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="557" y="212" width="87" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0xx73xn_di" bpmnElement="default-2-1">
+        <di:waypoint x="680" y="255" />
+        <di:waypoint x="680" y="495" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1afwcw8_di" bpmnElement="from-service-12">
+        <di:waypoint x="2030" y="560" />
+        <di:waypoint x="2110" y="560" />
+        <di:waypoint x="2110" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1kctz91_di" bpmnElement="default-6-2">
+        <di:waypoint x="2005" y="440" />
+        <di:waypoint x="2080" y="440" />
+        <di:waypoint x="2110" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_069n9cn_di" bpmnElement="to-service-12">
+        <di:waypoint x="1980" y="465" />
+        <di:waypoint x="1980" y="520" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1879" y="476" width="64" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0dfyy46_di" bpmnElement="to-decision-6-2">
+        <di:waypoint x="1980" y="365" />
+        <di:waypoint x="1980" y="415" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1vifvqq_di" bpmnElement="default-6-1">
+        <di:waypoint x="1980" y="215" />
+        <di:waypoint x="1980" y="315" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0disaur_di" bpmnElement="from-service-11">
+        <di:waypoint x="1910" y="300" />
+        <di:waypoint x="1910" y="340" />
+        <di:waypoint x="1955" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1s5c64i_di" bpmnElement="to-service-11">
+        <di:waypoint x="1955" y="190" />
+        <di:waypoint x="1910" y="190" />
+        <di:waypoint x="1910" y="220" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1805" y="176" width="90" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0gfkkkb_di" bpmnElement="to-decision-7">
+        <di:waypoint x="2135" y="100" />
+        <di:waypoint x="2305" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1uej18x_di" bpmnElement="to-decision-6-1">
+        <di:waypoint x="1980" y="125" />
+        <di:waypoint x="1980" y="165" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1867" y="144" width="85" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0oekf0q_di" bpmnElement="default-6">
+        <di:waypoint x="2005" y="100" />
+        <di:waypoint x="2085" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02wmnn2_di" bpmnElement="to-decision-5-1">
+        <di:waypoint x="1580" y="300" />
+        <di:waypoint x="1580" y="395" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0krrp7q_di" bpmnElement="to-service-10">
+        <di:waypoint x="1580" y="445" />
+        <di:waypoint x="1580" y="520" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1493" y="453" width="81" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0o6pd3m_di" bpmnElement="default-5-1">
+        <di:waypoint x="1605" y="420" />
+        <di:waypoint x="1690" y="420" />
+        <di:waypoint x="1720" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1wmciyj_di" bpmnElement="from-service-10">
+        <di:waypoint x="1630" y="560" />
+        <di:waypoint x="1720" y="560" />
+        <di:waypoint x="1720" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ybp8pt_di" bpmnElement="to-decision-6">
+        <di:waypoint x="1745" y="100" />
+        <di:waypoint x="1955" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_00ulrh1_di" bpmnElement="to-service-9">
+        <di:waypoint x="1580" y="125" />
+        <di:waypoint x="1580" y="220" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1479" y="121" width="81" height="80" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_02wvrv9_di" bpmnElement="default-5">
+        <di:waypoint x="1605" y="100" />
+        <di:waypoint x="1695" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1jamf5b_di" bpmnElement="default-4">
+        <di:waypoint x="1305" y="100" />
+        <di:waypoint x="1405" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1n5mbd3_di" bpmnElement="to-decision-4-1">
+        <di:waypoint x="1280" y="380" />
+        <di:waypoint x="1280" y="415" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0io2gm8_di" bpmnElement="toAddPremiumAddOn">
+        <di:waypoint x="1280" y="250" />
+        <di:waypoint x="1280" y="300" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06kk8it_di" bpmnElement="default-4-1">
+        <di:waypoint x="1305" y="440" />
+        <di:waypoint x="1410" y="440" />
+        <di:waypoint x="1430" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_07akelm_di" bpmnElement="to-decision-5">
+        <di:waypoint x="1455" y="100" />
+        <di:waypoint x="1555" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0cervpr_di" bpmnElement="from-service-8">
+        <di:waypoint x="1330" y="560" />
+        <di:waypoint x="1430" y="560" />
+        <di:waypoint x="1430" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1299tta_di" bpmnElement="to-service-8">
+        <di:waypoint x="1280" y="465" />
+        <di:waypoint x="1280" y="520" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1192" y="476" width="76" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ob2tdi_di" bpmnElement="to-service-6">
+        <di:waypoint x="1280" y="125" />
+        <di:waypoint x="1280" y="170" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1186" y="133" width="89" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12whqnt_di" bpmnElement="to-decision-1">
+        <di:waypoint x="188" y="100" />
+        <di:waypoint x="295" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0i5ebqp_di" bpmnElement="from-service-0">
+        <di:waypoint x="370" y="260" />
+        <di:waypoint x="440" y="260" />
+        <di:waypoint x="440" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1tzsnkq_di" bpmnElement="to-service-0">
+        <di:waypoint x="320" y="125" />
+        <di:waypoint x="320" y="220" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="307" y="138" width="87" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0q0qmq2_di" bpmnElement="default-1">
+        <di:waypoint x="345" y="100" />
+        <di:waypoint x="415" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18mlqm5_di" bpmnElement="to-service-4">
+        <di:waypoint x="680" y="785" />
+        <di:waypoint x="680" y="880" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="587" y="815" width="89" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03p8gun_di" bpmnElement="to-decision-2-3">
+        <di:waypoint x="680" y="680" />
+        <di:waypoint x="680" y="735" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_19x8rlo_di" bpmnElement="to-decision-3">
+        <di:waypoint x="825" y="100" />
+        <di:waypoint x="955" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03vcmt3_di" bpmnElement="to-decision-2-1">
+        <di:waypoint x="680" y="125" />
+        <di:waypoint x="680" y="205" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="596" y="138" width="73" height="40" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0tidtd9_di" bpmnElement="default-2">
+        <di:waypoint x="705" y="100" />
+        <di:waypoint x="775" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_146kjbj_di" bpmnElement="to-decision-4">
+        <di:waypoint x="1115" y="100" />
+        <di:waypoint x="1255" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1tjntya_di" bpmnElement="from-service-5">
+        <di:waypoint x="1030" y="260" />
+        <di:waypoint x="1090" y="260" />
+        <di:waypoint x="1090" y="125" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06d4kdc_di" bpmnElement="default-3">
+        <di:waypoint x="1005" y="100" />
+        <di:waypoint x="1065" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1881w4r_di" bpmnElement="to-service-5">
+        <di:waypoint x="980" y="125" />
+        <di:waypoint x="980" y="220" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="895" y="138" width="70" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="start">
+        <dc:Bounds x="152" y="82" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0rqx4nb_di" bpmnElement="decision-3" isMarkerVisible="true">
+        <dc:Bounds x="955" y="75" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="955" y="45" width="52" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_05w26gb_di" bpmnElement="join-decision-3">
+        <dc:Bounds x="1065" y="75" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0gqok2j_di" bpmnElement="end">
+        <dc:Bounds x="2652" y="82" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0svgt9z_di" bpmnElement="service-5">
+        <dc:Bounds x="930" y="220" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0krf4p1_di" bpmnElement="decision-2" isMarkerVisible="true">
+        <dc:Bounds x="655" y="75" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="655" y="45" width="52" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1ycu6jf_di" bpmnElement="service-4">
+        <dc:Bounds x="630" y="880" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1pw7zi5_di" bpmnElement="join-decision-2">
+        <dc:Bounds x="775" y="75" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0nhpy5i_di" bpmnElement="decision-2-3" isMarkerVisible="true">
+        <dc:Bounds x="655" y="735" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0qruaw0_di" bpmnElement="decision-1" isMarkerVisible="true">
+        <dc:Bounds x="295" y="75" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="295" y="45" width="52" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0hszsy2_di" bpmnElement="join-decision-1">
+        <dc:Bounds x="415" y="75" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0kzu2i4_di" bpmnElement="service-0">
+        <dc:Bounds x="270" y="220" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_030k2nc_di" bpmnElement="decision-4" isMarkerVisible="true">
+        <dc:Bounds x="1255" y="75" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1255" y="45" width="52" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0xvuvgi_di" bpmnElement="decision-4-1" isMarkerVisible="true">
+        <dc:Bounds x="1255" y="415" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1170" y="430" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0yvoq7a_di" bpmnElement="join-decision-4">
+        <dc:Bounds x="1405" y="75" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0okma24_di" bpmnElement="service-8">
+        <dc:Bounds x="1230" y="520" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0bsibif_di" bpmnElement="decision-5" isMarkerVisible="true">
+        <dc:Bounds x="1555" y="75" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1555" y="45" width="52" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0scvlmg_di" bpmnElement="join-decision-5">
+        <dc:Bounds x="1695" y="75" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0zuyiy5_di" bpmnElement="service-10">
+        <dc:Bounds x="1530" y="520" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1ieygqa_di" bpmnElement="service-9">
+        <dc:Bounds x="1530" y="220" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0iu9ln3_di" bpmnElement="decision-5-1" isMarkerVisible="true">
+        <dc:Bounds x="1555" y="395" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1489" y="403" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1lq0do6_di" bpmnElement="decision-6" isMarkerVisible="true">
+        <dc:Bounds x="1955" y="75" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1955" y="45" width="52" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_00b857y_di" bpmnElement="join-decision-6">
+        <dc:Bounds x="2085" y="75" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_04bi7pw_di" bpmnElement="decision-6-1" isMarkerVisible="true">
+        <dc:Bounds x="1955" y="165" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2030" y="180" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0zskpfq_di" bpmnElement="service-11">
+        <dc:Bounds x="1860" y="220" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1o8oo12_di" bpmnElement="join-decision-6-1">
+        <dc:Bounds x="1955" y="315" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0n1vnlh_di" bpmnElement="decision-6-2" isMarkerVisible="true">
+        <dc:Bounds x="1955" y="415" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1871" y="430" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0syoq0t_di" bpmnElement="service-12">
+        <dc:Bounds x="1930" y="520" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1hvbb9b_di" bpmnElement="decision-2-1" isMarkerVisible="true">
+        <dc:Bounds x="655" y="205" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="709" y="203" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1rzraol_di" bpmnElement="decision-2-2" isMarkerVisible="true">
+        <dc:Bounds x="515" y="385" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0yo1rw3_di" bpmnElement="join-decision-2-1">
+        <dc:Bounds x="655" y="495" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0c35iqw_di" bpmnElement="service-2">
+        <dc:Bounds x="490" y="480" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_01yx66x_di" bpmnElement="decison-7" isMarkerVisible="true">
+        <dc:Bounds x="2305" y="75" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2305" y="45" width="52" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1ikr7f6_di" bpmnElement="join-decision-7">
+        <dc:Bounds x="2475" y="75" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0hk13ly_di" bpmnElement="service-14">
+        <dc:Bounds x="2190" y="400" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0bng86f_di" bpmnElement="decision-7-1" isMarkerVisible="true">
+        <dc:Bounds x="2305" y="325" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2359" y="333" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_158q7k8_di" bpmnElement="join-decision-7-1">
+        <dc:Bounds x="2305" y="515" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0du0hsx_di" bpmnElement="decision-7-2" isMarkerVisible="true">
+        <dc:Bounds x="2305" y="795" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="2220" y="810" width="61" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1knb3qk_di" bpmnElement="service-16">
+        <dc:Bounds x="2280" y="930" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1iqwyo5_di" bpmnElement="service-1">
+        <dc:Bounds x="490" y="270" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1e00jyd_di" bpmnElement="service-3">
+        <dc:Bounds x="630" y="600" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0qakmt3_di" bpmnElement="service-6">
+        <dc:Bounds x="1230" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1gnonmn_di" bpmnElement="service-7">
+        <dc:Bounds x="1230" y="300" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1lcydgo_di" bpmnElement="service-13">
+        <dc:Bounds x="2280" y="200" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1t8e0mp_di" bpmnElement="service-15">
+        <dc:Bounds x="2280" y="650" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

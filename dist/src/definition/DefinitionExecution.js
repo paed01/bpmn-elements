@@ -394,7 +394,7 @@ function DefinitionExecution(definition) {
 
   function complete(completionType, content, options) {
     deactivate();
-    logger.debug(`<${executionId} (${id})> definition execution ${completionType}`);
+    logger.debug(`<${executionId} (${id})> definition execution ${completionType} in ${Date.now() - initMessage.properties.timestamp}ms`);
     if (!content) content = createMessage();
     completed = true;
     if (status !== 'terminated') status = completionType;
