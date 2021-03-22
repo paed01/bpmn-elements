@@ -1,8 +1,11 @@
+import ck from 'chronokinesis';
 import Definition from '../../src/definition/Definition';
 import JsExtension from '../resources/extensions/JsExtension';
 import testHelpers from '../helpers/testHelpers';
 
 Feature('Stop and resume', () => {
+  after(ck.reset);
+
   Scenario('Stop and resume at activity wait', () => {
     let definition;
     Given('a process with form start event, user task, looped user task, receive task, signal events, and message events', async () => {
@@ -167,6 +170,144 @@ Feature('Stop and resume', () => {
 
     Then('run completes', () => {
       return end;
+    });
+  });
+
+  Scenario('Stop and resume at activity timer', () => {
+    after(ck.reset);
+
+    let source, definition;
+    Given('a process with form start event, user task, looped user task, receive task, signal events, and message events', async () => {
+      source = `<definitions id="def-timer" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="bp-timer" isExecutable="true">
+          <startEvent id="start">
+            <timerEventDefinition id="timer">
+              <timeDuration xsi:type="tFormalExpression">PT10S</timeDuration>
+            </timerEventDefinition>
+          </startEvent>
+          <sequenceFlow id="to-end" sourceRef="start" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source, {timers: Timers()});
+      definition = Definition(context);
+    });
+
+    function Timers() {
+      const timers = new Set();
+
+      return {
+        get size() {
+          return timers.size;
+        },
+        timers,
+        register() {
+          return {
+            setTimeout: this.setTimeout,
+            clearTimeout: this.clearTimeout,
+          };
+        },
+        setTimeout(...args) {
+          timers.add(args);
+          return args;
+        },
+        clearTimeout(ptr) {
+          timers.delete(ptr);
+        },
+      };
+    }
+
+    let state;
+    And('a listener that will save state at definition activity timer', () => {
+      definition.on('activity.timer', (api) => {
+        if (api.content.isRecovered) return;
+        state = definition.getState();
+      });
+    });
+
+    let timerEvent;
+    When('ran', () => {
+      timerEvent = definition.waitFor('activity.timer');
+      definition.run();
+    });
+
+    Then('timer has fired', async () => {
+      await timerEvent;
+      definition.stop();
+    });
+
+    When('recovered and resumed', async () => {
+      ck.travel(Date.now() + 5000);
+      const context = await testHelpers.context(source, {timers: Timers()});
+      definition = Definition(context);
+
+      definition.recover(state);
+      timerEvent = definition.waitFor('activity.timer');
+      definition.resume();
+    });
+
+    Then('timer event fired again', () => {
+      return timerEvent;
+    });
+
+    And('one timer is added', () => {
+      expect(definition.environment.timers.size).to.equal(1);
+    });
+
+    Given('a listener that will save state at activity timer', async () => {
+      const context = await testHelpers.context(source, {timers: Timers()});
+      definition = Definition(context);
+    });
+
+    When('ran', () => {
+      timerEvent = definition.waitFor('activity.timer');
+      definition.run();
+    });
+
+    Then('timer is added', () => {
+      expect(definition.environment.timers.size).to.equal(1);
+      for (const timer of definition.environment.timers.timers.entries()) {
+        expect(timer[1][1]).to.equal(10000);
+      }
+    });
+
+    When('stopped and state is saved', async () => {
+      await timerEvent;
+
+      setImmediate(() => {
+        definition.stop();
+      });
+
+      await definition.waitFor('stop');
+      state = definition.getState();
+    });
+
+    Then('timer is stopped', () => {
+      expect(definition.environment.timers.size).to.equal(0);
+    });
+
+    When('recovered and resumed', async () => {
+      ck.travel(Date.now() + 5000);
+
+      const context = await testHelpers.context(source, {timers: Timers()});
+      definition = Definition(context);
+
+      definition.recover(state);
+      timerEvent = definition.waitFor('activity.timer');
+      definition.resume();
+    });
+
+    Then('timer event fired again', () => {
+      return timerEvent;
+    });
+
+    And('one timer is added', () => {
+      expect(definition.environment.timers.size).to.equal(1);
+      for (const timer of definition.environment.timers.timers.entries()) {
+        expect(timer[1][1]).to.be.below(5000);
+      }
     });
   });
 });

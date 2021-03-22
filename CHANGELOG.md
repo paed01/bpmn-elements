@@ -1,6 +1,16 @@
 Changelog
 =========
 
+# 4.4.1
+
+- smqp retains undelivered execute.timer message in exchange when state is saved... eh, just fixed resume timers hard-to-explain-edge-case
+
+# 4.4.0
+
+improve expression handling
+
+- cover false as expression function argument
+
 # 4.3.4
 
 - Fix multiple start events not completing process. Diverging flows to different ends stalled execution

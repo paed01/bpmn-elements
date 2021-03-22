@@ -58,15 +58,12 @@ function TimerEventDefinition(activity, eventDefinition) {
   function execute(executeMessage) {
     if (timerRef) timerRef = environment.timers.clearTimeout(timerRef);
     stopped = false;
-    const isResumed = executeMessage.fields && executeMessage.fields.redelivered;
+    const {
+      redelivered: isResumed
+    } = executeMessage.fields;
     const {
       executionId
     } = executeMessage.content;
-
-    if (isResumed && executeMessage.fields.routingKey !== 'execute.timer') {
-      return logger.debug(`<${executionId} (${id})> resumed, waiting for timer message`);
-    }
-
     const messageContent = executeMessage.content;
     const startedAt = 'startedAt' in messageContent ? new Date(messageContent.startedAt) : new Date();
     const resolvedTimer = getTimers(foundTimers, executeMessage);

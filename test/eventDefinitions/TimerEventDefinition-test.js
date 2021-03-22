@@ -171,34 +171,6 @@ describe('TimerEventDefinition', () => {
     });
 
     describe('resume execution', () => {
-      it('ignores execute start message if redelivered', () => {
-        const definition = TimerEventDefinition(event, {
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDuration: 'PT0.1S',
-          },
-        });
-
-        event.broker.subscribeOnce('execution', 'execute.timer', () => {
-          throw new Error('Should have been ignored');
-        });
-
-        definition.execute({
-          fields: {
-            routingKey: 'execute.start',
-            redelivered: true,
-          },
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
-          },
-        });
-      });
-
       it('recovers with message timeout', (done) => {
         const definition = TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
@@ -399,7 +371,7 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute({content: {executionId: 'def-execution-id'}});
+        definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
 
         setTimeout(() => {
           ActivityApi(broker, timerMessage).stop();
@@ -432,7 +404,7 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute({content: {executionId: 'def-execution-id'}});
+        definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
 
         setTimeout(() => {
           ActivityApi(broker, timerMessage).stop();
@@ -620,36 +592,6 @@ describe('TimerEventDefinition', () => {
     });
 
     describe('resume execution', () => {
-      it('ignores execute start message if redelivered', () => {
-        const definition = TimerEventDefinition(event, {
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDate: '1993-06-27',
-          },
-        });
-
-        event.broker.subscribeOnce('execution', 'execute.timer', () => {
-          throw new Error('Should have been ignored');
-        });
-
-        definition.execute({
-          fields: {
-            routingKey: 'execute.start',
-            redelivered: true,
-          },
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
-          },
-        });
-
-        definition.stop();
-      });
-
       it('publishes timer event message with resume message timeDate', (done) => {
         const definition = TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
@@ -832,34 +774,6 @@ describe('TimerEventDefinition', () => {
     });
 
     describe('resume execution', () => {
-      it('ignores execute start message if redelivered', () => {
-        const definition = TimerEventDefinition(event, {
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeCycle: 'R3/PT10H',
-          },
-        });
-
-        event.broker.subscribeOnce('execution', 'execute.timer', () => {
-          throw new Error('Should have been ignored');
-        });
-
-        definition.execute({
-          fields: {
-            routingKey: 'execute.start',
-            redelivered: true,
-          },
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
-          },
-        });
-      });
-
       it('publishes timer event message with resume message timeCycle', (done) => {
         const definition = TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
@@ -934,7 +848,7 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute({content: {executionId: 'def-execution-id'}});
+        definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
 
         ActivityApi(broker, timerMessage).stop();
 
@@ -962,7 +876,7 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute({content: {executionId: 'def-execution-id'}});
+        definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
 
         ActivityApi(broker, timerMessage).stop();
 
@@ -991,7 +905,7 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute({content: {executionId: 'def-execution-id'}});
+        definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
 
         ActivityApi(broker, timerMessage).stop();
 
@@ -1446,7 +1360,7 @@ describe('TimerEventDefinition', () => {
               timerMessage = msg;
             });
 
-            definition.execute({content: {executionId: 'def-execution-id'}});
+            definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
 
             ActivityApi(broker, timerMessage).stop();
 
@@ -1467,7 +1381,7 @@ describe('TimerEventDefinition', () => {
               timerMessage = msg;
             });
 
-            definition.execute({content: {executionId: 'def-execution-id'}});
+            definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
 
             ActivityApi(broker, timerMessage).stop();
 
@@ -1489,7 +1403,7 @@ describe('TimerEventDefinition', () => {
               timerMessage = msg;
             });
 
-            definition.execute({content: {executionId: 'def-execution-id'}});
+            definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
 
             ActivityApi(broker, timerMessage).stop();
 
