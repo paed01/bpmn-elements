@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "4.4.1",
+  "version": "4.4.2",
   "description": "Executable workflow elements based on BPMN 2.0",
   "main": "dist/index.js",
   "module": "index.js",
@@ -53,7 +53,7 @@
     "chai": "^4.2.0",
     "chronokinesis": "^3.0.0",
     "debug": "^4.3.1",
-    "eslint": "^7.21.0",
+    "eslint": "^7.23.0",
     "got": "^11.8.2",
     "mocha": "^8.2.1",
     "mocha-cakes-2": "^3.3.0",

@@ -1,7 +1,7 @@
 import {cloneMessage} from '../messageHelper';
 import {ActivityError, BpmnError} from '../error/Errors';
 
-export default function ExecutionScope(activity, initMessage = {}) {
+export default function ExecutionScope(activity, initMessage) {
   const {id, type, environment, logger} = activity;
 
   const {fields, content, properties} = cloneMessage(initMessage);

@@ -1607,5 +1607,57 @@ describe('TimerEventDefinition', () => {
 
       definition.stop();
     });
+
+    it('resets timer if resumed twice due to lingering execute timer message', () => {
+      const definition = TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: 'PT1M',
+        },
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      definition.execute({
+        fields: {
+          routingKey: 'execute.start',
+          redelivered: true,
+        },
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+          },
+        },
+      });
+
+      const timer = event.environment.timers.executing[0];
+      expect(event.environment.timers.executing.length).to.equal(1);
+
+      definition.execute({
+        fields: {
+          routingKey: 'execute.timer',
+        },
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+          },
+        },
+      });
+
+      expect(event.environment.timers.executing.length).to.equal(1);
+      expect(timer === event.environment.timers.executing[0], 'new timer ref').to.be.true;
+
+      definition.stop();
+    });
+
   });
 });

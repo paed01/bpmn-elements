@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 4.4.2
+
+- wrestling with 4.4.1 edge case
+
 # 4.4.1
 
 - smqp retains undelivered execute.timer message in exchange when state is saved... eh, just fixed resume timers hard-to-explain-edge-case

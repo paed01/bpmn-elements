@@ -310,4 +310,156 @@ Feature('Stop and resume', () => {
       }
     });
   });
+
+  Scenario('Stop and resume at timer with loopback flows', () => {
+    let context, definition;
+    const instances = [];
+
+    const source = `
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <process id="theProcess" isExecutable="true">
+        <startEvent id="start" />
+        <sequenceFlow id="to-task1" sourceRef="start" targetRef="task1" />
+        <userTask id="task1" />
+        <sequenceFlow id="to-task2" sourceRef="task1" targetRef="task2" />
+        <userTask id="task2" />
+        <boundaryEvent id="timeout1" attachedToRef="task2">
+          <timerEventDefinition id="timer1">
+            <timeDuration xsi:type="tFormalExpression">PT5M</timeDuration>
+          </timerEventDefinition>
+        </boundaryEvent>
+        <boundaryEvent id="timeout2" attachedToRef="task2">
+          <timerEventDefinition id="timer2">
+            <timeDuration xsi:type="tFormalExpression">PT10M</timeDuration>
+          </timerEventDefinition>
+        </boundaryEvent>
+
+        <sequenceFlow id="back-to-task1" sourceRef="timeout1" targetRef="task1" />
+
+        <sequenceFlow id="to-terminate" sourceRef="timeout2" targetRef="terminate" />
+        <endEvent id="terminate">
+          <terminateEventDefinition />
+        </endEvent>
+
+        <sequenceFlow id="to-end" sourceRef="task2" targetRef="end" />
+        <endEvent id="end" />
+      </process>
+    </definitions>`;
+
+    function Timers() {
+      const timers = {};
+
+      return {
+        timers,
+        register() {
+          return {
+            setTimeout: this.setTimeout,
+            clearTimeout: this.clearTimeout,
+          };
+        },
+        setTimeout(...args) {
+          instances.push(args);
+          return args;
+        },
+        clearTimeout(ref) {
+          const idx = instances.indexOf(ref);
+          if (idx > -1) instances.splice(idx, 1);
+        },
+      };
+    }
+
+    Given('a definition with a task with two timeouts, first loops back to previous task', async () => {
+      context = await testHelpers.context(source, {timers: Timers()});
+      definition = Definition(context);
+    });
+
+    let state;
+    When('ran and stopped at definition second bound activity.timer', (done) => {
+      definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
+        if (msg.content.id !== 'timeout2') return;
+        definition.broker.cancel(msg.fields.consumerTag);
+        setImmediate(definition.stop);
+      }, {noAck: true});
+
+      definition.once('stop', () => {
+        state = definition.getState();
+        done();
+      });
+
+      definition.run();
+      definition.signal({id: 'task1'});
+    });
+
+    Then('state is saved', () => {
+      expect(state).to.be.ok;
+    });
+
+    When('recovered and resumed', async () => {
+      context = await testHelpers.context(source, {timers: Timers()});
+      definition = Definition(context).recover(state);
+      definition.resume();
+    });
+
+    And('first timeout kicks', (done) => {
+      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
+        if (msg.content.id !== 'timeout1') return;
+        definition.broker.cancel(msg.fields.consumerTag);
+        setImmediate(definition.stop);
+      }, {noAck: true});
+
+      definition.once('stop', () => {
+        state = definition.getState();
+        done();
+      });
+
+      expect(instances).to.have.length(2);
+      const idx = instances.findIndex(([,, msg]) => msg.content.id === 'timeout1');
+      const [cb,, ...args] = instances.splice(idx, 1).pop();
+      cb(...args);
+    });
+
+    Then('state is saved', () => {
+      expect(state).to.be.ok;
+    });
+
+    When('recovered and resumed', async () => {
+      context = await testHelpers.context(source, {timers: Timers()});
+      definition = Definition(context).recover(state);
+      definition.resume();
+    });
+
+    And('previous task is signaled', () => {
+      definition.signal({id: 'task1'});
+    });
+
+    And('second timeout kicks and state is saved at timeout', (done) => {
+      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
+        if (msg.content.id !== 'timeout2') return;
+        definition.broker.cancel(msg.fields.consumerTag);
+        definition.stop();
+      }, {noAck: true});
+
+      definition.once('stop', () => {
+        state = definition.getState();
+        done();
+      });
+
+      expect(instances).to.have.length(2);
+      const idx = instances.findIndex(([,, msg]) => msg.content.id === 'timeout2');
+      const [cb,, ...args] = instances.splice(idx, 1).pop();
+      cb(...args);
+    });
+
+    let leave;
+    When('recovered and resumed', async () => {
+      context = await testHelpers.context(source, {timers: Timers()});
+      definition = Definition(context).recover(state);
+      leave = definition.waitFor('leave');
+      definition.resume();
+    });
+
+    Then('run completes', () => {
+      return leave;
+    });
+  });
 });

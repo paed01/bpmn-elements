@@ -9,7 +9,7 @@ var _messageHelper = require("../messageHelper");
 
 var _Errors = require("../error/Errors");
 
-function ExecutionScope(activity, initMessage = {}) {
+function ExecutionScope(activity, initMessage) {
   const {
     id,
     type,

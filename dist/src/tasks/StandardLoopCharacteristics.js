@@ -11,7 +11,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function StandardLoopCharacteristics(activity, loopCharacteristics) {
   let {
-    behaviour = {}
+    behaviour
   } = loopCharacteristics;
   behaviour = { ...behaviour,
     isSequential: true

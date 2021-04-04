@@ -19,7 +19,6 @@ function TimerEventDefinition(activity, eventDefinition) {
     type = 'TimerEventDefinition',
     behaviour = {}
   } = eventDefinition;
-  let stopped = false;
   const logger = environment.Logger(type.toLowerCase());
   const {
     timeDuration,
@@ -36,6 +35,7 @@ function TimerEventDefinition(activity, eventDefinition) {
       timeDate
     } : undefined)
   };
+  let stopped = false;
   let timerRef;
   const source = {
     type,
@@ -56,11 +56,18 @@ function TimerEventDefinition(activity, eventDefinition) {
   return source;
 
   function execute(executeMessage) {
-    if (timerRef) timerRef = environment.timers.clearTimeout(timerRef);
-    stopped = false;
     const {
+      routingKey: executeKey,
       redelivered: isResumed
     } = executeMessage.fields;
+    const running = !!timerRef;
+
+    if (running && executeKey === 'execute.timer') {
+      return;
+    }
+
+    if (timerRef) timerRef = environment.timers.clearTimeout(timerRef);
+    stopped = false;
     const {
       executionId
     } = executeMessage.content;

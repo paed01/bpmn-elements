@@ -5,7 +5,6 @@ export default function TimerEventDefinition(activity, eventDefinition) {
   const {id, broker, environment} = activity;
   const {type = 'TimerEventDefinition', behaviour = {}} = eventDefinition;
 
-  let stopped = false;
   const logger = environment.Logger(type.toLowerCase());
   const {timeDuration, timeCycle, timeDate} = behaviour;
   const foundTimers = {
@@ -14,6 +13,7 @@ export default function TimerEventDefinition(activity, eventDefinition) {
     ...(timeDate ? {timeDate} : undefined),
   };
 
+  let stopped = false;
   let timerRef;
 
   const source = {
@@ -34,10 +34,15 @@ export default function TimerEventDefinition(activity, eventDefinition) {
   return source;
 
   function execute(executeMessage) {
+    const {routingKey: executeKey, redelivered: isResumed} = executeMessage.fields;
+    const running = !!timerRef;
+    if (running && executeKey === 'execute.timer') {
+      return;
+    }
+
     if (timerRef) timerRef = environment.timers.clearTimeout(timerRef);
     stopped = false;
 
-    const {redelivered: isResumed} = executeMessage.fields;
     const {executionId} = executeMessage.content;
 
     const messageContent = executeMessage.content;
