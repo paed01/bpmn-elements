@@ -1,6 +1,20 @@
 Changelog
 =========
 
+# 5.0.0
+
+Multi-/Standard-loop characteristics.
+
+## Breaking
+- Cardinality and/or a collection is now required if designing a parallel multi instance loop
+- Start throwing error when cardinality is invalid, so no need for TS yet...
+
+## Addititions
+- Introduce new setting to control parallel loop batch size, defaults to 50
+
+## Bugfix
+- Fixed bug where multi instance parallel loop stalled when more than 100 iterations where required
+
 # 4.4.2
 
 - wrestling with 4.4.1 edge case

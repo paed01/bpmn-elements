@@ -2,7 +2,8 @@ import {ActivityApi} from '../Api';
 import {cloneContent, cloneMessage} from '../messageHelper';
 
 export default function ActivityExecution(activity, context) {
-  const {id, broker, logger, isSubProcess, Behaviour} = activity;
+  const {id, broker, logger, isSubProcess, Behaviour, environment} = activity;
+  const {batchSize = 50} = environment.settings;
   const postponed = [];
 
   let source, initMessage, completed = false, executionId;
@@ -102,7 +103,7 @@ export default function ActivityExecution(activity, context) {
     if (completed) return;
 
     broker.bindQueue(executeQ.name, 'execution', 'execute.#', {priority: 100});
-    executeQ.assertConsumer(onExecuteMessage, {exclusive: true, prefetch: 100, priority: 100, consumerTag: '_activity-execute'});
+    executeQ.assertConsumer(onExecuteMessage, {exclusive: true, prefetch: batchSize * 2, priority: 100, consumerTag: '_activity-execute'});
     if (completed) return deactivate();
 
     broker.subscribeTmp('api', `activity.*.${executionId}`, onParentApiMessage, {noAck: true, consumerTag: '_activity-api-execution', priority: 200});
@@ -198,6 +199,7 @@ export default function ActivityExecution(activity, context) {
 
         previousMsg = postponed.splice(idx, 1, message)[0];
         previousMsg.ack();
+
         return true;
       }
 

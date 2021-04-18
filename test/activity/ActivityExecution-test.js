@@ -1579,6 +1579,9 @@ describe('ActivityExecution', () => {
       expect(task.broker.getQueue('execute-q')).to.have.property('messageCount', 4);
 
       const executeQ = task.broker.getQueue('execute-q');
+      expect(executeQ.messageCount).to.equal(4);
+
+      expect(executeQ.messages[0].fields).to.have.property('routingKey', 'execute.iteration.batch');
       expect(executeQ.messages[0].content).to.have.property('isRootScope', true);
       expect(executeQ.messages[1].content).to.have.property('isMultiInstance', true);
       expect(executeQ.messages[2].content).to.have.property('isMultiInstance', true);
@@ -1624,6 +1627,7 @@ describe('ActivityExecution', () => {
       expect(task.broker.getQueue('execute-q')).to.have.property('messageCount', 4);
 
       const executeQ = task.broker.getQueue('execute-q');
+      expect(executeQ.messages[0].fields).to.have.property('routingKey', 'execute.iteration.batch');
       expect(executeQ.messages[0].content).to.have.property('isRootScope', true);
       expect(executeQ.messages[1].content).to.have.property('isMultiInstance', true);
       expect(executeQ.messages[2].content).to.have.property('isMultiInstance', true);

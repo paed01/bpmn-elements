@@ -8,12 +8,13 @@ Shared environment.
 Arguments:
 - `options`: optional options
   - `variables`: optional variables object
-  - `output`: = optional output object
+  - `output`: optional output object
   - `services`: optional named services object, key is name of service and value must be a function
   - `settings`: optional settings
     - `step`: boolean, true makes activity runs to go forward in steps, defaults to false
     - `enableDummyService`: boolean, true returns dummy service function for service task
     - `strict`: boolean, [strict mode](#strict-mode) defaults to false
+    - `batchSize`: optional positive integer to control parallel loop batch size, defaults to 50
   - `scripts`: [Scripts instance](/docs/Scripts.md)
   - `timers`: [Timers instance](/docs/Timers.md)
   - `expressions`: expressions handler, defaults to [Expressions instance](/docs/Expression.md)

@@ -43,7 +43,7 @@ The following elements are tested and supported.
   - throw
   - catch
 - MessageFlow
-- [MultiInstanceLoopCharacteristics](/docs/MultiInstanceLoopCharacteristics.md)
+- [MultiInstanceLoopCharacteristics](/docs/LoopCharacteristics.md)
 - [ParallelGateway](/docs/ParallelGateway.md)
 - ReceiveTask
 - ScriptTask
@@ -59,7 +59,7 @@ The following elements are tested and supported.
 - SignalTask
   - ManualTask
   - UserTask
-- StandardLoopCharacteristics
+- [StandardLoopCharacteristics](/docs/LoopCharacteristics.md)
 - [StartEvent](/docs/StartEvent.md)
 - SubProcess
 - Task

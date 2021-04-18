@@ -68,7 +68,28 @@ describe('LoopCharacteristics', () => {
       });
 
       task.once('error', (err) => {
-        expect(err).to.match(/loopCardinality is not a Number/i);
+        expect(err).to.match(/NaN/i);
+        done();
+      });
+
+      loop.execute({
+        content: {
+          isRootScope: true,
+          executionId: 'parent-execution-id',
+        },
+      });
+    });
+
+    it('publishes error on activity broker if loopCardinality is not a number', (done) => {
+      const loop = LoopCharacteristics(task, {
+        behaviour: {
+          loopCardinality: '3 pcs',
+          isSequential: true,
+        },
+      });
+
+      task.once('error', (err) => {
+        expect(err).to.match(/NaN/i);
         done();
       });
 
@@ -644,12 +665,26 @@ describe('LoopCharacteristics', () => {
         },
       });
 
-      expect(messages).to.have.length(3);
+      expect(messages).to.have.length(4);
 
-      expect(messages[0].fields).to.have.property('routingKey', 'execute.start');
-      expect(messages[0].content).to.have.property('executionId').that.is.not.equal('parent-execution-id');
-      expect(messages[0].content).to.have.property('index', 0);
-      expect(messages[0].content).to.have.property('parent').that.eql({
+      let message;
+
+      message = messages.shift();
+      expect(message.fields).to.have.property('routingKey', 'execute.iteration.batch');
+      expect(message.content).to.have.property('executionId', 'parent-execution-id');
+      expect(message.content).to.have.property('index', 3);
+      expect(message.content).to.have.property('running', 3);
+      expect(message.content).to.have.property('parent').that.eql({
+        id: 'process1',
+        type: 'bpmn:Process',
+        executionId: 'process1_1',
+      });
+
+      message = messages.shift();
+      expect(message.fields).to.have.property('routingKey', 'execute.start');
+      expect(message.content).to.have.property('executionId', 'parent-execution-id_0');
+      expect(message.content).to.have.property('index', 0);
+      expect(message.content).to.have.property('parent').that.eql({
         id: 'task',
         type: 'bpmn:Task',
         executionId: 'parent-execution-id',
@@ -660,10 +695,11 @@ describe('LoopCharacteristics', () => {
         }],
       });
 
-      expect(messages[1].fields).to.have.property('routingKey', 'execute.start');
-      expect(messages[1].content).to.have.property('executionId').that.is.not.equal('parent-execution-id');
-      expect(messages[1].content).to.have.property('index', 1);
-      expect(messages[1].content).to.have.property('parent').that.eql({
+      message = messages.shift();
+      expect(message.fields).to.have.property('routingKey', 'execute.start');
+      expect(message.content).to.have.property('executionId').that.is.not.equal('parent-execution-id');
+      expect(message.content).to.have.property('index', 1);
+      expect(message.content).to.have.property('parent').that.eql({
         id: 'task',
         type: 'bpmn:Task',
         executionId: 'parent-execution-id',
@@ -674,10 +710,11 @@ describe('LoopCharacteristics', () => {
         }],
       });
 
-      expect(messages[2].fields).to.have.property('routingKey', 'execute.start');
-      expect(messages[2].content).to.have.property('executionId').that.is.not.equal('parent-execution-id');
-      expect(messages[2].content).to.have.property('index', 2);
-      expect(messages[2].content).to.have.property('parent').that.eql({
+      message = messages.shift();
+      expect(message.fields).to.have.property('routingKey', 'execute.start');
+      expect(message.content).to.have.property('executionId').that.is.not.equal('parent-execution-id');
+      expect(message.content).to.have.property('index', 2);
+      expect(message.content).to.have.property('parent').that.eql({
         id: 'task',
         type: 'bpmn:Task',
         executionId: 'parent-execution-id',
@@ -691,7 +728,7 @@ describe('LoopCharacteristics', () => {
 
     it('publishes start messages for all items in collection', () => {
       const messages = [];
-      task.broker.subscribeTmp('execution', '#', (_, msg) => {
+      task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
         messages.push(msg);
       }, {noAck: true});
 
@@ -733,9 +770,9 @@ describe('LoopCharacteristics', () => {
       expect(messages[3].content).to.have.property('item', 'item 4');
     });
 
-    it('instructs execution to keep iteration start messages', () => {
+    it('instructs execution to to not complete when iteration completes', () => {
       const messages = [];
-      task.broker.subscribeTmp('execution', '#', (_, msg) => {
+      task.broker.subscribeTmp('execution', 'execute.iteration.*', (_, msg) => {
         messages.push(msg);
       }, {noAck: true});
 
@@ -759,14 +796,10 @@ describe('LoopCharacteristics', () => {
         },
       });
 
-      expect(messages).to.have.length(3);
+      expect(messages).to.have.length(1);
 
-      expect(messages[0].fields).to.have.property('routingKey', 'execute.start');
-      expect(messages[0].content).to.have.property('keep', true);
-      expect(messages[1].fields).to.have.property('routingKey', 'execute.start');
-      expect(messages[1].content).to.have.property('keep', true);
-      expect(messages[2].fields).to.have.property('routingKey', 'execute.start');
-      expect(messages[2].content).to.have.property('keep', true);
+      expect(messages[0].fields).to.have.property('routingKey', 'execute.iteration.batch');
+      expect(messages[0].content).to.have.property('preventComplete', true);
     });
 
     it('updates start message output when first has completed', () => {
@@ -788,22 +821,28 @@ describe('LoopCharacteristics', () => {
         },
       });
 
-      expect(messages).to.have.length(3);
+      expect(messages).to.have.length(4);
 
-      task.broker.publish('execution', 'execute.completed', {...messages[0].content, output: 0});
+      task.broker.publish('execution', 'execute.completed', {...messages[1].content, output: 0});
 
-      expect(messages).to.have.length(5);
+      expect(messages).to.have.length(6);
 
-      expect(messages[4].fields).to.have.property('routingKey', 'execute.iteration.completed');
-      expect(messages[4].content).to.have.property('executionId', 'parent-execution-id');
-      expect(messages[4].content).to.have.property('index', 0);
-      expect(messages[4].content).to.have.property('output').that.eql([0]);
+      const message = messages.pop();
+
+      expect(message.fields).to.have.property('routingKey', 'execute.iteration.completed');
+      expect(message.content).to.have.property('executionId', 'parent-execution-id');
+      expect(message.content).to.have.property('index', 3);
+      expect(message.content).to.have.property('preventComplete', true);
+      expect(message.content).to.have.property('output').that.eql([0]);
     });
 
     it('executes until completion condition is met', () => {
-      const messages = [];
+      const startMessages = [], messages = [];
       task.broker.subscribeTmp('execution', '#', (_, msg) => {
         messages.push(msg);
+      }, {noAck: true});
+      task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
+        startMessages.push(msg);
       }, {noAck: true});
 
       const loop = LoopCharacteristics(task, {
@@ -820,17 +859,15 @@ describe('LoopCharacteristics', () => {
         },
       });
 
-      expect(messages).to.have.length(3);
+      task.broker.publish('execution', 'execute.completed', {...startMessages[1].content, output: 2});
+      task.broker.publish('execution', 'execute.completed', {...startMessages[0].content, output: {stopLoop: true}});
 
-      task.broker.publish('execution', 'execute.completed', {...messages[1].content, output: 2});
-      task.broker.publish('execution', 'execute.completed', {...messages[0].content, output: {stopLoop: true}});
+      const lastMessage = messages.pop();
 
-      expect(messages).to.have.length(8);
-
-      expect(messages[7].fields).to.have.property('routingKey', 'execute.completed');
-      expect(messages[7].content).to.have.property('executionId', 'parent-execution-id');
-      expect(messages[7].content).to.have.property('index', 0);
-      expect(messages[7].content).to.have.property('output').that.eql([{stopLoop: true}, 2]);
+      expect(lastMessage.fields).to.have.property('routingKey', 'execute.completed');
+      expect(lastMessage.content).to.have.property('executionId', 'parent-execution-id');
+      expect(lastMessage.content).to.have.property('index', 0);
+      expect(lastMessage.content).to.have.property('output').that.eql([{stopLoop: true}, 2]);
     });
 
     it('root api stop message drops consumers', () => {
@@ -912,9 +949,9 @@ describe('LoopCharacteristics', () => {
         expect(task.broker).to.have.property('consumerCount', 3);
       });
 
-      it('recovered iteration completed message adds to output', () => {
+      it('recovered iteration from index 0 and iteration completed message adds to output', () => {
         const messages = [];
-        task.broker.subscribeTmp('execution', '#', (_, msg) => {
+        task.broker.subscribeTmp('execution', 'execute.iteration.*', (_, msg) => {
           messages.push(msg);
         }, {noAck: true});
 
@@ -940,7 +977,7 @@ describe('LoopCharacteristics', () => {
 
         expect(messages).to.have.length(2);
 
-        expect(messages[1].content).to.have.property('output').that.eql([0, 2]);
+        expect(messages.pop().content).to.have.property('output').that.eql([0, 2]);
       });
     });
   });

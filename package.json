@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "4.4.2",
+  "version": "5.0.0",
   "description": "Executable workflow elements based on BPMN 2.0",
   "main": "dist/index.js",
   "module": "index.js",

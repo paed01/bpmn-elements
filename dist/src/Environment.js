@@ -18,7 +18,7 @@ const defaultOptions = ['extensions', 'output', 'services', 'scripts', 'settings
 function Environment(options = {}) {
   const initialOptions = validateOptions(options);
   let variables = options.variables || {};
-  const settings = { ...(options.settings || {})
+  const settings = { ...options.settings
   };
   const output = options.output || {};
   const services = options.services || {};

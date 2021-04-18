@@ -15,7 +15,7 @@ Resolve expression.
 Arguments:
 - `expression`: expresion templated string
 - `context`: optional context from where to resolve expressions
-- `fnContext`: optional call context
+- `fnContext`: optional call context (this)
 
 ## `isExpression(testString)`
 

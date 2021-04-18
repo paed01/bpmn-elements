@@ -399,28 +399,38 @@ describe('UserTask', () => {
 
       expect(executeQ).to.have.property('messageCount', 5);
 
-      expect(executeQ.messages[0].fields).to.have.property('routingKey', 'execute.start');
-      expect(executeQ.messages[0].content).to.have.property('isRootScope', true);
+      const messages = executeQ.messages.slice();
 
-      expect(executeQ.messages[1].fields).to.have.property('routingKey', 'execute.start');
-      expect(executeQ.messages[1].fields).to.have.property('redelivered', true);
-      expect(executeQ.messages[1].content.isRootScope).to.not.be.ok;
-      expect(executeQ.messages[1].content).to.have.property('index', 0);
+      let message;
 
-      expect(executeQ.messages[2].fields).to.have.property('routingKey', 'execute.start');
-      expect(executeQ.messages[2].fields.redelivered).to.not.be.ok;
-      expect(executeQ.messages[2].content.isRootScope).to.not.be.ok;
-      expect(executeQ.messages[2].content).to.have.property('index', 1);
+      message = messages.shift();
+      expect(message.fields).to.have.property('routingKey', 'execute.iteration.batch');
+      expect(message.fields).to.have.property('redelivered', true);
+      expect(message.content).to.have.property('isRootScope', true);
 
-      expect(executeQ.messages[3].fields).to.have.property('routingKey', 'execute.start');
-      expect(executeQ.messages[3].fields.redelivered).to.not.be.ok;
-      expect(executeQ.messages[3].content.isRootScope).to.not.be.ok;
-      expect(executeQ.messages[3].content).to.have.property('index', 2);
+      message = messages.shift();
+      expect(message.fields).to.have.property('routingKey', 'execute.start');
+      expect(message.fields).to.have.property('redelivered', true);
+      expect(message.content.isRootScope).to.not.be.ok;
+      expect(message.content).to.have.property('index', 0);
 
-      expect(executeQ.messages[4].fields).to.have.property('routingKey', 'execute.completed');
-      expect(executeQ.messages[4].fields.redelivered).to.not.be.ok;
-      expect(executeQ.messages[4].content.isRootScope).to.not.be.ok;
-      expect(executeQ.messages[4].content).to.have.property('index', 0);
+      message = messages.shift();
+      expect(message.fields).to.have.property('routingKey', 'execute.start');
+      expect(message.fields.redelivered).to.not.be.ok;
+      expect(message.content.isRootScope).to.not.be.ok;
+      expect(message.content).to.have.property('index', 1);
+
+      message = messages.shift();
+      expect(message.fields).to.have.property('routingKey', 'execute.start');
+      expect(message.fields.redelivered).to.not.be.ok;
+      expect(message.content.isRootScope).to.not.be.ok;
+      expect(message.content).to.have.property('index', 2);
+
+      message = messages.shift();
+      expect(message.fields).to.have.property('routingKey', 'execute.completed');
+      expect(message.fields.redelivered).to.not.be.ok;
+      expect(message.content.isRootScope).to.not.be.ok;
+      expect(message.content).to.have.property('index', 0);
     });
 
     it('runs through if discarded', async () => {

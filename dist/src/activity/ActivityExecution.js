@@ -15,8 +15,12 @@ function ActivityExecution(activity, context) {
     broker,
     logger,
     isSubProcess,
-    Behaviour
+    Behaviour,
+    environment
   } = activity;
+  const {
+    batchSize = 50
+  } = environment.settings;
   const postponed = [];
   let source,
       initMessage,
@@ -127,7 +131,7 @@ function ActivityExecution(activity, context) {
     });
     executeQ.assertConsumer(onExecuteMessage, {
       exclusive: true,
-      prefetch: 100,
+      prefetch: batchSize * 2,
       priority: 100,
       consumerTag: '_activity-execute'
     });

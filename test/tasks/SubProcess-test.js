@@ -824,11 +824,11 @@ describe('SubProcess', () => {
 
         waiting.pop().signal(3);
 
-        expect(executeQ.messageCount, 'execute queue').to.equal(4);
+        expect(executeQ.messageCount, 'execute queue').to.equal(3);
 
         waiting.shift().signal(1);
 
-        expect(executeQ.messageCount, 'execute queue').to.equal(4);
+        expect(executeQ.messageCount, 'execute queue').to.equal(2);
 
         const leave = task.waitFor('leave', (_, msg) => msg.content.id === task.id);
 
@@ -883,7 +883,12 @@ describe('SubProcess', () => {
         await stop;
 
         const executeQ = task.broker.getQueue('execute-q');
-        expect(executeQ.messages[0].content).to.have.property('isRootScope', true);
+        expect(executeQ.messages[0].fields).to.have.property('routingKey', 'execute.iteration.batch');
+        expect(executeQ.messages[0].content).to.contain({
+          isRootScope: true,
+          running: 3,
+          index: 3,
+        });
         expect(executeQ.messages[1].content.isRootScope).to.be.undefined;
         expect(executeQ.messages[2].content.isRootScope).to.be.undefined;
         expect(executeQ.messages[3].content.isRootScope).to.be.undefined;

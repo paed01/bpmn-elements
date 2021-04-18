@@ -16,6 +16,9 @@ function LoopCharacteristics(activity, loopCharacteristics) {
     environment
   } = activity;
   const {
+    batchSize = 50
+  } = environment.settings;
+  const {
     type = 'LoopCharacteristics',
     behaviour = {}
   } = loopCharacteristics;
@@ -25,8 +28,7 @@ function LoopCharacteristics(activity, loopCharacteristics) {
     elementVariable = 'item'
   } = behaviour;
   let completionCondition, startCondition, loopCardinality;
-  if ('loopCardinality' in behaviour) loopCardinality = behaviour.loopCardinality;
-  if ('loopMaximum' in behaviour) loopCardinality = behaviour.loopMaximum;
+  if ('loopCardinality' in behaviour) loopCardinality = behaviour.loopCardinality;else if ('loopMaximum' in behaviour) loopCardinality = behaviour.loopMaximum;
 
   if (behaviour.loopCondition) {
     if (behaviour.testBefore) startCondition = behaviour.loopCondition;else completionCondition = behaviour.loopCondition;
@@ -73,8 +75,13 @@ function LoopCharacteristics(activity, loopCharacteristics) {
     const {
       executionId: parentExecutionId
     } = executeMessage.content;
-    getCharacteristics();
-    return isSequential ? executeSequential() : executeParallel();
+    if (!getCharacteristics()) return;
+
+    try {
+      return isSequential ? executeSequential() : executeParallel();
+    } catch (err) {
+      return activity.emitFatal(new _Errors.ActivityError(err.message, executeMessage, err), executeMessage.content);
+    }
 
     function executeSequential() {
       let startIndex = 0;
@@ -116,8 +123,6 @@ function LoopCharacteristics(activity, loopCharacteristics) {
         const {
           content
         } = message;
-        if (content.isRootScope) return;
-        if (!content.isMultiInstance) return;
         const loopOutput = getCharacteristics().output;
         if (content.output !== undefined) loopOutput[content.index] = content.output;
         broker.publish('execution', 'execute.iteration.completed', { ...message.content,
@@ -141,41 +146,97 @@ function LoopCharacteristics(activity, loopCharacteristics) {
     }
 
     function executeParallel() {
+      const {
+        cardinality,
+        getContent: getStartContent
+      } = getCharacteristics();
+      if (cardinality === 0) return complete();
+      if (!cardinality) return activity.emitFatal(new _Errors.ActivityError(`<${id}> cardinality or collection is required in parallel loops`, executeMessage), getStartContent());
+      let index = 0,
+          running = 0;
+
+      if (isRedelivered) {
+        if (!isNaN(executeMessage.content.index)) index = executeMessage.content.index;
+        if (!isNaN(executeMessage.content.running)) running = executeMessage.content.running;
+      }
+
       subscribe(onCompleteMessage);
       if (isRedelivered) return;
-      let index = 0,
-          startContent;
+      return startBatch();
 
-      while (startContent = next(index)) {
-        debug(`<${parentExecutionId} (${id})> start parallel iteration index ${index}`);
-        broker.publish('execution', 'execute.start', { ...startContent,
-          keep: true
+      function startBatch() {
+        const {
+          output: loopOutput,
+          getContent
+        } = getCharacteristics();
+        const batch = [];
+        let startContent = next(index);
+
+        do {
+          debug(`<${parentExecutionId} (${id})> start parallel iteration index ${index}`);
+          batch.push(startContent);
+          running++;
+          index++;
+
+          if (index >= cardinality || running >= batchSize) {
+            break;
+          }
+        } while (startContent = next(index));
+
+        broker.publish('execution', 'execute.iteration.batch', { ...getContent(),
+          index,
+          running,
+          output: loopOutput,
+          preventComplete: true
         });
-        index++;
+
+        for (const content of batch) {
+          broker.publish('execution', 'execute.start', content);
+        }
       }
 
       function onCompleteMessage(_, message) {
         const {
           content
         } = message;
-        if (content.isRootScope) return broker.cancel(executeConsumerTag);
-        if (!content.isMultiInstance) return;
-        const loopOutput = getCharacteristics().output;
+        const {
+          output: loopOutput
+        } = getCharacteristics();
         if (content.output !== undefined) loopOutput[content.index] = content.output;
+        running--;
         broker.publish('execution', 'execute.iteration.completed', { ...content,
           ...getCharacteristics().getContent(),
-          index: content.index,
+          index,
+          running,
           output: loopOutput,
-          state: 'iteration.completed'
+          state: 'iteration.completed',
+          preventComplete: true
         });
 
-        if (isConditionMet(completionCondition, message)) {
-          stop();
-          return broker.publish('execution', 'execute.completed', { ...content,
-            ...getCharacteristics().getContent(),
-            output: getCharacteristics().output
-          });
+        if (running <= 0 && !next(index)) {
+          return complete(content);
         }
+
+        if (isConditionMet(completionCondition, message)) {
+          return complete(content);
+        }
+
+        if (running <= 0) {
+          running = 0;
+          startBatch();
+        }
+      }
+
+      function complete(content) {
+        stop();
+        const {
+          getContent,
+          output
+        } = getCharacteristics();
+        return broker.publish('execution', 'execute.completed', { ...content,
+          ...getContent(),
+          output
+        });
       }
     }
 
@@ -210,13 +271,18 @@ function LoopCharacteristics(activity, loopCharacteristics) {
 
     function getCharacteristics() {
       if (loopSettings) return loopSettings;
-      const cardinality = getCardinality();
       const collection = getCollection();
+      const cardinality = getCardinality(collection);
       const messageContent = { ...(0, _messageHelper.cloneContent)(executeMessage.content),
         loopCardinality: cardinality,
         isSequential,
         output: undefined
       };
+
+      if (cardinality !== undefined && isNaN(cardinality) || cardinality < 0) {
+        return activity.emitFatal(new _Errors.ActivityError(`<${id}> invalid loop cardinality >${cardinality}<`, executeMessage), messageContent);
+      }
+
       const output = executeMessage.content.output || [];
       const parent = (0, _messageHelper.unshiftParent)(executeMessage.content.parent, executeMessage.content);
       loopSettings = {
@@ -234,14 +300,14 @@ function LoopCharacteristics(activity, loopCharacteristics) {
       return loopSettings;
     }
 
-    function getCardinality() {
-      if (!loopCardinality) return;
-      let value = loopCardinality;
-      if (!value) return;
-      value = environment.resolveExpression(value, executeMessage);
-      const nValue = Number(value);
-      if (isNaN(nValue)) return activity.emitFatal(new _Errors.ActivityError(`<${id}> loopCardinality is not a Number >${value}<`, executeMessage));
-      return nValue;
+    function getCardinality(collection) {
+      if (!loopCardinality) {
+        return Array.isArray(collection) ? collection.length : undefined;
+      }
+
+      const value = environment.resolveExpression(loopCardinality, executeMessage);
+      if (value === undefined) return;
+      return Number(value);
     }
 
     function getCollection() {
@@ -250,17 +316,28 @@ function LoopCharacteristics(activity, loopCharacteristics) {
       return environment.resolveExpression(collectionExpression, executeMessage);
     }
 
-    function subscribe(onCompleteMessage) {
-      broker.subscribeOnce('api', `activity.*.${parentExecutionId}`, onApiMessage, {
+    function subscribe(onIterationCompleteMessage) {
+      broker.subscribeTmp('api', `activity.*.${parentExecutionId}`, onApiMessage, {
+        noAck: true,
         consumerTag: apiConsumerTag
       }, {
         priority: 400
       });
-      broker.subscribeTmp('execution', 'execute.completed', onCompleteMessage, {
+      broker.subscribeTmp('execution', 'execute.*', onComplete, {
         noAck: true,
         consumerTag: executeConsumerTag,
         priority: 300
       });
+
+      function onComplete(routingKey, message, ...args) {
+        if (!message.content.isMultiInstance) return;
+
+        switch (routingKey) {
+          case 'execute.cancel':
+          case 'execute.completed':
+            return onIterationCompleteMessage(routingKey, message, ...args);
+        }
+      }
     }
   }
 
@@ -280,9 +357,9 @@ function LoopCharacteristics(activity, loopCharacteristics) {
 
   function isConditionMet(condition, message, loopOutput) {
     if (!condition) return false;
-    const testContext = { ...(0, _messageHelper.cloneMessage)(message),
+    const testContext = (0, _messageHelper.cloneMessage)(message, {
       loopOutput
-    };
+    });
     return environment.resolveExpression(condition, testContext);
   }
 }
