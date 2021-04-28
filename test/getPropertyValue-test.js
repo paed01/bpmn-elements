@@ -250,6 +250,54 @@ describe('getPropertyValue', () => {
       }, 'f("a.b",3)')).to.equal('a.b3');
     });
 
+    it('result with quoted argument and comma', () => {
+      expect(getPropertyValue({
+        f: (string) =>{
+          return string.toUpperCase();
+        },
+      }, 'f("this is a, string")')).to.equal('THIS IS A, STRING');
+    });
+
+    it('result with single-quoted argument and comma', () => {
+      expect(getPropertyValue({
+        f: (string) =>{
+          return string.toUpperCase();
+        },
+      }, 'f(\'this is a, string\')')).to.equal('THIS IS A, STRING');
+    });
+
+    it('result with single-quoted argument and quotes inside string', () => {
+      expect(getPropertyValue({
+        f: (string) =>{
+          return string.toUpperCase();
+        },
+      }, 'f(\'this is "a" string\')')).to.equal('THIS IS "A" STRING');
+    });
+
+    it('result with more than one quoted argument', () => {
+      expect(getPropertyValue({
+        f: (s1, s2) =>{
+          return s1.toUpperCase() + ' ' + s2.toUpperCase();
+        },
+      }, 'f(\'this is\', \'"a" string\')')).to.equal('THIS IS "A" STRING');
+    });
+
+    it('result with mixed quoted arguments', () => {
+      expect(getPropertyValue({
+        f: (s1, s2) =>{
+          return s1.toUpperCase() + ' ' + s2.toUpperCase();
+        },
+      }, 'f("this is", \'"a" string\')')).to.equal('THIS IS "A" STRING');
+    });
+
+    it('result with quoted and non quoted arguments', () => {
+      expect(getPropertyValue({
+        f: (s1, n, s2) =>{
+          return s1.toUpperCase() + ' ' + n + ' ' + s2.toUpperCase();
+        },
+      }, 'f("this is", 3, "number")')).to.equal('THIS IS 3 NUMBER');
+    });
+
     it('result returns boolean result', () => {
       expect(getPropertyValue({
         a: {
