@@ -52,10 +52,7 @@ function getPropertyValue(inputContext, propertyPath, fnScope) {
     let callArguments = [];
 
     if (args) {
-      callArguments = callArguments.concat(args.split(','));
-      callArguments = callArguments.map(argument => {
-        return getFunctionArgument(base, argument.trim(), fnScope);
-      });
+      callArguments = splitArguments(args, base, fnScope);
     } else {
       callArguments.push(base);
     }
@@ -66,6 +63,54 @@ function getPropertyValue(inputContext, propertyPath, fnScope) {
       return fn.apply(this, callArguments);
     }.call(fnScope);
   }
+}
+
+function splitArguments(args, base, fnScope) {
+  let insideString = false;
+  let delimiter = '';
+  let argCompleted = false;
+  let arg = '';
+  const callArguments = [];
+
+  for (let i = 0; i < args.length; i++) {
+    const charPos = args.charAt(i);
+
+    if (!insideString) {
+      if (charPos === ',') {
+        argCompleted = true;
+      } else if (charPos !== ' ') {
+        arg += charPos;
+
+        if (charPos === '\'' || charPos === '"') {
+          insideString = true;
+          delimiter = charPos;
+        }
+      }
+    } else {
+      arg += charPos;
+
+      if (charPos === delimiter) {
+        argCompleted = true;
+        delimiter = '';
+      }
+    }
+
+    if (argCompleted) {
+      if (arg.length > 0) {
+        callArguments.push(getFunctionArgument(base, arg.trim(), fnScope));
+      }
+
+      arg = '';
+      insideString = false;
+      argCompleted = false;
+    }
+  }
+
+  if (arg.trim() !== '') {
+    callArguments.push(getFunctionArgument(base, arg.trim(), fnScope));
+  }
+
+  return callArguments;
 }
 
 function getFunctionArgument(obj, argument, fnScope) {
