@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 5.0.1
+
+Improved expression handling by @javierlopezaircall
+
+- expression function call with string argument containing commas is now supported
+
 # 5.0.0
 
 Multi-/Standard-loop characteristics.
