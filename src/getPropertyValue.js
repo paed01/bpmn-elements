@@ -67,25 +67,19 @@ function splitArguments(args, base, fnScope) {
   for (let i = 0; i < args.length; i++) {
     const charPos = args.charAt(i);
 
-    //Not a string
     if (!insideString) {
 
-      // argument delimiter
       if (charPos === ',') {
         argCompleted = true;
 
-        // trimming non-string arguments
       } else if (charPos !== ' ') {
         arg += charPos;
 
-        // found a string delimiter
         if (charPos === '\'' || charPos === '"') {
           insideString = true;
           delimiter = charPos;
         }
       }
-
-      //String case
     } else {
       arg += charPos;
       if (charPos === delimiter) {
@@ -96,7 +90,6 @@ function splitArguments(args, base, fnScope) {
 
     if (argCompleted) {
 
-      //To avoid empty arguments in comma-after-quote case
       if (arg.length > 0) {
         callArguments.push(getFunctionArgument(base, arg.trim(), fnScope));
       }
@@ -106,7 +99,6 @@ function splitArguments(args, base, fnScope) {
     }
   }
 
-  // Last non-string argument
   if (arg.trim() !== '') {
     callArguments.push(getFunctionArgument(base, arg.trim(), fnScope));
   }
