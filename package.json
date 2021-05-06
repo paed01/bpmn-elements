@@ -57,7 +57,7 @@
     "got": "^11.8.2",
     "mocha": "^8.2.1",
     "mocha-cakes-2": "^3.3.0",
-    "moddle-context-serializer": "^0.16.0",
+    "moddle-context-serializer": "^1.0.0",
     "nock": "^13.0.9",
     "nyc": "^15.1.0"
   },
