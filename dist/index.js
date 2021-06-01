@@ -75,6 +75,18 @@ Object.defineProperty(exports, "TextAnnotation", {
     return _Dummy.default;
   }
 });
+Object.defineProperty(exports, "Group", {
+  enumerable: true,
+  get: function () {
+    return _Dummy.default;
+  }
+});
+Object.defineProperty(exports, "Category", {
+  enumerable: true,
+  get: function () {
+    return _Dummy.default;
+  }
+});
 Object.defineProperty(exports, "EndEvent", {
   enumerable: true,
   get: function () {

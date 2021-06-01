@@ -56,6 +56,8 @@ export {
   Definition,
   Dummy,
   Dummy as TextAnnotation,
+  Dummy as Group,
+  Dummy as Category,
   EndEvent,
   Environment,
   ErrorEventDefinition,

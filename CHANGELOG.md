@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 5.1.0
+
+- Support `bpmn:Group` as dummy placeholder
+- Support `bpmn:Category` as dummy placeholder
+
 # 5.0.1
 
 Improved expression handling by @javierlopezaircall
