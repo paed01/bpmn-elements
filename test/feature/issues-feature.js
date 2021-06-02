@@ -823,11 +823,12 @@ Feature('Issues', () => {
         <process id="issue-22" isExecutable="true">
           <startEvent id="start" />
           <sequenceFlow id="to-loop" sourceRef="start" targetRef="loop" />
-          <task id="loop">
+          <subProcess id="loop">
             <multiInstanceLoopCharacteristics isSequential="false" js:collection="\${environment.variables.list}">
               <loopCardinality>\${environment.variables.cardinality}</loopCardinality>
             </multiInstanceLoopCharacteristics>
-          </task>
+            <task id="task" />
+          </subProcess>
           <sequenceFlow id="to-end" sourceRef="loop" targetRef="end" />
           <endEvent id="end" />
         </process>
@@ -885,11 +886,12 @@ Feature('Issues', () => {
         <process id="issue-22" isExecutable="true">
           <startEvent id="start" />
           <sequenceFlow id="to-loop" sourceRef="start" targetRef="loop" />
-          <task id="loop">
+          <subProcess id="loop">
             <multiInstanceLoopCharacteristics isSequential="true" js:collection="\${environment.variables.list}">
               <loopCardinality>\${environment.variables.cardinality}</loopCardinality>
             </multiInstanceLoopCharacteristics>
-          </task>
+            <task id="task" />
+          </subProcess>
           <sequenceFlow id="to-end" sourceRef="loop" targetRef="end" />
           <endEvent id="end" />
         </process>
