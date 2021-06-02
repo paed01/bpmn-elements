@@ -1,6 +1,7 @@
 import Definition from '../../src/definition/Definition';
 import factory from '../helpers/factory';
 import testHelpers from '../helpers/testHelpers';
+import js from '../resources/extensions/JsExtension';
 
 Feature('Issues', () => {
   Scenario('Multiple discard loop back', () => {
@@ -812,5 +813,150 @@ Feature('Issues', () => {
         discarded: 0,
       });
     });
+  });
+
+  Scenario('SubProcess multi instance is stuck in pending if collection is [] #22', () => {
+    let context;
+    Given('a parallel multi instance task', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Issue_22" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="issue-22" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-loop" sourceRef="start" targetRef="loop" />
+          <task id="loop">
+            <multiInstanceLoopCharacteristics isSequential="false" js:collection="\${environment.variables.list}">
+              <loopCardinality>\${environment.variables.cardinality}</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+          </task>
+          <sequenceFlow id="to-end" sourceRef="loop" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+      context = await testHelpers.context(source, {
+        extensions: {js},
+      });
+    });
+
+    let completed;
+    When('ran with cardinality 1', () => {
+      completed = runWithCardinality(1);
+    });
+
+    Then('run completes', () => {
+      return completed;
+    });
+
+    When('ran with cardinality 2', () => {
+      completed = runWithCardinality(2);
+    });
+
+    Then('run completes', () => {
+      return completed;
+    });
+
+    When('ran with cardinality 0', () => {
+      completed = runWithCardinality(0);
+    });
+
+    Then('run completes', () => {
+      return completed;
+    });
+
+    When('ran with empty collection', () => {
+      completed = runWithCardinality(null, []);
+    });
+
+    Then('run completes', () => {
+      return completed;
+    });
+
+    When('ran without cardinality', () => {
+      completed = runWithCardinality().catch((err) => err);
+    });
+
+    Then('run errors', async () => {
+      const err = await completed;
+      expect(err.description).to.equal('<loop> cardinality or collection is required in parallel loops');
+    });
+
+    Given('a sequential multi instance task', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Issue_22" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="issue-22" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-loop" sourceRef="start" targetRef="loop" />
+          <task id="loop">
+            <multiInstanceLoopCharacteristics isSequential="true" js:collection="\${environment.variables.list}">
+              <loopCardinality>\${environment.variables.cardinality}</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+          </task>
+          <sequenceFlow id="to-end" sourceRef="loop" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+      context = await testHelpers.context(source, {
+        extensions: {js},
+      });
+    });
+
+    When('ran with cardinality 1', () => {
+      completed = runWithCardinality(1);
+    });
+
+    Then('run completes', () => {
+      return completed;
+    });
+
+    When('ran with cardinality 2', () => {
+      completed = runWithCardinality(2);
+    });
+
+    Then('run completes', () => {
+      return completed;
+    });
+
+    When('ran with cardinality 0', () => {
+      completed = runWithCardinality(0);
+    });
+
+    Then('run completes', () => {
+      return completed;
+    });
+
+    When('ran with empty collection', () => {
+      completed = runWithCardinality(null, []);
+    });
+
+    Then('run completes', () => {
+      return completed;
+    });
+
+    When('ran without cardinality', () => {
+      completed = runWithCardinality().catch((err) => err);
+    });
+
+    Then('run errors', async () => {
+      const err = await completed;
+      expect(err.description).to.equal('<loop> cardinality, collection, or condition is required in sequential loops');
+    });
+
+    function runWithCardinality(n, list) {
+      const def = Definition(context, {
+        variables: {
+          cardinality: n,
+          list,
+        },
+      });
+
+      const max = n || 0;
+      let iter = 0;
+      def.getActivityById('loop').broker.subscribeTmp('execution', 'execute.completed', () => {
+        if (iter++ > max) throw new Error('Inifinty');
+      }, {noAck: true});
+
+      const leave = def.waitFor('leave');
+      def.run();
+      return leave;
+    }
   });
 });

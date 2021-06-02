@@ -1,6 +1,14 @@
 Changelog
 =========
 
+# 5.1.1
+
+Sequential loop trouble.
+
+## Bugfix
+- Fix nasty bug in sequential multi-instance loop where it ran to infinity when cardinality is set to 0. Thank you @deelef for uncovering this!
+- set cardinality to collection length if cardinality expression resolved to nothing
+
 # 5.1.0
 
 - Support `bpmn:Group` as dummy placeholder

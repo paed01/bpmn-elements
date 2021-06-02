@@ -84,6 +84,12 @@ function LoopCharacteristics(activity, loopCharacteristics) {
     }
 
     function executeSequential() {
+      const {
+        cardinality,
+        getContent: getStartContent
+      } = getCharacteristics();
+      if (cardinality === 0) return complete();
+      if (!cardinality && !startCondition && !completionCondition) return activity.emitFatal(new _Errors.ActivityError(`<${id}> cardinality, collection, or condition is required in sequential loops`, executeMessage), getStartContent());
       let startIndex = 0;
 
       if (isRedelivered && executeRoutingKey === 'execute.iteration.next') {
@@ -137,10 +143,18 @@ function LoopCharacteristics(activity, loopCharacteristics) {
         } else if (startNext(content.index + 1)) return;
 
         debug(`<${parentExecutionId} (${id})> sequential loop completed`);
+        return complete(content);
+      }
+
+      function complete(content) {
         stop();
-        return broker.publish('execution', 'execute.completed', { ...message.content,
-          ...getCharacteristics().getContent(),
-          output: loopOutput
+        const {
+          getContent,
+          output
+        } = getCharacteristics();
+        return broker.publish('execution', 'execute.completed', { ...content,
+          ...getContent(),
+          output
         });
       }
     }
@@ -301,12 +315,14 @@ function LoopCharacteristics(activity, loopCharacteristics) {
     }
 
     function getCardinality(collection) {
+      const collectionLen = Array.isArray(collection) ? collection.length : undefined;
+
       if (!loopCardinality) {
-        return Array.isArray(collection) ? collection.length : undefined;
+        return collectionLen;
       }
 
       const value = environment.resolveExpression(loopCardinality, executeMessage);
-      if (value === undefined) return;
+      if (value === undefined) return collectionLen;
       return Number(value);
     }
 
