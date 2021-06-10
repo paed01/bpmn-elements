@@ -6,7 +6,7 @@
   "module": "index.js",
   "scripts": {
     "test": "mocha -R dot",
-    "posttest": "npm run dist && eslint . --cache",
+    "posttest": "npm run dist && eslint src test --cache",
     "prepare": "npm run dist",
     "cov:html": "nyc mocha -R dot && nyc report --reporter=html",
     "test:lcov": "nyc mocha -R dot && nyc report --reporter lcov && npm run posttest",
