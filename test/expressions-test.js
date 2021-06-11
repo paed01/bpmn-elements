@@ -121,6 +121,16 @@ describe('Expressions', () => {
         })).to.throw();
       });
 
+      it('should evaluate if there is a expression inside the expression proper defined', () => {
+        expect(expressions.resolveExpression('${environment.variables[`${environment.commonVariablePrefix}${environment.current}`]}', {
+          environment: {
+            variables: { a1: 1, a2: 2, a3: 3 },
+            commonVariablePrefix: 'a',
+            current: 2,
+          },
+        })).to.equal(2);
+      });
+
       it('should concatenate two variable scapes', () => {
         expect(expressions.resolveExpression('http://${variables.host}${variables.pathname}', {
           variables: {
@@ -328,6 +338,11 @@ describe('Expressions', () => {
       // Octal number
       expect(expressions.resolveExpression('${010}')).to.equal(8);
       expect(expressions.resolveExpression('${10.1}')).to.equal(10.1);
+    });
+
+    it('should work with lambda functions', () => {
+      expect(expressions.resolveExpression('${() => "value"}')()).to.equal('value');
+      expect(expressions.resolveExpression('${(test) => test}')(1)).to.equal(1);
     });
   });
 });

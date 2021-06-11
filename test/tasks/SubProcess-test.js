@@ -982,7 +982,9 @@ describe('SubProcess', () => {
         const stop = task.waitFor('stop', (_, msg) => msg.content.id === task.id);
 
         task.once('wait', (api) => {
-          api.signal(`${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.item}')}`);
+          api.signal(api.resolveExpression(
+            '${environment.variables.prefix} ${environment.variables.content.item}'
+          ));
           task.stop();
         });
 
@@ -1016,7 +1018,9 @@ describe('SubProcess', () => {
         const stop = task.waitFor('stop', (_, msg) => msg.content.id === task.id);
 
         task.once('wait', (api) => {
-          api.signal(`${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.index}')}`);
+          api.signal(api.resolveExpression(
+            '${environment.variables.prefix} ${environment.variables.content.index}'
+          ));
           task.stop();
         });
 
@@ -1035,7 +1039,9 @@ describe('SubProcess', () => {
         const leave = recoveredTask.waitFor('leave', (_, msg) => msg.content.id === task.id);
 
         const waitConsumer = recoveredTask.on('wait', (api) => {
-          api.signal(`${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.index}')}`);
+          api.signal(api.resolveExpression(
+            '${environment.variables.prefix} ${environment.variables.content.index}'
+          ));
         });
 
         recoveredTask.resume();

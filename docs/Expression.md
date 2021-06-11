@@ -4,36 +4,80 @@ Expressions
 Expressions handler interface.
 
 - `Expressions`
-  - `resolveExpression(expression[, context, fnContext])`: resolve expression
+  - `resolveExpression(expression[, context])`: resolve expression
 
-## `resolveExpression(expression[, context, fnContext])`
+## `resolveExpression(expression[, context])`
 
 Resolve expression.
 
 Arguments:
-- `expression`: expresion templated string
+- `expression`: expression templated string
 - `context`: optional context from where to resolve expressions
-- `fnContext`: optional call context (this)
 ## Default expression handling
 
-Default expressions come in the form of `${<variables or services>.<property name>}`.
+Default expressions come in the form of `${<JavaScript code to evaluate>}`. The templates are delimited with `${` and `}` strings and all the JavaScript code inside will be evaluated. If there is more than one expression or there is some text around the template, it will return a string evaluating all of them.
 
+For example, with this context:
+```JavaScript
+{
+  content: {
+    input: 2,
+    id: 'operation',
+    executionId: 1234,
+  },
+  environment: {
+    variables: { 
+      input: 1,
+      inputArray: [1, 2, 3],
+      inputObject: {
+        'spaced name': 'name'
+      },
+      getInput: () => {
+        return 1;
+      },
+      isBelow: (a, b) => a < b,
+    commonVariablePrefix: "a",
+    current: 2,
+  },
+}
+```
 The following expressions are supported:
 
-- `${environment.variables.input}` - resolves to the variable input
-- `${environment.variables.input[0]}` - resolves to first item of the variable input array
-- `${environment.variables.input[-1]}` - resolves to last item of the variable input array
-- `${environment.variables.input[spaced name]}` - resolves to the variable input object property `spaced name`
+- `${environment.variables.input}` - resolves to the variable input with value: `1`
+- `${environment.variables.inputArray[0]}` - resolves to first item of the variable input array with value: `1`
+- `${environment.variables.inputArray[-1]}` - resolves to last item of the variable input array: `3`
+- `${environment.variables.inputObject['spaced name']}` - resolves to the variable input object property `spaced name` with value: `'name'`
 
 - `${environment.services.getInput}` - return the service function `getInput`
-- `${environment.services.getInput()}` - executes the service function `getInput` with the argument `{services, variables}`
-- `${environment.services.isBelow(content.input,2)}` - executes the service function `isBelow` with result of `variable.input` value and 2
+- `${environment.services.isBelow(content.input,2)}` - executes the service function `isBelow` with `content.input` value and 2, with result `false`
 
-- `I, ${content.id}, execute with id ${content.executionId}` - formats a string addressing content object values
+- `I, ${content.id}, execute with id ${content.executionId}` - formats a string addressing content object values, returning: `'I, operation, execute with id 1234'`
 
 and, as utility:
 
-- `${true}` - return Boolean value `true`
-- `${false}` - return Boolean value `false`
+- `${true}` - returns Boolean value `true`
+- `${false}` - returns Boolean value `false`
+- `${null}` - returns `null`
+- `${undefined}` - returns `undefined`
+- `${<number>}` - returns the number passed
+- `${() => {}}` - returns the lambda function passed
 
-> Expressions in expressions is **not** supported and has unforeseeable outcome!
+> 
+> It is possible to nest multiple expressions if you write them in proper JavaScript code. For example:
+>
+> Given this context:
+> ```JavaScript
+> {
+>   environment: {
+>     variables: { a1: 1, a2: 2, a3: 3 },
+>     commonVariablePrefix: "a",
+>     current: 2,
+>   },
+> }
+> ```
+> The expression
+> ```JavaScript
+>  ${environment.variables[`${environment.commonVariablePrefix}${environment.current}`]}
+> ```
+> will evaluate to `2`.
+> 

@@ -60,7 +60,7 @@ function Api(pfx, broker, sourceMessage, environment) {
       sendApiMessage('stop');
     },
     resolveExpression(expression) {
-      return environment.resolveExpression(expression, apiMessage, broker.owner);
+      return environment.resolveExpression(expression, {...apiMessage, ...broker.owner});
     },
     sendApiMessage,
     createMessage,

@@ -42,14 +42,13 @@ Get service by name
 
 ### `getState()`
 ### `registerScript(activity)`
-### `resolveExpression(expression[, message = {}, expressionFnContext])`
+### `resolveExpression(expression[, context = {}])`
 
 Resolve expression.
 
 Arguments:
 - `expression`: expression string
-- `message`: optional object from where to resolve expressions, the environment instance is added by default
-- `expressionFnContext`: optional call context (this)
+- `context`: optional object from where to resolve expressions, the environment instance is added by default
 
 ### `recover(state)`
 

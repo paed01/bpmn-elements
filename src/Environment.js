@@ -105,13 +105,13 @@ export default function Environment(options = {}) {
     return services[serviceName];
   }
 
-  function resolveExpression(expression, message = {}, expressionFnContext) {
+  function resolveExpression(expression, context = {}) {
     const from = {
       environment: environmentApi,
-      ...message,
+      ...context,
     };
 
-    return expressions.resolveExpression(expression, from, expressionFnContext);
+    return expressions.resolveExpression(expression, from);
   }
 
   function addService(name, fn) {
