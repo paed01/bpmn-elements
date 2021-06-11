@@ -409,12 +409,6 @@ describe('Environment', () => {
         resolveExpression(...args) {
           return args;
         },
-        isExpression() {
-          return true;
-        },
-        hasExpression() {
-          return true;
-        },
       };
       const environment = Environment({
         settings,
