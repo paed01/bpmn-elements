@@ -12,7 +12,7 @@ Feature('Task loop', () => {
         <process id="TaskLoopProcess" isExecutable="true">
           <task id="task">
             <standardLoopCharacteristics>
-              <loopCondition xsi:type="bpmn:tFormalExpression">\${environment.services.stopLoop()}</loopCondition>
+              <loopCondition xsi:type="bpmn:tFormalExpression">\${environment.services.stopLoop(this)}</loopCondition>
             </standardLoopCharacteristics>
           </task>
         </process>
@@ -54,7 +54,7 @@ Feature('Task loop', () => {
         <process id="TaskLoopProcess" isExecutable="true">
           <task id="task">
             <standardLoopCharacteristics testBefore="true">
-              <loopCondition xsi:type="bpmn:tFormalExpression">\${environment.services.stopLoop()}</loopCondition>
+              <loopCondition xsi:type="bpmn:tFormalExpression">\${environment.services.stopLoop(this)}</loopCondition>
             </standardLoopCharacteristics>
           </task>
         </process>
@@ -95,7 +95,7 @@ Feature('Task loop', () => {
         <process id="TaskLoopProcess" isExecutable="true">
           <task id="task">
             <standardLoopCharacteristics loopMaximum="4">
-              <loopCondition xsi:type="bpmn:tFormalExpression">\${environment.services.stopLoop()}</loopCondition>
+              <loopCondition xsi:type="bpmn:tFormalExpression">\${environment.services.stopLoop(this)}</loopCondition>
             </standardLoopCharacteristics>
           </task>
         </process>
