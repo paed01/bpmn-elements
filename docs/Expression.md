@@ -47,7 +47,7 @@ The following expressions are supported:
 - `${environment.variables.inputArray[0]}` - resolves to first item of the variable input array with value: `1`
 - `${environment.variables.inputArray[-1]}` - resolves to last item of the variable input array: `3`
 - `${environment.variables.inputObject['spaced name']}` - resolves to the variable input object property `spaced name` with value: `'name'`
-
+- `${environment.services.getInput()}` - executes the service function `getInput` with the context passed as an argument
 - `${environment.services.getInput}` - return the service function `getInput`
 - `${environment.services.isBelow(content.input,2)}` - executes the service function `isBelow` with `content.input` value and 2, with result `false`
 
