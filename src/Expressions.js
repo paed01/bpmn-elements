@@ -41,12 +41,10 @@ function parse(constable) {
   let parseStr;
 
   return (context) => {
-    const returnLiteralFn = () => `${contextToString(
-      context
-    )}return ${replaceNegativeIndexes(exp[1])};`;
-    const returnString = () => `${contextToString(
-      context
-    )}return \`${replaceNegativeIndexes(constable)}\`;`;
+    const returnLiteralFn = () =>
+      `${contextToString(context)}return ${prepareStr(exp[1])};`;
+    const returnString = () =>
+      `${contextToString(context)}return \`${prepareStr(constable)}\`;`;
 
     if (!exp || constable.replace(expRegEx, '') !== '') {
       // If there is more than one expression or we have strings outside the expression, we managed
@@ -91,6 +89,10 @@ function contextToString(context = {}) {
   return declarationString;
 }
 
+function prepareStr(str) {
+  return replaceNegativeIndexes(replaceEmptyFnToReceiveContext(str));
+}
+
 /**
  * Look for negative indexes with a regular expression in the string and
  * replace them with equivalent array operations
@@ -98,4 +100,12 @@ function contextToString(context = {}) {
 function replaceNegativeIndexes(str) {
   const negativeArrayIndexesRegEx = /\s*\[\s*(-\s*\d)+\s*\]\s*/g;
   return str.replace(negativeArrayIndexesRegEx, '.slice($1).shift()');
+}
+
+/**
+ * Pass the context to empty functions
+ */
+function replaceEmptyFnToReceiveContext(str) {
+  const emptyFnRegEx = /((\w|_|\$)+(\w|\d|\$|_)*)[()]{2,}/g;
+  return str.replace(emptyFnRegEx, '$1(this)');
 }

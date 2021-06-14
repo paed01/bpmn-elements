@@ -165,6 +165,19 @@ describe('Expressions', () => {
       })()).to.equal('PT0.1S');
     });
 
+    it('should receive the context in empty functions', () => {
+      expect(expressions.resolveExpression('${services.get()}', {
+        variables: {
+          timeout: 'PT0.1S',
+        },
+        services: {
+          get: (message) => {
+            return message.variables.timeout;
+          },
+        },
+      })).to.equal('PT0.1S');
+    });
+
     it('service accessing variables returns value', () => {
       expect(expressions.resolveExpression('${services.get({variables})}', {
         variables: {

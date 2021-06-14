@@ -51,7 +51,7 @@ describe('ServiceTask', () => {
       <?xml version="1.0" encoding="UTF-8"?>
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="theProcess" isExecutable="true">
-          <serviceTask id="serviceTask" implementation="\${environment.services.getService(this)}" />
+          <serviceTask id="serviceTask" implementation="\${environment.services.getService()}" />
         </process>
       </definitions>`;
 
@@ -603,7 +603,7 @@ async function getLoopContext(isSequential) {
   <?xml version="1.0" encoding="UTF-8"?>
   <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <process id="loopProcess" isExecutable="true">
-      <serviceTask id="task" implementation="\${environment.services.get(this)}">
+      <serviceTask id="task" implementation="\${environment.services.get()}">
         <multiInstanceLoopCharacteristics isSequential="${isSequential}" js:collection="\${environment.variables.paths}">
           <loopCardinality>\${environment.variables.paths.length}</loopCardinality>
         </multiInstanceLoopCharacteristics>
