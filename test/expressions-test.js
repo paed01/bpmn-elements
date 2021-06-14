@@ -349,13 +349,17 @@ describe('Expressions', () => {
       expect(expressions.resolveExpression('${0}')).to.equal(0);
       expect(expressions.resolveExpression('${1}')).to.equal(1);
       // Octal number
-      expect(expressions.resolveExpression('${010}')).to.equal(8);
+      expect(expressions.resolveExpression('${0o10}')).to.equal(8);
       expect(expressions.resolveExpression('${10.1}')).to.equal(10.1);
     });
 
     it('should work with lambda functions', () => {
       expect(expressions.resolveExpression('${() => "value"}')()).to.equal('value');
       expect(expressions.resolveExpression('${(test) => test}')(1)).to.equal(1);
+    });
+
+    it('should throw an error if you do a not secure operation', () => {
+      expect(() => expressions.resolveExpression('${() => {require("fs").deleteSync(".")}}')).to.throw();
     });
   });
 });

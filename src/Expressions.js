@@ -1,3 +1,5 @@
+import { runASTAnalysis } from 'js-x-ray';
+
 export default function Expressions() {
   return {
     resolveExpression,
@@ -33,20 +35,24 @@ function compile(str) {
   };
 }
 
-function parse(constable) {
-  constable = constable.trim();
+function parse(strToParse) {
+  strToParse = strToParse.trim();
   const expRegEx = /^\$\{(.*)\}$/;
-  const exp = constable.match(expRegEx);
+  const exp = strToParse.match(expRegEx);
 
   let parseStr;
 
   return (context) => {
     const returnLiteralFn = () =>
-      `${contextToString(context)}return ${prepareStr(exp[1])};`;
+      securityChecker(
+        `${contextToString(context)}return ${prepareStr(exp[1])};`
+      );
     const returnString = () =>
-      `${contextToString(context)}return \`${prepareStr(constable)}\`;`;
+      securityChecker(
+        `${contextToString(context)}return \`${prepareStr(strToParse)}\`;`
+      );
 
-    if (!exp || constable.replace(expRegEx, '') !== '') {
+    if (!exp || strToParse.replace(expRegEx, '') !== '') {
       // If there is more than one expression or we have strings outside the expression, we managed
       // it like an string and return a string
       parseStr = returnString();
@@ -69,6 +75,26 @@ function parse(constable) {
       }
     }
   };
+}
+
+/**
+ * @param {string} str Javascript code in string format to check if it is secure
+ * @returns The str param or throw an error if the str in not secure
+ */
+function securityChecker(str) {
+  const fnWrapperStr = `function check(context) {${str}}`;
+  const { warnings, dependencies } = runASTAnalysis(fnWrapperStr);
+
+  const dependenciesName = [...dependencies];
+  const inTryDeps = [...dependencies.getDependenciesInTryStatement()];
+
+  if (dependenciesName.length > 0 || inTryDeps.length > 0) {
+    throw new Error('Insecure module import');
+  }
+  if (warnings.length > 0) {
+    throw new Error('Security problems detected: ' + warnings.join(', '));
+  }
+  return str;
 }
 
 /**
