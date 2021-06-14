@@ -425,7 +425,6 @@ describe('Environment', () => {
       expect(environment.resolveExpression('${environment.settings.init}')).to.eql([
         '${environment.settings.init}',
         {environment},
-        undefined,
       ]);
     });
   });

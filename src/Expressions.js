@@ -41,20 +41,35 @@ function parse(constable) {
   let parseStr;
 
   return (context) => {
+    const returnLiteralFn = () => `${contextToString(
+      context
+    )}return ${replaceNegativeIndexes(exp[1])};`;
+    const returnString = () => `${contextToString(
+      context
+    )}return \`${replaceNegativeIndexes(constable)}\`;`;
+
     if (!exp || constable.replace(expRegEx, '') !== '') {
       // If there is more than one expression or we have strings outside the expression, we managed
       // it like an string and return a string
-      parseStr = `${contextToString(context)}return \`${replaceNegativeIndexes(
-        constable
-      )}\`;`;
+      parseStr = returnString();
     } else {
-      parseStr = `${contextToString(context)}return ${replaceNegativeIndexes(
-        exp[1]
-      )};`;
+      parseStr = returnLiteralFn();
     }
 
-    // eslint-disable-next-line no-new-func
-    return Function('context', parseStr)(context);
+    try {
+      // eslint-disable-next-line no-new-func
+      return Function('context', parseStr)(context);
+    } catch (err) {
+      // There a case not covered of strings having multiple expressions, but it pass the expRegEx
+      // (for example `${test} ${test}`). In this cases, we have to get the error and parse as
+      // string
+      if (err.name === 'SyntaxError') {
+        // eslint-disable-next-line no-new-func
+        return Function('context', returnString())(context);
+      } else {
+        throw err;
+      }
+    }
   };
 }
 
