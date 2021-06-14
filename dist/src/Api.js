@@ -76,7 +76,9 @@ function Api(pfx, broker, sourceMessage, environment) {
     },
 
     resolveExpression(expression) {
-      return environment.resolveExpression(expression, apiMessage, broker.owner);
+      return environment.resolveExpression(expression, { ...apiMessage,
+        ...broker.owner
+      });
     },
 
     sendApiMessage,
