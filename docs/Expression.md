@@ -43,24 +43,22 @@ For example, with this context:
 ```
 The following expressions are supported:
 
-- `${environment.variables.input}` - resolves to the variable input with value: `1`
-- `${environment.variables.inputArray[0]}` - resolves to first item of the variable input array with value: `1`
-- `${environment.variables.inputArray[-1]}` - resolves to last item of the variable input array: `3`
-- `${environment.variables.inputObject['spaced name']}` - resolves to the variable input object property `spaced name` with value: `'name'`
-- `${environment.services.getInput()}` - executes the service function `getInput` with the context passed as an argument
-- `${environment.services.getInput}` - return the service function `getInput`
-- `${environment.services.isBelow(content.input,2)}` - executes the service function `isBelow` with `content.input` value and 2, with result `false`
-
-- `I, ${content.id}, execute with id ${content.executionId}` - formats a string addressing content object values, returning: `'I, operation, execute with id 1234'`
-
-and, as utility:
-
-- `${true}` - returns Boolean value `true`
-- `${false}` - returns Boolean value `false`
-- `${null}` - returns `null`
-- `${undefined}` - returns `undefined`
-- `${<number>}` - returns the number passed
-- `${() => {}}` - returns the lambda function passed
+| Template | Result | More information |
+|-|-|-|
+| `${environment.variables.input}` | `1` |  |
+| `${environment.variables.inputArray[0]}` | `1` | resolves to first item of the variable input array |
+| `${environment.variables.inputArray[-1]}` | `3` | resolves to last item of the variable input array |
+| `${environment.variables.inputObject['spaced name']}` | `'name'` | resolves to the variable input object property `spaced name` |
+| `${environment.services.getInput()}` | `1` | executes the service function `getInput` with the context passed as an argument |
+| `${environment.services.getInput}` | `Function getInput()` | returns the service function |
+| `${environment.services.isBelow(content.input,2)}` | `false` | executes the service function `isBelow` with `content.input` value and 2 |
+| `I, ${content.id}, execute with id ${content.executionId}` | `'I, operation, execute with id 1234'` | formats a string getting content object values |
+| `${true}` | `true` |  |
+| `${false}` | `false` |  |
+| `${null}` | `null` |  |
+| `${undefined}` | `undefined` |  |
+| `${<number>}` | `<number>` | returns the number passed |
+| `${() => {}}` | `() => {}` | returns the lambda function |
 
 > 
 > It is possible to nest multiple expressions if you write them in proper JavaScript code. For example:
