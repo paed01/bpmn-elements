@@ -32,8 +32,8 @@ For example, with this context:
       inputObject: {
         'spaced name': 'name'
       },
-      getInput: () => {
-        return 1;
+      getInput: (context) => {
+        return context.environment.variables.input;
       },
       isBelow: (a, b) => a < b,
     commonVariablePrefix: "a",
