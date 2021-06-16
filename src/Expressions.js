@@ -37,43 +37,35 @@ function compile(str) {
 
 function parse(strToParse) {
   strToParse = strToParse.trim();
-  const expRegEx = /^\$\{(.*)\}$/;
-  const exp = strToParse.match(expRegEx);
 
-  let parseStr;
+  const expRegEx = /\$\{(.*?`[^`]+`.*?)\}|\$\{(.*?)\}/g;
+  const exp = expRegEx.exec(strToParse);
+  const matchGroup = () => exp[1] || exp[2];
+  const isOnlyOneExpression = () => {
+    return matchGroup().length === strToParse.length - '${}'.length;
+  };
 
   return (context) => {
+    let parseStr;
+
     const returnLiteralFn = () =>
       securityChecker(
-        `${contextToString(context)}return ${prepareStr(exp[1])};`
+        `${contextToString(context)}return ${prepareStr(matchGroup())};`
       );
     const returnString = () =>
       securityChecker(
         `${contextToString(context)}return \`${prepareStr(strToParse)}\`;`
       );
 
-    if (!exp || strToParse.replace(expRegEx, '') !== '') {
-      // If there is more than one expression or we have strings outside the expression, we managed
-      // it like an string and return a string
+    if (!exp || !isOnlyOneExpression()) {
+      // If there is more than one expression or we have strings outside the expression, we
+      // managed it like an string and return a string
       parseStr = returnString();
     } else {
       parseStr = returnLiteralFn();
     }
-
-    try {
-      // eslint-disable-next-line no-new-func
-      return Function('context', parseStr)(context);
-    } catch (err) {
-      // There a case not covered of strings having multiple expressions, but it pass the expRegEx
-      // (for example `${test} ${test}`). In this cases, we have to get the error and parse as
-      // string
-      if (err.name === 'SyntaxError') {
-        // eslint-disable-next-line no-new-func
-        return Function('context', returnString())(context);
-      } else {
-        throw err;
-      }
-    }
+    // eslint-disable-next-line no-new-func
+    return Function('context', parseStr)(context);
   };
 }
 

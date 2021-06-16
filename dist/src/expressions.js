@@ -5,6 +5,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Expressions;
 
+var _jsXRay = require("js-x-ray");
+
 function Expressions() {
   return {
     resolveExpression
@@ -36,39 +38,60 @@ function compile(str) {
   };
 }
 
-function parse(constable) {
-  constable = constable.trim();
-  const expRegEx = /^\$\{(.*)\}$/;
-  const exp = constable.match(expRegEx);
-  let parseStr;
+function parse(strToParse) {
+  strToParse = strToParse.trim();
+  const expRegEx = /\$\{(.*?`[^`]+`.*?)\}|\$\{(.*?)\}/g;
+  const exp = expRegEx.exec(strToParse);
+
+  const matchGroup = () => exp[1] || exp[2];
+
+  const isOnlyOneExpression = () => {
+    return matchGroup().length === strToParse.length - '${}'.length;
+  };
+
   return context => {
-    const returnLiteralFn = () => `${contextToString(context)}return ${prepareStr(exp[1])};`;
+    let parseStr;
 
-    const returnString = () => `${contextToString(context)}return \`${prepareStr(constable)}\`;`;
+    const returnLiteralFn = () => securityChecker(`${contextToString(context)}return ${prepareStr(matchGroup())};`);
 
-    if (!exp || constable.replace(expRegEx, '') !== '') {
-      // If there is more than one expression or we have strings outside the expression, we managed
-      // it like an string and return a string
+    const returnString = () => securityChecker(`${contextToString(context)}return \`${prepareStr(strToParse)}\`;`);
+
+    if (!exp || !isOnlyOneExpression()) {
+      // If there is more than one expression or we have strings outside the expression, we
+      // managed it like an string and return a string
       parseStr = returnString();
     } else {
       parseStr = returnLiteralFn();
-    }
+    } // eslint-disable-next-line no-new-func
 
-    try {
-      // eslint-disable-next-line no-new-func
-      return Function('context', parseStr)(context);
-    } catch (err) {
-      // There a case not covered of strings having multiple expressions, but it pass the expRegEx
-      // (for example `${test} ${test}`). In this cases, we have to get the error and parse as
-      // string
-      if (err.name === 'SyntaxError') {
-        // eslint-disable-next-line no-new-func
-        return Function('context', returnString())(context);
-      } else {
-        throw err;
-      }
-    }
+
+    return Function('context', parseStr)(context);
   };
+}
+/**
+ * @param {string} str Javascript code in string format to check if it is secure
+ * @returns The str param or throw an error if the str in not secure
+ */
+
+
+function securityChecker(str) {
+  const fnWrapperStr = `function check(context) {${str}}`;
+  const {
+    warnings,
+    dependencies
+  } = (0, _jsXRay.runASTAnalysis)(fnWrapperStr);
+  const dependenciesName = [...dependencies];
+  const inTryDeps = [...dependencies.getDependenciesInTryStatement()];
+
+  if (dependenciesName.length > 0 || inTryDeps.length > 0) {
+    throw new Error('Insecure module import');
+  }
+
+  if (warnings.length > 0) {
+    throw new Error('Security problems detected: ' + warnings.join(', '));
+  }
+
+  return str;
 }
 /**
  *
