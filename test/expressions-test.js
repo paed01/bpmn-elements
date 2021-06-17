@@ -112,7 +112,7 @@ describe('Expressions', () => {
         })).to.equal('PT0.1S');
       });
 
-      it('should throw an error if there is a expression inside the expression', () => {
+      it('should throw an error if there is an expression inside the expression', () => {
         expect(() => expressions.resolveExpression('PT${variables[${variables.property}]}S', {
           variables: {
             input: 0.1,
@@ -121,7 +121,7 @@ describe('Expressions', () => {
         })).to.throw();
       });
 
-      it('should evaluate if there is a expression inside the expression proper defined', () => {
+      it('should evaluate if there is an expression inside the expression properly defined', () => {
         expect(expressions.resolveExpression('${environment.variables[`${environment.commonVariablePrefix}${environment.current}`]}', {
           environment: {
             variables: { a1: 1, a2: 2, a3: 3 },
@@ -140,7 +140,7 @@ describe('Expressions', () => {
         })).to.equal('http://example.com/api/v1');
       });
 
-      it('should support ternary operations and or operation', () => {
+      it('should support ternary and logic operations', () => {
         expect(expressions.resolveExpression(
           'http://${variables.host}${variables.pathname || ""}${variables.pathname2 ? variables.pathname2 : ""}',
           {
@@ -358,7 +358,7 @@ describe('Expressions', () => {
       expect(expressions.resolveExpression('${(test) => test}')(1)).to.equal(1);
     });
 
-    it('should throw an error if you do a not secure operation', () => {
+    it('should throw an error if you do an unsafe operation', () => {
       expect(() => expressions.resolveExpression('${() => {require("fs").deleteSync(".")}}')).to.throw();
     });
   });
