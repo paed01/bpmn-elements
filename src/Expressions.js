@@ -12,7 +12,6 @@ function resolveExpression(templatedString, context) {
 
 function compile(str) {
   if (typeof str !== 'string') {
-    // we don't need to parse other type of values, return the value as it
     return () => str;
   }
 
@@ -39,30 +38,27 @@ function parse(strToParse) {
   strToParse = strToParse.trim();
 
   const expRegEx = /\$\{(.*?`[^`]+`.*?)\}|\$\{(.*?)\}/g;
-  const exp = expRegEx.exec(strToParse);
-  const matchGroup = () => exp[1] || exp[2];
+  const regExResult = expRegEx.exec(strToParse);
+  const exp = regExResult && (regExResult[1] || regExResult[2]);
   const isOnlyOneExpression = () => {
-    return matchGroup().length === strToParse.length - '${}'.length;
+    return exp.length === strToParse.length - '${}'.length;
   };
 
   return (context) => {
     let parseStr;
 
-    const returnLiteralFn = () =>
-      securityChecker(
-        `${contextToString(context)}return ${prepareStr(matchGroup())};`
-      );
-    const returnString = () =>
-      securityChecker(
+    if (!exp || !isOnlyOneExpression()) {
+      const returnString = securityChecker(
         `${contextToString(context)}return \`${prepareStr(strToParse)}\`;`
       );
 
-    if (!exp || !isOnlyOneExpression()) {
-      // If there is more than one expression or we have strings outside the expression, we
-      // managed it like an string and return a string
-      parseStr = returnString();
+      parseStr = returnString;
     } else {
-      parseStr = returnLiteralFn();
+      const returnLiteral = securityChecker(
+        `${contextToString(context)}return ${prepareStr(exp)};`
+      );
+
+      parseStr = returnLiteral;
     }
     // eslint-disable-next-line no-new-func
     return Function('context', parseStr)(context);
