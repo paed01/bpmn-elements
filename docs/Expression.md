@@ -67,15 +67,22 @@ The following expressions are supported:
 > ```JavaScript
 > {
 >   environment: {
->     variables: { a1: 1, a2: 2, a3: 3 },
+>     variables: {
+>       a1: (v) => `method a1: ${v}`,
+>       a2: (v) => `method a2: ${v}`,
+>       a3: (v) => `method a3: ${v}`,
+>     },
 >     commonVariablePrefix: "a",
 >     current: 2,
 >   },
-> }
+> };
 > ```
 > The expression
 > ```JavaScript
 >  ${environment.variables[`${environment.commonVariablePrefix}${environment.current}`]}
 > ```
-> will evaluate to `2`.
+> returns the function: 
+> ```JavaScript 
+> (v) => `method a2: ${v}`
+> ```
 > 
