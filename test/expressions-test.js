@@ -361,5 +361,12 @@ describe('Expressions', () => {
     it('should throw an error if you do an unsafe operation', () => {
       expect(() => expressions.resolveExpression('${() => {require("fs").deleteSync(".")}}')).to.throw();
     });
+
+    it('should support multiple lines inside the expression', () => {
+      expect(expressions.resolveExpression(`\${
+        (value) => {
+          return value;
+        }}`)(1)).to.equal(1);
+    });
   });
 });

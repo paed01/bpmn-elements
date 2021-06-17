@@ -35,34 +35,39 @@ function compile(str) {
 }
 
 function parse(strToParse) {
-  strToParse = strToParse.trim();
-
-  const expRegEx = /\$\{(.*?`[^`]+`.*?)\}|\$\{(.*?)\}/g;
-  const regExResult = expRegEx.exec(strToParse);
-  const exp = regExResult && (regExResult[1] || regExResult[2]);
-  const isOnlyOneExpression = () => {
-    return exp.length === strToParse.length - '${}'.length;
-  };
+  strToParse = removeBL(strToParse);
+  const expRegEx = /\$\{.*\}/g;
 
   return (context) => {
-    let parseStr;
-
-    if (!exp || !isOnlyOneExpression()) {
-      const returnString = securityChecker(
+    const returnLiteral = () =>
+      securityChecker(
+        `${contextToString(context)}return ${prepareStr(
+          strToParse.slice(2, -1)
+        )};`
+      );
+    const returnString = () =>
+      securityChecker(
         `${contextToString(context)}return \`${prepareStr(strToParse)}\`;`
       );
 
-      parseStr = returnString;
-    } else {
-      const returnLiteral = securityChecker(
-        `${contextToString(context)}return ${prepareStr(exp)};`
-      );
-
-      parseStr = returnLiteral;
+    try {
+      return expRegEx.exec(strToParse)
+      // eslint-disable-next-line no-new-func
+        ? Function('context', returnLiteral())(context)
+        // eslint-disable-next-line no-new-func
+        : Function('context', returnString())(context);
+    } catch (err) {
+      // eslint-disable-next-line no-new-func
+      return Function('context', returnString())(context);
     }
-    // eslint-disable-next-line no-new-func
-    return Function('context', parseStr)(context);
   };
+}
+
+/**
+ * Remove break lines and spaces before and after the str
+ */
+function removeBL(str) {
+  return str.replace(/[\r\n]+/gm, ' ').trim();
 }
 
 /**
