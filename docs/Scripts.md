@@ -59,7 +59,7 @@ export function Scripts() {
 
     if (!/^javascript$/i.test(language)) return;
 
-    const script = javaScript(language, `${type}/${id}`, scriptBody, environment);
+    const script = new JavaScript(language, `${type}/${id}`, scriptBody, environment);
     scripts[id] = script;
 
     return script;
@@ -68,17 +68,17 @@ export function Scripts() {
   function getScript(language, {id}) {
     return scripts[id];
   }
-
-  function javaScript(language, filename, scriptBody, environment) {
-    const script = new Script(scriptBody, {filename});
-    return {
-      script,
-      language,
-      execute(executionContext, callback) {
-        const timers = environment.timers.register(executionContext);
-        return script.runInNewContext({...executionContext, ...timers, next: callback});
-      },
-    };
-  }
 }
+
+function JavaScript(language, filename, scriptBody, environment) {
+  this.id = filename;
+  this.script = new Script(scriptBody, {filename});
+  this.language = language;
+  this.environment = environment;
+}
+
+JavaScript.prototype.execute = function execute(executionContext, callback) {
+  const timers = this.environment.timers.register(executionContext);
+  return this.script.runInNewContext({...executionContext, ...timers, next: callback});
+};
 ```
