@@ -1,41 +1,209 @@
 import Expressions from '../src/Expressions';
+import {resolveExpression} from '@aircall/expression-parser';
 
 const expressions = Expressions();
+const aircall = {resolveExpression};
 
 describe('Expressions', () => {
-  describe('addressing variables', () => {
-    it('extracts variable value', () => {
-      expect(expressions.resolveExpression('${variables.input}', {
-        variables: {
-          input: 1,
-        },
-      })).to.equal(1);
-    });
+  [expressions, aircall].forEach((parser) => {
+    describe('#resolveExpression' + (parser !== expressions ? ' using @aircall/expression-parser' : ''), () => {
+      describe('addressing variables', () => {
+        it('extracts variable value', () => {
+          expect(parser.resolveExpression('${variables.input}', {
+            variables: {
+              input: 1,
+            },
+          })).to.equal(1);
+        });
 
-    it('returns undefined if not found', () => {
-      expect(expressions.resolveExpression('${variables.input}', {
-        variables: {
-          output: 1,
-        },
-      })).to.be.undefined;
-    });
+        it('returns undefined if not found', () => {
+          expect(parser.resolveExpression('${variables.input}', {
+            variables: {
+              output: 1,
+            },
+          })).to.be.undefined;
+        });
 
-    it('misspelled varailbes returns undefined', () => {
-      expect(expressions.resolveExpression('${varailbes.input}', {
-        variables: {
-          input: 1,
-        },
-      })).to.be.undefined;
-    });
+        it('misspelled varailbes returns undefined', () => {
+          expect(parser.resolveExpression('${varailbes.input}', {
+            variables: {
+              input: 1,
+            },
+          })).to.be.undefined;
+        });
 
-    it('addressing arrays returns value', () => {
-      expect(expressions.resolveExpression('${variables.input[1]}', {
-        variables: {
-          input: [0, 1],
-        },
-      })).to.equal(1);
-    });
+        it('addressing arrays returns value', () => {
+          expect(parser.resolveExpression('${variables.input[1]}', {
+            variables: {
+              input: [0, 1],
+            },
+          })).to.equal(1);
+        });
 
+        describe('inline', () => {
+          it('variables in string', () => {
+            expect(parser.resolveExpression('PT${variables.input}S', {
+              variables: {
+                input: 0.1,
+              },
+            })).to.equal('PT0.1S');
+          });
+
+          it('combined', () => {
+            expect(parser.resolveExpression('http://${variables.host}${variables.pathname}', {
+              variables: {
+                host: 'example.com',
+                pathname: '/api/v1',
+              },
+            })).to.equal('http://example.com/api/v1');
+          });
+        });
+      });
+
+      describe('services', () => {
+        it('returns service function', () => {
+          expect(parser.resolveExpression('${services.get}', {
+            services: {
+              get: () => {
+                return 'PT0.1S';
+              },
+            },
+          })()).to.equal('PT0.1S');
+        });
+
+        it('service accessing variables returns value', () => {
+          expect(parser.resolveExpression('${services.get()}', {
+            variables: {
+              timeout: 'PT0.1S',
+            },
+            services: {
+              get: (message) => {
+                return message.variables.timeout;
+              },
+            },
+          })).to.equal('PT0.1S');
+        });
+
+        it('expression with argument returns value', () => {
+          expect(parser.resolveExpression('${services.get(200)}', {
+            services: {
+              get: (statusCode) => {
+                return statusCode;
+              },
+            },
+          })).to.equal(200);
+        });
+
+        it('expression with empty arguments returns value', () => {
+          expect(parser.resolveExpression('${services.get()}', {
+            services: {
+              get: () => {
+                return '200';
+              },
+            },
+          })).to.equal('200');
+        });
+
+        it('expression with argument adressing variables returns value', () => {
+          expect(parser.resolveExpression('${services.get(variables.input[0])}', {
+            variables: {
+              input: [200],
+            },
+            services: {
+              get: (input) => {
+                return input;
+              },
+            },
+          })).to.equal(200);
+        });
+
+        it('expression with arguments adressing variables returns value', () => {
+          expect(parser.resolveExpression('${services.get(variables.input[0],variables.add)}', {
+            variables: {
+              input: [200],
+              add: 1,
+            },
+            services: {
+              get: (input, add) => {
+                return input + add;
+              },
+            },
+          })).to.equal(201);
+        });
+
+        it('expression with string arguments returns result', () => {
+          expect(parser.resolveExpression('${services.get("foo","bar")}', {
+            services: {
+              get(...args) {
+                return args.toString();
+              },
+            },
+          })).to.equal('foo,bar');
+
+          expect(parser.resolveExpression('${services.get("foo", "bar")}', {
+            services: {
+              get(...args) {
+                return args.toString();
+              },
+            },
+          })).to.equal('foo,bar');
+
+          expect(parser.resolveExpression('${services.get(  "foo",    "bar")}', {
+            services: {
+              get(...args) {
+                return args.toString();
+              },
+            },
+          })).to.equal('foo,bar');
+
+          expect(parser.resolveExpression('${services.get(true, "bar")}', {
+            services: {
+              get(...args) {
+                return args;
+              },
+            },
+          })).to.deep.equal([true, 'bar']);
+
+          expect(parser.resolveExpression('${services.get(  false, "bar")}', {
+            services: {
+              get(...args) {
+                return args;
+              },
+            },
+          })).to.deep.equal([false, 'bar']);
+
+          expect(parser.resolveExpression('${services.get(null,"bar")}', {
+            services: {
+              get(...args) {
+                return args;
+              },
+            },
+          })).to.deep.equal([null, 'bar']);
+        });
+      });
+
+      describe('specials', () => {
+        it('expression ${null} return null', () => {
+          expect(parser.resolveExpression('${null}')).to.be.null;
+        });
+
+        it('expression ${true} return true', () => {
+          expect(parser.resolveExpression('${true}')).to.be.true;
+        });
+
+        it('expression ${false} return false', () => {
+          expect(parser.resolveExpression('${false}')).to.be.false;
+        });
+
+        it('expression ${n} return number', () => {
+          expect(parser.resolveExpression('${0}')).to.equal(0);
+          expect(parser.resolveExpression('${1}')).to.equal(1);
+        });
+      });
+    });
+  });
+
+  describe('Standard #resolveExpression', () => {
     it('addressing array without index returns undefined', () => {
       expect(expressions.resolveExpression('${variables.input[]}', {
         variables: {
@@ -66,185 +234,28 @@ describe('Expressions', () => {
       })).to.equal(1);
     });
 
-    describe('inline', () => {
-      it('variables in string', () => {
-        expect(expressions.resolveExpression('PT${variables.input}S', {
-          variables: {
-            input: 0.1,
-          },
-        })).to.equal('PT0.1S');
-      });
-
-      it('expression in expression is not supported and returns weird value', () => {
-        expect(expressions.resolveExpression('PT${variables[${variables.property}]}S', {
-          variables: {
-            input: 0.1,
-            property: 'input',
-          },
-        })).to.equal('PT]}S');
-      });
-
-      it('combined', () => {
-        expect(expressions.resolveExpression('http://${variables.host}${variables.pathname}', {
-          variables: {
-            host: 'example.com',
-            pathname: '/api/v1',
-          },
-        })).to.equal('http://example.com/api/v1');
-      });
-
-      it('inserts nothing if variable is found but undefined', () => {
-        expect(expressions.resolveExpression('http://${variables.host}${variables.pathname}', {
-          variables: {
-            host: 'example.com',
-            pathname: undefined,
-          },
-        })).to.equal('http://example.com');
-      });
-    });
-  });
-
-  describe('services', () => {
-    it('returns service function', () => {
-      expect(expressions.resolveExpression('${services.get}', {
-        services: {
-          get: () => {
-            return 'PT0.1S';
-          },
-        },
-      })()).to.equal('PT0.1S');
-    });
-
-    it('service accessing variables returns value', () => {
-      expect(expressions.resolveExpression('${services.get()}', {
+    it('inserts nothing if variable is found but undefined', () => {
+      expect(expressions.resolveExpression('http://${variables.host}${variables.pathname}', {
         variables: {
-          timeout: 'PT0.1S',
+          host: 'example.com',
+          pathname: undefined,
         },
-        services: {
-          get: (message) => {
-            return message.variables.timeout;
-          },
-        },
-      })).to.equal('PT0.1S');
+      })).to.equal('http://example.com');
     });
 
-    it('expression with argument returns value', () => {
-      expect(expressions.resolveExpression('${services.get(200)}', {
-        services: {
-          get: (statusCode) => {
-            return statusCode;
-          },
-        },
-      })).to.equal(200);
-    });
-
-    it('expression with empty arguments returns value', () => {
-      expect(expressions.resolveExpression('${services.get()}', {
-        services: {
-          get: () => {
-            return '200';
-          },
-        },
-      })).to.equal('200');
-    });
-
-    it('expression with argument adressing variables returns value', () => {
-      expect(expressions.resolveExpression('${services.get(variables.input[0])}', {
-        variables: {
-          input: [200],
-        },
-        services: {
-          get: (input) => {
-            return input;
-          },
-        },
-      })).to.equal(200);
-    });
-
-    it('expression with arguments adressing variables returns value', () => {
-      expect(expressions.resolveExpression('${services.get(variables.input[0],variables.add)}', {
-        variables: {
-          input: [200],
-          add: 1,
-        },
-        services: {
-          get: (input, add) => {
-            return input + add;
-          },
-        },
-      })).to.equal(201);
-    });
-
-    it('expression with string arguments returns result', () => {
-      expect(expressions.resolveExpression('${services.get("foo","bar")}', {
-        services: {
-          get(...args) {
-            return args.toString();
-          },
-        },
-      })).to.equal('foo,bar');
-
-      expect(expressions.resolveExpression('${services.get("foo", "bar")}', {
-        services: {
-          get(...args) {
-            return args.toString();
-          },
-        },
-      })).to.equal('foo,bar');
-
-      expect(expressions.resolveExpression('${services.get(  "foo",    "bar")}', {
-        services: {
-          get(...args) {
-            return args.toString();
-          },
-        },
-      })).to.equal('foo,bar');
-
-      expect(expressions.resolveExpression('${services.get(true, "bar")}', {
-        services: {
-          get(...args) {
-            return args;
-          },
-        },
-      })).to.deep.equal([true, 'bar']);
-
-      expect(expressions.resolveExpression('${services.get(  false, "bar")}', {
-        services: {
-          get(...args) {
-            return args;
-          },
-        },
-      })).to.deep.equal([false, 'bar']);
-
-      expect(expressions.resolveExpression('${services.get(null,"bar")}', {
-        services: {
-          get(...args) {
-            return args;
-          },
-        },
-      })).to.deep.equal([null, 'bar']);
-    });
-  });
-
-  describe('specials', () => {
-    it('expression ${null} return null', () => {
-      expect(expressions.resolveExpression('${null}')).to.be.null;
-    });
-
-    it('expression ${true} return true', () => {
-      expect(expressions.resolveExpression('${true}')).to.be.true;
-    });
-
-    it('expression ${false} return false', () => {
-      expect(expressions.resolveExpression('${false}')).to.be.false;
-    });
-
-    it('expression ${0...} return number', () => {
-      expect(expressions.resolveExpression('${0}')).to.equal(0);
-      expect(expressions.resolveExpression('${1}')).to.equal(1);
+    it('expression ${01...} return number', () => {
       expect(expressions.resolveExpression('${010}')).to.equal(10);
       expect(expressions.resolveExpression('${010.1}')).to.equal(10.1);
       expect(expressions.resolveExpression('${010,1}')).to.be.undefined;
+    });
+
+    it('expression in expression is not supported and returns weird value', () => {
+      expect(expressions.resolveExpression('PT${variables[${variables.property}]}S', {
+        variables: {
+          input: 0.1,
+          property: 'input',
+        },
+      })).to.equal('PT]}S');
     });
   });
 

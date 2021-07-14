@@ -8,6 +8,8 @@ Expressions handler interface.
   - `isExpression(testString)`: optional function to evaluate if string is an expression
   - `hasExpression(testString)`: optional function to evaluate if the string contains an expression
 
+# Standard
+
 ## `resolveExpression(expression[, context, fnContext])`
 
 Resolve expression.
@@ -48,3 +50,12 @@ and, as utility:
 - `${false}` - return Boolean value `false`
 
 > Expressions in expressions is **not** supported and has unforeseeable outcome!
+
+
+# Community
+
+## [`expression-parser`](/aircall/aircall-expression-parser)
+
+A far more advanced expression parser by [Aircall](/aircall).
+
+`npm i @aircall/expression-parser`
