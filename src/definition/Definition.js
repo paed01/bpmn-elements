@@ -182,7 +182,7 @@ export function Definition(context, options) {
       if (!shakeBp.isRunning) {
         shovel = shakeBp.broker.createShovel('shaker', {
           exchange: 'event',
-          pattern: '*.shake*',
+          pattern: '*.shake#',
         }, {
           broker,
           exchange: 'event',

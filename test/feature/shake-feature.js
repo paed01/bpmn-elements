@@ -202,7 +202,7 @@ Feature('Shaking', () => {
 
         const messages = [];
         And('shake messages are collected', () => {
-          definition.broker.subscribeTmp('event', '*.shake*', (routingKey) => {
+          definition.broker.subscribeTmp('event', '*.shake#', (routingKey) => {
             messages.push(routingKey);
           }, {noAck: true});
         });
@@ -225,7 +225,7 @@ Feature('Shaking', () => {
         });
 
         And('event messsages are forwarded from event activity', () => {
-          expect(messages).to.have.length(1);
+          expect(messages).to.have.length(2);
         });
 
         When('definition shakes all', () => {
@@ -266,7 +266,7 @@ Feature('Shaking', () => {
         });
 
         And('event messsages are forwarded from event activity', () => {
-          expect(messages).to.have.length(5);
+          expect(messages).to.include('activity.shake.end');
         });
 
         When('an activity with inbound flows is shaken', () => {

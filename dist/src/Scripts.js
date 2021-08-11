@@ -11,11 +11,7 @@ function Scripts() {
     register
   };
 
-  function getScript()
-  /*scriptType, activity*/
-  {}
+  function getScript() {}
 
-  function register()
-  /*activity*/
-  {}
+  function register() {}
 }
