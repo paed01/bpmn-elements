@@ -1,6 +1,16 @@
 Changelog
 =========
 
+# 5.1.3
+
+- bump smqp to even less CPU intense version
+- fix shake routing key pattern bug
+
+# 5.1.2
+
+- stop building with node 10 (mocha)
+- bump smqp to less CPU intense version
+
 # 5.1.1
 
 Sequential loop trouble.
