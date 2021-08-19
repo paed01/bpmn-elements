@@ -7,6 +7,8 @@ import CompensateEventDefinition from './src/eventDefinitions/CompensateEventDef
 import ConditionalEventDefinition from './src/eventDefinitions/ConditionalEventDefinition';
 import Context from './src/Context';
 import DataObject from './src/io/EnvironmentDataObject';
+import DataStore from './src/io/EnvironmentDataStore';
+import DataStoreReference from './src/io/EnvironmentDataStoreReference';
 import Definition from './src/definition/Definition';
 import Dummy from './src/activity/Dummy';
 import EndEvent from './src/events/EndEvent';
@@ -27,6 +29,7 @@ import MessageEventDefinition from './src/eventDefinitions/MessageEventDefinitio
 import MessageFlow from './src/flows/MessageFlow';
 import ParallelGateway from './src/gateways/ParallelGateway';
 import Process from './src/process/Process';
+import Properties from './src/io/Properties';
 import ReceiveTask from './src/tasks/ReceiveTask';
 import ScriptTask from './src/tasks/ScriptTask';
 import SequenceFlow from './src/flows/SequenceFlow';
@@ -53,6 +56,8 @@ export {
   ConditionalEventDefinition,
   Context,
   DataObject,
+  DataStore,
+  DataStoreReference,
   Definition,
   Dummy,
   Dummy as TextAnnotation,
@@ -76,6 +81,7 @@ export {
   LoopCharacteristics as MultiInstanceLoopCharacteristics,
   ParallelGateway,
   Process,
+  Properties,
   ReceiveTask,
   ScriptTask,
   SequenceFlow,

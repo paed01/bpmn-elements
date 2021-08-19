@@ -27,6 +27,7 @@ function ContextInstance(definitionContext, environment) {
   const sid = (0, _shared.getUniqueId)(id);
   const activityRefs = {},
         dataObjectRefs = {},
+        dataStoreRefs = {},
         messageFlows = [],
         processes = [],
         processRefs = {},
@@ -46,6 +47,7 @@ function ContextInstance(definitionContext, environment) {
     getAssociations,
     getExecutableProcesses,
     getDataObjectById,
+    getDataStoreById,
     getInboundAssociations,
     getInboundSequenceFlows,
     getMessageFlows,
@@ -162,13 +164,22 @@ function ContextInstance(definitionContext, environment) {
     return messageFlows.filter(flow => flow.source.processId === sourceId);
   }
 
-  function getDataObjectById(dataObjectId) {
+  function getDataObjectById(referenceId) {
     let dataObject;
-    if (dataObject = dataObjectRefs[dataObjectId]) return dataObject;
-    const dataObjectDef = definitionContext.getDataObjectById(dataObjectId);
+    if (dataObject = dataObjectRefs[referenceId]) return dataObject;
+    const dataObjectDef = definitionContext.getDataObjectById(referenceId);
     if (!dataObjectDef) return;
     dataObject = dataObjectRefs[dataObjectDef.id] = dataObjectDef.Behaviour(dataObjectDef, context);
     return dataObject;
+  }
+
+  function getDataStoreById(referenceId) {
+    let dataStore;
+    if (dataStore = dataStoreRefs[referenceId]) return dataStore;
+    const dataStoreDef = definitionContext.getDataStoreById(referenceId) || definitionContext.getDataStoreReferenceById(referenceId);
+    if (!dataStoreDef) return;
+    dataStore = dataStoreRefs[dataStoreDef.id] = dataStoreDef.Behaviour(dataStoreDef, context);
+    return dataStore;
   }
 
   function getStartActivities(filterOptions, scopeId) {

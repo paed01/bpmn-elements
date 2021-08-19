@@ -21,7 +21,9 @@ The following elements are tested and supported.
 - ConditionalEventDefinition
 - CompensateEventDefinition
   - compensate by outbound Association
-- DataObject
+- [DataObject](/docs/BpmnIO.md)
+- [DataStore](/docs/BpmnIO.md)
+- [DataStoreReference](/docs/BpmnIO.md)
 - EndEvent
 - Error
 - ErrorEventDefinition
@@ -35,7 +37,7 @@ The following elements are tested and supported.
 - InclusiveGateway
 - IntermediateCatchEvent
 - IntermediateThrowEvent
-- IoSpecification
+- [InputOutputSpecification](/docs/BpmnIO.md)
 - LinkEventDefinition
   - throw
   - catch
@@ -45,6 +47,7 @@ The following elements are tested and supported.
 - MessageFlow
 - [MultiInstanceLoopCharacteristics](/docs/LoopCharacteristics.md)
 - [ParallelGateway](/docs/ParallelGateway.md)
+- [Property](/docs/BpmnIO.md)
 - ReceiveTask
 - ScriptTask
 - [SequenceFlow](/docs/SequenceFlow.md)

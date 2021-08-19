@@ -7,6 +7,8 @@ exports.default = Activity;
 
 var _ActivityExecution = _interopRequireDefault(require("./ActivityExecution"));
 
+var _BpmnIO = _interopRequireDefault(require("../io/BpmnIO"));
+
 var _shared = require("../shared");
 
 var _Api = require("../Api");
@@ -48,7 +50,6 @@ function Activity(Behaviour, activityDef, context) {
   } = environment.settings;
   const {
     attachedTo: attachedToRef,
-    ioSpecification: ioSpecificationDef,
     eventDefinitions
   } = behaviour;
   let attachedToActivity, attachedTo;
@@ -188,7 +189,7 @@ function Activity(Behaviour, activityDef, context) {
     enumerable: true,
     get: () => execution
   });
-  const ioSpecification = ioSpecificationDef && ioSpecificationDef.Behaviour(activityApi, ioSpecificationDef, context);
+  const bpmnIo = (0, _BpmnIO.default)(activityApi, context);
   const loaedEventDefinitions = eventDefinitions && eventDefinitions.map(ed => ed.Behaviour(activityApi, ed, context));
   Object.defineProperty(activityApi, 'eventDefinitions', {
     enumerable: true,
@@ -598,7 +599,7 @@ function Activity(Behaviour, activityDef, context) {
           }
 
           if (extensions) extensions.activate((0, _messageHelper.cloneMessage)(message), activityApi);
-          if (ioSpecification) ioSpecification.activate(message);
+          if (bpmnIo) bpmnIo.activate(message);
           if (!isRedelivered) publishEvent('enter', content, {
             correlationId
           });
@@ -611,7 +612,7 @@ function Activity(Behaviour, activityDef, context) {
           status = 'discard';
           execution = undefined;
           if (extensions) extensions.activate((0, _messageHelper.cloneMessage)(message), activityApi);
-          if (ioSpecification) ioSpecification.activate(message);
+          if (bpmnIo) bpmnIo.activate(message);
 
           if (!isRedelivered) {
             broker.publish('run', 'run.discarded', content, {
@@ -652,17 +653,21 @@ function Activity(Behaviour, activityDef, context) {
         {
           status = 'executing';
           executeMessage = message;
-
-          if (isRedelivered) {
-            if (extensions) extensions.activate((0, _messageHelper.cloneMessage)(message), activityApi);
-            if (ioSpecification) ioSpecification.activate(message);
-          }
-
           executionQ.assertConsumer(onExecutionMessage, {
             exclusive: true,
             consumerTag: '_activity-execution'
           });
           execution = execution || (0, _ActivityExecution.default)(activityApi, context);
+
+          if (isRedelivered) {
+            return resumeExtensions(message, (err, formattedContent) => {
+              if (err) return emitFatal(err, message.content);
+              if (formattedContent) message.content = formattedContent;
+              status = 'executing';
+              return execution.execute(message);
+            });
+          }
+
           return execution.execute(message);
         }
 
@@ -723,6 +728,7 @@ function Activity(Behaviour, activityDef, context) {
       case 'run.leave':
         {
           status = undefined;
+          if (bpmnIo) bpmnIo.deactivate(message);
           if (extensions) extensions.deactivate(message);
 
           if (!isRedelivered) {
@@ -771,6 +777,17 @@ function Activity(Behaviour, activityDef, context) {
         if (onOutbound) onOutbound();
       });
     }
+  }
+
+  function resumeExtensions(message, callback) {
+    if (!extensions && !bpmnIo) return callback();
+    if (extensions) extensions.activate((0, _messageHelper.cloneMessage)(message), activityApi);
+    if (bpmnIo) bpmnIo.activate((0, _messageHelper.cloneMessage)(message));
+    status = 'formatting';
+    return formatter(message, (err, formattedContent, formatted) => {
+      if (err) return callback(err);
+      return callback(null, formatted && formattedContent);
+    });
   }
 
   function getOutboundSequenceFlowById(flowId) {

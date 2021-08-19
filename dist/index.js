@@ -57,6 +57,18 @@ Object.defineProperty(exports, "DataObject", {
     return _EnvironmentDataObject.default;
   }
 });
+Object.defineProperty(exports, "DataStore", {
+  enumerable: true,
+  get: function () {
+    return _EnvironmentDataStore.default;
+  }
+});
+Object.defineProperty(exports, "DataStoreReference", {
+  enumerable: true,
+  get: function () {
+    return _EnvironmentDataStoreReference.default;
+  }
+});
 Object.defineProperty(exports, "Definition", {
   enumerable: true,
   get: function () {
@@ -195,6 +207,12 @@ Object.defineProperty(exports, "Process", {
     return _Process.default;
   }
 });
+Object.defineProperty(exports, "Properties", {
+  enumerable: true,
+  get: function () {
+    return _Properties.default;
+  }
+});
 Object.defineProperty(exports, "ReceiveTask", {
   enumerable: true,
   get: function () {
@@ -328,6 +346,10 @@ var _Context = _interopRequireDefault(require("./src/Context"));
 
 var _EnvironmentDataObject = _interopRequireDefault(require("./src/io/EnvironmentDataObject"));
 
+var _EnvironmentDataStore = _interopRequireDefault(require("./src/io/EnvironmentDataStore"));
+
+var _EnvironmentDataStoreReference = _interopRequireDefault(require("./src/io/EnvironmentDataStoreReference"));
+
 var _Definition = _interopRequireDefault(require("./src/definition/Definition"));
 
 var _Dummy = _interopRequireDefault(require("./src/activity/Dummy"));
@@ -367,6 +389,8 @@ var _MessageFlow = _interopRequireDefault(require("./src/flows/MessageFlow"));
 var _ParallelGateway = _interopRequireDefault(require("./src/gateways/ParallelGateway"));
 
 var _Process = _interopRequireDefault(require("./src/process/Process"));
+
+var _Properties = _interopRequireDefault(require("./src/io/Properties"));
 
 var _ReceiveTask = _interopRequireDefault(require("./src/tasks/ReceiveTask"));
 
