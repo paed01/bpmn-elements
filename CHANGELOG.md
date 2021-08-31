@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 5.2.0
+
+- add basic support for bpmn:Property, bpmn:DataStore, and bpmn:DataStoreReference
+
 # 5.1.3
 
 - bump smqp to even less CPU intense version
