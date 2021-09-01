@@ -1,6 +1,13 @@
 Changelog
 =========
 
+# 6.0.0
+
+Isomorphism.
+
+## Breaking
+- Stop calling `setTimeout.call(owner, ...args)` in default Timers.js. Doesn't work in browsers and results in `TypeError: Illegal invocation`. Hence, timeout callback context is no longer the owner of the timer. Altough, it works fine in nodejs. So feel free to build your own [Timers](/docs/Timers.md) and pass it as an [option](/docs/Definition.md).
+
 # 5.2.0
 
 - add basic support for bpmn:Property, bpmn:DataStore, and bpmn:DataStoreReference

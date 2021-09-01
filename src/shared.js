@@ -1,11 +1,7 @@
 const safePattern = /[./\\#*:\s]/g;
 
 export function generateId() {
-  const min = 100000000;
-  const max = 999999999;
-  const rand = Math.floor(Math.random() * (max - min)) + min;
-
-  return rand.toString(16);
+  return Math.random().toString(16).substring(2, 12);
 }
 
 export function brokerSafeId(id) {

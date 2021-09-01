@@ -544,23 +544,6 @@ describe('Environment', () => {
         expect(timer).to.have.property('clearTimeout').that.is.a('function');
       });
 
-      it('registered executes timer function with owner', (done) => {
-        const owner = {id: 'a'};
-
-        const {timers} = Environment({
-          timers: Timers({
-            setTimeout: function fakeSetTimeout() {
-              expect(this === owner).to.be.true;
-              done();
-            },
-          })
-        });
-
-        const timer = timers.register(owner);
-
-        timer.setTimeout();
-      });
-
       it('setTimeout adds timer to executing', () => {
         const {timers} = Environment({
           timers: Timers({
@@ -576,23 +559,6 @@ describe('Environment', () => {
         expect(timers.executing).to.have.length(1);
         expect(timers.executing[0]).to.have.property('delay', 10);
         expect(timers.executing[0].owner === owner, 'owner as owner').to.be.true;
-      });
-
-      it('registered executes timer function with owner', (done) => {
-        const owner = {id: 'a'};
-
-        const {timers} = Environment({
-          timers: Timers({
-            setTimeout: function fakeSetTimeout() {
-              expect(this === owner).to.be.true;
-              done();
-            },
-          })
-        });
-
-        const timer = timers.register(owner);
-
-        timer.setTimeout();
       });
 
       it('setTimeout adds timer to executing', () => {

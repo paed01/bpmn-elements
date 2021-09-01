@@ -35,7 +35,7 @@ export function Timers(options) {
   function wrappedSetTimeout(callback, delay, ...args) {
     const ref = {timerId: `timer_${count++}`, callback, delay, args, owner: this};
     executing.push(ref);
-    ref.timerRef = options.setTimeout.call(this, onTimeout, delay, ...args);
+    ref.timerRef = options.setTimeout(onTimeout, delay, ...args);
     return ref;
 
     function onTimeout(...rargs) {
@@ -48,8 +48,8 @@ export function Timers(options) {
   function wrappedClearTimeout(ref) {
     const idx = executing.indexOf(ref);
     if (idx > -1) {
-      const [{owner}] = executing.splice(idx, 1);
-      return options.clearTimeout.call(owner, ref.timerRef);
+      executing.splice(idx, 1);
+      return options.clearTimeout(ref.timerRef);
     }
     return options.clearTimeout(ref);
   }

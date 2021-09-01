@@ -23,10 +23,10 @@ Returns:
 Register timers with owner. Called from TimerEventDefinition.
 
 Arguments:
-- `owner`: owning object
+- `owner`: owning object, usually the activity in question
 
 Returns:
-- `setTimeout`: calls `setTimeout` with owner as context (this)
+- `setTimeout`: calls `setTimeout`
 - `clearTimeout`: clear timeout function
 
 ## `setTimeout(callback, delay, ...args)`
@@ -40,4 +40,4 @@ Returns timer:
 
 ## `clearTimeout(ref)`
 
-Removes timer from list of executing timers and calls options `clearTimeout` with `ref.timerRef` and owner as context (this).
+Removes timer from list of executing timers and calls options `clearTimeout` with `ref.timerRef`.
