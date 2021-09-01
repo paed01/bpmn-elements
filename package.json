@@ -10,7 +10,8 @@
     "prepare": "npm run dist",
     "cov:html": "nyc mocha -R dot && nyc report --reporter=html",
     "test:lcov": "nyc mocha -R dot && nyc report --reporter lcov && npm run posttest",
-    "dist": "babel index.js -d dist && rm -rf dist/src && babel src -d dist/src",
+    "dist": "babel index.js -d dist && babel src -d dist/src",
+    "predist": "node -e \"fs.rmdirSync('./dist/src', {recursive: true});\"",
     "test-md": "node scripts/test-markdown ./API.md && node scripts/test-markdown ./docs/Examples.md",
     "toc": "node scripts/generate-api-toc ./API.md,./docs/Examples.md,./docs/Form.md"
   },
