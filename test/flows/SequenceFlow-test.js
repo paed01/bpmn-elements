@@ -3,6 +3,7 @@ import factory from '../helpers/factory';
 import js from '../resources/extensions/JsExtension';
 import testHelpers from '../helpers/testHelpers';
 import SequenceFlow from '../../src/flows/SequenceFlow';
+import {resolveExpression} from '@aircall/expression-parser';
 import {Scripts} from '../helpers/JavaScripts';
 
 const extensions = {
@@ -264,7 +265,7 @@ describe('SequenceFlow', () => {
       const flow = context.getSequenceFlowById('flow3');
 
       const res = await new Promise((resolve, reject) => {
-        flow.evaluateCondition({
+        flow.getCondition().execute({
           content: {
             parent: {},
           },
@@ -275,6 +276,166 @@ describe('SequenceFlow', () => {
       });
 
       expect(res).to.equal(true);
+    });
+
+    it('if script throws rethrows error or returns error in callback', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="start" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+          <sequenceFlow id="flow" sourceRef="start" targetRef="end1" />
+          <sequenceFlow id="flowWithScript" sourceRef="start" targetRef="end2">
+            <conditionExpression xsi:type="tFormalExpression" language="js">
+              next(null, content.empty.prop);
+            </conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source, {
+        scripts: {
+          register() {
+            return {};
+          },
+          getScript() {
+            return {
+              execute() {
+                throw new Error('scripterror');
+              }
+            };
+          },
+        }
+      });
+      const flow = context.getSequenceFlowById('flowWithScript');
+
+      expect(() => {
+        flow.getCondition().execute({
+          content: {
+            parent: {},
+          },
+        });
+      }).to.throw(/scripterror/i);
+
+      const res = await new Promise((resolve, reject) => {
+        flow.getCondition().execute({
+          content: {
+            parent: {},
+          },
+        }, (err) => {
+          if (err) return resolve(err);
+          return reject(new Error('Wut?'));
+        });
+      });
+
+      expect(res).to.match(/scripterror/);
+    });
+
+    it('expression condition executes and returns result or in callback', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="start" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+          <sequenceFlow id="flow" sourceRef="start" targetRef="end1" />
+          <sequenceFlow id="flowWithExpression" sourceRef="start" targetRef="end2">
+            <conditionExpression xsi:type="tFormalExpression">\${content.isOk}</conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const flow = context.getSequenceFlowById('flowWithExpression');
+
+      expect(flow.getCondition().execute({
+        content: {
+          isOk: 1,
+          parent: {},
+        },
+      })).to.equal(1);
+
+      const res = await new Promise((resolve, reject) => {
+        flow.getCondition().execute({
+          content: {
+            isOk: 2,
+            parent: {},
+          },
+        }, (err, result) => {
+          if (err) return reject(err);
+          return resolve(result);
+        });
+      });
+
+      expect(res).to.equal(2);
+    });
+
+    it('invalid expression condition throws error or returns error in callback', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="start" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+          <sequenceFlow id="flow" sourceRef="start" targetRef="end1" />
+          <sequenceFlow id="flowWithExpression" sourceRef="start" targetRef="end2">
+            <conditionExpression xsi:type="tFormalExpression">\${content.isOk"}</conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source, {
+        expressions: {resolveExpression},
+      });
+      const flow = context.getSequenceFlowById('flowWithExpression');
+
+      expect(() => {
+        flow.getCondition().execute({
+          content: {
+            isOk: 1,
+            parent: {},
+          },
+        });
+      }).to.throw(/Unterminated string literal/i);
+
+      const res = await new Promise((resolve, reject) => {
+        flow.getCondition().execute({
+          content: {
+            isOk: 2,
+            parent: {},
+          },
+        }, (err) => {
+          if (err) return resolve(err);
+          return reject(new Error('Ehhhh'));
+        });
+      });
+
+      expect(res).to.match(/Unterminated string literal/i);
+    });
+
+    it('return empty if no condition', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="start" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+          <sequenceFlow id="flow" sourceRef="start" targetRef="end1" />
+          <sequenceFlow id="flowWithExpression" sourceRef="start" targetRef="end2">
+            <conditionExpression xsi:type="tFormalExpression">\${content.isOk}</conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const flow = context.getSequenceFlowById('flow');
+
+      expect(flow.getCondition()).to.be.null;
     });
 
     it('throws if script type is unsupported', async () => {
@@ -292,7 +453,7 @@ describe('SequenceFlow', () => {
       const flow = SequenceFlow(flowDef, {environment: Environment()});
 
       expect(() => {
-        flow.evaluateCondition({
+        flow.getCondition().execute({
           content: {
             parent: {},
           },
@@ -315,7 +476,7 @@ describe('SequenceFlow', () => {
       const flow = SequenceFlow(flowDef, {environment: Environment()});
 
       expect(() => {
-        flow.evaluateCondition({
+        flow.getCondition().execute({
           content: {
             parent: {},
           },

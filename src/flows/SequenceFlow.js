@@ -38,7 +38,6 @@ export default function SequenceFlow(flowDef, {environment}) {
       return {...counters};
     },
     discard,
-    evaluateCondition,
     getApi,
     getCondition,
     getState,
@@ -156,13 +155,6 @@ export default function SequenceFlow(flowDef, {environment}) {
     broker.publish('event', 'flow.shake', content, {persistent: false, type: 'shake'});
   }
 
-  function evaluateCondition(message, callback) {
-    const condition = getCondition(message);
-    if (!condition) return callback(null, true);
-
-    return condition.execute(message, callback);
-  }
-
   function getCondition() {
     const conditionExpression = behaviour.conditionExpression;
     if (!conditionExpression) return null;
@@ -199,9 +191,14 @@ export default function SequenceFlow(flowDef, {environment}) {
   function ExpressionCondition(expression) {
     return {
       execute: (message, callback) => {
-        const result = environment.resolveExpression(expression, createMessage(message));
-        if (callback) return callback(null, result);
-        return result;
+        try {
+          const result = environment.resolveExpression(expression, createMessage(message));
+          if (callback) return callback(null, result);
+          return result;
+        } catch (err) {
+          if (callback) return callback(err);
+          throw err;
+        }
       },
     };
   }

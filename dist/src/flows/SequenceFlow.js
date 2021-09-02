@@ -60,7 +60,6 @@ function SequenceFlow(flowDef, {
     },
 
     discard,
-    evaluateCondition,
     getApi,
     getCondition,
     getState,
@@ -201,12 +200,6 @@ function SequenceFlow(flowDef, {
     });
   }
 
-  function evaluateCondition(message, callback) {
-    const condition = getCondition(message);
-    if (!condition) return callback(null, true);
-    return condition.execute(message, callback);
-  }
-
   function getCondition() {
     const conditionExpression = behaviour.conditionExpression;
     if (!conditionExpression) return null;
@@ -247,9 +240,14 @@ function SequenceFlow(flowDef, {
   function ExpressionCondition(expression) {
     return {
       execute: (message, callback) => {
-        const result = environment.resolveExpression(expression, createMessage(message));
-        if (callback) return callback(null, result);
-        return result;
+        try {
+          const result = environment.resolveExpression(expression, createMessage(message));
+          if (callback) return callback(null, result);
+          return result;
+        } catch (err) {
+          if (callback) return callback(err);
+          throw err;
+        }
       }
     };
   }

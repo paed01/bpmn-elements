@@ -7,6 +7,10 @@ Isomorphism.
 
 ## Breaking
 - Stop calling `setTimeout.call(owner, ...args)` in default Timers.js. Doesn't work in browsers and results in `TypeError: Illegal invocation`. Hence, timeout callback context is no longer the owner of the timer. Altough, it works fine in nodejs. So feel free to build your own [Timers](/docs/Timers.md) and pass it as an [option](/docs/Definition.md).
+- Removed sequence flow function `evaluateCondition` since it not used and was inconsistent. Use `getCondition().execute(...args)` instead.
+
+## Bugfix
+- Sequence flow with expression condition that throws will terminate the run
 
 # 5.2.0
 

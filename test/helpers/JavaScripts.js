@@ -33,7 +33,7 @@ export function Scripts(enableDummy = true) {
       return script;
     }
 
-    if (!/^javascript$/i.test(language)) return;
+    if (!/^javascript$/i.test(language) && language !== 'js') return;
 
     const script = new JavaScript(language, `${type}/${id}`, scriptBody, environment);
     scripts[id] = script;
