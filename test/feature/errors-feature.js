@@ -645,6 +645,142 @@ Feature('Errors', () => {
       return end;
     });
   });
+
+  Scenario('throw error inside script', () => {
+    const source = `
+    <?xml version="1.0" encoding="UTF-8"?>
+    <definitions id="Definitions_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+      <process id="mainProcess" isExecutable="true">
+        <scriptTask id="task" scriptFormat="js">
+          <script>next(new BpmnError('adsad', {id: 'Error_1'}))</script>
+        </scriptTask>
+        <boundaryEvent id="bound-err" attachedToRef="task">
+          <errorEventDefinition errorRef="Error_1" />
+        </boundaryEvent>
+      </process>
+      <error id="Error_1" name="Error" />
+    </definitions>`;
+
+    let context, definition;
+    Given('process with task with bound named error', async () => {
+      context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    let execution, end;
+    When('run without listener', () => {
+      end = definition.waitFor('end');
+      execution = definition.run();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('script task was discarded', () => {
+      const task = execution.getActivityById('task');
+      expect(task.counters).to.contain({
+        taken: 0,
+        discarded: 1,
+      });
+    });
+
+    And('thrown error was caught', () => {
+      const errorEvent = execution.getActivityById('bound-err');
+      expect(errorEvent.counters).to.contain({
+        taken: 1,
+        discarded: 0,
+      });
+    });
+  });
+
+  Scenario('throw error inside listener', () => {
+    const source = `<?xml version="1.0" encoding="UTF-8"?>
+    <definitions id="Definitions_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+      targetNamespace="http://bpmn.io/schema/bpmn">
+      <process id="Process_0" isExecutable="true">
+        <startEvent id="start" />
+        <manualTask id="task-a" />
+        <sequenceFlow id="to-task-a" sourceRef="start" targetRef="task-a" />
+        <task id="task-b" />
+        <endEvent id="end-b" />
+        <sequenceFlow id="to-end-b" sourceRef="task-b" targetRef="end-b" />
+        <endEvent id="end-a" />
+        <sequenceFlow id="to-end-a" sourceRef="task-a" targetRef="end-a" />
+        <boundaryEvent id="bound-err" attachedToRef="task-a">
+          <errorEventDefinition id="error-def-1" errorRef="Error_1" />
+        </boundaryEvent>
+        <sequenceFlow id="to-task-b" sourceRef="bound-err" targetRef="task-b" />
+      </process>
+      <error id="Error_1" name="Error" />
+    </definitions>`;
+
+    let context, definition;
+    Given('process with task with bound named error', async () => {
+      context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    let execution, end;
+    When('run without listener', () => {
+      end = definition.waitFor('end');
+      execution = definition.run();
+      execution.signal({id: 'task-a'});
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('task was taken', () => {
+      const task = execution.getActivityById('task-a');
+      expect(task.counters).to.contain({
+        taken: 1,
+        discarded: 0,
+      });
+    });
+
+    And('boundary event was discarded', () => {
+      const errorEvent = execution.getActivityById('bound-err');
+      expect(errorEvent.counters).to.contain({
+        taken: 0,
+        discarded: 1,
+      });
+    });
+
+    And('listener for task that will throw error', () => {
+      definition.on('activity.wait', (elementApi) => {
+        if (elementApi.id !== 'task-a') return;
+        elementApi.owner.emitFatal({id: 'Error_1'}, {id: elementApi.id});
+      });
+    });
+
+    When('executed', async () => {
+      end = definition.waitFor('end');
+      execution = definition.run();
+    });
+
+    Then('execution completed', () => {
+      return end;
+    });
+
+    And('task was discarded', () => {
+      const task = execution.getActivityById('task-a');
+      expect(task.counters).to.contain({
+        taken: 1,
+        discarded: 1,
+      });
+    });
+
+    And('thrown error was caught', () => {
+      const errorEvent = execution.getActivityById('bound-err');
+      expect(errorEvent.counters).to.contain({
+        taken: 1,
+        discarded: 1,
+      });
+    });
+  });
 });
 
 async function prepareSource() {
