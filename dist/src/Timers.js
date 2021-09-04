@@ -46,7 +46,7 @@ function Timers(options) {
       owner: this
     };
     executing.push(ref);
-    ref.timerRef = options.setTimeout(onTimeout, delay, ...args);
+    ref.timerRef = options.setTimeout.call(null, onTimeout, delay, ...args);
     return ref;
 
     function onTimeout(...rargs) {
@@ -61,9 +61,9 @@ function Timers(options) {
 
     if (idx > -1) {
       executing.splice(idx, 1);
-      return options.clearTimeout(ref.timerRef);
+      return options.clearTimeout.call(null, ref.timerRef);
     }
 
-    return options.clearTimeout(ref);
+    return options.clearTimeout.call(null, ref);
   }
 }
