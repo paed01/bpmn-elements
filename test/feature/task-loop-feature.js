@@ -192,6 +192,147 @@ Feature('Task loop', () => {
     });
   });
 
+  Scenario('SubProcess with parallel loop characteristics over collection', () => {
+    let context, definition;
+    Given('a process with one collection looped sub process with script task', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="TaskLoopProcess" isExecutable="true">
+          <subProcess id="looped" js:result="iterated">
+            <multiInstanceLoopCharacteristics isSequential="false" js:collection="\${environment.variables.list}" />
+            <startEvent id="start" />
+            <sequenceFlow id="to-task" sourceRef="start" targetRef="task" />
+            <serviceTask id="task" implementation="\${environment.services.serviceFn}" js:result="result" />
+            <sequenceFlow id="to-end" sourceRef="task" targetRef="end" />
+            <endEvent id="end" />
+          </subProcess>
+        </process>
+      </definitions>`;
+      context = await testHelpers.context(source, {
+        extensions: {js},
+        services: {
+          serviceFn(ctx, next) {
+            process.nextTick(next, null, ctx.environment.variables.content.item);
+          },
+        },
+      });
+    });
+
+    let leave;
+    When('definition is run with 101 items and batch size 50', () => {
+      definition = Definition(context, {
+        settings: {
+          batchSize: 50,
+        },
+        variables: {
+          list: new Array(101).fill().map((_, idx) => ({idx}))
+        },
+      });
+
+      leave = definition.waitFor('leave');
+      definition.run();
+    }).timeout(10000);
+
+    Then('definition completes', () => {
+      return leave;
+    }).timeout(10000);
+
+    And('task was looped expected number of times', () => {
+      expect(definition.environment.output.iterated).to.have.length(101);
+    });
+
+    When('definition is run with 0 items', () => {
+      definition = Definition(context, {
+        settings: {
+          batchSize: 100,
+        },
+        variables: {
+          list: [],
+        },
+      });
+
+      leave = definition.waitFor('leave');
+      definition.run();
+    });
+
+    Then('definition completes when condition is met', () => {
+      return leave;
+    }).timeout(10000);
+
+    And('task was looped expected number of times', () => {
+      expect(definition.environment.output.iterated).to.have.length(0);
+    });
+  });
+
+  Scenario('SubProcess with sequential loop characteristics over collection', () => {
+    let context, definition;
+    Given('a process with one collection looped sub process with script task', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="TaskLoopProcess" isExecutable="true">
+          <subProcess id="looped" js:result="iterated">
+            <multiInstanceLoopCharacteristics isSequential="true" js:collection="\${environment.variables.list}" />
+            <startEvent id="start" />
+            <sequenceFlow id="to-task" sourceRef="start" targetRef="task" />
+            <serviceTask id="task" implementation="\${environment.services.serviceFn}" js:result="result" />
+            <sequenceFlow id="to-end" sourceRef="task" targetRef="end" />
+            <endEvent id="end" />
+          </subProcess>
+        </process>
+      </definitions>`;
+      context = await testHelpers.context(source, {
+        extensions: {js},
+        services: {
+          serviceFn(ctx, next) {
+            process.nextTick(next, null, ctx.environment.variables.content.item);
+          },
+        },
+      });
+    });
+
+    let leave;
+    When('definition is run with 101 items', () => {
+      definition = Definition(context, {
+        variables: {
+          list: new Array(101).fill().map((_, idx) => ({idx}))
+        },
+      });
+
+      leave = definition.waitFor('leave');
+      definition.run();
+    }).timeout(10000);
+
+    Then('definition completes', () => {
+      return leave;
+    }).timeout(10000);
+
+    And('task was looped expected number of times', () => {
+      expect(definition.environment.output.iterated).to.have.length(101);
+    });
+
+    When('definition is run with 0 items', () => {
+      definition = Definition(context, {
+        settings: {
+          batchSize: 100,
+        },
+        variables: {
+          list: [],
+        },
+      });
+
+      leave = definition.waitFor('leave');
+      definition.run();
+    });
+
+    Then('definition completes when condition is met', () => {
+      return leave;
+    }).timeout(10000);
+
+    And('task was looped expected number of times', () => {
+      expect(definition.environment.output.iterated).to.have.length(0);
+    });
+  });
+
   Scenario('ScriptTask with parallel loop characteristics over collection with cardinality', () => {
     let context, definition;
     Given('a process with one collection looped script task', async () => {

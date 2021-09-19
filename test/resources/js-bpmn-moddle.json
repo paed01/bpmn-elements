@@ -24,7 +24,8 @@
     "name": "TaskResult",
     "isAbstract": true,
     "extends": [
-      "bpmn:Task"
+      "bpmn:Task",
+      "bpmn:SubProcess"
     ],
     "properties": [{
       "name": "result",
