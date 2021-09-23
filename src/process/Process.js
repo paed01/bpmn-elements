@@ -32,7 +32,7 @@ export function Process(processDef, context) {
       return {...counters};
     },
     get executionId() {
-      return executionId;
+      return executionId || initExecutionId;
     },
     get status() {
       return status;
@@ -91,8 +91,8 @@ export function Process(processDef, context) {
 
   return processApi;
 
-  function init() {
-    initExecutionId = getUniqueId(id);
+  function init(useAsExecutionId) {
+    initExecutionId = useAsExecutionId || getUniqueId(id);
     logger.debug(`<${id}> initialized with executionId <${initExecutionId}>`);
     publishEvent('init', createMessage({executionId: initExecutionId}));
   }
@@ -132,6 +132,7 @@ export function Process(processDef, context) {
     status = state.status;
     executionId = state.executionId;
     counters = {...counters, ...state.counters};
+    environment.recover(state.environment);
 
     if (state.execution) {
       execution = ProcessExecution(processApi, context).recover(state.execution);
@@ -231,6 +232,7 @@ export function Process(processDef, context) {
         counters.completed++;
 
         broker.publish('run', 'run.leave', content);
+
         publishEvent('end', content);
         break;
       }
@@ -246,7 +248,8 @@ export function Process(processDef, context) {
       case 'run.leave': {
         status = undefined;
         broker.cancel('_process-api');
-        publishEvent('leave');
+        const {output, ...rest} = content; // eslint-disable-line no-unused-vars
+        publishEvent('leave', rest);
         break;
       }
     }
@@ -305,8 +308,8 @@ export function Process(processDef, context) {
   }
 
   function publishEvent(state, content) {
-    if (!content) content = createMessage();
-    broker.publish('event', `process.${state}`, {...content, state}, {type: state, mandatory: state === 'error'});
+    const eventContent = createMessage({...content, state});
+    broker.publish('event', `process.${state}`, eventContent, {type: state, mandatory: state === 'error'});
   }
 
   function sendMessage(message) {
@@ -372,6 +375,7 @@ export function Process(processDef, context) {
       id,
       type,
       name,
+      executionId: processApi.executionId,
       parent: {...parent},
       ...override,
     };
@@ -379,12 +383,13 @@ export function Process(processDef, context) {
 
   function getState() {
     return createMessage({
-      executionId,
+      environment: environment.getState(),
       status,
       stopped,
       counters: {...counters},
       broker: broker.getState(true),
       execution: execution && execution.getState(),
+      output: {...environment.output},
     });
   }
 }

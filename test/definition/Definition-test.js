@@ -18,17 +18,6 @@ describe('Definition', () => {
       expect(definition.run).to.be.a('function');
     });
 
-    it('requires context with getProcesses() and getExecutableProcesses() to run', () => {
-      const definition = Definition({
-        id: 'Def_1',
-        environment: Environment({ Logger: testHelpers.Logger }),
-        getProcesses() {},
-        getExecutableProcesses() {},
-      });
-      definition.run();
-      expect(definition.counters).to.have.property('completed', 1);
-    });
-
     it('inherits environment from context', () => {
       const Logger = testHelpers.Logger;
       const services = {
@@ -37,8 +26,12 @@ describe('Definition', () => {
       const definition = Definition({
         id: 'Def_1',
         environment: Environment({ Logger, services }),
-        getProcesses() {},
-        getExecutableProcesses() {},
+        getProcesses() {
+          return [];
+        },
+        getExecutableProcesses() {
+          return [];
+        },
         getMessageFlows() {},
       });
       definition.run();
@@ -86,8 +79,12 @@ describe('Definition', () => {
       const definition = Definition({
         id: 'Def_1',
         environment: Environment({ Logger: testHelpers.Logger }),
-        getProcesses() {},
-        getExecutableProcesses() {},
+        getProcesses() {
+          return [];
+        },
+        getExecutableProcesses() {
+          return [];
+        },
         getMessageFlows() {},
         getDataObjects() {},
       });
@@ -98,8 +95,12 @@ describe('Definition', () => {
       const definition = Definition({
         id: 'Def_1',
         environment: Environment({ Logger: testHelpers.Logger }),
-        getProcesses() {},
-        getExecutableProcesses() {},
+        getProcesses() {
+          return [];
+        },
+        getExecutableProcesses() {
+          return [];
+        },
         getMessageFlows() {},
         getDataObjects() {},
       });
@@ -114,8 +115,12 @@ describe('Definition', () => {
       const definition = Definition({
         id: 'Def_1',
         environment: Environment({ Logger: testHelpers.Logger }),
-        getProcesses() {},
-        getExecutableProcesses() {},
+        getProcesses() {
+          return [];
+        },
+        getExecutableProcesses() {
+          return [];
+        },
         getMessageFlows() {},
       });
 
@@ -130,14 +135,13 @@ describe('Definition', () => {
       const context = await testHelpers.context(lanesSource);
 
       const definition = Definition(context);
-      const processes = definition.getProcesses();
-      expect(processes).to.have.length(2);
-
       const end = definition.waitFor('end');
 
       definition.run();
 
       await end;
+
+      const processes = definition.execution.processes;
 
       expect(processes[0].counters, processes[0].id).to.have.property('completed', 1);
       expect(processes[1].counters, processes[1].id).to.have.property('completed', 1);
@@ -175,8 +179,10 @@ describe('Definition', () => {
 
       await leave;
 
-      expect(processes[0].counters, processes[0].id).to.have.property('completed', 1);
-      expect(processes[1].counters, processes[1].id).to.have.property('completed', 1);
+      const bps = definition.execution.processes;
+
+      expect(bps[0].counters, bps[0].id).to.have.property('completed', 1);
+      expect(bps[1].counters, bps[1].id).to.have.property('completed', 1);
     });
 
     it('leaves no messages in run queue when completed', async () => {
@@ -1382,7 +1388,7 @@ describe('Definition', () => {
       const definition = Definition(context.clone());
       definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
         const api = definition.getApi(message);
-        expect(api, message.content.id).to.be.ok;
+        expect(api, `${routingKey} ${message.content.id}`).to.be.ok;
         expect(message.content.type).to.equal(api.content.type);
       }, {noAck: true});
 

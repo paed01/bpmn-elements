@@ -75,6 +75,12 @@ function emptyContext(override, options) {
     getInboundSequenceFlows() {},
     getMessageFlows() {},
     getOutboundSequenceFlows() {},
+    getProcesses() {
+      return [];
+    },
+    getExecutableProcesses() {
+      return [];
+    },
     getSequenceFlows() {},
     ...override,
   }, Environment({Logger, scripts: Scripts(), settings: {enableDummyService: true}, ...options}));

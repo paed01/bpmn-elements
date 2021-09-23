@@ -118,6 +118,7 @@ Feature('Definition', () => {
       assertMessage('activity.execution.completed', 'task1');
       assertMessage('activity.end', 'task1');
 
+      assertMessage('process.init', 'participantProcess');
       assertMessage('process.enter', 'participantProcess');
       assertMessage('process.start', 'participantProcess');
 
@@ -333,11 +334,10 @@ Feature('Definition', () => {
     });
 
     let processes;
-    Then('processes are resumed', async () => {
-      processes = recoveredDefinition.getProcesses();
-      expect(processes).to.have.length(2);
-      expect(processes[0]).to.have.property('stopped', false);
-      expect(processes[1]).to.have.property('stopped', undefined);
+    Then('main process is resumed', async () => {
+      processes = recoveredDefinition.getRunningProcesses();
+      expect(processes).to.have.length(1);
+      expect(processes[0], processes[0].id).to.have.property('stopped', false);
     });
 
     And('all running activities are resumed', async () => {

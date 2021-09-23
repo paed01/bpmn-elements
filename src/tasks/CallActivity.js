@@ -2,12 +2,12 @@ import Activity from '../activity/Activity';
 import {ActivityError} from '../error/Errors';
 import {cloneContent} from '../messageHelper';
 
-export default function SignalTask(activityDef, context) {
-  return Activity(SignalTaskBehaviour, activityDef, context);
+export default function CallActivity(activityDef, context) {
+  return Activity(CallActivityBehaviour, activityDef, context);
 }
 
-export function SignalTaskBehaviour(activity) {
-  const {id, type, behaviour, broker} = activity;
+export function CallActivityBehaviour(activity) {
+  const {id, type, behaviour, environment, broker} = activity;
   const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
 
   const source = {
@@ -29,7 +29,14 @@ export function SignalTaskBehaviour(activity) {
 
     broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
     broker.subscribeTmp('api', '#.signal.*', onDelegatedApiMessage, {noAck: true, consumerTag: `_api-delegated-${executionId}`});
-    broker.publish('event', 'activity.wait', cloneContent(content, {state: 'wait'}));
+
+    try {
+      var calledElement = environment.resolveExpression(behaviour.calledElement); // eslint-disable-line no-var
+    } catch (err) {
+      return broker.publish('execution', 'execute.error', cloneContent(content, {error: new ActivityError(err.message, executeMessage, err)}, {mandatory: true}));
+    }
+
+    broker.publish('event', 'activity.call', cloneContent(content, {state: 'wait', calledElement}), {type: 'call'});
 
     function onDelegatedApiMessage(routingKey, message) {
       if (!message.properties.delegate) return;

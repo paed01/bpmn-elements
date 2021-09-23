@@ -1,6 +1,6 @@
 import Environment from '../../src/Environment';
 import DefinitionExecution from '../../src/definition/DefinitionExecution';
-import {Logger} from '../helpers/testHelpers';
+import testHelpers from '../helpers/testHelpers';
 import {DefinitionBroker, ProcessBroker} from '../../src/EventBroker';
 
 describe('Definition execution', () => {
@@ -10,16 +10,10 @@ describe('Definition execution', () => {
         id: 'Def_1',
         type: 'Definition',
         environment: Environment(),
-        logger: Logger('bpmn:definition'),
+        logger: testHelpers.Logger('bpmn:definition'),
         broker: DefinitionBroker(this).broker,
-        getProcesses() {
-          return [];
-        },
-        getExecutableProcesses() {
-          return [];
-        }
       };
-      const execution = DefinitionExecution(definition);
+      const execution = DefinitionExecution(definition, testHelpers.emptyContext());
       expect(execution).to.have.property('id', 'Def_1');
       expect(execution).to.have.property('type', 'Definition');
       expect(execution).to.have.property('broker', definition.broker);
@@ -42,7 +36,7 @@ describe('Definition execution', () => {
       const definition = {
         id: 'Def_1',
         environment: Environment(),
-        logger: Logger('bpmn:definition'),
+        logger: testHelpers.Logger('bpmn:definition'),
         broker: DefinitionBroker(this).broker,
         getProcesses() {
           return [];
@@ -51,7 +45,7 @@ describe('Definition execution', () => {
           return [];
         }
       };
-      const execution = DefinitionExecution(definition);
+      const execution = DefinitionExecution(definition, testHelpers.emptyContext());
       expect(execution.execute).to.throw(/requires message/);
     });
 
@@ -59,7 +53,7 @@ describe('Definition execution', () => {
       const definition = {
         id: 'Def_1',
         environment: Environment(),
-        logger: Logger('bpmn:definition'),
+        logger: testHelpers.Logger('bpmn:definition'),
         broker: DefinitionBroker(this).broker,
         getProcesses() {
           return [];
@@ -68,7 +62,7 @@ describe('Definition execution', () => {
           return [];
         }
       };
-      const execution = DefinitionExecution(definition);
+      const execution = DefinitionExecution(definition, testHelpers.emptyContext());
       expect(() => execution.execute({content: {}})).to.throw(/requires execution id/);
     });
   });
@@ -77,54 +71,80 @@ describe('Definition execution', () => {
     it('completes when both are completed', () => {
       const processes = [{
         id: 'process_1',
-        parent: {id: 'Def_1'},
-        broker: ProcessBroker(this).broker,
-        init() {
-          this.broker.publish('event', 'process.init', {
-            id: this.id,
-            parent: this.parent,
-          });
-        },
-        run() {
-          this.broker.publish('event', 'process.enter', {
-            id: this.id,
-            parent: this.parent,
-          });
-          this.broker.publish('event', 'process.leave', {
-            id: this.id,
-            parent: this.parent,
-          });
+        type: 'process',
+        Behaviour() {
+          return {
+            id: 'process_1',
+            type: 'process',
+            isExecutable: true,
+            parent: {id: 'Def_1'},
+            broker: ProcessBroker(this).broker,
+            init() {
+              this.broker.publish('event', 'process.init', {
+                id: this.id,
+                executionId: this.id + '_1',
+                parent: this.parent,
+              });
+            },
+            run() {
+              this.broker.publish('event', 'process.enter', {
+                id: this.id,
+                executionId: this.id + '_1',
+                parent: this.parent,
+              });
+              this.broker.publish('event', 'process.leave', {
+                id: this.id,
+                executionId: this.id + '_1',
+                parent: this.parent,
+              });
+            }
+          };
         }
       }, {
         id: 'process_2',
-        broker: ProcessBroker(this).broker,
-        run() {
-          this.broker.publish('event', 'process.enter', {
-            id: this.id,
-            parent: this.parent,
-          });
-        },
-        init() {
-          this.broker.publish('event', 'process.init', {
-            id: this.id,
-            parent: this.parent,
-          });
+        type: 'process',
+        Behaviour() {
+          return {
+            id: 'process_2',
+            type: 'process',
+            isExecutable: true,
+            broker: ProcessBroker(this).broker,
+            init() {
+              this.broker.publish('event', 'process.init', {
+                id: this.id,
+                executionId: this.id + '_2',
+                parent: this.parent,
+              });
+            },
+            run() {
+              this.broker.publish('event', 'process.enter', {
+                id: this.id,
+                executionId: this.id + '_2',
+                parent: this.parent,
+              });
+            },
+          };
         },
       }];
 
       const definition = {
         id: 'Def_1',
         environment: Environment(),
-        logger: Logger('bpmn:definition'),
+        logger: testHelpers.Logger('bpmn:definition'),
         broker: DefinitionBroker(this).broker,
+      };
+      const context = testHelpers.emptyContext({
+        getProcessById(processId) {
+          return processes.find(({id}) => id === processId);
+        },
         getProcesses() {
           return processes;
         },
         getExecutableProcesses() {
           return processes;
-        }
-      };
-      const execution = DefinitionExecution(definition);
+        },
+      });
+      const execution = DefinitionExecution(definition, context);
 
       let completed;
       definition.broker.subscribeTmp('execution', 'execution.completed.*', () => {
@@ -140,8 +160,9 @@ describe('Definition execution', () => {
 
       expect(completed, 'completed before second process is complete').to.not.be.ok;
 
-      processes[1].broker.publish('event', 'process.leave', {
+      context.getProcesses()[1].broker.publish('event', 'process.leave', {
         id: 'process_2',
+        executionId: 'process_2_2',
         parent: {
           id: 'Def_1',
         }
@@ -193,16 +214,37 @@ describe('Definition execution', () => {
       const definition = {
         id: 'Def_1',
         environment: Environment(),
-        logger: Logger('bpmn:definition'),
+        logger: testHelpers.Logger('bpmn:definition'),
         broker: DefinitionBroker(this).broker,
+      };
+
+      const context = testHelpers.emptyContext({
+        getProcessById(processId) {
+          const bp = processes.find(({id}) => id === processId);
+          return {
+            id: bp.id,
+            Behaviour() {
+              return bp;
+            },
+          };
+        },
         getProcesses() {
-          return processes;
+          return processes.map((p) => {
+            return {id: p.id, Behaviour() {
+              return p;
+            }};
+          });
         },
         getExecutableProcesses() {
-          return processes;
-        }
-      };
-      const execution = DefinitionExecution(definition);
+          return processes.map((p) => {
+            return {id: p.id, Behaviour() {
+              return p;
+            }};
+          });
+        },
+      });
+
+      const execution = DefinitionExecution(definition, context);
 
       let completed;
       definition.broker.subscribeTmp('execution', 'execution.error.*', () => {

@@ -2,6 +2,7 @@ import Activity from './src/activity/Activity';
 import Association from './src/flows/Association';
 import BoundaryEvent from './src/events/BoundaryEvent';
 import BpmnError from './src/error/BpmnError';
+import CallActivity from './src/tasks/CallActivity';
 import CancelEventDefinition from './src/eventDefinitions/CancelEventDefinition';
 import CompensateEventDefinition from './src/eventDefinitions/CompensateEventDefinition';
 import ConditionalEventDefinition from './src/eventDefinitions/ConditionalEventDefinition';
@@ -51,6 +52,7 @@ export {
   Activity,
   BoundaryEvent,
   BpmnError,
+  CallActivity,
   CancelEventDefinition,
   CompensateEventDefinition,
   ConditionalEventDefinition,

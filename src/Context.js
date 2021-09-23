@@ -11,7 +11,15 @@ function ContextInstance(definitionContext, environment) {
   const {id = 'Def', name, type = 'context'} = definitionContext;
   const sid = getUniqueId(id);
 
-  const activityRefs = {}, dataObjectRefs = {}, dataStoreRefs = {}, messageFlows = [], processes = [], processRefs = {}, sequenceFlowRefs = {}, sequenceFlows = [], associationRefs = [];
+  const activityRefs = {},
+    associationRefs = [],
+    dataObjectRefs = {},
+    dataStoreRefs = {},
+    messageFlows = [],
+    processes = [],
+    processRefs = {},
+    sequenceFlowRefs = {},
+    sequenceFlows = [];
 
   const context = {
     id,
@@ -30,6 +38,7 @@ function ContextInstance(definitionContext, environment) {
     getInboundAssociations,
     getInboundSequenceFlows,
     getMessageFlows,
+    getNewProcessById,
     getOutboundSequenceFlows,
     getOutboundAssociations,
     getProcessById,
@@ -130,6 +139,13 @@ function ContextInstance(definitionContext, environment) {
     processInstance = processRefs[processId] = processDefinition.Behaviour(processDefinition, context);
     processes.push(processInstance);
 
+    return processInstance;
+  }
+
+  function getNewProcessById(processId, processOptions) {
+    if (!getProcessById(processId)) return null;
+    const processDefinition = definitionContext.getProcessById(processId);
+    const processInstance = processDefinition.Behaviour(processDefinition, context.clone(environment.clone({output: {}, ...processOptions})));
     return processInstance;
   }
 

@@ -48,10 +48,7 @@ function ProcessExecution(parentActivity, context) {
     id,
     type,
     broker,
-
-    get environment() {
-      return environment;
-    },
+    environment,
 
     get executionId() {
       return executionId;
@@ -651,7 +648,8 @@ function ProcessExecution(parentActivity, context) {
     if (status !== 'terminated') status = completionType;
     broker.deleteQueue(activityQ.name);
     return broker.publish(exchangeName, `execution.${completionType}.${executionId}`, { ...stateMessage.content,
-      output: environment.output,
+      output: { ...environment.output
+      },
       ...content,
       state: completionType
     }, {

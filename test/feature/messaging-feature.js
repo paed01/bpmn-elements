@@ -173,7 +173,7 @@ Feature('Messaging', () => {
     let definition;
     Given('a intermediate throw event with message, and participant process with a start event waiting for that message', async () => {
       const source = `
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="mainProcess" isExecutable="true">
           <startEvent id="start1" />
           <sequenceFlow id="toTask" sourceRef="start1" targetRef="send" />
@@ -199,7 +199,6 @@ Feature('Messaging', () => {
     let main, participant;
     When('definition is ran', () => {
       end = definition.waitFor('end');
-      [main, participant] = definition.getProcesses();
       definition.run();
     });
 
@@ -208,6 +207,7 @@ Feature('Messaging', () => {
     });
 
     And('main process completed', async () => {
+      [main, participant] = definition.getProcesses();
       expect(main.counters).to.have.property('completed', 1);
     });
 
@@ -227,7 +227,7 @@ Feature('Messaging', () => {
     let definition;
     Given('a task with formatted end message and message flow to participant process, and a start event waiting for that message', async () => {
       const source = `
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
         <collaboration id="Collaboration_0">
           <messageFlow id="fromMainToParticipant" sourceRef="send" targetRef="start2" />

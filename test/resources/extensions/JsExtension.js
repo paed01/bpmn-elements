@@ -24,13 +24,12 @@ function Js(activity, context) {
   };
 }
 
-function ResultVariableIo(activity, context) {
-  const {id, logger, behaviour} = activity;
-  const {result} = behaviour;
+function ResultVariableIo(activity) {
+  const {result} = activity.behaviour;
   if (!result) return;
 
+  const {id, logger, environment} = activity;
   const {broker} = activity;
-  const {environment} = context;
 
   const type = 'js:resultvariable';
   let activityConsumer;

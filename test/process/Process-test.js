@@ -1,9 +1,9 @@
 import factory from '../helpers/factory';
-import testHelpers from '../helpers/testHelpers';
+import JsExtension from '../resources/extensions/JsExtension';
 import SignalTask from '../../src/tasks/SignalTask';
+import testHelpers from '../helpers/testHelpers';
 import { ActivityError } from '../../src/error/Errors';
 import { Process } from '../../src/process/Process';
-import JsExtension from '../resources/extensions/JsExtension';
 
 describe('Process', () => {
   describe('requirements', () => {
@@ -76,17 +76,23 @@ describe('Process', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source, {
-        js: JsExtension,
+        extensions: {
+          js: JsExtension
+        },
       });
       const bp = context.getProcessById('theProcess');
+      expect(bp.behaviour).to.contain({
+        versionTag: '0.0.1',
+        candidateStarterUsers: 'me',
+      });
 
       expect(bp.executionId).to.be.undefined;
-      expect(bp.extensions).to.be.ok;
+      expect(bp.extensions).to.not.be.empty;
 
       bp.run();
 
       expect(bp.executionId).to.be.ok;
-      expect(bp.extensions).to.be.ok;
+      expect(bp.extensions).to.not.be.empty;
     });
   });
 

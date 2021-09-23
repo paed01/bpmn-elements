@@ -27,6 +27,12 @@ Object.defineProperty(exports, "BpmnError", {
     return _BpmnError.default;
   }
 });
+Object.defineProperty(exports, "CallActivity", {
+  enumerable: true,
+  get: function () {
+    return _CallActivity.default;
+  }
+});
 Object.defineProperty(exports, "CancelEventDefinition", {
   enumerable: true,
   get: function () {
@@ -335,6 +341,8 @@ var _Association = _interopRequireDefault(require("./src/flows/Association"));
 var _BoundaryEvent = _interopRequireDefault(require("./src/events/BoundaryEvent"));
 
 var _BpmnError = _interopRequireDefault(require("./src/error/BpmnError"));
+
+var _CallActivity = _interopRequireDefault(require("./src/tasks/CallActivity"));
 
 var _CancelEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/CancelEventDefinition"));
 

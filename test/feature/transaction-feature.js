@@ -18,7 +18,7 @@ Feature('Transaction', () => {
         }
       },
       extensions: {
-        me({broker}, {environment}) {
+        me({broker, environment}) {
           broker.subscribeTmp('event', 'activity.#', (routingKey, {content}) => {
             switch (routingKey) {
               case 'activity.end': {

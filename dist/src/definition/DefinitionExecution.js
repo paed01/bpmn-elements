@@ -5,15 +5,17 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = DefinitionExecution;
 
+var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue"));
+
 var _Api = require("../Api");
+
+var _shared = require("../shared");
 
 var _messageHelper = require("../messageHelper");
 
-var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue"));
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-function DefinitionExecution(definition) {
+function DefinitionExecution(definition, context) {
   const {
     id,
     type,
@@ -21,11 +23,12 @@ function DefinitionExecution(definition) {
     logger,
     environment
   } = definition;
-  const processes = definition.getProcesses();
+  const processes = context.getProcesses();
+  const runningProcesses = [];
   const processIds = processes.map(({
     id: childId
   }) => childId);
-  let executableProcesses = definition.getExecutableProcesses();
+  let executableProcesses = context.getExecutableProcesses();
   const postponed = [];
   broker.assertExchange('execution', 'topic', {
     autoDelete: false,
@@ -72,11 +75,18 @@ function DefinitionExecution(definition) {
       return false;
     },
 
-    processes,
+    getExecutableProcesses() {
+      return executableProcesses.slice();
+    },
+
+    processes: runningProcesses,
     createMessage,
     getApi,
     getState,
     getPostponed,
+    getProcessById,
+    getProcesses,
+    getRunningProcesses,
     execute,
     resume,
     recover,
@@ -113,38 +123,14 @@ function DefinitionExecution(definition) {
     }
 
     logger.debug(`<${executionId} (${id})> execute definition`);
-    activate();
+    runningProcesses.push(...executableProcesses);
+    activate(executableProcesses);
     start();
     return true;
   }
 
-  function resume() {
-    logger.debug(`<${executionId} (${id})> resume`, status, 'definition execution');
-    if (completed) return complete('completed');
-    activate();
-    postponed.splice(0);
-    activityQ.consume(onProcessMessage, {
-      prefetch: 1000,
-      consumerTag: `_definition-activity-${executionId}`
-    });
-    if (completed) return complete('completed');
-
-    switch (status) {
-      case 'init':
-        return start();
-
-      case 'executing':
-        {
-          if (!postponed.length) return complete('completed');
-          break;
-        }
-    }
-
-    processes.forEach(p => p.resume());
-  }
-
   function start() {
-    if (!processes.length) {
+    if (!processIds.length) {
       return publishCompletionMessage('completed');
     }
 
@@ -164,6 +150,31 @@ function DefinitionExecution(definition) {
     });
   }
 
+  function resume() {
+    logger.debug(`<${executionId} (${id})> resume`, status, 'definition execution');
+    if (completed) return complete('completed');
+    activate(runningProcesses);
+    postponed.splice(0);
+    activityQ.consume(onProcessMessage, {
+      prefetch: 1000,
+      consumerTag: `_definition-activity-${executionId}`
+    });
+    if (completed) return complete('completed');
+
+    switch (status) {
+      case 'init':
+        return start();
+
+      case 'executing':
+        {
+          if (!postponed.length) return complete('completed');
+          break;
+        }
+    }
+
+    runningProcesses.forEach(p => p.resume());
+  }
+
   function recover(state) {
     if (!state) return definitionExecution;
     executionId = state.executionId;
@@ -171,10 +182,12 @@ function DefinitionExecution(definition) {
     completed = state.completed;
     status = state.status;
     logger.debug(`<${executionId} (${id})> recover`, status, 'definition execution');
-    state.processes.forEach(processState => {
-      const instance = definition.getProcessById(processState.id);
+    runningProcesses.splice(0);
+    state.processes.map(processState => {
+      const instance = context.getNewProcessById(processState.id);
       if (!instance) return;
       instance.recover(processState);
+      runningProcesses.push(instance);
     });
     return definitionExecution;
   }
@@ -183,68 +196,78 @@ function DefinitionExecution(definition) {
     getApi().stop();
   }
 
-  function activate() {
+  function activate(processList) {
     broker.subscribeTmp('api', '#', onApiMessage, {
       noAck: true,
       consumerTag: '_definition-api-consumer'
     });
-    processes.forEach(p => {
-      p.broker.subscribeTmp('message', 'message.outbound', onMessageOutbound, {
-        noAck: true,
-        consumerTag: '_definition-outbound-message-consumer'
-      });
-      p.broker.subscribeTmp('event', 'activity.signal', onDelegateMessage, {
-        noAck: true,
-        consumerTag: '_definition-signal-consumer',
-        priority: 200
-      });
-      p.broker.subscribeTmp('event', 'activity.message', onDelegateMessage, {
-        noAck: true,
-        consumerTag: '_definition-message-consumer',
-        priority: 200
-      });
-      p.broker.subscribeTmp('event', '#', onEvent, {
-        noAck: true,
-        consumerTag: '_definition-activity-consumer',
-        priority: 100
-      });
-    });
+    processList.forEach(activateProcess);
     activated = true;
+  }
 
-    function onEvent(routingKey, originalMessage) {
-      const message = (0, _messageHelper.cloneMessage)(originalMessage);
-      const content = message.content;
-      const parent = content.parent = content.parent || {};
-      const isDirectChild = processIds.indexOf(content.id) > -1;
+  function activateProcess(bp) {
+    bp.broker.subscribeTmp('message', 'message.outbound', onMessageOutbound, {
+      noAck: true,
+      consumerTag: '_definition-outbound-message-consumer'
+    });
+    bp.broker.subscribeTmp('event', 'activity.signal', onDelegateMessage, {
+      noAck: true,
+      consumerTag: '_definition-signal-consumer',
+      priority: 200
+    });
+    bp.broker.subscribeTmp('event', 'activity.message', onDelegateMessage, {
+      noAck: true,
+      consumerTag: '_definition-message-consumer',
+      priority: 200
+    });
+    bp.broker.subscribeTmp('event', 'activity.call', onCallActivity, {
+      noAck: true,
+      consumerTag: '_definition-call-consumer',
+      priority: 200
+    });
+    bp.broker.subscribeTmp('event', '#', onChildEvent, {
+      noAck: true,
+      consumerTag: '_definition-activity-consumer',
+      priority: 100
+    });
+  }
 
-      if (isDirectChild) {
-        parent.executionId = executionId;
-      } else {
-        content.parent = (0, _messageHelper.pushParent)(parent, {
-          id,
-          type,
-          executionId
-        });
-      }
+  function onChildEvent(routingKey, originalMessage) {
+    const message = (0, _messageHelper.cloneMessage)(originalMessage);
+    const content = message.content;
+    const parent = content.parent = content.parent || {};
+    const isDirectChild = processIds.indexOf(content.id) > -1;
 
-      broker.publish('event', routingKey, content, { ...message.properties,
-        mandatory: false
+    if (isDirectChild) {
+      parent.executionId = executionId;
+    } else {
+      content.parent = (0, _messageHelper.pushParent)(parent, {
+        id,
+        type,
+        executionId
       });
-      if (!isDirectChild) return;
-      activityQ.queueMessage(message.fields, (0, _messageHelper.cloneContent)(content), message.properties);
     }
+
+    broker.publish('event', routingKey, content, { ...message.properties,
+      mandatory: false
+    });
+    if (!isDirectChild) return;
+    activityQ.queueMessage(message.fields, (0, _messageHelper.cloneContent)(content), message.properties);
   }
 
   function deactivate() {
     broker.cancel('_definition-api-consumer');
     broker.cancel(`_definition-activity-${executionId}`);
-    processes.forEach(p => {
-      p.broker.cancel('_definition-outbound-message-consumer');
-      p.broker.cancel('_definition-activity-consumer');
-      p.broker.cancel('_definition-signal-consumer');
-      p.broker.cancel('_definition-message-consumer');
-    });
+    runningProcesses.forEach(deactivateProcess);
     activated = false;
+  }
+
+  function deactivateProcess(bp) {
+    bp.broker.cancel('_definition-outbound-message-consumer');
+    bp.broker.cancel('_definition-activity-consumer');
+    bp.broker.cancel('_definition-signal-consumer');
+    bp.broker.cancel('_definition-message-consumer');
+    bp.broker.cancel('_definition-call-consumer');
   }
 
   function onProcessMessage(routingKey, message) {
@@ -253,7 +276,8 @@ function DefinitionExecution(definition) {
     const {
       id: childId,
       type: activityType,
-      executionId: childExecutionId
+      executionId: childExecutionId,
+      inbound
     } = content;
     if (isRedelivered && message.properties.persistent === false) return;
 
@@ -270,7 +294,7 @@ function DefinitionExecution(definition) {
 
       case 'process.leave':
         {
-          return onChildCompleted();
+          return onProcessCompleted();
         }
     }
 
@@ -282,36 +306,71 @@ function DefinitionExecution(definition) {
         status = 'executing';
         break;
 
+      case 'process.end':
+        if (inbound && inbound.length) {
+          const calledFrom = inbound[0];
+          getApiByProcess({
+            content: calledFrom
+          }).signal({
+            executionId: calledFrom.executionId,
+            output: { ...content.output
+            }
+          });
+        } else {
+          Object.assign(environment.output, content.output);
+        }
+
+        break;
+
       case 'process.error':
         {
-          processes.slice().forEach(p => {
-            if (p.id !== childId) p.stop();
-          });
-          complete('error', {
-            error: content.error
-          });
+          if (inbound && inbound.length) {
+            const calledFrom = inbound[0];
+            getApiByProcess({
+              content: calledFrom
+            }).sendApiMessage('error', {
+              executionId: calledFrom.executionId,
+              error: content.error
+            }, {
+              mandatory: true,
+              type: 'error'
+            });
+          } else {
+            runningProcesses.slice().forEach(p => {
+              if (p.id !== childId) p.stop();
+            });
+            complete('error', {
+              error: content.error
+            });
+          }
+
           break;
         }
     }
 
     function stateChangeMessage(postponeMessage = true) {
-      const previousMsg = popPostponed(childId);
+      const previousMsg = popPostponed(childExecutionId);
       if (previousMsg) previousMsg.ack();
       if (postponeMessage) postponed.push(message);
     }
 
-    function popPostponed(postponedId) {
-      const idx = postponed.findIndex(msg => msg.content.id === postponedId);
+    function popPostponed(postponedExecutionId) {
+      const idx = postponed.findIndex(msg => msg.content.executionId === postponedExecutionId);
 
       if (idx > -1) {
         return postponed.splice(idx, 1)[0];
       }
     }
 
-    function onChildCompleted() {
+    function onProcessCompleted() {
       stateChangeMessage(false);
       if (isRedelivered) return message.ack();
-      logger.debug(`<${executionId} (${id})> left <${childId}> (${activityType}), pending runs ${postponed.length}`);
+      logger.debug(`<${executionId} (${id})> left <${childExecutionId} (${childId})> (${activityType}), pending runs ${postponed.length}`);
+
+      if (inbound && inbound.length) {
+        const bp = removeProcessByExecutionId(childExecutionId);
+        deactivateProcess(bp);
+      }
 
       if (!postponed.length) {
         message.ack();
@@ -320,10 +379,10 @@ function DefinitionExecution(definition) {
     }
 
     function onStopped() {
-      logger.debug(`<${executionId} (${id})> stop definition execution (stop process executions ${postponed.length})`);
+      logger.debug(`<${executionId} (${id})> stop definition execution (stop process executions ${runningProcesses.length})`);
       activityQ.close();
       deactivate();
-      processes.slice().forEach(p => {
+      runningProcesses.slice().forEach(p => {
         p.stop();
       });
       stopped = true;
@@ -342,22 +401,14 @@ function DefinitionExecution(definition) {
 
     if (delegate && id === message.content.id) {
       const referenceId = (0, _getPropertyValue.default)(message, 'content.message.id');
-
-      for (const bp of processes) {
-        if (bp.isRunning) continue;
-
-        if (bp.getStartActivities({
-          referenceId,
-          referenceType: messageType
-        }).length) {
-          logger.debug(`<${executionId} (${id})> start <${bp.id}>`);
-          bp.run();
-        }
-      }
+      startProcessesByMessage({
+        referenceId,
+        referenceType: messageType
+      });
     }
 
     if (delegate) {
-      for (const bp of processes) {
+      for (const bp of runningProcesses.slice()) {
         bp.broker.publish('api', routingKey, (0, _messageHelper.cloneContent)(message.content), message.properties);
       }
     }
@@ -375,18 +426,158 @@ function DefinitionExecution(definition) {
     }
   }
 
+  function startProcessesByMessage(reference) {
+    if (processes.length < 2) return;
+
+    for (const bp of processes) {
+      if (bp.isExecutable) continue;
+      if (!bp.getStartActivities(reference).length) continue;
+      logger.debug(`<${executionId} (${id})> start <${bp.id}>`);
+
+      if (!bp.executionId) {
+        activateProcess(bp);
+        runningProcesses.push(bp);
+        bp.init();
+        return bp.run();
+      }
+
+      const targetProcess = context.getNewProcessById(bp.id);
+      activateProcess(targetProcess);
+      runningProcesses.push(targetProcess);
+      targetProcess.init();
+      targetProcess.run();
+    }
+  }
+
+  function onMessageOutbound(routingKey, message) {
+    const content = message.content;
+    const {
+      target,
+      source
+    } = content;
+    logger.debug(`<${executionId} (${id})> conveying message from <${source.processId}.${source.id}> to`, target.id ? `<${target.processId}.${target.id}>` : `<${target.processId}>`);
+    const targetProcesses = getProcessesById(target.processId);
+    if (!targetProcesses.length) return;
+    let targetProcess, found;
+
+    for (const bp of targetProcesses) {
+      if (!bp.executionId) {
+        targetProcess = bp;
+        continue;
+      }
+
+      bp.sendMessage(message);
+      found = true;
+    }
+
+    if (found) return;
+    targetProcess = targetProcess || context.getNewProcessById(target.processId);
+    activateProcess(targetProcess);
+    runningProcesses.push(targetProcess);
+    targetProcess.init();
+    targetProcess.run();
+    targetProcess.sendMessage(message);
+  }
+
+  function runAdjecentProcessById(processId) {
+    let targetProcess = getProcessesById(processId);
+    if (!targetProcess) return;
+
+    if (targetProcess.executionId) {
+      targetProcess = context.getNewProcessById(processId);
+    }
+
+    activateProcess(targetProcess);
+    runningProcesses.push(targetProcess);
+    targetProcess.init();
+    targetProcess.run();
+    return targetProcess;
+  }
+
+  function onCallActivity(routingKey, message) {
+    const content = message.content;
+    const {
+      calledElement,
+      id: fromId,
+      executionId: fromExecutionId,
+      name: fromName,
+      parent: fromParent
+    } = content;
+    const bpExecutionId = `${(0, _shared.brokerSafeId)(calledElement)}_${fromExecutionId}`;
+
+    if (content.isRecovered) {
+      if (getProcessByExecutionId(bpExecutionId)) return;
+    }
+
+    const targetProcess = context.getNewProcessById(calledElement, {
+      settings: {
+        calledFrom: (0, _messageHelper.cloneContent)({
+          id: fromId,
+          name: fromName,
+          executionId: content.executionId,
+          parent: content.parent
+        })
+      }
+    });
+    if (!targetProcess) return;
+    logger.debug(`<${executionId} (${id})> call from <${fromParent.id}.${fromId}> to <${calledElement}>`);
+    activateProcess(targetProcess);
+    runningProcesses.push(targetProcess);
+    targetProcess.init(bpExecutionId);
+    targetProcess.run({
+      inbound: [(0, _messageHelper.cloneContent)(content)]
+    });
+  }
+
+  function onDelegateMessage(routingKey, executeMessage) {
+    const content = executeMessage.content;
+    const messageType = executeMessage.properties.type;
+    const delegateMessage = executeMessage.content.message;
+    const reference = context.getActivityById(delegateMessage.id);
+    const message = reference && reference.resolve(executeMessage);
+    logger.debug(`<${executionId} (${id})>`, reference ? `${messageType} <${delegateMessage.id}>` : `anonymous ${messageType}`, `event received from <${content.parent.id}.${content.id}>. Delegating.`);
+    getApi().sendApiMessage(messageType, {
+      source: {
+        id: content.id,
+        executionId: content.executionId,
+        type: content.type,
+        parent: (0, _messageHelper.cloneParent)(content.parent)
+      },
+      message,
+      originalMessage: content.message
+    }, {
+      delegate: true,
+      type: messageType
+    });
+    broker.publish('event', `definition.${messageType}`, createMessage({
+      message: message && (0, _messageHelper.cloneContent)(message)
+    }), {
+      type: messageType
+    });
+  }
+
+  function getProcesses() {
+    const result = runningProcesses.slice();
+
+    for (const bp of processes) {
+      if (!result.find(runningBp => bp.id === runningBp.id)) result.push(bp);
+    }
+
+    return result;
+  }
+
   function getState() {
     return {
       executionId,
       stopped,
       completed,
       status,
-      processes: processes.map(p => p.getState())
+      processes: runningProcesses.map(bp => bp.getState())
     };
   }
 
   function getPostponed(...args) {
-    return processes.reduce((result, p) => {
+    return runningProcesses.reduce((result, p) => {
       result = result.concat(p.getPostponed(...args));
       return result;
     }, []);
@@ -400,7 +591,8 @@ function DefinitionExecution(definition) {
     if (status !== 'terminated') status = completionType;
     broker.deleteQueue(activityQ.name);
     return broker.publish('execution', `execution.${completionType}.${executionId}`, { ...initMessage.content,
-      output: environment.output,
+      output: { ...environment.output
+      },
       ...content,
       state: completionType
     }, {
@@ -410,40 +602,26 @@ function DefinitionExecution(definition) {
     });
   }
 
-  function onMessageOutbound(routingKey, message) {
-    const content = message.content;
-    const {
-      target,
-      source
-    } = content;
-    logger.debug(`<${executionId} (${id})> conveying message from <${source.processId}.${source.id}> to`, target.id ? `<${target.processId}.${target.id}>` : `<${target.processId}>`);
-    const targetProcess = getProcessById(target.processId);
-    targetProcess.sendMessage(message);
-  }
-
-  function onDelegateMessage(routingKey, executeMessage) {
-    const content = executeMessage.content;
-    const messageType = executeMessage.properties.type;
-    const delegateMessage = executeMessage.content.message;
-    const reference = definition.getElementById(delegateMessage.id);
-    const message = reference && reference.resolve(executeMessage);
-    logger.debug(`<${executionId} (${id})>`, reference ? `${messageType} <${delegateMessage.id}>` : `anonymous ${messageType}`, `event received from <${content.parent.id}.${content.id}>. Delegating.`);
-    getApi().sendApiMessage(messageType, {
-      message: message,
-      originalMessage: content.message
-    }, {
-      delegate: true,
-      type: messageType
-    });
-    broker.publish('event', `definition.${messageType}`, createMessage({
-      message: message && (0, _messageHelper.cloneContent)(message)
-    }), {
-      type: messageType
-    });
-  }
-
   function getProcessById(processId) {
-    return processes.find(p => p.id === processId);
+    return getProcesses().find(bp => bp.id === processId);
+  }
+
+  function getProcessesById(processId) {
+    return getProcesses().filter(bp => bp.id === processId);
+  }
+
+  function getProcessByExecutionId(processExecutionId) {
+    return runningProcesses.find(bp => bp.executionId === processExecutionId);
+  }
+
+  function getRunningProcesses() {
+    return runningProcesses.filter(bp => bp.executionId);
+  }
+
+  function removeProcessByExecutionId(processExecutionId) {
+    const idx = runningProcesses.findIndex(p => p.executionId === processExecutionId);
+    if (idx === -1) return;
+    return runningProcesses.splice(idx, 1)[0];
   }
 
   function publishCompletionMessage(completionType, content) {
@@ -472,7 +650,7 @@ function DefinitionExecution(definition) {
     const content = apiMessage.content;
 
     if (content.executionId !== executionId) {
-      return getProcessApi(apiMessage);
+      return getApiByProcess(apiMessage);
     }
 
     const api = (0, _Api.DefinitionApi)(broker, apiMessage);
@@ -488,24 +666,24 @@ function DefinitionExecution(definition) {
     return api;
   }
 
-  function getProcessApi(message) {
+  function getApiByProcess(message) {
     const content = message.content;
-    let api = getApiByProcessId(content.id);
+    let api = getApiByExecutionId(content.executionId, message);
     if (api) return api;
     if (!content.parent) return;
-    api = getApiByProcessId(content.parent.id);
+    api = getApiByExecutionId(content.parent.executionId, message);
     if (api) return api;
     if (!content.parent.path) return;
 
     for (let i = 0; i < content.parent.path.length; i++) {
-      api = getApiByProcessId(content.parent.path[i].id);
+      api = getApiByExecutionId(content.parent.path[i].executionId, message);
       if (api) return api;
     }
+  }
 
-    function getApiByProcessId(parentId) {
-      const processInstance = getProcessById(parentId);
-      if (!processInstance) return;
-      return processInstance.getApi(message);
-    }
+  function getApiByExecutionId(parentExecutionId, message) {
+    const processInstance = getProcessByExecutionId(parentExecutionId);
+    if (!processInstance) return;
+    return processInstance.getApi(message);
   }
 }

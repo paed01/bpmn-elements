@@ -26,9 +26,7 @@ export default function ProcessExecution(parentActivity, context) {
     id,
     type,
     broker,
-    get environment() {
-      return environment;
-    },
+    environment,
     get executionId() {
       return executionId;
     },
@@ -559,7 +557,7 @@ export default function ProcessExecution(parentActivity, context) {
 
     return broker.publish(exchangeName, `execution.${completionType}.${executionId}`, {
       ...stateMessage.content,
-      output: environment.output,
+      output: {...environment.output},
       ...content,
       state: completionType,
     }, {type: completionType, mandatory: completionType === 'error'});

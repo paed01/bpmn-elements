@@ -20,7 +20,7 @@ export function Definition(context, options) {
 
   const logger = environment.Logger(type.toLowerCase());
 
-  let execution, executionId, processes, executableProcesses, postponedMessage, stateMessage, stopped, consumingRunQ;
+  let execution, executionId, postponedMessage, stateMessage, stopped, consumingRunQ;
   let status;
 
   let counters = {
@@ -58,10 +58,11 @@ export function Definition(context, options) {
     getState,
     getActivityById,
     getElementById,
+    getExecutableProcesses,
     getPostponed,
     getProcesses,
-    getExecutableProcesses,
     getProcessById,
+    getRunningProcesses,
     sendMessage,
     recover,
     resume,
@@ -411,24 +412,22 @@ export function Definition(context, options) {
   }
 
   function getProcesses() {
-    if (!processes) loadProcesses();
-    return processes;
+    if (execution) return execution.getProcesses();
+    return context.getProcesses();
   }
 
   function getExecutableProcesses() {
-    if (!processes) loadProcesses();
-    return executableProcesses;
+    if (execution) return execution.getExecutableProcesses();
+    return context.getExecutableProcesses();
+  }
+
+  function getRunningProcesses() {
+    if (!execution) return [];
+    return execution.processes.slice();
   }
 
   function getProcessById(processId) {
     return getProcesses().find((p) => p.id === processId);
-  }
-
-  function loadProcesses() {
-    if (processes) return processes;
-    executableProcesses = context.getExecutableProcesses() || [];
-    processes = context.getProcesses() || [];
-    logger.debug(`<${id}> found ${processes.length} processes`);
   }
 
   function getActivityById(childId) {

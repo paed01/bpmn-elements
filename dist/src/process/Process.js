@@ -55,7 +55,7 @@ function Process(processDef, context) {
     },
 
     get executionId() {
-      return executionId;
+      return executionId || initExecutionId;
     },
 
     get status() {
@@ -119,8 +119,8 @@ function Process(processDef, context) {
   });
   return processApi;
 
-  function init() {
-    initExecutionId = (0, _shared.getUniqueId)(id);
+  function init(useAsExecutionId) {
+    initExecutionId = useAsExecutionId || (0, _shared.getUniqueId)(id);
     logger.debug(`<${id}> initialized with executionId <${initExecutionId}>`);
     publishEvent('init', createMessage({
       executionId: initExecutionId
@@ -163,6 +163,7 @@ function Process(processDef, context) {
     counters = { ...counters,
       ...state.counters
     };
+    environment.recover(state.environment);
 
     if (state.execution) {
       execution = (0, _ProcessExecution.default)(processApi, context).recover(state.execution);
@@ -301,7 +302,12 @@ function Process(processDef, context) {
         {
           status = undefined;
           broker.cancel('_process-api');
-          publishEvent('leave');
+          const {
+            output,
+            ...rest
+          } = content; // eslint-disable-line no-unused-vars
+
+          publishEvent('leave', rest);
           break;
         }
     }
@@ -365,10 +371,10 @@ function Process(processDef, context) {
   }
 
   function publishEvent(state, content) {
-    if (!content) content = createMessage();
-    broker.publish('event', `process.${state}`, { ...content,
+    const eventContent = createMessage({ ...content,
       state
-    }, {
+    });
+    broker.publish('event', `process.${state}`, eventContent, {
       type: state,
       mandatory: state === 'error'
     });
@@ -443,6 +449,7 @@ function Process(processDef, context) {
       id,
       type,
       name,
+      executionId: processApi.executionId,
       parent: { ...parent
       },
       ...override
@@ -451,13 +458,15 @@ function Process(processDef, context) {
 
   function getState() {
     return createMessage({
-      executionId,
+      environment: environment.getState(),
       status,
       stopped,
       counters: { ...counters
       },
       broker: broker.getState(true),
-      execution: execution && execution.getState()
+      execution: execution && execution.getState(),
+      output: { ...environment.output
+      }
     });
   }
 }
