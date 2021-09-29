@@ -115,7 +115,7 @@ export default function SequenceFlow(flowDef, {environment}) {
   }
 
   function getState() {
-    const result = {
+    return {
       id,
       type,
       name,
@@ -123,9 +123,8 @@ export default function SequenceFlow(flowDef, {environment}) {
       targetId,
       isDefault,
       counters: {...counters},
+      broker: broker.getState(),
     };
-    result.broker = broker.getState();
-    return result;
   }
 
   function recover(state) {

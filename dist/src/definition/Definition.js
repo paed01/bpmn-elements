@@ -465,7 +465,7 @@ function Definition(context, options) {
       },
       environment: environment.getState(),
       execution: execution && execution.getState(),
-      broker: broker.getState()
+      broker: broker.getState(true)
     });
   }
 

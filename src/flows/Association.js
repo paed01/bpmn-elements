@@ -102,16 +102,15 @@ export default function Association(associationDef, {environment}) {
   }
 
   function getState() {
-    const result = {
+    return {
       id,
       type,
       name,
       sourceId,
       targetId,
       counters: {...counters},
+      broker: broker.getState(true),
     };
-    result.broker = broker.getState();
-    return result;
   }
 
   function recover(state) {

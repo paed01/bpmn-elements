@@ -1,13 +1,18 @@
 Changelog
 =========
 
+# Next version
+
+Call activity...
+
 # 6.0.0
 
-Isomorphism.
+Isomorphism and state.
 
 ## Breaking
 - Stop calling `setTimeout.call(owner, ...args)` in default Timers.js. Doesn't work in browsers and results in `TypeError: Illegal invocation`. Hence, timeout callback context is no longer the owner of the timer. Altough, it works fine in nodejs. So feel free to build your own [Timers](/docs/Timers.md) and pass it as an [option](/docs/Definition.md).
 - Removed sequence flow function `evaluateCondition` since it not used and was inconsistent. Use `getCondition().execute(...args)` instead.
+- Generate a slimmer state. Element broker state now only contains queues that has pending messages and sometimes an exchange with undelivered message. Not really breaking unless broker state was inspected for some reason
 
 ## Bugfix
 - Sequence flow with expression condition that throws will terminate the run

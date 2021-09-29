@@ -406,7 +406,7 @@ export function Definition(context, options) {
       counters: {...counters},
       environment: environment.getState(),
       execution: execution && execution.getState(),
-      broker: broker.getState(),
+      broker: broker.getState(true),
     });
   }
 

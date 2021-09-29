@@ -354,7 +354,7 @@ describe('Process', () => {
       const state = bp.getState();
 
       expect(state.status).to.be.undefined;
-      expect(state).to.have.property('broker').that.is.ok;
+      expect(state.broker).to.not.be.ok;
       expect(state).to.have.property('counters');
       expect(state.status).to.be.undefined;
       expect(state.execution).to.be.undefined;

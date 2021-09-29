@@ -142,7 +142,7 @@ function SequenceFlow(flowDef, {
   }
 
   function getState() {
-    const result = {
+    return {
       id,
       type,
       name,
@@ -150,10 +150,9 @@ function SequenceFlow(flowDef, {
       targetId,
       isDefault,
       counters: { ...counters
-      }
+      },
+      broker: broker.getState()
     };
-    result.broker = broker.getState();
-    return result;
   }
 
   function recover(state) {

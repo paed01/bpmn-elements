@@ -398,7 +398,7 @@ describe('Definition', () => {
       const state = definition.getState();
 
       expect(state.status, 'status').to.be.undefined;
-      expect(state).to.have.property('broker').that.is.ok;
+      expect(state).to.have.property('broker').that.is.not.ok;
       expect(state.execution).to.be.undefined;
     });
 

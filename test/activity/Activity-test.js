@@ -2052,7 +2052,7 @@ describe('Activity', () => {
 
       expect(state.status).to.be.undefined;
       expect(state.counters).to.eql({discarded: 0, taken: 0});
-      expect(state).to.have.property('broker').with.property('queues');
+      expect(state).to.have.property('broker').that.is.not.ok;
       expect(state.execution).to.be.undefined;
     });
 
@@ -2109,7 +2109,7 @@ describe('Activity', () => {
 
       expect(state.status).to.be.undefined;
       expect(state.counters).to.eql({discarded: 0, taken: 1});
-      expect(state).to.have.property('broker').with.property('queues');
+      expect(state).to.have.property('broker').that.is.not.ok;
     });
 
     it('returns expected state when completed twice', () => {
@@ -2122,7 +2122,7 @@ describe('Activity', () => {
 
       expect(state.status).to.be.undefined;
       expect(state.counters).to.eql({discarded: 0, taken: 2});
-      expect(state).to.have.property('broker').with.property('queues');
+      expect(state).to.have.property('broker').that.is.not.ok;
     });
 
     it('returns expected state when discarded', () => {
@@ -2134,7 +2134,7 @@ describe('Activity', () => {
 
       expect(state.status).to.be.undefined;
       expect(state.counters).to.eql({discarded: 1, taken: 0});
-      expect(state).to.have.property('broker').with.property('queues');
+      expect(state).to.have.property('broker').that.is.not.ok;
     });
 
     it('returns expected state when discarded and completed', () => {
@@ -2147,7 +2147,7 @@ describe('Activity', () => {
 
       expect(state.status).to.be.undefined;
       expect(state.counters).to.eql({discarded: 1, taken: 1});
-      expect(state).to.have.property('broker').with.property('queues');
+      expect(state).to.have.property('broker').that.is.not.ok;
     });
   });
 

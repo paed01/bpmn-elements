@@ -1124,7 +1124,7 @@ function Activity(Behaviour, activityDef, context) {
       },
       counters: { ...counters
       },
-      broker: broker.getState(),
+      broker: broker.getState(true),
       execution: execution && execution.getState()
     };
   }

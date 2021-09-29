@@ -927,7 +927,7 @@ export default function Activity(Behaviour, activityDef, context) {
       stopped,
       behaviour: {...behaviour},
       counters: {...counters},
-      broker: broker.getState(),
+      broker: broker.getState(true),
       execution: execution && execution.getState(),
     };
   }

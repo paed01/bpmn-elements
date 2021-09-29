@@ -1,0 +1,4252 @@
+{
+  "id": "Definitions_1",
+  "type": "bpmn:Definitions",
+  "executionId": "Definitions_1_381cda3098",
+  "status": "executing",
+  "counters": {
+    "completed": 0,
+    "discarded": 0
+  },
+  "environment": {
+    "settings": {
+      "enableDummyService": true
+    },
+    "variables": {
+      "fields": {
+        "routingKey": "run.execute",
+        "exchange": "run",
+        "consumerTag": "_process-run"
+      },
+      "content": {
+        "id": "participantProcess",
+        "type": "bpmn:Process",
+        "parent": {
+          "id": "Definitions_1",
+          "type": "bpmn:Definitions"
+        },
+        "executionId": "participantProcess_84aae36f5e"
+      },
+      "properties": {
+        "messageId": "smq.mid-5f8379c31f",
+        "timestamp": 1632888328813
+      },
+      "stopLoop": true
+    },
+    "output": {}
+  },
+  "execution": {
+    "executionId": "Definitions_1_381cda3098",
+    "stopped": false,
+    "completed": false,
+    "status": "executing",
+    "processes": [
+      {
+        "id": "motherOfAll",
+        "type": "bpmn:Process",
+        "parent": {
+          "id": "Definitions_1",
+          "type": "bpmn:Definitions"
+        },
+        "executionId": "motherOfAll_f4e353e86a",
+        "status": "executing",
+        "counters": {
+          "completed": 0,
+          "discarded": 0,
+          "terminated": 0
+        },
+        "broker": {
+          "exchanges": [
+            {
+              "name": "run",
+              "type": "topic",
+              "options": {
+                "durable": true,
+                "autoDelete": false
+              },
+              "bindings": [
+                {
+                  "id": "run-q/run.#",
+                  "options": {
+                    "priority": 0
+                  },
+                  "queueName": "run-q",
+                  "pattern": "run.#"
+                }
+              ]
+            },
+            {
+              "name": "format",
+              "type": "topic",
+              "options": {
+                "durable": true,
+                "autoDelete": false
+              },
+              "bindings": [
+                {
+                  "id": "format-run-q/run.#",
+                  "options": {
+                    "priority": 0
+                  },
+                  "queueName": "format-run-q",
+                  "pattern": "run.#"
+                }
+              ]
+            },
+            {
+              "name": "execution",
+              "type": "topic",
+              "options": {
+                "durable": true,
+                "autoDelete": false
+              },
+              "bindings": [
+                {
+                  "id": "execution-q/execution.#",
+                  "options": {
+                    "priority": 0
+                  },
+                  "queueName": "execution-q",
+                  "pattern": "execution.#"
+                }
+              ]
+            },
+            {
+              "name": "message",
+              "type": "topic",
+              "options": {
+                "durable": true,
+                "autoDelete": true
+              }
+            }
+          ],
+          "queues": [
+            {
+              "name": "run-q",
+              "options": {
+                "autoDelete": false,
+                "durable": true
+              },
+              "messages": [
+                {
+                  "fields": {
+                    "routingKey": "run.execute",
+                    "exchange": "run",
+                    "consumerTag": "_process-run"
+                  },
+                  "content": {
+                    "id": "motherOfAll",
+                    "type": "bpmn:Process",
+                    "parent": {
+                      "id": "Definitions_1",
+                      "type": "bpmn:Definitions"
+                    },
+                    "executionId": "motherOfAll_f4e353e86a"
+                  },
+                  "properties": {
+                    "messageId": "smq.mid-2cac75c73c",
+                    "timestamp": 1632888328714
+                  }
+                }
+              ]
+            },
+            {
+              "name": "format-run-q",
+              "options": {
+                "autoDelete": false,
+                "durable": true
+              }
+            },
+            {
+              "name": "execution-q",
+              "options": {
+                "autoDelete": false,
+                "durable": true
+              }
+            },
+            {
+              "name": "execute-motherOfAll_f4e353e86a-q",
+              "options": {
+                "autoDelete": false,
+                "durable": true
+              },
+              "messages": [
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event",
+                    "consumerTag": "_process-activity-motherOfAll_f4e353e86a"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "id": "toFirstScriptTask",
+                        "sequenceId": "toFirstScriptTask_take_e96ca67957",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "StartEvent_1",
+                        "targetId": "scriptTask1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "motherOfAll",
+                          "type": "bpmn:Process"
+                        }
+                      }
+                    ],
+                    "executionId": "scriptTask1_38afad9724",
+                    "id": "scriptTask1",
+                    "type": "bpmn:ScriptTask",
+                    "name": "Script\n",
+                    "parent": {
+                      "id": "motherOfAll",
+                      "type": "bpmn:Process",
+                      "executionId": "motherOfAll_f4e353e86a"
+                    },
+                    "state": "leave",
+                    "isRootScope": true,
+                    "outbound": [
+                      {
+                        "action": "take",
+                        "id": "toFirstUserTask"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-b25e575322",
+                    "timestamp": 1632888328752
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event",
+                    "consumerTag": "_process-activity-motherOfAll_f4e353e86a"
+                  },
+                  "content": {
+                    "executionId": "StartEvent_1_7bb087152b",
+                    "id": "StartEvent_1",
+                    "type": "bpmn:StartEvent",
+                    "name": "Start",
+                    "parent": {
+                      "id": "motherOfAll",
+                      "type": "bpmn:Process",
+                      "executionId": "motherOfAll_f4e353e86a"
+                    },
+                    "isStart": true,
+                    "state": "leave",
+                    "isRootScope": true,
+                    "outbound": [
+                      {
+                        "action": "take",
+                        "id": "toFirstScriptTask"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-937fa4a95e",
+                    "timestamp": 1632888328752
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event",
+                    "consumerTag": "_process-activity-motherOfAll_f4e353e86a"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "id": "toFirstUserTask",
+                        "sequenceId": "toFirstUserTask_take_baa5ee0aec",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "scriptTask1",
+                        "targetId": "userTask1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "motherOfAll",
+                          "type": "bpmn:Process"
+                        }
+                      }
+                    ],
+                    "executionId": "userTask1_684fd26c31",
+                    "id": "userTask1",
+                    "type": "bpmn:UserTask",
+                    "name": "Wait for user",
+                    "parent": {
+                      "id": "motherOfAll",
+                      "type": "bpmn:Process",
+                      "executionId": "motherOfAll_f4e353e86a"
+                    },
+                    "state": "leave",
+                    "isRootScope": true,
+                    "output": {
+                      "id": "userTask1"
+                    },
+                    "outbound": [
+                      {
+                        "action": "take",
+                        "id": "toSubProcess"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "correlationId": "Definitions_1_signal_5fc072c3d9",
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-af9c8d7412",
+                    "timestamp": 1632888328782
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event",
+                    "consumerTag": "_process-activity-motherOfAll_f4e353e86a"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "id": "toPickMe1",
+                        "sequenceId": "toPickMe1_take_02ed994da9",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "manyDecisions",
+                        "targetId": "noPickMeTask",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "motherOfAll",
+                          "type": "bpmn:Process"
+                        }
+                      }
+                    ],
+                    "executionId": "noPickMeTask_4aecba5c60",
+                    "id": "noPickMeTask",
+                    "type": "bpmn:Task",
+                    "name": "No! Pick me",
+                    "parent": {
+                      "id": "motherOfAll",
+                      "type": "bpmn:Process",
+                      "executionId": "motherOfAll_f4e353e86a"
+                    },
+                    "state": "leave",
+                    "isRootScope": true,
+                    "outbound": [
+                      {
+                        "action": "take",
+                        "id": "toJoin1"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-761d958ab1",
+                    "timestamp": 1632888328802
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event",
+                    "consumerTag": "_process-activity-motherOfAll_f4e353e86a"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "id": "toPickMe3",
+                        "sequenceId": "toPickMe3_take_453c98dc0d",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "manyDecisions",
+                        "targetId": "pickMeTask",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "motherOfAll",
+                          "type": "bpmn:Process"
+                        }
+                      }
+                    ],
+                    "executionId": "pickMeTask_cc7cc558f2",
+                    "id": "pickMeTask",
+                    "type": "bpmn:Task",
+                    "name": "Pick me",
+                    "parent": {
+                      "id": "motherOfAll",
+                      "type": "bpmn:Process",
+                      "executionId": "motherOfAll_f4e353e86a"
+                    },
+                    "state": "leave",
+                    "isRootScope": true,
+                    "outbound": [
+                      {
+                        "action": "take",
+                        "id": "toJoin3"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-41d28ee827",
+                    "timestamp": 1632888328804
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.wait",
+                    "exchange": "event",
+                    "consumerTag": "_process-activity-motherOfAll_f4e353e86a"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "id": "toFirstUserTask",
+                        "sequenceId": "toFirstUserTask_take_1821d1e428",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "scriptTask1",
+                        "targetId": "userTask1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "motherOfAll",
+                          "type": "bpmn:Process"
+                        }
+                      }
+                    ],
+                    "executionId": "userTask1_5964ff1b8e",
+                    "id": "userTask1",
+                    "type": "bpmn:UserTask",
+                    "name": "Wait for user",
+                    "parent": {
+                      "id": "motherOfAll",
+                      "type": "bpmn:Process",
+                      "executionId": "motherOfAll_f4e353e86a"
+                    },
+                    "state": "wait",
+                    "isRootScope": true
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "messageId": "smq.mid-08ba6783e9",
+                    "timestamp": 1632888328835
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event",
+                    "consumerTag": "_process-activity-motherOfAll_f4e353e86a"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "id": "toReturnScriptTask",
+                        "sequenceId": "toReturnScriptTask_take_fe2d1b0bb6",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "scriptTask2",
+                        "targetId": "scriptTask1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "motherOfAll",
+                          "type": "bpmn:Process"
+                        }
+                      }
+                    ],
+                    "executionId": "scriptTask1_7c8ac88cb2",
+                    "id": "scriptTask1",
+                    "type": "bpmn:ScriptTask",
+                    "name": "Script\n",
+                    "parent": {
+                      "id": "motherOfAll",
+                      "type": "bpmn:Process",
+                      "executionId": "motherOfAll_f4e353e86a"
+                    },
+                    "state": "leave",
+                    "isRootScope": true,
+                    "outbound": [
+                      {
+                        "action": "take",
+                        "id": "toFirstUserTask"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-dd2c7cce44",
+                    "timestamp": 1632888328835
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event",
+                    "consumerTag": "_process-activity-motherOfAll_f4e353e86a"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "id": "toLoop",
+                        "sequenceId": "toLoop_take_b36c72cbf1",
+                        "type": "bpmn:SequenceFlow",
+                        "name": "Enter loop",
+                        "sourceId": "decision",
+                        "targetId": "scriptTask2",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "motherOfAll",
+                          "type": "bpmn:Process"
+                        }
+                      }
+                    ],
+                    "executionId": "scriptTask2_ef61cd382b",
+                    "id": "scriptTask2",
+                    "type": "bpmn:ScriptTask",
+                    "name": "Only run me once",
+                    "parent": {
+                      "id": "motherOfAll",
+                      "type": "bpmn:Process",
+                      "executionId": "motherOfAll_f4e353e86a"
+                    },
+                    "state": "leave",
+                    "isRootScope": true,
+                    "outbound": [
+                      {
+                        "action": "take",
+                        "id": "toReturnScriptTask"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-6fd14aee8e",
+                    "timestamp": 1632888328835
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event",
+                    "consumerTag": "_process-activity-motherOfAll_f4e353e86a"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "discard",
+                        "id": "toFinal",
+                        "isDefault": true,
+                        "sequenceId": "toFinal_discard_ec26319258",
+                        "discardSequence": [
+                          "decision"
+                        ],
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "decision",
+                        "targetId": "theEnd",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "motherOfAll",
+                          "type": "bpmn:Process"
+                        }
+                      }
+                    ],
+                    "discardSequence": [
+                      "decision"
+                    ],
+                    "executionId": "theEnd_4e05bc37cb",
+                    "id": "theEnd",
+                    "type": "bpmn:EndEvent",
+                    "name": "Final",
+                    "parent": {
+                      "id": "motherOfAll",
+                      "type": "bpmn:Process",
+                      "executionId": "motherOfAll_f4e353e86a"
+                    },
+                    "isEnd": true,
+                    "state": "leave"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-ff7eb73b31",
+                    "timestamp": 1632888328836
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event",
+                    "consumerTag": "_process-activity-motherOfAll_f4e353e86a"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "id": "toDecision",
+                        "sequenceId": "toDecision_take_5c41bf4f41",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "join",
+                        "targetId": "decision",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "motherOfAll",
+                          "type": "bpmn:Process"
+                        }
+                      }
+                    ],
+                    "executionId": "decision_9809817699",
+                    "id": "decision",
+                    "type": "bpmn:ExclusiveGateway",
+                    "name": "Loop?",
+                    "parent": {
+                      "id": "motherOfAll",
+                      "type": "bpmn:Process",
+                      "executionId": "motherOfAll_f4e353e86a"
+                    },
+                    "state": "leave",
+                    "isRootScope": true,
+                    "outboundTakeOne": true,
+                    "outbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "id": "toLoop"
+                      },
+                      {
+                        "action": "discard",
+                        "id": "toFinal",
+                        "isDefault": true
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-940ab71dfe",
+                    "timestamp": 1632888328836
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event",
+                    "consumerTag": "_process-activity-motherOfAll_f4e353e86a"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "id": "toJoin1",
+                        "sequenceId": "toJoin1_take_e68c3562c5",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "noPickMeTask",
+                        "targetId": "join",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "motherOfAll",
+                          "type": "bpmn:Process"
+                        }
+                      },
+                      {
+                        "action": "take",
+                        "id": "toJoin3",
+                        "sequenceId": "toJoin3_take_7e51eb3969",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "pickMeTask",
+                        "targetId": "join",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "motherOfAll",
+                          "type": "bpmn:Process"
+                        }
+                      },
+                      {
+                        "action": "discard",
+                        "id": "toJoin2",
+                        "sequenceId": "toJoin2_discard_a4838c9d87",
+                        "discardSequence": [
+                          "manyDecisions",
+                          "defaultTask"
+                        ],
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "defaultTask",
+                        "targetId": "join",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "motherOfAll",
+                          "type": "bpmn:Process"
+                        }
+                      }
+                    ],
+                    "executionId": "join_825bc4ef5d",
+                    "id": "join",
+                    "type": "bpmn:ParallelGateway",
+                    "name": "Join",
+                    "parent": {
+                      "id": "motherOfAll",
+                      "type": "bpmn:Process",
+                      "executionId": "motherOfAll_f4e353e86a"
+                    },
+                    "state": "leave",
+                    "isRootScope": true,
+                    "outbound": [
+                      {
+                        "action": "take",
+                        "id": "toDecision"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-9ba7053539",
+                    "timestamp": 1632888328837
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event",
+                    "consumerTag": "_process-activity-motherOfAll_f4e353e86a"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "discard",
+                        "id": "toPickMe2",
+                        "isDefault": true,
+                        "sequenceId": "toPickMe2_discard_2a5a4eefdd",
+                        "discardSequence": [
+                          "manyDecisions"
+                        ],
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "manyDecisions",
+                        "targetId": "defaultTask",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "motherOfAll",
+                          "type": "bpmn:Process"
+                        }
+                      }
+                    ],
+                    "discardSequence": [
+                      "manyDecisions"
+                    ],
+                    "executionId": "defaultTask_2e4a0ddc84",
+                    "id": "defaultTask",
+                    "type": "bpmn:Task",
+                    "name": "Default task",
+                    "parent": {
+                      "id": "motherOfAll",
+                      "type": "bpmn:Process",
+                      "executionId": "motherOfAll_f4e353e86a"
+                    },
+                    "outbound": [
+                      {
+                        "action": "discard",
+                        "id": "toJoin2"
+                      }
+                    ],
+                    "state": "leave"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-2594e753c1",
+                    "timestamp": 1632888328837
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event",
+                    "consumerTag": "_process-activity-motherOfAll_f4e353e86a"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "id": "toInclusiveGateway",
+                        "sequenceId": "toInclusiveGateway_take_baf7fae5f9",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "subProcess1",
+                        "targetId": "manyDecisions",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "motherOfAll",
+                          "type": "bpmn:Process"
+                        }
+                      }
+                    ],
+                    "executionId": "manyDecisions_3aca9c848a",
+                    "id": "manyDecisions",
+                    "type": "bpmn:InclusiveGateway",
+                    "parent": {
+                      "id": "motherOfAll",
+                      "type": "bpmn:Process",
+                      "executionId": "motherOfAll_f4e353e86a"
+                    },
+                    "state": "leave",
+                    "isRootScope": true,
+                    "outbound": [
+                      {
+                        "action": "take",
+                        "id": "toPickMe1"
+                      },
+                      {
+                        "action": "take",
+                        "id": "toPickMe3"
+                      },
+                      {
+                        "action": "discard",
+                        "id": "toPickMe2",
+                        "isDefault": true
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-ede11cc2d4",
+                    "timestamp": 1632888328837
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event",
+                    "consumerTag": "_process-activity-motherOfAll_f4e353e86a"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "id": "toSubProcess",
+                        "sequenceId": "toSubProcess_take_7bdba25234",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "userTask1",
+                        "targetId": "subProcess1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "motherOfAll",
+                          "type": "bpmn:Process"
+                        }
+                      }
+                    ],
+                    "executionId": "subProcess1_a3fae21df8",
+                    "id": "subProcess1",
+                    "type": "bpmn:SubProcess",
+                    "name": "Sub process\n",
+                    "parent": {
+                      "id": "motherOfAll",
+                      "type": "bpmn:Process",
+                      "executionId": "motherOfAll_f4e353e86a"
+                    },
+                    "isSubProcess": true,
+                    "state": "leave",
+                    "isRootScope": true,
+                    "output": {},
+                    "outbound": [
+                      {
+                        "action": "take",
+                        "id": "toInclusiveGateway"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-0c1cd3168b",
+                    "timestamp": 1632888328837
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "execution": {
+          "executionId": "motherOfAll_f4e353e86a",
+          "stopped": false,
+          "completed": false,
+          "status": "executing",
+          "children": [
+            {
+              "id": "StartEvent_1",
+              "type": "bpmn:StartEvent",
+              "name": "Start",
+              "parent": {
+                "id": "motherOfAll",
+                "type": "bpmn:Process"
+              },
+              "isStart": true,
+              "executionId": "StartEvent_1_7bb087152b",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:StartEvent",
+                "id": "StartEvent_1",
+                "name": "Start"
+              },
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "scriptTask1",
+              "type": "bpmn:ScriptTask",
+              "name": "Script\n",
+              "parent": {
+                "id": "motherOfAll",
+                "type": "bpmn:Process"
+              },
+              "executionId": "scriptTask1_7c8ac88cb2",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:ScriptTask",
+                "id": "scriptTask1",
+                "name": "Script\n",
+                "scriptFormat": "JavaScript",
+                "script": "next()"
+              },
+              "counters": {
+                "taken": 2,
+                "discarded": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "userTask1",
+              "type": "bpmn:UserTask",
+              "name": "Wait for user",
+              "status": "executing",
+              "parent": {
+                "id": "motherOfAll",
+                "type": "bpmn:Process"
+              },
+              "executionId": "userTask1_5964ff1b8e",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:UserTask",
+                "id": "userTask1",
+                "name": "Wait for user"
+              },
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execute-q/execute.#",
+                        "options": {
+                          "priority": 100
+                        },
+                        "queueName": "execute-q",
+                        "pattern": "execute.#"
+                      },
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    },
+                    "messages": [
+                      {
+                        "fields": {
+                          "routingKey": "run.execute",
+                          "exchange": "run",
+                          "consumerTag": "_activity-run"
+                        },
+                        "content": {
+                          "inbound": [
+                            {
+                              "action": "take",
+                              "id": "toFirstUserTask",
+                              "sequenceId": "toFirstUserTask_take_1821d1e428",
+                              "type": "bpmn:SequenceFlow",
+                              "sourceId": "scriptTask1",
+                              "targetId": "userTask1",
+                              "isSequenceFlow": true,
+                              "parent": {
+                                "id": "motherOfAll",
+                                "type": "bpmn:Process"
+                              }
+                            }
+                          ],
+                          "executionId": "userTask1_5964ff1b8e",
+                          "id": "userTask1",
+                          "type": "bpmn:UserTask",
+                          "name": "Wait for user",
+                          "parent": {
+                            "id": "motherOfAll",
+                            "type": "bpmn:Process"
+                          }
+                        },
+                        "properties": {
+                          "messageId": "smq.mid-dcfca02733",
+                          "timestamp": 1632888328834
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    },
+                    "messages": [
+                      {
+                        "fields": {
+                          "routingKey": "execute.start",
+                          "exchange": "execution",
+                          "consumerTag": "_activity-execute"
+                        },
+                        "content": {
+                          "inbound": [
+                            {
+                              "action": "take",
+                              "id": "toFirstUserTask",
+                              "sequenceId": "toFirstUserTask_take_1821d1e428",
+                              "type": "bpmn:SequenceFlow",
+                              "sourceId": "scriptTask1",
+                              "targetId": "userTask1",
+                              "isSequenceFlow": true,
+                              "parent": {
+                                "id": "motherOfAll",
+                                "type": "bpmn:Process"
+                              }
+                            }
+                          ],
+                          "executionId": "userTask1_5964ff1b8e",
+                          "id": "userTask1",
+                          "type": "bpmn:UserTask",
+                          "name": "Wait for user",
+                          "parent": {
+                            "id": "motherOfAll",
+                            "type": "bpmn:Process"
+                          },
+                          "state": "start",
+                          "isRootScope": true
+                        },
+                        "properties": {
+                          "messageId": "smq.mid-8a6e2e624c",
+                          "timestamp": 1632888328835
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "execution": {
+                "completed": false
+              }
+            },
+            {
+              "id": "subProcess1",
+              "type": "bpmn:SubProcess",
+              "name": "Sub process\n",
+              "parent": {
+                "id": "motherOfAll",
+                "type": "bpmn:Process"
+              },
+              "isSubProcess": true,
+              "executionId": "subProcess1_a3fae21df8",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:SubProcess",
+                "id": "subProcess1",
+                "name": "Sub process\n",
+                "flowElements": [
+                  {
+                    "$type": "bpmn:SequenceFlow",
+                    "id": "toSubScriptTask"
+                  },
+                  {
+                    "$type": "bpmn:UserTask",
+                    "id": "subUserTask1",
+                    "name": "Sub user task"
+                  },
+                  {
+                    "$type": "bpmn:BoundaryEvent",
+                    "id": "subUserTaskTimer",
+                    "eventDefinitions": [
+                      {
+                        "$type": "bpmn:TimerEventDefinition",
+                        "timeDuration": {
+                          "$type": "bpmn:FormalExpression",
+                          "body": "PT0.1S"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "$type": "bpmn:SequenceFlow",
+                    "id": "toSubScriptTaskTimeout"
+                  },
+                  {
+                    "$type": "bpmn:ScriptTask",
+                    "id": "subScriptTask1",
+                    "name": "Sub script",
+                    "scriptFormat": "JavaScript",
+                    "script": "next();"
+                  }
+                ]
+              },
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "subprocess-execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    }
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true,
+                "executionId": "subProcess1_a3fae21df8",
+                "stopped": false,
+                "status": "completed",
+                "children": [
+                  {
+                    "id": "subUserTask1",
+                    "type": "bpmn:UserTask",
+                    "name": "Sub user task",
+                    "parent": {
+                      "id": "subProcess1",
+                      "type": "bpmn:SubProcess"
+                    },
+                    "isStart": true,
+                    "executionId": "subUserTask1_a50203402f",
+                    "stopped": false,
+                    "behaviour": {
+                      "$type": "bpmn:UserTask",
+                      "id": "subUserTask1",
+                      "name": "Sub user task"
+                    },
+                    "counters": {
+                      "taken": 1,
+                      "discarded": 0
+                    },
+                    "broker": {
+                      "exchanges": [
+                        {
+                          "name": "run",
+                          "type": "topic",
+                          "options": {
+                            "durable": true,
+                            "autoDelete": false
+                          },
+                          "bindings": [
+                            {
+                              "id": "run-q/run.#",
+                              "options": {
+                                "priority": 0
+                              },
+                              "queueName": "run-q",
+                              "pattern": "run.#"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "format",
+                          "type": "topic",
+                          "options": {
+                            "durable": true,
+                            "autoDelete": false
+                          },
+                          "bindings": [
+                            {
+                              "id": "format-run-q/run.#",
+                              "options": {
+                                "priority": 0
+                              },
+                              "queueName": "format-run-q",
+                              "pattern": "run.#"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "execution",
+                          "type": "topic",
+                          "options": {
+                            "durable": true,
+                            "autoDelete": false
+                          },
+                          "bindings": [
+                            {
+                              "id": "execution-q/execution.#",
+                              "options": {
+                                "priority": 0
+                              },
+                              "queueName": "execution-q",
+                              "pattern": "execution.#"
+                            }
+                          ]
+                        }
+                      ],
+                      "queues": [
+                        {
+                          "name": "run-q",
+                          "options": {
+                            "autoDelete": false,
+                            "durable": true
+                          }
+                        },
+                        {
+                          "name": "format-run-q",
+                          "options": {
+                            "autoDelete": false,
+                            "durable": true
+                          }
+                        },
+                        {
+                          "name": "execution-q",
+                          "options": {
+                            "autoDelete": false,
+                            "durable": true
+                          }
+                        },
+                        {
+                          "name": "inbound-q",
+                          "options": {
+                            "autoDelete": false,
+                            "durable": true
+                          }
+                        },
+                        {
+                          "name": "execute-q",
+                          "options": {
+                            "autoDelete": false,
+                            "durable": true
+                          }
+                        }
+                      ]
+                    },
+                    "execution": {
+                      "completed": true
+                    }
+                  },
+                  {
+                    "id": "subUserTaskTimer",
+                    "type": "bpmn:BoundaryEvent",
+                    "parent": {
+                      "id": "subProcess1",
+                      "type": "bpmn:SubProcess"
+                    },
+                    "attachedTo": "subUserTask1",
+                    "executionId": "subUserTaskTimer_29d2f8db7d",
+                    "stopped": false,
+                    "behaviour": {
+                      "attachedTo": {
+                        "id": "subUserTask1",
+                        "type": "bpmn:UserTask",
+                        "name": "Sub user task"
+                      },
+                      "$type": "bpmn:BoundaryEvent",
+                      "id": "subUserTaskTimer",
+                      "eventDefinitions": [
+                        {
+                          "type": "bpmn:TimerEventDefinition",
+                          "behaviour": {
+                            "$type": "bpmn:TimerEventDefinition",
+                            "timeDuration": "PT0.1S"
+                          }
+                        }
+                      ]
+                    },
+                    "counters": {
+                      "taken": 0,
+                      "discarded": 1
+                    },
+                    "broker": {
+                      "exchanges": [
+                        {
+                          "name": "run",
+                          "type": "topic",
+                          "options": {
+                            "durable": true,
+                            "autoDelete": false
+                          },
+                          "bindings": [
+                            {
+                              "id": "run-q/run.#",
+                              "options": {
+                                "priority": 0
+                              },
+                              "queueName": "run-q",
+                              "pattern": "run.#"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "format",
+                          "type": "topic",
+                          "options": {
+                            "durable": true,
+                            "autoDelete": false
+                          },
+                          "bindings": [
+                            {
+                              "id": "format-run-q/run.#",
+                              "options": {
+                                "priority": 0
+                              },
+                              "queueName": "format-run-q",
+                              "pattern": "run.#"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "execution",
+                          "type": "topic",
+                          "options": {
+                            "durable": true,
+                            "autoDelete": false
+                          },
+                          "bindings": [
+                            {
+                              "id": "execution-q/execution.#",
+                              "options": {
+                                "priority": 0
+                              },
+                              "queueName": "execution-q",
+                              "pattern": "execution.#"
+                            }
+                          ]
+                        }
+                      ],
+                      "queues": [
+                        {
+                          "name": "run-q",
+                          "options": {
+                            "autoDelete": false,
+                            "durable": true
+                          }
+                        },
+                        {
+                          "name": "format-run-q",
+                          "options": {
+                            "autoDelete": false,
+                            "durable": true
+                          }
+                        },
+                        {
+                          "name": "execution-q",
+                          "options": {
+                            "autoDelete": false,
+                            "durable": true
+                          }
+                        },
+                        {
+                          "name": "inbound-q",
+                          "options": {
+                            "autoDelete": false,
+                            "durable": true
+                          }
+                        },
+                        {
+                          "name": "execute-q",
+                          "options": {
+                            "autoDelete": false,
+                            "durable": true
+                          }
+                        }
+                      ]
+                    },
+                    "execution": {
+                      "completed": true
+                    }
+                  },
+                  {
+                    "id": "subScriptTask1",
+                    "type": "bpmn:ScriptTask",
+                    "name": "Sub script",
+                    "parent": {
+                      "id": "subProcess1",
+                      "type": "bpmn:SubProcess"
+                    },
+                    "isEnd": true,
+                    "executionId": "subScriptTask1_b5d50d04ca",
+                    "stopped": false,
+                    "behaviour": {
+                      "$type": "bpmn:ScriptTask",
+                      "id": "subScriptTask1",
+                      "name": "Sub script",
+                      "scriptFormat": "JavaScript",
+                      "script": "next();"
+                    },
+                    "counters": {
+                      "taken": 1,
+                      "discarded": 1
+                    },
+                    "broker": {
+                      "exchanges": [
+                        {
+                          "name": "run",
+                          "type": "topic",
+                          "options": {
+                            "durable": true,
+                            "autoDelete": false
+                          },
+                          "bindings": [
+                            {
+                              "id": "run-q/run.#",
+                              "options": {
+                                "priority": 0
+                              },
+                              "queueName": "run-q",
+                              "pattern": "run.#"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "format",
+                          "type": "topic",
+                          "options": {
+                            "durable": true,
+                            "autoDelete": false
+                          },
+                          "bindings": [
+                            {
+                              "id": "format-run-q/run.#",
+                              "options": {
+                                "priority": 0
+                              },
+                              "queueName": "format-run-q",
+                              "pattern": "run.#"
+                            }
+                          ]
+                        },
+                        {
+                          "name": "execution",
+                          "type": "topic",
+                          "options": {
+                            "durable": true,
+                            "autoDelete": false
+                          },
+                          "bindings": [
+                            {
+                              "id": "execution-q/execution.#",
+                              "options": {
+                                "priority": 0
+                              },
+                              "queueName": "execution-q",
+                              "pattern": "execution.#"
+                            }
+                          ]
+                        }
+                      ],
+                      "queues": [
+                        {
+                          "name": "run-q",
+                          "options": {
+                            "autoDelete": false,
+                            "durable": true
+                          }
+                        },
+                        {
+                          "name": "format-run-q",
+                          "options": {
+                            "autoDelete": false,
+                            "durable": true
+                          }
+                        },
+                        {
+                          "name": "execution-q",
+                          "options": {
+                            "autoDelete": false,
+                            "durable": true
+                          }
+                        },
+                        {
+                          "name": "inbound-q",
+                          "options": {
+                            "autoDelete": false,
+                            "durable": true
+                          }
+                        },
+                        {
+                          "name": "execute-q",
+                          "options": {
+                            "autoDelete": false,
+                            "durable": true
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "flows": [
+                  {
+                    "id": "toSubScriptTask",
+                    "type": "bpmn:SequenceFlow",
+                    "sourceId": "subUserTask1",
+                    "targetId": "subScriptTask1",
+                    "counters": {
+                      "looped": 0,
+                      "take": 1,
+                      "discard": 0
+                    },
+                    "broker": {
+                      "exchanges": [
+                        {
+                          "name": "event",
+                          "type": "topic",
+                          "options": {
+                            "durable": true,
+                            "autoDelete": false,
+                            "prefix": "flow"
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "id": "toSubScriptTaskTimeout",
+                    "type": "bpmn:SequenceFlow",
+                    "sourceId": "subUserTaskTimer",
+                    "targetId": "subScriptTask1",
+                    "counters": {
+                      "looped": 0,
+                      "take": 0,
+                      "discard": 1
+                    },
+                    "broker": {
+                      "exchanges": [
+                        {
+                          "name": "event",
+                          "type": "topic",
+                          "options": {
+                            "durable": true,
+                            "autoDelete": false,
+                            "prefix": "flow"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "messageFlows": [],
+                "associations": [],
+                "environment": {
+                  "settings": {
+                    "enableDummyService": true
+                  },
+                  "variables": {
+                    "fields": {
+                      "routingKey": "execute.start",
+                      "exchange": "execution",
+                      "consumerTag": "_activity-execute"
+                    },
+                    "content": {
+                      "inbound": [
+                        {
+                          "action": "take",
+                          "id": "toSubProcess",
+                          "sequenceId": "toSubProcess_take_7bdba25234",
+                          "type": "bpmn:SequenceFlow",
+                          "sourceId": "userTask1",
+                          "targetId": "subProcess1",
+                          "isSequenceFlow": true,
+                          "parent": {
+                            "id": "motherOfAll",
+                            "type": "bpmn:Process"
+                          }
+                        }
+                      ],
+                      "executionId": "subProcess1_a3fae21df8",
+                      "id": "subProcess1",
+                      "type": "bpmn:SubProcess",
+                      "name": "Sub process\n",
+                      "parent": {
+                        "id": "motherOfAll",
+                        "type": "bpmn:Process"
+                      },
+                      "isSubProcess": true,
+                      "state": "start",
+                      "isRootScope": true
+                    },
+                    "properties": {
+                      "messageId": "smq.mid-75541db358",
+                      "timestamp": 1632888328769
+                    }
+                  },
+                  "output": {}
+                }
+              }
+            },
+            {
+              "id": "defaultTask",
+              "type": "bpmn:Task",
+              "name": "Default task",
+              "parent": {
+                "id": "motherOfAll",
+                "type": "bpmn:Process"
+              },
+              "executionId": "defaultTask_2e4a0ddc84",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:Task",
+                "id": "defaultTask",
+                "name": "Default task"
+              },
+              "counters": {
+                "taken": 0,
+                "discarded": 1
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "join",
+              "type": "bpmn:ParallelGateway",
+              "name": "Join",
+              "parent": {
+                "id": "motherOfAll",
+                "type": "bpmn:Process"
+              },
+              "executionId": "join_825bc4ef5d",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:ParallelGateway",
+                "id": "join",
+                "name": "Join"
+              },
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "pickMeTask",
+              "type": "bpmn:Task",
+              "name": "Pick me",
+              "parent": {
+                "id": "motherOfAll",
+                "type": "bpmn:Process"
+              },
+              "executionId": "pickMeTask_cc7cc558f2",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:Task",
+                "id": "pickMeTask",
+                "name": "Pick me"
+              },
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "noPickMeTask",
+              "type": "bpmn:Task",
+              "name": "No! Pick me",
+              "parent": {
+                "id": "motherOfAll",
+                "type": "bpmn:Process"
+              },
+              "executionId": "noPickMeTask_4aecba5c60",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:Task",
+                "id": "noPickMeTask",
+                "name": "No! Pick me"
+              },
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "decision",
+              "type": "bpmn:ExclusiveGateway",
+              "name": "Loop?",
+              "parent": {
+                "id": "motherOfAll",
+                "type": "bpmn:Process"
+              },
+              "executionId": "decision_9809817699",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:ExclusiveGateway",
+                "id": "decision",
+                "name": "Loop?"
+              },
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "scriptTask2",
+              "type": "bpmn:ScriptTask",
+              "name": "Only run me once",
+              "parent": {
+                "id": "motherOfAll",
+                "type": "bpmn:Process"
+              },
+              "executionId": "scriptTask2_ef61cd382b",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:ScriptTask",
+                "id": "scriptTask2",
+                "name": "Only run me once",
+                "scriptFormat": "JavaScript",
+                "script": "environment.variables.stopLoop = true;\nnext();"
+              },
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "manyDecisions",
+              "type": "bpmn:InclusiveGateway",
+              "parent": {
+                "id": "motherOfAll",
+                "type": "bpmn:Process"
+              },
+              "executionId": "manyDecisions_3aca9c848a",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:InclusiveGateway",
+                "id": "manyDecisions"
+              },
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "theEnd",
+              "type": "bpmn:EndEvent",
+              "name": "Final",
+              "parent": {
+                "id": "motherOfAll",
+                "type": "bpmn:Process"
+              },
+              "isEnd": true,
+              "executionId": "theEnd_4e05bc37cb",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:EndEvent",
+                "id": "theEnd",
+                "name": "Final"
+              },
+              "counters": {
+                "taken": 0,
+                "discarded": 1
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "flows": [
+            {
+              "id": "toDecision",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "join",
+              "targetId": "decision",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "toFinal",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "decision",
+              "targetId": "theEnd",
+              "isDefault": true,
+              "counters": {
+                "looped": 0,
+                "take": 0,
+                "discard": 1
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "toLoop",
+              "type": "bpmn:SequenceFlow",
+              "name": "Enter loop",
+              "sourceId": "decision",
+              "targetId": "scriptTask2",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "toPickMe1",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "manyDecisions",
+              "targetId": "noPickMeTask",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "toPickMe3",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "manyDecisions",
+              "targetId": "pickMeTask",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "toJoin3",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "pickMeTask",
+              "targetId": "join",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "toJoin1",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "noPickMeTask",
+              "targetId": "join",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "toJoin2",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "defaultTask",
+              "targetId": "join",
+              "counters": {
+                "looped": 0,
+                "take": 0,
+                "discard": 1
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "toPickMe2",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "manyDecisions",
+              "targetId": "defaultTask",
+              "isDefault": true,
+              "counters": {
+                "looped": 0,
+                "take": 0,
+                "discard": 1
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "toInclusiveGateway",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "subProcess1",
+              "targetId": "manyDecisions",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "toSubProcess",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "userTask1",
+              "targetId": "subProcess1",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "toFirstUserTask",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "scriptTask1",
+              "targetId": "userTask1",
+              "counters": {
+                "looped": 0,
+                "take": 2,
+                "discard": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "toReturnScriptTask",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "scriptTask2",
+              "targetId": "scriptTask1",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "toFirstScriptTask",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "StartEvent_1",
+              "targetId": "scriptTask1",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "messageFlows": [
+            {
+              "id": "MessageFlow_0poeswc",
+              "type": "bpmn:MessageFlow",
+              "counters": {
+                "messages": 1,
+                "discard": 0
+              }
+            }
+          ],
+          "associations": []
+        }
+      },
+      {
+        "id": "participantProcess",
+        "type": "bpmn:Process",
+        "parent": {
+          "id": "Definitions_1",
+          "type": "bpmn:Definitions"
+        },
+        "executionId": "participantProcess_84aae36f5e",
+        "counters": {
+          "completed": 1,
+          "discarded": 0,
+          "terminated": 0
+        },
+        "broker": {
+          "exchanges": [
+            {
+              "name": "run",
+              "type": "topic",
+              "options": {
+                "durable": true,
+                "autoDelete": false
+              },
+              "bindings": [
+                {
+                  "id": "run-q/run.#",
+                  "options": {
+                    "priority": 0
+                  },
+                  "queueName": "run-q",
+                  "pattern": "run.#"
+                }
+              ]
+            },
+            {
+              "name": "format",
+              "type": "topic",
+              "options": {
+                "durable": true,
+                "autoDelete": false
+              },
+              "bindings": [
+                {
+                  "id": "format-run-q/run.#",
+                  "options": {
+                    "priority": 0
+                  },
+                  "queueName": "format-run-q",
+                  "pattern": "run.#"
+                }
+              ]
+            },
+            {
+              "name": "execution",
+              "type": "topic",
+              "options": {
+                "durable": true,
+                "autoDelete": false
+              },
+              "bindings": [
+                {
+                  "id": "execution-q/execution.#",
+                  "options": {
+                    "priority": 0
+                  },
+                  "queueName": "execution-q",
+                  "pattern": "execution.#"
+                }
+              ]
+            },
+            {
+              "name": "message",
+              "type": "topic",
+              "options": {
+                "durable": true,
+                "autoDelete": true
+              }
+            }
+          ],
+          "queues": [
+            {
+              "name": "run-q",
+              "options": {
+                "autoDelete": false,
+                "durable": true
+              }
+            },
+            {
+              "name": "format-run-q",
+              "options": {
+                "autoDelete": false,
+                "durable": true
+              }
+            },
+            {
+              "name": "execution-q",
+              "options": {
+                "autoDelete": false,
+                "durable": true
+              }
+            }
+          ]
+        },
+        "execution": {
+          "executionId": "participantProcess_84aae36f5e",
+          "stopped": false,
+          "completed": true,
+          "status": "completed",
+          "children": [
+            {
+              "id": "messageStartEvent",
+              "type": "bpmn:StartEvent",
+              "parent": {
+                "id": "participantProcess",
+                "type": "bpmn:Process"
+              },
+              "isStart": true,
+              "executionId": "messageStartEvent_66207346bf",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:StartEvent",
+                "id": "messageStartEvent",
+                "eventDefinitions": [
+                  {
+                    "type": "bpmn:MessageEventDefinition",
+                    "behaviour": {
+                      "$type": "bpmn:MessageEventDefinition"
+                    }
+                  }
+                ]
+              },
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "message-messageStartEvent-anonymous-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "participathEndEvent",
+              "type": "bpmn:EndEvent",
+              "parent": {
+                "id": "participantProcess",
+                "type": "bpmn:Process"
+              },
+              "isEnd": true,
+              "executionId": "participathEndEvent_0dbdc2aeaa",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:EndEvent",
+                "id": "participathEndEvent"
+              },
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "participathErrorEndEvent",
+              "type": "bpmn:EndEvent",
+              "parent": {
+                "id": "participantProcess",
+                "type": "bpmn:Process"
+              },
+              "isEnd": true,
+              "executionId": "participathErrorEndEvent_4d1259e0c6",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:EndEvent",
+                "id": "participathErrorEndEvent",
+                "eventDefinitions": [
+                  {
+                    "type": "bpmn:ErrorEventDefinition",
+                    "behaviour": {
+                      "$type": "bpmn:ErrorEventDefinition"
+                    }
+                  }
+                ]
+              },
+              "counters": {
+                "taken": 0,
+                "discarded": 1
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "participantServiceTask",
+              "type": "bpmn:ServiceTask",
+              "name": "Service",
+              "parent": {
+                "id": "participantProcess",
+                "type": "bpmn:Process"
+              },
+              "executionId": "participantServiceTask_f5950ab65a",
+              "stopped": false,
+              "behaviour": {
+                "$type": "bpmn:ServiceTask",
+                "id": "participantServiceTask",
+                "name": "Service",
+                "extensionElements": {
+                  "$type": "bpmn:ExtensionElements",
+                  "values": [
+                    {
+                      "$type": "camunda:properties",
+                      "$children": [
+                        {
+                          "$type": "camunda:property",
+                          "name": "service",
+                          "value": "runService"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              },
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "serviceBoundErrorEvent",
+              "type": "bpmn:BoundaryEvent",
+              "parent": {
+                "id": "participantProcess",
+                "type": "bpmn:Process"
+              },
+              "attachedTo": "participantServiceTask",
+              "executionId": "serviceBoundErrorEvent_b273e978f8",
+              "stopped": false,
+              "behaviour": {
+                "attachedTo": {
+                  "id": "participantServiceTask",
+                  "type": "bpmn:ServiceTask",
+                  "name": "Service"
+                },
+                "$type": "bpmn:BoundaryEvent",
+                "id": "serviceBoundErrorEvent",
+                "eventDefinitions": [
+                  {
+                    "type": "bpmn:ErrorEventDefinition",
+                    "behaviour": {
+                      "$type": "bpmn:ErrorEventDefinition"
+                    }
+                  }
+                ]
+              },
+              "counters": {
+                "taken": 0,
+                "discarded": 1
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "run",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "format",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "format-run-q/run.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "format-run-q",
+                        "pattern": "run.#"
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "bindings": [
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "format-run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execution-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "inbound-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "error-serviceBoundErrorEvent-anonymous-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    }
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true
+              }
+            }
+          ],
+          "flows": [
+            {
+              "id": "SequenceFlow_0o4woz0",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "serviceBoundErrorEvent",
+              "targetId": "participathErrorEndEvent",
+              "counters": {
+                "looped": 0,
+                "take": 0,
+                "discard": 1
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "SequenceFlow_1uyrch1",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "participantServiceTask",
+              "targetId": "participathEndEvent",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "id": "SequenceFlow_1ifeyo8",
+              "type": "bpmn:SequenceFlow",
+              "sourceId": "messageStartEvent",
+              "targetId": "participantServiceTask",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "flow"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "messageFlows": [],
+          "associations": [
+            {
+              "id": "Association_01m3i19",
+              "type": "bpmn:Association",
+              "sourceId": "participantServiceTask",
+              "targetId": "TextAnnotation_1lqy6ca",
+              "counters": {
+                "complete": 0,
+                "take": 0,
+                "discard": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "event",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false,
+                      "prefix": "association"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "broker": {
+    "exchanges": [
+      {
+        "name": "run",
+        "type": "topic",
+        "options": {
+          "durable": true,
+          "autoDelete": false
+        },
+        "bindings": [
+          {
+            "id": "run-q/run.#",
+            "options": {
+              "priority": 0
+            },
+            "queueName": "run-q",
+            "pattern": "run.#"
+          }
+        ]
+      },
+      {
+        "name": "format",
+        "type": "topic",
+        "options": {
+          "durable": true,
+          "autoDelete": false
+        },
+        "bindings": [
+          {
+            "id": "format-run-q/run.#",
+            "options": {
+              "priority": 0
+            },
+            "queueName": "format-run-q",
+            "pattern": "run.#"
+          }
+        ]
+      },
+      {
+        "name": "execution",
+        "type": "topic",
+        "options": {
+          "durable": true,
+          "autoDelete": false
+        },
+        "bindings": [
+          {
+            "id": "execution-q/execution.#",
+            "options": {
+              "priority": 0
+            },
+            "queueName": "execution-q",
+            "pattern": "execution.#"
+          }
+        ]
+      }
+    ],
+    "queues": [
+      {
+        "name": "run-q",
+        "options": {
+          "autoDelete": false,
+          "durable": true
+        },
+        "messages": [
+          {
+            "fields": {
+              "routingKey": "run.execute",
+              "exchange": "run",
+              "consumerTag": "_definition-run"
+            },
+            "content": {
+              "id": "Definitions_1",
+              "type": "bpmn:Definitions",
+              "executionId": "Definitions_1_381cda3098"
+            },
+            "properties": {
+              "messageId": "smq.mid-8c0b8de7f7",
+              "timestamp": 1632888328708
+            }
+          }
+        ]
+      },
+      {
+        "name": "format-run-q",
+        "options": {
+          "autoDelete": false,
+          "durable": true
+        }
+      },
+      {
+        "name": "execution-q",
+        "options": {
+          "autoDelete": false,
+          "durable": true
+        }
+      },
+      {
+        "name": "execute-Definitions_1_381cda3098-q",
+        "options": {
+          "autoDelete": false,
+          "durable": true
+        },
+        "messages": [
+          {
+            "fields": {
+              "routingKey": "process.start",
+              "exchange": "event",
+              "consumerTag": "_definition-activity-Definitions_1_381cda3098"
+            },
+            "content": {
+              "id": "motherOfAll",
+              "type": "bpmn:Process",
+              "parent": {
+                "id": "Definitions_1",
+                "type": "bpmn:Definitions",
+                "executionId": "Definitions_1_381cda3098"
+              },
+              "executionId": "motherOfAll_f4e353e86a",
+              "state": "start"
+            },
+            "properties": {
+              "type": "start",
+              "mandatory": false,
+              "messageId": "smq.mid-58e891dd54",
+              "timestamp": 1632888328714
+            }
+          },
+          {
+            "fields": {
+              "routingKey": "process.leave",
+              "exchange": "event",
+              "consumerTag": "_definition-activity-Definitions_1_381cda3098"
+            },
+            "content": {
+              "id": "participantProcess",
+              "type": "bpmn:Process",
+              "parent": {
+                "id": "Definitions_1",
+                "type": "bpmn:Definitions",
+                "executionId": "Definitions_1_381cda3098"
+              },
+              "state": "leave"
+            },
+            "properties": {
+              "type": "leave",
+              "mandatory": false,
+              "messageId": "smq.mid-027899a756",
+              "timestamp": 1632888328831
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

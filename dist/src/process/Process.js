@@ -456,7 +456,7 @@ function Process(processDef, context) {
       stopped,
       counters: { ...counters
       },
-      broker: broker.getState(),
+      broker: broker.getState(true),
       execution: execution && execution.getState()
     });
   }
