@@ -78,14 +78,14 @@ function Association(associationDef, {
 
   function take(content = {}) {
     logger.debug(`<${id}> take target <${targetId}>`);
-    ++counters.discard;
+    ++counters.take;
     publishEvent('take', content);
     return true;
   }
 
   function discard(content = {}) {
     logger.debug(`<${id}> discard target <${targetId}>`);
-    ++counters.take;
+    ++counters.discard;
     publishEvent('discard', content);
     return true;
   }

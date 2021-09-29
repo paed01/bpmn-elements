@@ -53,7 +53,7 @@ export default function Association(associationDef, {environment}) {
 
   function take(content = {}) {
     logger.debug(`<${id}> take target <${targetId}>`);
-    ++counters.discard;
+    ++counters.take;
 
     publishEvent('take', content);
 
@@ -62,7 +62,7 @@ export default function Association(associationDef, {environment}) {
 
   function discard(content = {}) {
     logger.debug(`<${id}> discard target <${targetId}>`);
-    ++counters.take;
+    ++counters.discard;
 
     publishEvent('discard', content);
 

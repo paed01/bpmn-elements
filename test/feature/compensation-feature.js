@@ -103,6 +103,15 @@ Feature('Compensation', () => {
       expect(completeArgs.content.message.content).to.have.property('output').that.eql([{condition: true}]);
     });
 
+    And('association was taken', () => {
+      const [association] = definition.context.getAssociations();
+      expect(association.counters).to.deep.equal({
+        complete: 1,
+        take: 1,
+        discard: 0,
+      });
+    });
+
     When('compensation service completes', () => {
       undoCallback(null, true);
     });

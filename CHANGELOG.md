@@ -15,7 +15,8 @@ Isomorphism and state.
 - Generate a slimmer state. Element broker state now only contains queues that has pending messages and sometimes an exchange with undelivered message. Not really breaking unless broker state was inspected for some reason
 
 ## Bugfix
-- Sequence flow with expression condition that throws will terminate the run
+- Sequence flow with expression condition that throws will now terminate the run
+- Association counters where flipped
 
 # 5.2.0
 
