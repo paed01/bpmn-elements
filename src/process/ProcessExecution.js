@@ -69,6 +69,7 @@ export default function ProcessExecution(parentActivity, context) {
 
     const isRedelivered = executeMessage.fields.redelivered;
     executionId = executeMessage.content.executionId;
+    children.forEach(child => child.parent.executionId = executionId);
     prepare();
 
     stateMessage = cloneMessage(executeMessage);
@@ -85,7 +86,7 @@ export default function ProcessExecution(parentActivity, context) {
 
     logger.debug(`<${executionName}> execute`, isSubProcess ? 'sub process' : 'process');
     activate();
-    start();
+    start(executionId);
     return true;
   }
 
@@ -122,7 +123,7 @@ export default function ProcessExecution(parentActivity, context) {
     });
   }
 
-  function start() {
+  function start(executionId) {
     if (children.length === 0) {
       return complete('completed');
     }
@@ -137,8 +138,8 @@ export default function ProcessExecution(parentActivity, context) {
       startActivities.forEach((a) => a.shake());
     }
 
-    startActivities.forEach((activity) => activity.init());
-    startActivities.forEach((activity) => activity.run());
+    startActivities.forEach(activity => activity.init({parent: {executionId}}));
+    startActivities.forEach(activity => activity.run({parent: {executionId}}));
 
     postponed.splice(0);
     detachedActivities.splice(0);
