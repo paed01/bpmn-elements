@@ -47,7 +47,7 @@ export default function SequenceFlow(flowDef, {environment}) {
     take,
   };
 
-  const {broker, on, once, waitFor, emitFatal} = EventBroker(flowApi, {prefix: 'flow', durable: true, autoDelete: false});
+  const {broker, on, once, waitFor, emitFatal} = new EventBroker(flowApi, {prefix: 'flow', durable: true, autoDelete: false});
 
   flowApi.on = on;
   flowApi.once = once;

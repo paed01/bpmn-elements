@@ -36,7 +36,7 @@ export default function Association(associationDef, {environment}) {
     take,
   };
 
-  const {broker, on, once, waitFor} = EventBroker(associationApi, {prefix: 'association', durable: true, autoDelete: false});
+  const {broker, on, once, waitFor} = new EventBroker(associationApi, {prefix: 'association', durable: true, autoDelete: false});
 
   associationApi.on = on;
   associationApi.once = once;

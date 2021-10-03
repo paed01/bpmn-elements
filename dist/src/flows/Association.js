@@ -61,7 +61,7 @@ function Association(associationDef, {
     on,
     once,
     waitFor
-  } = (0, _EventBroker.EventBroker)(associationApi, {
+  } = new _EventBroker.EventBroker(associationApi, {
     prefix: 'association',
     durable: true,
     autoDelete: false

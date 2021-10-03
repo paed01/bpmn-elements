@@ -74,7 +74,7 @@ function SequenceFlow(flowDef, {
     once,
     waitFor,
     emitFatal
-  } = (0, _EventBroker.EventBroker)(flowApi, {
+  } = new _EventBroker.EventBroker(flowApi, {
     prefix: 'flow',
     durable: true,
     autoDelete: false

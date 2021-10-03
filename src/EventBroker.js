@@ -23,7 +23,7 @@ function DefinitionBroker(owner, onBrokerReturn) {
 }
 
 function MessageFlowBroker(owner) {
-  const eventBroker = EventBroker(owner, {prefix: 'messageflow', autoDelete: false, durable: false});
+  const eventBroker = new EventBroker(owner, {prefix: 'messageflow', autoDelete: false, durable: false});
   const broker = eventBroker.broker;
 
   broker.assertExchange('message', 'topic', {durable: true, autoDelete: false});
@@ -34,7 +34,7 @@ function MessageFlowBroker(owner) {
 }
 
 function ExecutionBroker(brokerOwner, prefix, onBrokerReturn) {
-  const eventBroker = EventBroker(brokerOwner, {prefix, autoDelete: false, durable: false}, onBrokerReturn);
+  const eventBroker = new EventBroker(brokerOwner, {prefix, autoDelete: false, durable: false}, onBrokerReturn);
   const broker = eventBroker.broker;
 
   broker.assertExchange('api', 'topic', {autoDelete: false, durable: false});
@@ -54,64 +54,12 @@ function ExecutionBroker(brokerOwner, prefix, onBrokerReturn) {
 }
 
 function EventBroker(brokerOwner, options, onBrokerReturn) {
-  const broker = Broker(brokerOwner);
-  const pfx = options.prefix;
+  this.options = options;
+  this.eventPrefix = options.prefix;
 
+  const broker = this.broker = Broker(brokerOwner);
   broker.assertExchange('event', 'topic', options);
   broker.on('return', onBrokerReturn || onBrokerReturnFn);
-
-  return {
-    eventPrefix: pfx,
-    broker,
-    on,
-    once,
-    waitFor,
-    emit,
-    emitFatal,
-  };
-
-  function on(eventName, callback, eventOptions = { once: false }) {
-    const key = getEventRoutingKey(eventName);
-
-    if (eventOptions.once) return broker.subscribeOnce('event', key, eventCallback, eventOptions);
-    return broker.subscribeTmp('event', key, eventCallback, {...eventOptions, noAck: true});
-
-    function eventCallback(routingKey, message, owner) {
-      if (eventName === 'error') return callback(makeErrorFromMessage(message));
-      callback(owner.getApi(message));
-    }
-  }
-
-  function once(eventName, callback, eventOptions = {}) {
-    return on(eventName, callback, {...eventOptions, once: true});
-  }
-
-  function waitFor(eventName, onMessage) {
-    const key = getEventRoutingKey(eventName);
-
-    return new Promise((resolve, reject) => {
-      const consumers = [
-        broker.subscribeTmp('event', key, eventCallback, {noAck: true}),
-        broker.subscribeTmp('event', '*.error', errorCallback, {noAck: true})
-      ];
-
-      function eventCallback(routingKey, message, owner) {
-        if (onMessage && !onMessage(routingKey, message, owner)) return;
-        unsubscribe();
-        return resolve(owner.getApi(message));
-      }
-
-      function errorCallback(routingKey, message, owner) {
-        if (!message.properties.mandatory) return;
-        unsubscribe();
-        return reject(makeErrorFromMessage(message, owner));
-      }
-
-      function unsubscribe() {
-        consumers.forEach((consumer) => consumer.cancel());
-      }
-    });
-  }
 
   function onBrokerReturnFn(message) {
     if (message.properties.type === 'error') {
@@ -120,24 +68,81 @@ function EventBroker(brokerOwner, options, onBrokerReturn) {
     }
   }
 
-  function getEventRoutingKey(eventName) {
-    if (eventName.indexOf('.') > -1) return eventName;
+  this.on = this.on.bind(this);
+  this.once = this.once.bind(this);
+  this.waitFor = this.waitFor.bind(this);
+  this.emit = this.emit.bind(this);
+  this.emitFatal = this.emitFatal.bind(this);
+}
 
-    switch (eventName) {
-      case 'wait': {
-        return `activity.${eventName}`;
-      }
-      default: {
-        return `${pfx}.${eventName}`;
-      }
+EventBroker.prototype.on = function on(eventName, callback, eventOptions = { once: false }) {
+  const key = this.getEventRoutingKey(eventName);
+
+  if (eventOptions.once) return this.broker.subscribeOnce('event', key, eventCallback, eventOptions);
+  return this.broker.subscribeTmp('event', key, eventCallback, {...eventOptions, noAck: true});
+
+  function eventCallback(routingKey, message, owner) {
+    if (eventName === 'error') return callback(makeErrorFromMessage(message));
+    callback(owner.getApi(message));
+  }
+};
+
+EventBroker.prototype.once = function once(eventName, callback, eventOptions = {}) {
+  return this.on(eventName, callback, {...eventOptions, once: true});
+};
+
+EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
+  const key = this.getEventRoutingKey(eventName);
+
+  return new Promise((resolve, reject) => {
+    const consumers = [
+      this.broker.subscribeTmp('event', key, eventCallback, {noAck: true}),
+      this.broker.subscribeTmp('event', '*.error', errorCallback, {noAck: true})
+    ];
+
+    function eventCallback(routingKey, message, owner) {
+      if (onMessage && !onMessage(routingKey, message, owner)) return;
+      unsubscribe();
+      return resolve(owner.getApi(message));
+    }
+
+    function errorCallback(routingKey, message, owner) {
+      if (!message.properties.mandatory) return;
+      unsubscribe();
+      return reject(makeErrorFromMessage(message, owner));
+    }
+
+    function unsubscribe() {
+      consumers.forEach((consumer) => consumer.cancel());
+    }
+  });
+};
+
+EventBroker.prototype.onBrokerReturnFn = function onBrokerReturnFn(message) {
+  if (message.properties.type === 'error') {
+    const err = makeErrorFromMessage(message);
+    throw err;
+  }
+};
+
+EventBroker.prototype.getEventRoutingKey = function getEventRoutingKey(eventName) {
+  if (eventName.indexOf('.') > -1) return eventName;
+
+  switch (eventName) {
+    case 'wait': {
+      return `activity.${eventName}`;
+    }
+    default: {
+      return `${this.eventPrefix}.${eventName}`;
     }
   }
+};
 
-  function emit(eventName, content = {}, props = {}) {
-    broker.publish('event', `${pfx}.${eventName}`, {...content}, {type: eventName, ...props});
-  }
+EventBroker.prototype.emit = function emit(eventName, content = {}, props = {}) {
+  this.broker.publish('event', `${this.eventPrefix}.${eventName}`, {...content}, {type: eventName, ...props});
+};
 
-  function emitFatal(error, content = {}) {
-    emit('error', {...content, error}, {mandatory: true});
-  }
-}
+
+EventBroker.prototype.emitFatal = function emitFatal(error, content = {}) {
+  this.emit('error', {...content, error}, {mandatory: true});
+};
