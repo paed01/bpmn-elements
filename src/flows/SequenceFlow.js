@@ -123,7 +123,7 @@ export default function SequenceFlow(flowDef, {environment}) {
       targetId,
       isDefault,
       counters: {...counters},
-      broker: broker.getState(),
+      broker: broker.getState(true),
     };
   }
 

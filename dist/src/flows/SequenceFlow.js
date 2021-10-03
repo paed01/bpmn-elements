@@ -151,7 +151,7 @@ function SequenceFlow(flowDef, {
       isDefault,
       counters: { ...counters
       },
-      broker: broker.getState()
+      broker: broker.getState(true)
     };
   }
 
