@@ -174,7 +174,7 @@ export default function Activity(Behaviour, activityDef, context) {
       type,
       ...(name ? {name} : undefined),
       ...(status ? {status} : undefined),
-      parent: cloneParent(parent),
+      parent: cloneParent({...override.parent, ...parent}),
     };
 
     const flags = {isEnd, isStart, isSubProcess, isMultiInstance, isForCompensation, attachedTo, isTransaction};
