@@ -107,6 +107,64 @@ Feature('Call activity', () => {
     });
   });
 
+  Scenario('call activity is canceled', () => {
+    let definition;
+    Given('a process with a call activity referencing a process that throws', async () => {
+      const source = `
+      <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+          <callActivity id="call-activity" calledElement="called-process" />
+          <endEvent id="end" />
+          <sequenceFlow id="to-end" sourceRef="call-activity" targetRef="end" />
+        </process>
+        <process id="called-process" isExecutable="false">
+          <userTask id="task" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    let end;
+    When('ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('call activity has started process', () => {
+      expect(definition.getRunningProcesses()).to.have.length(2);
+    });
+
+    When('call activity is cancelled', () => {
+      const callActivity = definition.getPostponed()[0];
+      callActivity.cancel();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    When('ran again', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('call activity has started process', () => {
+      expect(definition.getRunningProcesses()).to.have.length(2);
+    });
+
+    When('called process is discarded', () => {
+      definition.getRunningProcesses()[1].getApi().discard();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+  });
+
   Scenario('a process with a parallel multi-instance call activity with cardinality of three', () => {
     let context, definition;
     const serviceCalls = [];

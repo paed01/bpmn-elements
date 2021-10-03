@@ -58,9 +58,11 @@ export function CallActivityBehaviour(activity) {
       switch (messageType) {
         case 'stop':
           return stop();
+        case 'cancel':
+          broker.publish('event', 'activity.call.cancel', cloneContent(content, {state: 'cancel', calledElement}), {type: 'cancel'});
         case 'signal':
           stop();
-          return broker.publish('execution', 'execute.completed', cloneContent(content, {output: message.content.message, state: 'signal'}), {correlationId});
+          return broker.publish('execution', 'execute.completed', cloneContent(content, {output: message.content.message, state: messageType}), {correlationId});
         case 'error':
           stop();
           return broker.publish('execution', 'execute.error', cloneContent(content, {error: new ActivityError(message.content.message, executeMessage, message.content)}, {mandatory: true, correlationId}));

@@ -107,11 +107,19 @@ function CallActivityBehaviour(activity) {
         case 'stop':
           return stop();
 
+        case 'cancel':
+          broker.publish('event', 'activity.call.cancel', (0, _messageHelper.cloneContent)(content, {
+            state: 'cancel',
+            calledElement
+          }), {
+            type: 'cancel'
+          });
+
         case 'signal':
           stop();
           return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
             output: message.content.message,
-            state: 'signal'
+            state: messageType
           }), {
             correlationId
           });

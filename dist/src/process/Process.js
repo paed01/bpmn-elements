@@ -295,6 +295,7 @@ function Process(processDef, context) {
           if (fields.redelivered) break;
           counters.discarded++;
           broker.publish('run', 'run.leave', content);
+          publishEvent('discarded', content);
           break;
         }
 

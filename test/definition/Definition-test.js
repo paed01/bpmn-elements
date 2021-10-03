@@ -1018,6 +1018,69 @@ describe('Definition', () => {
       expect(result1.length).to.equal(1);
       expect(result1[0] === result2[0]).to.be.true;
     });
+
+    it('returns same process instances when called while running', () => {
+      const result1 = definition.getExecutableProcesses();
+
+      definition.run();
+
+      const result2 = definition.getExecutableProcesses();
+      expect(result1.length).to.equal(1);
+      expect(result1[0] === result2[0]).to.be.true;
+    });
+  });
+
+  describe('getRunningProcesses()', () => {
+    let context;
+    before('Given definition is initiated with two processes', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <callActivity id="call-activity" calledElement="called-process">
+            <multiInstanceLoopCharacteristics isSequential="false">
+              <loopCardinality>3</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+          </callActivity>
+          <endEvent id="end" />
+          <sequenceFlow id="to-end" sourceRef="call-activity" targetRef="end" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+        </process>
+        <process id="called-process" isExecutable="false">
+          <userTask id="task1" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    it('returns no processes if not running', () => {
+      const definition = Definition(context.clone());
+      expect(definition.getRunningProcesses().length).to.equal(0);
+    });
+
+    it('returns same process instances when called again', () => {
+      const definition = Definition(context.clone());
+      definition.run();
+      const result1 = definition.getRunningProcesses();
+      const result2 = definition.getRunningProcesses();
+      expect(result1.length).to.equal(4);
+      expect(result1[0] === result2[0]).to.be.true;
+      expect(result1[1] === result2[1]).to.be.true;
+      expect(result1[2] === result2[2]).to.be.true;
+      expect(result1[3] === result2[3]).to.be.true;
+    });
+
+    it('returns only running processes', () => {
+      const definition = Definition(context.clone());
+      definition.run();
+
+      const waitingTask = definition.getPostponed().find(({id}) => id === 'task1');
+      waitingTask.signal();
+
+      const running = definition.getRunningProcesses();
+      expect(running.length).to.equal(3);
+    });
   });
 
   describe('errors', () => {

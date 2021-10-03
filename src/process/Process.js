@@ -243,6 +243,8 @@ export function Process(processDef, context) {
         counters.discarded++;
 
         broker.publish('run', 'run.leave', content);
+
+        publishEvent('discarded', content);
         break;
       }
       case 'run.leave': {

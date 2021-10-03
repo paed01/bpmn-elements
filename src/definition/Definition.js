@@ -423,7 +423,7 @@ export function Definition(context, options) {
 
   function getRunningProcesses() {
     if (!execution) return [];
-    return execution.processes.slice();
+    return execution.getRunningProcesses();
   }
 
   function getProcessById(processId) {

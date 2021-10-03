@@ -13,6 +13,7 @@ export default function DefinitionExecution(definition, context) {
 
   const postponed = [];
   broker.assertExchange('execution', 'topic', {autoDelete: false, durable: true});
+  broker.assertQueue('activity-q', {autoDelete: false, durable: false});
 
   let activityQ, status = 'init', executionId, stopped, activated, initMessage, completed = false;
 
@@ -167,6 +168,7 @@ export default function DefinitionExecution(definition, context) {
     bp.broker.subscribeTmp('event', 'activity.signal', onDelegateMessage, {noAck: true, consumerTag: '_definition-signal-consumer', priority: 200});
     bp.broker.subscribeTmp('event', 'activity.message', onDelegateMessage, {noAck: true, consumerTag: '_definition-message-consumer', priority: 200});
     bp.broker.subscribeTmp('event', 'activity.call', onCallActivity, {noAck: true, consumerTag: '_definition-call-consumer', priority: 200});
+    bp.broker.subscribeTmp('event', 'activity.call.cancel', onCancelCallActivity, {noAck: true, consumerTag: '_definition-call-cancel-consumer', priority: 200});
     bp.broker.subscribeTmp('event', '#', onChildEvent, {noAck: true, consumerTag: '_definition-activity-consumer', priority: 100});
   }
 
@@ -201,6 +203,7 @@ export default function DefinitionExecution(definition, context) {
     bp.broker.cancel('_definition-signal-consumer');
     bp.broker.cancel('_definition-message-consumer');
     bp.broker.cancel('_definition-call-consumer');
+    bp.broker.cancel('_definition-call-cancel-consumer');
   }
 
   function onProcessMessage(routingKey, message) {
@@ -230,7 +233,16 @@ export default function DefinitionExecution(definition, context) {
       case 'process.enter':
         status = 'executing';
         break;
-      case 'process.end':
+      case 'process.discarded': {
+        if (inbound && inbound.length) {
+          const calledFrom = inbound[0];
+          getApiByProcess({content: calledFrom}).cancel({
+            executionId: calledFrom.executionId,
+          });
+        }
+        break;
+      }
+      case 'process.end': {
         if (inbound && inbound.length) {
           const calledFrom = inbound[0];
 
@@ -242,6 +254,7 @@ export default function DefinitionExecution(definition, context) {
           Object.assign(environment.output, content.output);
         }
         break;
+      }
       case 'process.error': {
         if (inbound && inbound.length) {
           const calledFrom = inbound[0];
@@ -332,24 +345,29 @@ export default function DefinitionExecution(definition, context) {
 
   function startProcessesByMessage(reference) {
     if (processes.length < 2) return;
+
     for (const bp of processes) {
       if (bp.isExecutable) continue;
       if (!bp.getStartActivities(reference).length) continue;
 
-      logger.debug(`<${executionId} (${id})> start <${bp.id}>`);
-
       if (!bp.executionId) {
+        logger.debug(`<${executionId} (${id})> start <${bp.id}> by <${reference.referenceId}> (${reference.referenceType})`);
         activateProcess(bp);
         runningProcesses.push(bp);
         bp.init();
-        return bp.run();
+        bp.run();
+        if (reference.referenceType === 'message') return;
+        continue;
       }
+
+      logger.debug(`<${executionId} (${id})> start new <${bp.id}> by <${reference.referenceId}> (${reference.referenceType})`);
 
       const targetProcess = context.getNewProcessById(bp.id);
       activateProcess(targetProcess);
       runningProcesses.push(targetProcess);
       targetProcess.init();
       targetProcess.run();
+      if (reference.referenceType === 'message') return;
     }
   }
 
@@ -411,6 +429,19 @@ export default function DefinitionExecution(definition, context) {
     runningProcesses.push(targetProcess);
     targetProcess.init(bpExecutionId);
     targetProcess.run({inbound: [cloneContent(content)]});
+  }
+
+  function onCancelCallActivity(routingKey, message) {
+    const content = message.content;
+    const {calledElement, id: fromId, executionId: fromExecutionId, parent: fromParent} = content;
+
+    const bpExecutionId = `${brokerSafeId(calledElement)}_${fromExecutionId}`;
+    const targetProcess = getProcessByExecutionId(bpExecutionId);
+    if (!targetProcess) return;
+
+    logger.debug(`<${executionId} (${id})> cancel call from <${fromParent.id}.${fromId}> to <${calledElement}>`);
+
+    targetProcess.getApi().discard();
   }
 
   function onDelegateMessage(routingKey, executeMessage) {

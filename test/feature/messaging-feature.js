@@ -610,4 +610,185 @@ Feature('Messaging', () => {
       expect(definition.getActivityById('end').counters).to.have.property('discarded', 1);
     });
   });
+
+  Scenario('Two processes with message start activities', () => {
+    let definition;
+    Given('a intermediate throw event with message, two participant processes that starts with same message', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="mainProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="toSend" sourceRef="start" targetRef="send" />
+          <intermediateThrowEvent id="send">
+            <messageEventDefinition messageRef="Message1" />
+          </intermediateThrowEvent>
+        </process>
+        <process id="participantProcess1">
+          <startEvent id="start1">
+            <messageEventDefinition messageRef="Message1" />
+          </startEvent>
+          <sequenceFlow id="toEnd" sourceRef="start1" targetRef="end1" />
+          <endEvent id="end1" />
+        </process>
+        <process id="participantProcess2">
+          <startEvent id="start2">
+            <messageEventDefinition messageRef="Message1" />
+          </startEvent>
+          <sequenceFlow id="toEnd2" sourceRef="start2" targetRef="end2" />
+          <endEvent id="end2" />
+        </process>
+        <message id="Message1" name="Start message" />
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    let end;
+    let main, participant1, participant2;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      [main, participant1, participant2] = definition.getProcesses();
+      definition.run();
+    });
+
+    Then('definition completes', () => {
+      return end;
+    });
+
+    And('main process completed', async () => {
+      expect(main.counters).to.have.property('completed', 1);
+    });
+
+    And('first participant processe have completed', async () => {
+      expect(participant1.counters).to.have.property('completed', 1);
+      expect(participant2.counters).to.have.property('completed', 0);
+    });
+
+    And('all activities were taken once', () => {
+      expect(definition.getActivityById('start1').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('end1').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('start2').counters).to.have.property('taken', 0);
+      expect(definition.getActivityById('end2').counters).to.have.property('taken', 0);
+    });
+
+    Given('a intermediate throw event with message followed by the same, one participant processes that starts with message', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="mainProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-send1" sourceRef="start" targetRef="send1" />
+          <intermediateThrowEvent id="send1">
+            <messageEventDefinition messageRef="Message1" />
+          </intermediateThrowEvent>
+          <sequenceFlow id="to-send2" sourceRef="send1" targetRef="send2" />
+          <intermediateThrowEvent id="send2">
+            <messageEventDefinition messageRef="Message1" />
+          </intermediateThrowEvent>
+        </process>
+        <process id="participantProcess1">
+          <startEvent id="start1">
+            <messageEventDefinition messageRef="Message1" />
+          </startEvent>
+          <sequenceFlow id="to-end1" sourceRef="start1" targetRef="end1" />
+          <endEvent id="end1" />
+        </process>
+        <message id="Message1" name="Start message" />
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    let participant;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      [main, participant] = definition.getProcesses();
+      definition.run();
+    });
+
+    Then('definition completes', () => {
+      return end;
+    });
+
+    And('main process completed', async () => {
+      expect(main.counters).to.have.property('completed', 1);
+    });
+
+    And('first participant process has completed', async () => {
+      expect(participant.counters).to.have.property('completed', 1);
+    });
+
+    And('and a second participant process has completed', async () => {
+      [,, participant2] = definition.getProcesses();
+      expect(participant2.counters).to.have.property('completed', 1);
+    });
+
+    And('all activities were taken once', () => {
+      expect(definition.getActivityById('start1').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('end1').counters).to.have.property('taken', 1);
+    });
+  });
+
+  Scenario('Two processes with signal start activities', () => {
+    let definition;
+    Given('a intermediate throw event with signal, two participant processes that starts with same signal', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="mainProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="toSend" sourceRef="start" targetRef="send" />
+          <intermediateThrowEvent id="send">
+            <signalEventDefinition signalRef="Signal1" />
+          </intermediateThrowEvent>
+        </process>
+        <process id="participantProcess1">
+          <startEvent id="start1">
+            <signalEventDefinition signalRef="Signal1" />
+          </startEvent>
+          <sequenceFlow id="toEnd" sourceRef="start1" targetRef="end1" />
+          <endEvent id="end1" />
+        </process>
+        <process id="participantProcess2">
+          <startEvent id="start2">
+            <signalEventDefinition signalRef="Signal1" />
+          </startEvent>
+          <sequenceFlow id="toEnd2" sourceRef="start2" targetRef="end2" />
+          <endEvent id="end2" />
+        </process>
+        <signal id="Signal1" name="Start message" />
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = Definition(context);
+    });
+
+    let end;
+    let main, participant1, participant2;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      [main, participant1, participant2] = definition.getProcesses();
+      definition.run();
+    });
+
+    Then('definition completes', () => {
+      return end;
+    });
+
+    And('main process completed', async () => {
+      expect(main.counters).to.have.property('completed', 1);
+    });
+
+    And('both participant processes have completed', async () => {
+      expect(participant1.counters).to.have.property('completed', 1);
+      expect(participant2.counters).to.have.property('completed', 1);
+    });
+
+    And('all activities were taken once', () => {
+      expect(definition.getActivityById('start1').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('end2').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('start2').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('end2').counters).to.have.property('taken', 1);
+    });
+  });
 });

@@ -34,6 +34,10 @@ function DefinitionExecution(definition, context) {
     autoDelete: false,
     durable: true
   });
+  broker.assertQueue('activity-q', {
+    autoDelete: false,
+    durable: false
+  });
   let activityQ,
       status = 'init',
       executionId,
@@ -225,6 +229,11 @@ function DefinitionExecution(definition, context) {
       consumerTag: '_definition-call-consumer',
       priority: 200
     });
+    bp.broker.subscribeTmp('event', 'activity.call.cancel', onCancelCallActivity, {
+      noAck: true,
+      consumerTag: '_definition-call-cancel-consumer',
+      priority: 200
+    });
     bp.broker.subscribeTmp('event', '#', onChildEvent, {
       noAck: true,
       consumerTag: '_definition-activity-consumer',
@@ -268,6 +277,7 @@ function DefinitionExecution(definition, context) {
     bp.broker.cancel('_definition-signal-consumer');
     bp.broker.cancel('_definition-message-consumer');
     bp.broker.cancel('_definition-call-consumer');
+    bp.broker.cancel('_definition-call-cancel-consumer');
   }
 
   function onProcessMessage(routingKey, message) {
@@ -306,21 +316,37 @@ function DefinitionExecution(definition, context) {
         status = 'executing';
         break;
 
-      case 'process.end':
-        if (inbound && inbound.length) {
-          const calledFrom = inbound[0];
-          getApiByProcess({
-            content: calledFrom
-          }).signal({
-            executionId: calledFrom.executionId,
-            output: { ...content.output
-            }
-          });
-        } else {
-          Object.assign(environment.output, content.output);
+      case 'process.discarded':
+        {
+          if (inbound && inbound.length) {
+            const calledFrom = inbound[0];
+            getApiByProcess({
+              content: calledFrom
+            }).cancel({
+              executionId: calledFrom.executionId
+            });
+          }
+
+          break;
         }
 
-        break;
+      case 'process.end':
+        {
+          if (inbound && inbound.length) {
+            const calledFrom = inbound[0];
+            getApiByProcess({
+              content: calledFrom
+            }).signal({
+              executionId: calledFrom.executionId,
+              output: { ...content.output
+              }
+            });
+          } else {
+            Object.assign(environment.output, content.output);
+          }
+
+          break;
+        }
 
       case 'process.error':
         {
@@ -432,20 +458,24 @@ function DefinitionExecution(definition, context) {
     for (const bp of processes) {
       if (bp.isExecutable) continue;
       if (!bp.getStartActivities(reference).length) continue;
-      logger.debug(`<${executionId} (${id})> start <${bp.id}>`);
 
       if (!bp.executionId) {
+        logger.debug(`<${executionId} (${id})> start <${bp.id}> by <${reference.referenceId}> (${reference.referenceType})`);
         activateProcess(bp);
         runningProcesses.push(bp);
         bp.init();
-        return bp.run();
+        bp.run();
+        if (reference.referenceType === 'message') return;
+        continue;
       }
 
+      logger.debug(`<${executionId} (${id})> start new <${bp.id}> by <${reference.referenceId}> (${reference.referenceType})`);
       const targetProcess = context.getNewProcessById(bp.id);
       activateProcess(targetProcess);
       runningProcesses.push(targetProcess);
       targetProcess.init();
       targetProcess.run();
+      if (reference.referenceType === 'message') return;
     }
   }
 
@@ -477,21 +507,6 @@ function DefinitionExecution(definition, context) {
     targetProcess.init();
     targetProcess.run();
     targetProcess.sendMessage(message);
-  }
-
-  function runAdjecentProcessById(processId) {
-    let targetProcess = getProcessesById(processId);
-    if (!targetProcess) return;
-
-    if (targetProcess.executionId) {
-      targetProcess = context.getNewProcessById(processId);
-    }
-
-    activateProcess(targetProcess);
-    runningProcesses.push(targetProcess);
-    targetProcess.init();
-    targetProcess.run();
-    return targetProcess;
   }
 
   function onCallActivity(routingKey, message) {
@@ -527,6 +542,21 @@ function DefinitionExecution(definition, context) {
     targetProcess.run({
       inbound: [(0, _messageHelper.cloneContent)(content)]
     });
+  }
+
+  function onCancelCallActivity(routingKey, message) {
+    const content = message.content;
+    const {
+      calledElement,
+      id: fromId,
+      executionId: fromExecutionId,
+      parent: fromParent
+    } = content;
+    const bpExecutionId = `${(0, _shared.brokerSafeId)(calledElement)}_${fromExecutionId}`;
+    const targetProcess = getProcessByExecutionId(bpExecutionId);
+    if (!targetProcess) return;
+    logger.debug(`<${executionId} (${id})> cancel call from <${fromParent.id}.${fromId}> to <${calledElement}>`);
+    targetProcess.getApi().discard();
   }
 
   function onDelegateMessage(routingKey, executeMessage) {
@@ -566,6 +596,22 @@ function DefinitionExecution(definition, context) {
     return result;
   }
 
+  function getProcessById(processId) {
+    return getProcesses().find(bp => bp.id === processId);
+  }
+
+  function getProcessesById(processId) {
+    return getProcesses().filter(bp => bp.id === processId);
+  }
+
+  function getProcessByExecutionId(processExecutionId) {
+    return runningProcesses.find(bp => bp.executionId === processExecutionId);
+  }
+
+  function getRunningProcesses() {
+    return runningProcesses.filter(bp => bp.executionId);
+  }
+
   function getState() {
     return {
       executionId,
@@ -574,6 +620,12 @@ function DefinitionExecution(definition, context) {
       status,
       processes: runningProcesses.map(bp => bp.getState())
     };
+  }
+
+  function removeProcessByExecutionId(processExecutionId) {
+    const idx = runningProcesses.findIndex(p => p.executionId === processExecutionId);
+    if (idx === -1) return;
+    return runningProcesses.splice(idx, 1)[0];
   }
 
   function getPostponed(...args) {
@@ -600,28 +652,6 @@ function DefinitionExecution(definition, context) {
       mandatory: completionType === 'error',
       ...options
     });
-  }
-
-  function getProcessById(processId) {
-    return getProcesses().find(bp => bp.id === processId);
-  }
-
-  function getProcessesById(processId) {
-    return getProcesses().filter(bp => bp.id === processId);
-  }
-
-  function getProcessByExecutionId(processExecutionId) {
-    return runningProcesses.find(bp => bp.executionId === processExecutionId);
-  }
-
-  function getRunningProcesses() {
-    return runningProcesses.filter(bp => bp.executionId);
-  }
-
-  function removeProcessByExecutionId(processExecutionId) {
-    const idx = runningProcesses.findIndex(p => p.executionId === processExecutionId);
-    if (idx === -1) return;
-    return runningProcesses.splice(idx, 1)[0];
   }
 
   function publishCompletionMessage(completionType, content) {

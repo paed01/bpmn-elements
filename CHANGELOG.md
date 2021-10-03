@@ -1,7 +1,7 @@
 Changelog
 =========
 
-# Next version
+# 7.0.0
 
 Call activity...
 
