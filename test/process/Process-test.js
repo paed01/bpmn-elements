@@ -1148,6 +1148,38 @@ describe('Process', () => {
       expect(api).to.have.property('executionId');
     });
 
+    it('emits api that exposes getPostponed', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <manualTask id="task" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const [bp] = context.getProcesses();
+
+      const errored = new Promise((resolve) => {
+        bp.on('error', () => {
+          resolve(bp.getApi().getPostponed());
+        });
+      });
+
+      bp.on('wait', (api) => {
+        api.fail({
+          error: new Error('thrown in wait'),
+        });
+      });
+
+      bp.run();
+
+      const postponed = await errored;
+      expect(postponed).to.have.length(1);
+
+      expect(postponed[0]).to.have.property('id', 'task');
+      expect(postponed[0]).to.have.property('executionId');
+    });
+
     it('once only calls callback once', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">

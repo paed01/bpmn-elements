@@ -59,14 +59,7 @@ function EventBroker(brokerOwner, options, onBrokerReturn) {
 
   const broker = this.broker = Broker(brokerOwner);
   broker.assertExchange('event', 'topic', options);
-  broker.on('return', onBrokerReturn || onBrokerReturnFn);
-
-  function onBrokerReturnFn(message) {
-    if (message.properties.type === 'error') {
-      const err = makeErrorFromMessage(message);
-      throw err;
-    }
-  }
+  broker.on('return', onBrokerReturn || this.onBrokerReturnFn.bind(this));
 
   this.on = this.on.bind(this);
   this.once = this.once.bind(this);
@@ -138,11 +131,10 @@ EventBroker.prototype.getEventRoutingKey = function getEventRoutingKey(eventName
   }
 };
 
-EventBroker.prototype.emit = function emit(eventName, content = {}, props = {}) {
+EventBroker.prototype.emit = function emit(eventName, content, props) {
   this.broker.publish('event', `${this.eventPrefix}.${eventName}`, {...content}, {type: eventName, ...props});
 };
 
-
-EventBroker.prototype.emitFatal = function emitFatal(error, content = {}) {
+EventBroker.prototype.emitFatal = function emitFatal(error, content) {
   this.emit('error', {...content, error}, {mandatory: true});
 };

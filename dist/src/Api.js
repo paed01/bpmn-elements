@@ -61,6 +61,12 @@ Api.prototype.discard = function discard() {
   this.sendApiMessage('discard');
 };
 
+Api.prototype.fail = function fail(error) {
+  this.sendApiMessage('error', {
+    error
+  });
+};
+
 Api.prototype.signal = function signal(message, options) {
   this.sendApiMessage('signal', {
     message
@@ -79,13 +85,12 @@ Api.prototype.resolveExpression = function resolveExpression(expression) {
   }, this.owner);
 };
 
-Api.prototype.sendApiMessage = function sendApiMessage(action, content, options = {}) {
-  if (!options.correlationId) options = { ...options,
-    correlationId: (0, _shared.getUniqueId)(`${this.id || this.messagePrefix}_signal`)
-  };
+Api.prototype.sendApiMessage = function sendApiMessage(action, content, options) {
+  const correlationId = options && options.correlationId || (0, _shared.getUniqueId)(`${this.id || this.messagePrefix}_signal`);
   let key = `${this.messagePrefix}.${action}`;
   if (this.executionId) key += `.${this.executionId}`;
   this.broker.publish('api', key, this.createMessage(content), { ...options,
+    correlationId,
     type: action
   });
 };
@@ -96,7 +101,7 @@ Api.prototype.getPostponed = function getPostponed(...args) {
   return [];
 };
 
-Api.prototype.createMessage = function createMessage(content = {}) {
+Api.prototype.createMessage = function createMessage(content) {
   return { ...this.content,
     ...content
   };

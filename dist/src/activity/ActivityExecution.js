@@ -153,6 +153,14 @@ function ActivityExecution(activity, context) {
     const messageType = message.properties.type;
 
     switch (messageType) {
+      case 'error':
+        executeQ.queueMessage({
+          routingKey: 'execute.error'
+        }, {
+          error: message.content.error
+        });
+        break;
+
       case 'discard':
         executeQ.queueMessage({
           routingKey: 'execute.discard'
