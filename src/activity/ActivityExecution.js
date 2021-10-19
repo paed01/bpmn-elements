@@ -1,309 +1,322 @@
 import {ActivityApi} from '../Api';
 import {cloneContent, cloneMessage} from '../messageHelper';
 
-export default function ActivityExecution(activity, context) {
-  const {id, broker, logger, isSubProcess, Behaviour, environment} = activity;
-  const {batchSize = 50} = environment.settings;
-  const postponed = [];
+const completedSymbol = Symbol.for('completed');
 
-  let source, initMessage, completed = false, executionId;
+export default ActivityExecution;
 
-  const executeQ = broker.assertQueue('execute-q', {durable: true, autoDelete: false});
+function ActivityExecution(activity, context) {
+  if (!(this instanceof ActivityExecution)) return new ActivityExecution(activity, context);
+  this.activity = activity;
+  this.context = context;
+  this.id = activity.id;
+  this.broker = activity.broker;
+  this.postponed = [];
+  this.executeQ = this.broker.assertQueue('execute-q', {durable: true, autoDelete: false});
+  this[completedSymbol] = false;
+  this.onParentApiMessage = this.onParentApiMessage.bind(this);
+  this.onExecuteMessage = this.onExecuteMessage.bind(this);
+}
 
-  const executionApi = {
-    get completed() {
-      return completed;
-    },
-    get source() {
-      return source;
-    },
-    discard,
-    execute,
-    passthrough,
-    getApi,
-    getPostponed,
-    getState,
-    recover,
-    stop,
+Object.defineProperty(ActivityExecution.prototype, 'completed', {
+  enumerable: true,
+  get() {
+    return this[completedSymbol];
+  },
+});
+
+ActivityExecution.prototype.execute = function execute(executeMessage) {
+  if (!executeMessage) throw new Error('Execution requires message');
+  const executionId = executeMessage.content && executeMessage.content.executionId;
+  if (!executionId) throw new Error('Execution requires execution id');
+
+  this.executionId = executionId;
+  const initMessage = this.initMessage = cloneMessage(executeMessage, {
+    executionId,
+    state: 'start',
+    isRootScope: true,
+  });
+
+  if (executeMessage.fields.redelivered) {
+    this.postponed.splice(0);
+    this.debug('resume execution');
+
+    if (!this.source) this.source = this.activity.Behaviour(this.activity, this.context);
+
+    this.activate();
+    return this.broker.publish('execution', 'execute.resume.execution', cloneContent(initMessage.content), {persistent: false});
+  }
+
+  this.debug('execute');
+  this.activate();
+  this.source = this.activity.Behaviour(this.activity, this.context);
+  this.broker.publish('execution', 'execute.start', cloneContent(this.initMessage.content));
+};
+
+ActivityExecution.prototype.activate = function activate() {
+  if (this[completedSymbol]) return;
+
+  const broker = this.broker;
+  const batchSize = this.activity.environment.settings.batchSize || 50;
+  broker.bindQueue('execute-q', 'execution', 'execute.#', {priority: 100});
+  this.executeQ.assertConsumer(this.onExecuteMessage, {exclusive: true, prefetch: batchSize * 2, priority: 100, consumerTag: '_activity-execute'});
+
+  if (this[completedSymbol]) return this.deactivate();
+
+  broker.subscribeTmp('api', `activity.*.${this.executionId}`, this.onParentApiMessage, {noAck: true, consumerTag: '_activity-api-execution', priority: 200});
+};
+
+ActivityExecution.prototype.deactivate = function deactivate() {
+  const broker = this.broker;
+  broker.cancel('_activity-api-execution');
+  broker.cancel('_activity-execute');
+  broker.unbindQueue('execute-q', 'execution', 'execute.#');
+};
+
+ActivityExecution.prototype.discard = function discard() {
+  if (this[completedSymbol]) return;
+  const initMessage = this.initMessage;
+  if (!initMessage) return this.activity.logger.warn(`<${this.id}> is not executing`);
+  this.getApi(initMessage).discard();
+};
+
+ActivityExecution.prototype.passthrough = function passthrough(executeMessage) {
+  if (!this.source) return this.execute(executeMessage);
+  return this.source.execute(executeMessage);
+};
+
+ActivityExecution.prototype.getApi = function getApi(apiMessage) {
+  const self = this;
+  if (!apiMessage) apiMessage = this.initMessage;
+
+  if (self.source.getApi) {
+    const sourceApi = self.source.getApi(apiMessage);
+    if (sourceApi) return sourceApi;
+  }
+
+  const api = ActivityApi(self.broker, apiMessage);
+
+  api.getExecuting = function getExecuting() {
+    return self.postponed.reduce((result, msg) => {
+      if (msg.content.executionId === apiMessage.content.executionId) return result;
+      result.push(self.getApi(msg));
+      return result;
+    }, []);
   };
 
-  return executionApi;
+  return api;
+};
 
-  function getPostponed() {
-    let apis = postponed.map((msg) => getApi(msg));
-    if (!isSubProcess || !source) return apis;
-    apis = apis.concat(source.getPostponed());
-    return apis;
+ActivityExecution.prototype.getPostponed = function getPostponed() {
+  let apis = this.postponed.map((msg) => this.getApi(msg));
+  if (!this.activity.isSubProcess || !this.source) return apis;
+  apis = apis.concat(this.source.getPostponed());
+  return apis;
+};
+
+ActivityExecution.prototype.getState = function getState() {
+  const result = {completed: this[completedSymbol]};
+  const source = this.source;
+
+  if (!source || !source.getState) return result;
+  return {...result, ...source.getState()};
+};
+
+ActivityExecution.prototype.recover = function recover(state) {
+  this.postponed.splice(0);
+
+  if (!state) return this;
+  if ('completed' in state) this[completedSymbol] = state.completed;
+
+  const source = this.source = this.activity.Behaviour(this.activity, this.context);
+  if (source.recover) {
+    source.recover(state);
   }
 
-  function execute(executeMessage) {
-    if (!executeMessage) throw new Error('Execution requires message');
-    if (!executeMessage.content || !executeMessage.content.executionId) throw new Error('Execution requires execution id');
+  return this;
+};
 
-    const isRedelivered = executeMessage.fields.redelivered;
-    executionId = executeMessage.content.executionId;
+ActivityExecution.prototype.stop = function stop() {
+  if (!this.initMessage) return;
+  this.getApi(this.initMessage).stop();
+};
 
-    initMessage = cloneMessage(executeMessage);
-    initMessage.content = {...initMessage.content, executionId, state: 'start', isRootScope: true};
+ActivityExecution.prototype.onExecuteMessage = function onExecuteMessage(routingKey, message) {
+  const {fields = {}, content, properties = {}} = message;
+  const isRedelivered = fields.redelivered;
 
-    if (isRedelivered) {
-      postponed.splice(0);
-      logger.debug(`<${executionId} (${id})> resume execution`);
+  if (isRedelivered && properties.persistent === false) return message.ack();
 
-      if (!source) source = Behaviour(activity, context);
-
-      activate();
-      return broker.publish('execution', 'execute.resume.execution', cloneContent(initMessage.content), {persistent: false});
+  switch (routingKey) {
+    case 'execute.resume.execution': {
+      if (!this.postponed.length) return this.broker.publish('execution', 'execute.start', cloneContent(this.initMessage.content));
+      break;
     }
-
-    logger.debug(`<${executionId} (${id})> execute`);
-    activate();
-    source = Behaviour(activity, context);
-    broker.publish('execution', 'execute.start', cloneContent(initMessage.content));
-  }
-
-  function passthrough(executeMessage) {
-    if (!source) return execute(executeMessage);
-    return source.execute(executeMessage);
-  }
-
-  function discard() {
-    if (completed) return;
-    if (!initMessage) return logger.warn(`<${id}> is not executing`);
-    getApi(initMessage).discard();
-  }
-
-  function stop() {
-    if (!initMessage) return;
-    getApi(initMessage).stop();
-  }
-
-  function getState() {
-    const result = {completed};
-
-    if (!source || !source.getState) return result;
-    return {...result, ...source.getState()};
-  }
-
-  function recover(state) {
-    postponed.splice(0);
-
-    if (!state) return executionApi;
-    if ('completed' in state) completed = state.completed;
-
-    source = Behaviour(activity, context);
-    if (source.recover) {
-      source.recover(state);
-    }
-
-    return executionApi;
-  }
-
-  function activate() {
-    if (completed) return;
-
-    broker.bindQueue(executeQ.name, 'execution', 'execute.#', {priority: 100});
-    executeQ.assertConsumer(onExecuteMessage, {exclusive: true, prefetch: batchSize * 2, priority: 100, consumerTag: '_activity-execute'});
-    if (completed) return deactivate();
-
-    broker.subscribeTmp('api', `activity.*.${executionId}`, onParentApiMessage, {noAck: true, consumerTag: '_activity-api-execution', priority: 200});
-  }
-
-  function deactivate() {
-    broker.cancel('_activity-api-execution');
-    broker.cancel('_activity-execute');
-    broker.unbindQueue(executeQ.name, 'execution', 'execute.#');
-  }
-
-  function onParentApiMessage(routingKey, message) {
-    const messageType = message.properties.type;
-
-    switch (messageType) {
-      case 'error':
-        executeQ.queueMessage({routingKey: 'execute.error'}, {error: message.content.error});
-        break;
-      case 'discard':
-        executeQ.queueMessage({routingKey: 'execute.discard'}, cloneContent(initMessage.content));
-        break;
-      case 'stop':
-        onStop(message);
-        break;
-    }
-  }
-
-  function onStop(message) {
-    const stoppedId = message && message.content && message.content.executionId;
-    const running = getPostponed();
-    running.forEach((api) => {
-      if (stoppedId !== api.content.executionId) {
-        api.stop();
-      }
-    });
-
-    broker.cancel('_activity-execute');
-    broker.cancel('_activity-api-execution');
-  }
-
-  function onExecuteMessage(routingKey, message) {
-    const {fields = {}, content = {}, properties = {}} = message;
-    const isRedelivered = fields.redelivered;
-    const {isRootScope, ignoreIfExecuting, keep, executionId: cexid, error} = content;
-    const {persistent, correlationId} = properties;
-
-    if (isRedelivered && persistent === false) return message.ack();
-
-    switch (routingKey) {
-      case 'execute.resume.execution': {
-        if (!postponed.length) return broker.publish('execution', 'execute.start', cloneContent(initMessage.content));
-        break;
-      }
-      case 'execute.error':
-      case 'execute.discard':
-        executionDiscard();
-        break;
-      case 'execute.cancel':
-      case 'execute.completed': {
-        if (isRedelivered) {
-          message.ack();
-          return broker.publish('execution', routingKey, getExecuteMessage().content);
-        }
-
-        executionCompleted();
-        break;
-      }
-      case 'execute.start': {
-        if (!stateChangeMessage()) return;
-        return source.execute(getExecuteMessage());
-      }
-      case 'execute.outbound.take': {
-        if (isRedelivered) {
-          message.ack();
-          break;
-        }
-        broker.publish('execution', 'execution.outbound.take', cloneContent(content), {type: 'outbound'});
-        break;
-      }
-      default: {
-        if (!stateChangeMessage()) return;
-        if (isRedelivered) {
-          return source.execute(getExecuteMessage());
-        }
-      }
-    }
-
-    function stateChangeMessage() {
-      const idx = postponed.findIndex((msg) => msg.content.executionId === cexid);
-      let previousMsg;
-      if (idx > -1) {
-        if (ignoreIfExecuting) {
-          message.ack();
-          return false;
-        }
-
-        previousMsg = postponed.splice(idx, 1, message)[0];
-        previousMsg.ack();
-
-        return true;
-      }
-
-      postponed.push(message);
-      return true;
-    }
-
-    function getExecuteMessage() {
-      const result = cloneMessage(message, {...(isRedelivered ? {isRecovered: true} : undefined)});
-      result.content.ignoreIfExecuting = undefined;
-      return result;
-    }
-
-    function executionCompleted() {
-      const postponedMsg = ackPostponed(message);
-      if (!postponedMsg) return;
-
-      if (!isRootScope) {
-        logger.debug(`<${cexid} (${id})> completed sub execution`);
-        if (!keep) message.ack();
-        if (postponed.length === 1 && postponed[0].content.isRootScope && !postponed[0].content.preventComplete) {
-          return broker.publish('execution', 'execute.completed', cloneContent(postponed[0].content));
-        }
-        return;
-      }
-
-      logger.debug(`<${cexid} (${id})> completed execution`);
-      completed = true;
-
-      message.ack(true);
-
-      deactivate();
-
-      const subApis = getPostponed();
-      postponed.splice(0);
-      subApis.forEach((api) => api.discard());
-
-      publishExecutionCompleted('completed', {...postponedMsg.content, ...message.content});
-    }
-
-    function executionDiscard() {
-      const postponedMsg = ackPostponed(message);
-      if (!isRootScope && !postponedMsg) return;
-
-      if (!error && !isRootScope) {
+    case 'execute.error':
+    case 'execute.discard':
+      return this.onExecutionDiscarded(message);
+    case 'execute.cancel':
+    case 'execute.completed': {
+      if (isRedelivered) {
         message.ack();
-        if (postponed.length === 1 && postponed[0].content.isRootScope) {
-          return broker.publish('execution', 'execute.discard', {...postponed[0].content}, {correlationId});
-        }
-        return;
+        return this.broker.publish('execution', routingKey, getExecuteMessage(message).content);
       }
 
-      message.ack(true);
-
-      deactivate();
-
-      const subApis = getPostponed();
-      postponed.splice(0);
-      subApis.forEach((api) => api.discard());
-
-      publishExecutionCompleted(error ? 'error' : 'discard', {...content});
+      return this.onExecutionCompleted(message);
     }
-
-    function publishExecutionCompleted(completionType, completeContent) {
-      completed = true;
-
-      broker.publish('execution', `execution.${completionType}`, {
-        ...completeContent,
-        state: completionType,
-      }, {type: completionType, correlationId});
+    case 'execute.start': {
+      if (!this.onStateChangeMessage(message)) return;
+      return this.source.execute(getExecuteMessage(message));
+    }
+    case 'execute.outbound.take': {
+      if (isRedelivered) {
+        message.ack();
+        break;
+      }
+      this.broker.publish('execution', 'execution.outbound.take', cloneContent(content), {type: 'outbound'});
+      break;
+    }
+    default: {
+      if (!this.onStateChangeMessage(message)) return;
+      if (isRedelivered) {
+        return this.source.execute(getExecuteMessage(message));
+      }
     }
   }
+};
 
-  function ackPostponed(completeMessage) {
-    const {executionId: eid} = completeMessage.content;
-
-    const idx = postponed.findIndex(({content}) => content.executionId === eid);
-    if (idx === -1) return;
-    const [msg] = postponed.splice(idx, 1);
-    msg.ack();
-    return msg;
-  }
-
-  function getApi(apiMessage) {
-    if (!apiMessage) apiMessage = initMessage;
-
-    if (source.getApi) {
-      const sourceApi = source.getApi(apiMessage);
-      if (sourceApi) return sourceApi;
+ActivityExecution.prototype.onStateChangeMessage = function onStateChangeMessage(message) {
+  const {ignoreIfExecuting, executionId} = message.content;
+  const postponed = this.postponed;
+  const idx = postponed.findIndex((msg) => msg.content.executionId === executionId);
+  let previousMsg;
+  if (idx > -1) {
+    if (ignoreIfExecuting) {
+      message.ack();
+      return false;
     }
 
-    const api = ActivityApi(broker, apiMessage);
+    previousMsg = postponed.splice(idx, 1, message)[0];
+    previousMsg.ack();
 
-    api.getExecuting = function getExecuting() {
-      return postponed.reduce((result, msg) => {
-        if (msg.content.executionId === apiMessage.content.executionId) return result;
-        result.push(getApi(msg));
-        return result;
-      }, []);
-    };
-
-    return api;
+    return true;
   }
+
+  postponed.push(message);
+  return true;
+};
+
+ActivityExecution.prototype.onExecutionCompleted = function onExecutionCompleted(message) {
+  const postponedMsg = this.ackPostponed(message);
+  if (!postponedMsg) return;
+  const postponed = this.postponed;
+
+  const {executionId, keep, isRootScope} = message.content;
+  if (!isRootScope) {
+    this.debug('completed sub execution');
+    if (!keep) message.ack();
+    if (postponed.length === 1 && postponed[0].content.isRootScope && !postponed[0].content.preventComplete) {
+      return this.broker.publish('execution', 'execute.completed', cloneContent(postponed[0].content));
+    }
+    return;
+  }
+
+  this.debug('completed execution', executionId);
+  this[completedSymbol] = true;
+
+  message.ack(true);
+
+  this.deactivate();
+
+  const subApis = this.getPostponed();
+  postponed.splice(0);
+  subApis.forEach((api) => api.discard());
+
+  this.publishExecutionCompleted('completed', {...postponedMsg.content, ...message.content}, message.properties.correlationId);
+};
+
+ActivityExecution.prototype.onExecutionDiscarded = function onExecutionDiscarded(message) {
+  const postponedMsg = this.ackPostponed(message);
+  const {isRootScope, error} = message.content;
+  if (!isRootScope && !postponedMsg) return;
+
+  const postponed = this.postponed;
+  const correlationId = message.properties.correlationId;
+  if (!error && !isRootScope) {
+    message.ack();
+    if (postponed.length === 1 && postponed[0].content.isRootScope) {
+      return this.broker.publish('execution', 'execute.discard', postponed[0].content, {correlationId});
+    }
+    return;
+  }
+
+  message.ack(true);
+
+  this.deactivate();
+
+  const subApis = this.getPostponed();
+  postponed.splice(0);
+  subApis.forEach((api) => api.discard());
+
+  this.publishExecutionCompleted(error ? 'error' : 'discard', message.content, correlationId);
+};
+
+ActivityExecution.prototype.publishExecutionCompleted = function publishExecutionCompleted(completionType, completeContent, correlationId) {
+  this[completedSymbol] = true;
+
+  this.broker.publish('execution', `execution.${completionType}`, {
+    ...completeContent,
+    state: completionType,
+  }, {type: completionType, correlationId});
+};
+
+ActivityExecution.prototype.ackPostponed = function ackPostponed(completeMessage) {
+  const {executionId: eid} = completeMessage.content;
+
+  const postponed = this.postponed;
+  const idx = postponed.findIndex(({content: c}) => c.executionId === eid);
+  if (idx === -1) return;
+  const [msg] = postponed.splice(idx, 1);
+  msg.ack();
+  return msg;
+};
+
+ActivityExecution.prototype.onParentApiMessage = function onParentApiMessage(routingKey, message) {
+  const messageType = message.properties.type;
+
+  switch (messageType) {
+    case 'error':
+      return this.executeQ.queueMessage({routingKey: 'execute.error'}, {error: message.content.error});
+    case 'discard':
+      return this.executeQ.queueMessage({routingKey: 'execute.discard'}, cloneContent(this.initMessage.content));
+    case 'stop': {
+      return this.onStop(message);
+    }
+  }
+};
+
+ActivityExecution.prototype.onStop = function onStop(message) {
+  const stoppedId = message && message.content && message.content.executionId;
+  const running = this.getPostponed();
+  running.forEach((api) => {
+    if (stoppedId !== api.content.executionId) {
+      api.stop();
+    }
+  });
+
+  this.broker.cancel('_activity-execute');
+  this.broker.cancel('_activity-api-execution');
+};
+
+ActivityExecution.prototype.debug = function debugMessage(logMessage, executionId) {
+  executionId = executionId || this.executionId;
+  this.activity.logger.debug(`<${executionId} (${this.id})> ${logMessage}`);
+};
+
+function getExecuteMessage(message) {
+  const result = cloneMessage(message, {
+    ...(message.fields.redelivered ? {isRecovered: true} : undefined),
+    ignoreIfExecuting: undefined,
+  });
+  return result;
 }

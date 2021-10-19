@@ -263,7 +263,7 @@ function Activity(Behaviour, activityDef, context) {
     };
 
     if (state.execution) {
-      execution = (0, _ActivityExecution.default)(activityApi, context).recover(state.execution);
+      execution = new _ActivityExecution.default(activityApi, context).recover(state.execution);
     }
 
     broker.recover(state.broker);
@@ -657,7 +657,7 @@ function Activity(Behaviour, activityDef, context) {
             exclusive: true,
             consumerTag: '_activity-execution'
           });
-          execution = execution || (0, _ActivityExecution.default)(activityApi, context);
+          execution = execution || new _ActivityExecution.default(activityApi, context);
 
           if (isRedelivered) {
             return resumeExtensions(message, (err, formattedContent) => {

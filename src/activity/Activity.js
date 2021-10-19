@@ -196,7 +196,7 @@ export default function Activity(Behaviour, activityDef, context) {
     counters = {...counters, ...state.counters};
 
     if (state.execution) {
-      execution = ActivityExecution(activityApi, context).recover(state.execution);
+      execution = new ActivityExecution(activityApi, context).recover(state.execution);
     }
 
     broker.recover(state.broker);
@@ -544,7 +544,7 @@ export default function Activity(Behaviour, activityDef, context) {
         executeMessage = message;
 
         executionQ.assertConsumer(onExecutionMessage, {exclusive: true, consumerTag: '_activity-execution'});
-        execution = execution || ActivityExecution(activityApi, context);
+        execution = execution || new ActivityExecution(activityApi, context);
 
         if (isRedelivered) {
           return resumeExtensions(message, (err, formattedContent) => {

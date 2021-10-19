@@ -168,12 +168,6 @@ EventBroker.prototype.getEventRoutingKey = function getEventRoutingKey(eventName
 };
 
 EventBroker.prototype.emit = function emit(eventName, content, props) {
-  console.log({
-    eventName,
-    content,
-    props,
-    rk: `${this.eventPrefix}.${eventName}`
-  });
   this.broker.publish('event', `${this.eventPrefix}.${eventName}`, { ...content
   }, {
     type: eventName,
