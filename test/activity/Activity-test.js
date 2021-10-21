@@ -722,7 +722,7 @@ describe('Activity', () => {
       });
 
       activity.run();
-      expect(activity.run).to.throw(/activity .+? is already running/);
+      expect(() => activity.run()).to.throw(/activity .+? is already running/);
     });
   });
 
@@ -1127,7 +1127,7 @@ describe('Activity', () => {
         };
       });
 
-      expect(activity.run).to.throw('unstable');
+      expect(() => activity.run()).to.throw('unstable');
     });
 
     it('throws if activity error is NOT caught', async () => {
@@ -1139,7 +1139,7 @@ describe('Activity', () => {
         };
       });
 
-      expect(activity.run).to.throw('unstable');
+      expect(() => activity.run()).to.throw('unstable');
     });
 
     it('continues execution if execute error is caught', async () => {

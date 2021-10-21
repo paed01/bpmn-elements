@@ -4,7 +4,7 @@ import {cloneContent} from '../messageHelper';
 
 export default function SubProcess(activityDef, context) {
   const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
-  const subProcess = Activity(SubProcessBehaviour, {...activityDef, isSubProcess: true, triggeredByEvent}, context);
+  const subProcess = new Activity(SubProcessBehaviour, {...activityDef, isSubProcess: true, triggeredByEvent}, context);
 
   subProcess.getStartActivities = function getStartActivities(filterOptions) {
     return context.getStartActivities(filterOptions, activityDef.id);

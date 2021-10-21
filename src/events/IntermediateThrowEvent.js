@@ -3,7 +3,7 @@ import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecuti
 import {cloneContent} from '../messageHelper';
 
 export default function IntermediateThrowEvent(activityDef, context) {
-  return Activity(IntermediateThrowEventBehaviour, {...activityDef, isThrowing: true}, context);
+  return new Activity(IntermediateThrowEventBehaviour, {...activityDef, isThrowing: true}, context);
 }
 
 export function IntermediateThrowEventBehaviour(activity) {

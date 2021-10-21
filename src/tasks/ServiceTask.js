@@ -3,7 +3,7 @@ import {ActivityError} from '../error/Errors';
 import {cloneMessage, cloneContent} from '../messageHelper';
 
 export default function ServiceTask(activityDef, context) {
-  return Activity(ServiceTaskBehaviour, activityDef, context);
+  return new Activity(ServiceTaskBehaviour, activityDef, context);
 }
 
 export function ServiceTaskBehaviour(activity) {

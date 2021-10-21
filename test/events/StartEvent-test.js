@@ -1,4 +1,3 @@
-import Environment from '../../src/Environment';
 import JsExtension from '../resources/extensions/JsExtension';
 import MessageEventDefinition from '../../src/eventDefinitions/MessageEventDefinition';
 import StartEvent from '../../src/events/StartEvent';
@@ -334,13 +333,7 @@ describe('StartEvent', () => {
     it('on enter cancels all listeners', () => {
       const event = StartEvent({
         id: 'start',
-      }, {
-        environment: Environment({Logger: testHelpers.Logger}),
-        getInboundAssociations() {},
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
-        loadExtensions() {},
-      });
+      }, testHelpers.emptyContext());
 
       event.once('enter', (api) => api.stop());
 
@@ -352,13 +345,7 @@ describe('StartEvent', () => {
     it('on start cancels all listeners', () => {
       const event = StartEvent({
         id: 'start',
-      }, {
-        environment: Environment({Logger: testHelpers.Logger}),
-        getInboundAssociations() {},
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
-        loadExtensions() {},
-      });
+      }, testHelpers.emptyContext());
 
       event.once('start', (api) => api.stop());
 
@@ -374,13 +361,7 @@ describe('StartEvent', () => {
         behaviour: {
           eventDefinitions: [{Behaviour: MessageEventDefinition}],
         }
-      }, {
-        environment: Environment({Logger: testHelpers.Logger}),
-        getInboundAssociations() {},
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
-        loadExtensions() {},
-      });
+      }, testHelpers.emptyContext());
 
       event.once('wait', (api) => api.stop());
 
@@ -394,13 +375,7 @@ describe('StartEvent', () => {
     it('on enter discards run', () => {
       const event = StartEvent({
         id: 'start',
-      }, {
-        environment: Environment({Logger: testHelpers.Logger}),
-        getInboundAssociations() {},
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
-        loadExtensions() {},
-      });
+      }, testHelpers.emptyContext());
 
       event.once('enter', (api) => api.discard());
 
@@ -412,13 +387,7 @@ describe('StartEvent', () => {
     it('on start discards run', () => {
       const event = StartEvent({
         id: 'start',
-      }, {
-        environment: Environment({Logger: testHelpers.Logger}),
-        getInboundAssociations() {},
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
-        loadExtensions() {},
-      });
+      }, testHelpers.emptyContext());
 
       event.once('start', (api) => api.discard());
 
@@ -434,13 +403,7 @@ describe('StartEvent', () => {
         behaviour: {
           eventDefinitions: [{Behaviour: MessageEventDefinition}],
         }
-      }, {
-        environment: Environment({Logger: testHelpers.Logger}),
-        getInboundAssociations() {},
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
-        loadExtensions() {},
-      });
+      }, testHelpers.emptyContext());
 
       event.once('wait', (api) => {
         api.discard();
@@ -458,13 +421,7 @@ describe('StartEvent', () => {
         id: 'start',
         type: 'startevent',
         behaviour: {}
-      }, {
-        environment: Environment({Logger: testHelpers.Logger}),
-        getInboundAssociations() {},
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
-        loadExtensions() {},
-      });
+      }, testHelpers.emptyContext());
 
       event.once('enter', () => event.broker.publish('format', 'run.enter', {form: {key: 1}}));
       event.once('wait', (api) => {

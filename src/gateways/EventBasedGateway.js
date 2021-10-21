@@ -2,7 +2,7 @@ import Activity from '../activity/Activity';
 import {cloneContent} from '../messageHelper';
 
 export default function EventBasedGateway(activityDef, context) {
-  return Activity(EventBasedGatewayBehaviour, {...activityDef}, context);
+  return new Activity(EventBasedGatewayBehaviour, activityDef, context);
 }
 
 export function EventBasedGatewayBehaviour(activity, context) {

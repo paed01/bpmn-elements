@@ -19,8 +19,7 @@ function SignalEventDefinition(activity, eventDefinition) {
     broker,
     environment,
     isStart,
-    isThrowing,
-    getActivityById
+    isThrowing
   } = activity;
   const {
     type,
@@ -32,7 +31,7 @@ function SignalEventDefinition(activity, eventDefinition) {
   const reference = behaviour.signalRef || {
     name: 'anonymous'
   };
-  const referenceElement = reference.id && getActivityById(reference.id);
+  const referenceElement = reference.id && activity.getActivityById(reference.id);
   const signalId = referenceElement ? referenceElement.id : 'anonymous';
   const signalQueueName = `signal-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(signalId)}-q`;
   if (!isThrowing && isStart) setupCatch();

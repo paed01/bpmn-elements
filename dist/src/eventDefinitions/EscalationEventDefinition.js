@@ -18,8 +18,7 @@ function EscalationEventDefinition(activity, eventDefinition) {
     id,
     broker,
     environment,
-    isThrowing,
-    getActivityById
+    isThrowing
   } = activity;
   const {
     type,
@@ -31,7 +30,7 @@ function EscalationEventDefinition(activity, eventDefinition) {
   const reference = behaviour.escalationRef || {
     name: 'anonymous'
   };
-  const referenceElement = reference.id && getActivityById(reference.id);
+  const referenceElement = reference.id && activity.getActivityById(reference.id);
   const escalationId = referenceElement ? referenceElement.id : 'anonymous';
   const escalationQueueName = `escalate-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(escalationId)}-q`;
   if (!isThrowing) setupCatch();

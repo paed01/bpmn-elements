@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Activity;
+exports.default = void 0;
 
 var _ActivityExecution = _interopRequireDefault(require("./ActivityExecution"));
 
@@ -23,35 +23,51 @@ var _Errors = require("../error/Errors");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+const activityDefSymbol = Symbol.for('activityDefinition');
+const bpmnIoSymbol = Symbol.for('bpmnIo');
+const brokerSymbol = Symbol.for('broker');
+const consumingSymbol = Symbol.for('consuming');
+const contextSymbol = Symbol.for('context');
+const countersSymbol = Symbol.for('counters');
+const eventDefinitionsSymbol = Symbol.for('eventDefinitions');
+const executeMessageSymbol = Symbol.for('executeMessage');
+const execSymbol = Symbol.for('exec');
+const extensionsSymbol = Symbol.for('extensions');
+const flagsSymbol = Symbol.for('flags');
+const flowsSymbol = Symbol.for('flows');
+const formatterSymbol = Symbol.for('formatter');
+const stateMessageSymbol = Symbol.for('stateMessage');
+var _default = Activity;
+exports.default = _default;
+
 function Activity(Behaviour, activityDef, context) {
+  if (!(this instanceof Activity)) return new Activity(Behaviour, activityDef, context);
   const {
     id,
     type = 'activity',
     name,
-    parent: originalParent = {},
-    behaviour = {},
-    isParallelGateway,
-    isSubProcess,
-    triggeredByEvent,
-    isThrowing,
-    isTransaction
+    behaviour = {}
   } = activityDef;
-  const isForCompensation = behaviour.isForCompensation;
-  const parent = (0, _messageHelper.cloneParent)(originalParent);
-  const {
-    environment,
-    getInboundSequenceFlows,
-    getOutboundSequenceFlows,
-    getInboundAssociations
-  } = context;
-  const logger = environment.Logger(type.toLowerCase());
-  const {
-    step
-  } = environment.settings;
   const {
     attachedTo: attachedToRef,
     eventDefinitions
   } = behaviour;
+  this.Behaviour = Behaviour;
+  this[activityDefSymbol] = activityDef;
+  this[contextSymbol] = context;
+  this.id = id;
+  this.type = type;
+  this.name = name;
+  this.behaviour = { ...behaviour,
+    eventDefinitions
+  };
+  this.Behaviour = Behaviour;
+  this.parent = activityDef.parent ? (0, _messageHelper.cloneParent)(activityDef.parent) : {};
+  this.logger = context.environment.Logger(type.toLowerCase());
+  this[countersSymbol] = {
+    taken: 0,
+    discarded: 0
+  };
   let attachedToActivity, attachedTo;
 
   if (attachedToRef) {
@@ -59,108 +75,51 @@ function Activity(Behaviour, activityDef, context) {
     attachedToActivity = context.getActivityById(attachedToRef.id);
   }
 
-  const inboundSequenceFlows = getInboundSequenceFlows(id) || [];
-  const outboundSequenceFlows = getOutboundSequenceFlows(id) || [];
-  const inboundAssociations = getInboundAssociations(id) || [];
-  const isStart = inboundSequenceFlows.length === 0 && !attachedTo && !triggeredByEvent && !isForCompensation;
-  const isEnd = outboundSequenceFlows.length === 0;
-  const isParallelJoin = inboundSequenceFlows.length > 1 && isParallelGateway;
-  const isMultiInstance = !!behaviour.loopCharacteristics;
-  let execution,
-      initExecutionId,
-      executionId,
-      stateMessage,
-      status,
-      stopped = false,
-      executeMessage,
-      consumingRunQ;
+  const inboundSequenceFlows = context.getInboundSequenceFlows(id);
+  const inboundAssociations = context.getInboundAssociations(id);
   const inboundTriggers = attachedToActivity ? [attachedToActivity] : inboundSequenceFlows.slice();
-  const inboundJoinFlows = [];
-  let counters = {
-    taken: 0,
-    discarded: 0
+  const flows = this[flowsSymbol] = {
+    inboundSequenceFlows,
+    outboundSequenceFlows: context.getOutboundSequenceFlows(id),
+    inboundAssociations,
+    inboundJoinFlows: [],
+    inboundTriggers
   };
-  const activityApi = {
-    id,
-    type,
-    name,
-    isEnd,
-    isStart,
-    isSubProcess,
-    isThrowing,
+  const isForCompensation = behaviour.isForCompensation;
+  const isParallelJoin = activityDef.isParallelGateway && flows.inboundSequenceFlows.length > 1;
+  this[flagsSymbol] = {
+    isEnd: flows.outboundSequenceFlows.length === 0,
+    isStart: flows.inboundSequenceFlows.length === 0 && !attachedTo && !behaviour.triggeredByEvent && !isForCompensation,
+    isSubProcess: activityDef.isSubProcess,
+    isMultiInstance: !!behaviour.loopCharacteristics,
     isForCompensation,
-    triggeredByEvent,
-    parent: (0, _messageHelper.cloneParent)(parent),
-    behaviour: { ...behaviour,
-      eventDefinitions
-    },
-    attachedTo: attachedToActivity,
-    environment,
-    inbound: inboundSequenceFlows,
-    outbound: outboundSequenceFlows,
-
-    get counters() {
-      return { ...counters
-      };
-    },
-
-    get executionId() {
-      return executionId;
-    },
-
-    get status() {
-      return status;
-    },
-
-    get stopped() {
-      return stopped;
-    },
-
-    get isRunning() {
-      if (!consumingRunQ) return false;
-      return !!status;
-    },
-
-    Behaviour,
-    activate,
-    deactivate,
-    evaluateOutbound,
-    logger,
-    discard,
-    getApi,
-    getActivityById,
-    getState,
-    init,
-    recover,
-    resume,
-    run,
-    shake,
-    stop,
-    next: step && next
+    attachedTo,
+    isTransaction: activityDef.isTransaction,
+    isParallelJoin,
+    isThrowing: activityDef.isThrowing
   };
+  this[execSymbol] = {};
   const {
     broker,
     on,
     once,
     waitFor,
     emitFatal
-  } = (0, _EventBroker.ActivityBroker)(activityApi);
-  activityApi.on = on;
-  activityApi.once = once;
-  activityApi.waitFor = waitFor;
-  activityApi.emitFatal = emitFatal;
-  const runQ = broker.getQueue('run-q');
-  const executionQ = broker.getQueue('execution-q');
-  const inboundQ = broker.assertQueue('inbound-q', {
+  } = (0, _EventBroker.ActivityBroker)(this);
+  this[brokerSymbol] = broker;
+  this.on = on;
+  this.once = once;
+  this.waitFor = waitFor;
+  this.emitFatal = emitFatal;
+  this.onRunMessage = this.onRunMessage.bind(this);
+  if (isParallelJoin) this.onJoinInbound = this.onJoinInbound.bind(this);else this.onInbound = this.onInbound.bind(this);
+  this.onApiMessage = this.onApiMessage.bind(this);
+  this.onExecutionMessage = this.onExecutionMessage.bind(this);
+  const onInboundEvent = this.onInboundEvent.bind(this);
+  broker.assertQueue('inbound-q', {
     durable: true,
     autoDelete: false
   });
-  const formatRunQ = broker.getQueue('format-run-q');
-  const formatter = (0, _MessageFormatter.Formatter)({
-    id,
-    broker,
-    logger
-  }, formatRunQ);
 
   if (isForCompensation) {
     inboundAssociations.forEach(trigger => {
@@ -181,966 +140,1171 @@ function Activity(Behaviour, activityDef, context) {
     });
   }
 
-  Object.defineProperty(activityApi, 'broker', {
-    enumerable: true,
-    get: () => broker
-  });
-  Object.defineProperty(activityApi, 'execution', {
-    enumerable: true,
-    get: () => execution
-  });
-  const bpmnIo = (0, _BpmnIO.default)(activityApi, context);
-  const loaedEventDefinitions = eventDefinitions && eventDefinitions.map(ed => ed.Behaviour(activityApi, ed, context));
-  Object.defineProperty(activityApi, 'eventDefinitions', {
-    enumerable: true,
-    get: () => loaedEventDefinitions
-  });
-  const extensions = context.loadExtensions(activityApi);
-  Object.defineProperty(activityApi, 'extensions', {
-    enumerable: true,
-    get: () => extensions
-  });
-  return activityApi;
+  this[eventDefinitionsSymbol] = eventDefinitions && eventDefinitions.map(ed => ed.Behaviour(this, ed, this[contextSymbol]));
+}
 
-  function init(initContent) {
-    initExecutionId = initExecutionId || (0, _shared.getUniqueId)(id);
-    logger.debug(`<${id}> initialized with executionId <${initExecutionId}>`);
-    publishEvent('init', createMessage({ ...initContent,
-      executionId: initExecutionId
-    }));
+Object.defineProperty(Activity.prototype, 'context', {
+  enumerable: true,
+
+  get() {
+    return this[contextSymbol];
   }
 
-  function run(runContent) {
-    if (activityApi.isRunning) throw new Error(`activity <${id}> is already running`);
-    executionId = initExecutionId || (0, _shared.getUniqueId)(id);
-    initExecutionId = undefined;
-    consumeApi();
-    const content = createMessage({ ...runContent,
-      executionId
-    });
-    broker.publish('run', 'run.enter', content);
-    broker.publish('run', 'run.start', (0, _messageHelper.cloneContent)(content));
-    consumeRunQ();
-  }
+});
+Object.defineProperty(Activity.prototype, 'counters', {
+  enumerable: true,
 
-  function createMessage(override = {}) {
-    const result = { ...override,
-      id,
-      type,
-      ...(name ? {
-        name
-      } : undefined),
-      ...(status ? {
-        status
-      } : undefined),
-      parent: (0, _messageHelper.cloneParent)(parent)
+  get() {
+    return { ...this[countersSymbol]
     };
-    const flags = {
-      isEnd,
-      isStart,
-      isSubProcess,
-      isMultiInstance,
-      isForCompensation,
-      attachedTo,
-      isTransaction
-    };
-
-    for (const flag in flags) {
-      if (flags[flag]) result[flag] = flags[flag];
-    }
-
-    return result;
   }
 
-  function recover(state) {
-    if (activityApi.isRunning) throw new Error(`cannot recover running activity <${id}>`);
-    if (!state) return;
-    stopped = state.stopped;
-    status = state.status;
-    executionId = state.executionId;
-    counters = { ...counters,
-      ...state.counters
-    };
+});
+Object.defineProperty(Activity.prototype, 'environment', {
+  enumerable: true,
 
-    if (state.execution) {
-      execution = new _ActivityExecution.default(activityApi, context).recover(state.execution);
-    }
-
-    broker.recover(state.broker);
-    return activityApi;
+  get() {
+    return this[contextSymbol].environment;
   }
 
-  function resume() {
-    if (consumingRunQ) {
-      throw new Error(`cannot resume running activity <${id}>`);
-    }
+});
+Object.defineProperty(Activity.prototype, 'broker', {
+  enumerable: true,
 
-    if (!status) return activate();
-    stopped = false;
-    consumeApi();
-    const content = createMessage({
-      executionId
+  get() {
+    return this[brokerSymbol];
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'execution', {
+  enumerable: true,
+
+  get() {
+    return this[execSymbol].execution;
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'executionId', {
+  enumerable: true,
+
+  get() {
+    return this[execSymbol].executionId;
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'bpmnIo', {
+  enumerable: true,
+
+  get() {
+    if (bpmnIoSymbol in this) return this[bpmnIoSymbol];
+    const bpmnIo = this[bpmnIoSymbol] = (0, _BpmnIO.default)(this, this[contextSymbol]);
+    return bpmnIo;
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'extensions', {
+  enumerable: true,
+
+  get() {
+    if (extensionsSymbol in this) return this[extensionsSymbol];
+    const extensions = this[extensionsSymbol] = this.context.loadExtensions(this);
+    return extensions;
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'formatter', {
+  enumerable: true,
+
+  get() {
+    let formatter = this[formatterSymbol];
+    if (formatter) return formatter;
+    const broker = this[brokerSymbol];
+    formatter = this[formatterSymbol] = (0, _MessageFormatter.Formatter)({
+      id: this.id,
+      broker,
+      logger: this.logger
+    }, broker.getQueue('format-run-q'));
+    return formatter;
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'isRunning', {
+  enumerable: true,
+
+  get() {
+    if (!this[consumingSymbol]) return false;
+    return !!this.status;
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'outbound', {
+  enumerable: true,
+
+  get() {
+    return this[flowsSymbol].outboundSequenceFlows;
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'inbound', {
+  enumerable: true,
+
+  get() {
+    return this[flowsSymbol].inboundSequenceFlows;
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'isEnd', {
+  enumerable: true,
+
+  get() {
+    return this[flagsSymbol].isEnd;
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'isStart', {
+  enumerable: true,
+
+  get() {
+    return this[flagsSymbol].isStart;
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'isSubProcess', {
+  enumerable: true,
+
+  get() {
+    return this[flagsSymbol].isSubProcess;
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'isMultiInstance', {
+  enumerable: true,
+
+  get() {
+    return this[flagsSymbol].isMultiInstance;
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'isThrowing', {
+  enumerable: true,
+
+  get() {
+    return this[flagsSymbol].isThrowing;
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'isForCompensation', {
+  enumerable: true,
+
+  get() {
+    return this[flagsSymbol].isForCompensation;
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'triggeredByEvent', {
+  enumerable: true,
+
+  get() {
+    return this[activityDefSymbol].triggeredByEvent;
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'attachedTo', {
+  enumerable: true,
+
+  get() {
+    const attachedToId = this[flagsSymbol].attachedTo;
+    if (!attachedToId) return null;
+    return this.getActivityById(attachedToId);
+  }
+
+});
+Object.defineProperty(Activity.prototype, 'eventDefinitions', {
+  enumerable: true,
+
+  get() {
+    return this[eventDefinitionsSymbol];
+  }
+
+});
+
+Activity.prototype.activate = function activate() {
+  if (this[flagsSymbol].isForCompensation) return;
+  return this.consumeInbound();
+};
+
+Activity.prototype.deactivate = function deactivate() {
+  const broker = this[brokerSymbol];
+  broker.cancel('_run-on-inbound');
+  broker.cancel('_format-consumer');
+};
+
+Activity.prototype.init = function init(initContent) {
+  const id = this.id;
+  const exec = this[execSymbol];
+  const executionId = exec.initExecutionId = exec.initExecutionId || (0, _shared.getUniqueId)(id);
+  this.logger.debug(`<${id}> initialized with executionId <${executionId}>`);
+  this.publishEvent('init', this.createMessage({ ...initContent,
+    executionId
+  }));
+};
+
+Activity.prototype.run = function run(runContent) {
+  const id = this.id;
+  if (this.isRunning) throw new Error(`activity <${id}> is already running`);
+  const exec = this[execSymbol];
+  const executionId = exec.executionId = exec.initExecutionId || (0, _shared.getUniqueId)(id);
+  exec.initExecutionId = null;
+  this.consumeApi();
+  const content = this.createMessage({ ...runContent,
+    executionId
+  });
+  const broker = this[brokerSymbol];
+  broker.publish('run', 'run.enter', content);
+  broker.publish('run', 'run.start', (0, _messageHelper.cloneContent)(content));
+  this.consumeRunQ();
+};
+
+Activity.prototype.recover = function recover(state) {
+  if (this.isRunning) throw new Error(`cannot recover running activity <${this.id}>`);
+  if (!state) return;
+  this.stopped = state.stopped;
+  this.status = state.status;
+  const exec = this[execSymbol];
+  exec.executionId = state.executionId;
+  this[countersSymbol] = { ...this[countersSymbol],
+    ...state.counters
+  };
+
+  if (state.execution) {
+    exec.execution = new _ActivityExecution.default(this, this[contextSymbol]).recover(state.execution);
+  }
+
+  this[brokerSymbol].recover(state.broker);
+  return this;
+};
+
+Activity.prototype.resume = function resume() {
+  if (this[consumingSymbol]) {
+    throw new Error(`cannot resume running activity <${this.id}>`);
+  }
+
+  if (!this.status) return this.activate();
+  this.stopped = false;
+  this.consumeApi();
+  const content = this.createMessage();
+  this[brokerSymbol].publish('run', 'run.resume', content, {
+    persistent: false
+  });
+  this.consumeRunQ();
+};
+
+Activity.prototype.discard = function discard(discardContent) {
+  if (!this.status) return this.runDiscard(discardContent);
+  const execution = this[execSymbol].execution;
+  if (execution && !execution.completed) return execution.discard();
+  this.deactivateRunConsumers();
+  const broker = this[brokerSymbol];
+  broker.getQueue('run-q').purge();
+  broker.publish('run', 'run.discard', (0, _messageHelper.cloneContent)(this[stateMessageSymbol].content));
+  this.consumeRunQ();
+};
+
+Activity.prototype.runDiscard = function runDiscard(discardContent = {}) {
+  const exec = this[execSymbol];
+  const executionId = exec.executionId = exec.initExecutionId || (0, _shared.getUniqueId)(this.id);
+  exec.initExecutionId = null;
+  this.consumeApi();
+  const content = this.createMessage({ ...discardContent,
+    executionId
+  });
+  this[brokerSymbol].publish('run', 'run.discard', content);
+  this.consumeRunQ();
+};
+
+Activity.prototype.discardRun = function discardRun() {
+  const status = this.status;
+  if (!status) return;
+  const execution = this[execSymbol].execution;
+  if (execution && !execution.completed) return;
+
+  switch (status) {
+    case 'executing':
+    case 'error':
+    case 'discarded':
+      return;
+  }
+
+  this.deactivateRunConsumers();
+  if (this.extensions) this.extensions.deactivate();
+  const broker = this[brokerSymbol];
+  broker.getQueue('run-q').purge();
+  broker.publish('run', 'run.discard', (0, _messageHelper.cloneContent)(this[stateMessageSymbol].content));
+  this.consumeRunQ();
+};
+
+Activity.prototype.stop = function stop() {
+  if (!this[consumingSymbol]) return;
+  return this.getApi().stop();
+};
+
+Activity.prototype.next = function next() {
+  if (!this.environment.settings.step) return;
+  const stateMessage = this[stateMessageSymbol];
+  if (!stateMessage) return;
+  if (this.status === 'executing') return false;
+  if (this.status === 'formatting') return false;
+  const current = stateMessage;
+  stateMessage.ack();
+  return current;
+};
+
+Activity.prototype.shake = function shake() {
+  this.shakeOutbound({
+    content: this.createMessage()
+  });
+};
+
+Activity.prototype.shakeOutbound = function shakeOutbound(sourceMessage) {
+  const message = (0, _messageHelper.cloneMessage)(sourceMessage);
+  message.content.sequence = message.content.sequence || [];
+  message.content.sequence.push({
+    id: this.id,
+    type: this.type
+  });
+  const broker = this[brokerSymbol];
+  this[brokerSymbol].publish('api', 'activity.shake.start', message.content, {
+    persistent: false,
+    type: 'shake'
+  });
+
+  if (this[flagsSymbol].isEnd) {
+    return broker.publish('event', 'activity.shake.end', message.content, {
+      persistent: false,
+      type: 'shake'
     });
-    broker.publish('run', 'run.resume', content, {
-      persistent: false
-    });
-    consumeRunQ();
   }
 
-  function discard(discardContent) {
-    if (!status) return runDiscard(discardContent);
-    if (execution && !execution.completed) return execution.discard();
-    deactivateRunConsumers();
-    runQ.purge();
-    broker.publish('run', 'run.discard', (0, _messageHelper.cloneContent)(stateMessage.content));
-    consumeRunQ();
-  }
+  this[flowsSymbol].outboundSequenceFlows.forEach(f => f.shake(message));
+};
 
-  function discardRun() {
-    if (!status) return;
-    if (execution && !execution.completed) return;
+Activity.prototype.consumeInbound = function consumeInbound() {
+  if (this.status) return;
+  const inboundQ = this[brokerSymbol].getQueue('inbound-q');
 
-    switch (status) {
-      case 'executing':
-      case 'error':
-      case 'discarded':
-        return;
-    }
-
-    deactivateRunConsumers();
-    if (extensions) extensions.deactivate();
-    runQ.purge();
-    broker.publish('run', 'run.discard', (0, _messageHelper.cloneContent)(stateMessage.content));
-    consumeRunQ();
-  }
-
-  function runDiscard(discardContent = {}) {
-    executionId = initExecutionId || (0, _shared.getUniqueId)(id);
-    consumeApi();
-    initExecutionId = undefined;
-    const content = createMessage({ ...discardContent,
-      executionId
-    });
-    broker.publish('run', 'run.discard', content);
-    consumeRunQ();
-  }
-
-  function stop() {
-    if (!consumingRunQ) return;
-    return getApi().stop();
-  }
-
-  function onStop(message) {
-    const running = consumingRunQ;
-    stopped = true;
-    consumingRunQ = false;
-    broker.cancel('_activity-run');
-    broker.cancel('_activity-api');
-    broker.cancel('_activity-execution');
-    broker.cancel('_run-on-inbound');
-    broker.cancel('_format-consumer');
-
-    if (running) {
-      if (extensions) extensions.deactivate(message || createMessage());
-      publishEvent('stop');
-    }
-  }
-
-  function activate() {
-    if (isForCompensation) return;
-    return consumeInbound();
-  }
-
-  function deactivate() {
-    broker.cancel('_run-on-inbound');
-    broker.cancel('_format-consumer');
-  }
-
-  function consumeRunQ() {
-    if (consumingRunQ) return;
-    consumingRunQ = true;
-    runQ.assertConsumer(onRunMessage, {
-      exclusive: true,
-      consumerTag: '_activity-run'
+  if (this[flagsSymbol].isParallelJoin) {
+    return inboundQ.consume(this.onJoinInbound, {
+      consumerTag: '_run-on-inbound',
+      prefetch: 1000
     });
   }
 
-  function consumeApi() {
-    if (!executionId) return;
-    broker.cancel('_activity-api');
-    broker.subscribeTmp('api', `activity.*.${executionId}`, onApiMessage, {
-      noAck: true,
-      consumerTag: '_activity-api',
-      priority: 100
-    });
-  }
+  return inboundQ.consume(this.onInbound, {
+    consumerTag: '_run-on-inbound'
+  });
+};
 
-  function consumeInbound() {
-    if (status) return;
+Activity.prototype.onInbound = function onInbound(routingKey, message) {
+  message.ack();
+  const id = this.id;
+  const broker = this[brokerSymbol];
+  broker.cancel('_run-on-inbound');
+  const content = message.content;
+  const inbound = [(0, _messageHelper.cloneContent)(content)];
 
-    if (isParallelJoin) {
-      return inboundQ.consume(onJoinInbound, {
-        consumerTag: '_run-on-inbound',
-        prefetch: 1000
+  switch (routingKey) {
+    case 'association.take':
+    case 'flow.take':
+    case 'activity.enter':
+      return this.run({
+        message: content.message,
+        inbound
       });
-    }
 
-    return inboundQ.consume(onInbound, {
-      consumerTag: '_run-on-inbound'
-    });
-  }
-
-  function deactivateRunConsumers() {
-    broker.cancel('_activity-api');
-    broker.cancel('_activity-run');
-    broker.cancel('_activity-execution');
-    consumingRunQ = false;
-  }
-
-  function onInboundEvent(routingKey, message) {
-    const {
-      fields,
-      content,
-      properties
-    } = message;
-
-    switch (routingKey) {
-      case 'activity.enter':
-      case 'activity.discard':
-        {
-          if (content.id === attachedToActivity.id) {
-            inboundQ.queueMessage(fields, (0, _messageHelper.cloneContent)(content), properties);
-          }
-
-          break;
-        }
-
-      case 'flow.shake':
-        {
-          shakeOutbound(message);
-          break;
-        }
-
-      case 'association.take':
-      case 'flow.take':
-      case 'flow.discard':
-        inboundQ.queueMessage(fields, (0, _messageHelper.cloneContent)(content), properties);
-        break;
-
-      case 'association.discard':
-        {
-          logger.debug(`<${id}> compensation discarded`);
-          inboundQ.purge();
-          break;
-        }
-
-      case 'association.complete':
-        {
-          if (!isForCompensation) break;
-          inboundQ.queueMessage(fields, (0, _messageHelper.cloneContent)(content), properties);
-          const compensationId = `${(0, _shared.brokerSafeId)(id)}_${(0, _shared.brokerSafeId)(content.sequenceId)}`;
-          publishEvent('compensation.start', createMessage({
-            executionId: compensationId,
-            placeholder: true
-          }));
-          logger.debug(`<${id}> start compensation with id <${compensationId}>`);
-          consumeInbound();
-          break;
-        }
-    }
-  }
-
-  function onInbound(routingKey, message) {
-    message.ack();
-    broker.cancel('_run-on-inbound');
-    const content = message.content;
-    const inbound = [(0, _messageHelper.cloneContent)(content)];
-
-    switch (routingKey) {
-      case 'association.take':
-      case 'flow.take':
-      case 'activity.enter':
-        run({
-          message: content.message,
-          inbound
+    case 'flow.discard':
+    case 'activity.discard':
+      {
+        let discardSequence;
+        if (content.discardSequence) discardSequence = content.discardSequence.slice();
+        return this.runDiscard({
+          inbound,
+          discardSequence
         });
-        break;
-
-      case 'flow.discard':
-      case 'activity.discard':
-        {
-          let discardSequence;
-          if (content.discardSequence) discardSequence = content.discardSequence.slice();
-          runDiscard({
-            inbound,
-            discardSequence
-          });
-          break;
-        }
-
-      case 'association.complete':
-        {
-          broker.cancel('_run-on-inbound');
-          const compensationId = `${(0, _shared.brokerSafeId)(id)}_${(0, _shared.brokerSafeId)(content.sequenceId)}`;
-          logger.debug(`<${id}> completed compensation with id <${compensationId}>`);
-          publishEvent('compensation.end', createMessage({
-            executionId: compensationId
-          }));
-          break;
-        }
-    }
-  }
-
-  function onJoinInbound(routingKey, message) {
-    const {
-      content
-    } = message;
-    const idx = inboundJoinFlows.findIndex(msg => msg.content.id === content.id);
-    inboundJoinFlows.push(message);
-    if (idx > -1) return;
-    const allTouched = inboundJoinFlows.length >= inboundTriggers.length;
-
-    if (!allTouched) {
-      const remaining = inboundSequenceFlows.filter((inb, i, list) => list.indexOf(inb) === i).length - inboundJoinFlows.length;
-      return logger.debug(`<${id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
-    }
-
-    const evaluatedInbound = inboundJoinFlows.splice(0);
-    let taken;
-    const inbound = evaluatedInbound.map(im => {
-      if (im.fields.routingKey === 'flow.take') taken = true;
-      im.ack();
-      return (0, _messageHelper.cloneContent)(im.content);
-    });
-    const discardSequence = !taken && evaluatedInbound.reduce((result, im) => {
-      if (!im.content.discardSequence) return result;
-      im.content.discardSequence.forEach(sourceId => {
-        if (result.indexOf(sourceId) === -1) result.push(sourceId);
-      });
-      return result;
-    }, []);
-    broker.cancel('_run-on-inbound');
-    if (!taken) return runDiscard({
-      inbound,
-      discardSequence
-    });
-    return run({
-      inbound
-    });
-  }
-
-  function onRunMessage(routingKey, message, messageProperties) {
-    switch (routingKey) {
-      case 'run.outbound.discard':
-      case 'run.outbound.take':
-      case 'run.next':
-        return continueRunMessage(routingKey, message, messageProperties);
-
-      case 'run.resume':
-        {
-          return onResumeMessage();
-        }
-    }
-
-    const preStatus = status;
-    status = 'formatting';
-    return formatter(message, (err, formattedContent, formatted) => {
-      if (err) return emitFatal(err, message.content);
-      if (formatted) message.content = formattedContent;
-      status = preStatus;
-      continueRunMessage(routingKey, message, messageProperties);
-    });
-
-    function onResumeMessage() {
-      message.ack();
-      const {
-        fields
-      } = stateMessage;
-
-      switch (fields.routingKey) {
-        case 'run.enter':
-        case 'run.start':
-        case 'run.discarded':
-        case 'run.end':
-        case 'run.leave':
-          break;
-
-        default:
-          return;
       }
 
-      if (!fields.redelivered) return;
-      logger.debug(`<${id}> resume from ${message.content.status}`);
-      return broker.publish('run', fields.routingKey, (0, _messageHelper.cloneContent)(stateMessage.content), stateMessage.properties);
-    }
+    case 'association.complete':
+      {
+        broker.cancel('_run-on-inbound');
+        const compensationId = `${(0, _shared.brokerSafeId)(id)}_${(0, _shared.brokerSafeId)(content.sequenceId)}`;
+        this.logger.debug(`<${id}> completed compensation with id <${compensationId}>`);
+        return this.publishEvent('compensation.end', this.createMessage({
+          executionId: compensationId
+        }));
+      }
+  }
+};
+
+Activity.prototype.onJoinInbound = function onJoinInbound(routingKey, message) {
+  const {
+    content
+  } = message;
+  const {
+    inboundSequenceFlows,
+    inboundJoinFlows,
+    inboundTriggers
+  } = this[flowsSymbol];
+  const idx = inboundJoinFlows.findIndex(msg => msg.content.id === content.id);
+  inboundJoinFlows.push(message);
+  if (idx > -1) return;
+  const allTouched = inboundJoinFlows.length >= inboundTriggers.length;
+
+  if (!allTouched) {
+    const remaining = inboundSequenceFlows.filter((inb, i, list) => list.indexOf(inb) === i).length - inboundJoinFlows.length;
+    return this.logger.debug(`<${this.id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
   }
 
-  function continueRunMessage(routingKey, message) {
-    const {
-      fields,
-      content: originalContent,
-      ack
-    } = message;
-    const isRedelivered = fields.redelivered;
-    const content = (0, _messageHelper.cloneContent)(originalContent);
-    const {
-      correlationId
-    } = message.properties;
-    stateMessage = message;
+  const evaluatedInbound = inboundJoinFlows.splice(0);
+  let taken;
+  const inbound = evaluatedInbound.map(im => {
+    if (im.fields.routingKey === 'flow.take') taken = true;
+    im.ack();
+    return (0, _messageHelper.cloneContent)(im.content);
+  });
+  const discardSequence = !taken && evaluatedInbound.reduce((result, im) => {
+    if (!im.content.discardSequence) return result;
+    im.content.discardSequence.forEach(sourceId => {
+      if (result.indexOf(sourceId) === -1) result.push(sourceId);
+    });
+    return result;
+  }, []);
+  this[brokerSymbol].cancel('_run-on-inbound');
+  if (!taken) return this.runDiscard({
+    inbound,
+    discardSequence
+  });
+  return this.run({
+    inbound
+  });
+};
 
-    switch (routingKey) {
-      case 'run.enter':
-        {
-          logger.debug(`<${id}> enter`, isRedelivered ? 'redelivered' : '');
-          status = 'entered';
+Activity.prototype.onInboundEvent = function onInboundEvent(routingKey, message) {
+  const {
+    fields,
+    content,
+    properties
+  } = message;
+  const id = this.id;
+  const inboundQ = this[brokerSymbol].getQueue('inbound-q');
 
-          if (!isRedelivered) {
-            execution = undefined;
-          }
+  switch (routingKey) {
+    case 'activity.enter':
+    case 'activity.discard':
+      {
+        if (content.id === this[flagsSymbol].attachedTo) {
+          inboundQ.queueMessage(fields, (0, _messageHelper.cloneContent)(content), properties);
+        }
 
-          if (extensions) extensions.activate((0, _messageHelper.cloneMessage)(message), activityApi);
-          if (bpmnIo) bpmnIo.activate(message);
-          if (!isRedelivered) publishEvent('enter', content, {
+        break;
+      }
+
+    case 'flow.shake':
+      {
+        return this.shakeOutbound(message);
+      }
+
+    case 'association.take':
+    case 'flow.take':
+    case 'flow.discard':
+      return inboundQ.queueMessage(fields, (0, _messageHelper.cloneContent)(content), properties);
+
+    case 'association.discard':
+      {
+        this.logger.debug(`<${id}> compensation discarded`);
+        return inboundQ.purge();
+      }
+
+    case 'association.complete':
+      {
+        if (!this[flagsSymbol].isForCompensation) break;
+        inboundQ.queueMessage(fields, (0, _messageHelper.cloneContent)(content), properties);
+        const compensationId = `${(0, _shared.brokerSafeId)(id)}_${(0, _shared.brokerSafeId)(content.sequenceId)}`;
+        this.publishEvent('compensation.start', this.createMessage({
+          executionId: compensationId,
+          placeholder: true
+        }));
+        this.logger.debug(`<${id}> start compensation with id <${compensationId}>`);
+        return this.consumeInbound();
+      }
+  }
+};
+
+Activity.prototype.consumeRunQ = function consumerRunQ() {
+  if (this[consumingSymbol]) return;
+  this[consumingSymbol] = true;
+  this[brokerSymbol].getQueue('run-q').assertConsumer(this.onRunMessage, {
+    exclusive: true,
+    consumerTag: '_activity-run'
+  });
+};
+
+Activity.prototype.onRunMessage = function onRunMessage(routingKey, message, messageProperties) {
+  switch (routingKey) {
+    case 'run.outbound.discard':
+    case 'run.outbound.take':
+    case 'run.next':
+      return this.continueRunMessage(routingKey, message, messageProperties);
+
+    case 'run.resume':
+      {
+        return this.onResumeMessage(message);
+      }
+  }
+
+  const preStatus = this.status;
+  this.status = 'formatting';
+  return this.formatter(message, (err, formattedContent, formatted) => {
+    if (err) return this.emitFatal(err, message.content);
+    if (formatted) message.content = formattedContent;
+    this.status = preStatus;
+    this.continueRunMessage(routingKey, message, messageProperties);
+  });
+};
+
+Activity.prototype.continueRunMessage = function continueRunMessage(routingKey, message) {
+  const {
+    fields,
+    content: originalContent,
+    ack
+  } = message;
+  const isRedelivered = fields.redelivered;
+  const content = (0, _messageHelper.cloneContent)(originalContent);
+  const {
+    correlationId
+  } = message.properties;
+  const id = this.id;
+  const step = this.environment.settings.step;
+  this[stateMessageSymbol] = message;
+
+  switch (routingKey) {
+    case 'run.enter':
+      {
+        this.logger.debug(`<${id}> enter`, isRedelivered ? 'redelivered' : '');
+        this.status = 'entered';
+
+        if (!isRedelivered) {
+          this[execSymbol].execution = null;
+        }
+
+        if (this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(message), this);
+        if (this.bpmnIo) this.bpmnIo.activate(message);
+        if (!isRedelivered) this.publishEvent('enter', content, {
+          correlationId
+        });
+        break;
+      }
+
+    case 'run.discard':
+      {
+        this.logger.debug(`<${id}> discard`, isRedelivered ? 'redelivered' : '');
+        this.status = 'discard';
+        this[execSymbol].execution = null;
+        if (this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(message), this);
+        if (this.bpmnIo) this.bpmnIo.activate(message);
+
+        if (!isRedelivered) {
+          this[brokerSymbol].publish('run', 'run.discarded', content, {
             correlationId
           });
-          break;
+          this.publishEvent('discard', content);
         }
 
-      case 'run.discard':
-        {
-          logger.debug(`<${id}> discard`, isRedelivered ? 'redelivered' : '');
-          status = 'discard';
-          execution = undefined;
-          if (extensions) extensions.activate((0, _messageHelper.cloneMessage)(message), activityApi);
-          if (bpmnIo) bpmnIo.activate(message);
+        break;
+      }
 
-          if (!isRedelivered) {
-            broker.publish('run', 'run.discarded', content, {
-              correlationId
-            });
-            publishEvent('discard', content);
-          }
+    case 'run.start':
+      {
+        this.logger.debug(`<${id}> start`, isRedelivered ? 'redelivered' : '');
+        this.status = 'started';
 
-          break;
-        }
-
-      case 'run.start':
-        {
-          logger.debug(`<${id}> start`, isRedelivered ? 'redelivered' : '');
-          status = 'started';
-
-          if (!isRedelivered) {
-            broker.publish('run', 'run.execute', content, {
-              correlationId
-            });
-            publishEvent('start', content, {
-              correlationId
-            });
-          }
-
-          break;
-        }
-
-      case 'run.execute.passthrough':
-        {
-          if (!isRedelivered && execution) {
-            executeMessage = message;
-            return execution.passthrough(message);
-          }
-        }
-
-      case 'run.execute':
-        {
-          status = 'executing';
-          executeMessage = message;
-          executionQ.assertConsumer(onExecutionMessage, {
-            exclusive: true,
-            consumerTag: '_activity-execution'
+        if (!isRedelivered) {
+          this[brokerSymbol].publish('run', 'run.execute', content, {
+            correlationId
           });
-          execution = execution || new _ActivityExecution.default(activityApi, context);
-
-          if (isRedelivered) {
-            return resumeExtensions(message, (err, formattedContent) => {
-              if (err) return emitFatal(err, message.content);
-              if (formattedContent) message.content = formattedContent;
-              status = 'executing';
-              return execution.execute(message);
-            });
-          }
-
-          return execution.execute(message);
+          this.publishEvent('start', content, {
+            correlationId
+          });
         }
 
-      case 'run.end':
-        {
-          if (status === 'end') break;
-          counters.taken++;
-          status = 'end';
-          if (isRedelivered) break;
-          return doRunLeave(false, () => {
-            publishEvent('end', content, {
-              correlationId
-            });
+        break;
+      }
+
+    case 'run.execute.passthrough':
+      {
+        const execution = this.execution;
+
+        if (!isRedelivered && execution) {
+          this[executeMessageSymbol] = message;
+          return execution.passthrough(message);
+        }
+      }
+
+    case 'run.execute':
+      {
+        this.status = 'executing';
+        this[executeMessageSymbol] = message;
+        this[brokerSymbol].getQueue('execution-q').assertConsumer(this.onExecutionMessage, {
+          exclusive: true,
+          consumerTag: '_activity-execution'
+        });
+        const exec = this[execSymbol];
+        if (!exec.execution) exec.execution = new _ActivityExecution.default(this, this.context);
+
+        if (isRedelivered) {
+          return this.resumeExtensions(message, (err, formattedContent) => {
+            if (err) return this.emitFatal(err, message.content);
+            if (formattedContent) message.content = formattedContent;
+            this.status = 'executing';
+            return exec.execution.execute(message);
+          });
+        }
+
+        return exec.execution.execute(message);
+      }
+
+    case 'run.end':
+      {
+        if (this.status === 'end') break;
+        this[countersSymbol].taken++;
+        this.status = 'end';
+        if (isRedelivered) break;
+        return this.doRunLeave(message, false, () => {
+          this.publishEvent('end', content, {
+            correlationId
+          });
+          if (!step) ack();
+        });
+      }
+
+    case 'run.error':
+      {
+        this.publishEvent('error', (0, _messageHelper.cloneContent)(content, {
+          error: fields.redelivered ? (0, _Errors.makeErrorFromMessage)(message) : content.error
+        }), {
+          correlationId
+        });
+        break;
+      }
+
+    case 'run.discarded':
+      {
+        this.logger.debug(`<${content.executionId} (${id})> discarded`);
+        this[countersSymbol].discarded++;
+        this.status = 'discarded';
+        content.outbound = undefined;
+
+        if (!isRedelivered) {
+          return this.doRunLeave(message, true, () => {
             if (!step) ack();
           });
         }
 
-      case 'run.error':
-        {
-          publishEvent('error', (0, _messageHelper.cloneContent)(content, {
-            error: fields.redelivered ? (0, _Errors.makeErrorFromMessage)(message) : content.error
-          }), {
-            correlationId
-          });
-          break;
-        }
-
-      case 'run.discarded':
-        {
-          logger.debug(`<${executionId} (${id})> discarded`);
-          counters.discarded++;
-          status = 'discarded';
-          content.outbound = undefined;
-
-          if (!isRedelivered) {
-            return doRunLeave(true, () => {
-              if (!step) ack();
-            });
-          }
-
-          break;
-        }
-
-      case 'run.outbound.take':
-        {
-          const flow = getOutboundSequenceFlowById(content.flow.id);
-          ack();
-          return flow.take(content.flow);
-        }
-
-      case 'run.outbound.discard':
-        {
-          const flow = getOutboundSequenceFlowById(content.flow.id);
-          ack();
-          return flow.discard(content.flow);
-        }
-
-      case 'run.leave':
-        {
-          status = undefined;
-          if (bpmnIo) bpmnIo.deactivate(message);
-          if (extensions) extensions.deactivate(message);
-
-          if (!isRedelivered) {
-            broker.publish('run', 'run.next', (0, _messageHelper.cloneContent)(content), {
-              persistent: false
-            });
-            publishEvent('leave', content, {
-              correlationId
-            });
-          }
-
-          break;
-        }
-
-      case 'run.next':
-        consumeInbound();
         break;
-    }
-
-    if (!step) ack();
-
-    function doRunLeave(isDiscarded, onOutbound) {
-      if (content.ignoreOutbound) {
-        broker.publish('run', 'run.leave', (0, _messageHelper.cloneContent)(content), {
-          correlationId
-        });
-        if (onOutbound) onOutbound();
-        return;
       }
 
-      return doOutbound((0, _messageHelper.cloneMessage)(message), isDiscarded, (err, outbound) => {
-        if (err) {
-          return publishEvent('error', (0, _messageHelper.cloneContent)(content, {
-            error: err
-          }), {
+    case 'run.outbound.take':
+      {
+        const flow = this.getOutboundSequenceFlowById(content.flow.id);
+        ack();
+        return flow.take(content.flow);
+      }
+
+    case 'run.outbound.discard':
+      {
+        const flow = this.getOutboundSequenceFlowById(content.flow.id);
+        ack();
+        return flow.discard(content.flow);
+      }
+
+    case 'run.leave':
+      {
+        this.status = undefined;
+        if (this.bpmnIo) this.bpmnIo.deactivate(message);
+        if (this.extensions) this.extensions.deactivate(message);
+
+        if (!isRedelivered) {
+          this[brokerSymbol].publish('run', 'run.next', (0, _messageHelper.cloneContent)(content), {
+            persistent: false
+          });
+          this.publishEvent('leave', content, {
             correlationId
           });
         }
 
-        broker.publish('run', 'run.leave', (0, _messageHelper.cloneContent)(content, { ...(outbound.length ? {
+        break;
+      }
+
+    case 'run.next':
+      this.consumeInbound();
+      break;
+  }
+
+  if (!step) ack();
+};
+
+Activity.prototype.onExecutionMessage = function onExecutionMessage(routingKey, message) {
+  const executeMessage = this[executeMessageSymbol];
+  const content = (0, _messageHelper.cloneContent)({ ...executeMessage.content,
+    ...message.content,
+    executionId: executeMessage.content.executionId,
+    parent: { ...this.parent
+    }
+  });
+  const {
+    correlationId
+  } = message.properties;
+  this.publishEvent(routingKey, content, message.properties);
+  const broker = this[brokerSymbol];
+
+  switch (routingKey) {
+    case 'execution.outbound.take':
+      {
+        return this.doOutbound((0, _messageHelper.cloneMessage)(message), false, (err, outbound) => {
+          message.ack();
+          if (err) return this.emitFatal(err, content);
+          broker.publish('run', 'run.execute.passthrough', (0, _messageHelper.cloneContent)(content, {
             outbound
-          } : undefined)
-        }), {
+          }));
+          return this.ackRunExecuteMessage();
+        });
+      }
+
+    case 'execution.error':
+      {
+        this.status = 'error';
+        broker.publish('run', 'run.error', content, {
           correlationId
         });
-        if (onOutbound) onOutbound();
-      });
-    }
-  }
-
-  function resumeExtensions(message, callback) {
-    if (!extensions && !bpmnIo) return callback();
-    if (extensions) extensions.activate((0, _messageHelper.cloneMessage)(message), activityApi);
-    if (bpmnIo) bpmnIo.activate((0, _messageHelper.cloneMessage)(message));
-    status = 'formatting';
-    return formatter(message, (err, formattedContent, formatted) => {
-      if (err) return callback(err);
-      return callback(null, formatted && formattedContent);
-    });
-  }
-
-  function getOutboundSequenceFlowById(flowId) {
-    return outboundSequenceFlows.find(flow => flow.id === flowId);
-  }
-
-  function onExecutionMessage(routingKey, message) {
-    const content = (0, _messageHelper.cloneContent)({ ...executeMessage.content,
-      ...message.content,
-      executionId: executeMessage.content.executionId,
-      parent: { ...parent
-      }
-    });
-    const {
-      correlationId
-    } = message.properties;
-    publishEvent(routingKey, content, message.properties);
-
-    switch (routingKey) {
-      case 'execution.outbound.take':
-        {
-          return doOutbound((0, _messageHelper.cloneMessage)(message), false, (err, outbound) => {
-            message.ack();
-            if (err) return emitFatal(err, content);
-            broker.publish('run', 'run.execute.passthrough', (0, _messageHelper.cloneContent)(content, {
-              outbound
-            }));
-            return ackRunExecuteMessage();
-          });
-        }
-
-      case 'execution.error':
-        {
-          status = 'error';
-          broker.publish('run', 'run.error', content, {
-            correlationId
-          });
-          broker.publish('run', 'run.discarded', content, {
-            correlationId
-          });
-          break;
-        }
-
-      case 'execution.discard':
-        status = 'discarded';
         broker.publish('run', 'run.discarded', content, {
           correlationId
         });
         break;
+      }
 
-      default:
-        {
-          status = 'executed';
-          broker.publish('run', 'run.end', content, {
-            correlationId
-          });
-        }
-    }
+    case 'execution.discard':
+      this.status = 'discarded';
+      broker.publish('run', 'run.discarded', content, {
+        correlationId
+      });
+      break;
 
-    message.ack();
-    ackRunExecuteMessage();
-
-    function ackRunExecuteMessage() {
-      if (step) return;
-      if (!executeMessage) return;
-      const ackMessage = executeMessage;
-      executeMessage = null;
-      ackMessage.ack();
-    }
+    default:
+      {
+        this.status = 'executed';
+        broker.publish('run', 'run.end', content, {
+          correlationId
+        });
+      }
   }
 
-  function onApiMessage(routingKey, message) {
-    const messageType = message.properties.type;
+  message.ack();
+  this.ackRunExecuteMessage();
+};
 
-    switch (messageType) {
-      case 'discard':
-        {
-          discardRun(message);
-          break;
-        }
+Activity.prototype.ackRunExecuteMessage = function ackRunExecuteMessage() {
+  if (this.environment.settings.step) return;
+  const executeMessage = this[executeMessageSymbol];
+  if (!executeMessage) return;
+  const ackMessage = executeMessage;
+  this[executeMessageSymbol] = null;
+  ackMessage.ack();
+};
 
-      case 'stop':
-        {
-          onStop(message);
-          break;
-        }
+Activity.prototype.doRunLeave = function doRunLeave(message, isDiscarded, onOutbound) {
+  const {
+    content,
+    properties
+  } = message;
+  const correlationId = properties.correlationId;
 
-      case 'shake':
-        {
-          shakeOutbound(message);
-          break;
-        }
-    }
+  if (content.ignoreOutbound) {
+    this[brokerSymbol].publish('run', 'run.leave', (0, _messageHelper.cloneContent)(content), {
+      correlationId
+    });
+    if (onOutbound) onOutbound();
+    return;
   }
 
-  function shake() {
-    shakeOutbound({
-      content: createMessage()
-    });
-  }
-
-  function shakeOutbound(sourceMessage) {
-    const message = (0, _messageHelper.cloneMessage)(sourceMessage);
-    message.content.sequence = message.content.sequence || [];
-    message.content.sequence.push({
-      id,
-      type
-    });
-    broker.publish('api', 'activity.shake.start', message.content, {
-      persistent: false,
-      type: 'shake'
-    });
-
-    if (isEnd) {
-      return broker.publish('event', 'activity.shake.end', message.content, {
-        persistent: false,
-        type: 'shake'
+  return this.doOutbound((0, _messageHelper.cloneMessage)(message), isDiscarded, (err, outbound) => {
+    if (err) {
+      return this.publishEvent('error', (0, _messageHelper.cloneContent)(content, {
+        error: err
+      }), {
+        correlationId
       });
     }
 
-    outboundSequenceFlows.forEach(f => f.shake(message));
-  }
-
-  function publishEvent(state, content, messageProperties = {}) {
-    if (!state) return;
-    if (!content) content = createMessage();
-    broker.publish('event', `activity.${state}`, { ...content,
-      state
-    }, { ...messageProperties,
-      type: state,
-      mandatory: state === 'error',
-      persistent: 'persistent' in messageProperties ? messageProperties.persistent : state !== 'stop'
-    });
-  }
-
-  function doOutbound(fromMessage, isDiscarded, callback) {
-    if (!outboundSequenceFlows.length) return callback(null, []);
-    const fromContent = fromMessage.content;
-    let discardSequence = fromContent.discardSequence;
-
-    if (isDiscarded && !discardSequence && attachedTo && fromContent.inbound && fromContent.inbound[0]) {
-      discardSequence = [fromContent.inbound[0].id];
-    }
-
-    let outboundFlows;
-
-    if (isDiscarded) {
-      outboundFlows = outboundSequenceFlows.map(flow => formatFlowAction(flow, {
-        action: 'discard'
-      }));
-    } else if (fromContent.outbound && fromContent.outbound.length) {
-      outboundFlows = outboundSequenceFlows.map(flow => formatFlowAction(flow, fromContent.outbound.filter(f => f.id === flow.id).pop()));
-    }
-
-    if (outboundFlows) {
-      doRunOutbound(outboundFlows);
-      return callback(null, outboundFlows);
-    }
-
-    return evaluateOutbound(fromMessage, fromContent.outboundTakeOne, (err, evaluatedOutbound) => {
-      if (err) return callback(new _Errors.ActivityError(err.message, fromMessage, err));
-      const outbound = doRunOutbound(evaluatedOutbound);
-      return callback(null, outbound);
-    });
-
-    function doRunOutbound(outboundList) {
-      return outboundList.map(outboundFlow => {
-        const {
-          id: flowId,
-          action
-        } = outboundFlow;
-        broker.publish('run', 'run.outbound.' + action, (0, _messageHelper.cloneContent)(fromContent, {
-          flow: { ...outboundFlow,
-            sequenceId: (0, _shared.getUniqueId)(`${flowId}_${action}`),
-            ...(discardSequence ? {
-              discardSequence: discardSequence.slice()
-            } : undefined)
-          }
-        }));
-        return outboundFlow;
-      });
-    }
-  }
-
-  function formatFlowAction(flow, options) {
-    if (!options) options = {
-      action: 'discard'
-    };
-    const action = options.action;
-    const message = options.message;
-    return { ...options,
-      id: flow.id,
-      action,
-      ...(flow.isDefault ? {
-        isDefault: true
-      } : undefined),
-      ...(message !== undefined ? {
-        message
+    this[brokerSymbol].publish('run', 'run.leave', (0, _messageHelper.cloneContent)(content, { ...(outbound.length ? {
+        outbound
       } : undefined)
-    };
+    }), {
+      correlationId
+    });
+    if (onOutbound) onOutbound();
+  });
+};
+
+Activity.prototype.doOutbound = function doOutbound(fromMessage, isDiscarded, callback) {
+  const outboundSequenceFlows = this[flowsSymbol].outboundSequenceFlows;
+  if (!outboundSequenceFlows.length) return callback(null, []);
+  const fromContent = fromMessage.content;
+  let discardSequence = fromContent.discardSequence;
+
+  if (isDiscarded && !discardSequence && this[flagsSymbol].attachedTo && fromContent.inbound && fromContent.inbound[0]) {
+    discardSequence = [fromContent.inbound[0].id];
   }
 
-  function evaluateOutbound(fromMessage, discardRestAtTake, callback) {
-    let conditionMet;
-    const outbound = {};
-    if (!outboundSequenceFlows.length) return completed();
-    const content = fromMessage.content;
-    const message = content.message;
-    const evaluateFlows = outboundSequenceFlows.slice();
-    const defaultFlowIdx = outboundSequenceFlows.findIndex(({
-      isDefault
-    }) => isDefault);
+  let outboundFlows;
 
-    if (defaultFlowIdx > -1) {
-      evaluateFlows.splice(defaultFlowIdx, 1);
-      evaluateFlows.push(outboundSequenceFlows[defaultFlowIdx]);
+  if (isDiscarded) {
+    outboundFlows = outboundSequenceFlows.map(flow => formatFlowAction(flow, {
+      action: 'discard'
+    }));
+  } else if (fromContent.outbound && fromContent.outbound.length) {
+    outboundFlows = outboundSequenceFlows.map(flow => formatFlowAction(flow, fromContent.outbound.filter(f => f.id === flow.id).pop()));
+  }
+
+  if (outboundFlows) {
+    this.doRunOutbound(outboundFlows, fromContent, discardSequence);
+    return callback(null, outboundFlows);
+  }
+
+  return this.evaluateOutbound(fromMessage, fromContent.outboundTakeOne, (err, evaluatedOutbound) => {
+    if (err) return callback(new _Errors.ActivityError(err.message, fromMessage, err));
+    const outbound = this.doRunOutbound(evaluatedOutbound, fromContent, discardSequence);
+    return callback(null, outbound);
+  });
+};
+
+Activity.prototype.doRunOutbound = function doRunOutbound(outboundList, content, discardSequence) {
+  return outboundList.map(outboundFlow => {
+    const {
+      id: flowId,
+      action
+    } = outboundFlow;
+    this[brokerSymbol].publish('run', 'run.outbound.' + action, (0, _messageHelper.cloneContent)(content, {
+      flow: { ...outboundFlow,
+        sequenceId: (0, _shared.getUniqueId)(`${flowId}_${action}`),
+        ...(discardSequence ? {
+          discardSequence: discardSequence.slice()
+        } : undefined)
+      }
+    }));
+    return outboundFlow;
+  });
+};
+
+Activity.prototype.evaluateOutbound = function evaluateOutbound(fromMessage, discardRestAtTake, callback) {
+  let conditionMet;
+  const outbound = {};
+  const broker = this[brokerSymbol];
+  const id = this.id;
+  const consumerTag = `_flow-evaluation-${this[execSymbol].executionId}`;
+  const outboundSequenceFlows = this[flowsSymbol].outboundSequenceFlows;
+  if (!outboundSequenceFlows.length) return completed();
+  const content = fromMessage.content;
+  const message = content.message;
+  const evaluateFlows = outboundSequenceFlows.slice();
+  const defaultFlowIdx = outboundSequenceFlows.findIndex(({
+    isDefault
+  }) => isDefault);
+
+  if (defaultFlowIdx > -1) {
+    evaluateFlows.splice(defaultFlowIdx, 1);
+    evaluateFlows.push(outboundSequenceFlows[defaultFlowIdx]);
+  }
+
+  let takenCount = 0;
+  broker.subscribeTmp('execution', 'evaluate.flow.#', (routingKey, {
+    content: evalContent,
+    ack
+  }) => {
+    const {
+      id: flowId,
+      action
+    } = evalContent;
+
+    if (action === 'take') {
+      takenCount++;
+      conditionMet = true;
     }
 
-    let takenCount = 0;
-    broker.subscribeTmp('execution', 'evaluate.flow.#', (routingKey, {
-      content: evalContent,
-      ack
-    }) => {
-      const {
-        id: flowId,
-        action
-      } = evalContent;
+    outbound[flowId] = evalContent;
 
-      if (action === 'take') {
-        takenCount++;
-        conditionMet = true;
-      }
+    if ('result' in evalContent) {
+      this.logger.debug(`<${content.executionId} (${id})> flow <${flowId}> evaluated to: ${evalContent.result}`);
+    }
 
-      outbound[flowId] = evalContent;
+    let nextFlow = evaluateFlows.shift();
+    if (!nextFlow) return completed();
 
-      if ('result' in evalContent) {
-        logger.debug(`<${content.executionId} (${id})> flow <${flowId}> evaluated to: ${evalContent.result}`);
-      }
-
-      let nextFlow = evaluateFlows.shift();
-      if (!nextFlow) return completed();
-
-      if (discardRestAtTake && conditionMet) {
-        do {
-          outbound[nextFlow.id] = formatFlowAction(nextFlow, {
-            action: 'discard'
-          });
-        } while (nextFlow = evaluateFlows.shift());
-
-        return completed();
-      }
-
-      if (conditionMet && nextFlow.isDefault) {
+    if (discardRestAtTake && conditionMet) {
+      do {
         outbound[nextFlow.id] = formatFlowAction(nextFlow, {
           action: 'discard'
         });
-        return completed();
-      }
+      } while (nextFlow = evaluateFlows.shift());
 
-      ack();
-      evaluateSequenceFlows(nextFlow);
-    }, {
-      consumerTag: `_flow-evaluation-${executionId}`
-    });
-    return evaluateSequenceFlows(evaluateFlows.shift());
-
-    function completed(err) {
-      broker.cancel(`_flow-evaluation-${executionId}`);
-      if (err) return callback(err);
-
-      if (!takenCount) {
-        const nonTakenError = new _Errors.ActivityError(`<${id}> no conditional flow taken`, fromMessage);
-        logger.error(`<${id}>`, nonTakenError);
-        return callback(nonTakenError);
-      }
-
-      const outboundList = Object.keys(outbound).reduce((result, flowId) => {
-        const flow = outbound[flowId];
-        result.push({ ...flow,
-          ...(message !== undefined ? {
-            message
-          } : undefined)
-        });
-        return result;
-      }, []);
-      return callback(null, outboundList);
+      return completed();
     }
 
-    function evaluateSequenceFlows(flow) {
-      if (!flow) return completed();
+    if (conditionMet && nextFlow.isDefault) {
+      outbound[nextFlow.id] = formatFlowAction(nextFlow, {
+        action: 'discard'
+      });
+      return completed();
+    }
 
-      if (flow.isDefault) {
-        return broker.publish('execution', 'evaluate.flow.take', formatFlowAction(flow, {
-          action: 'take'
-        }), {
-          persistent: false
-        });
-      }
+    ack();
+    evaluateSequenceFlows(nextFlow);
+  }, {
+    consumerTag
+  });
+  return evaluateSequenceFlows(evaluateFlows.shift());
 
-      const flowCondition = flow.getCondition();
+  function completed(err) {
+    broker.cancel(consumerTag);
+    if (err) return callback(err);
 
-      if (!flowCondition) {
-        return broker.publish('execution', 'evaluate.flow.take', formatFlowAction(flow, {
-          action: 'take'
-        }), {
-          persistent: false
-        });
-      }
+    if (!takenCount) {
+      const nonTakenError = new _Errors.ActivityError(`<${id}> no conditional flow taken`, fromMessage); // logger.error(`<${id}>`, nonTakenError);
 
-      flowCondition.execute((0, _messageHelper.cloneMessage)(fromMessage), (err, result) => {
-        if (err) return completed(err);
-        const action = result ? 'take' : 'discard';
-        return broker.publish('execution', 'evaluate.flow.' + action, formatFlowAction(flow, {
-          action,
-          result
-        }), {
-          persistent: false
-        });
+      return callback(nonTakenError);
+    }
+
+    const outboundList = Object.keys(outbound).reduce((result, flowId) => {
+      const flow = outbound[flowId];
+      result.push({ ...flow,
+        ...(message !== undefined ? {
+          message
+        } : undefined)
+      });
+      return result;
+    }, []);
+    return callback(null, outboundList);
+  }
+
+  function evaluateSequenceFlows(flow) {
+    if (!flow) return completed();
+
+    if (flow.isDefault) {
+      return broker.publish('execution', 'evaluate.flow.take', formatFlowAction(flow, {
+        action: 'take'
+      }), {
+        persistent: false
       });
     }
+
+    const flowCondition = flow.getCondition();
+
+    if (!flowCondition) {
+      return broker.publish('execution', 'evaluate.flow.take', formatFlowAction(flow, {
+        action: 'take'
+      }), {
+        persistent: false
+      });
+    }
+
+    flowCondition.execute((0, _messageHelper.cloneMessage)(fromMessage), (err, result) => {
+      if (err) return completed(err);
+      const action = result ? 'take' : 'discard';
+      return broker.publish('execution', 'evaluate.flow.' + action, formatFlowAction(flow, {
+        action,
+        result
+      }), {
+        persistent: false
+      });
+    });
+  }
+};
+
+Activity.prototype.onResumeMessage = function onResumeMessage(message) {
+  message.ack();
+  const stateMessage = this[stateMessageSymbol];
+  const {
+    fields
+  } = stateMessage;
+
+  switch (fields.routingKey) {
+    case 'run.enter':
+    case 'run.start':
+    case 'run.discarded':
+    case 'run.end':
+    case 'run.leave':
+      break;
+
+    default:
+      return;
   }
 
-  function getActivityById(elementId) {
-    return context.getActivityById(elementId);
+  if (!fields.redelivered) return;
+  this.logger.debug(`<${this.id}> resume from ${message.content.status}`);
+  return this[brokerSymbol].publish('run', fields.routingKey, (0, _messageHelper.cloneContent)(stateMessage.content), stateMessage.properties);
+};
+
+Activity.prototype.publishEvent = function publishEvent(state, content, messageProperties = {}) {
+  if (!state) return;
+  if (!content) content = this.createMessage();
+  this[brokerSymbol].publish('event', `activity.${state}`, { ...content,
+    state
+  }, { ...messageProperties,
+    type: state,
+    mandatory: state === 'error',
+    persistent: 'persistent' in messageProperties ? messageProperties.persistent : state !== 'stop'
+  });
+};
+
+Activity.prototype.onStop = function onStop(message) {
+  const running = this[consumingSymbol];
+  this.stopped = true;
+  this[consumingSymbol] = false;
+  const broker = this[brokerSymbol];
+  broker.cancel('_activity-run');
+  broker.cancel('_activity-api');
+  broker.cancel('_activity-execution');
+  broker.cancel('_run-on-inbound');
+  broker.cancel('_format-consumer');
+
+  if (running) {
+    if (this.extensions) this.extensions.deactivate(message || this.createMessage());
+    this.publishEvent('stop');
+  }
+};
+
+Activity.prototype.consumeApi = function consumeApi() {
+  const executionId = this[execSymbol].executionId;
+  if (!executionId) return;
+  const broker = this[brokerSymbol];
+  broker.cancel('_activity-api');
+  broker.subscribeTmp('api', `activity.*.${executionId}`, this.onApiMessage, {
+    noAck: true,
+    consumerTag: '_activity-api',
+    priority: 100
+  });
+};
+
+Activity.prototype.onApiMessage = function onApiMessage(routingKey, message) {
+  const messageType = message.properties.type;
+
+  switch (messageType) {
+    case 'discard':
+      {
+        this.discardRun(message);
+        break;
+      }
+
+    case 'stop':
+      {
+        this.onStop(message);
+        break;
+      }
+
+    case 'shake':
+      {
+        this.shakeOutbound(message);
+        break;
+      }
+  }
+};
+
+Activity.prototype.createMessage = function createMessage(override = {}) {
+  const name = this.name,
+        status = this.status,
+        parent = this.parent;
+  const result = { ...override,
+    id: this.id,
+    type: this.type,
+    ...(name ? {
+      name
+    } : undefined),
+    ...(status ? {
+      status
+    } : undefined),
+    ...(parent ? {
+      parent: (0, _messageHelper.cloneParent)(parent)
+    } : undefined)
+  };
+
+  for (const [flag, value] of Object.entries(this[flagsSymbol])) {
+    if (value) result[flag] = value;
   }
 
-  function getState() {
-    const msg = createMessage();
-    return { ...msg,
-      status,
-      executionId,
-      stopped,
-      behaviour: { ...behaviour
-      },
-      counters: { ...counters
-      },
-      broker: broker.getState(true),
-      execution: execution && execution.getState()
-    };
-  }
+  return result;
+};
 
-  function next() {
-    if (!step) return;
-    if (!stateMessage) return;
-    if (status === 'executing') return false;
-    if (status === 'formatting') return false;
-    const current = stateMessage;
-    stateMessage.ack();
-    return current;
-  }
+Activity.prototype.getOutboundSequenceFlowById = function getOutboundSequenceFlowById(flowId) {
+  return this[flowsSymbol].outboundSequenceFlows.find(flow => flow.id === flowId);
+};
 
-  function getApi(message) {
-    if (execution && !execution.completed) return execution.getApi(message);
-    return (0, _Api.ActivityApi)(broker, message || stateMessage);
-  }
+Activity.prototype.resumeExtensions = function resumeExtensions(message, callback) {
+  const extensions = this.extensions,
+        bpmnIo = this.bpmnIo;
+  if (!extensions && !bpmnIo) return callback();
+  if (extensions) extensions.activate((0, _messageHelper.cloneMessage)(message), this);
+  if (bpmnIo) bpmnIo.activate((0, _messageHelper.cloneMessage)(message), this);
+  this.status = 'formatting';
+  return this.formatter(message, (err, formattedContent, formatted) => {
+    if (err) return callback(err);
+    return callback(null, formatted && formattedContent);
+  });
+};
+
+Activity.prototype.getState = function getState() {
+  const msg = this.createMessage();
+  const exec = this[execSymbol];
+  return { ...msg,
+    executionId: exec.executionId,
+    stopped: this.stopped,
+    behaviour: { ...this.behaviour
+    },
+    counters: { ...this[countersSymbol]
+    },
+    broker: this[brokerSymbol].getState(true),
+    execution: exec.execution && exec.execution.getState()
+  };
+};
+
+Activity.prototype.getApi = function getApi(message) {
+  const execution = this[execSymbol].execution;
+  if (execution && !execution.completed) return execution.getApi(message);
+  return (0, _Api.ActivityApi)(this[brokerSymbol], message || this[stateMessageSymbol]);
+};
+
+Activity.prototype.getActivityById = function getActivityById(elementId) {
+  return this[contextSymbol].getActivityById(elementId);
+};
+
+Activity.prototype.deactivateRunConsumers = function deactivateRunConsumers() {
+  const broker = this[brokerSymbol];
+  broker.cancel('_activity-api');
+  broker.cancel('_activity-run');
+  broker.cancel('_activity-execution');
+  this[consumingSymbol] = false;
+};
+
+function formatFlowAction(flow, options) {
+  if (!options) options = {
+    action: 'discard'
+  };
+  const action = options.action;
+  const message = options.message;
+  return { ...options,
+    id: flow.id,
+    action,
+    ...(flow.isDefault ? {
+      isDefault: true
+    } : undefined),
+    ...(message !== undefined ? {
+      message
+    } : undefined)
+  };
 }

@@ -15,7 +15,7 @@ var _messageHelper = require("../messageHelper");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function EndEvent(activityDef, context) {
-  return (0, _Activity.default)(EndEventBehaviour, { ...activityDef,
+  return new _Activity.default(EndEventBehaviour, { ...activityDef,
     isThrowing: true
   }, context);
 }

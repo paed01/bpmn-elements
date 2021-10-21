@@ -3,7 +3,7 @@ import {ActivityError} from '../error/Errors';
 import {cloneContent} from '../messageHelper';
 
 export default function SignalTask(activityDef, context) {
-  return Activity(SignalTaskBehaviour, activityDef, context);
+  return new Activity(SignalTaskBehaviour, activityDef, context);
 }
 
 export function SignalTaskBehaviour(activity) {

@@ -3,11 +3,11 @@ import {brokerSafeId} from '../shared';
 import {cloneContent, shiftParent} from '../messageHelper';
 
 export default function SignalEventDefinition(activity, eventDefinition) {
-  const {id, broker, environment, isStart, isThrowing, getActivityById} = activity;
+  const {id, broker, environment, isStart, isThrowing} = activity;
   const {type, behaviour = {}} = eventDefinition;
   const {debug} = environment.Logger(type.toLowerCase());
   const reference = behaviour.signalRef || {name: 'anonymous'};
-  const referenceElement = reference.id && getActivityById(reference.id);
+  const referenceElement = reference.id && activity.getActivityById(reference.id);
   const signalId = referenceElement ? referenceElement.id : 'anonymous';
   const signalQueueName = `signal-${brokerSafeId(id)}-${brokerSafeId(signalId)}-q`;
 

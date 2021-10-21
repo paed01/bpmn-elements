@@ -15,7 +15,7 @@ var _messageHelper = require("../messageHelper");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function SignalTask(activityDef, context) {
-  return (0, _Activity.default)(SignalTaskBehaviour, activityDef, context);
+  return new _Activity.default(SignalTaskBehaviour, activityDef, context);
 }
 
 function SignalTaskBehaviour(activity) {

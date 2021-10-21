@@ -2,7 +2,7 @@ import Activity from '../activity/Activity';
 import {cloneContent} from '../messageHelper';
 
 export default function InclusiveGateway(activityDef, context) {
-  return Activity(InclusiveGatewayBehaviour, activityDef, context);
+  return new Activity(InclusiveGatewayBehaviour, activityDef, context);
 }
 
 export function InclusiveGatewayBehaviour(activity) {

@@ -3,7 +3,7 @@ import {ActivityError} from '../error/Errors';
 import {cloneContent} from '../messageHelper';
 
 export default function CallActivity(activityDef, context) {
-  return Activity(CallActivityBehaviour, activityDef, context);
+  return new Activity(CallActivityBehaviour, activityDef, context);
 }
 
 export function CallActivityBehaviour(activity) {

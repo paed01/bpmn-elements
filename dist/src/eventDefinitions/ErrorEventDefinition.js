@@ -14,7 +14,6 @@ function ErrorEventDefinition(activity, eventDefinition) {
     id,
     broker,
     environment,
-    getActivityById,
     isThrowing
   } = activity;
   const {
@@ -27,7 +26,7 @@ function ErrorEventDefinition(activity, eventDefinition) {
   const reference = behaviour.errorRef || {
     name: 'anonymous'
   };
-  const referenceElement = reference.id && getActivityById(reference.id);
+  const referenceElement = reference.id && activity.getActivityById(reference.id);
   const errorId = referenceElement ? referenceElement.id : 'anonymous';
   const errorQueueName = `error-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(errorId)}-q`;
   if (!isThrowing) setupCatch();

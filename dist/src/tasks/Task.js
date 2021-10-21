@@ -11,7 +11,7 @@ var _Activity = _interopRequireDefault(require("../activity/Activity"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function Task(activityDef, context) {
-  return (0, _Activity.default)(TaskBehaviour, activityDef, context);
+  return new _Activity.default(TaskBehaviour, activityDef, context);
 }
 
 function TaskBehaviour(activity) {

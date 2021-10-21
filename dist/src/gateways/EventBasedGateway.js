@@ -13,8 +13,7 @@ var _messageHelper = require("../messageHelper");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function EventBasedGateway(activityDef, context) {
-  return (0, _Activity.default)(EventBasedGatewayBehaviour, { ...activityDef
-  }, context);
+  return new _Activity.default(EventBasedGatewayBehaviour, activityDef, context);
 }
 
 function EventBasedGatewayBehaviour(activity, context) {

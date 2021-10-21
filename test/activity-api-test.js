@@ -1,7 +1,6 @@
 import Activity from '../src/activity/Activity';
-import Environment from '../src/Environment';
+import testHelpers from './helpers/testHelpers';
 import {cloneContent} from '../src/messageHelper';
-import {Logger} from './helpers/testHelpers';
 
 describe('activity api', () => {
   describe('properties', () => {
@@ -154,11 +153,5 @@ describe('activity api', () => {
 });
 
 function getContext() {
-  return {
-    environment: Environment({Logger}),
-    getInboundSequenceFlows() {},
-    getInboundAssociations() {},
-    getOutboundSequenceFlows() {},
-    loadExtensions() {},
-  };
+  return testHelpers.emptyContext();
 }

@@ -4,7 +4,7 @@ import { ActivityError } from '../error/Errors';
 import {cloneContent, cloneMessage} from '../messageHelper';
 
 export default function ScriptTask(activityDef, context) {
-  return Activity(ScriptTaskBehaviour, activityDef, context);
+  return new Activity(ScriptTaskBehaviour, activityDef, context);
 }
 
 export function ScriptTaskBehaviour(activity) {

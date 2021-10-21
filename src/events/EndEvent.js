@@ -3,7 +3,7 @@ import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecuti
 import {cloneContent} from '../messageHelper';
 
 export default function EndEvent(activityDef, context) {
-  return Activity(EndEventBehaviour, {...activityDef, isThrowing: true}, context);
+  return new Activity(EndEventBehaviour, {...activityDef, isThrowing: true}, context);
 }
 
 export function EndEventBehaviour(activity) {

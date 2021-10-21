@@ -17,7 +17,7 @@ var _shared = require("../shared");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function BoundaryEvent(activityDef, context) {
-  return (0, _Activity.default)(BoundaryEventBehaviour, activityDef, context);
+  return new _Activity.default(BoundaryEventBehaviour, activityDef, context);
 }
 
 function BoundaryEventBehaviour(activity) {

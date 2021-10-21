@@ -2,7 +2,7 @@ import Activity from '../activity/Activity';
 import {cloneContent} from '../messageHelper';
 
 export default function ExclusiveGateway(activityDef, context) {
-  return Activity(ExclusiveGatewayBehaviour, activityDef, context);
+  return new Activity(ExclusiveGatewayBehaviour, activityDef, context);
 }
 
 export function ExclusiveGatewayBehaviour(activity) {

@@ -1,7 +1,7 @@
 import Activity from '../activity/Activity';
 
 export default function Task(activityDef, context) {
-  return Activity(TaskBehaviour, activityDef, context);
+  return new Activity(TaskBehaviour, activityDef, context);
 }
 
 export function TaskBehaviour(activity) {

@@ -43,7 +43,7 @@ Feature('EventBasedGateway', () => {
       return end;
     });
 
-    When('process is again', () => {
+    When('process is ran again', () => {
       wait = bp.waitFor('activity.wait');
       timer = bp.waitFor('activity.timer');
       end = bp.waitFor('end');

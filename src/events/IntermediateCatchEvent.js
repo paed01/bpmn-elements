@@ -3,7 +3,7 @@ import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecuti
 import {cloneContent} from '../messageHelper';
 
 export default function IntermediateCatchEvent(activityDef, context) {
-  return Activity(IntermediateCatchEventBehaviour, activityDef, context);
+  return new Activity(IntermediateCatchEventBehaviour, activityDef, context);
 }
 
 export function IntermediateCatchEventBehaviour(activity) {

@@ -3,11 +3,11 @@ import {brokerSafeId} from '../shared';
 import {cloneContent, shiftParent} from '../messageHelper';
 
 export default function EscalationEventDefinition(activity, eventDefinition) {
-  const {id, broker, environment, isThrowing, getActivityById} = activity;
+  const {id, broker, environment, isThrowing} = activity;
   const {type, behaviour = {}} = eventDefinition;
   const {debug} = environment.Logger(type.toLowerCase());
   const reference = behaviour.escalationRef || {name: 'anonymous'};
-  const referenceElement = reference.id && getActivityById(reference.id);
+  const referenceElement = reference.id && activity.getActivityById(reference.id);
   const escalationId = referenceElement ? referenceElement.id : 'anonymous';
   const escalationQueueName = `escalate-${brokerSafeId(id)}-${brokerSafeId(escalationId)}-q`;
 

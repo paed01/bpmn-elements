@@ -16,7 +16,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 function SubProcess(activityDef, context) {
   const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
-  const subProcess = (0, _Activity.default)(SubProcessBehaviour, { ...activityDef,
+  const subProcess = new _Activity.default(SubProcessBehaviour, { ...activityDef,
     isSubProcess: true,
     triggeredByEvent
   }, context);

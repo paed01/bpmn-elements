@@ -3,11 +3,11 @@ import {brokerSafeId} from '../shared';
 import {cloneContent, shiftParent} from '../messageHelper';
 
 export default function MessageEventDefinition(activity, eventDefinition) {
-  const {id, broker, environment, isStart, isThrowing, getActivityById} = activity;
+  const {id, broker, environment, isStart, isThrowing} = activity;
   const {type = 'MessageEventDefinition', behaviour = {}} = eventDefinition;
   const {debug} = environment.Logger(type.toLowerCase());
   const reference = behaviour.messageRef || {name: 'anonymous'};
-  const referenceElement = reference.id && getActivityById(reference.id);
+  const referenceElement = reference.id && activity.getActivityById(reference.id);
   const messageId = referenceElement ? referenceElement.id : 'anonymous';
   const messageQueueName = `message-${brokerSafeId(id)}-${brokerSafeId(messageId)}-q`;
 

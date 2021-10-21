@@ -4,7 +4,7 @@ import {cloneContent, cloneMessage} from '../messageHelper';
 import {brokerSafeId} from '../shared';
 
 export default function BoundaryEvent(activityDef, context) {
-  return Activity(BoundaryEventBehaviour, activityDef, context);
+  return new Activity(BoundaryEventBehaviour, activityDef, context);
 }
 
 export function BoundaryEventBehaviour(activity) {

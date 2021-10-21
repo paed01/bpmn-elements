@@ -71,10 +71,16 @@ function emptyContext(override, options) {
     getActivities() {},
     getActivityExtensions() {},
     getAssociations() {},
-    getInboundAssociations() {},
-    getInboundSequenceFlows() {},
+    getInboundAssociations() {
+      return [];
+    },
+    getInboundSequenceFlows() {
+      return [];
+    },
     getMessageFlows() {},
-    getOutboundSequenceFlows() {},
+    getOutboundSequenceFlows() {
+      return [];
+    },
     getProcesses() {
       return [];
     },

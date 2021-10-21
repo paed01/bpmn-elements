@@ -3,7 +3,7 @@ import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecuti
 import {cloneContent} from '../messageHelper';
 
 export default function StartEvent(activityDef, context) {
-  return Activity(StartEventBehaviour, activityDef, context);
+  return new Activity(StartEventBehaviour, activityDef, context);
 }
 
 export function StartEventBehaviour(activity) {

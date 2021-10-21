@@ -13,7 +13,7 @@ var _messageHelper = require("../messageHelper");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function ReceiveTask(activityDef, context) {
-  const task = (0, _Activity.default)(ReceiveTaskBehaviour, activityDef, context);
+  const task = new _Activity.default(ReceiveTaskBehaviour, activityDef, context);
   task.broker.assertQueue('message', {
     autoDelete: false,
     durable: true
@@ -30,13 +30,12 @@ function ReceiveTaskBehaviour(activity) {
     type,
     broker,
     logger,
-    behaviour = {},
-    getActivityById
+    behaviour = {}
   } = activity;
   const reference = behaviour.messageRef || {
     name: 'anonymous'
   };
-  const referenceElement = reference.id && getActivityById(reference.id);
+  const referenceElement = reference.id && activity.getActivityById(reference.id);
   const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   const source = {
     id,

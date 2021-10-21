@@ -2,7 +2,7 @@ import Activity from '../activity/Activity';
 import {cloneContent} from '../messageHelper';
 
 export default function ReceiveTask(activityDef, context) {
-  const task = Activity(ReceiveTaskBehaviour, activityDef, context);
+  const task = new Activity(ReceiveTaskBehaviour, activityDef, context);
 
   task.broker.assertQueue('message', {autoDelete: false, durable: true});
   task.broker.bindQueue('message', 'api', '*.message.#', {durable: true});
@@ -11,10 +11,10 @@ export default function ReceiveTask(activityDef, context) {
 }
 
 export function ReceiveTaskBehaviour(activity) {
-  const {id, type, broker, logger, behaviour = {}, getActivityById} = activity;
+  const {id, type, broker, logger, behaviour = {}} = activity;
   const reference = behaviour.messageRef || {name: 'anonymous'};
 
-  const referenceElement = reference.id && getActivityById(reference.id);
+  const referenceElement = reference.id && activity.getActivityById(reference.id);
   const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
 
   const source = {

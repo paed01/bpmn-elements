@@ -13,7 +13,7 @@ var _messageHelper = require("../messageHelper");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function InclusiveGateway(activityDef, context) {
-  return (0, _Activity.default)(InclusiveGatewayBehaviour, activityDef, context);
+  return new _Activity.default(InclusiveGatewayBehaviour, activityDef, context);
 }
 
 function InclusiveGatewayBehaviour(activity) {

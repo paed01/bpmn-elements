@@ -199,6 +199,7 @@ function ContextInstance(definitionContext, environment) {
 
       if (!activity.behaviour.eventDefinitions && !activity.behaviour.eventDefinitions) return false;
 
+
       return activity.eventDefinitions.some((ed) => {
         return ed.reference && ed.reference.id === referenceId && ed.reference.referenceType === referenceType;
       });

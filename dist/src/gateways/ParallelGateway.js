@@ -13,7 +13,7 @@ var _messageHelper = require("../messageHelper");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function ParallelGateway(activityDef, context) {
-  return (0, _Activity.default)(ParallelGatewayBehaviour, { ...activityDef,
+  return new _Activity.default(ParallelGatewayBehaviour, { ...activityDef,
     isParallelGateway: true
   }, context);
 }

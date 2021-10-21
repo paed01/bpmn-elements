@@ -19,8 +19,7 @@ function MessageEventDefinition(activity, eventDefinition) {
     broker,
     environment,
     isStart,
-    isThrowing,
-    getActivityById
+    isThrowing
   } = activity;
   const {
     type = 'MessageEventDefinition',
@@ -32,7 +31,7 @@ function MessageEventDefinition(activity, eventDefinition) {
   const reference = behaviour.messageRef || {
     name: 'anonymous'
   };
-  const referenceElement = reference.id && getActivityById(reference.id);
+  const referenceElement = reference.id && activity.getActivityById(reference.id);
   const messageId = referenceElement ? referenceElement.id : 'anonymous';
   const messageQueueName = `message-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(messageId)}-q`;
   if (!isThrowing || isStart) setupCatch();

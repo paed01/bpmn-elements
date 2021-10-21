@@ -15,7 +15,7 @@ var _messageHelper = require("../messageHelper");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function StartEvent(activityDef, context) {
-  return (0, _Activity.default)(StartEventBehaviour, activityDef, context);
+  return new _Activity.default(StartEventBehaviour, activityDef, context);
 }
 
 function StartEventBehaviour(activity) {
