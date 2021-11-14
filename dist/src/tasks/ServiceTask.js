@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = ServiceTask;
 exports.ServiceTaskBehaviour = ServiceTaskBehaviour;
+exports.default = ServiceTask;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 

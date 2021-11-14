@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Task;
 exports.TaskBehaviour = TaskBehaviour;
+exports.default = Task;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 

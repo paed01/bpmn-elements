@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = EventBasedGateway;
 exports.EventBasedGatewayBehaviour = EventBasedGatewayBehaviour;
+exports.default = EventBasedGateway;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 

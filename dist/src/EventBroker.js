@@ -5,9 +5,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.ActivityBroker = ActivityBroker;
 exports.DefinitionBroker = DefinitionBroker;
+exports.EventBroker = EventBroker;
 exports.MessageFlowBroker = MessageFlowBroker;
 exports.ProcessBroker = ProcessBroker;
-exports.EventBroker = EventBroker;
 
 var _smqp = require("smqp");
 

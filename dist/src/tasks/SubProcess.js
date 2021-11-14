@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = SubProcess;
 exports.SubProcessBehaviour = SubProcessBehaviour;
+exports.default = SubProcess;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 

@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = IntermediateCatchEvent;
 exports.IntermediateCatchEventBehaviour = IntermediateCatchEventBehaviour;
+exports.default = IntermediateCatchEvent;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 

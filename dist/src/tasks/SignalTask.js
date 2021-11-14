@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = SignalTask;
 exports.SignalTaskBehaviour = SignalTaskBehaviour;
+exports.default = SignalTask;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 

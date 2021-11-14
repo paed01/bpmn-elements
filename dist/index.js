@@ -27,6 +27,12 @@ Object.defineProperty(exports, "BpmnError", {
     return _BpmnError.default;
   }
 });
+Object.defineProperty(exports, "BusinessRuleTask", {
+  enumerable: true,
+  get: function () {
+    return _ServiceTask.default;
+  }
+});
 Object.defineProperty(exports, "CallActivity", {
   enumerable: true,
   get: function () {
@@ -37,6 +43,12 @@ Object.defineProperty(exports, "CancelEventDefinition", {
   enumerable: true,
   get: function () {
     return _CancelEventDefinition.default;
+  }
+});
+Object.defineProperty(exports, "Category", {
+  enumerable: true,
+  get: function () {
+    return _Dummy.default;
   }
 });
 Object.defineProperty(exports, "CompensateEventDefinition", {
@@ -87,24 +99,6 @@ Object.defineProperty(exports, "Dummy", {
     return _Dummy.default;
   }
 });
-Object.defineProperty(exports, "TextAnnotation", {
-  enumerable: true,
-  get: function () {
-    return _Dummy.default;
-  }
-});
-Object.defineProperty(exports, "Group", {
-  enumerable: true,
-  get: function () {
-    return _Dummy.default;
-  }
-});
-Object.defineProperty(exports, "Category", {
-  enumerable: true,
-  get: function () {
-    return _Dummy.default;
-  }
-});
 Object.defineProperty(exports, "EndEvent", {
   enumerable: true,
   get: function () {
@@ -147,6 +141,12 @@ Object.defineProperty(exports, "ExclusiveGateway", {
     return _ExclusiveGateway.default;
   }
 });
+Object.defineProperty(exports, "Group", {
+  enumerable: true,
+  get: function () {
+    return _Dummy.default;
+  }
+});
 Object.defineProperty(exports, "InclusiveGateway", {
   enumerable: true,
   get: function () {
@@ -177,10 +177,10 @@ Object.defineProperty(exports, "LinkEventDefinition", {
     return _LinkEventDefinition.default;
   }
 });
-Object.defineProperty(exports, "MultiInstanceLoopCharacteristics", {
+Object.defineProperty(exports, "ManualTask", {
   enumerable: true,
   get: function () {
-    return _LoopCharacteristics.default;
+    return _SignalTask.default;
   }
 });
 Object.defineProperty(exports, "Message", {
@@ -199,6 +199,12 @@ Object.defineProperty(exports, "MessageFlow", {
   enumerable: true,
   get: function () {
     return _MessageFlow.default;
+  }
+});
+Object.defineProperty(exports, "MultiInstanceLoopCharacteristics", {
+  enumerable: true,
+  get: function () {
+    return _LoopCharacteristics.default;
   }
 });
 Object.defineProperty(exports, "ParallelGateway", {
@@ -231,6 +237,12 @@ Object.defineProperty(exports, "ScriptTask", {
     return _ScriptTask.default;
   }
 });
+Object.defineProperty(exports, "SendTask", {
+  enumerable: true,
+  get: function () {
+    return _ServiceTask.default;
+  }
+});
 Object.defineProperty(exports, "SequenceFlow", {
   enumerable: true,
   get: function () {
@@ -241,18 +253,6 @@ Object.defineProperty(exports, "ServiceImplementation", {
   enumerable: true,
   get: function () {
     return _ServiceImplementation.default;
-  }
-});
-Object.defineProperty(exports, "SendTask", {
-  enumerable: true,
-  get: function () {
-    return _ServiceTask.default;
-  }
-});
-Object.defineProperty(exports, "BusinessRuleTask", {
-  enumerable: true,
-  get: function () {
-    return _ServiceTask.default;
   }
 });
 Object.defineProperty(exports, "ServiceTask", {
@@ -271,18 +271,6 @@ Object.defineProperty(exports, "SignalEventDefinition", {
   enumerable: true,
   get: function () {
     return _SignalEventDefinition.default;
-  }
-});
-Object.defineProperty(exports, "ManualTask", {
-  enumerable: true,
-  get: function () {
-    return _SignalTask.default;
-  }
-});
-Object.defineProperty(exports, "UserTask", {
-  enumerable: true,
-  get: function () {
-    return _SignalTask.default;
   }
 });
 Object.defineProperty(exports, "SignalTask", {
@@ -321,6 +309,12 @@ Object.defineProperty(exports, "TerminateEventDefinition", {
     return _TerminateEventDefinition.default;
   }
 });
+Object.defineProperty(exports, "TextAnnotation", {
+  enumerable: true,
+  get: function () {
+    return _Dummy.default;
+  }
+});
 Object.defineProperty(exports, "TimerEventDefinition", {
   enumerable: true,
   get: function () {
@@ -331,6 +325,12 @@ Object.defineProperty(exports, "Transaction", {
   enumerable: true,
   get: function () {
     return _Transaction.default;
+  }
+});
+Object.defineProperty(exports, "UserTask", {
+  enumerable: true,
+  get: function () {
+    return _SignalTask.default;
   }
 });
 

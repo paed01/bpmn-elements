@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.makeErrorFromMessage = makeErrorFromMessage;
 exports.BpmnError = exports.ActivityError = void 0;
+exports.makeErrorFromMessage = makeErrorFromMessage;
 
 var _messageHelper = require("../messageHelper");
 

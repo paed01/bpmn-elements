@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = IntermediateThrowEvent;
 exports.IntermediateThrowEventBehaviour = IntermediateThrowEventBehaviour;
+exports.default = IntermediateThrowEvent;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 

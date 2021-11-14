@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = InclusiveGateway;
 exports.InclusiveGatewayBehaviour = InclusiveGatewayBehaviour;
+exports.default = InclusiveGateway;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 

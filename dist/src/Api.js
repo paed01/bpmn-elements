@@ -4,10 +4,10 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.ActivityApi = ActivityApi;
-exports.DefinitionApi = DefinitionApi;
-exports.ProcessApi = ProcessApi;
-exports.FlowApi = FlowApi;
 exports.Api = Api;
+exports.DefinitionApi = DefinitionApi;
+exports.FlowApi = FlowApi;
+exports.ProcessApi = ProcessApi;
 
 var _messageHelper = require("./messageHelper");
 

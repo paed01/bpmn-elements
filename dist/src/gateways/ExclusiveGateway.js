@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = ExclusiveGateway;
 exports.ExclusiveGatewayBehaviour = ExclusiveGatewayBehaviour;
+exports.default = ExclusiveGateway;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 

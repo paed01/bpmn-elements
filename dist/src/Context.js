@@ -114,7 +114,7 @@ function ContextInstance(definitionContext, environment) {
   function upsertSequenceFlow(flowDefinition) {
     let flowInstance = sequenceFlowRefs[flowDefinition.id];
     if (flowInstance) return flowInstance;
-    flowInstance = sequenceFlowRefs[flowDefinition.id] = flowDefinition.Behaviour(flowDefinition, context);
+    flowInstance = sequenceFlowRefs[flowDefinition.id] = new flowDefinition.Behaviour(flowDefinition, context);
     sequenceFlows.push(flowInstance);
     return flowInstance;
   }

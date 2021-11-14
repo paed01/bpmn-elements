@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = BoundaryEvent;
 exports.BoundaryEventBehaviour = BoundaryEventBehaviour;
+exports.default = BoundaryEvent;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 

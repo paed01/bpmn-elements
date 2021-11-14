@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = CallActivity;
 exports.CallActivityBehaviour = CallActivityBehaviour;
+exports.default = CallActivity;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 

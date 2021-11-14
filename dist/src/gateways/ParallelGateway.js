@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = ParallelGateway;
 exports.ParallelGatewayBehaviour = ParallelGatewayBehaviour;
+exports.default = ParallelGateway;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 
