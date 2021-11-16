@@ -1623,15 +1623,5 @@ function createProcess(override, step) {
   return Process({
     id: 'process1',
     type: 'bpmn:Process',
-  }, {
-    getActivities() {
-      return activities;
-    },
-    getActivityById(id) {
-      return this.getActivities().find((a) => a.id === id);
-    },
-    getDataObjects() {},
-    getMessageFlows() {},
-    ...context,
-  });
+  }, context);
 }
