@@ -136,7 +136,6 @@ Feature('EventBasedGateway', () => {
       });
     });
 
-    // let timerApi;
     Then('message event is waiting and timer is started', async () => {
       await timer;
       await wait;

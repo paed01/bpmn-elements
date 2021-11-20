@@ -15,6 +15,8 @@ class ActivityError extends Error {
   }
 }
 
+class RunError extends ActivityError {}
+
 class BpmnError extends Error {
   constructor(description, behaviour = {}, sourceMessage, inner) {
     const {errorCode} = behaviour;
@@ -33,6 +35,7 @@ class BpmnError extends Error {
 export {
   ActivityError,
   BpmnError,
+  RunError,
   makeErrorFromMessage
 };
 
@@ -47,6 +50,8 @@ function makeErrorFromMessage(errorMessage) {
   switch (error.type) {
     case 'ActivityError':
       return new ActivityError(error.message || error.description, error.source, error.inner ? error.inner : {code: error.code, name: error.name});
+    case 'RunError':
+      return new RunError(error.message || error.description, error.source, error.inner ? error.inner : {code: error.code, name: error.name});
     case 'BpmnError':
       return new BpmnError(error.message || error.description, error, error.source);
   }

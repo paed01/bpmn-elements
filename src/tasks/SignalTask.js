@@ -8,7 +8,7 @@ export default function SignalTask(activityDef, context) {
 
 export function SignalTaskBehaviour(activity) {
   const {id, type, behaviour, broker} = activity;
-  const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  const loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
 
   const source = {
     id,

@@ -336,28 +336,6 @@ Feature('Gateway', () => {
   Scenario('A process with an parallel join gateway with flows touched more than once before complete', () => {
     let definition;
     Given('a decision followed by a parallel gateway that has joined flows touched more than once', async () => {
-      // const source = `
-      // <?xml version="1.0" encoding="UTF-8"?>
-      // <definitions id="Definitions_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-      //   <process id="mainProcess" isExecutable="true">
-      //     <startEvent id="start" />
-      //     <sequenceFlow id="flow1" sourceRef="start" targetRef="decisions" />
-      //     <exclusiveGateway id="decisions" default="defaultFlow" />
-      //     <sequenceFlow id="defaultFlow" sourceRef="decisions" targetRef="multitask" />
-      //     <sequenceFlow id="condFlow1" sourceRef="decisions" targetRef="multitask">
-      //       <conditionExpression xsi:type="tFormalExpression" language="javascript">this.environment.variables.condition.var1</conditionExpression>
-      //     </sequenceFlow>
-      //     <sequenceFlow id="toJoin1" sourceRef="decisions" targetRef="join">
-      //       <conditionExpression xsi:type="tFormalExpression">\${environment.variables.condition2}</conditionExpression>
-      //     </sequenceFlow>
-      //     <task id="multitask" />
-      //     <sequenceFlow id="toJoin2" sourceRef="multitask" targetRef="join" />
-      //     <parallelGateway id="join" />
-      //     <sequenceFlow id="toEnd" sourceRef="join" targetRef="end" />
-      //     <endEvent id="end" />
-      //   </process>
-      // </definitions>`;
-
       const context = await testHelpers.context(factory.resource('parallel-join-edgecase.bpmn'));
       definition = Definition(context);
     });

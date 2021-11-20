@@ -59,7 +59,7 @@ function EventBroker(brokerOwner, options, onBrokerReturn) {
 
   const broker = this.broker = Broker(brokerOwner);
   broker.assertExchange('event', 'topic', options);
-  broker.on('return', onBrokerReturn || this.onBrokerReturnFn.bind(this));
+  broker.on('return', onBrokerReturn ? onBrokerReturn.bind(brokerOwner) : this.onBrokerReturnFn.bind(this));
 
   this.on = this.on.bind(this);
   this.once = this.once.bind(this);

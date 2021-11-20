@@ -16,7 +16,7 @@ function StandardLoopCharacteristics(activity, loopCharacteristics) {
   behaviour = { ...behaviour,
     isSequential: true
   };
-  return (0, _LoopCharacteristics.default)(activity, { ...loopCharacteristics,
+  return new _LoopCharacteristics.default(activity, { ...loopCharacteristics,
     behaviour
   });
 }

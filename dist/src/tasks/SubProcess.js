@@ -54,7 +54,7 @@ function SubProcessBehaviour(activity, context) {
     environment,
     logger
   } = activity;
-  const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  const loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   const processExecutions = [];
   let rootExecutionId;
   const source = {

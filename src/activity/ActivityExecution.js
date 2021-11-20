@@ -80,9 +80,17 @@ ActivityExecution.prototype.discard = function discard() {
   this.getApi(initMessage).discard();
 };
 
+ActivityExecution.prototype.sourceExecute = function sourceExecute(executeMessage) {
+  try {
+    return this.source.execute(executeMessage);
+  } catch (error) {
+    return this.broker.publish('execution', 'execute.error', {...executeMessage.content, error});
+  }
+};
+
 ActivityExecution.prototype.passthrough = function passthrough(executeMessage) {
   if (!this.source) return this.execute(executeMessage);
-  return this.source.execute(executeMessage);
+  return this.sourceExecute(executeMessage);
 };
 
 ActivityExecution.prototype.getApi = function getApi(apiMessage) {
@@ -166,7 +174,7 @@ ActivityExecution.prototype.onExecuteMessage = function onExecuteMessage(routing
     }
     case 'execute.start': {
       if (!this.onStateChangeMessage(message)) return;
-      return this.source.execute(getExecuteMessage(message));
+      return this.sourceExecute(getExecuteMessage(message));
     }
     case 'execute.outbound.take': {
       if (isRedelivered) {
@@ -179,7 +187,7 @@ ActivityExecution.prototype.onExecuteMessage = function onExecuteMessage(routing
     default: {
       if (!this.onStateChangeMessage(message)) return;
       if (isRedelivered) {
-        return this.source.execute(getExecuteMessage(message));
+        return this.sourceExecute(getExecuteMessage(message));
       }
     }
   }
@@ -235,10 +243,11 @@ ActivityExecution.prototype.onExecutionCompleted = function onExecutionCompleted
   this.publishExecutionCompleted('completed', {...postponedMsg.content, ...message.content}, message.properties.correlationId);
 };
 
-ActivityExecution.prototype.onExecutionDiscarded = function onExecutionDiscarded(message) {
+ActivityExecution.prototype.onExecutionDiscarded = function onExecutionDiscarded(message, error) {
   const postponedMsg = this.ackPostponed(message);
-  const {isRootScope, error} = message.content;
+  const {isRootScope, error: messageError} = message.content;
   if (!isRootScope && !postponedMsg) return;
+  if (!error) error = messageError;
 
   const postponed = this.postponed;
   const correlationId = message.properties.correlationId;
@@ -258,7 +267,11 @@ ActivityExecution.prototype.onExecutionDiscarded = function onExecutionDiscarded
   postponed.splice(0);
   subApis.forEach((api) => api.discard());
 
-  this.publishExecutionCompleted(error ? 'error' : 'discard', message.content, correlationId);
+  if (error) {
+    return this.publishExecutionCompleted('error', cloneContent(message.content, {error}), correlationId);
+  }
+
+  this.publishExecutionCompleted('discard', message.content, correlationId);
 };
 
 ActivityExecution.prototype.publishExecutionCompleted = function publishExecutionCompleted(completionType, completeContent, correlationId) {

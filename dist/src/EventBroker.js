@@ -88,7 +88,7 @@ function EventBroker(brokerOwner, options, onBrokerReturn) {
   this.eventPrefix = options.prefix;
   const broker = this.broker = (0, _smqp.Broker)(brokerOwner);
   broker.assertExchange('event', 'topic', options);
-  broker.on('return', onBrokerReturn || this.onBrokerReturnFn.bind(this));
+  broker.on('return', onBrokerReturn ? onBrokerReturn.bind(brokerOwner) : this.onBrokerReturnFn.bind(this));
   this.on = this.on.bind(this);
   this.once = this.once.bind(this);
   this.waitFor = this.waitFor.bind(this);

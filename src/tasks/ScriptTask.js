@@ -12,7 +12,7 @@ export function ScriptTaskBehaviour(activity) {
 
   const {scriptFormat} = activity.behaviour;
 
-  const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  const loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
 
   environment.registerScript(activity);
 

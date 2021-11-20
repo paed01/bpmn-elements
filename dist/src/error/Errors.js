@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.BpmnError = exports.ActivityError = void 0;
+exports.RunError = exports.BpmnError = exports.ActivityError = void 0;
 exports.makeErrorFromMessage = makeErrorFromMessage;
 
 var _messageHelper = require("../messageHelper");
@@ -28,6 +28,10 @@ class ActivityError extends Error {
 }
 
 exports.ActivityError = ActivityError;
+
+class RunError extends ActivityError {}
+
+exports.RunError = RunError;
 
 class BpmnError extends Error {
   constructor(description, behaviour = {}, sourceMessage, inner) {
@@ -64,6 +68,12 @@ function makeErrorFromMessage(errorMessage) {
   switch (error.type) {
     case 'ActivityError':
       return new ActivityError(error.message || error.description, error.source, error.inner ? error.inner : {
+        code: error.code,
+        name: error.name
+      });
+
+    case 'RunError':
+      return new RunError(error.message || error.description, error.source, error.inner ? error.inner : {
         code: error.code,
         name: error.name
       });

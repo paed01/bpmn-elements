@@ -43,36 +43,7 @@ function ContextInstance(definitionContext, environment) {
     sequenceFlowRefs: {},
     sequenceFlows: []
   };
-} // const context = {
-//   id,
-//   name,
-//   type,
-//   sid,
-//   definitionContext,
-//   environment,
-//   clone,
-//   getActivities,
-//   getActivityById,
-//   getAssociations,
-//   getExecutableProcesses,
-//   getDataObjectById,
-//   getDataStoreById,
-//   getInboundAssociations,
-//   getInboundSequenceFlows,
-//   getMessageFlows,
-//   getNewProcessById,
-//   getOutboundSequenceFlows,
-//   getOutboundAssociations,
-//   getProcessById,
-//   getProcesses,
-//   getSequenceFlowById,
-//   getSequenceFlows,
-//   getStartActivities,
-//   loadExtensions,
-// };
-// const extensionsMapper = ExtensionsMapper(context);
-// return context;
-
+}
 
 ContextInstance.prototype.getActivityById = function getActivityById(activityId) {
   const activityInstance = this.refs.activityRefs[activityId];

@@ -898,7 +898,6 @@ Activity.prototype.evaluateOutbound = function evaluateOutbound(fromMessage, dis
 
     if (!takenCount) {
       const nonTakenError = new ActivityError(`<${id}> no conditional flow taken`, fromMessage);
-      // logger.error(`<${id}>`, nonTakenError);
       return callback(nonTakenError);
     }
 
@@ -964,6 +963,7 @@ Activity.prototype.onResumeMessage = function onResumeMessage(message) {
 Activity.prototype.publishEvent = function publishEvent(state, content, messageProperties = {}) {
   if (!state) return;
   if (!content) content = this.createMessage();
+
   this[brokerSymbol].publish('event', `activity.${state}`, {...content, state}, {
     ...messageProperties,
     type: state,

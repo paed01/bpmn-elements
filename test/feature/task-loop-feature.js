@@ -418,7 +418,48 @@ Feature('Task loop', () => {
 
     Then('definition breaks', async () => {
       const {content} = await execError;
-      expect(content.error.message).to.equal('<task> invalid loop cardinality >NaN<');
+      expect(content.error.message).to.equal('<task> invalid loop cardinality >apapap<');
+    });
+
+    Given('same process with bound anonymous error catcher', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="TaskLoopProcess" isExecutable="true">
+          <scriptTask id="task" scriptFormat="javascript" js:result="iterated">
+            <multiInstanceLoopCharacteristics isSequential="true">
+              <loopCardinality xsi:type="tFormalExpression">\${environment.variables.cardinality}</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+            <script><![CDATA[
+              next(null, content.item.idx);
+            ]]></script>
+          </scriptTask>
+          <boundaryEvent id="errorEvent" attachedToRef="task">
+            <errorEventDefinition />
+          </boundaryEvent>
+        </process>
+      </definitions>`;
+      context = await testHelpers.context(source, {
+        extensions: {js},
+      });
+    });
+
+    let end;
+    When('definition is run with cardinality that is not a number', () => {
+      definition = Definition(context, {
+        settings: {
+          batchSize: 100,
+        },
+        variables: {
+          cardinality: 'apapap',
+        }
+      });
+
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('definition completes', () => {
+      return end;
     });
   });
 
@@ -457,7 +498,7 @@ Feature('Task loop', () => {
 
     Then('definition breaks', async () => {
       const {content} = await execError;
-      expect(content.error.message).to.equal('<task> invalid loop cardinality >NaN<');
+      expect(content.error.message).to.equal('<task> invalid loop cardinality >apapap<');
     });
 
     When('definition is run with negative cardinality', () => {

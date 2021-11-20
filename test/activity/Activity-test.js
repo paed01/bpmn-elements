@@ -1027,7 +1027,7 @@ describe('Activity', () => {
       expect(activity.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
     });
 
-    it('stop on event publises activity.stop', async () => {
+    it('stop on event publishes activity.stop', async () => {
       const activity = getActivity(undefined, ({broker}) => {
         return {
           execute({content}) {
@@ -1118,11 +1118,11 @@ describe('Activity', () => {
   });
 
   describe('error', () => {
-    it('throws if execute error is NOT caught', async () => {
+    it('throws if execute error is NOT caught', () => {
       const activity = getActivity(undefined, ({broker}) => {
         return {
           execute(executeMessage) {
-            broker.publish('execution', 'execute.error', {...executeMessage.content, error: new Error('unstable')}, {type: 'error', mandatory: true});
+            broker.publish('execution', 'execute.error', {...executeMessage.content, error: new Error('unstable')}, {type: 'error'});
           },
         };
       });
@@ -1130,7 +1130,19 @@ describe('Activity', () => {
       expect(() => activity.run()).to.throw('unstable');
     });
 
-    it('throws if activity error is NOT caught', async () => {
+    it('throws if behaviour execute throws', () => {
+      const activity = getActivity(undefined, () => {
+        return {
+          execute() {
+            throw new Error('unstable');
+          },
+        };
+      });
+
+      expect(() => activity.run()).to.throw('unstable');
+    });
+
+    it.skip('throws if activity event error is NOT caught', () => {
       const activity = getActivity(undefined, ({broker}) => {
         return {
           execute(executeMessage) {

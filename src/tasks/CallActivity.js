@@ -8,7 +8,7 @@ export default function CallActivity(activityDef, context) {
 
 export function CallActivityBehaviour(activity) {
   const {id, type, behaviour, environment, broker} = activity;
-  const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  const loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
 
   const source = {
     id,

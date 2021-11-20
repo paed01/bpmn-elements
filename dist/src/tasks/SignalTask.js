@@ -25,7 +25,7 @@ function SignalTaskBehaviour(activity) {
     behaviour,
     broker
   } = activity;
-  const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  const loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   const source = {
     id,
     type,

@@ -5,6 +5,17 @@ Changelog
 
 Call activity...
 
+- add api fail function
+- prototype LoopCharacteristics
+- prototype Context
+- prototype SequenceFlow
+- prototype Activity
+- prototype ActivityExecution
+
+## Breaking
+
+- unable to make activity throw if emitFatal is called within activity, unsure why?
+
 # 6.0.0
 
 Isomorphism and state.

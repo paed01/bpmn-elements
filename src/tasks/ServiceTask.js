@@ -8,7 +8,7 @@ export default function ServiceTask(activityDef, context) {
 
 export function ServiceTaskBehaviour(activity) {
   const {id, type, broker, logger, behaviour, environment, emitFatal} = activity;
-  const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  const loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
 
   const source = {
     id,

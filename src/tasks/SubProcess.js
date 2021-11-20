@@ -25,7 +25,7 @@ export default function SubProcess(activityDef, context) {
 
 export function SubProcessBehaviour(activity, context) {
   const {id, type, broker, behaviour, environment, logger} = activity;
-  const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  const loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
 
   const processExecutions = [];
   let rootExecutionId;

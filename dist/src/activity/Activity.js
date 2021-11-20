@@ -1076,8 +1076,7 @@ Activity.prototype.evaluateOutbound = function evaluateOutbound(fromMessage, dis
     if (err) return callback(err);
 
     if (!takenCount) {
-      const nonTakenError = new _Errors.ActivityError(`<${id}> no conditional flow taken`, fromMessage); // logger.error(`<${id}>`, nonTakenError);
-
+      const nonTakenError = new _Errors.ActivityError(`<${id}> no conditional flow taken`, fromMessage);
       return callback(nonTakenError);
     }
 
