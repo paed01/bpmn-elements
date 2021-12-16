@@ -37,7 +37,7 @@ function SubProcess(activityDef, context) {
       startId
     } = message.content;
     const last = message.content.sequence.pop();
-    const sequence = (0, _ProcessExecution.default)(subProcess, context).shake(startId);
+    const sequence = new _ProcessExecution.default(subProcess, context).shake(startId);
     message.content.sequence.push({ ...last,
       isSubProcess: true,
       sequence
@@ -168,7 +168,7 @@ function SubProcessBehaviour(activity, context) {
 
     const subEnvironment = environment.clone().recover(state.environment);
     const subContext = context.clone(subEnvironment);
-    const execution = (0, _ProcessExecution.default)(activity, subContext).recover(state);
+    const execution = new _ProcessExecution.default(activity, subContext).recover(state);
     processExecutions.push(execution);
     return execution;
   }
@@ -187,7 +187,7 @@ function SubProcessBehaviour(activity, context) {
       output: {}
     });
     const subContext = context.clone(subEnvironment);
-    execution = (0, _ProcessExecution.default)(activity, subContext);
+    execution = new _ProcessExecution.default(activity, subContext);
     processExecutions.push(execution);
     addListeners(execution, executionId);
     return execution;

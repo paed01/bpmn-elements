@@ -135,7 +135,7 @@ export function Process(processDef, context) {
     environment.recover(state.environment);
 
     if (state.execution) {
-      execution = ProcessExecution(processApi, context).recover(state.execution);
+      execution = new ProcessExecution(processApi, context).recover(state.execution);
     }
 
     broker.recover(state.broker);
@@ -145,7 +145,7 @@ export function Process(processDef, context) {
 
   function shake(startId) {
     if (processApi.isRunning) return execution.shake(startId);
-    return ProcessExecution(processApi, context).shake(startId);
+    return new ProcessExecution(processApi, context).shake(startId);
   }
 
   function activateRunConsumers() {
@@ -214,7 +214,7 @@ export function Process(processDef, context) {
         }
         postponedMessage = message;
         executionQ.assertConsumer(onExecutionMessage, {exclusive: true, consumerTag: '_process-execution'});
-        execution = execution || ProcessExecution(processApi, context);
+        execution = execution || new ProcessExecution(processApi, context);
         return execution.execute(executeMessage);
       }
       case 'run.error': {

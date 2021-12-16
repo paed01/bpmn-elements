@@ -593,7 +593,8 @@ Feature('Compensation', () => {
       }).recover(JSON.parse(JSON.stringify(state)));
       end = recovered.waitFor('end');
 
-      return recovered.resume();
+
+      recovered.resume();
     });
 
     Then('compensation service awaits callback', () => {

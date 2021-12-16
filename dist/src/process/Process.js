@@ -166,7 +166,7 @@ function Process(processDef, context) {
     environment.recover(state.environment);
 
     if (state.execution) {
-      execution = (0, _ProcessExecution.default)(processApi, context).recover(state.execution);
+      execution = new _ProcessExecution.default(processApi, context).recover(state.execution);
     }
 
     broker.recover(state.broker);
@@ -175,7 +175,7 @@ function Process(processDef, context) {
 
   function shake(startId) {
     if (processApi.isRunning) return execution.shake(startId);
-    return (0, _ProcessExecution.default)(processApi, context).shake(startId);
+    return new _ProcessExecution.default(processApi, context).shake(startId);
   }
 
   function activateRunConsumers() {
@@ -266,7 +266,7 @@ function Process(processDef, context) {
             exclusive: true,
             consumerTag: '_process-execution'
           });
-          execution = execution || (0, _ProcessExecution.default)(processApi, context);
+          execution = execution || new _ProcessExecution.default(processApi, context);
           return execution.execute(executeMessage);
         }
 
