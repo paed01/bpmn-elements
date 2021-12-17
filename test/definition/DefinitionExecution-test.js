@@ -69,62 +69,45 @@ describe('Definition execution', () => {
 
   describe('two executable processes', () => {
     it('completes when both are completed', () => {
-      const processes = [{
-        id: 'process_1',
-        type: 'process',
-        Behaviour() {
-          return {
-            id: 'process_1',
-            type: 'process',
-            isExecutable: true,
-            parent: {id: 'Def_1'},
-            broker: ProcessBroker(this).broker,
-            init() {
-              this.broker.publish('event', 'process.init', {
-                id: this.id,
-                executionId: this.id + '_1',
-                parent: this.parent,
-              });
-            },
-            run() {
-              this.broker.publish('event', 'process.enter', {
-                id: this.id,
-                executionId: this.id + '_1',
-                parent: this.parent,
-              });
+      function ProcessBehaviour({id, type}) {
+        return {
+          id,
+          type,
+          isExecutable: true,
+          parent: {id: 'Def_1'},
+          broker: ProcessBroker(this).broker,
+          init() {
+            this.broker.publish('event', 'process.init', {
+              id: this.id,
+              executionId: id + '_1',
+              parent: this.parent,
+            });
+          },
+          run() {
+            this.broker.publish('event', 'process.enter', {
+              id: this.id,
+              executionId: id + '_1',
+              parent: this.parent,
+            });
+            if (this.id === 'process_1') {
               this.broker.publish('event', 'process.leave', {
                 id: this.id,
                 executionId: this.id + '_1',
                 parent: this.parent,
               });
             }
-          };
-        }
+          }
+        };
+      }
+
+      const processes = [{
+        id: 'process_1',
+        type: 'process',
+        Behaviour: ProcessBehaviour,
       }, {
         id: 'process_2',
         type: 'process',
-        Behaviour() {
-          return {
-            id: 'process_2',
-            type: 'process',
-            isExecutable: true,
-            broker: ProcessBroker(this).broker,
-            init() {
-              this.broker.publish('event', 'process.init', {
-                id: this.id,
-                executionId: this.id + '_2',
-                parent: this.parent,
-              });
-            },
-            run() {
-              this.broker.publish('event', 'process.enter', {
-                id: this.id,
-                executionId: this.id + '_2',
-                parent: this.parent,
-              });
-            },
-          };
-        },
+        Behaviour: ProcessBehaviour,
       }];
 
       const definition = {
@@ -162,7 +145,7 @@ describe('Definition execution', () => {
 
       context.getProcesses()[1].broker.publish('event', 'process.leave', {
         id: 'process_2',
-        executionId: 'process_2_2',
+        executionId: 'process_2_1',
         parent: {
           id: 'Def_1',
         }
@@ -218,28 +201,26 @@ describe('Definition execution', () => {
         broker: DefinitionBroker(this).broker,
       };
 
+      function Behaviour({id}) {
+        return processes.find((bp) => bp.id === id);
+      }
+
       const context = testHelpers.emptyContext({
         getProcessById(processId) {
           const bp = processes.find(({id}) => id === processId);
           return {
             id: bp.id,
-            Behaviour() {
-              return bp;
-            },
+            Behaviour,
           };
         },
         getProcesses() {
           return processes.map((p) => {
-            return {id: p.id, Behaviour() {
-              return p;
-            }};
+            return {id: p.id, Behaviour};
           });
         },
         getExecutableProcesses() {
           return processes.map((p) => {
-            return {id: p.id, Behaviour() {
-              return p;
-            }};
+            return {id: p.id, Behaviour};
           });
         },
       });

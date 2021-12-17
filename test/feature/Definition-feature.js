@@ -234,7 +234,7 @@ Feature('Definition', () => {
       processes = definition.getProcesses();
       expect(processes).to.have.length(2);
       expect(processes[0]).to.have.property('stopped', true);
-      expect(processes[1]).to.have.property('stopped', undefined);
+      expect(processes[1]).to.have.property('stopped', false);
     });
 
     And('all running activities are stopped', async () => {
@@ -261,7 +261,7 @@ Feature('Definition', () => {
       processes = definition.getProcesses();
       expect(processes).to.have.length(2);
       expect(processes[0]).to.have.property('stopped', false);
-      expect(processes[1]).to.have.property('stopped', undefined);
+      expect(processes[1]).to.have.property('stopped', false);
     });
 
     And('all running activities are resumed', async () => {

@@ -1451,7 +1451,7 @@ describe('Definition', () => {
       const definition = Definition(context.clone());
       definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
         const api = definition.getApi(message);
-        expect(api, `${routingKey} ${message.content.id}`).to.be.ok;
+        expect(api, `api ${routingKey} ${message.content.id}`).to.be.ok;
         expect(message.content.type).to.equal(api.content.type);
       }, {noAck: true});
 

@@ -116,7 +116,7 @@ describe('Process', () => {
     it('ignored if not executing', () => {
       const bp = Process({id: 'theProcess'}, Context());
       bp.stop();
-      expect(bp.getState().stopped).to.be.undefined;
+      expect(bp.getState().stopped).to.be.false;
     });
 
     it('stops run queue and leaves run message', () => {
@@ -373,7 +373,7 @@ describe('Process', () => {
       const state = bp.getState();
 
       expect(state.status).to.equal('executing');
-      expect(state.stopped).to.be.undefined;
+      expect(state.stopped).to.be.false;
       expect(state).to.have.property('broker').that.is.ok;
       expect(state).to.have.property('execution').that.is.ok;
       expect(state).to.have.property('counters');
@@ -1305,7 +1305,7 @@ describe('Process', () => {
       });
       const bp = context.getProcessById('theProcess');
 
-      expect(bp.run).to.throw('unstable');
+      expect(() => bp.run()).to.throw('unstable');
     });
 
     it('emits error on activity error', async () => {

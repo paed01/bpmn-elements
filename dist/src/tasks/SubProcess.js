@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.SubProcessBehaviour = SubProcessBehaviour;
 exports.default = SubProcess;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
@@ -149,22 +150,23 @@ proto.getState = function getState() {
 proto.recover = function recover(state) {
   if (!state) return;
   const loopCharacteristics = this.loopCharacteristics;
+  const executions = this.executions;
 
   if (loopCharacteristics && state.executions) {
-    this.executions.splice(0);
+    executions.splice(0);
     return state.executions.forEach(s => {
       this.recover(s);
     });
   }
 
   if (!loopCharacteristics) {
-    this.executions.splice(0);
+    executions.splice(0);
   }
 
   const subEnvironment = this.environment.clone().recover(state.environment);
   const subContext = this.context.clone(subEnvironment);
   const execution = new _ProcessExecution.default(this.activity, subContext).recover(state);
-  this.executions.push(execution);
+  executions.push(execution);
   return execution;
 };
 

@@ -123,7 +123,7 @@ ContextInstance.prototype.getProcessById = function getProcessById(processId) {
   if (processInstance) return processInstance;
   const processDefinition = this.definitionContext.getProcessById(processId);
   if (!processDefinition) return null;
-  processInstance = refs[processId] = processDefinition.Behaviour(processDefinition, this);
+  processInstance = refs[processId] = new processDefinition.Behaviour(processDefinition, this);
   this.refs.processes.push(processInstance);
   return processInstance;
 };
@@ -131,7 +131,7 @@ ContextInstance.prototype.getProcessById = function getProcessById(processId) {
 ContextInstance.prototype.getNewProcessById = function getNewProcessById(processId, processOptions) {
   if (!this.getProcessById(processId)) return null;
   const processDefinition = this.definitionContext.getProcessById(processId);
-  const processInstance = processDefinition.Behaviour(processDefinition, this.clone(this.environment.clone({
+  const processInstance = new processDefinition.Behaviour(processDefinition, this.clone(this.environment.clone({
     output: {},
     ...processOptions
   })));

@@ -6,6 +6,8 @@ Changelog
 Call activity...
 
 - add api fail function
+- prototype ProcessExecution
+- prototype SubProcess behaviour
 - prototype LoopCharacteristics
 - prototype Context
 - prototype SequenceFlow
@@ -14,6 +16,7 @@ Call activity...
 
 ## Breaking
 
+- all Behaviours will be invoked with new
 - unable to make activity throw if emitFatal is called within activity, unsure why?
 
 # 6.0.0
