@@ -21,23 +21,20 @@ function TaskBehaviour(activity) {
     behaviour,
     broker
   } = activity;
-  const loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
-  const source = {
-    id,
-    type,
-    loopCharacteristics,
-    execute
-  };
-  return source;
-
-  function execute(executeMessage) {
-    const content = executeMessage.content;
-
-    if (loopCharacteristics && content.isRootScope) {
-      return loopCharacteristics.execute(executeMessage);
-    }
-
-    return broker.publish('execution', 'execute.completed', { ...content
-    });
-  }
+  this.id = id;
+  this.type = type;
+  this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  this.broker = broker;
 }
+
+TaskBehaviour.prototype.execute = function execute(executeMessage) {
+  const content = executeMessage.content;
+  const loopCharacteristics = this.loopCharacteristics;
+
+  if (loopCharacteristics && content.isRootScope) {
+    return loopCharacteristics.execute(executeMessage);
+  }
+
+  return this.broker.publish('execution', 'execute.completed', { ...content
+  });
+};
