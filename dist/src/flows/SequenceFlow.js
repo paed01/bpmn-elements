@@ -23,9 +23,6 @@ exports.default = _default;
 function SequenceFlow(flowDef, {
   environment
 }) {
-  if (!(this instanceof SequenceFlow)) return new SequenceFlow(flowDef, {
-    environment
-  });
   const {
     id,
     type = 'sequenceflow',

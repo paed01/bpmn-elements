@@ -7,7 +7,6 @@ import {FlowApi} from '../Api';
 export default SequenceFlow;
 
 function SequenceFlow(flowDef, {environment}) {
-  if (!(this instanceof SequenceFlow)) return new SequenceFlow(flowDef, {environment});
   const {id, type = 'sequenceflow', name, parent: originalParent, targetId, sourceId, isDefault, behaviour = {}} = flowDef;
 
   this.counters = {

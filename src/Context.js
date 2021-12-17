@@ -42,7 +42,7 @@ ContextInstance.prototype.upsertActivity = function upsertActivity(activityDef) 
   let activityInstance = this.refs.activityRefs[activityDef.id];
   if (activityInstance) return activityInstance;
 
-  activityInstance = this.refs.activityRefs[activityDef.id] = activityDef.Behaviour(activityDef, this);
+  activityInstance = this.refs.activityRefs[activityDef.id] = new activityDef.Behaviour(activityDef, this);
 
   return activityInstance;
 };
@@ -100,7 +100,7 @@ ContextInstance.prototype.upsertAssociation = function upsertAssociation(associa
   let instance = refs[associationDefinition.id];
   if (instance) return instance;
 
-  instance = refs[associationDefinition.id] = associationDefinition.Behaviour(associationDefinition, this);
+  instance = refs[associationDefinition.id] = new associationDefinition.Behaviour(associationDefinition, this);
 
   return instance;
 };
@@ -141,7 +141,7 @@ ContextInstance.prototype.getExecutableProcesses = function getExecutableProcess
 ContextInstance.prototype.getMessageFlows = function getMessageFlows(sourceId) {
   if (!this.refs.messageFlows.length) {
     const flows = this.definitionContext.getMessageFlows() || [];
-    this.refs.messageFlows.push(...flows.map((flow) => flow.Behaviour(flow, this)));
+    this.refs.messageFlows.push(...flows.map((flow) => new flow.Behaviour(flow, this)));
   }
 
   return this.refs.messageFlows.filter((flow) => flow.source.processId === sourceId);
@@ -154,7 +154,7 @@ ContextInstance.prototype.getDataObjectById = function getDataObjectById(referen
   const dataObjectDef = this.definitionContext.getDataObjectById(referenceId);
   if (!dataObjectDef) return;
 
-  dataObject = this.refs.dataObjectRefs[dataObjectDef.id] = dataObjectDef.Behaviour(dataObjectDef, this);
+  dataObject = this.refs.dataObjectRefs[dataObjectDef.id] = new dataObjectDef.Behaviour(dataObjectDef, this);
 
   return dataObject;
 };
@@ -166,7 +166,7 @@ ContextInstance.prototype.getDataStoreById = function getDataStoreById(reference
   const dataStoreDef = this.definitionContext.getDataStoreById(referenceId) || this.definitionContext.getDataStoreReferenceById(referenceId);
   if (!dataStoreDef) return;
 
-  dataStore = this.refs.dataStoreRefs[dataStoreDef.id] = dataStoreDef.Behaviour(dataStoreDef, this);
+  dataStore = this.refs.dataStoreRefs[dataStoreDef.id] = new dataStoreDef.Behaviour(dataStoreDef, this);
 
   return dataStore;
 };

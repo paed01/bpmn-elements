@@ -41,7 +41,6 @@ var _default = Activity;
 exports.default = _default;
 
 function Activity(Behaviour, activityDef, context) {
-  if (!(this instanceof Activity)) return new Activity(Behaviour, activityDef, context);
   const {
     id,
     type = 'activity',
@@ -140,7 +139,7 @@ function Activity(Behaviour, activityDef, context) {
     });
   }
 
-  this[eventDefinitionsSymbol] = eventDefinitions && eventDefinitions.map(ed => ed.Behaviour(this, ed, this[contextSymbol]));
+  this[eventDefinitionsSymbol] = eventDefinitions && eventDefinitions.map(ed => new ed.Behaviour(this, ed, this[contextSymbol]));
 }
 
 Object.defineProperty(Activity.prototype, 'context', {

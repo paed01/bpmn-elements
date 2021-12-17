@@ -1620,7 +1620,7 @@ function createProcess(override, step) {
     ...override
   }, {step});
 
-  return Process({
+  return new Process({
     id: 'process1',
     type: 'bpmn:Process',
   }, context);

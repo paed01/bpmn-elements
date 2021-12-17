@@ -46,7 +46,6 @@ function SubProcess(activityDef, context) {
 }
 
 function SubProcessBehaviour(activity, context) {
-  if (!(this instanceof SubProcessBehaviour)) return new SubProcessBehaviour(activity, context);
   const {
     id,
     type,

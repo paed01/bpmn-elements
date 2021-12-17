@@ -18,8 +18,6 @@ const executeMessageSymbol = Symbol.for('executeMessage');
 export default Process;
 
 export function Process(processDef, context) {
-  if (!(this instanceof Process)) return new Process(processDef, context);
-
   const {id, type = 'process', name, parent, behaviour = {}} = processDef;
   this.id = id;
   this.type = type;

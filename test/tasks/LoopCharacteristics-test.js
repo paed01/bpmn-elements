@@ -31,23 +31,6 @@ describe('LoopCharacteristics', () => {
       expect(loop).to.have.property('elementVariable', 'testitem');
       expect(loop).to.have.property('execute').that.is.a('function');
     });
-
-    it('returns loop characteristics if called without new', () => {
-      const loop = LoopCharacteristics(task, {
-        behaviour: {
-          loopCardinality: 3,
-          isSequential: true,
-          collection: '${environment.variables.list}',
-          elementVariable: 'testitem',
-        },
-      });
-
-      expect(loop).to.have.property('isSequential', true);
-      expect(loop).to.have.property('loopCardinality', 3);
-      expect(loop).to.have.property('collection', '${environment.variables.list}');
-      expect(loop).to.have.property('elementVariable', 'testitem');
-      expect(loop).to.have.property('execute').that.is.a('function');
-    });
   });
 
   describe('execute(executeMessage)', () => {

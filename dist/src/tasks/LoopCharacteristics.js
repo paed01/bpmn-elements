@@ -13,7 +13,6 @@ var _default = LoopCharacteristics;
 exports.default = _default;
 
 function LoopCharacteristics(activity, loopCharacteristics) {
-  if (!(this instanceof LoopCharacteristics)) return new LoopCharacteristics(activity, loopCharacteristics);
   this.activity = activity;
   this.loopCharacteristics = loopCharacteristics;
   const {

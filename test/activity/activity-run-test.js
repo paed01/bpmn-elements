@@ -299,7 +299,7 @@ describe('activity run', () => {
   describe('extensions', () => {
     it('are activated on enter', () => {
       let active = false;
-      const activity = Activity(TaskBehaviour, {
+      const activity = new Activity(TaskBehaviour, {
         id: 'activity',
         type: 'task',
         parent: {
@@ -331,7 +331,7 @@ describe('activity run', () => {
 
     it('are activated on discard', () => {
       let active = false;
-      const activity = Activity(TaskBehaviour, {
+      const activity = new Activity(TaskBehaviour, {
         id: 'activity',
         type: 'task',
         parent: {
@@ -363,7 +363,7 @@ describe('activity run', () => {
 
     it('are deactivated on activity leave', () => {
       let active = false;
-      const activity = Activity(TaskBehaviour, {
+      const activity = new Activity(TaskBehaviour, {
         id: 'activity',
         type: 'task',
         parent: {
@@ -398,7 +398,7 @@ describe('activity run', () => {
 
     it('are deactivated on stop', () => {
       let active = false;
-      const activity = Activity(TaskBehaviour, {
+      const activity = new Activity(TaskBehaviour, {
         id: 'activity',
         type: 'task',
         parent: {
@@ -435,7 +435,7 @@ describe('activity run', () => {
 
     it('are reactivated on next run', () => {
       let active = false;
-      const activity = Activity(TaskBehaviour, {
+      const activity = new Activity(TaskBehaviour, {
         id: 'activity',
         type: 'task',
         parent: {
@@ -479,7 +479,7 @@ function createActivity(step = true) {
     },
   });
 
-  return Activity(TaskBehaviour, {
+  return new Activity(TaskBehaviour, {
     id: 'activity',
     type: 'task',
     parent: {
@@ -488,10 +488,10 @@ function createActivity(step = true) {
   }, getContext({
     environment,
     getInboundSequenceFlows() {
-      return [SequenceFlow({id: 'flow0', parent: {id: 'process1'}}, {environment})];
+      return [new SequenceFlow({id: 'flow0', parent: {id: 'process1'}}, {environment})];
     },
     getOutboundSequenceFlows() {
-      return [SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, {environment})];
+      return [new SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, {environment})];
     },
   }));
 }

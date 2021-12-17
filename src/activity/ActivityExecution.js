@@ -6,7 +6,6 @@ const completedSymbol = Symbol.for('completed');
 export default ActivityExecution;
 
 function ActivityExecution(activity, context) {
-  if (!(this instanceof ActivityExecution)) return new ActivityExecution(activity, context);
   this.activity = activity;
   this.context = context;
   this.id = activity.id;
@@ -41,7 +40,7 @@ ActivityExecution.prototype.execute = function execute(executeMessage) {
     this.postponed.splice(0);
     this.debug('resume execution');
 
-    if (!this.source) this.source = this.activity.Behaviour(this.activity, this.context);
+    if (!this.source) this.source = new this.activity.Behaviour(this.activity, this.context);
 
     this.activate();
     return this.broker.publish('execution', 'execute.resume.execution', cloneContent(initMessage.content), {persistent: false});
@@ -49,7 +48,7 @@ ActivityExecution.prototype.execute = function execute(executeMessage) {
 
   this.debug('execute');
   this.activate();
-  this.source = this.activity.Behaviour(this.activity, this.context);
+  this.source = new this.activity.Behaviour(this.activity, this.context);
   this.broker.publish('execution', 'execute.start', cloneContent(this.initMessage.content));
 };
 
@@ -136,7 +135,7 @@ ActivityExecution.prototype.recover = function recover(state) {
   if (!state) return this;
   if ('completed' in state) this[completedSymbol] = state.completed;
 
-  const source = this.source = this.activity.Behaviour(this.activity, this.context);
+  const source = this.source = new this.activity.Behaviour(this.activity, this.context);
   if (source.recover) {
     source.recover(state);
   }

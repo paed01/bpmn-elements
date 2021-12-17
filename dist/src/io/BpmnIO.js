@@ -10,8 +10,8 @@ function BpmnIO(activity, context) {
     ioSpecification: ioSpecificationDef,
     properties: propertiesDef
   } = activity.behaviour;
-  const ioSpecification = ioSpecificationDef && ioSpecificationDef.Behaviour(activity, ioSpecificationDef, context);
-  const bpmnProperties = propertiesDef && propertiesDef.Behaviour(activity, propertiesDef, context);
+  const ioSpecification = ioSpecificationDef && new ioSpecificationDef.Behaviour(activity, ioSpecificationDef, context);
+  const bpmnProperties = propertiesDef && new propertiesDef.Behaviour(activity, propertiesDef, context);
   if (!ioSpecification && !bpmnProperties) return;
   return {
     activate(message) {

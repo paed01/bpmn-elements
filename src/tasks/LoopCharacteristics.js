@@ -4,7 +4,6 @@ import {cloneContent, cloneMessage, unshiftParent, cloneParent} from '../message
 export default LoopCharacteristics;
 
 function LoopCharacteristics(activity, loopCharacteristics) {
-  if (!(this instanceof LoopCharacteristics)) return new LoopCharacteristics(activity, loopCharacteristics);
   this.activity = activity;
   this.loopCharacteristics = loopCharacteristics;
   const {type = 'LoopCharacteristics', behaviour = {}} = loopCharacteristics;

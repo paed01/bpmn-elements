@@ -33,7 +33,6 @@ var _default = Process;
 exports.default = _default;
 
 function Process(processDef, context) {
-  if (!(this instanceof Process)) return new Process(processDef, context);
   const {
     id,
     type = 'process',

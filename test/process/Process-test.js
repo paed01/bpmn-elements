@@ -8,18 +8,18 @@ import { Process } from '../../src/process/Process';
 describe('Process', () => {
   describe('requirements', () => {
     it('requires a process definition with id and a context with an environment', () => {
-      const bp = Process({id: 'theProcess'}, testHelpers.emptyContext());
+      const bp = new Process({id: 'theProcess'}, testHelpers.emptyContext());
       expect(bp.run).to.be.a('function');
     });
 
     it('requires context with getActivities(), and getSequenceFlows() to run', () => {
-      const bp = Process({id: 'theProcess'}, testHelpers.emptyContext());
+      const bp = new Process({id: 'theProcess'}, testHelpers.emptyContext());
       bp.run();
       expect(bp.counters).to.have.property('completed', 1);
     });
 
     it('maps isExecutable behaviour to process', () => {
-      const bp = Process({id: 'theProcess', behaviour: {isExecutable: true} }, testHelpers.emptyContext());
+      const bp = new Process({id: 'theProcess', behaviour: {isExecutable: true} }, testHelpers.emptyContext());
       expect(bp.isExecutable).to.be.true;
     });
   });
@@ -98,7 +98,7 @@ describe('Process', () => {
 
   describe('stop()', () => {
     it('when executing sets stopped flag and cancels process broker consumers', () => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
 
       bp.run();
       bp.stop();
@@ -114,13 +114,13 @@ describe('Process', () => {
     });
 
     it('ignored if not executing', () => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
       bp.stop();
       expect(bp.getState().stopped).to.be.false;
     });
 
     it('stops run queue and leaves run message', () => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
       bp.run();
       bp.stop();
 
@@ -131,7 +131,7 @@ describe('Process', () => {
     });
 
     it('stops all child executions', () => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
       bp.run();
       bp.stop();
 
@@ -140,7 +140,7 @@ describe('Process', () => {
     });
 
     it('stop on process enter stops all running activities', (done) => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
 
       bp.once('enter', () => {
         bp.stop();
@@ -160,7 +160,7 @@ describe('Process', () => {
     });
 
     it('stop on activity start stops all running activities', (done) => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
 
       bp.once('activity.start', () => {
         bp.stop();
@@ -355,7 +355,7 @@ describe('Process', () => {
 
   describe('getState()', () => {
     it('returns expected state when not running', () => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
 
       const state = bp.getState();
 
@@ -367,7 +367,7 @@ describe('Process', () => {
     });
 
     it('returns expected state when running', () => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
       bp.run();
 
       const state = bp.getState();
@@ -381,7 +381,7 @@ describe('Process', () => {
     });
 
     it('returns expected state when stopped', () => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
       bp.run();
       bp.stop();
 
@@ -398,7 +398,7 @@ describe('Process', () => {
 
   describe('recover(state)', () => {
     it('throws if called when process is running', () => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
       bp.run();
 
       const state = bp.getState();
@@ -409,7 +409,7 @@ describe('Process', () => {
     });
 
     it('returns process if called without state', () => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
       expect(bp === bp.recover()).to.be.true;
     });
   });
@@ -446,7 +446,7 @@ describe('Process', () => {
     });
 
     it('resumes after stopped', async () => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
 
       bp.run();
       bp.stop();
@@ -459,12 +459,12 @@ describe('Process', () => {
     });
 
     it('resumes with stopped state', async () => {
-      const bp1 = Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({id: 'theProcess'}, Context());
 
       bp1.run();
       bp1.stop();
 
-      const bp2 = Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({id: 'theProcess'}, Context());
       bp2.recover(bp1.getState());
 
       bp2.resume();
@@ -475,11 +475,11 @@ describe('Process', () => {
     });
 
     it('resumes with running state', async () => {
-      const bp1 = Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({id: 'theProcess'}, Context());
 
       bp1.run();
 
-      const bp2 = Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({id: 'theProcess'}, Context());
       bp2.recover(bp1.getState());
 
       bp2.resume();
@@ -490,14 +490,14 @@ describe('Process', () => {
     });
 
     it('resumes on enter', async () => {
-      const bp1 = Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({id: 'theProcess'}, Context());
       bp1.once('enter', (api) => {
         api.stop();
       });
 
       bp1.run();
 
-      const bp2 = Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({id: 'theProcess'}, Context());
       bp2.recover(bp1.getState());
 
       bp2.resume();
@@ -508,14 +508,14 @@ describe('Process', () => {
     });
 
     it('resumes stopped recovered on enter', async () => {
-      const bp1 = Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({id: 'theProcess'}, Context());
       bp1.once('enter', (api) => {
         api.stop();
       });
 
       bp1.run();
 
-      const bp2 = Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({id: 'theProcess'}, Context());
       bp2.recover(bp1.getState());
 
       bp2.resume();
@@ -526,14 +526,14 @@ describe('Process', () => {
     });
 
     it('resumes stopped recovered on start', async () => {
-      const bp1 = Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({id: 'theProcess'}, Context());
       bp1.once('start', (api) => {
         api.stop();
       });
 
       bp1.run();
 
-      const bp2 = Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({id: 'theProcess'}, Context());
       bp2.recover(bp1.getState());
 
       bp2.resume();
@@ -544,7 +544,7 @@ describe('Process', () => {
     });
 
     it('resumes on start state', async () => {
-      const bp1 = Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({id: 'theProcess'}, Context());
       let state;
       bp1.once('enter', () => {
         state = bp1.getState();
@@ -552,7 +552,7 @@ describe('Process', () => {
 
       bp1.run();
 
-      const bp2 = Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({id: 'theProcess'}, Context());
       bp2.recover(state);
 
       bp2.resume();
@@ -563,7 +563,7 @@ describe('Process', () => {
     });
 
     it('resumes stopped recovered on end', async () => {
-      const bp1 = Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({id: 'theProcess'}, Context());
       const stopped = bp1.waitFor('stop');
       bp1.once('end', (api) => {
         api.stop();
@@ -574,7 +574,7 @@ describe('Process', () => {
 
       await stopped;
 
-      const bp2 = Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({id: 'theProcess'}, Context());
       bp2.recover(bp1.getState());
 
       bp2.resume();
@@ -583,7 +583,7 @@ describe('Process', () => {
     });
 
     it('resumes stopped recovered on activity event', async () => {
-      const bp1 = Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({id: 'theProcess'}, Context());
       bp1.once('wait', (api) => {
         api.stop();
       });
@@ -591,7 +591,7 @@ describe('Process', () => {
       bp1.run();
       expect(bp1.counters).to.have.property('completed', 0);
 
-      const bp2 = Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({id: 'theProcess'}, Context());
       bp2.recover(JSON.parse(JSON.stringify(bp1.getState())));
 
       bp2.resume();
@@ -602,7 +602,7 @@ describe('Process', () => {
     });
 
     it('throws if called while process is running', () => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
       bp.run();
 
       expect(() => {
@@ -611,7 +611,7 @@ describe('Process', () => {
     });
 
     it('ignored if never started', () => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
       bp.broker.subscribeTmp('event', '#', () => {
         throw new Error('Shouldn´t happen');
       });
@@ -619,7 +619,7 @@ describe('Process', () => {
     });
 
     it('ignored if completed', () => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
 
       bp.on('wait', (activityApi) => {
         activityApi.signal();
@@ -1439,7 +1439,7 @@ describe('Process', () => {
 
   describe('waitFor()', () => {
     it('returns promise that resolves when event occur', async () => {
-      const bp = Process({id: 'theProcess'}, testHelpers.emptyContext());
+      const bp = new Process({id: 'theProcess'}, testHelpers.emptyContext());
 
       const leave = bp.waitFor('leave');
 
@@ -1449,7 +1449,7 @@ describe('Process', () => {
     });
 
     it('rejects if process error is published', (done) => {
-      const bp = Process({id: 'theProcess'}, testHelpers.emptyContext());
+      const bp = new Process({id: 'theProcess'}, testHelpers.emptyContext());
 
       bp.once('end', () => {
         bp.broker.publish('event', 'process.error', new Error('unstable'), {mandatory: true});
@@ -1464,7 +1464,7 @@ describe('Process', () => {
     });
 
     it('rejects if execution error occur', (done) => {
-      const bp = Process({id: 'theProcess'}, Context());
+      const bp = new Process({id: 'theProcess'}, Context());
 
       bp.once('wait', () => {
         bp.broker.publish('execution', 'execution.error', {error: new Error('unstable')}, {mandatory: true, type: 'error'});

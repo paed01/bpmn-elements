@@ -24,8 +24,6 @@ export default function SubProcess(activityDef, context) {
 }
 
 export function SubProcessBehaviour(activity, context) {
-  if (!(this instanceof SubProcessBehaviour)) return new SubProcessBehaviour(activity, context);
-
   const {id, type, behaviour} = activity;
   this.id = id;
   this.type = type;

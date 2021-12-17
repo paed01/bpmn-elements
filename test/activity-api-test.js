@@ -5,7 +5,7 @@ import {cloneContent} from '../src/messageHelper';
 describe('activity api', () => {
   describe('properties', () => {
     it('exposes activity id, type, and name', () => {
-      const activity = Activity(Behaviour, {id: 'task', type: 'bpmn:Task', name: 'Task'}, getContext());
+      const activity = new Activity(Behaviour, {id: 'task', type: 'bpmn:Task', name: 'Task'}, getContext());
 
       activity.run();
       const api = activity.getApi();
@@ -23,7 +23,7 @@ describe('activity api', () => {
 
   describe('discard()', () => {
     it('discards activity', () => {
-      const activity = Activity(Behaviour, {id: 'task'}, getContext());
+      const activity = new Activity(Behaviour, {id: 'task'}, getContext());
 
       activity.run();
       activity.getApi().discard();
@@ -38,7 +38,7 @@ describe('activity api', () => {
     });
 
     it('discards sub execution', () => {
-      const activity = Activity(Behaviour, {id: 'task'}, getContext());
+      const activity = new Activity(Behaviour, {id: 'task'}, getContext());
 
       const apiMessages = [];
       activity.broker.subscribeTmp('api', '#', (_, msg) => {
@@ -65,7 +65,7 @@ describe('activity api', () => {
     });
 
     it('execution can be discarded by sub execution', () => {
-      const activity = Activity(Behaviour, {id: 'task'}, getContext());
+      const activity = new Activity(Behaviour, {id: 'task'}, getContext());
 
       const apiMessages = [];
       activity.broker.subscribeTmp('api', '#', (_, msg) => {
@@ -103,7 +103,7 @@ describe('activity api', () => {
 
   describe('stop()', () => {
     it('stops activity', () => {
-      const activity = Activity(Behaviour, {id: 'task'}, getContext());
+      const activity = new Activity(Behaviour, {id: 'task'}, getContext());
 
       activity.run();
       activity.getApi().stop();
@@ -122,7 +122,7 @@ describe('activity api', () => {
 
   describe('getPostponed()', () => {
     it('returns empty array', () => {
-      const activity = Activity(Behaviour, {id: 'task'}, getContext());
+      const activity = new Activity(Behaviour, {id: 'task'}, getContext());
 
       activity.run();
       expect(activity.getApi().getPostponed()).to.be.empty;
@@ -135,7 +135,7 @@ describe('activity api', () => {
     });
 
     it('calls behaviour getPostponed if sub process', () => {
-      const activity = Activity(Behaviour, {id: 'task', isSubProcess: true}, getContext());
+      const activity = new Activity(Behaviour, {id: 'task', isSubProcess: true}, getContext());
 
       activity.run();
       expect(activity.getApi().getPostponed()).to.not.be.empty;
