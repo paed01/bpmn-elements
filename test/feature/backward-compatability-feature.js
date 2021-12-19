@@ -19,7 +19,7 @@ Feature('Backward compatability 5.2', () => {
 
     let leave;
     When('recovered and resumed with state from version 5', () => {
-      definition = Definition(context).recover(state);
+      definition = new Definition(context).recover(state);
       leave = definition.waitFor('leave');
       definition.resume();
     });

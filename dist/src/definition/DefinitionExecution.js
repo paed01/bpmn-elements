@@ -15,13 +15,13 @@ var _messageHelper = require("../messageHelper");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const parentSymbol = Symbol.for('parent');
-const stateMessageSymbol = Symbol.for('stateMessage');
-const stoppedSymbol = Symbol.for('stopped');
-const completedSymbol = Symbol.for('completed');
 const activatedSymbol = Symbol.for('activated');
-const statusSymbol = Symbol.for('status');
+const completedSymbol = Symbol.for('completed');
+const parentSymbol = Symbol.for('parent');
 const processesSymbol = Symbol.for('processes');
+const stateMessageSymbol = Symbol.for('stateMessage');
+const statusSymbol = Symbol.for('status');
+const stoppedSymbol = Symbol.for('stopped');
 
 function DefinitionExecution(definition, context) {
   const broker = definition.broker;

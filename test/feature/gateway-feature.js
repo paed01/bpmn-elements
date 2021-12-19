@@ -39,7 +39,7 @@ Feature('Gateway', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('definition is ran with falsy second and first condition script', () => {
@@ -135,7 +135,7 @@ Feature('Gateway', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('definition is ran with falsy second and first condition script', () => {
@@ -237,7 +237,7 @@ Feature('Gateway', () => {
     });
 
     And('a definition with rules extensions', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         extensions: {
           rulesExtension,
           userInput,
@@ -337,7 +337,7 @@ Feature('Gateway', () => {
     let definition;
     Given('a decision followed by a parallel gateway that has joined flows touched more than once', async () => {
       const context = await testHelpers.context(factory.resource('parallel-join-edgecase.bpmn'));
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -375,7 +375,7 @@ Feature('Gateway', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('definition is ran with falsy second and first condition script', () => {

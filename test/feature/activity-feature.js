@@ -10,7 +10,7 @@ Feature('Activity', () => {
       const source = factory.resource('consumer_error.bpmn');
       const context = await testHelpers.context(source);
 
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let wait;

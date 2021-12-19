@@ -38,7 +38,7 @@ Feature('Errors', () => {
       </definitions>`;
 
       context = await testHelpers.context(source);
-      definition = Definition(context, options);
+      definition = new Definition(context, options);
     });
 
     let error;
@@ -102,7 +102,7 @@ Feature('Errors', () => {
 
     let recovered;
     Given('definition is recovered', () => {
-      recovered = Definition(context.clone(), options).recover(state);
+      recovered = new Definition(context.clone(), options).recover(state);
     });
 
     When('resumed', () => {
@@ -135,7 +135,7 @@ Feature('Errors', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end, thrown;
@@ -183,7 +183,7 @@ Feature('Errors', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end, thrown;
@@ -241,7 +241,7 @@ Feature('Errors', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end, thrown;
@@ -302,7 +302,7 @@ Feature('Errors', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end, thrown, caught;
@@ -386,7 +386,7 @@ Feature('Errors', () => {
       context.environment.addService('get', function get(_, next) {
         serviceCallback = next;
       });
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -491,7 +491,7 @@ Feature('Errors', () => {
         serviceCallback = next;
       });
 
-      recoveredDefinition = Definition(newContext);
+      recoveredDefinition = new Definition(newContext);
       recoveredDefinition.recover(JSON.parse(state));
     });
 
@@ -518,7 +518,7 @@ Feature('Errors', () => {
 
     Given('definition is ran with error listener where state is saved', () => {
       state = undefined;
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.once('error', () => {
         state = JSON.stringify(definition.getState(), null, 2);
       });
@@ -545,7 +545,7 @@ Feature('Errors', () => {
         serviceCallback = next;
       });
 
-      recoveredDefinition = Definition(newContext);
+      recoveredDefinition = new Definition(newContext);
       recoveredDefinition.recover(JSON.parse(state));
     });
 
@@ -664,7 +664,7 @@ Feature('Errors', () => {
     let context, definition;
     Given('process with task with bound named error', async () => {
       context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let execution, end;
@@ -719,7 +719,7 @@ Feature('Errors', () => {
     let context, definition;
     Given('process with task with bound named error', async () => {
       context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let execution, end;

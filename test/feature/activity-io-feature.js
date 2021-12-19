@@ -8,7 +8,7 @@ Feature('Activity IO', () => {
     Given('a process with an activity with property', async () => {
       const source = factory.resource('engine-issue-139.bpmn');
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           _data: {
             DataObject_14zge3i: 1,
@@ -77,7 +77,7 @@ Feature('Activity IO', () => {
        </definitions>
       `;
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           _data: {
             DataObject_1: 1,
@@ -151,7 +151,7 @@ Feature('Activity IO', () => {
        </definitions>
       `;
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           _data: {
             DataObject_1: 1,
@@ -228,7 +228,7 @@ Feature('Activity IO', () => {
        </definitions>
       `;
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           _data: {
             DataObject_1: 1,
@@ -334,7 +334,7 @@ Feature('Activity IO', () => {
        </definitions>
       `;
       context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           _data: {
             DataStoreReference_1: {
@@ -395,7 +395,7 @@ Feature('Activity IO', () => {
     let resumedTaskMessage1;
     When('resumed from user task and data has been updated', () => {
 
-      definition = Definition(context.clone()).recover(state);
+      definition = new Definition(context.clone()).recover(state);
       end = definition.waitFor('end');
 
       definition.broker.subscribeTmp('event', 'activity.#', (_, msg) => {
@@ -479,7 +479,7 @@ Feature('Activity IO', () => {
        </definitions>
       `;
       context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           _data: {
             datastore: {
@@ -540,7 +540,7 @@ Feature('Activity IO', () => {
     let resumedTaskMessage1;
     When('resumed from user task and data has been updated', () => {
 
-      definition = Definition(context.clone()).recover(state);
+      definition = new Definition(context.clone()).recover(state);
       end = definition.waitFor('end');
 
       definition.broker.subscribeTmp('event', 'activity.#', (_, msg) => {

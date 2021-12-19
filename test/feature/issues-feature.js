@@ -8,7 +8,7 @@ Feature('Issues', () => {
     let definition;
     Given('a source with two user tasks in sequence ending up in two succeeding decisions with loopback', async () => {
       const context = await testHelpers.context(factory.resource('engine-issue-73.bpmn'));
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let leave, wait;
@@ -114,7 +114,7 @@ Feature('Issues', () => {
 
     Given('an usertask ending up in decision with two loopback flows each taken once and an end event', async () => {
       context = await testHelpers.context(factory.resource('engine-issue-73_2.bpmn'));
-      definition = Definition(context, {extensions});
+      definition = new Definition(context, {extensions});
     });
 
     let stopped;
@@ -130,7 +130,7 @@ Feature('Issues', () => {
 
     let recovered, completed;
     When('resumed', () => {
-      recovered = Definition(context.clone(), {extensions}).recover(state);
+      recovered = new Definition(context.clone(), {extensions}).recover(state);
       completed = recovered.waitFor('leave');
       stopped = recovered.waitFor('stop');
       recovered.on('wait', onWaitHandler(recovered));
@@ -240,7 +240,7 @@ Feature('Issues', () => {
           }
         };
 
-        definition = Definition(context, {
+        definition = new Definition(context, {
           variables: {
             passTask2: 1
           },
@@ -336,7 +336,7 @@ Feature('Issues', () => {
       });
 
       When('definition is recovered with state from first run user task wait', () => {
-        definition = Definition(context.clone(), {...options});
+        definition = new Definition(context.clone(), {...options});
         definition.recover(JSON.parse(states[0]));
       });
 
@@ -408,7 +408,7 @@ Feature('Issues', () => {
           }
         };
 
-        definition = Definition(context, {
+        definition = new Definition(context, {
           variables: {
             passTask2: 1
           },
@@ -450,7 +450,7 @@ Feature('Issues', () => {
       });
 
       When('definition is recovered with state from wait', () => {
-        definition = Definition(context.clone(), options);
+        definition = new Definition(context.clone(), options);
         definition.recover(JSON.parse(state));
       });
 
@@ -518,7 +518,7 @@ Feature('Issues', () => {
           }
         };
 
-        definition = Definition(context, {
+        definition = new Definition(context, {
           variables: {
             passTask2: 1
           },
@@ -614,7 +614,7 @@ Feature('Issues', () => {
       });
 
       When('definition is recovered with state from first run user task wait', () => {
-        definition = Definition(context.clone(), {...options});
+        definition = new Definition(context.clone(), {...options});
         definition.recover(JSON.parse(states[0]));
       });
 
@@ -660,7 +660,7 @@ Feature('Issues', () => {
 
       Given('definition is ran again', () => {
         states.splice(0);
-        definition = Definition(context.clone(), {...options, variables: {passTask2: 1}});
+        definition = new Definition(context.clone(), {...options, variables: {passTask2: 1}});
         wait = definition.waitFor('wait');
         definition.run();
       });
@@ -680,7 +680,7 @@ Feature('Issues', () => {
       });
 
       When('definition is recovered with state', () => {
-        definition = Definition(context.clone(), {...options});
+        definition = new Definition(context.clone(), {...options});
         definition.recover(state);
       });
 
@@ -723,7 +723,7 @@ Feature('Issues', () => {
 
     let definition, state;
     When('run and then stop', () => {
-      definition = Definition(context);
+      definition = new Definition(context);
       definition.run();
       definition.stop();
 
@@ -738,7 +738,7 @@ Feature('Issues', () => {
     });
 
     When('recovered and resumed', () => {
-      definition = Definition(context);
+      definition = new Definition(context);
       definition.recover(state);
       definition.resume();
     });
@@ -765,7 +765,7 @@ Feature('Issues', () => {
     });
 
     When('recovered and resumed', () => {
-      definition = Definition(context);
+      definition = new Definition(context);
       definition.recover(state);
       definition.resume();
     });
@@ -943,7 +943,7 @@ Feature('Issues', () => {
     });
 
     function runWithCardinality(n, list) {
-      const def = Definition(context, {
+      const def = new Definition(context, {
         variables: {
           cardinality: n,
           list,

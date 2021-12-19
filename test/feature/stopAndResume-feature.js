@@ -51,7 +51,7 @@ Feature('Stop and resume', () => {
           js: JsExtension,
         }
       });
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let stoppedAt;
@@ -192,7 +192,7 @@ Feature('Stop and resume', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     function Timers() {
@@ -241,7 +241,7 @@ Feature('Stop and resume', () => {
     When('recovered and resumed', async () => {
       ck.travel(Date.now() + 5000);
       const context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context);
+      definition = new Definition(context);
 
       definition.recover(state);
       timerEvent = definition.waitFor('activity.timer');
@@ -258,7 +258,7 @@ Feature('Stop and resume', () => {
 
     Given('a listener that will save state at activity timer', async () => {
       const context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('ran', () => {
@@ -292,7 +292,7 @@ Feature('Stop and resume', () => {
       ck.travel(Date.now() + 5000);
 
       const context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context);
+      definition = new Definition(context);
 
       definition.recover(state);
       timerEvent = definition.waitFor('activity.timer');
@@ -370,7 +370,7 @@ Feature('Stop and resume', () => {
 
     Given('a definition with a task with two timeouts, first loops back to previous task', async () => {
       context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let state;
@@ -378,7 +378,7 @@ Feature('Stop and resume', () => {
       definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
         if (msg.content.id !== 'timeout2') return;
         definition.broker.cancel(msg.fields.consumerTag);
-        setImmediate(definition.stop);
+        setImmediate(() => definition.stop());
       }, {noAck: true});
 
       definition.once('stop', () => {
@@ -396,7 +396,7 @@ Feature('Stop and resume', () => {
 
     When('recovered and resumed', async () => {
       context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context).recover(state);
+      definition = new Definition(context).recover(state);
       definition.resume();
     });
 
@@ -404,7 +404,7 @@ Feature('Stop and resume', () => {
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         if (msg.content.id !== 'timeout1') return;
         definition.broker.cancel(msg.fields.consumerTag);
-        setImmediate(definition.stop);
+        setImmediate(() => definition.stop());
       }, {noAck: true});
 
       definition.once('stop', () => {
@@ -424,7 +424,7 @@ Feature('Stop and resume', () => {
 
     When('recovered and resumed', async () => {
       context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context).recover(state);
+      definition = new Definition(context).recover(state);
       definition.resume();
     });
 
@@ -453,7 +453,7 @@ Feature('Stop and resume', () => {
     let leave;
     When('recovered and resumed', async () => {
       context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context).recover(state);
+      definition = new Definition(context).recover(state);
       leave = definition.waitFor('leave');
       definition.resume();
     });

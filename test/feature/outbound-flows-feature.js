@@ -9,7 +9,7 @@ Feature('Outbound flows', () => {
     Given('a task with one default flow, flow with script condition, and a third with expression', async () => {
       const source = factory.resource('conditional-flows.bpmn');
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('definition is ran with truthy script condition', () => {
@@ -103,7 +103,7 @@ Feature('Outbound flows', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let thrown;
@@ -134,7 +134,7 @@ Feature('Outbound flows', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('definition is ran', () => {
@@ -164,7 +164,7 @@ Feature('Outbound flows', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('definition is ran', () => {
@@ -194,7 +194,7 @@ Feature('Outbound flows', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('definition is ran', () => {
@@ -224,7 +224,7 @@ Feature('Outbound flows', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('definition is ran', () => {
@@ -257,7 +257,7 @@ Feature('Outbound flows', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let thrown;
@@ -288,7 +288,7 @@ Feature('Outbound flows', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('definition is ran', () => {
@@ -318,7 +318,7 @@ Feature('Outbound flows', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('definition is ran', () => {
@@ -348,7 +348,7 @@ Feature('Outbound flows', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('definition is ran', () => {
@@ -378,7 +378,7 @@ Feature('Outbound flows', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('definition is ran', () => {
@@ -426,7 +426,7 @@ Feature('Outbound flows', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -475,7 +475,7 @@ Feature('Outbound flows', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('definition is ran', () => {

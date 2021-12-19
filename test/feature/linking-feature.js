@@ -11,7 +11,7 @@ Feature('Linking', () => {
       const source = factory.resource('link-event.bpmn');
       const context = await testHelpers.context(source);
 
-      definition = Definition(context, {
+      definition = new Definition(context, {
         services: {
           log(...args) {
             logBook.push(...args);
@@ -75,7 +75,7 @@ Feature('Linking', () => {
       `;
       const context = await testHelpers.context(source);
 
-      definition = Definition(context, {
+      definition = new Definition(context, {
         services: {
           log(...args) {
             logBook.push(...args);
@@ -163,7 +163,7 @@ Feature('Linking', () => {
         extensions: {js: JsExtension}
       });
 
-      definition = Definition(context, {
+      definition = new Definition(context, {
         extensions: {
           js: JsExtension.extension
         }
@@ -238,7 +238,7 @@ Feature('Linking', () => {
     });
 
     When('definition is recovered and resumed', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         extensions: {
           js: JsExtension.extension
         }

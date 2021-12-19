@@ -99,7 +99,7 @@ Feature('Escalate', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end, caught;
@@ -179,7 +179,7 @@ Feature('Escalate', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end, timeout;
@@ -361,7 +361,7 @@ Feature('Escalate', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end, caught, bp;
@@ -419,7 +419,7 @@ Feature('Escalate', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end, caught, bp;

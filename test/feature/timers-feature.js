@@ -23,7 +23,7 @@ Feature('Timers', () => {
     let context, definition;
     Given('a time cycle start event, bound time duration event, throw time date event, and a user task with due date', async () => {
       context = await testHelpers.context(timersSource, {extensions});
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           catchDate: '1993-06-26',
           dueDate: '1993-06-27'
@@ -124,7 +124,7 @@ Feature('Timers', () => {
     });
 
     Given('the definition is recovered and resumed somewhere else', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.recover(JSON.parse(JSON.stringify(state)));
       definition.resume();
     });
@@ -149,7 +149,7 @@ Feature('Timers', () => {
     });
 
     When('the definition is recovered and resumed somewhere else', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.recover(JSON.parse(JSON.stringify(state)));
       definition.resume();
     });
@@ -170,7 +170,7 @@ Feature('Timers', () => {
     });
 
     When('the definition is recovered and resumed somewhere else', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.recover(JSON.parse(JSON.stringify(state)));
       definition.resume();
     });
@@ -200,7 +200,7 @@ Feature('Timers', () => {
 
     let timeoutMessage;
     When('the definition is recovered and resumed somewhere else', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.recover(JSON.parse(JSON.stringify(state)));
 
       definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
@@ -236,7 +236,7 @@ Feature('Timers', () => {
       }
 
       context = await testHelpers.context(timersSource, {extensions, timers: Timers()});
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           catchDate: '1993-06-26',
           dueDate: '1993-06-27'
@@ -339,7 +339,7 @@ Feature('Timers', () => {
     });
 
     Given('the definition is recovered and resumed somewhere else', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.recover(JSON.parse(JSON.stringify(state)));
       definition.resume();
     });
@@ -364,7 +364,7 @@ Feature('Timers', () => {
     });
 
     When('the definition is recovered and resumed somewhere else', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.recover(JSON.parse(JSON.stringify(state)));
       definition.resume();
     });
@@ -385,7 +385,7 @@ Feature('Timers', () => {
     });
 
     When('the definition is recovered and resumed somewhere else', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.recover(JSON.parse(JSON.stringify(state)));
       definition.resume();
     });
@@ -415,7 +415,7 @@ Feature('Timers', () => {
 
     let timeoutMessage;
     When('the definition is recovered and resumed somewhere else', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.recover(JSON.parse(JSON.stringify(state)));
 
       definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {

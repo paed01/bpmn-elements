@@ -23,7 +23,7 @@ Feature('Messaging', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -90,7 +90,7 @@ Feature('Messaging', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -192,7 +192,7 @@ Feature('Messaging', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -250,7 +250,7 @@ Feature('Messaging', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -308,7 +308,7 @@ Feature('Messaging', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -367,7 +367,7 @@ Feature('Messaging', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -428,7 +428,7 @@ Feature('Messaging', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -473,7 +473,7 @@ Feature('Messaging', () => {
       </definitions>`;
 
       context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let wait, end;
@@ -578,7 +578,7 @@ Feature('Messaging', () => {
     });
 
     And('recovered', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.recover(JSON.parse(JSON.stringify(state)));
     });
 
@@ -641,7 +641,7 @@ Feature('Messaging', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -697,7 +697,7 @@ Feature('Messaging', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let participant;
@@ -760,7 +760,7 @@ Feature('Messaging', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;

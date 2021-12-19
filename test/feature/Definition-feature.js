@@ -25,7 +25,7 @@ Feature('Definition', () => {
     let definition, assertMessage;
     Given('a definition', async () => {
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
       assertMessage = AssertMessage(definition, messages, true);
     });
 
@@ -75,7 +75,7 @@ Feature('Definition', () => {
     let definition, assertMessage;
     Given('a definition with lanes and extensions', async () => {
       const context = await testHelpers.context(factory.resource('lanes.bpmn'), {extensions});
-      definition = Definition(context, {
+      definition = new Definition(context, {
         Logger: testHelpers.Logger,
       });
       assertMessage = AssertMessage(definition, messages, true);
@@ -196,7 +196,7 @@ Feature('Definition', () => {
 
     Given('a definition', async () => {
       const context = await testHelpers.context(bigSource, {extensions});
-      definition = Definition(context, {
+      definition = new Definition(context, {
         Logger: testHelpers.Logger,
       });
       assertMessage = AssertMessage(context, messages, false);
@@ -292,7 +292,7 @@ Feature('Definition', () => {
     let definition;
     Given('a definition with user task, timer event, and loop', async () => {
       const context = await testHelpers.context(bigSource, {extensions});
-      definition = Definition(context, {
+      definition = new Definition(context, {
         Logger: testHelpers.Logger,
         extensions: {
           saveAllOutputToEnvironmentExtension
@@ -322,7 +322,7 @@ Feature('Definition', () => {
     let recoveredDefinition;
     Then('new definition can be recovered', async () => {
       const newContext = await testHelpers.context(bigSource, {extensions});
-      recoveredDefinition = Definition(newContext).recover(state);
+      recoveredDefinition = new Definition(newContext).recover(state);
     });
 
     let leave;
@@ -422,7 +422,7 @@ Feature('Definition', () => {
 
     Then('new definition can be recovered', async () => {
       const newContext = await testHelpers.context(bigSource, {extensions});
-      recoveredDefinition = Definition(newContext, {
+      recoveredDefinition = new Definition(newContext, {
         myOption: true,
         extensions: {
           saveAllOutputToEnvironmentExtension
@@ -463,7 +463,7 @@ Feature('Definition', () => {
     let assertMessage, definition;
     Given('a definition with user task, timer event, and loop', async () => {
       const context = await testHelpers.context(factory.resource('two-executable-processes.bpmn'), {extensions});
-      definition = Definition(context);
+      definition = new Definition(context);
       assertMessage = AssertMessage(definition, messages, true);
     });
 
@@ -559,16 +559,16 @@ Feature('Definition', () => {
     });
 
     Given('a definition with no executable process', async () => {
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     Then('throws on run', () => {
-      expect(definition.run).to.throw('No executable process');
+      expect(() => definition.run()).to.throw('No executable process');
       expect(definition.isRunning).to.be.false;
     });
 
     And('returns error in callback on run', (done) => {
-      definition = Definition(context);
+      definition = new Definition(context);
       definition.run((err) => {
         expect(err).to.have.property('message', 'No executable process');
         expect(definition.isRunning).to.be.false;
@@ -586,7 +586,7 @@ Feature('Definition', () => {
 
     let definition;
     And('a definition', () => {
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     And('expects to be stopped at first user task wait', () => {

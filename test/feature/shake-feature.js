@@ -23,7 +23,7 @@ Feature('Shaking', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     const messages = [];
@@ -91,7 +91,7 @@ Feature('Shaking', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     const messages = [];
@@ -190,7 +190,7 @@ Feature('Shaking', () => {
       describe(run ? 'running definition' : 'definition is not running', () => {
         let definition;
         Given('definition is initiated', () => {
-          definition = Definition(context.clone());
+          definition = new Definition(context.clone());
         });
 
         if (run) {
@@ -331,7 +331,7 @@ Feature('Shaking', () => {
     describe('stopped and resumed', () => {
       let definition;
       Given('definition is running', () => {
-        definition = Definition(context.clone());
+        definition = new Definition(context.clone());
         definition.run();
         definition.once('wait', () => {
           definition.stop();
@@ -415,7 +415,7 @@ Feature('Shaking', () => {
     describe('stopped and recovered', () => {
       let definition, state;
       Given('definition is running', () => {
-        definition = Definition(context.clone());
+        definition = new Definition(context.clone());
         definition.run();
         definition.once('wait', () => {
           definition.stop();
@@ -431,7 +431,7 @@ Feature('Shaking', () => {
       });
 
       When('definition is recovered', () => {
-        definition = Definition(context.clone());
+        definition = new Definition(context.clone());
         definition.recover(state);
         expect(definition).to.have.property('isRunning', false);
         expect(definition).to.have.property('stopped', true);
@@ -502,7 +502,7 @@ Feature('Shaking', () => {
       describe(run ? 'running definition' : 'definition is not running', () => {
         let definition;
         Given('definition is initiated', () => {
-          definition = Definition(context.clone());
+          definition = new Definition(context.clone());
         });
 
         if (run) {

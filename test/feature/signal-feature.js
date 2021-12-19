@@ -191,7 +191,7 @@ Feature('Signals', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -246,7 +246,7 @@ Feature('Signals', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('definition is ran', () => {
@@ -300,7 +300,7 @@ Feature('Signals', () => {
       const source = factory.resource('issue-3.bpmn');
       const context = await testHelpers.context(source);
 
-      definition = Definition(context, {
+      definition = new Definition(context, {
         services: {
           log(...args) {
             logBook.push(...args);
@@ -387,7 +387,7 @@ Feature('Signals', () => {
           js: JsExtension,
         }
       });
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -749,7 +749,7 @@ Feature('Signals', () => {
     let end, state, definition;
     const output = {};
     When('definition is ran', () => {
-      definition = Definition(context);
+      definition = new Definition(context);
       definition.run();
 
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
@@ -768,7 +768,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -791,7 +791,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -817,7 +817,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -845,7 +845,7 @@ Feature('Signals', () => {
 
     let wait;
     When('definition is resumed', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -879,7 +879,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -906,7 +906,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -933,7 +933,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -960,7 +960,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -995,7 +995,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -1026,7 +1026,7 @@ async function prepareSource() {
       }
     }
   });
-  const definition = Definition(context, {
+  const definition = new Definition(context, {
     variables: {
       spotPrice: 100
     },

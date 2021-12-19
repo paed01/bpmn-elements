@@ -11,7 +11,7 @@ Feature('Dummy', () => {
     let ended;
     When('a source with groups is ran', async () => {
       context = await testHelpers.context(groupsSource);
-      definition = Definition(context);
+      definition = new Definition(context);
       ended = definition.waitFor('end');
       definition.run();
     });

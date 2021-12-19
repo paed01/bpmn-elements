@@ -85,7 +85,7 @@ Object.defineProperty(proto, 'isRunning', {
   enumerable: true,
   get() {
     if (!this[consumingSymbol]) return false;
-    return !!this[statusSymbol];
+    return !!this.status;
   },
 });
 

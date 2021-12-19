@@ -9,9 +9,19 @@ import {Scripts as JavaScripts} from '../helpers/JavaScripts';
 const lanesSource = factory.resource('lanes.bpmn');
 
 describe('Definition', () => {
+  describe('#ctor', () => {
+    it('can be invoked without new', () => {
+      const newNewDefinition = Definition({
+        id: 'Def_1',
+        environment: Environment(),
+      });
+      expect(newNewDefinition.run).to.be.a('function');
+    });
+  });
+
   describe('requirements', () => {
     it('requires a context with id and environment', () => {
-      const definition = Definition({
+      const definition = new Definition({
         id: 'Def_1',
         environment: Environment(),
       });
@@ -23,7 +33,7 @@ describe('Definition', () => {
       const services = {
         myService: () => {},
       };
-      const definition = Definition({
+      const definition = new Definition({
         id: 'Def_1',
         environment: Environment({ Logger, services }),
         getProcesses() {
@@ -48,7 +58,7 @@ describe('Definition', () => {
     it('takes environment override options as second argument', () => {
       const scripts = JavaScripts();
       const environment = Environment({ Logger: testHelpers.Logger, scripts });
-      const definition = Definition({
+      const definition = new Definition({
         id: 'Def_1',
         environment,
         getProcesses() {},
@@ -76,7 +86,7 @@ describe('Definition', () => {
 
   describe('run([options, callback])', () => {
     it('returns api', async () => {
-      const definition = Definition({
+      const definition = new Definition({
         id: 'Def_1',
         environment: Environment({ Logger: testHelpers.Logger }),
         getProcesses() {
@@ -92,7 +102,7 @@ describe('Definition', () => {
     });
 
     it('publishes enter on run', async () => {
-      const definition = Definition({
+      const definition = new Definition({
         id: 'Def_1',
         environment: Environment({ Logger: testHelpers.Logger }),
         getProcesses() {
@@ -112,7 +122,7 @@ describe('Definition', () => {
     });
 
     it('publishes start when started', async () => {
-      const definition = Definition({
+      const definition = new Definition({
         id: 'Def_1',
         environment: Environment({ Logger: testHelpers.Logger }),
         getProcesses() {
@@ -134,7 +144,7 @@ describe('Definition', () => {
     it('publishes end when all processes are completed', async () => {
       const context = await testHelpers.context(lanesSource);
 
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const end = definition.waitFor('end');
 
       definition.run();
@@ -156,7 +166,7 @@ describe('Definition', () => {
         services,
       });
 
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const processes = definition.getProcesses();
       expect(processes).to.have.length(2);
 
@@ -169,7 +179,7 @@ describe('Definition', () => {
     it('publishes leave when all processes are completed', async () => {
       const context = await testHelpers.context(lanesSource);
 
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const processes = definition.getProcesses();
       expect(processes).to.have.length(2);
 
@@ -188,7 +198,7 @@ describe('Definition', () => {
     it('leaves no messages in run queue when completed', async () => {
       const context = await testHelpers.context(lanesSource);
 
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const processes = definition.getProcesses();
       expect(processes).to.have.length(2);
 
@@ -204,7 +214,7 @@ describe('Definition', () => {
     it('leaves no messages in run queue when completed with callback', async () => {
       const context = await testHelpers.context(lanesSource);
 
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const processes = definition.getProcesses();
       expect(processes).to.have.length(2);
 
@@ -222,7 +232,7 @@ describe('Definition', () => {
 
     it('calls optional callback when completed', (done) => {
       testHelpers.context(factory.valid(), {}, (_, moddleContext) => {
-        const def = Definition(moddleContext, {scripts: JavaScripts()});
+        const def = new Definition(moddleContext, {scripts: JavaScripts()});
         def.run((err) => {
           if (err) return done(err);
           done();
@@ -232,7 +242,7 @@ describe('Definition', () => {
 
     it('calls callback if stopped', (done) => {
       testHelpers.context(factory.userTask(), {}, (_, moddleContext) => {
-        const def = Definition(moddleContext, {scripts: JavaScripts()});
+        const def = new Definition(moddleContext, {scripts: JavaScripts()});
         def.run((err) => {
           if (err) return done(err);
           done();
@@ -244,7 +254,7 @@ describe('Definition', () => {
 
     it('calls second callback when ran and completed again', (done) => {
       testHelpers.context(factory.valid(), {}, (_, moddleContext) => {
-        const def = Definition(moddleContext, {scripts: JavaScripts()});
+        const def = new Definition(moddleContext, {scripts: JavaScripts()});
         def.run((errRun1) => {
           if (errRun1) return done(errRun1);
 
@@ -266,7 +276,7 @@ describe('Definition', () => {
       testHelpers.context(source, (merr, result) => {
         if (merr) return done(merr);
 
-        const def = Definition(result);
+        const def = new Definition(result);
         def.run((err) => {
           expect(err).to.be.an('error').with.property('message', 'No executable process');
           done();
@@ -282,9 +292,9 @@ describe('Definition', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      const def = Definition(context);
+      const def = new Definition(context);
 
-      expect(def.run).to.throw('No executable process');
+      expect(() => def.run()).to.throw('No executable process');
     });
 
     it('emits error if no executable process', async () => {
@@ -295,7 +305,7 @@ describe('Definition', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      const def = Definition(context);
+      const def = new Definition(context);
 
       let error;
       def.once('error', (err) => {
@@ -319,7 +329,7 @@ describe('Definition', () => {
         next(Error('unstable'));
       });
 
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       let error;
       definition.on('error', (err) => {
@@ -346,9 +356,9 @@ describe('Definition', () => {
         next(Error('unstable'));
       });
 
-      const def = Definition(context);
+      const def = new Definition(context);
 
-      expect(def.run).to.throw(/unstable/);
+      expect(() => def.run()).to.throw(/unstable/);
     });
 
     it('throws if called while definition is running', async () => {
@@ -361,7 +371,7 @@ describe('Definition', () => {
       </definitions>`;
       const context = await testHelpers.context(source);
 
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
 
       expect(() => {
@@ -379,7 +389,7 @@ describe('Definition', () => {
       </definitions>`;
       const context = await testHelpers.context(source);
 
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
 
       let error;
@@ -399,7 +409,7 @@ describe('Definition', () => {
     });
 
     it('returns state when not running', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       const state = definition.getState();
 
@@ -409,13 +419,13 @@ describe('Definition', () => {
     });
 
     it('returns context, broker, and execution when running', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
 
       const state = definition.getState();
 
       expect(state.status).to.equal('executing');
-      expect(state.stopped).to.be.undefined;
+      expect(state.stopped).to.be.false;
       expect(state).to.have.property('broker').that.is.ok;
       expect(state).to.have.property('execution').that.is.ok;
       expect(state).to.have.property('counters');
@@ -423,7 +433,7 @@ describe('Definition', () => {
     });
 
     it('returns context, broker, and execution when stopped', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.stop();
 
@@ -446,13 +456,13 @@ describe('Definition', () => {
     });
 
     it('ignored if not executing', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.stop();
-      expect(definition.getState().stopped).to.be.undefined;
+      expect(definition.getState().stopped).to.be.false;
     });
 
     it('stops running processes', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.stop();
       expect(definition.stopped).to.equal(true);
@@ -466,7 +476,7 @@ describe('Definition', () => {
     });
 
     it('stops run queue and leaves run message', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.stop();
       expect(definition.stopped).to.equal(true);
@@ -478,7 +488,7 @@ describe('Definition', () => {
     });
 
     it('publishes stop message when processes are stopped', (done) => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.once('stop', () => {
         expect(definition.stopped).to.equal(true);
 
@@ -494,7 +504,7 @@ describe('Definition', () => {
     });
 
     it('publishes stop message after processes are stopped', (done) => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const [bp] = definition.getProcesses();
       let bpStopped;
       bp.once('stop', () => {
@@ -511,7 +521,7 @@ describe('Definition', () => {
     });
 
     it('stop on activity start stops process', (done) => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const [bp] = definition.getProcesses();
       let bpStopped;
       bp.once('stop', () => {
@@ -541,7 +551,7 @@ describe('Definition', () => {
       </definitions>`;
 
       const stopContext = await testHelpers.context(stopSource);
-      const definition = Definition(stopContext);
+      const definition = new Definition(stopContext);
 
       const stop = definition.waitFor('stop');
       await definition.run();
@@ -570,14 +580,14 @@ describe('Definition', () => {
     });
 
     it('throws if not executing and called without message', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       expect(() => {
         definition.signal();
       }).to.throw('Definition is not running');
     });
 
     it('signal with id of running user task completes task', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.signal({id: 'userTask'});
 
@@ -585,7 +595,7 @@ describe('Definition', () => {
     });
 
     it('signal without id of running user task is ignored', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.signal({});
 
@@ -593,7 +603,7 @@ describe('Definition', () => {
     });
 
     it('signal with unknown id is ignored', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.signal({id: 'hittepa'});
 
@@ -601,7 +611,7 @@ describe('Definition', () => {
     });
 
     it('signal without message is ignored', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.signal();
 
@@ -617,7 +627,7 @@ describe('Definition', () => {
     });
 
     it('recovers without state', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       definition.run();
       definition.stop();
@@ -626,7 +636,7 @@ describe('Definition', () => {
     });
 
     it('recovers with only counters', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       definition.recover({
         counters: {
@@ -639,7 +649,7 @@ describe('Definition', () => {
     });
 
     it('recovers with only environment', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       definition.recover({
         environment: {...definition.environment.getState(), output: {recovered: 1}},
@@ -652,17 +662,17 @@ describe('Definition', () => {
     });
 
     it('recovers with state', () => {
-      const definition1 = Definition(context);
+      const definition1 = new Definition(context);
 
       definition1.run();
       definition1.stop();
 
-      const definition2 = Definition(context.clone()).recover(definition1.getState());
+      const definition2 = new Definition(context.clone()).recover(definition1.getState());
       expect(definition2).to.have.property('status', 'executing');
     });
 
     it('throws if called while definition is running', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
 
       const state = definition.getState();
@@ -681,7 +691,7 @@ describe('Definition', () => {
     });
 
     it('resumes execution if stopped', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.stop();
 
@@ -700,7 +710,7 @@ describe('Definition', () => {
     });
 
     it('is resumable if stopped on enter', async () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const stopped = definition.waitFor('stop');
       definition.once('enter', (api) => {
         api.stop();
@@ -715,7 +725,7 @@ describe('Definition', () => {
     });
 
     it('is resumable if stopped on start', async () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const stopped = definition.waitFor('stop');
       definition.once('start', (api) => {
         api.stop();
@@ -730,11 +740,11 @@ describe('Definition', () => {
     });
 
     it('resumes recovered with stopped state', () => {
-      const startDefinition = Definition(context);
+      const startDefinition = new Definition(context);
       startDefinition.run();
       startDefinition.stop();
 
-      const definition = Definition(context.clone()).recover(startDefinition.getState());
+      const definition = new Definition(context.clone()).recover(startDefinition.getState());
 
       definition.resume();
 
@@ -748,11 +758,11 @@ describe('Definition', () => {
     });
 
     it('resumes recovered with running state', () => {
-      const startDefinition = Definition(context);
+      const startDefinition = new Definition(context);
       startDefinition.run();
       const state = startDefinition.getState();
 
-      const definition = Definition(context.clone()).recover(state);
+      const definition = new Definition(context.clone()).recover(state);
       definition.resume();
 
       const [activity] = definition.getPostponed();
@@ -763,7 +773,7 @@ describe('Definition', () => {
     });
 
     it('resumes recovered with state from stopped on activity event', async () => {
-      const startDefinition = Definition(context);
+      const startDefinition = new Definition(context);
       const stopped = startDefinition.waitFor('stop');
 
       let state;
@@ -776,7 +786,7 @@ describe('Definition', () => {
 
       await stopped;
 
-      const definition = Definition(context.clone()).recover(state);
+      const definition = new Definition(context.clone()).recover(state);
 
       definition.resume();
 
@@ -790,7 +800,7 @@ describe('Definition', () => {
     });
 
     it('calls callback when definition completes', (done) => {
-      const startDefinition = Definition(context);
+      const startDefinition = new Definition(context);
 
       let state;
       startDefinition.once('wait', () => {
@@ -800,7 +810,7 @@ describe('Definition', () => {
 
       startDefinition.run();
 
-      const definition = Definition(context.clone()).recover(state);
+      const definition = new Definition(context.clone()).recover(state);
       definition.once('wait', (api) => {
         api.signal();
       });
@@ -809,7 +819,7 @@ describe('Definition', () => {
     });
 
     it('throws if called while definition is running', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
 
       expect(() => {
@@ -818,7 +828,7 @@ describe('Definition', () => {
     });
 
     it('returns error in callback if called while definition is running', (done) => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
 
       definition.resume((err) => {
@@ -828,7 +838,7 @@ describe('Definition', () => {
     });
 
     it('resumes recovered with stopped on enter state', async () => {
-      const startDefinition = Definition(context);
+      const startDefinition = new Definition(context);
       const stop = startDefinition.waitFor('stop');
       startDefinition.once('enter', (api) => {
         api.stop();
@@ -839,7 +849,7 @@ describe('Definition', () => {
       await stop;
       const state = startDefinition.getState();
 
-      const definition = Definition(context.clone()).recover(state);
+      const definition = new Definition(context.clone()).recover(state);
       definition.resume();
 
       const [activity] = definition.getPostponed();
@@ -852,7 +862,7 @@ describe('Definition', () => {
     });
 
     it('resumes recovered with stopped on start state', async () => {
-      const startDefinition = Definition(context);
+      const startDefinition = new Definition(context);
       const stop = startDefinition.waitFor('stop');
       startDefinition.once('start', (api) => {
         api.stop();
@@ -863,7 +873,7 @@ describe('Definition', () => {
       await stop;
       const state = startDefinition.getState();
 
-      const definition = Definition(context.clone()).recover(state);
+      const definition = new Definition(context.clone()).recover(state);
       definition.resume();
 
       const [activity] = definition.getPostponed();
@@ -876,7 +886,7 @@ describe('Definition', () => {
     });
 
     it('resumes recovered with stopped on end state', async () => {
-      const startDefinition = Definition(context);
+      const startDefinition = new Definition(context);
       const stop = startDefinition.waitFor('stop');
       startDefinition.once('end', (api) => {
         api.stop();
@@ -893,14 +903,14 @@ describe('Definition', () => {
       await stop;
       const state = startDefinition.getState();
 
-      const definition = Definition(context.clone()).recover(state);
+      const definition = new Definition(context.clone()).recover(state);
       definition.resume();
 
       expect(definition.counters).to.have.property('completed', 1);
     });
 
     it('ignored if never started', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.broker.subscribeOnce('event', '#', () => {
         throw new Error('Shouldn´t happen');
       });
@@ -908,7 +918,7 @@ describe('Definition', () => {
     });
 
     it('ignored if completed', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       definition.on('wait', (activityApi) => {
         activityApi.signal();
@@ -925,7 +935,7 @@ describe('Definition', () => {
     });
 
     it('publish resume event when resumed', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.stop();
 
@@ -940,13 +950,13 @@ describe('Definition', () => {
     });
 
     it('publish resume event when recovered and resumed', () => {
-      let definition = Definition(context);
+      let definition = new Definition(context);
       definition.run();
       definition.stop();
 
       const state = definition.getState();
 
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.recover(state);
 
       const messages = [];
@@ -960,7 +970,7 @@ describe('Definition', () => {
     });
 
     it('ignores stop on resume event', async () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.stop();
 
@@ -985,7 +995,7 @@ describe('Definition', () => {
     let definition;
     before('Given definition is initiated with two processes', async () => {
       const context = await testHelpers.context(lanesSource);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     it('returns processes from passed moddle context', () => {
@@ -1005,7 +1015,7 @@ describe('Definition', () => {
     let definition;
     before('Given definition is initiated with two processes', async () => {
       const context = await testHelpers.context(lanesSource);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     it('returns executable processes from passed moddle context', () => {
@@ -1055,12 +1065,12 @@ describe('Definition', () => {
     });
 
     it('returns no processes if not running', () => {
-      const definition = Definition(context.clone());
+      const definition = new Definition(context.clone());
       expect(definition.getRunningProcesses().length).to.equal(0);
     });
 
     it('returns same process instances when called again', () => {
-      const definition = Definition(context.clone());
+      const definition = new Definition(context.clone());
       definition.run();
       const result1 = definition.getRunningProcesses();
       const result2 = definition.getRunningProcesses();
@@ -1072,7 +1082,7 @@ describe('Definition', () => {
     });
 
     it('returns only running processes', () => {
-      const definition = Definition(context.clone());
+      const definition = new Definition(context.clone());
       definition.run();
 
       const waitingTask = definition.getPostponed().find(({id}) => id === 'task1');
@@ -1097,9 +1107,9 @@ describe('Definition', () => {
       context.environment.addService('shaky', (_, next) => {
         next(Error('unstable'));
       });
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
-      expect(definition.run).to.throw('unstable');
+      expect(() => definition.run()).to.throw('unstable');
     });
 
     it('emits error on activity error', async () => {
@@ -1115,7 +1125,7 @@ describe('Definition', () => {
       context.environment.addService('shaky', (_, next) => {
         next(Error('unstable'));
       });
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       const errors = [];
       definition.on('error', (err) => {
@@ -1155,7 +1165,7 @@ describe('Definition', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      const definition = Definition(context, {
+      const definition = new Definition(context, {
         scripts: JavaScripts(false),
       });
 
@@ -1185,9 +1195,9 @@ describe('Definition', () => {
           next(Error('unstable'));
         });
 
-        const definition = Definition(context);
+        const definition = new Definition(context);
 
-        expect(definition.run).to.throw('unstable');
+        expect(() => definition.run()).to.throw('unstable');
       });
 
       it('error event handler catches error', async () => {
@@ -1200,7 +1210,7 @@ describe('Definition', () => {
         </definitions>`;
 
         const context = await testHelpers.context(source);
-        const definition = Definition(context);
+        const definition = new Definition(context);
 
         let error;
         definition.once('error', (childErr) => {
@@ -1231,7 +1241,7 @@ describe('Definition', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source, {Logger});
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       definition.run();
 
@@ -1266,7 +1276,7 @@ describe('Definition', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       const leave = definition.waitFor('leave');
 
@@ -1285,7 +1295,7 @@ describe('Definition', () => {
       </definitions>`;
 
       testHelpers.context(source).then((context) => {
-        const definition = Definition(context);
+        const definition = new Definition(context);
 
         definition.once('wait', () => {
           definition.broker.publish('execution', 'execution.error', {error: new Error('unstable')}, {mandatory: true, type: 'error'});
@@ -1308,17 +1318,17 @@ describe('Definition', () => {
     });
 
     it('returns child activity', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       expect(definition.getActivityById('task1')).to.exist;
     });
 
     it('returns child activity from participant process', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       expect(definition.getActivityById('completeTask')).to.exist;
     });
 
     it('returns null if activity is not found', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       expect(definition.getActivityById('whoAmITask')).to.be.null;
     });
   });
@@ -1349,12 +1359,12 @@ describe('Definition', () => {
     });
 
     it('returns none if not executing', () => {
-      const def = Definition(context);
+      const def = new Definition(context);
       expect(def.getPostponed()).to.have.length(0);
     });
 
     it('returns executing activities', () => {
-      const def = Definition(context);
+      const def = new Definition(context);
       def.run();
 
       const activities = def.getPostponed();
@@ -1378,7 +1388,7 @@ describe('Definition', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       const messages = [];
       definition.broker.subscribeTmp('event', 'process.start', (_, message) => {
@@ -1448,7 +1458,7 @@ describe('Definition', () => {
     });
 
     it('returns api on each event', () => {
-      const definition = Definition(context.clone());
+      const definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
         const api = definition.getApi(message);
         expect(api, `api ${routingKey} ${message.content.id}`).to.be.ok;
@@ -1459,7 +1469,7 @@ describe('Definition', () => {
     });
 
     it('returns undefined if message parent path is not resolved', () => {
-      const definition = Definition(context.clone());
+      const definition = new Definition(context.clone());
 
       let api = false;
       definition.broker.subscribeTmp('event', 'activity.#', (routingKey, message) => {
@@ -1475,7 +1485,7 @@ describe('Definition', () => {
     });
 
     it('without message and running, returns current state api', () => {
-      const definition = Definition(context.clone());
+      const definition = new Definition(context.clone());
       definition.run();
       expect(definition.getApi()).to.have.property('content').with.property('state', 'start');
     });

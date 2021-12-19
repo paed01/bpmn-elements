@@ -75,9 +75,9 @@ async function run(source) {
       },
     },
   };
-  const context = Context(serialize(moddleContext, typeResolver));
+  const context = new Context(serialize(moddleContext, typeResolver));
 
-  const definition = Definition(context, options);
+  const definition = new Definition(context, options);
   definition.run();
 }
 
@@ -160,9 +160,9 @@ async function run(source) {
       },
     },
   };
-  const context = Context(serialize(moddleContext, typeResolver));
+  const context = new Context(serialize(moddleContext, typeResolver));
 
-  const definition = Definition(context, options);
+  const definition = new Definition(context, options);
   definition.run();
 }
 

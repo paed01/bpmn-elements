@@ -112,7 +112,7 @@ Feature('EventBasedGateway', () => {
       </definitions>`;
 
       context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let wait, timer, state;
@@ -148,7 +148,7 @@ Feature('EventBasedGateway', () => {
     let end;
     When('definition is resumed and signaled', async () => {
       definition.stop();
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       end = definition.waitFor('end');
 
       definition.recover(state);

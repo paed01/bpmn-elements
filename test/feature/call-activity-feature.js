@@ -7,7 +7,7 @@ Feature('Call activity', () => {
     let definition;
     Given('a process with a call activity referencing a process', async () => {
       const context = await testHelpers.context(factory.resource('call-activity.bpmn'));
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -49,7 +49,7 @@ Feature('Call activity', () => {
           },
         },
       });
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let endInError;
@@ -89,7 +89,7 @@ Feature('Call activity', () => {
           },
         },
       });
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -125,7 +125,7 @@ Feature('Call activity', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -200,7 +200,7 @@ Feature('Call activity', () => {
         },
       });
 
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let leave;
@@ -303,7 +303,7 @@ Feature('Call activity', () => {
     });
 
     Given('recovered from stopped', () => {
-      definition = Definition(context.clone()).recover(state);
+      definition = new Definition(context.clone()).recover(state);
     });
 
     And('has four running processes', () => {
@@ -372,7 +372,7 @@ Feature('Call activity', () => {
         },
       });
 
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let leave;
@@ -528,7 +528,7 @@ Feature('Call activity', () => {
     });
 
     Given('recovered from stopped', () => {
-      definition = Definition(context.clone()).recover(state);
+      definition = new Definition(context.clone()).recover(state);
     });
 
     And('has three running processes', () => {
@@ -588,7 +588,7 @@ Feature('Call activity', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;

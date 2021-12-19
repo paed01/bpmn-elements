@@ -19,7 +19,7 @@ Feature('Performance', () => {
 
     let definition, ended;
     When('run with default JavaScript', async () => {
-      definition = Definition(await context.clone());
+      definition = new Definition(await context.clone());
       ended = definition.waitFor('end');
       await definition.run();
     });
@@ -29,7 +29,7 @@ Feature('Performance', () => {
     });
 
     When('run again with default JavaScript', async () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       ended = definition.waitFor('end');
       definition.run();
     });
@@ -59,7 +59,7 @@ Feature('Performance', () => {
     });
 
     When('run with non-op JavaScript', async () => {
-      definition = Definition(context.clone(), {
+      definition = new Definition(context.clone(), {
         scripts: {
           register() {},
           getScript() {
@@ -80,7 +80,7 @@ Feature('Performance', () => {
     });
 
     When('run without logger', async () => {
-      definition = Definition(context.clone(), {
+      definition = new Definition(context.clone(), {
         Logger: null
       });
       ended = definition.waitFor('end');
@@ -92,7 +92,7 @@ Feature('Performance', () => {
     });
 
     When('run with non-op JavaScript and no logger', async () => {
-      definition = Definition(context.clone(), {
+      definition = new Definition(context.clone(), {
         Logger: null,
         scripts: {
           register() {},

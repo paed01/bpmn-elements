@@ -112,7 +112,7 @@ Object.defineProperty(proto, 'isRunning', {
 
   get() {
     if (!this[consumingSymbol]) return false;
-    return !!this[statusSymbol];
+    return !!this.status;
   }
 
 });

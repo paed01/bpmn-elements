@@ -30,7 +30,7 @@ Feature('Multiple start events', () => {
     let definition;
     Given('a process with multiple start events, a joining task and an end event', async () => {
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         extensions: {
           output(element) {
             if (element.type !== 'bpmn:Process') return;
@@ -123,7 +123,7 @@ Feature('Multiple start events', () => {
     let definition;
     Given('a process with multiple start events, a joining task and an end event', async () => {
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         extensions: {
           output(element) {
             if (element.type !== 'bpmn:Process') return;
