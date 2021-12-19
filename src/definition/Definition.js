@@ -154,7 +154,7 @@ export function Definition(context, options) {
     environment.recover(state.environment);
 
     if (state.execution) {
-      execution = DefinitionExecution(definitionApi, context).recover(state.execution);
+      execution = new DefinitionExecution(definitionApi, context).recover(state.execution);
     }
 
     broker.recover(state.broker);
@@ -299,7 +299,7 @@ export function Definition(context, options) {
         postponedMessage = message;
         executionQ.assertConsumer(onExecutionMessage, {exclusive: true, consumerTag: '_definition-execution'});
 
-        execution = execution || DefinitionExecution(definitionApi, context);
+        execution = execution || new DefinitionExecution(definitionApi, context);
 
         if (executeMessage.fields.redelivered) {
           publishEvent('resume', content);

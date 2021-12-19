@@ -12,14 +12,15 @@ const activatedSymbol = Symbol.for('activated');
 const statusSymbol = Symbol.for('status');
 
 function ProcessExecution(parentActivity, context) {
-  this[parentSymbol] = parentActivity;
-  this.id = parentActivity.id;
-  this.type = parentActivity.type;
-  this.broker = parentActivity.broker;
-  this.context = context;
-  this.environment = context.environment;
+  const {id, type, broker, isSubProcess} = parentActivity;
 
-  const {id, broker, isSubProcess} = parentActivity;
+  this[parentSymbol] = parentActivity;
+  this.id = id;
+  this.type = type;
+  this.isSubProcess = isSubProcess;
+  this.broker = broker;
+  this.environment = context.environment;
+  this.context = context;
 
   this.elements = {
     children: context.getActivities(id),
@@ -40,6 +41,7 @@ function ProcessExecution(parentActivity, context) {
   this[stoppedSymbol] = false;
   this[activatedSymbol] = false;
   this[statusSymbol] = 'init';
+  this.executionId = undefined;
 
   this.onChildMessage = this.onChildMessage.bind(this);
 }
@@ -93,12 +95,11 @@ proto.execute = function execute(executeMessage) {
   this.environment.assignVariables(executeMessage);
   this.activityQ = this.broker.assertQueue(`execute-${executionId}-q`, {durable: true, autoDelete: false});
 
-
   if (executeMessage.fields.redelivered) {
     return this.resume();
   }
 
-  this.debug(`execute ${this[parentSymbol].isSubProcess ? 'sub process' : 'process'}`);
+  this.debug(`execute ${this.isSubProcess ? 'sub process' : 'process'}`);
   this.activate();
   this.start();
   return true;

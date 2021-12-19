@@ -179,7 +179,7 @@ function Definition(context, options) {
     environment.recover(state.environment);
 
     if (state.execution) {
-      execution = (0, _DefinitionExecution.default)(definitionApi, context).recover(state.execution);
+      execution = new _DefinitionExecution.default(definitionApi, context).recover(state.execution);
     }
 
     broker.recover(state.broker);
@@ -343,7 +343,7 @@ function Definition(context, options) {
             exclusive: true,
             consumerTag: '_definition-execution'
           });
-          execution = execution || (0, _DefinitionExecution.default)(definitionApi, context);
+          execution = execution || new _DefinitionExecution.default(definitionApi, context);
 
           if (executeMessage.fields.redelivered) {
             publishEvent('resume', content);

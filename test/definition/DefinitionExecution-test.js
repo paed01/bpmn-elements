@@ -13,7 +13,7 @@ describe('Definition execution', () => {
         logger: testHelpers.Logger('bpmn:definition'),
         broker: DefinitionBroker(this).broker,
       };
-      const execution = DefinitionExecution(definition, testHelpers.emptyContext());
+      const execution = new DefinitionExecution(definition, testHelpers.emptyContext());
       expect(execution).to.have.property('id', 'Def_1');
       expect(execution).to.have.property('type', 'Definition');
       expect(execution).to.have.property('broker', definition.broker);
@@ -45,7 +45,7 @@ describe('Definition execution', () => {
           return [];
         }
       };
-      const execution = DefinitionExecution(definition, testHelpers.emptyContext());
+      const execution = new DefinitionExecution(definition, testHelpers.emptyContext());
       expect(execution.execute).to.throw(/requires message/);
     });
 
@@ -62,7 +62,7 @@ describe('Definition execution', () => {
           return [];
         }
       };
-      const execution = DefinitionExecution(definition, testHelpers.emptyContext());
+      const execution = new DefinitionExecution(definition, testHelpers.emptyContext());
       expect(() => execution.execute({content: {}})).to.throw(/requires execution id/);
     });
   });
@@ -127,7 +127,7 @@ describe('Definition execution', () => {
           return processes;
         },
       });
-      const execution = DefinitionExecution(definition, context);
+      const execution = new DefinitionExecution(definition, context);
 
       let completed;
       definition.broker.subscribeTmp('execution', 'execution.completed.*', () => {
@@ -225,7 +225,7 @@ describe('Definition execution', () => {
         },
       });
 
-      const execution = DefinitionExecution(definition, context);
+      const execution = new DefinitionExecution(definition, context);
 
       let completed;
       definition.broker.subscribeTmp('execution', 'execution.error.*', () => {
