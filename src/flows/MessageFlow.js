@@ -2,108 +2,100 @@ import {brokerSafeId} from '../shared';
 import {cloneParent} from '../messageHelper';
 import {MessageFlowBroker} from '../EventBroker';
 
+const brokerSymbol = Symbol.for('broker');
+const countersSymbol = Symbol.for('counters');
+const sourceElementSymbol = Symbol.for('sourceElement');
+
 export default function MessageFlow(flowDef, context) {
   const {id, type = 'message', name, target, source, behaviour, parent} = flowDef;
-  const sourceElement = context.getActivityById(source.id) || context.getProcessById(source.processId);
-  const sourceEndConsumerTag = `_message-on-end-${brokerSafeId(id)}`;
-  const sourceMessageConsumerTag = `_message-on-message-${brokerSafeId(id)}`;
-  const {debug} = context.environment.Logger(type.toLowerCase());
 
-  if (!sourceElement) return;
+  this.id = id;
+  this.type = type;
+  this.name = name;
+  this.parent = parent && cloneParent(parent);
+  this.source = source;
+  this.target = target;
+  this.behaviour = behaviour;
+  this.environment = context.environment;
+  this.context = context;
 
-  const counters = {
+  this[countersSymbol] = {
     messages: 0,
-    discard: 0,
   };
 
-  const flowApi = {
-    id,
-    type,
-    name,
-    target,
-    source,
-    behaviour,
-    get counters() {
-      return {...counters};
-    },
-    activate,
-    deactivate,
-    getApi,
-    getState,
-    recover,
-    resume,
-    stop,
-  };
+  const {broker, on, once, emit, waitFor} = MessageFlowBroker(this);
+  this[brokerSymbol] = broker;
+  this.on = on;
+  this.once = once;
+  this.emit = emit;
+  this.waitFor = waitFor;
 
-  const {broker, on, once, emit, waitFor} = MessageFlowBroker(flowApi);
-
-  flowApi.on = on;
-  flowApi.once = once;
-  flowApi.emit = emit;
-  flowApi.waitFor = waitFor;
-
-  Object.defineProperty(flowApi, 'broker', {
-    enumerable: true,
-    get: () => broker,
-  });
-
-  return flowApi;
-
-  function onSourceEnd({content}) {
-    ++counters.messages;
-    debug(`<${id}> sending message from <${source.processId}.${source.id}> to`, target.id ? `<${target.processId}.${target.id}>` : `<${target.processId}>`);
-    broker.publish('event', 'message.outbound', createMessage(content.message));
-  }
-
-  function onSourceMessage() {
-    deactivate();
-  }
-
-  function createMessage(message) {
-    return {
-      id,
-      type,
-      name,
-      source: {...source},
-      target: {...target},
-      parent: parent && cloneParent(parent),
-      message,
-    };
-  }
-
-  function stop() {
-    deactivate();
-    broker.stop();
-  }
-
-  function getState() {
-    return {
-      id,
-      type,
-      counters: {...counters},
-    };
-  }
-
-  function recover(state) {
-    Object.assign(counters, state.counters);
-    broker.recover(state.broker);
-  }
-
-  function resume() {
-    broker.resume();
-  }
-
-  function getApi() {
-    return flowApi;
-  }
-
-  function activate() {
-    sourceElement.on('message', onSourceMessage, {consumerTag: sourceMessageConsumerTag});
-    sourceElement.on('end', onSourceEnd, {consumerTag: sourceEndConsumerTag});
-  }
-
-  function deactivate() {
-    sourceElement.broker.cancel(sourceMessageConsumerTag);
-    sourceElement.broker.cancel(sourceEndConsumerTag);
-  }
+  this[sourceElementSymbol] = context.getActivityById(source.id) || context.getProcessById(source.processId);
+  this.logger = context.environment.Logger(type.toLowerCase());
 }
+
+const proto = MessageFlow.prototype;
+
+Object.defineProperty(proto, 'broker', {
+  enumerable: true,
+  get() {
+    return this[brokerSymbol];
+  },
+});
+
+Object.defineProperty(proto, 'counters', {
+  enumerable: true,
+  get() {
+    return {...this[countersSymbol]};
+  },
+});
+
+proto.createMessage = function createMessage(message) {
+  return {
+    id: this.id,
+    type: this.type,
+    name: this.name,
+    source: {...this.source},
+    target: {...this.target},
+    parent: this.parent && cloneParent(this.parent),
+    message,
+  };
+};
+
+proto.getState = function getState() {
+  return {
+    id: this.id,
+    type: this.type,
+    counters: this.counters,
+  };
+};
+
+proto.recover = function recover(state) {
+  this[countersSymbol] = {...this[countersSymbol], ...state.counters};
+};
+
+proto.getApi = function getApi() {
+  return this;
+};
+
+proto.activate = function activate() {
+  const sourceElement = this[sourceElementSymbol];
+  const safeId = brokerSafeId(this.id);
+  sourceElement.on('message', this.deactivate.bind(this), {consumerTag: `_message-on-message-${safeId}`});
+  sourceElement.on('end', this.onSourceEnd.bind(this), {consumerTag: `_message-on-end-${safeId}`});
+};
+
+proto.onSourceEnd = function onSourceEnd({content}) {
+  ++this[countersSymbol].messages;
+  const source = this.source;
+  const target = this.target;
+  this.logger.debug(`<${this.id}> sending message from <${source.processId}.${source.id}> to <${target.id ? `${target.processId}.${target.id}` : target.processId}>`);
+  this.broker.publish('event', 'message.outbound', this.createMessage(content.message));
+};
+
+proto.deactivate = function deactivate() {
+  const sourceElement = this[sourceElementSymbol];
+  const safeId = brokerSafeId(this.id);
+  sourceElement.broker.cancel(`_message-on-end-${safeId}`);
+  sourceElement.broker.cancel(`_message-on-message-${safeId}`);
+};
