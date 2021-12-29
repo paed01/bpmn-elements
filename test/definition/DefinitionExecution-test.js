@@ -9,7 +9,7 @@ describe('Definition execution', () => {
       const definition = {
         id: 'Def_1',
         type: 'Definition',
-        environment: Environment(),
+        environment: new Environment(),
         logger: testHelpers.Logger('bpmn:definition'),
         broker: DefinitionBroker(this).broker,
       };
@@ -35,7 +35,7 @@ describe('Definition execution', () => {
     it('throws if no message is passed', () => {
       const definition = {
         id: 'Def_1',
-        environment: Environment(),
+        environment: new Environment(),
         logger: testHelpers.Logger('bpmn:definition'),
         broker: DefinitionBroker(this).broker,
         getProcesses() {
@@ -52,7 +52,7 @@ describe('Definition execution', () => {
     it('throws message misses content executionId', () => {
       const definition = {
         id: 'Def_1',
-        environment: Environment(),
+        environment: new Environment(),
         logger: testHelpers.Logger('bpmn:definition'),
         broker: DefinitionBroker(this).broker,
         getProcesses() {
@@ -112,7 +112,7 @@ describe('Definition execution', () => {
 
       const definition = {
         id: 'Def_1',
-        environment: Environment(),
+        environment: new Environment(),
         logger: testHelpers.Logger('bpmn:definition'),
         broker: DefinitionBroker(this).broker,
       };
@@ -196,7 +196,7 @@ describe('Definition execution', () => {
 
       const definition = {
         id: 'Def_1',
-        environment: Environment(),
+        environment: new Environment(),
         logger: testHelpers.Logger('bpmn:definition'),
         broker: DefinitionBroker(this).broker,
       };

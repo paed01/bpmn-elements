@@ -7,7 +7,7 @@ describe('CancelEventDefinition', () => {
   describe('catching bound event', () => {
     let event;
     beforeEach(() => {
-      const environment = Environment({Logger});
+      const environment = new Environment({Logger});
       event = {
         id: 'event',
         environment,
@@ -316,7 +316,7 @@ describe('CancelEventDefinition', () => {
   describe('throwing', () => {
     let event;
     beforeEach(() => {
-      const environment = Environment({Logger});
+      const environment = new Environment({Logger});
       event = {
         id: 'event',
         type: 'endevent',

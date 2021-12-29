@@ -3,10 +3,9 @@ Extending behaviour
 
 # Extend by overriding behaviour
 
-First off define your own type function. The requirements are that it should return an instance of `Activity` with a behaviour function.
+First off define your own type function. The type function will receive the activity definition and the current context and is required to return an instance of `Activity` with behaviour functionality, i.e. an api with an execute function.
 
-The type function will receive the type data from the source context.
-The behaviour function will receive the Activity instance and the workflow context when the activity executes.
+The behaviour function or class will receive the Activity instance and the context when the activity executes.
 
 To complete execution the broker must publish an `execute.completed` message, or an `execute.error` message if things went sideways.
 
@@ -14,29 +13,24 @@ To complete execution the broker must publish an `execute.completed` message, or
 import {Activity} from 'bpmn-elements';
 
 export default function MyOwnStartEvent(activityDefinition, context) {
-  return Activity(MyStartEventBehaviour, activityDefinition, context);
+  return new Activity(MyStartEventBehaviour, activityDefinition, context);
 }
 
 export function MyStartEventBehaviour(activity, context) {
-  const {id, type, broker} = activity;
-  const {environment} = context;
-
-  const event = {
-    execute,
-  };
-
-  return event;
-
-  function execute(executeMessage) {
-    const content = executeMessage.content;
-
-    environment.services.getSomeData({id, type}, (err, result) => {
-      if (err) return broker.publish('execution', 'execute.error', {...content, error: err});
-
-      return broker.publish('execution', 'execute.completed', {...content, result});
-    });
-  }
+  this.activity = activity;
+  this.context = context;
 }
+
+MyStartEventBehaviour.prototype.execute = function execute(executeMessage) {
+  const content = executeMessage.content;
+  const {id, type, broker} = this.activity;
+  const {environment} = this.context;
+
+  environment.services.getSomeData({id, type}, (err, result) => {
+    if (err) return broker.publish('execution', 'execute.error', {...content, error: err});
+    return broker.publish('execution', 'execute.completed', {...content, result});
+  });
+};
 ```
 
 Second the behavior must be mapped to the workflow context and passed to the definition.

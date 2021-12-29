@@ -13,7 +13,7 @@ describe('Definition', () => {
     it('can be invoked without new', () => {
       const newNewDefinition = Definition({
         id: 'Def_1',
-        environment: Environment(),
+        environment: new Environment(),
       });
       expect(newNewDefinition.run).to.be.a('function');
     });
@@ -23,7 +23,7 @@ describe('Definition', () => {
     it('requires a context with id and environment', () => {
       const definition = new Definition({
         id: 'Def_1',
-        environment: Environment(),
+        environment: new Environment(),
       });
       expect(definition.run).to.be.a('function');
     });
@@ -35,7 +35,7 @@ describe('Definition', () => {
       };
       const definition = new Definition({
         id: 'Def_1',
-        environment: Environment({ Logger, services }),
+        environment: new Environment({ Logger, services }),
         getProcesses() {
           return [];
         },
@@ -57,7 +57,7 @@ describe('Definition', () => {
 
     it('takes environment override options as second argument', () => {
       const scripts = JavaScripts();
-      const environment = Environment({ Logger: testHelpers.Logger, scripts });
+      const environment = new Environment({ Logger: testHelpers.Logger, scripts });
       const definition = new Definition({
         id: 'Def_1',
         environment,
@@ -88,7 +88,7 @@ describe('Definition', () => {
     it('returns api', async () => {
       const definition = new Definition({
         id: 'Def_1',
-        environment: Environment({ Logger: testHelpers.Logger }),
+        environment: new Environment({ Logger: testHelpers.Logger }),
         getProcesses() {
           return [];
         },
@@ -104,7 +104,7 @@ describe('Definition', () => {
     it('publishes enter on run', async () => {
       const definition = new Definition({
         id: 'Def_1',
-        environment: Environment({ Logger: testHelpers.Logger }),
+        environment: new Environment({ Logger: testHelpers.Logger }),
         getProcesses() {
           return [];
         },
@@ -124,7 +124,7 @@ describe('Definition', () => {
     it('publishes start when started', async () => {
       const definition = new Definition({
         id: 'Def_1',
-        environment: Environment({ Logger: testHelpers.Logger }),
+        environment: new Environment({ Logger: testHelpers.Logger }),
         getProcesses() {
           return [];
         },

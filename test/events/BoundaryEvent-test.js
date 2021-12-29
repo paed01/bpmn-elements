@@ -186,7 +186,7 @@ describe('BoundaryEvent', () => {
           behaviour: {
             cancelActivity: true,
           },
-          environment: Environment(),
+          environment: new Environment(),
           logger: testHelpers.Logger('boundaryevent')
         }, {
           getOutboundAssociations() {},
@@ -224,7 +224,7 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker
         };
         const broker = ActivityBroker().broker;
-        const environment = Environment({Logger: testHelpers.Logger});
+        const environment = new Environment({Logger: testHelpers.Logger});
         const activity = {
           id: 'event',
           broker,
@@ -264,7 +264,7 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker
         };
         const broker = ActivityBroker().broker;
-        const environment = Environment({Logger: testHelpers.Logger});
+        const environment = new Environment({Logger: testHelpers.Logger});
         const behaviour = BoundaryEventBehaviour({
           id: 'event',
           broker,
@@ -311,7 +311,7 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker
         };
         const broker = ActivityBroker().broker;
-        const environment = Environment({Logger: testHelpers.Logger});
+        const environment = new Environment({Logger: testHelpers.Logger});
         const behaviour = BoundaryEventBehaviour({
           id: 'event',
           broker,
@@ -358,7 +358,7 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker
         };
         const broker = ActivityBroker().broker;
-        const environment = Environment({Logger: testHelpers.Logger});
+        const environment = new Environment({Logger: testHelpers.Logger});
         const behaviour = BoundaryEventBehaviour({
           id: 'event',
           broker,
@@ -401,7 +401,7 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker
         };
         broker = ActivityBroker().broker;
-        const environment = Environment({Logger: testHelpers.Logger});
+        const environment = new Environment({Logger: testHelpers.Logger});
         behaviour = BoundaryEventBehaviour({
           id: 'event',
           broker,

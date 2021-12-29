@@ -9,9 +9,7 @@ All activities except EventBasedGateway share this lifecycle. The EventBasedGate
 
 ![Activity lifecycle](https://raw.github.com/paed01/bpmn-elements/master/docs/activity-lifecycle.png)
 
-## `Activity(Behaviour, activityDefinition, context)`
-
-Activity ctorish.
+## `new Activity(Behaviour, activityDefinition, context)`
 
 Arguments:
 - `Behaviour`: activity [Behaviour](/docs/Extend.md) function
@@ -23,7 +21,7 @@ Activity properties:
 - `type`: activity type
 - `name`: activity name
 - `attachedTo`: activity is attached to, e.g. a BoundaryEvent
-- `Behaviour`: passed activity Behaviour function
+- `Behaviour`: passed activity Behaviour function, invoked with new
 - `behaviour`: activity behaviour from serializable context
 - `broker`: activity [broker](https://github.com/paed01/smqp)
 - `counters`: counters for completed runs etc

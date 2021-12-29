@@ -2405,7 +2405,7 @@ function getActivity(override = {}, OBehaviour = TaskBehaviour) {
 }
 
 function getContext(override) {
-  const environment = Environment({Logger: testHelpers.Logger});
+  const environment = new Environment({Logger: testHelpers.Logger});
   return {
     environment,
     getActivityExtensions() {

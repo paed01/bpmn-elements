@@ -6,11 +6,13 @@ Changelog
 Call activity...
 
 - add api fail function
+- prototype Environment
 - prototype ProcessExecution
 - prototype SubProcess behaviour
 - prototype LoopCharacteristics
 - prototype Context
 - prototype SequenceFlow
+- prototype MessageFlow
 - prototype Activity
 - prototype ActivityExecution
 

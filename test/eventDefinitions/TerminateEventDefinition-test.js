@@ -6,7 +6,7 @@ describe('TerminateEventDefinition', () => {
   let event;
   beforeEach(() => {
     event = {
-      environment: Environment(),
+      environment: new Environment(),
       broker: ActivityBroker(this).broker,
     };
   });

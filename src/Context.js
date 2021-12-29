@@ -3,7 +3,7 @@ import ExtensionsMapper from './ExtensionsMapper';
 import {getUniqueId} from './shared';
 
 export default function Context(definitionContext, environment) {
-  environment = environment ? environment.clone() : Environment();
+  environment = environment ? environment.clone() : new Environment();
   return new ContextInstance(definitionContext, environment);
 }
 

@@ -7,7 +7,7 @@ import {ActivityApi} from '../../src/Api';
 describe('ConditionalEventDefinition', () => {
   let event, task;
   beforeEach(() => {
-    const environment = Environment({ Logger: testHelpers.Logger });
+    const environment = new Environment({ Logger: testHelpers.Logger });
     task = {
       id: 'task',
       type: 'bpmn:Task',

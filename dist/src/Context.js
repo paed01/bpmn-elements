@@ -14,7 +14,7 @@ var _shared = require("./shared");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function Context(definitionContext, environment) {
-  environment = environment ? environment.clone() : (0, _Environment.default)();
+  environment = environment ? environment.clone() : new _Environment.default();
   return new ContextInstance(definitionContext, environment);
 }
 

@@ -8,7 +8,7 @@ describe('ErrorEventDefinition', () => {
   describe('catching', () => {
     let event;
     beforeEach(() => {
-      const environment = Environment({ Logger: testHelpers.Logger });
+      const environment = new Environment({ Logger: testHelpers.Logger });
 
       event = {
         id: 'bound',
@@ -722,7 +722,7 @@ describe('ErrorEventDefinition', () => {
   describe('throw', () => {
     let event, bpmnError;
     beforeEach(() => {
-      const environment = Environment();
+      const environment = new Environment();
       bpmnError = BpmnError({
         id: 'Error_0',
         type: 'bpmn:Error',

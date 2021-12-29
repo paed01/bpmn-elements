@@ -7,7 +7,7 @@ import {Logger} from '../helpers/testHelpers';
 describe('MessageEventDefinition', () => {
   let event;
   beforeEach(() => {
-    const environment = Environment({Logger});
+    const environment = new Environment({Logger});
     event = {
       id: 'event',
       environment,

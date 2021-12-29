@@ -2,122 +2,110 @@ import Expressions from './Expressions';
 import {Scripts as IScripts} from './Scripts';
 import {Timers} from './Timers';
 
+const optionsSymbol = Symbol.for('options');
+const variablesSymbol = Symbol.for('variables');
+
 const defaultOptions = ['extensions', 'output', 'services', 'scripts', 'settings', 'variables', 'Logger'];
 
 export default function Environment(options = {}) {
-  const initialOptions = validateOptions(options);
+  this[optionsSymbol] = options;
+  this.options = validateOptions(options);
 
-  let variables = options.variables || {};
-  const settings = {...options.settings};
-  const output = options.output || {};
-  const services = options.services || {};
-  const scripts = options.scripts || IScripts();
-  const timers = options.timers || Timers();
-  const expressions = options.expressions || Expressions();
-  const Logger = options.Logger || DummyLogger;
-  const extensions = options.extensions;
+  this.expressions = options.expressions || Expressions();
+  this.extensions = options.extensions;
+  this.output = options.output || {};
+  this.scripts = options.scripts || IScripts();
+  this.services = options.services || {};
+  this.settings = {...options.settings};
+  this.timers = options.timers || Timers();
+  this.Logger = options.Logger || DummyLogger;
+  this[variablesSymbol] = options.variables || {};
+}
 
-  const environmentApi = {
-    options: initialOptions,
-    expressions,
-    extensions,
-    output,
-    scripts,
+const proto = Environment.prototype;
+
+Object.defineProperty(proto, 'variables', {
+  enumerable: true,
+  get() {
+    return this[variablesSymbol];
+  },
+});
+
+proto.getState = function getState() {
+  return {
+    settings: {...this.settings},
+    variables: {...this.variables},
+    output: {...this.output},
+  };
+};
+
+proto.recover = function recover(state) {
+  if (!state) return this;
+
+  const recoverOptions = validateOptions(state);
+  Object.assign(this[optionsSymbol], recoverOptions);
+
+  if (state.settings) Object.assign(this.settings, state.settings);
+  if (state.variables) Object.assign(this[variablesSymbol], state.variables);
+  if (state.output) Object.assign(this.output, state.output);
+
+  return this;
+};
+
+proto.clone = function clone(overrideOptions = {}) {
+  const services = this.services;
+  const newOptions = {
+    settings: {...this.settings},
+    variables: {...this.variables},
+    output: {...this.output},
+    Logger: this.Logger,
+    extensions: this.extensions,
+    scripts: this.scripts,
+    timers: this.timers,
+    expressions: this.expressions,
+    ...this.options,
+    ...overrideOptions,
     services,
-    settings,
-    timers,
-    get variables() {
-      return variables;
-    },
-    addService,
-    assignVariables,
-    clone,
-    getScript,
-    getServiceByName,
-    getState,
-    registerScript,
-    resolveExpression,
-    recover,
-    Logger,
   };
 
-  return environmentApi;
+  if (overrideOptions.services) newOptions.services = {...services, ...overrideOptions.services};
 
-  function getState() {
-    return {
-      settings: {...settings},
-      variables: {...variables},
-      output: {...output},
-    };
-  }
+  return new this.constructor(newOptions);
+};
 
-  function recover(state) {
-    if (!state) return environmentApi;
+proto.assignVariables = function assignVariables(newVars) {
+  if (!newVars || typeof newVars !== 'object') return;
 
-    const recoverOptions = validateOptions(state);
-    Object.assign(options, recoverOptions);
+  this[variablesSymbol] = {
+    ...this.variables,
+    ...newVars,
+  };
+};
 
-    if (state.settings) Object.assign(settings, state.settings);
-    if (state.variables) Object.assign(variables, state.variables);
-    if (state.output) Object.assign(output, state.output);
+proto.getScript = function getScript(...args) {
+  return this.scripts.getScript(...args);
+};
 
-    return environmentApi;
-  }
+proto.registerScript = function registerScript(...args) {
+  return this.scripts.register(...args);
+};
 
-  function clone(overrideOptions = {}) {
-    const newOptions = {
-      settings: {...settings},
-      variables: {...variables},
-      output: {...output},
-      Logger,
-      extensions,
-      scripts,
-      timers,
-      expressions,
-      ...initialOptions,
-      ...overrideOptions,
-      services,
-    };
+proto.getServiceByName = function getServiceByName(serviceName) {
+  return this.services[serviceName];
+};
 
-    if (overrideOptions.services) newOptions.services = {...services, ...overrideOptions.services};
+proto.resolveExpression = function resolveExpression(expression, message = {}, expressionFnContext) {
+  const from = {
+    environment: this,
+    ...message,
+  };
 
-    return Environment(newOptions);
-  }
+  return this.expressions.resolveExpression(expression, from, expressionFnContext);
+};
 
-  function assignVariables(newVars) {
-    if (!newVars || typeof newVars !== 'object') return;
-
-    variables = {
-      ...variables,
-      ...newVars,
-    };
-  }
-
-  function getScript(...args) {
-    return scripts.getScript(...args);
-  }
-
-  function registerScript(...args) {
-    return scripts.register(...args);
-  }
-
-  function getServiceByName(serviceName) {
-    return services[serviceName];
-  }
-
-  function resolveExpression(expression, message = {}, expressionFnContext) {
-    const from = {
-      environment: environmentApi,
-      ...message,
-    };
-
-    return expressions.resolveExpression(expression, from, expressionFnContext);
-  }
-
-  function addService(name, fn) {
-    services[name] = fn;
-  }
-}
+proto.addService = function addService(name, fn) {
+  this.services[name] = fn;
+};
 
 function validateOptions(input) {
   const options = {};

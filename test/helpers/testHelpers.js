@@ -39,7 +39,7 @@ async function context(source, ...args) {
     return result;
   }, {});
 
-  const ctx = Context(serializer, Environment({Logger, scripts: Scripts(), settings: {enableDummyService: true}, ...options, extensions}));
+  const ctx = Context(serializer, new Environment({Logger, scripts: Scripts(), settings: {enableDummyService: true}, ...options, extensions}));
   logger.debug('context complete');
   if (callback) {
     callback(null, ctx);
@@ -89,7 +89,7 @@ function emptyContext(override, options) {
     },
     getSequenceFlows() {},
     ...override,
-  }, Environment({Logger, scripts: Scripts(), settings: {enableDummyService: true}, ...options}));
+  }, new Environment({Logger, scripts: Scripts(), settings: {enableDummyService: true}, ...options}));
 }
 
 function AssertMessage(processContext, messages, inSequence) {

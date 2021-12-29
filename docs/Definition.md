@@ -3,9 +3,7 @@ Definition
 
 Executable BPMN 2 definition. Pass [context](/docs/Context.md) and execute.
 
-## `Definition(context[, options])`
-
-Definition constructorish.
+## `new Definition(context[, options])`
 
 Arguments:
 - `context`: context instance, see [Context](/docs/Context.md)

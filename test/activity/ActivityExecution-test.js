@@ -1922,7 +1922,7 @@ describe('ActivityExecution', () => {
 });
 
 function createActivity(Behaviour) {
-  const environment = Environment({
+  const environment = new Environment({
     Logger,
   });
 

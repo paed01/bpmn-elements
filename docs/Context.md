@@ -3,9 +3,7 @@ Context
 
 Shared context.
 
-## `Context(serializableContext[, environment])`
-
-Context instantiator.
+## `new Context(serializableContext[, environment])`
 
 Arguments:
 - `serializableContext`: serializable context. Maybe from [moddle-context-serializer](https://www.npmjs.com/package/moddle-context-serializer)

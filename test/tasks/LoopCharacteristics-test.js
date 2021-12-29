@@ -9,7 +9,7 @@ describe('LoopCharacteristics', () => {
   beforeEach(() => {
     task = ActivityBroker();
     task.id = 'task';
-    task.environment = Environment({Logger});
+    task.environment = new Environment({Logger});
     task.broker.assertQueue('execute-q');
     task.broker.bindQueue('execute-q', 'execution', '#');
   });

@@ -6,7 +6,7 @@ describe('DataObject', () => {
   describe('read', () => {
     it('publishes message on passed broker exchange when value was read', () => {
       const {broker} = ActivityBroker();
-      const dataObject = DataObject({id: 'input'}, {environment: Environment()});
+      const dataObject = DataObject({id: 'input'}, {environment: new Environment()});
 
       let message;
       broker.subscribeOnce('format', 'test.#', (_, msg) => {
@@ -23,7 +23,7 @@ describe('DataObject', () => {
   describe('write', () => {
     it('publishes message on passed broker exchange when value was written', () => {
       const {broker} = ActivityBroker();
-      const dataObject = DataObject({id: 'input'}, {environment: Environment()});
+      const dataObject = DataObject({id: 'input'}, {environment: new Environment()});
 
       let message;
       broker.subscribeOnce('format', 'test.#', (_, msg) => {
@@ -39,7 +39,7 @@ describe('DataObject', () => {
 
   describe('builtin', () => {
     it('saves dataObject value in environment variables _data', () => {
-      const environment = Environment();
+      const environment = new Environment();
       const {broker} = ActivityBroker();
       const dataObject = DataObject({id: 'info'}, {environment});
 

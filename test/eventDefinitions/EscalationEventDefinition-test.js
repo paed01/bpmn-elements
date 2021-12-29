@@ -8,7 +8,7 @@ describe('EscalationEventDefinition', () => {
   beforeEach(() => {
     event = {
       id: 'event',
-      environment: Environment({Logger}),
+      environment: new Environment({Logger}),
       broker: ActivityBroker(this).broker,
     };
   });

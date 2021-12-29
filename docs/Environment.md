@@ -3,7 +3,7 @@ Environment
 
 Shared environment.
 
-## `Environment([options])`
+## `new Environment([options])`
 
 Arguments:
 - `options`: optional options

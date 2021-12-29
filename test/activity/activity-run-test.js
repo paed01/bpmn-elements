@@ -472,7 +472,7 @@ describe('activity run', () => {
 });
 
 function createActivity(step = true) {
-  const environment = Environment({
+  const environment = new Environment({
     Logger,
     settings: {
       step,
@@ -498,7 +498,7 @@ function createActivity(step = true) {
 
 function getContext(override) {
   return {
-    environment: Environment({
+    environment: new Environment({
       Logger,
     }),
     getInboundSequenceFlows() {

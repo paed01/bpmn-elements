@@ -10,7 +10,7 @@ describe('SignalEventDefinition', () => {
   beforeEach(() => {
     event = {
       id: 'event',
-      environment: Environment({Logger}),
+      environment: new Environment({Logger}),
       broker: ActivityBroker(this).broker,
       getActivityById(id) {
         if (id !== 'Signal_0') return;

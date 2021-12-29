@@ -8,7 +8,7 @@ describe('MessageFlow', () => {
   it('requires target, source, and context with environment and getActivityById', () => {
     const activity = ActivityBroker();
     const context = {
-      environment: Environment(),
+      environment: new Environment(),
       getActivityById() {
         return activity;
       },
@@ -29,7 +29,7 @@ describe('MessageFlow', () => {
   it('listens for run end, and message messages from source activity', () => {
     const activity = ActivityBroker();
     const context = {
-      environment: Environment(),
+      environment: new Environment(),
       getActivityById() {
         return activity;
       },

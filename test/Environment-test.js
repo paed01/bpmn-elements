@@ -4,8 +4,8 @@ import {Timers} from '../src/Timers';
 describe('Environment', () => {
   describe('ctor', () => {
     it('sets settings', () => {
-      expect(Environment()).to.have.property('settings').that.eql({});
-      expect(Environment({settings: {
+      expect(new Environment()).to.have.property('settings').that.eql({});
+      expect(new Environment({settings: {
         test: 1,
       }})).to.have.property('settings').that.eql({
         test: 1,
@@ -17,7 +17,7 @@ describe('Environment', () => {
         test: 1,
       };
 
-      const environment = Environment({settings});
+      const environment = new Environment({settings});
 
       settings.test = 2;
 
@@ -28,22 +28,22 @@ describe('Environment', () => {
 
     it('throws if scripts interface validation is not met', () => {
       expect(() => {
-        Environment({
+        new Environment({
           scripts: {}
         });
       }).to.throw(/scripts.register is not a function/);
       expect(() => {
-        Environment({
+        new Environment({
           scripts: {register: {}}
         });
       }).to.throw(/scripts.register is not a function/);
       expect(() => {
-        Environment({
+        new Environment({
           scripts: {register() {}}
         });
       }).to.throw(/scripts.getScript is not a function/);
       expect(() => {
-        Environment({
+        new Environment({
           scripts: {register() {}, getScript: 1}
         });
       }).to.throw(/scripts.getScript is not a function/);
@@ -51,12 +51,12 @@ describe('Environment', () => {
 
     it('throws if extensions interface validation is not met', () => {
       expect(() => {
-        Environment({
+        new Environment({
           extensions: 1
         });
       }).to.throw(/extensions is not an object/);
       expect(() => {
-        Environment({
+        new Environment({
           extensions: {
             js: {}
           }
@@ -67,7 +67,7 @@ describe('Environment', () => {
 
   describe('getServiceByName()', () => {
     it('returns service function', () => {
-      const environment = Environment({
+      const environment = new Environment({
         services: {
           get() {},
         },
@@ -79,7 +79,7 @@ describe('Environment', () => {
     });
 
     it('returns undefined if service is not found', () => {
-      const environment = Environment();
+      const environment = new Environment();
       const service = environment.getServiceByName('put');
       expect(service).to.be.undefined;
     });
@@ -87,7 +87,7 @@ describe('Environment', () => {
 
   describe('getState()', () => {
     it('returns settings, variables, and output', () => {
-      const environment = Environment({
+      const environment = new Environment({
         settings: {
           test: 0,
         },
@@ -113,7 +113,7 @@ describe('Environment', () => {
   describe('recover()', () => {
     it('sets options, variables, and output', () => {
       const extensions = {};
-      let environment = Environment({
+      let environment = new Environment({
         extensions,
         variables: {
           beforeState: true,
@@ -141,7 +141,7 @@ describe('Environment', () => {
 
     it('keeps extensions', () => {
       const extensions = {extendo() {}};
-      let environment = Environment({
+      let environment = new Environment({
         extensions,
         settings: {
           enableDummyService: false,
@@ -168,7 +168,7 @@ describe('Environment', () => {
 
     it('recovers without state', () => {
       const extensions = {};
-      let environment = Environment({
+      let environment = new Environment({
         extensions,
         services: {
           request() {},
@@ -186,7 +186,7 @@ describe('Environment', () => {
 
     it('recovers variables only', () => {
       const extensions = {};
-      let environment = Environment({
+      let environment = new Environment({
         extensions,
         services: {
           request() {},
@@ -205,7 +205,7 @@ describe('Environment', () => {
 
     it('recovers with empty object', () => {
       const extensions = {};
-      let environment = Environment({
+      let environment = new Environment({
         extensions,
         services: {
           request() {},
@@ -223,7 +223,7 @@ describe('Environment', () => {
 
   describe('assignVariables()', () => {
     it('assigns new variables', () => {
-      const environment = Environment({variables: {before: true, init: 0}});
+      const environment = new Environment({variables: {before: true, init: 0}});
 
       environment.assignVariables({
         init: 1,
@@ -234,7 +234,7 @@ describe('Environment', () => {
     });
 
     it('ignored if non-object is passed', () => {
-      const environment = Environment({variables: {before: true}});
+      const environment = new Environment({variables: {before: true}});
       environment.assignVariables();
       expect(environment.variables).to.eql({before: true});
       environment.assignVariables(null);
@@ -258,7 +258,7 @@ describe('Environment', () => {
         emit() {}
       };
       const expressions = {};
-      const environment = Environment({
+      const environment = new Environment({
         listener,
         settings,
         variables,
@@ -293,7 +293,7 @@ describe('Environment', () => {
     });
 
     it('extends options', () => {
-      const environment = Environment({
+      const environment = new Environment({
         listener: {},
       });
 
@@ -308,7 +308,7 @@ describe('Environment', () => {
         init: true,
       };
       const output = {};
-      const environment = Environment({
+      const environment = new Environment({
         variables,
         output,
       });
@@ -322,7 +322,7 @@ describe('Environment', () => {
     });
 
     it('allows override of scripts', () => {
-      const environment = Environment({
+      const environment = new Environment({
         scripts: {
           register() {},
           getScript() {},
@@ -340,7 +340,7 @@ describe('Environment', () => {
 
     it('allows override of expressions', () => {
       const expressions = {};
-      const environment = Environment({
+      const environment = new Environment({
         expressions
       });
 
@@ -351,7 +351,7 @@ describe('Environment', () => {
     });
 
     it('extends services', () => {
-      const environment = Environment({
+      const environment = new Environment({
         variables: {init: true},
         output: {},
         services: {
@@ -381,7 +381,7 @@ describe('Environment', () => {
       const settings = {
         init: true,
       };
-      const environment = Environment({
+      const environment = new Environment({
         settings,
         variables,
         services: {
@@ -416,7 +416,7 @@ describe('Environment', () => {
           return true;
         },
       };
-      const environment = Environment({
+      const environment = new Environment({
         settings,
         variables,
         expressions,
@@ -438,7 +438,7 @@ describe('Environment', () => {
 
   describe('timers', () => {
     it('timers.setTimeout adds timer to executing', () => {
-      const {timers} = Environment({
+      const {timers} = new Environment({
         timers: Timers({
           setTimeout() {},
         })
@@ -453,7 +453,7 @@ describe('Environment', () => {
 
     it('removes timer from executing when timed out', () => {
       let onTimeout;
-      const {timers} = Environment({
+      const {timers} = new Environment({
         timers: Timers({
           setTimeout(callback) {
             onTimeout = callback;
@@ -472,7 +472,7 @@ describe('Environment', () => {
 
     it('callback called twice is ignored', () => {
       let onTimeout;
-      const {timers} = Environment({
+      const {timers} = new Environment({
         timers: Timers({
           setTimeout(callback) {
             onTimeout = callback;
@@ -491,7 +491,7 @@ describe('Environment', () => {
     });
 
     it('timers.clearTimeout removes timer from executing', () => {
-      const {timers} = Environment({
+      const {timers} = new Environment({
         timers: Timers({
           setTimeout() {},
           clearTimeout() {},
@@ -508,7 +508,7 @@ describe('Environment', () => {
     });
 
     it('timers.clearTimeout can be called twice', () => {
-      const {timers} = Environment({
+      const {timers} = new Environment({
         timers: Timers({
           setTimeout() {},
           clearTimeout() {},
@@ -527,7 +527,7 @@ describe('Environment', () => {
 
     describe('.register(owner)', () => {
       it('.register(owner) returns timers', () => {
-        const environment = Environment();
+        const environment = new Environment();
 
         const timer = environment.timers.register({id: 'a'});
 
@@ -536,7 +536,7 @@ describe('Environment', () => {
       });
 
       it('.register() returns timers', () => {
-        const environment = Environment();
+        const environment = new Environment();
 
         const timer = environment.timers.register();
 
@@ -545,7 +545,7 @@ describe('Environment', () => {
       });
 
       it('setTimeout adds timer to executing', () => {
-        const {timers} = Environment({
+        const {timers} = new Environment({
           timers: Timers({
             setTimeout() {},
           })
@@ -562,7 +562,7 @@ describe('Environment', () => {
       });
 
       it('setTimeout adds timer to executing', () => {
-        const {timers} = Environment({
+        const {timers} = new Environment({
           timers: Timers({
             setTimeout() {},
           })
@@ -579,7 +579,7 @@ describe('Environment', () => {
       });
 
       it('multiple setTimeout adds timers to executing', () => {
-        const {timers} = Environment({
+        const {timers} = new Environment({
           timers: Timers({
             setTimeout() {},
           })
@@ -602,7 +602,7 @@ describe('Environment', () => {
       });
 
       it('clearTimeout removes timer from executing', () => {
-        const {timers} = Environment({
+        const {timers} = new Environment({
           timers: Timers({
             setTimeout() {},
             clearTimeout() {},
@@ -621,7 +621,7 @@ describe('Environment', () => {
       });
 
       it('clearTimeout removes only ref from executing', () => {
-        const {timers} = Environment({
+        const {timers} = new Environment({
           timers: Timers({
             setTimeout() {},
           })
@@ -642,7 +642,7 @@ describe('Environment', () => {
       });
 
       it('timers.clearTimeout removes registered timer from executing', () => {
-        const {timers} = Environment({
+        const {timers} = new Environment({
           timers: Timers({
             setTimeout() {},
             clearTimeout() {},
@@ -661,7 +661,7 @@ describe('Environment', () => {
       });
 
       it('clearTimeout can be called twice', () => {
-        const {timers} = Environment({
+        const {timers} = new Environment({
           timers: Timers({
             setTimeout() {},
             clearTimeout() {},
@@ -681,7 +681,7 @@ describe('Environment', () => {
       });
 
       it('clearTimeout can be called with unknown ref', () => {
-        const {timers} = Environment({
+        const {timers} = new Environment({
           timers: Timers({
             setTimeout() {},
             clearTimeout() {},
@@ -703,15 +703,15 @@ describe('Environment', () => {
     describe('custom timer', () => {
       it('throws if interface not met', () => {
         expect(() => {
-          Environment({timers: {}});
+          new Environment({timers: {}});
         }).to.throw(/register is not a function/);
 
         expect(() => {
-          Environment({timers: {register: 1}});
+          new Environment({timers: {register: 1}});
         }).to.throw(/register is not a function/);
 
         expect(() => {
-          Environment({
+          new Environment({
             timers: {
               register() {},
             }
@@ -719,7 +719,7 @@ describe('Environment', () => {
         }).to.throw(/setTimeout is not a function/);
 
         expect(() => {
-          Environment({
+          new Environment({
             timers: {
               register() {},
               setTimeout() {},

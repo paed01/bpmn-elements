@@ -12,7 +12,7 @@ describe('TimerEventDefinition', () => {
     event = {
       id: 'event',
       type: 'bpmn:Event',
-      environment: Environment({Logger: testHelpers.Logger}),
+      environment: new Environment({Logger: testHelpers.Logger}),
     };
     event.broker = ActivityBroker(event).broker;
   });
