@@ -74,9 +74,7 @@ export default function CompensationEventDefinition(activity, eventDefinition, c
       compensateQ.on('depleted', onDepleted);
       compensateQ.consume(onCollected, {noAck: true, consumerTag: '_convey-messages'});
 
-      associations.forEach((association) => {
-        association.complete(cloneMessage(message));
-      });
+      for (const association of associations) association.complete(cloneMessage(message));
 
       function onDepleted() {
         compensateQ.off('depleted', onDepleted);
@@ -85,9 +83,7 @@ export default function CompensationEventDefinition(activity, eventDefinition, c
     }
 
     function onCollected(routingKey, message) {
-      associations.forEach((association) => {
-        association.take(cloneMessage(message));
-      });
+      for (const association of associations) association.take(cloneMessage(message));
     }
 
     function onApiMessage(routingKey, message) {
@@ -100,9 +96,7 @@ export default function CompensationEventDefinition(activity, eventDefinition, c
         case 'discard': {
           completed = true;
           stop();
-          associations.forEach((association) => {
-            association.discard(cloneMessage(message));
-          });
+          for (const association of associations) association.discard(cloneMessage(message));
           return broker.publish('execution', 'execute.discard', {...messageContent});
         }
         case 'stop': {

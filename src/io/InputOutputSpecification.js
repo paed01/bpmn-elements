@@ -89,9 +89,7 @@ export default function IoSpecification(activity, ioSpecificationDef, context) {
     });
 
     return read(broker, dataObjects, (_, responses) => {
-      responses.forEach((response) => {
-        sources[response.index].value = response.value;
-      });
+      for (const response of responses) sources[response.index].value = response.value;
 
       broker.publish('format', endRoutingKey, {
         ioSpecification: {
@@ -149,9 +147,7 @@ export default function IoSpecification(activity, ioSpecificationDef, context) {
     });
 
     return write(broker, dataObjects, (_, responses) => {
-      responses.forEach((response) => {
-        sources[response.index].value = response.value;
-      });
+      for (const response of responses) sources[response.index].value = response.value;
 
       broker.publish('format', endRoutingKey, {
         ioSpecification: {
@@ -179,8 +175,7 @@ function read(broker, dataObjectRefs, callback) {
   let count = 0;
   const dataReadConsumer = broker.subscribeTmp('data', 'data.read.#', onDataObjectResponse, {noAck: true});
 
-  for (let i = 0; i < dataObjectRefs.length; i++) {
-    const {dataObject} = dataObjectRefs[i];
+  for (const {dataObject} of dataObjectRefs) {
     dataObject.read(broker, 'data', 'data.read.');
   }
 
@@ -202,8 +197,7 @@ function write(broker, dataObjectRefs, callback) {
   let count = 0;
   const dataWriteConsumer = broker.subscribeTmp('data', 'data.write.#', onDataObjectResponse, {noAck: true});
 
-  for (let i = 0; i < dataObjectRefs.length; i++) {
-    const {dataObject, value} = dataObjectRefs[i];
+  for (const {dataObject, value} of dataObjectRefs) {
     dataObject.write(broker, 'data', 'data.write.', value);
   }
 

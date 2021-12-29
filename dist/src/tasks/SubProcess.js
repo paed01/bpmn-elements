@@ -111,19 +111,19 @@ proto.onApiRootMessage = function onApiRootMessage(_, message) {
 };
 
 proto.stop = function stop() {
-  return this.executions.forEach(pe => {
-    this.broker.cancel(`_sub-process-execution-${pe.executionId}`);
-    this.broker.cancel(`_sub-process-api-${pe.executionId}`);
-    pe.stop();
-  });
+  for (const execution of this.executions) {
+    this.broker.cancel(`_sub-process-execution-${execution.executionId}`);
+    this.broker.cancel(`_sub-process-api-${execution.executionId}`);
+    execution.stop();
+  }
 };
 
 proto.discard = function discard() {
-  return this.executions.forEach(pe => {
-    this.broker.cancel(`_sub-process-execution-${pe.executionId}`);
-    this.broker.cancel(`_sub-process-api-${pe.executionId}`);
-    pe.discard();
-  });
+  for (const execution of this.executions) {
+    this.broker.cancel(`_sub-process-execution-${execution.executionId}`);
+    this.broker.cancel(`_sub-process-api-${execution.executionId}`);
+    execution.discard();
+  }
 };
 
 proto.getState = function getState() {
@@ -153,9 +153,12 @@ proto.recover = function recover(state) {
 
   if (loopCharacteristics && state.executions) {
     executions.splice(0);
-    return state.executions.forEach(s => {
-      this.recover(s);
-    });
+
+    for (const se of state.executions) {
+      this.recover(se);
+    }
+
+    return;
   }
 
   if (!loopCharacteristics) {
@@ -245,10 +248,8 @@ proto.getApi = function getApi(apiMessage) {
     return execution.getApi(apiMessage);
   }
 
-  const parentPath = content.parent.path;
-
-  for (let i = 0; i < parentPath.length; i++) {
-    if (execution = this.getExecutionById(parentPath[i].executionId)) return execution.getApi(apiMessage);
+  for (const pp of content.parent.path) {
+    if (execution = this.getExecutionById(pp.executionId)) return execution.getApi(apiMessage);
   }
 };
 

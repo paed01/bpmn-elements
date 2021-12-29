@@ -114,8 +114,9 @@ proto.start = function start() {
 
   this[statusSymbol] = 'start';
 
-  this.executableProcesses.forEach((p) => p.init());
-  this.executableProcesses.forEach((p) => p.run());
+  const executableProcesses = this.executableProcesses;
+  for (const bp of executableProcesses) bp.init();
+  for (const bp of executableProcesses) bp.run();
 
   this.postponed.splice(0);
   this.activityQ.assertConsumer(this.onProcessMessage, {
@@ -146,7 +147,7 @@ proto.resume = function resume() {
     }
   }
 
-  this.processes.forEach((p) => p.resume());
+  for (const bp of this.processes) bp.resume();
 };
 
 proto.recover = function recover(state) {
@@ -180,7 +181,7 @@ proto.activate = function activate(processList) {
     noAck: true,
     consumerTag: '_definition-api-consumer',
   });
-  processList.forEach((p) => this.activateProcess(p));
+  for (const bp of processList) this.activateProcess(bp);
   this[activatedSymbol] = true;
 };
 
@@ -214,7 +215,7 @@ proto.onChildEvent = function onChildEvent(routingKey, originalMessage) {
 proto.deactivate = function deactivate() {
   this.broker.cancel('_definition-api-consumer');
   this.broker.cancel(`_definition-activity-${this.executionId}`);
-  this.processes.forEach((p) => this.deactivateProcess(p));
+  for (const bp of this.processes) this.deactivateProcess(bp);
   this[activatedSymbol] = false;
 };
 
@@ -285,9 +286,9 @@ proto.onProcessMessage = function onProcessMessage(routingKey, message) {
           error: content.error,
         }, {mandatory: true, type: 'error'});
       } else {
-        this.processes.slice().forEach((p) => {
-          if (p.id !== childId) p.stop();
-        });
+        for (const bp of this.processes.slice()) {
+          if (bp.id !== childId) bp.stop();
+        }
 
         this.complete('error', {error: content.error});
       }
@@ -330,9 +331,7 @@ proto.onStopped = function onStopped(message) {
   this.debug(`stop definition execution (stop process executions ${this.processes.length})`);
   this.activityQ.close();
   this.deactivate();
-  this.processes.slice().forEach((p) => {
-    p.stop();
-  });
+  for (const bp of this.processes.slice()) bp.stop();
   this[stoppedSymbol] = true;
   return this.broker.publish('execution', `execution.stopped.${this.executionId}`, {
     ...this[stateMessageSymbol].content,
@@ -608,8 +607,8 @@ proto.getApiByProcess = function getApiByProcess(message) {
 
   if (!content.parent.path) return;
 
-  for (let i = 0; i < content.parent.path.length; i++) {
-    api = this.getApiByExecutionId(content.parent.path[i].executionId, message);
+  for (const pp of content.parent.path) {
+    api = this.getApiByExecutionId(pp.executionId, message);
     if (api) return api;
   }
 };

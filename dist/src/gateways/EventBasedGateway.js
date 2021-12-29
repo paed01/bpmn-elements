@@ -42,8 +42,7 @@ function EventBasedGatewayBehaviour(activity, context) {
     } = content;
     const targets = [];
 
-    for (let i = 0; i < outboundSequenceFlows.length; i++) {
-      const flow = outboundSequenceFlows[i];
+    for (const flow of outboundSequenceFlows) {
       targets.push(context.getActivityById(flow.targetId));
       outbound.push({
         id: flow.id,
@@ -54,11 +53,13 @@ function EventBasedGatewayBehaviour(activity, context) {
     if (!targets.length) return complete(content);
     if (executing && outboundTaken) return;
     const targetConsumerTag = `_gateway-listener-${id}`;
-    targets.forEach(target => {
+
+    for (const target of targets) {
       target.broker.subscribeOnce('event', 'activity.end', onTargetCompleted, {
         consumerTag: targetConsumerTag
       });
-    });
+    }
+
     broker.subscribeOnce('api', `activity.stop.${executionId}`, stop, {
       noAck: true,
       consumerTag: `_api-stop-${executionId}`
@@ -74,11 +75,13 @@ function EventBasedGatewayBehaviour(activity, context) {
         exexutionId: targetExecutionId
       } = message.content;
       logger.debug(`<${executionId} (${id})> <${targetExecutionId}> completed run, discarding the rest`);
-      targets.forEach(target => {
-        if (target === owner) return;
+
+      for (const target of targets) {
+        if (target === owner) continue;
         target.broker.cancel(targetConsumerTag);
         target.discard();
-      });
+      }
+
       const completedContent = (0, _messageHelper.cloneContent)(executeMessage.content, {
         taken: {
           id: targetId,
@@ -95,9 +98,9 @@ function EventBasedGatewayBehaviour(activity, context) {
 
     function stop() {
       executing = false;
-      targets.forEach(target => {
-        target.broker.cancel(targetConsumerTag);
-      });
+
+      for (const target of targets) target.broker.cancel(targetConsumerTag);
+
       broker.cancel(`_api-stop-${executionId}`);
     }
   }

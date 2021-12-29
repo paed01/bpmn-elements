@@ -69,7 +69,7 @@ function Formatter(element, formatQ) {
           const errMessage = error && error.message || 'formatting failed';
           logger.debug(`<${id}> formatting of ${fields.routingKey} failed with ${routingKey}: ${errMessage}`);
           formattingError = new ActivityError(errMessage, cloneMessage(runMessage, formattedContent), error);
-          pendingFormats.splice(0).forEach(({nack}) => nack(false, false));
+          for (const {nack} of pendingFormats.splice(0)) nack(false, false);
         }
         formatStart.ack(isError);
       }

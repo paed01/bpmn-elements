@@ -462,4 +462,69 @@ Feature('Stop and resume', () => {
       return leave;
     });
   });
+
+  Scenario('Stop and resume different versions of flow', () => {
+    let context, definition;
+
+    const source1 = `
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <process id="theProcess" isExecutable="true">
+        <startEvent id="start" />
+        <sequenceFlow id="to-task1" sourceRef="start" targetRef="task1" />
+        <userTask id="task1" />
+        <sequenceFlow id="to-task2" sourceRef="task1" targetRef="task2" />
+        <userTask id="task2" />
+        <sequenceFlow id="to-end" sourceRef="task2" targetRef="end" />
+        <endEvent id="end" />
+      </process>
+    </definitions>`;
+
+    Given('a definition with a two user tasks', async () => {
+      context = await testHelpers.context(source1);
+      definition = new Definition(context);
+    });
+
+    let state;
+    When('first user task is signaled', () => {
+      definition.run();
+      definition.signal({id: 'task1'});
+    });
+
+    Then('state is saved', () => {
+      state = definition.getState();
+    });
+
+    const source2 = `
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <process id="theProcess" isExecutable="true">
+        <startEvent id="start" />
+        <sequenceFlow id="to-task2" sourceRef="start" targetRef="task2" />
+        <userTask id="task2" />
+        <sequenceFlow id="to-end2" sourceRef="task2" targetRef="end2" />
+        <endEvent id="end2" />
+      </process>
+    </definitions>`;
+
+    Given('flow is altered and removed first user task and renamed end event', () => {
+      // no-op
+    });
+
+    let completed;
+    When('recovered and resumed with old state', async () => {
+      context = await testHelpers.context(source2);
+      definition = new Definition(context).recover(state);
+      completed = definition.waitFor('end');
+      definition.resume();
+
+      expect(definition.getProcesses()[0].getSequenceFlows()).to.have.length(2);
+    });
+
+    And('second user task is signaled', () => {
+      definition.signal({id: 'task2'});
+    });
+
+    Then('resumed flow completes', () => {
+      return completed;
+    });
+  });
 });

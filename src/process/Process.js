@@ -33,7 +33,6 @@ export function Process(processDef, context) {
   this[countersSymbol] = {
     completed: 0,
     discarded: 0,
-    terminated: 0,
   };
   this[stoppedSymbol] = false;
   this[execSymbol] = {};
@@ -63,7 +62,7 @@ Object.defineProperty(proto, 'broker', {
 Object.defineProperty(proto, 'counters', {
   enumerable: true,
   get() {
-    return this[countersSymbol];
+    return {...this[countersSymbol]};
   },
 });
 
@@ -259,7 +258,7 @@ proto.onRunMessage = function onRunMessage(routingKey, message) {
       if (fields.redelivered) break;
       this.debug('completed');
 
-      this.counters.completed++;
+      this[countersSymbol].completed++;
 
       this.broker.publish('run', 'run.leave', content);
 
@@ -270,7 +269,7 @@ proto.onRunMessage = function onRunMessage(routingKey, message) {
       this[statusSymbol] = 'discarded';
       if (fields.redelivered) break;
 
-      this.counters.discarded++;
+      this[countersSymbol].discarded++;
 
       this.broker.publish('run', 'run.leave', content);
 
@@ -419,7 +418,7 @@ proto.getState = function getState() {
     environment: this.environment.getState(),
     status: this.status,
     stopped: this.stopped,
-    counters: {...this.counters},
+    counters: this.counters,
     broker: this.broker.getState(true),
     execution: this.execution && this.execution.getState(),
     output: {...this.environment.output},

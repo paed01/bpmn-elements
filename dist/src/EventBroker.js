@@ -139,7 +139,9 @@ EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
     }
 
     function unsubscribe() {
-      consumers.forEach(consumer => consumer.cancel());
+      for (const consumer of consumers) {
+        consumer.cancel();
+      }
     }
   });
 };

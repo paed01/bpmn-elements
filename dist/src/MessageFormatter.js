@@ -88,9 +88,10 @@ function Formatter(element, formatQ) {
           const errMessage = error && error.message || 'formatting failed';
           logger.debug(`<${id}> formatting of ${fields.routingKey} failed with ${routingKey}: ${errMessage}`);
           formattingError = new _Errors.ActivityError(errMessage, (0, _messageHelper.cloneMessage)(runMessage, formattedContent), error);
-          pendingFormats.splice(0).forEach(({
+
+          for (const {
             nack
-          }) => nack(false, false));
+          } of pendingFormats.splice(0)) nack(false, false);
         }
 
         formatStart.ack(isError);

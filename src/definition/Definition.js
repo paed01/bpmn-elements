@@ -71,7 +71,7 @@ Object.defineProperty(proto, 'broker', {
 Object.defineProperty(proto, 'counters', {
   enumerable: true,
   get() {
-    return this[countersSymbol];
+    return {...this[countersSymbol]};
   },
 });
 
@@ -303,7 +303,7 @@ proto.onRunMessage = function onRunMessage(routingKey, message) {
     case 'run.end': {
       if (this.status === 'end') break;
 
-      this.counters.completed++;
+      this[countersSymbol].completed++;
 
       this.logger.debug(`<${this.executionId} (${this.id})> completed`);
       this[statusSymbol] = 'end';
@@ -314,7 +314,7 @@ proto.onRunMessage = function onRunMessage(routingKey, message) {
     case 'run.discarded': {
       if (this.status === 'discarded') break;
 
-      this.counters.discarded++;
+      this[countersSymbol].discarded++;
 
       this[statusSymbol] = 'discarded';
       this.broker.publish('run', 'run.leave', content);
@@ -410,7 +410,7 @@ proto.getState = function getState() {
   return this.createMessage({
     status: this.status,
     stopped: this.stopped,
-    counters: {...this[countersSymbol]},
+    counters: this.counters,
     environment: this.environment.getState(),
     execution: this.execution && this.execution.getState(),
     broker: this.broker.getState(true),
@@ -440,13 +440,12 @@ proto.getProcessById = function getProcessById(processId) {
 };
 
 proto.getActivityById = function getActivityById(childId) {
-  let child;
   const siblings = this.getProcesses();
-  for (let i = 0; i < siblings.length; i++) {
-    child = siblings[i].getActivityById(childId);
+  for (const sibling of siblings) {
+    const child = sibling.getActivityById(childId);
     if (child) return child;
   }
-  return child;
+  return null;
 };
 
 proto.getElementById = function getElementById(elementId) {

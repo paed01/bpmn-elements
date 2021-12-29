@@ -13,9 +13,8 @@ describe('MessageFlow', () => {
         return activity;
       },
     };
-    MessageFlow({
+    const flow = new MessageFlow({
       id: 'message',
-      type: 'messageflow',
       source: {
         id: 'task',
       },
@@ -23,6 +22,8 @@ describe('MessageFlow', () => {
         id: 'task1',
       },
     }, context);
+
+    expect(flow).to.have.property('type', 'messageflow');
   });
 
   it('listens for run end, and message messages from source activity', () => {
@@ -33,7 +34,7 @@ describe('MessageFlow', () => {
         return activity;
       },
     };
-    const flow = MessageFlow({
+    const flow = new MessageFlow({
       id: 'message',
       type: 'messageflow',
       source: {

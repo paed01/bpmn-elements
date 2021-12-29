@@ -174,9 +174,9 @@ ActivityExecution.prototype.stop = function stop() {
 
 ActivityExecution.prototype.onExecuteMessage = function onExecuteMessage(routingKey, message) {
   const {
-    fields = {},
+    fields,
     content,
-    properties = {}
+    properties
   } = message;
   const isRedelivered = fields.redelivered;
   if (isRedelivered && properties.persistent === false) return message.ack();
@@ -284,7 +284,9 @@ ActivityExecution.prototype.onExecutionCompleted = function onExecutionCompleted
   this.deactivate();
   const subApis = this.getPostponed();
   postponed.splice(0);
-  subApis.forEach(api => api.discard());
+
+  for (const api of subApis) api.discard();
+
   this.publishExecutionCompleted('completed', { ...postponedMsg.content,
     ...message.content
   }, message.properties.correlationId);
@@ -317,7 +319,8 @@ ActivityExecution.prototype.onExecutionDiscarded = function onExecutionDiscarded
   this.deactivate();
   const subApis = this.getPostponed();
   postponed.splice(0);
-  subApis.forEach(api => api.discard());
+
+  for (const api of subApis) api.discard();
 
   if (error) {
     return this.publishExecutionCompleted('error', (0, _messageHelper.cloneContent)(message.content, {
@@ -378,11 +381,13 @@ ActivityExecution.prototype.onParentApiMessage = function onParentApiMessage(rou
 ActivityExecution.prototype.onStop = function onStop(message) {
   const stoppedId = message && message.content && message.content.executionId;
   const running = this.getPostponed();
-  running.forEach(api => {
+
+  for (const api of running) {
     if (stoppedId !== api.content.executionId) {
       api.stop();
     }
-  });
+  }
+
   this.broker.cancel('_activity-execute');
   this.broker.cancel('_activity-api-execution');
 };

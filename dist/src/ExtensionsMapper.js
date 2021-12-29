@@ -28,11 +28,11 @@ function ExtensionsMapper(context) {
     }
 
     function activate(message) {
-      activityExtensions.forEach(extension => extension.activate(message));
+      for (const extension of activityExtensions) extension.activate(message);
     }
 
     function deactivate(message) {
-      activityExtensions.forEach(extension => extension.deactivate(message));
+      for (const extension of activityExtensions) extension.deactivate(message);
     }
   }
 

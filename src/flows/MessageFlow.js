@@ -7,7 +7,7 @@ const countersSymbol = Symbol.for('counters');
 const sourceElementSymbol = Symbol.for('sourceElement');
 
 export default function MessageFlow(flowDef, context) {
-  const {id, type = 'message', name, target, source, behaviour, parent} = flowDef;
+  const {id, type = 'messageflow', name, target, source, behaviour, parent} = flowDef;
 
   this.id = id;
   this.type = type;

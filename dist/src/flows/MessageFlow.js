@@ -18,7 +18,7 @@ const sourceElementSymbol = Symbol.for('sourceElement');
 function MessageFlow(flowDef, context) {
   const {
     id,
-    type = 'message',
+    type = 'messageflow',
     name,
     target,
     source,

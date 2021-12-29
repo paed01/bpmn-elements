@@ -570,6 +570,24 @@ describe('Definition', () => {
       expect(task2).to.have.property('isRunning', false);
       expect(task3).to.have.property('isRunning', false);
     });
+
+    it('publishes stop message if execution is stopped', (done) => {
+      const definition = new Definition(context);
+      const [bp] = definition.getProcesses();
+
+      let bpStopped;
+      bp.once('stop', () => {
+        bpStopped = true;
+      });
+
+      definition.once('stop', () => {
+        expect(bpStopped).to.be.true;
+        done();
+      });
+
+      definition.run();
+      definition.execution.stop();
+    });
   });
 
   describe('signal()', () => {

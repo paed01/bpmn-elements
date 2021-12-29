@@ -23,8 +23,7 @@ export function EventBasedGatewayBehaviour(activity, context) {
     const {executionId, outbound = [], outboundTaken} = content;
 
     const targets = [];
-    for (let i = 0; i < outboundSequenceFlows.length; i++) {
-      const flow = outboundSequenceFlows[i];
+    for (const flow of outboundSequenceFlows) {
       targets.push(context.getActivityById(flow.targetId));
       outbound.push({id: flow.id, action: 'take'});
     }
@@ -35,9 +34,9 @@ export function EventBasedGatewayBehaviour(activity, context) {
 
     const targetConsumerTag = `_gateway-listener-${id}`;
 
-    targets.forEach((target) => {
+    for (const target of targets) {
       target.broker.subscribeOnce('event', 'activity.end', onTargetCompleted, {consumerTag: targetConsumerTag});
-    });
+    }
 
     broker.subscribeOnce('api', `activity.stop.${executionId}`, stop, {noAck: true, consumerTag: `_api-stop-${executionId}`});
 
@@ -47,11 +46,11 @@ export function EventBasedGatewayBehaviour(activity, context) {
     function onTargetCompleted(_, message, owner) {
       const {id: targetId, exexutionId: targetExecutionId} = message.content;
       logger.debug(`<${executionId} (${id})> <${targetExecutionId}> completed run, discarding the rest`);
-      targets.forEach((target) => {
-        if (target === owner) return;
+      for (const target of targets) {
+        if (target === owner) continue;
         target.broker.cancel(targetConsumerTag);
         target.discard();
-      });
+      }
 
       const completedContent = cloneContent(executeMessage.content, {taken: {
         id: targetId,
@@ -67,9 +66,7 @@ export function EventBasedGatewayBehaviour(activity, context) {
 
     function stop() {
       executing = false;
-      targets.forEach((target) => {
-        target.broker.cancel(targetConsumerTag);
-      });
+      for (const target of targets) target.broker.cancel(targetConsumerTag);
       broker.cancel(`_api-stop-${executionId}`);
     }
   }

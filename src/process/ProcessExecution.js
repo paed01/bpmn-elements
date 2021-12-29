@@ -115,7 +115,7 @@ proto.resume = function resume() {
   const {startActivities, detachedActivities} = this.elements;
 
   if (startActivities.length > 1) {
-    startActivities.forEach((a) => a.shake());
+    for (const a of startActivities) a.shake();
   }
 
   this.postponed.splice(0);
@@ -155,11 +155,11 @@ proto.start = function start() {
 
   const startActivities = this.elements.startActivities;
   if (startActivities.length > 1) {
-    startActivities.forEach((a) => a.shake());
+    for (const a of startActivities) a.shake();
   }
 
-  startActivities.forEach((activity) => activity.init());
-  startActivities.forEach((activity) => activity.run());
+  for (const a of startActivities) a.init();
+  for (const a of startActivities) a.run();
 
   this.postponed.splice(0);
   this.elements.detachedActivities.splice(0);
@@ -177,36 +177,36 @@ proto.recover = function recover(state) {
   this.debug(`recover process execution at ${this.status}`);
 
   if (state.messageFlows) {
-    state.messageFlows.forEach((flowState) => {
+    for (const flowState of state.messageFlows) {
       const flow = this.getMessageFlowById(flowState.id);
-      if (!flow) return;
+      if (!flow) continue;
       flow.recover(flowState);
-    });
+    }
   }
 
   if (state.associations) {
-    state.associations.forEach((associationState) => {
+    for (const associationState of state.associations) {
       const association = this.getAssociationById(associationState.id);
-      if (!association) return;
+      if (!association) continue;
       association.recover(associationState);
-    });
+    }
   }
 
   if (state.flows) {
-    state.flows.forEach((flowState) => {
+    for (const flowState of state.flows) {
       const flow = this.getFlowById(flowState.id);
-      if (!flow) return;
+      if (!flow) continue;
       flow.recover(flowState);
-    });
+    }
   }
 
   if (state.children) {
-    state.children.forEach((childState) => {
+    for (const childState of state.children) {
       const child = this.getActivityById(childState.id);
-      if (!child) return;
+      if (!child) continue;
 
       child.recover(childState);
-    });
+    }
   }
 
   return this;
@@ -239,7 +239,7 @@ proto.shake = function shake(fromId) {
     }
   }, {noAck: true, consumerTag: `_shaker-${this.executionId}`});
 
-  toShake.forEach((a) => a.shake());
+  for (const a of toShake) a.shake();
 
   if (!executing) this.deactivate();
   this.broker.cancel(`_shaker-${this.executionId}`);
@@ -256,30 +256,30 @@ proto.activate = function activate() {
 
   const {outboundMessageFlows, flows, associations, startActivities, triggeredByEvent, children} = this.elements;
 
-  outboundMessageFlows.forEach((flow) => {
+  for (const flow of outboundMessageFlows) {
     flow.activate();
     flow.broker.subscribeTmp('event', '#', this.onMessageFlowEvent.bind(this), {consumerTag: '_process-message-consumer', noAck: true, priority: 200});
-  });
+  }
 
   const onActivityEvent = this.onActivityEvent.bind(this);
-  flows.forEach((flow) => {
+  for (const flow of flows) {
     flow.broker.subscribeTmp('event', '#', onActivityEvent, {consumerTag: '_process-flow-controller', noAck: true, priority: 200});
-  });
+  }
 
-  associations.forEach((association) => {
+  for (const association of associations) {
     association.broker.subscribeTmp('event', '#', onActivityEvent, {consumerTag: '_process-association-controller', noAck: true, priority: 200});
-  });
+  }
 
   startActivities.splice(0);
   triggeredByEvent.splice(0);
 
-  children.forEach((activity) => {
-    if (activity.placeholder) return;
+  for (const activity of children) {
+    if (activity.placeholder) continue;
     activity.activate(this);
     activity.broker.subscribeTmp('event', '#', onActivityEvent, {noAck: true, consumerTag: '_process-activity-consumer', priority: 200});
     if (activity.isStart) startActivities.push(activity);
     if (activity.triggeredByEvent) triggeredByEvent.push(activity);
-  });
+  }
 
   this[activatedSymbol] = true;
 };
@@ -292,24 +292,24 @@ proto.deactivate = function deactivate() {
 
   const {children, flows, associations, outboundMessageFlows} = this.elements;
 
-  children.forEach((activity) => {
-    if (activity.placeholder) return;
+  for (const activity of children) {
+    if (activity.placeholder) continue;
     activity.broker.cancel('_process-activity-consumer');
     activity.deactivate();
-  });
+  }
 
-  flows.forEach((flow) => {
+  for (const flow of flows) {
     flow.broker.cancel('_process-flow-controller');
-  });
+  }
 
-  associations.forEach((association) => {
+  for (const association of associations) {
     association.broker.cancel('_process-association-controller');
-  });
+  }
 
-  outboundMessageFlows.forEach((flow) => {
+  for (const flow of outboundMessageFlows) {
     flow.deactivate();
     flow.broker.cancel('_process-message-consumer');
-  });
+  }
 
   this[activatedSymbol] = false;
 };
@@ -325,12 +325,12 @@ proto.onDelegateEvent = function onDelegateEvent(message) {
     this.debug(`delegate ${eventType} anonymous event`);
   }
 
-  this.elements.triggeredByEvent.forEach((activity) => {
+  for (const activity of this.elements.triggeredByEvent) {
     if (activity.getStartActivities({referenceId: content.message && content.message.id, referenceType: eventType}).length) {
       delegate = false;
       activity.run(content.message);
     }
-  });
+  }
 
   this.getApi().sendApiMessage(eventType, content, {delegate: true});
 
@@ -472,17 +472,18 @@ proto.onChildCompleted = function onChildCompleted(message) {
   this.debug(`left <${id}> (${type}), pending runs ${postponedCount}, ${this.postponed.map((a) => a.content.id).join(',')}`);
 
   if (postponedCount === this.elements.detachedActivities.length) {
-    return this.getPostponed().forEach((api) => api.discard());
+    for (const api of this.getPostponed()) api.discard();
+    return;
   }
 
   if (isEnd && this.elements.startActivities.length) {
     const startSequences = this.elements.startSequences;
-    for (const p of this.postponed) {
-      const postponedId = p.content.id;
+    for (const msg of this.postponed) {
+      const postponedId = msg.content.id;
       const startSequence = startSequences[postponedId];
       if (startSequence) {
         if (startSequence.content.sequence.some(({id: sid}) => sid === id)) {
-          this.getApi(p).discard();
+          this.getApi(msg).discard();
         }
       }
     }
@@ -494,9 +495,7 @@ proto.stopExecution = function stopExecution(message) {
   const postponedCount = this.postponedCount;
   this.debug(`stop process execution (stop child executions ${postponedCount})`);
   if (postponedCount) {
-    this.getPostponed().forEach((api) => {
-      api.stop();
-    });
+    for (const api of this.getPostponed()) api.stop();
   }
   this.deactivate();
   this[stoppedSymbol] = true;
@@ -511,13 +510,8 @@ proto.onDiscard = function onDiscard() {
   const running = this.postponed.splice(0);
   this.debug(`discard process execution (discard child executions ${running.length})`);
 
-  this.getSequenceFlows().forEach((flow) => {
-    flow.stop();
-  });
-
-  running.forEach((msg) => {
-    this.getApi(msg).discard();
-  });
+  for (const flow of this.getSequenceFlows()) flow.stop();
+  for (const msg of running) this.getApi(msg).discard();
 
   this.activityQ.purge();
   return this.complete('discard');
@@ -605,17 +599,15 @@ proto.terminate = function terminate(message) {
   this.debug('terminating process execution');
 
   const running = this.postponed.splice(0);
-  this.getSequenceFlows().forEach((flow) => {
-    flow.stop();
-  });
+  for (const flow of this.getSequenceFlows()) flow.stop();
 
-  running.forEach((msg) => {
+  for (const msg of running) {
     const {id: postponedId, isSequenceFlow} = msg.content;
-    if (postponedId === message.content.id) return;
-    if (isSequenceFlow) return;
+    if (postponedId === message.content.id) continue;
+    if (isSequenceFlow) continue;
     this.getApi(msg).stop();
     msg.ack();
-  });
+  }
 
   this.activityQ.purge();
 };
@@ -701,8 +693,8 @@ proto.getChildApi = function getChildApi(message) {
 
   if (!content.parent.path) return;
 
-  for (let i = 0; i < content.parent.path.length; i++) {
-    child = this.getChildById(content.parent.path[i].id, message);
+  for (const pp of content.parent.path) {
+    child = this.getChildById(pp.id, message);
     if (child) return child.getApi(message);
   }
 };

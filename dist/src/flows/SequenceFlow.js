@@ -17,6 +17,8 @@ var _Api = require("../Api");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+const brokerSymbol = Symbol.for('broker');
+const countersSymbol = Symbol.for('counters');
 var _default = SequenceFlow;
 exports.default = _default;
 
@@ -33,11 +35,6 @@ function SequenceFlow(flowDef, {
     isDefault,
     behaviour = {}
   } = flowDef;
-  this.counters = {
-    looped: 0,
-    take: 0,
-    discard: 0
-  };
   this.id = id;
   this.type = type;
   this.name = name;
@@ -50,6 +47,11 @@ function SequenceFlow(flowDef, {
   this.environment = environment;
   this.logger = environment.Logger(type.toLowerCase());
   this.parent = (0, _messageHelper.cloneParent)(originalParent);
+  this[countersSymbol] = {
+    looped: 0,
+    take: 0,
+    discard: 0
+  };
   environment.registerScript(this);
   const {
     broker,
@@ -62,7 +64,7 @@ function SequenceFlow(flowDef, {
     durable: true,
     autoDelete: false
   });
-  this.broker = broker;
+  this[brokerSymbol] = broker;
   this.on = on;
   this.once = once;
   this.waitFor = waitFor;
@@ -70,36 +72,55 @@ function SequenceFlow(flowDef, {
   this.logger.debug(`<${id}> init, <${sourceId}> -> <${targetId}>`);
 }
 
-SequenceFlow.prototype.take = function take(content = {}) {
+const proto = SequenceFlow.prototype;
+Object.defineProperty(proto, 'broker', {
+  enumerable: true,
+
+  get() {
+    return this[brokerSymbol];
+  }
+
+});
+Object.defineProperty(proto, 'counters', {
+  enumerable: true,
+
+  get() {
+    return { ...this[countersSymbol]
+    };
+  }
+
+});
+
+proto.take = function take(content = {}) {
   this.looped = undefined;
   const {
     sequenceId
   } = content;
   this.logger.debug(`<${sequenceId} (${this.id})> take, target <${this.targetId}>`);
-  ++this.counters.take;
+  ++this[countersSymbol].take;
   this.publishEvent('take', content);
   return true;
 };
 
-SequenceFlow.prototype.discard = function discard(content = {}) {
+proto.discard = function discard(content = {}) {
   const {
     sequenceId = (0, _shared.getUniqueId)(this.id)
   } = content;
   const discardSequence = content.discardSequence = (content.discardSequence || []).slice();
 
   if (discardSequence.indexOf(this.targetId) > -1) {
-    ++this.counters.looped;
+    ++this[countersSymbol].looped;
     this.logger.debug(`<${this.id}> discard loop detected <${this.sourceId}> -> <${this.targetId}>. Stop.`);
     return this.publishEvent('looped', content);
   }
 
   discardSequence.push(this.sourceId);
   this.logger.debug(`<${sequenceId} (${this.id})> discard, target <${this.targetId}>`);
-  ++this.counters.discard;
+  ++this[countersSymbol].discard;
   this.publishEvent('discard', content);
 };
 
-SequenceFlow.prototype.publishEvent = function publishEvent(action, content) {
+proto.publishEvent = function publishEvent(action, content) {
   const eventContent = this.createMessage({
     action,
     ...content
@@ -109,7 +130,7 @@ SequenceFlow.prototype.publishEvent = function publishEvent(action, content) {
   });
 };
 
-SequenceFlow.prototype.createMessage = function createMessage(override) {
+proto.createMessage = function createMessage(override) {
   return { ...override,
     id: this.id,
     type: this.type,
@@ -122,30 +143,31 @@ SequenceFlow.prototype.createMessage = function createMessage(override) {
   };
 };
 
-SequenceFlow.prototype.getState = function getState() {
+proto.getState = function getState() {
   return this.createMessage({
-    counters: { ...this.counters
-    },
+    counters: this.counters,
     broker: this.broker.getState(true)
   });
 };
 
-SequenceFlow.prototype.recover = function recover(state) {
-  Object.assign(this.counters, state.counters);
+proto.recover = function recover(state) {
+  this[countersSymbol] = { ...this[countersSymbol],
+    ...state.counters
+  };
   this.broker.recover(state.broker);
 };
 
-SequenceFlow.prototype.getApi = function getApi(message) {
+proto.getApi = function getApi(message) {
   return (0, _Api.FlowApi)(this.broker, message || {
     content: this.createMessage()
   });
 };
 
-SequenceFlow.prototype.stop = function stop() {
+proto.stop = function stop() {
   this.broker.stop();
 };
 
-SequenceFlow.prototype.shake = function shake(message) {
+proto.shake = function shake(message) {
   const content = (0, _messageHelper.cloneContent)(message.content);
   content.sequence = content.sequence || [];
   content.sequence.push({
@@ -172,7 +194,7 @@ SequenceFlow.prototype.shake = function shake(message) {
   });
 };
 
-SequenceFlow.prototype.getCondition = function getCondition() {
+proto.getCondition = function getCondition() {
   const conditionExpression = this.behaviour.conditionExpression;
   if (!conditionExpression) return null;
   const {

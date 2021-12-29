@@ -212,11 +212,10 @@ function read(broker, dataReferences, callback) {
     noAck: true
   });
 
-  for (let i = 0; i < dataReferences.length; i++) {
-    const {
-      id: propertyId,
-      reference
-    } = dataReferences[i];
+  for (const {
+    id: propertyId,
+    reference
+  } of dataReferences) {
     reference.read(broker, 'data', 'data.read.', {
       correlationId: propertyId
     });
@@ -238,11 +237,10 @@ function write(broker, dataReferences, properties, callback) {
     noAck: true
   });
 
-  for (let i = 0; i < dataReferences.length; i++) {
-    const {
-      id: propertyId,
-      reference
-    } = dataReferences[i];
+  for (const {
+    id: propertyId,
+    reference
+  } of dataReferences) {
     const value = propertyId in properties ? properties[propertyId].value : undefined;
     reference.write(broker, 'data', 'data.write.', value, {
       correlationId: propertyId

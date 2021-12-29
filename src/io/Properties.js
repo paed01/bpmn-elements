@@ -164,8 +164,7 @@ function read(broker, dataReferences, callback) {
 
   const dataReadConsumer = broker.subscribeTmp('data', 'data.read.#', onDataReadResponse, {noAck: true});
 
-  for (let i = 0; i < dataReferences.length; i++) {
-    const {id: propertyId, reference} = dataReferences[i];
+  for (const {id: propertyId, reference} of dataReferences) {
     reference.read(broker, 'data', 'data.read.', {correlationId: propertyId});
   }
 
@@ -184,8 +183,7 @@ function write(broker, dataReferences, properties, callback) {
   let count = 0;
   const dataWriteConsumer = broker.subscribeTmp('data', 'data.write.#', onDataWriteResponse, {noAck: true});
 
-  for (let i = 0; i < dataReferences.length; i++) {
-    const {id: propertyId, reference} = dataReferences[i];
+  for (const {id: propertyId, reference} of dataReferences) {
     const value = propertyId in properties ? properties[propertyId].value : undefined;
     reference.write(broker, 'data', 'data.write.', value, {correlationId: propertyId});
   }

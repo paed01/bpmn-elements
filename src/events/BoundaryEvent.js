@@ -119,8 +119,8 @@ export function BoundaryEventBehaviour(activity) {
     function stop(detach) {
       attachedTo.broker.cancel(`_bound-listener-${parentExecutionId}`);
       attachedTo.broker.cancel(`_bound-error-listener-${parentExecutionId}`);
-      errorConsumerTags.splice(0).forEach((tag) => attachedTo.broker.cancel(tag));
-      shovels.splice(0).forEach((shovelName) => attachedTo.broker.closeShovel(shovelName));
+      for (const tag of errorConsumerTags.splice(0)) attachedTo.broker.cancel(tag);
+      for (const shovelName of shovels.splice(0)) attachedTo.broker.closeShovel(shovelName);
 
       broker.cancel('_expect-tag');
       broker.cancel('_detach-tag');

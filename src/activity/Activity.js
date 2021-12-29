@@ -92,62 +92,64 @@ function Activity(Behaviour, activityDef, context) {
   const onInboundEvent = this.onInboundEvent.bind(this);
   broker.assertQueue('inbound-q', {durable: true, autoDelete: false});
   if (isForCompensation) {
-    inboundAssociations.forEach((trigger) => {
+    for (const trigger of inboundAssociations) {
       trigger.broker.subscribeTmp('event', '#', onInboundEvent, {noAck: true, consumerTag: `_inbound-${id}`});
-    });
+    }
   } else {
-    inboundTriggers.forEach((trigger) => {
+    for (const trigger of inboundTriggers) {
       if (trigger.isSequenceFlow) trigger.broker.subscribeTmp('event', 'flow.#', onInboundEvent, {noAck: true, consumerTag: `_inbound-${id}`});
       else trigger.broker.subscribeTmp('event', 'activity.#', onInboundEvent, {noAck: true, consumerTag: `_inbound-${id}`});
-    });
+    }
   }
 
   this[eventDefinitionsSymbol] = eventDefinitions && eventDefinitions.map((ed) => new ed.Behaviour(this, ed, this[contextSymbol]));
 }
 
-Object.defineProperty(Activity.prototype, 'context', {
+const proto = Activity.prototype;
+
+Object.defineProperty(proto, 'context', {
   enumerable: true,
   get() {
     return this[contextSymbol];
   },
 });
 
-Object.defineProperty(Activity.prototype, 'counters', {
+Object.defineProperty(proto, 'counters', {
   enumerable: true,
   get() {
     return {...this[countersSymbol]};
   },
 });
 
-Object.defineProperty(Activity.prototype, 'environment', {
+Object.defineProperty(proto, 'environment', {
   enumerable: true,
   get() {
     return this[contextSymbol].environment;
   },
 });
 
-Object.defineProperty(Activity.prototype, 'broker', {
+Object.defineProperty(proto, 'broker', {
   enumerable: true,
   get() {
     return this[brokerSymbol];
   },
 });
 
-Object.defineProperty(Activity.prototype, 'execution', {
+Object.defineProperty(proto, 'execution', {
   enumerable: true,
   get() {
     return this[execSymbol].execution;
   },
 });
 
-Object.defineProperty(Activity.prototype, 'executionId', {
+Object.defineProperty(proto, 'executionId', {
   enumerable: true,
   get() {
     return this[execSymbol].executionId;
   },
 });
 
-Object.defineProperty(Activity.prototype, 'bpmnIo', {
+Object.defineProperty(proto, 'bpmnIo', {
   enumerable: true,
   get() {
     if (bpmnIoSymbol in this) return this[bpmnIoSymbol];
@@ -156,7 +158,7 @@ Object.defineProperty(Activity.prototype, 'bpmnIo', {
   },
 });
 
-Object.defineProperty(Activity.prototype, 'extensions', {
+Object.defineProperty(proto, 'extensions', {
   enumerable: true,
   get() {
     if (extensionsSymbol in this) return this[extensionsSymbol];
@@ -165,7 +167,7 @@ Object.defineProperty(Activity.prototype, 'extensions', {
   },
 });
 
-Object.defineProperty(Activity.prototype, 'formatter', {
+Object.defineProperty(proto, 'formatter', {
   enumerable: true,
   get() {
     let formatter = this[formatterSymbol];
@@ -181,7 +183,7 @@ Object.defineProperty(Activity.prototype, 'formatter', {
   },
 });
 
-Object.defineProperty(Activity.prototype, 'isRunning', {
+Object.defineProperty(proto, 'isRunning', {
   enumerable: true,
   get() {
     if (!this[consumingSymbol]) return false;
@@ -189,66 +191,66 @@ Object.defineProperty(Activity.prototype, 'isRunning', {
   },
 });
 
-Object.defineProperty(Activity.prototype, 'outbound', {
+Object.defineProperty(proto, 'outbound', {
   enumerable: true,
   get() {
     return this[flowsSymbol].outboundSequenceFlows;
   },
 });
 
-Object.defineProperty(Activity.prototype, 'inbound', {
+Object.defineProperty(proto, 'inbound', {
   enumerable: true,
   get() {
     return this[flowsSymbol].inboundSequenceFlows;
   },
 });
 
-Object.defineProperty(Activity.prototype, 'isEnd', {
+Object.defineProperty(proto, 'isEnd', {
   enumerable: true,
   get() {
     return this[flagsSymbol].isEnd;
   },
 });
-Object.defineProperty(Activity.prototype, 'isStart', {
+Object.defineProperty(proto, 'isStart', {
   enumerable: true,
   get() {
     return this[flagsSymbol].isStart;
   },
 });
-Object.defineProperty(Activity.prototype, 'isSubProcess', {
+Object.defineProperty(proto, 'isSubProcess', {
   enumerable: true,
   get() {
     return this[flagsSymbol].isSubProcess;
   },
 });
 
-Object.defineProperty(Activity.prototype, 'isMultiInstance', {
+Object.defineProperty(proto, 'isMultiInstance', {
   enumerable: true,
   get() {
     return this[flagsSymbol].isMultiInstance;
   },
 });
 
-Object.defineProperty(Activity.prototype, 'isThrowing', {
+Object.defineProperty(proto, 'isThrowing', {
   enumerable: true,
   get() {
     return this[flagsSymbol].isThrowing;
   },
 });
-Object.defineProperty(Activity.prototype, 'isForCompensation', {
+Object.defineProperty(proto, 'isForCompensation', {
   enumerable: true,
   get() {
     return this[flagsSymbol].isForCompensation;
   },
 });
-Object.defineProperty(Activity.prototype, 'triggeredByEvent', {
+Object.defineProperty(proto, 'triggeredByEvent', {
   enumerable: true,
   get() {
     return this[activityDefSymbol].triggeredByEvent;
   },
 });
 
-Object.defineProperty(Activity.prototype, 'attachedTo', {
+Object.defineProperty(proto, 'attachedTo', {
   enumerable: true,
   get() {
     const attachedToId = this[flagsSymbol].attachedTo;
@@ -257,25 +259,25 @@ Object.defineProperty(Activity.prototype, 'attachedTo', {
   },
 });
 
-Object.defineProperty(Activity.prototype, 'eventDefinitions', {
+Object.defineProperty(proto, 'eventDefinitions', {
   enumerable: true,
   get() {
     return this[eventDefinitionsSymbol];
   },
 });
 
-Activity.prototype.activate = function activate() {
+proto.activate = function activate() {
   if (this[flagsSymbol].isForCompensation) return;
   return this.consumeInbound();
 };
 
-Activity.prototype.deactivate = function deactivate() {
+proto.deactivate = function deactivate() {
   const broker = this[brokerSymbol];
   broker.cancel('_run-on-inbound');
   broker.cancel('_format-consumer');
 };
 
-Activity.prototype.init = function init(initContent) {
+proto.init = function init(initContent) {
   const id = this.id;
   const exec = this[execSymbol];
   const executionId = exec.initExecutionId = exec.initExecutionId || getUniqueId(id);
@@ -283,7 +285,7 @@ Activity.prototype.init = function init(initContent) {
   this.publishEvent('init', this.createMessage({...initContent, executionId}));
 };
 
-Activity.prototype.run = function run(runContent) {
+proto.run = function run(runContent) {
   const id = this.id;
   if (this.isRunning) throw new Error(`activity <${id}> is already running`);
 
@@ -302,7 +304,7 @@ Activity.prototype.run = function run(runContent) {
   this.consumeRunQ();
 };
 
-Activity.prototype.recover = function recover(state) {
+proto.recover = function recover(state) {
   if (this.isRunning) throw new Error(`cannot recover running activity <${this.id}>`);
   if (!state) return;
 
@@ -322,7 +324,7 @@ Activity.prototype.recover = function recover(state) {
   return this;
 };
 
-Activity.prototype.resume = function resume() {
+proto.resume = function resume() {
   if (this[consumingSymbol]) {
     throw new Error(`cannot resume running activity <${this.id}>`);
   }
@@ -337,7 +339,7 @@ Activity.prototype.resume = function resume() {
   this.consumeRunQ();
 };
 
-Activity.prototype.discard = function discard(discardContent) {
+proto.discard = function discard(discardContent) {
   if (!this.status) return this.runDiscard(discardContent);
   const execution = this[execSymbol].execution;
   if (execution && !execution.completed) return execution.discard();
@@ -349,7 +351,7 @@ Activity.prototype.discard = function discard(discardContent) {
   this.consumeRunQ();
 };
 
-Activity.prototype.runDiscard = function runDiscard(discardContent = {}) {
+proto.runDiscard = function runDiscard(discardContent = {}) {
   const exec = this[execSymbol];
   const executionId = exec.executionId = exec.initExecutionId || getUniqueId(this.id);
   exec.initExecutionId = null;
@@ -362,7 +364,7 @@ Activity.prototype.runDiscard = function runDiscard(discardContent = {}) {
   this.consumeRunQ();
 };
 
-Activity.prototype.discardRun = function discardRun() {
+proto.discardRun = function discardRun() {
   const status = this.status;
   if (!status) return;
 
@@ -383,12 +385,12 @@ Activity.prototype.discardRun = function discardRun() {
   this.consumeRunQ();
 };
 
-Activity.prototype.stop = function stop() {
+proto.stop = function stop() {
   if (!this[consumingSymbol]) return;
   return this.getApi().stop();
 };
 
-Activity.prototype.next = function next() {
+proto.next = function next() {
   if (!this.environment.settings.step) return;
   const stateMessage = this[stateMessageSymbol];
   if (!stateMessage) return;
@@ -399,11 +401,11 @@ Activity.prototype.next = function next() {
   return current;
 };
 
-Activity.prototype.shake = function shake() {
+proto.shake = function shake() {
   this.shakeOutbound({content: this.createMessage()});
 };
 
-Activity.prototype.shakeOutbound = function shakeOutbound(sourceMessage) {
+proto.shakeOutbound = function shakeOutbound(sourceMessage) {
   const message = cloneMessage(sourceMessage);
   message.content.sequence = message.content.sequence || [];
   message.content.sequence.push({id: this.id, type: this.type});
@@ -415,10 +417,10 @@ Activity.prototype.shakeOutbound = function shakeOutbound(sourceMessage) {
     return broker.publish('event', 'activity.shake.end', message.content, {persistent: false, type: 'shake'});
   }
 
-  this[flowsSymbol].outboundSequenceFlows.forEach((f) => f.shake(message));
+  for (const flow of this[flowsSymbol].outboundSequenceFlows) flow.shake(message);
 };
 
-Activity.prototype.consumeInbound = function consumeInbound() {
+proto.consumeInbound = function consumeInbound() {
   if (this.status) return;
   const inboundQ = this[brokerSymbol].getQueue('inbound-q');
   if (this[flagsSymbol].isParallelJoin) {
@@ -428,7 +430,7 @@ Activity.prototype.consumeInbound = function consumeInbound() {
   return inboundQ.consume(this.onInbound, {consumerTag: '_run-on-inbound'});
 };
 
-Activity.prototype.onInbound = function onInbound(routingKey, message) {
+proto.onInbound = function onInbound(routingKey, message) {
   message.ack();
   const id = this.id;
   const broker = this[brokerSymbol];
@@ -464,7 +466,7 @@ Activity.prototype.onInbound = function onInbound(routingKey, message) {
   }
 };
 
-Activity.prototype.onJoinInbound = function onJoinInbound(routingKey, message) {
+proto.onJoinInbound = function onJoinInbound(routingKey, message) {
   const {content} = message;
   const {inboundSequenceFlows, inboundJoinFlows, inboundTriggers} = this[flowsSymbol];
   const idx = inboundJoinFlows.findIndex((msg) => msg.content.id === content.id);
@@ -490,9 +492,9 @@ Activity.prototype.onJoinInbound = function onJoinInbound(routingKey, message) {
 
   const discardSequence = !taken && evaluatedInbound.reduce((result, im) => {
     if (!im.content.discardSequence) return result;
-    im.content.discardSequence.forEach((sourceId) => {
+    for (const sourceId of im.content.discardSequence) {
       if (result.indexOf(sourceId) === -1) result.push(sourceId);
-    });
+    }
     return result;
   }, []);
 
@@ -502,7 +504,7 @@ Activity.prototype.onJoinInbound = function onJoinInbound(routingKey, message) {
   return this.run({inbound});
 };
 
-Activity.prototype.onInboundEvent = function onInboundEvent(routingKey, message) {
+proto.onInboundEvent = function onInboundEvent(routingKey, message) {
   const {fields, content, properties} = message;
   const id = this.id;
   const inboundQ = this[brokerSymbol].getQueue('inbound-q');
@@ -544,14 +546,14 @@ Activity.prototype.onInboundEvent = function onInboundEvent(routingKey, message)
   }
 };
 
-Activity.prototype.consumeRunQ = function consumerRunQ() {
+proto.consumeRunQ = function consumerRunQ() {
   if (this[consumingSymbol]) return;
 
   this[consumingSymbol] = true;
   this[brokerSymbol].getQueue('run-q').assertConsumer(this.onRunMessage, {exclusive: true, consumerTag: '_activity-run'});
 };
 
-Activity.prototype.onRunMessage = function onRunMessage(routingKey, message, messageProperties) {
+proto.onRunMessage = function onRunMessage(routingKey, message, messageProperties) {
   switch (routingKey) {
     case 'run.outbound.discard':
     case 'run.outbound.take':
@@ -572,7 +574,7 @@ Activity.prototype.onRunMessage = function onRunMessage(routingKey, message, mes
   });
 };
 
-Activity.prototype.continueRunMessage = function continueRunMessage(routingKey, message) {
+proto.continueRunMessage = function continueRunMessage(routingKey, message) {
   const {fields, content: originalContent, ack} = message;
   const isRedelivered = fields.redelivered;
   const content = cloneContent(originalContent);
@@ -714,7 +716,7 @@ Activity.prototype.continueRunMessage = function continueRunMessage(routingKey, 
   if (!step) ack();
 };
 
-Activity.prototype.onExecutionMessage = function onExecutionMessage(routingKey, message) {
+proto.onExecutionMessage = function onExecutionMessage(routingKey, message) {
   const executeMessage = this[executeMessageSymbol];
   const content = cloneContent({
     ...executeMessage.content,
@@ -757,7 +759,7 @@ Activity.prototype.onExecutionMessage = function onExecutionMessage(routingKey, 
   this.ackRunExecuteMessage();
 };
 
-Activity.prototype.ackRunExecuteMessage = function ackRunExecuteMessage() {
+proto.ackRunExecuteMessage = function ackRunExecuteMessage() {
   if (this.environment.settings.step) return;
   const executeMessage = this[executeMessageSymbol];
   if (!executeMessage) return;
@@ -767,7 +769,7 @@ Activity.prototype.ackRunExecuteMessage = function ackRunExecuteMessage() {
   ackMessage.ack();
 };
 
-Activity.prototype.doRunLeave = function doRunLeave(message, isDiscarded, onOutbound) {
+proto.doRunLeave = function doRunLeave(message, isDiscarded, onOutbound) {
   const {content, properties} = message;
   const correlationId = properties.correlationId;
   if (content.ignoreOutbound) {
@@ -789,7 +791,7 @@ Activity.prototype.doRunLeave = function doRunLeave(message, isDiscarded, onOutb
   });
 };
 
-Activity.prototype.doOutbound = function doOutbound(fromMessage, isDiscarded, callback) {
+proto.doOutbound = function doOutbound(fromMessage, isDiscarded, callback) {
   const outboundSequenceFlows = this[flowsSymbol].outboundSequenceFlows;
   if (!outboundSequenceFlows.length) return callback(null, []);
 
@@ -820,7 +822,7 @@ Activity.prototype.doOutbound = function doOutbound(fromMessage, isDiscarded, ca
   });
 };
 
-Activity.prototype.doRunOutbound = function doRunOutbound(outboundList, content, discardSequence) {
+proto.doRunOutbound = function doRunOutbound(outboundList, content, discardSequence) {
   return outboundList.map((outboundFlow) => {
     const {id: flowId, action} = outboundFlow;
     this[brokerSymbol].publish('run', 'run.outbound.' + action, cloneContent(content, {
@@ -835,7 +837,7 @@ Activity.prototype.doRunOutbound = function doRunOutbound(outboundList, content,
   });
 };
 
-Activity.prototype.evaluateOutbound = function evaluateOutbound(fromMessage, discardRestAtTake, callback) {
+proto.evaluateOutbound = function evaluateOutbound(fromMessage, discardRestAtTake, callback) {
   let conditionMet;
   const outbound = {};
   const broker = this[brokerSymbol];
@@ -934,7 +936,7 @@ Activity.prototype.evaluateOutbound = function evaluateOutbound(fromMessage, dis
   }
 };
 
-Activity.prototype.onResumeMessage = function onResumeMessage(message) {
+proto.onResumeMessage = function onResumeMessage(message) {
   message.ack();
 
   const stateMessage = this[stateMessageSymbol];
@@ -958,7 +960,7 @@ Activity.prototype.onResumeMessage = function onResumeMessage(message) {
   return this[brokerSymbol].publish('run', fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
 };
 
-Activity.prototype.publishEvent = function publishEvent(state, content, messageProperties = {}) {
+proto.publishEvent = function publishEvent(state, content, messageProperties = {}) {
   if (!state) return;
   if (!content) content = this.createMessage();
 
@@ -970,7 +972,7 @@ Activity.prototype.publishEvent = function publishEvent(state, content, messageP
   });
 };
 
-Activity.prototype.onStop = function onStop(message) {
+proto.onStop = function onStop(message) {
   const running = this[consumingSymbol];
 
   this.stopped = true;
@@ -989,7 +991,7 @@ Activity.prototype.onStop = function onStop(message) {
   }
 };
 
-Activity.prototype.consumeApi = function consumeApi() {
+proto.consumeApi = function consumeApi() {
   const executionId = this[execSymbol].executionId;
   if (!executionId) return;
   const broker = this[brokerSymbol];
@@ -997,7 +999,7 @@ Activity.prototype.consumeApi = function consumeApi() {
   broker.subscribeTmp('api', `activity.*.${executionId}`, this.onApiMessage, {noAck: true, consumerTag: '_activity-api', priority: 100});
 };
 
-Activity.prototype.onApiMessage = function onApiMessage(routingKey, message) {
+proto.onApiMessage = function onApiMessage(routingKey, message) {
   const messageType = message.properties.type;
   switch (messageType) {
     case 'discard': {
@@ -1015,7 +1017,7 @@ Activity.prototype.onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-Activity.prototype.createMessage = function createMessage(override = {}) {
+proto.createMessage = function createMessage(override = {}) {
   const name = this.name, status = this.status, parent = this.parent;
   const result = {
     ...override,
@@ -1033,11 +1035,11 @@ Activity.prototype.createMessage = function createMessage(override = {}) {
   return result;
 };
 
-Activity.prototype.getOutboundSequenceFlowById = function getOutboundSequenceFlowById(flowId) {
+proto.getOutboundSequenceFlowById = function getOutboundSequenceFlowById(flowId) {
   return this[flowsSymbol].outboundSequenceFlows.find((flow) => flow.id === flowId);
 };
 
-Activity.prototype.resumeExtensions = function resumeExtensions(message, callback) {
+proto.resumeExtensions = function resumeExtensions(message, callback) {
   const extensions = this.extensions, bpmnIo = this.bpmnIo;
   if (!extensions && !bpmnIo) return callback();
 
@@ -1051,7 +1053,7 @@ Activity.prototype.resumeExtensions = function resumeExtensions(message, callbac
   });
 };
 
-Activity.prototype.getState = function getState() {
+proto.getState = function getState() {
   const msg = this.createMessage();
 
   const exec = this[execSymbol];
@@ -1060,23 +1062,23 @@ Activity.prototype.getState = function getState() {
     executionId: exec.executionId,
     stopped: this.stopped,
     behaviour: {...this.behaviour},
-    counters: {...this[countersSymbol]},
+    counters: this.counters,
     broker: this[brokerSymbol].getState(true),
     execution: exec.execution && exec.execution.getState(),
   };
 };
 
-Activity.prototype.getApi = function getApi(message) {
+proto.getApi = function getApi(message) {
   const execution = this[execSymbol].execution;
   if (execution && !execution.completed) return execution.getApi(message);
   return ActivityApi(this[brokerSymbol], message || this[stateMessageSymbol]);
 };
 
-Activity.prototype.getActivityById = function getActivityById(elementId) {
+proto.getActivityById = function getActivityById(elementId) {
   return this[contextSymbol].getActivityById(elementId);
 };
 
-Activity.prototype.deactivateRunConsumers = function deactivateRunConsumers() {
+proto.deactivateRunConsumers = function deactivateRunConsumers() {
   const broker = this[brokerSymbol];
   broker.cancel('_activity-api');
   broker.cancel('_activity-run');
