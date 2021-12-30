@@ -1,9 +1,7 @@
 import {RunError} from '../error/Errors';
 import {cloneContent, cloneMessage, unshiftParent, cloneParent} from '../messageHelper';
 
-export default LoopCharacteristics;
-
-function LoopCharacteristics(activity, loopCharacteristics) {
+export default function LoopCharacteristics(activity, loopCharacteristics) {
   this.activity = activity;
   this.loopCharacteristics = loopCharacteristics;
   const {type = 'LoopCharacteristics', behaviour = {}} = loopCharacteristics;

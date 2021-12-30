@@ -8,7 +8,7 @@ export default function IntermediateCatchEvent(activityDef, context) {
 
 export function IntermediateCatchEventBehaviour(activity) {
   const {id, type, broker, eventDefinitions} = activity;
-  const eventDefinitionExecution = eventDefinitions && EventDefinitionExecution(activity, eventDefinitions);
+  const eventDefinitionExecution = eventDefinitions && new EventDefinitionExecution(activity, eventDefinitions);
 
   const source = {
     id,

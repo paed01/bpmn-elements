@@ -8,7 +8,7 @@ export default function EndEvent(activityDef, context) {
 
 export function EndEventBehaviour(activity) {
   const {id, type, broker, eventDefinitions} = activity;
-  const eventDefinitionExecution = eventDefinitions && EventDefinitionExecution(activity, eventDefinitions);
+  const eventDefinitionExecution = eventDefinitions && new EventDefinitionExecution(activity, eventDefinitions);
 
   const source = {
     id,

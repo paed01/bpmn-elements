@@ -33,7 +33,7 @@ function BoundaryEventBehaviour(activity) {
   } = activity;
   const attachedToId = attachedTo.id;
   const cancelActivity = 'cancelActivity' in behaviour ? behaviour.cancelActivity : true;
-  const eventDefinitionExecution = eventDefinitions && (0, _EventDefinitionExecution.default)(activity, eventDefinitions, 'execute.bound.completed');
+  const eventDefinitionExecution = eventDefinitions && new _EventDefinitionExecution.default(activity, eventDefinitions, 'execute.bound.completed');
   return {
     id,
     type,

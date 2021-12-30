@@ -25,7 +25,7 @@ function IntermediateCatchEventBehaviour(activity) {
     broker,
     eventDefinitions
   } = activity;
-  const eventDefinitionExecution = eventDefinitions && (0, _EventDefinitionExecution.default)(activity, eventDefinitions);
+  const eventDefinitionExecution = eventDefinitions && new _EventDefinitionExecution.default(activity, eventDefinitions);
   const source = {
     id,
     type,

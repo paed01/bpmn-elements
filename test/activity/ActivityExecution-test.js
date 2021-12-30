@@ -1695,7 +1695,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql(4);
 
       function Behaviour(activity) {
-        const eventDefinitionExecution = EventDefinitionExecution(activity, [{
+        const eventDefinitionExecution = new EventDefinitionExecution(activity, [{
           type: 'messageeventdef',
           execute() {},
         }]);
@@ -1751,7 +1751,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql(4);
 
       function Behaviour(activity) {
-        const eventDefinitionExecution = EventDefinitionExecution(activity, [{
+        const eventDefinitionExecution = new EventDefinitionExecution(activity, [{
           type: 'messageeventdef1',
           execute() {},
         }, {
@@ -1812,7 +1812,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('message').that.eql(5);
 
       function Behaviour(activity) {
-        const eventDefinitionExecution = EventDefinitionExecution(activity, [{
+        const eventDefinitionExecution = new EventDefinitionExecution(activity, [{
           type: 'messageeventdef1',
           execute() {},
         }, {

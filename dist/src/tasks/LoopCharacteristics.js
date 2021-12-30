@@ -3,14 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.default = LoopCharacteristics;
 
 var _Errors = require("../error/Errors");
 
 var _messageHelper = require("../messageHelper");
-
-var _default = LoopCharacteristics;
-exports.default = _default;
 
 function LoopCharacteristics(activity, loopCharacteristics) {
   this.activity = activity;
