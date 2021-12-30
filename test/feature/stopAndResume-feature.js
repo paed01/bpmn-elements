@@ -413,7 +413,7 @@ Feature('Stop and resume', () => {
       });
 
       expect(instances).to.have.length(2);
-      const idx = instances.findIndex(([,, msg]) => msg.content.id === 'timeout1');
+      const idx = instances.findIndex(([,, msg]) => msg.id === 'timeout1');
       const [cb,, ...args] = instances.splice(idx, 1).pop();
       cb(...args);
     });
@@ -445,7 +445,7 @@ Feature('Stop and resume', () => {
       });
 
       expect(instances).to.have.length(2);
-      const idx = instances.findIndex(([,, msg]) => msg.content.id === 'timeout2');
+      const idx = instances.findIndex(([,, msg]) => msg.id === 'timeout2');
       const [cb,, ...args] = instances.splice(idx, 1).pop();
       cb(...args);
     });
