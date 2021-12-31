@@ -128,6 +128,53 @@ describe('StartEvent', () => {
       expect(executeQ).to.have.property('consumerCount', 0);
       expect(executeQ.peek()).to.have.property('fields').with.property('routingKey', 'execute.start');
     });
+
+    it('ignores delegated api signals if not delegated', async () => {
+      const event = context.getActivityById('start');
+
+      const wait = event.waitFor('wait');
+
+      event.run();
+      await wait;
+
+      event.broker.publish('api', 'definition.signal.some-id', {
+        message: {
+          id: 'start'
+        },
+      }, {delegate: false});
+
+      expect(event.counters).property('taken', 0);
+    });
+
+    it('ignores delegated api signals if no content message', async () => {
+      const event = context.getActivityById('start');
+
+      const wait = event.waitFor('wait');
+
+      event.run();
+      await wait;
+
+      event.broker.publish('api', 'definition.signal.some-id', {}, {delegate: true});
+
+      expect(event.counters).property('taken', 0);
+    });
+
+    it('ignores delegated api signals if id doesn´t match', async () => {
+      const event = context.getActivityById('start');
+
+      const wait = event.waitFor('wait');
+
+      event.run();
+      await wait;
+
+      event.broker.publish('api', 'definition.signal.some-id', {
+        message: {
+          id: 'end'
+        },
+      }, {delegate: true});
+
+      expect(event.counters).property('taken', 0);
+    });
   });
 
   describe('with MessageEventDefinition', () => {

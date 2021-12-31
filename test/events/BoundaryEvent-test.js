@@ -7,13 +7,42 @@ import {BoundaryEventBehaviour} from '../../src/events/BoundaryEvent';
 
 describe('BoundaryEvent', () => {
   describe('behaviour', () => {
+    describe('cancel activity flag', () => {
+      it('defaults to true', () => {
+        const attachedTo = {
+          id: 'task',
+          broker: ActivityBroker(this).broker
+        };
+        const behaviour = new BoundaryEventBehaviour({
+          broker: ActivityBroker(this).broker,
+          attachedTo,
+        });
+
+        expect(behaviour).to.have.property('cancelActivity', true);
+      });
+
+      it('returns behaviour value', () => {
+        const attachedTo = {
+          id: 'task',
+          broker: ActivityBroker(this).broker
+        };
+        const behaviour = new BoundaryEventBehaviour({
+          broker: ActivityBroker(this).broker,
+          attachedTo,
+          behaviour: {cancelActivity: false}
+        });
+
+        expect(behaviour).to.have.property('cancelActivity', false);
+      });
+    });
+
     describe('without event definitions', () => {
       it('adds listener to attached to on execute', () => {
         const attachedTo = {
           id: 'task',
           broker: ActivityBroker(this).broker
         };
-        const behaviour = BoundaryEventBehaviour({
+        const behaviour = new BoundaryEventBehaviour({
           broker: ActivityBroker(this).broker,
           attachedTo,
         }, {
@@ -40,7 +69,7 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker
         };
         const broker = ActivityBroker().broker;
-        const behaviour = BoundaryEventBehaviour({
+        const behaviour = new BoundaryEventBehaviour({
           broker,
           attachedTo,
         }, {
@@ -67,7 +96,7 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker
         };
         const broker = ActivityBroker().broker;
-        const behaviour = BoundaryEventBehaviour({
+        const behaviour = new BoundaryEventBehaviour({
           broker,
           attachedTo,
         }, {
@@ -104,7 +133,7 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker
         };
         const broker = ActivityBroker().broker;
-        const behaviour = BoundaryEventBehaviour({
+        const behaviour = new BoundaryEventBehaviour({
           broker,
           attachedTo,
         }, {
@@ -140,7 +169,7 @@ describe('BoundaryEvent', () => {
         };
 
         const broker = ActivityBroker().broker;
-        const behaviour = BoundaryEventBehaviour({
+        const behaviour = new BoundaryEventBehaviour({
           broker,
           attachedTo,
         }, {
@@ -180,7 +209,7 @@ describe('BoundaryEvent', () => {
         };
 
         const broker = ActivityBroker().broker;
-        const behaviour = BoundaryEventBehaviour({
+        const behaviour = new BoundaryEventBehaviour({
           broker,
           attachedTo,
           behaviour: {
@@ -236,7 +265,7 @@ describe('BoundaryEvent', () => {
             return self._eds || (self._eds = [ErrorEventDefinition(self, {}), MessageEventDefinition(self, {})]);
           }
         };
-        const behaviour = BoundaryEventBehaviour(activity, {
+        const behaviour = new BoundaryEventBehaviour(activity, {
           getOutboundAssociations() {},
         });
         expect(attachedTo.broker.getExchange('event')).to.have.property('bindingCount', 0);
@@ -265,7 +294,7 @@ describe('BoundaryEvent', () => {
         };
         const broker = ActivityBroker().broker;
         const environment = new Environment({Logger: testHelpers.Logger});
-        const behaviour = BoundaryEventBehaviour({
+        const behaviour = new BoundaryEventBehaviour({
           id: 'event',
           broker,
           environment,
@@ -312,7 +341,7 @@ describe('BoundaryEvent', () => {
         };
         const broker = ActivityBroker().broker;
         const environment = new Environment({Logger: testHelpers.Logger});
-        const behaviour = BoundaryEventBehaviour({
+        const behaviour = new BoundaryEventBehaviour({
           id: 'event',
           broker,
           environment,
@@ -359,7 +388,7 @@ describe('BoundaryEvent', () => {
         };
         const broker = ActivityBroker().broker;
         const environment = new Environment({Logger: testHelpers.Logger});
-        const behaviour = BoundaryEventBehaviour({
+        const behaviour = new BoundaryEventBehaviour({
           id: 'event',
           broker,
           environment,
@@ -402,7 +431,7 @@ describe('BoundaryEvent', () => {
         };
         broker = ActivityBroker().broker;
         const environment = new Environment({Logger: testHelpers.Logger});
-        behaviour = BoundaryEventBehaviour({
+        behaviour = new BoundaryEventBehaviour({
           id: 'event',
           broker,
           environment,

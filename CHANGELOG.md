@@ -6,6 +6,8 @@ Changelog
 Call activity...
 
 - add api fail function
+- prototype BoundaryEvent
+- prototype StartEvent
 - prototype TimerEventDefinition
 - prototype Environment
 - prototype ProcessExecution
