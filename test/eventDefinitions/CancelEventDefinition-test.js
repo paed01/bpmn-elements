@@ -16,7 +16,7 @@ describe('CancelEventDefinition', () => {
     });
 
     it('expects cancel with canceled routing key', () => {
-      const catchEvent = CancelEventDefinition(event, {
+      const catchEvent = new CancelEventDefinition(event, {
         type: 'bpmn:CancelEventDefinition',
       });
 
@@ -48,7 +48,7 @@ describe('CancelEventDefinition', () => {
     });
 
     it('completes when cancel routing key is published', () => {
-      const catchEvent = CancelEventDefinition(event, {
+      const catchEvent = new CancelEventDefinition(event, {
         type: 'bpmn:CancelEventDefinition',
       });
 
@@ -81,7 +81,7 @@ describe('CancelEventDefinition', () => {
     });
 
     it('publish compensate event if cancel emanates from a transaction', () => {
-      const catchEvent = CancelEventDefinition(event, {
+      const catchEvent = new CancelEventDefinition(event, {
         type: 'bpmn:CancelEventDefinition',
       });
 
@@ -114,7 +114,7 @@ describe('CancelEventDefinition', () => {
     });
 
     it('detaches if cancel emanates from a transaction and creates cancel exchange', () => {
-      const catchEvent = CancelEventDefinition(event, {
+      const catchEvent = new CancelEventDefinition(event, {
         type: 'bpmn:CancelEventDefinition',
       });
 
@@ -150,7 +150,7 @@ describe('CancelEventDefinition', () => {
     });
 
     it('completes when bound event detects that transaction is complete', () => {
-      const catchEvent = CancelEventDefinition(event, {
+      const catchEvent = new CancelEventDefinition(event, {
         type: 'bpmn:CancelEventDefinition',
       });
 
@@ -185,7 +185,7 @@ describe('CancelEventDefinition', () => {
     });
 
     it('ignores leave message if not matching attachedTo', () => {
-      const catchEvent = CancelEventDefinition(event, {
+      const catchEvent = new CancelEventDefinition(event, {
         type: 'bpmn:CancelEventDefinition',
       });
 
@@ -219,7 +219,7 @@ describe('CancelEventDefinition', () => {
     });
 
     it('completes and clears listeners when transaction is complete', () => {
-      const catchEvent = CancelEventDefinition(event, {
+      const catchEvent = new CancelEventDefinition(event, {
         type: 'bpmn:CancelEventDefinition',
       });
 
@@ -255,7 +255,7 @@ describe('CancelEventDefinition', () => {
     });
 
     it('completes and clears listeners if stopped by api', () => {
-      const catchEvent = CancelEventDefinition(event, {
+      const catchEvent = new CancelEventDefinition(event, {
         type: 'bpmn:CancelEventDefinition',
       });
 
@@ -284,7 +284,7 @@ describe('CancelEventDefinition', () => {
     });
 
     it('completes and clears listeners if parent is stopped by api', () => {
-      const catchEvent = CancelEventDefinition(event, {
+      const catchEvent = new CancelEventDefinition(event, {
         type: 'bpmn:CancelEventDefinition',
       });
 
@@ -328,7 +328,7 @@ describe('CancelEventDefinition', () => {
     it('publishes Cancel event on parent broker with resolved message', () => {
       event.isThrowing = true;
 
-      const definition = CancelEventDefinition(event, {
+      const definition = new CancelEventDefinition(event, {
         type: 'bpmn:CancelEventDefinition',
       });
 

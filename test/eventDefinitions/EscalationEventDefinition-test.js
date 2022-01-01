@@ -15,7 +15,7 @@ describe('EscalationEventDefinition', () => {
 
   describe('catching', () => {
     it('publishes wait event on parent broker', () => {
-      const catchSignal = EscalationEventDefinition(event, {
+      const catchSignal = new EscalationEventDefinition(event, {
         type: 'bpmn:EscalationEventDefinition',
       });
 
@@ -48,7 +48,7 @@ describe('EscalationEventDefinition', () => {
     });
 
     it('completes and clears listeners when escalation is caught', () => {
-      const catchSignal = EscalationEventDefinition(event, {
+      const catchSignal = new EscalationEventDefinition(event, {
         type: 'bpmn:EscalationEventDefinition',
       });
 
@@ -82,7 +82,7 @@ describe('EscalationEventDefinition', () => {
     });
 
     it('completes and clears listeners if escalated before execution', () => {
-      const catchSignal = EscalationEventDefinition(event, {
+      const catchSignal = new EscalationEventDefinition(event, {
         type: 'bpmn:EscalationEventDefinition',
       });
 
@@ -117,7 +117,7 @@ describe('EscalationEventDefinition', () => {
     });
 
     it('completes and clears listeners if discarded', () => {
-      const catchSignal = EscalationEventDefinition(event, {
+      const catchSignal = new EscalationEventDefinition(event, {
         type: 'bpmn:EscalationEventDefinition',
       });
 
@@ -152,7 +152,7 @@ describe('EscalationEventDefinition', () => {
     });
 
     it('stops and clears listeners if stopped', () => {
-      const catchSignal = EscalationEventDefinition(event, {
+      const catchSignal = new EscalationEventDefinition(event, {
         type: 'bpmn:EscalationEventDefinition',
       });
 
@@ -191,7 +191,7 @@ describe('EscalationEventDefinition', () => {
     it('publishes escalation event on parent broker', () => {
       event.isThrowing = true;
 
-      const definition = EscalationEventDefinition(event, {
+      const definition = new EscalationEventDefinition(event, {
         type: 'bpmn:EscalationEventDefinition',
       });
 

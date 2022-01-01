@@ -69,6 +69,77 @@ Feature('Escalate', () => {
     And('run is completed', async () => {
       return end;
     });
+
+    When('ran again', () => {
+      definition.run();
+    });
+
+    let state;
+    And('stopped at escalate', () => {
+      definition.stop();
+      state = definition.getState();
+    });
+
+    Then('definition can be resumed', () => {
+      expect(state).to.be.ok;
+    });
+
+    When('recovered and resumed', async () => {
+      definition = await prepareSource();
+      signal = definition.waitFor('signal');
+      escalate = definition.waitFor('activity.escalate');
+      end = definition.waitFor('end');
+      definition.recover(state).resume();
+    });
+
+    Then('escalation is monitored', () => {
+      [orderProcess, escalated] = definition.getPostponed();
+      expect(escalated.content).to.have.property('escalation').that.eql({
+        id: 'AmountEscalation',
+        type: 'bpmn:Escalation',
+        messageType: 'escalation',
+        name: 'Escalate amount too big',
+        parent: {
+          id: 'Definition_0',
+          type: 'bpmn:Definitions'
+        }
+      });
+    });
+
+    And('amount above treshold is ordered', () => {
+      const [, orderTask] = orderProcess.getPostponed();
+      expect(orderTask).to.be.ok;
+      expect(orderTask.content.form).to.have.property('fields');
+      orderTask.signal({
+        form: {
+          amount: 11
+        }
+      });
+    });
+
+    Then('amount is escalated', async () => {
+      await escalate;
+      expect(escalated.owner.counters).to.have.property('taken', 2);
+    });
+
+    And('signal is sent', async () => {
+      const endSignal = await signal;
+      expect(endSignal.owner.counters).to.have.property('completed', 2);
+      expect(endSignal.content).to.have.property('message').that.deep.include({
+        id: 'EscalatedSignal',
+        type: 'bpmn:Signal',
+        messageType: 'signal',
+        name: 'Too big signal',
+        parent: {
+          id: 'Definition_0',
+          type: 'bpmn:Definitions',
+        }
+      });
+    });
+
+    And('run is completed', async () => {
+      return end;
+    });
   });
 
   Scenario('a process with start escalation event', () => {
