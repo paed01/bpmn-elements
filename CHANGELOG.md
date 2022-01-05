@@ -24,6 +24,10 @@ Call activity...
 - all Behaviours will be invoked with new
 - unable to make activity throw if emitFatal is called within activity, unsure why?
 
+## Fix
+
+- Signals are now broadcasted to multiple targets, previously it stopped at first catch
+
 # 6.0.0
 
 Isomorphism and state.

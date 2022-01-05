@@ -21,7 +21,7 @@ describe('SignalEventDefinition', () => {
 
   describe('catching', () => {
     it('publishes wait event on parent broker', () => {
-      const catchSignal = SignalEventDefinition(event, {
+      const catchSignal = new SignalEventDefinition(event, {
         type: 'bpmn:SignalEventDefinition',
       });
 
@@ -54,7 +54,7 @@ describe('SignalEventDefinition', () => {
     });
 
     it('completes and clears listeners when signal is caught', () => {
-      const catchSignal = SignalEventDefinition(event, {
+      const catchSignal = new SignalEventDefinition(event, {
         type: 'bpmn:SignalEventDefinition',
       });
 
@@ -88,7 +88,7 @@ describe('SignalEventDefinition', () => {
     });
 
     it('completes and clears listeners if event is a start event and signaled before execution', () => {
-      const catchSignal = SignalEventDefinition({...event, isStart: true}, {
+      const catchSignal = new SignalEventDefinition({...event, isStart: true}, {
         type: 'bpmn:SignalEventDefinition',
       });
 
@@ -123,7 +123,7 @@ describe('SignalEventDefinition', () => {
     });
 
     it('completes and clears listeners if discarded', () => {
-      const catchSignal = SignalEventDefinition(event, {
+      const catchSignal = new SignalEventDefinition(event, {
         type: 'bpmn:SignalEventDefinition',
       });
 
@@ -158,7 +158,7 @@ describe('SignalEventDefinition', () => {
     });
 
     it('stops and clears listeners if stopped', () => {
-      const catchSignal = SignalEventDefinition(event, {
+      const catchSignal = new SignalEventDefinition(event, {
         type: 'bpmn:SignalEventDefinition',
       });
 
@@ -191,13 +191,49 @@ describe('SignalEventDefinition', () => {
 
       expect(event.broker).to.have.property('consumerCount', 0);
     });
+
+
+    it('completes if called with api message type escalate', () => {
+      const definition = new SignalEventDefinition(event, {
+        type: 'bpmn:SignalEventDefinition',
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('execution', 'execute.*', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      definition.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'event',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0'
+            }]
+          },
+        },
+      });
+
+      event.broker.publish('api', 'activity.sometype.event_1_0', {}, {type: 'signal'});
+
+      expect(messages).to.have.length(1);
+      expect(messages[0].fields).to.have.property('routingKey', 'execute.completed');
+      expect(messages[0].content).to.have.property('executionId', 'event_1_0');
+      expect(messages[0].content.parent).to.have.property('id', 'event');
+      expect(messages[0].content.parent).to.have.property('executionId', 'event_1');
+    });
   });
 
   describe('throwing', () => {
     it('publishes signal event on parent broker', () => {
       event.isThrowing = true;
 
-      const definition = SignalEventDefinition(event, {
+      const definition = new SignalEventDefinition(event, {
         type: 'bpmn:SignalEventDefinition',
       });
 
@@ -232,7 +268,7 @@ describe('SignalEventDefinition', () => {
     it('publishes signal with input from execution message', () => {
       event.isThrowing = true;
 
-      const definition = SignalEventDefinition(event, {
+      const definition = new SignalEventDefinition(event, {
         type: 'bpmn:SignalEventDefinition',
         behaviour: {
           signalRef: {
@@ -276,7 +312,7 @@ describe('SignalEventDefinition', () => {
     it('without signal reference publishes anonymous message', () => {
       event.isThrowing = true;
 
-      const definition = SignalEventDefinition(event, {
+      const definition = new SignalEventDefinition(event, {
         type: 'bpmn:SignalEventDefinition',
       });
 
@@ -315,7 +351,7 @@ describe('SignalEventDefinition', () => {
     it('with unknown signal reference publishes message with unknown signal id', () => {
       event.isThrowing = true;
 
-      const definition = SignalEventDefinition(event, {
+      const definition = new SignalEventDefinition(event, {
         type: 'bpmn:SignalEventDefinition',
         behaviour: {
           signalRef: {

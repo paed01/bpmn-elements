@@ -2,136 +2,195 @@ import getPropertyValue from '../getPropertyValue';
 import {brokerSafeId} from '../shared';
 import {cloneContent, shiftParent} from '../messageHelper';
 
+const completedSymbol = Symbol.for('completed');
+const messageQSymbol = Symbol.for('messageQ');
+const executeMessageSymbol = Symbol.for('executeMessage');
+const referenceElementSymbol = Symbol.for('referenceElement');
+const referenceInfoSymbol = Symbol.for('referenceInfo');
+
 export default function SignalEventDefinition(activity, eventDefinition) {
   const {id, broker, environment, isStart, isThrowing} = activity;
   const {type, behaviour = {}} = eventDefinition;
-  const {debug} = environment.Logger(type.toLowerCase());
-  const reference = behaviour.signalRef || {name: 'anonymous'};
-  const referenceElement = reference.id && activity.getActivityById(reference.id);
-  const signalId = referenceElement ? referenceElement.id : 'anonymous';
-  const signalQueueName = `signal-${brokerSafeId(id)}-${brokerSafeId(signalId)}-q`;
 
-  if (!isThrowing && isStart) setupCatch();
+  this.id = id;
+  this.type = type;
 
-  const source = {
-    id,
-    type,
-    reference: {...reference, referenceType: 'signal'},
-    execute: isThrowing ? executeThrow : executeCatch,
+  const reference = this.reference = {
+    name: 'anonymous',
+    ...behaviour.signalRef,
+    referenceType: 'signal',
   };
 
-  return source;
+  this.isThrowing = isThrowing;
+  this.activity = activity;
+  this.environment = environment;
+  this.broker = broker;
+  this.logger = environment.Logger(type.toLowerCase());
+  this[completedSymbol] = false;
 
-  function executeCatch(executeMessage) {
-    let completed;
-
-    const messageContent = cloneContent(executeMessage.content);
-    const {executionId, parent} = messageContent;
-    const parentExecutionId = parent && parent.executionId;
-
-    const {message: referenceMessage, description} = resolveMessage(executeMessage);
-    if (isStart) broker.consume(signalQueueName, onCatchSignal, {noAck: true, consumerTag: `_api-signal-${executionId}`});
-
-    if (completed) return;
-
-    broker.subscribeTmp('api', `activity.#.${parentExecutionId}`, onApiMessage, {noAck: true, consumerTag: `_api-parent-${parentExecutionId}`});
-    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
-    broker.subscribeTmp('api', '#.signal.*', onCatchSignal, {noAck: true, consumerTag: `_api-delegated-${executionId}`});
-
-    debug(`<${executionId} (${id})> expect ${description}`);
-
-    broker.publish('event', 'activity.wait', {
-      ...messageContent,
-      executionId: parentExecutionId,
-      parent: shiftParent(parent),
-      signal: {...referenceMessage},
-    });
-
-    function onCatchSignal(routingKey, message) {
-      if (getPropertyValue(message, 'content.message.id') !== referenceMessage.id) return;
-      completed = true;
-      stop();
-
-      const {type: messageType, correlationId} = message.properties;
-      broker.publish('event', 'activity.consumed', cloneContent(messageContent, {message: {...message.content.message}}), {correlationId, type: messageType});
-
-      return complete(message.content.message, message.properties);
-    }
-
-    function onApiMessage(routingKey, message) {
-      const {type: messageType, correlationId} = message.properties;
-
-      switch (messageType) {
-        case 'signal': {
-          return complete(message.content.message, {correlationId});
-        }
-        case 'discard': {
-          completed = true;
-          stop();
-          return broker.publish('execution', 'execute.discard', {...messageContent}, {correlationId});
-        }
-        case 'stop': {
-          stop();
-          break;
-        }
-      }
-    }
-
-    function complete(output, options) {
-      completed = true;
-      stop();
-      debug(`<${executionId} (${id})> signaled with`, description);
-      return broker.publish('execution', 'execute.completed', {...messageContent, output, state: 'signal'}, options);
-    }
-
-    function stop() {
-      broker.cancel(`_api-signal-${executionId}`);
-      broker.cancel(`_api-parent-${parentExecutionId}`);
-      broker.cancel(`_api-${executionId}`);
-      broker.cancel(`_api-delegated-${executionId}`);
-      if (isStart) broker.purgeQueue(signalQueueName);
-    }
-  }
-
-  function executeThrow(executeMessage) {
-    const messageContent = cloneContent(executeMessage.content);
-    const {executionId, parent} = messageContent;
-    const parentExecutionId = parent && parent.executionId;
-
-    const {message: referenceMessage, description} = resolveMessage(executeMessage);
-
-    debug(`<${executionId} (${id})> throw ${description}`);
-
-    broker.publish('event', 'activity.signal', {
-      ...cloneContent(messageContent),
-      executionId: parentExecutionId,
-      parent: shiftParent(parent),
-      message: {...messageContent.input, ...referenceMessage},
-      state: 'throw',
-    }, {type: 'signal'});
-
-    return broker.publish('execution', 'execute.completed', messageContent);
-  }
-
-  function resolveMessage(message) {
-    if (!referenceElement) {
-      return {
-        message: {...reference},
-        description: 'anonymous signal',
-      };
-    }
-
-    const result = {
-      message: referenceElement.resolve(message),
-    };
-
-    result.description = `${result.message.name} <${result.message.id}>`;
-
-    return result;
-  }
-
-  function setupCatch() {
-    broker.assertQueue(signalQueueName, {autoDelete: false, durable: true});
-    broker.bindQueue(signalQueueName, 'api', '*.signal.#', {durable: true});
+  const referenceElement = this[referenceElementSymbol] = reference.id && activity.getActivityById(reference.id);
+  if (!isThrowing && isStart) {
+    const referenceId = referenceElement ? referenceElement.id : 'anonymous';
+    const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(referenceId)}-q`;
+    this[messageQSymbol] = broker.assertQueue(messageQueueName, {autoDelete: false, durable: true});
+    broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, {durable: true});
   }
 }
+
+const proto = SignalEventDefinition.prototype;
+
+Object.defineProperty(proto, 'executionId', {
+  get() {
+    const message = this[executeMessageSymbol];
+    return message && message.content.executionId;
+  },
+});
+
+proto.execute = function execute(executeMessage) {
+  this[executeMessageSymbol] = executeMessage;
+  this[completedSymbol] = false;
+  return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
+};
+
+proto.executeCatch = function executeCatch(executeMessage) {
+  const executeContent = executeMessage.content;
+  const {executionId, parent} = executeContent;
+  const parentExecutionId = parent && parent.executionId;
+
+  const info = this[referenceInfoSymbol] = this._getReferenceInfo(executeMessage);
+  const broker = this.broker;
+
+  const onCatchMessage = this._onCatchMessage.bind(this);
+  if (this.activity.isStart) {
+    this[messageQSymbol].consume(onCatchMessage, {
+      noAck: true,
+      consumerTag: `_api-signal-${executionId}`,
+    });
+  }
+
+  if (this[completedSymbol]) return;
+
+  const onApiMessage = this._onApiMessage.bind(this);
+  broker.subscribeTmp('api', `activity.#.${parentExecutionId}`, onApiMessage, {
+    noAck: true,
+    consumerTag: `_api-parent-${parentExecutionId}`,
+  });
+  broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
+    noAck: true,
+    consumerTag: `_api-${executionId}`,
+  });
+  broker.subscribeTmp('api', '#.signal.*', onCatchMessage, {
+    noAck: true,
+    consumerTag: `_api-delegated-${executionId}`,
+  });
+
+  this._debug(`expect ${info.description}`);
+
+  const waitContent = cloneContent(executeContent, {
+    executionId: parent.executionId,
+    parent: shiftParent(parent),
+    signal: {...info.message},
+  });
+  waitContent.parent = shiftParent(parent);
+
+  broker.publish('event', 'activity.wait', waitContent);
+};
+
+proto.executeThrow = function executeThrow(executeMessage) {
+  const executeContent = executeMessage.content;
+  const parent = executeContent.parent;
+
+  const info = this[referenceInfoSymbol] = this._getReferenceInfo(executeMessage);
+
+  this._debug(`throw ${info.description}`);
+
+  const throwContent = cloneContent(executeContent, {
+    executionId: parent.executionId,
+    message: {...executeContent.input, ...info.message},
+    state: 'throw',
+  });
+  throwContent.parent = shiftParent(parent);
+
+  const broker = this.broker;
+  broker.publish('event', 'activity.signal', throwContent, {type: 'signal'});
+
+  return broker.publish('execution', 'execute.completed', executeContent);
+};
+
+proto._onCatchMessage = function onCatchMessage(routingKey, message) {
+  const info = this[referenceInfoSymbol];
+  if (getPropertyValue(message, 'content.message.id') !== info.message.id) return;
+  this[completedSymbol] = true;
+  this._stop();
+
+  const {type, correlationId} = message.properties;
+  this.broker.publish('event', 'activity.consumed', cloneContent(this[executeMessageSymbol].content, {
+    message: { ...message.content.message},
+  }), {
+    correlationId,
+    type,
+  });
+
+  return this._complete(message.content.message, message.properties);
+};
+
+proto._onApiMessage = function onApiMessage(routingKey, message) {
+  const {type, correlationId} = message.properties;
+
+  switch (type) {
+    case 'signal': {
+      return this._complete(message.content.message, {correlationId});
+    }
+    case 'discard': {
+      this[completedSymbol] = true;
+      this._stop();
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[executeMessageSymbol].content), {correlationId});
+    }
+    case 'stop': {
+      this._stop();
+      break;
+    }
+  }
+};
+
+proto._complete = function complete(output, options) {
+  this[completedSymbol] = true;
+  this._stop();
+  this._debug(`signaled with ${this[referenceInfoSymbol].description}`);
+  return this.broker.publish('execution', 'execute.completed', cloneContent(this[executeMessageSymbol].content, {
+    output,
+    state: 'signal',
+  }), options);
+};
+
+proto._stop = function stop() {
+  const broker = this.broker;
+  const {executionId, parent} = this[executeMessageSymbol].content;
+  broker.cancel(`_api-signal-${executionId}`);
+  broker.cancel(`_api-parent-${parent.executionId}`);
+  broker.cancel(`_api-${executionId}`);
+  broker.cancel(`_api-delegated-${executionId}`);
+  if (this.activity.isStart) this[messageQSymbol].purge();
+};
+
+proto._getReferenceInfo = function getReferenceInfo(message) {
+  const referenceElement = this[referenceElementSymbol];
+  if (!referenceElement) {
+    return {
+      message: {...this.reference},
+      description: 'anonymous signal',
+    };
+  }
+
+  const result = {
+    message: referenceElement.resolve(message),
+  };
+
+  result.description = `${result.message.name} <${result.message.id}>`;
+
+  return result;
+};
+
+proto._debug = function debug(msg) {
+  this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
+};

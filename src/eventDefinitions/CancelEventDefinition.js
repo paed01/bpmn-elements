@@ -1,25 +1,28 @@
 import {brokerSafeId} from '../shared';
 import {cloneContent, shiftParent} from '../messageHelper';
 
-const cancelQSymbol = Symbol.for('cancelQ');
+const messageQSymbol = Symbol.for('cancelQ');
 const completedSymbol = Symbol.for('completed');
 const executeMessageSymbol = Symbol.for('executeMessage');
 
 export default function CancelEventDefinition(activity, eventDefinition) {
   const {id, broker, environment, isThrowing} = activity;
+  const type = eventDefinition.type;
+
   this.id = id;
-  const type = this.type = eventDefinition.type;
+  this.type = type;
   this.reference = {referenceType: 'cancel'};
   this.isThrowing = isThrowing;
   this.activity = activity;
-  this.environment = activity.environment;
+  this.environment = environment;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
   this[completedSymbol] = false;
+
   if (!isThrowing) {
-    const cancelQueueName = `cancel-${brokerSafeId(id)}-q`;
-    this[cancelQSymbol] = broker.assertQueue(cancelQueueName, {autoDelete: false, durable: true});
-    broker.bindQueue(cancelQueueName, 'api', '*.cancel.#', {durable: true, priority: 400});
+    const messageQueueName = `cancel-${brokerSafeId(id)}-q`;
+    this[messageQSymbol] = broker.assertQueue(messageQueueName, {autoDelete: false, durable: true});
+    broker.bindQueue(messageQueueName, 'api', '*.cancel.#', {durable: true, priority: 400});
   }
 }
 
@@ -45,7 +48,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
 
   const broker = this.broker;
   const onCatchMessage = this._onCatchMessage.bind(this);
-  this[cancelQSymbol].consume(onCatchMessage, {
+  this[messageQSymbol].consume(onCatchMessage, {
     noAck: true,
     consumerTag: `_oncancel-${executionId}`,
   });
@@ -162,7 +165,7 @@ proto._stop = function stop() {
   broker.cancel(`_oncancel-${executionId}`);
   broker.cancel(`_oncancelend-${executionId}`);
   broker.cancel(`_onattached-cancel-${executionId}`);
-  this[cancelQSymbol].purge();
+  this[messageQSymbol].purge();
 };
 
 proto._debug = function debug(msg) {
