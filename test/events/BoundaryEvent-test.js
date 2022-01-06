@@ -262,7 +262,7 @@ describe('BoundaryEvent', () => {
           attachedTo,
           get eventDefinitions() {
             const self = this;
-            return self._eds || (self._eds = [ErrorEventDefinition(self, {}), MessageEventDefinition(self, {})]);
+            return self._eds || (self._eds = [new ErrorEventDefinition(self, {}), new MessageEventDefinition(self, {})]);
           }
         };
         const behaviour = new BoundaryEventBehaviour(activity, {

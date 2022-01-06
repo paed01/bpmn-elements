@@ -88,7 +88,7 @@ proto.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const parent = executeContent.parent;
 
-  const info = this[referenceInfoSymbol] = this._getReferenceInfo(executeMessage);
+  const info = this._getReferenceInfo(executeMessage);
   this._debug(`escalate ${info.description}`);
 
   const broker = this.broker;

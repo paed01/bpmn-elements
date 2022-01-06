@@ -93,9 +93,8 @@ proto.executeCatch = function executeCatch(executeMessage) {
       noAck: true,
       consumerTag: `_api-signal-${executionId}`
     });
+    if (this[completedSymbol]) return;
   }
-
-  if (this[completedSymbol]) return;
 
   const onApiMessage = this._onApiMessage.bind(this);
 
@@ -128,7 +127,7 @@ proto.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const parent = executeContent.parent;
 
-  const info = this[referenceInfoSymbol] = this._getReferenceInfo(executeMessage);
+  const info = this._getReferenceInfo(executeMessage);
 
   this._debug(`throw ${info.description}`);
 
@@ -144,7 +143,7 @@ proto.executeThrow = function executeThrow(executeMessage) {
   broker.publish('event', 'activity.signal', throwContent, {
     type: 'signal'
   });
-  return broker.publish('execution', 'execute.completed', executeContent);
+  return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
 
 proto._onCatchMessage = function onCatchMessage(routingKey, message) {

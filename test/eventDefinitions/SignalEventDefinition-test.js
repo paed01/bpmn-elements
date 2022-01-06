@@ -192,8 +192,7 @@ describe('SignalEventDefinition', () => {
       expect(event.broker).to.have.property('consumerCount', 0);
     });
 
-
-    it('completes if called with api message type escalate', () => {
+    it('completes if called with api message type signal', () => {
       const definition = new SignalEventDefinition(event, {
         type: 'bpmn:SignalEventDefinition',
       });
