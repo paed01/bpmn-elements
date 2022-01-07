@@ -33,6 +33,7 @@ describe('MessageEventDefinition', () => {
           }
         }
       });
+      expect(catchMessage.executionId, 'executionId').to.be.undefined;
 
       const messages = [];
       event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
@@ -325,11 +326,6 @@ describe('MessageEventDefinition', () => {
         type: 'bpmn:MessageEventDefinition',
       });
 
-      const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.discard', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
-
       catchMessage.execute({
         fields: {},
         content: {
@@ -346,11 +342,9 @@ describe('MessageEventDefinition', () => {
         },
       });
 
-      event.broker.publish('api', 'activity.discard.event_1_0', {}, {type: 'discard'});
+      event.broker.publish('api', 'activity.stop.event_1_0', {}, {type: 'stop'});
 
       event.broker.cancel('_test-tag');
-
-      expect(messages).to.have.length(1);
 
       expect(event.broker).to.have.property('consumerCount', 0);
     });

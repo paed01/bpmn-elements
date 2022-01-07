@@ -169,6 +169,59 @@ describe('EscalationEventDefinition', () => {
       expect(event.broker).to.have.property('consumerCount', 0);
     });
 
+    it('ignores api message if escalate message element id mismatch', () => {
+      const catchSignal = new EscalationEventDefinition({
+        ...event,
+        getActivityById() {
+          return new Escalation({
+            id: 'Escalate_0',
+            name: 'Awake King',
+          }, {environment: new Environment()});
+        },
+      }, {
+        type: 'bpmn:EscalationEventDefinition',
+        behaviour: {
+          escalationRef: {
+            id: 'Escalate_0',
+          },
+        },
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true, consumerTag: '_test-tag'});
+
+
+      event.broker.publish('api', 'activity.escalate.event_1', {
+        message: {
+          id: 'Escalate_1',
+        },
+      });
+
+      catchSignal.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0'
+            }]
+          },
+        },
+      });
+
+      event.broker.cancel('_test-tag');
+
+      expect(messages).to.have.length(0);
+
+      expect(event.broker).to.have.property('consumerCount').that.is.above(1);
+    });
+
     it('completes and clears listeners if discarded', () => {
       const catchSignal = new EscalationEventDefinition(event, {
         type: 'bpmn:EscalationEventDefinition',
@@ -209,11 +262,6 @@ describe('EscalationEventDefinition', () => {
         type: 'bpmn:EscalationEventDefinition',
       });
 
-      const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.discard', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
-
       catchSignal.execute({
         fields: {},
         content: {
@@ -230,11 +278,9 @@ describe('EscalationEventDefinition', () => {
         },
       });
 
-      event.broker.publish('api', 'activity.discard.event_1_0', {}, {type: 'discard'});
+      event.broker.publish('api', 'activity.stop.event_1_0', {}, {type: 'stop'});
 
       event.broker.cancel('_test-tag');
-
-      expect(messages).to.have.length(1);
 
       expect(event.broker).to.have.property('consumerCount', 0);
     });

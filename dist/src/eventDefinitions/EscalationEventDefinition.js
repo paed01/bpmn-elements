@@ -42,10 +42,10 @@ function EscalationEventDefinition(activity, eventDefinition) {
   this.environment = environment;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
-  this[completedSymbol] = false;
   const referenceElement = this[referenceElementSymbol] = reference.id && activity.getActivityById(reference.id);
 
   if (!isThrowing) {
+    this[completedSymbol] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${reference.referenceType}-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(referenceId)}-q`;
     this[messageQSymbol] = broker.assertQueue(messageQueueName, {
@@ -69,12 +69,12 @@ Object.defineProperty(proto, 'executionId', {
 });
 
 proto.execute = function execute(executeMessage) {
-  this[executeMessageSymbol] = executeMessage;
-  this[completedSymbol] = false;
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 
 proto.executeCatch = function executeCatch(executeMessage) {
+  this[executeMessageSymbol] = executeMessage;
+  this[completedSymbol] = false;
   const executeContent = executeMessage.content;
   const {
     executionId,
@@ -93,7 +93,6 @@ proto.executeCatch = function executeCatch(executeMessage) {
     noAck: true,
     consumerTag: `_api-${executionId}`
   });
-  if (this[completedSymbol]) return this._stop();
 
   this._debug(`expect ${info.description}`);
 

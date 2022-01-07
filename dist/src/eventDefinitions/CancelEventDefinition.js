@@ -23,7 +23,7 @@ function CancelEventDefinition(activity, eventDefinition) {
   const type = eventDefinition.type;
   this.id = id;
   this.type = type;
-  this.reference = {
+  const reference = this.reference = {
     referenceType: 'cancel'
   };
   this.isThrowing = isThrowing;
@@ -31,15 +31,15 @@ function CancelEventDefinition(activity, eventDefinition) {
   this.environment = environment;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
-  this[completedSymbol] = false;
 
   if (!isThrowing) {
-    const messageQueueName = `cancel-${(0, _shared.brokerSafeId)(id)}-q`;
+    this[completedSymbol] = false;
+    const messageQueueName = `${reference.referenceType}-${(0, _shared.brokerSafeId)(id)}-q`;
     this[messageQSymbol] = broker.assertQueue(messageQueueName, {
       autoDelete: false,
       durable: true
     });
-    broker.bindQueue(messageQueueName, 'api', '*.cancel.#', {
+    broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, {
       durable: true,
       priority: 400
     });
@@ -56,12 +56,12 @@ Object.defineProperty(proto, 'executionId', {
 });
 
 proto.execute = function execute(executeMessage) {
-  this[executeMessageSymbol] = executeMessage;
-  this[completedSymbol] = false;
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 
 proto.executeCatch = function executeCatch(executeMessage) {
+  this[executeMessageSymbol] = executeMessage;
+  this[completedSymbol] = false;
   const executeContent = executeMessage.content;
   const {
     executionId,
@@ -107,10 +107,11 @@ proto.executeThrow = function executeThrow(executeMessage) {
     isTransaction
   } = this.environment.variables.content || {};
   const executeContent = executeMessage.content;
-  const parent = executeContent.parent;
-
-  this._debug(`throw cancel${isTransaction ? ' transaction' : ''}`);
-
+  const {
+    executionId,
+    parent
+  } = executeContent;
+  this.logger.debug(`<${executionId} (${this.activity.id})> throw cancel${isTransaction ? ' transaction' : ''}`);
   const broker = this.broker;
   const cancelContent = (0, _messageHelper.cloneContent)(executeContent, {
     isTransaction,

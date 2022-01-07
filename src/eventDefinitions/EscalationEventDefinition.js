@@ -26,10 +26,10 @@ export default function EscalationEventDefinition(activity, eventDefinition) {
   this.environment = environment;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
-  this[completedSymbol] = false;
 
   const referenceElement = this[referenceElementSymbol] = reference.id && activity.getActivityById(reference.id);
   if (!isThrowing) {
+    this[completedSymbol] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(referenceId)}-q`;
     this[messageQSymbol] = broker.assertQueue(messageQueueName, {autoDelete: false, durable: true});
@@ -47,12 +47,13 @@ Object.defineProperty(proto, 'executionId', {
 });
 
 proto.execute = function execute(executeMessage) {
-  this[executeMessageSymbol] = executeMessage;
-  this[completedSymbol] = false;
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 
 proto.executeCatch = function executeCatch(executeMessage) {
+  this[executeMessageSymbol] = executeMessage;
+  this[completedSymbol] = false;
+
   const executeContent = executeMessage.content;
   const {executionId, parent} = executeContent;
 
@@ -70,8 +71,6 @@ proto.executeCatch = function executeCatch(executeMessage) {
     consumerTag: `_api-${executionId}`,
   });
 
-  if (this[completedSymbol]) return this._stop();
-
   this._debug(`expect ${info.description}`);
 
   const waitContent = cloneContent(executeContent, {
@@ -86,10 +85,10 @@ proto.executeCatch = function executeCatch(executeMessage) {
 
 proto.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
-  const parent = executeContent.parent;
+  const {executionId, parent} = executeContent;
 
   const info = this._getReferenceInfo(executeMessage);
-  this._debug(`escalate ${info.description}`);
+  this.logger.debug(`<${executionId} (${this.activity.id})> escalate ${info.description}`);
 
   const broker = this.broker;
   const throwContent = cloneContent(executeContent, {

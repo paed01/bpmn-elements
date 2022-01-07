@@ -94,7 +94,7 @@ proto.execute = function execute(executeMessage) {
   });
 };
 
-proto.stop = function stop() {
+proto.stop = function stopTimer() {
   const timer = this[timerSymbol];
   if (timer) this[timerSymbol] = this.environment.timers.clearTimeout(timer);
 };
@@ -161,7 +161,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-proto._stop = function _stop() {
+proto._stop = function stop() {
   this[stoppedSymbol] = true;
   const timer = this[timerSymbol];
   if (timer) this[timerSymbol] = this.environment.timers.clearTimeout(timer);
