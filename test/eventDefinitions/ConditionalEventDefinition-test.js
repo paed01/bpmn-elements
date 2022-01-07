@@ -26,9 +26,8 @@ describe('ConditionalEventDefinition', () => {
     it('publishes condition message with undefined result if expression is empty', () => {
       event.attachedTo = task;
 
-      const condition = ConditionalEventDefinition(event, {
+      const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
-        behaviour: {},
       });
 
       let message;
@@ -62,7 +61,7 @@ describe('ConditionalEventDefinition', () => {
     it('publishes condition message with condition result as output if condition is met', () => {
       event.attachedTo = task;
 
-      const condition = ConditionalEventDefinition(event, {
+      const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
           expression: '${content.output.value}'
@@ -108,11 +107,54 @@ describe('ConditionalEventDefinition', () => {
       expect(completedMessage).to.have.property('content').with.property('output').that.eql({data: 1});
       expect(completedMessage.content).to.have.property('index', 0);
     });
+
+    it('publishes execution error if condition expression throws', () => {
+      event.attachedTo = task;
+
+      event.environment.addService('badService', function condition() {
+        throw new Error('Unexpected');
+      });
+
+      const condition = new ConditionalEventDefinition(event, {
+        behaviour: {
+          expression: '${environment.services.badService()}',
+        },
+      });
+
+      let message;
+      event.broker.subscribeOnce('execution', 'execute.error', (_, msg) => {
+        message = msg;
+      });
+
+      condition.execute({
+        fields: {},
+        content: {
+          executionId: 'event_0_0',
+          index: 0,
+          parent: {
+            id: 'event',
+            executionId: 'event_0',
+          },
+        },
+      });
+
+      task.broker.publish('execution', 'execute.completed', {
+        id: 'task',
+        executionId: 'task_0',
+        output: {
+          value: {data: 1}
+        }
+      });
+
+      expect(message).to.be.ok;
+      expect(message).to.have.property('content').with.property('error').that.is.ok;
+      expect(message.content).to.have.property('index', 0);
+    });
   });
 
   describe('wait', () => {
     it('publishes condition message with undefined result if expression is empty', () => {
-      const condition = ConditionalEventDefinition(event, {
+      const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {},
       });
@@ -148,7 +190,7 @@ describe('ConditionalEventDefinition', () => {
     });
 
     it('publishes condition message with condition result as output if condition is met', () => {
-      const condition = ConditionalEventDefinition(event, {
+      const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
           expression: '${content.message.value}'
@@ -195,7 +237,7 @@ describe('ConditionalEventDefinition', () => {
     });
 
     it('discard closes consumers and publish discard message', () => {
-      const condition = ConditionalEventDefinition(event, {
+      const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
           expression: '${content.output.value}'
@@ -237,7 +279,7 @@ describe('ConditionalEventDefinition', () => {
 
   describe('condition met', () => {
     it('wait condition closes consumers', () => {
-      const condition = ConditionalEventDefinition(event, {
+      const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
           expression: '${content.message.value}'
@@ -270,7 +312,7 @@ describe('ConditionalEventDefinition', () => {
     it('bound condition completed close consumers', () => {
       event.attachedTo = task;
 
-      const condition = ConditionalEventDefinition(event, {
+      const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
           expression: '${content.output.value}'
@@ -312,7 +354,7 @@ describe('ConditionalEventDefinition', () => {
 
   describe('stop', () => {
     it('wait condition stop closes consumers', () => {
-      const condition = ConditionalEventDefinition(event, {
+      const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
           expression: '${content.output.value}'
@@ -345,7 +387,7 @@ describe('ConditionalEventDefinition', () => {
     it('bound condition stop closes consumers', () => {
       event.attachedTo = task;
 
-      const condition = ConditionalEventDefinition(event, {
+      const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
           expression: '${content.output.value}'

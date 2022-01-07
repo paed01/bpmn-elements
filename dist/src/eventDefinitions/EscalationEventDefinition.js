@@ -108,12 +108,14 @@ proto.executeCatch = function executeCatch(executeMessage) {
 
 proto.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
-  const parent = executeContent.parent;
+  const {
+    executionId,
+    parent
+  } = executeContent;
 
   const info = this._getReferenceInfo(executeMessage);
 
-  this._debug(`escalate ${info.description}`);
-
+  this.logger.debug(`<${executionId} (${this.activity.id})> escalate ${info.description}`);
   const broker = this.broker;
   const throwContent = (0, _messageHelper.cloneContent)(executeContent, {
     executionId: parent.executionId,
