@@ -27,6 +27,104 @@ const behaviours = {
 };
 
 describe('Activity', () => {
+  describe('properties', () => {
+    it('isEnd is truthy when no outbound flows', () => {
+      const sequenceFlows = [];
+      const context = getContext({
+        getOutboundSequenceFlows() {
+          return sequenceFlows;
+        },
+      });
+
+      let activity = new Activity(behaviours.Behaviour, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+      }, context);
+
+      expect(activity).to.have.property('isEnd', true);
+
+      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      sequenceFlows.push(sequenceFlow);
+
+      activity = new Activity(behaviours.Behaviour, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+      }, context);
+
+      expect(activity).to.have.property('isEnd', false);
+    });
+
+    it('isMultiInstance indicates multi instance', () => {
+      const sequenceFlows = [];
+      const context = getContext({
+        getOutboundSequenceFlows() {
+          return sequenceFlows;
+        },
+      });
+
+      let activity = new Activity(behaviours.Behaviour, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+      }, context);
+
+      expect(activity).to.have.property('isMultiInstance', false);
+
+      activity = new Activity(behaviours.Behaviour, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+        behaviour: {
+          loopCharacteristics: {},
+        },
+      }, context);
+
+      expect(activity).to.have.property('isMultiInstance', true);
+    });
+
+    it('isForCompensation indicates compensation behaviour', () => {
+      const associations = [];
+      const context = getContext({
+        getInboundAssociations() {
+          return associations;
+        },
+      });
+
+      let activity = new Activity(behaviours.Behaviour, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+      }, context);
+
+      expect(activity).to.have.property('isForCompensation', false);
+
+      activity = new Activity(behaviours.Behaviour, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+        behaviour: {
+          isForCompensation: true,
+        },
+      }, context);
+
+      expect(activity).to.have.property('isForCompensation', true);
+    });
+  });
+
   describe('run on inbound', () => {
     it('starts run when inbound sequence flow is taken', () => {
       const sequenceFlows = [];
@@ -749,6 +847,70 @@ describe('Activity', () => {
       return leave;
     });
 
+    it('runs discard if not executing', async () => {
+      const sequenceFlows = [];
+      const context = getContext({
+        getOutboundSequenceFlows() {
+          return sequenceFlows;
+        },
+      });
+
+      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      sequenceFlows.push(sequenceFlow);
+
+      function SpecialBehaviour() {
+        return {
+          execute() {},
+        };
+      }
+
+      const activity = new Activity(SpecialBehaviour, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+      }, context);
+
+      const leave = activity.waitFor('leave');
+      activity.discard();
+
+      expect(sequenceFlow.counters).to.have.property('discard', 1);
+
+      return leave;
+    });
+
+    it('discards on enter', async () => {
+      const sequenceFlows = [];
+      const context = getContext({
+        getOutboundSequenceFlows() {
+          return sequenceFlows;
+        },
+      });
+
+      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      sequenceFlows.push(sequenceFlow);
+
+      const activity = new Activity(behaviours.CompleteBehaviour, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+      }, context);
+
+      activity.broker.subscribeOnce('event', 'activity.enter', () => {
+        activity.discard();
+      });
+      const leave = activity.waitFor('leave');
+
+      activity.run();
+
+      await leave;
+
+      expect(sequenceFlow.counters).to.have.property('discard', 1);
+    });
+
     it('discards on end', async () => {
       const sequenceFlows = [];
       const context = getContext({
@@ -987,6 +1149,27 @@ describe('Activity', () => {
       expect(activity.broker.getExchange('api')).to.have.property('bindingCount', 0);
       expect(activity.broker.getQueue('execution-q')).to.have.property('consumerCount', 0);
       expect(activity.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
+    });
+
+    it('stops once', () => {
+      const activity = getActivity(undefined, behaviours.Behaviour);
+
+      activity.run();
+
+      const messages = [];
+      activity.broker.subscribeTmp('event', 'activity.stop', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true, consumerTag: '_test-tag'});
+
+      activity.stop();
+      activity.stop();
+
+      expect(activity.stopped).to.be.true;
+
+      activity.broker.cancel('_test-tag');
+
+      expect(activity.broker.consumerCount, 'no consumers').to.equal(0);
+      expect(messages, 'stop events').to.have.length(1);
     });
   });
 
@@ -2318,6 +2501,28 @@ describe('Activity', () => {
     });
   });
 
+  describe('evaluateOutbound()', () => {
+    it('calls callback if no outbound flows', (done) => {
+      const context = getContext({
+        getOutboundSequenceFlows() {
+          return [];
+        },
+      });
+
+      const activity = new Activity(behaviours.CompleteBehaviour, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+      }, context);
+
+      activity.evaluateOutbound({
+        content: {},
+      }, false, done);
+    });
+  });
+
   describe('inbound associations', () => {
     it('starts compensation task run when inbound association complete', () => {
       const associations = [];
@@ -2387,6 +2592,58 @@ describe('Activity', () => {
       expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 0);
 
       expect(activity.counters).to.have.property('taken', 2);
+    });
+  });
+
+  describe('stepping with next()', () => {
+    it('ignored if environment step is falsy', () => {
+      const activity = new Activity(behaviours.Behaviour, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+      }, getContext());
+
+      activity.run();
+      activity.next();
+    });
+
+    it('ignored if not running', () => {
+      const context = getContext();
+      context.environment.settings.step = true;
+      const activity = new Activity(behaviours.Behaviour, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+      }, context);
+
+      activity.next();
+      expect(activity.isRunning).to.false;
+    });
+
+    it('ignored if executing', () => {
+      const context = getContext();
+      context.environment.settings.step = true;
+      const activity = new Activity(behaviours.Behaviour, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+      }, context);
+
+      activity.run();
+      expect(activity).to.have.property('status', 'entered');
+      activity.next();
+      expect(activity).to.have.property('status', 'started');
+      activity.next();
+      expect(activity).to.have.property('status', 'executing');
+      activity.next();
+      expect(activity).to.have.property('status', 'executing');
+      activity.next();
     });
   });
 });

@@ -59,7 +59,7 @@ function EventBroker(brokerOwner, options, onBrokerReturn) {
 
   const broker = this.broker = Broker(brokerOwner);
   broker.assertExchange('event', 'topic', options);
-  broker.on('return', onBrokerReturn ? onBrokerReturn.bind(brokerOwner) : this.onBrokerReturnFn.bind(this));
+  broker.on('return', onBrokerReturn ? onBrokerReturn.bind(brokerOwner) : this._onBrokerReturnFn.bind(this));
 
   this.on = this.on.bind(this);
   this.once = this.once.bind(this);
@@ -69,7 +69,7 @@ function EventBroker(brokerOwner, options, onBrokerReturn) {
 }
 
 EventBroker.prototype.on = function on(eventName, callback, eventOptions = { once: false }) {
-  const key = this.getEventRoutingKey(eventName);
+  const key = this._getEventRoutingKey(eventName);
 
   if (eventOptions.once) return this.broker.subscribeOnce('event', key, eventCallback, eventOptions);
   return this.broker.subscribeTmp('event', key, eventCallback, {...eventOptions, noAck: true});
@@ -85,7 +85,7 @@ EventBroker.prototype.once = function once(eventName, callback, eventOptions = {
 };
 
 EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
-  const key = this.getEventRoutingKey(eventName);
+  const key = this._getEventRoutingKey(eventName);
 
   return new Promise((resolve, reject) => {
     const consumers = [
@@ -113,14 +113,22 @@ EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
   });
 };
 
-EventBroker.prototype.onBrokerReturnFn = function onBrokerReturnFn(message) {
+EventBroker.prototype.emit = function emit(eventName, content, props) {
+  this.broker.publish('event', `${this.eventPrefix}.${eventName}`, {...content}, {type: eventName, ...props});
+};
+
+EventBroker.prototype.emitFatal = function emitFatal(error, content) {
+  this.emit('error', {...content, error}, {mandatory: true});
+};
+
+EventBroker.prototype._onBrokerReturnFn = function onBrokerReturnFn(message) {
   if (message.properties.type === 'error') {
     const err = makeErrorFromMessage(message);
     throw err;
   }
 };
 
-EventBroker.prototype.getEventRoutingKey = function getEventRoutingKey(eventName) {
+EventBroker.prototype._getEventRoutingKey = function getEventRoutingKey(eventName) {
   if (eventName.indexOf('.') > -1) return eventName;
 
   switch (eventName) {
@@ -131,12 +139,4 @@ EventBroker.prototype.getEventRoutingKey = function getEventRoutingKey(eventName
       return `${this.eventPrefix}.${eventName}`;
     }
   }
-};
-
-EventBroker.prototype.emit = function emit(eventName, content, props) {
-  this.broker.publish('event', `${this.eventPrefix}.${eventName}`, {...content}, {type: eventName, ...props});
-};
-
-EventBroker.prototype.emitFatal = function emitFatal(error, content) {
-  this.emit('error', {...content, error}, {mandatory: true});
 };
