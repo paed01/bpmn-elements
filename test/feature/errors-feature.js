@@ -781,6 +781,80 @@ Feature('Errors', () => {
       });
     });
   });
+
+  Scenario('strict mode', () => {
+    let context, definition, serviceCallback, source;
+    Given('a service task with a catch anonymous error boundary event', async () => {
+      source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="Process_0" isExecutable="true">
+          <serviceTask id="service" implementation="\${environment.services.get}" />
+          <boundaryEvent id="catchError" attachedToRef="service">
+            <errorEventDefinition errorRef="Error_0" />
+          </boundaryEvent>
+        </process>
+        <error id="Error_0" errorCode="404" />
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      context.environment.addService('get', function get(_, next) {
+        serviceCallback = next;
+      });
+      definition = new Definition(context, {
+        settings: {
+          strict: true,
+        }
+      });
+    });
+
+    let errored, end;
+    When('definition is ran in strict mode', () => {
+      errored = definition.waitFor('error');
+      definition.run();
+    });
+
+    And('service encounters custom error with error code that match known error', () => {
+      const error = new Error('Not found');
+      error.code = 404;
+      serviceCallback(error);
+    });
+
+    Then('run is errored', async () => {
+      const err = await errored;
+      expect(err.content.error)
+        .to.have.property('source')
+        .with.property('content')
+        .with.property('id', 'service');
+    });
+
+    And('error was not caught', () => {
+      const catchError = definition.getActivityById('catchError');
+      expect(catchError.counters).to.have.property('taken', 0);
+      expect(catchError.counters).to.have.property('discarded', 1);
+    });
+
+    When('definition is ran again in non-strict mode', () => {
+      end = definition.waitFor('end');
+      definition.environment.settings.strict = false;
+      definition.run();
+    });
+
+    And('service encounters custom error with error code that match known error', () => {
+      const error = new Error('Not found');
+      error.code = 404;
+      serviceCallback(error);
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('error was caught', () => {
+      const catchError = definition.getActivityById('catchError');
+      expect(catchError.counters).to.have.property('taken', 1);
+      expect(catchError.counters).to.have.property('discarded', 1);
+    });
+  });
 });
 
 async function prepareSource() {
