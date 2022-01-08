@@ -15,7 +15,7 @@ describe('LinkEventDefinition', () => {
 
   describe('catching', () => {
     it('publishes wait event on parent broker', () => {
-      const catchSignal = LinkEventDefinition(event, {
+      const catchSignal = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
         behaviour: { name: 'LINKA' }
       });
@@ -49,7 +49,7 @@ describe('LinkEventDefinition', () => {
     });
 
     it('completes and clears listeners when signal is caught', () => {
-      const catchSignal = LinkEventDefinition(event, {
+      const catchSignal = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
         behaviour: { name: 'LINKA' }
       });
@@ -84,7 +84,7 @@ describe('LinkEventDefinition', () => {
     });
 
     it('completes and clears listeners if signaled before execution', () => {
-      const catchSignal = LinkEventDefinition(event, {
+      const catchSignal = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
         behaviour: { name: 'LINKA' }
       });
@@ -120,7 +120,7 @@ describe('LinkEventDefinition', () => {
     });
 
     it('completes and clears listeners if discarded', () => {
-      const catchSignal = LinkEventDefinition(event, {
+      const catchSignal = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
         behaviour: { name: 'LINKA' }
       });
@@ -156,7 +156,7 @@ describe('LinkEventDefinition', () => {
     });
 
     it('stops and clears listeners if stopped', () => {
-      const catchSignal = LinkEventDefinition(event, {
+      const catchSignal = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
         behaviour: { name: 'LINKA' }
       });
@@ -190,13 +190,48 @@ describe('LinkEventDefinition', () => {
 
       expect(event.broker).to.have.property('consumerCount', 0);
     });
+
+    it('ignores link message on link name mismatch', () => {
+      const catchSignal = new LinkEventDefinition(event, {
+        behaviour: { name: 'LINKA' }
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true, consumerTag: '_test-tag'});
+
+      catchSignal.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0'
+            }]
+          },
+        },
+      });
+
+      event.broker.cancel('_test-tag');
+
+      event.broker.publish('api', 'activity.link.event_1', {message: {linkName: 'LINKB'}});
+
+      expect(messages).to.have.length(0);
+
+      expect(event.broker).to.have.property('consumerCount').that.is.above(1);
+    });
   });
 
   describe('throwing', () => {
     it('publishes signal event on parent broker', () => {
       event.isThrowing = true;
 
-      const definition = LinkEventDefinition(event, {
+      const definition = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
         behaviour: { name: 'LINKA' }
       });
@@ -232,7 +267,7 @@ describe('LinkEventDefinition', () => {
     it('publishes signal discard event on parent broker if parent is discarded', () => {
       event.isThrowing = true;
 
-      LinkEventDefinition(event, {
+      new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
         behaviour: { name: 'LINKA' }
       });

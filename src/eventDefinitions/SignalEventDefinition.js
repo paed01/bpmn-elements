@@ -73,7 +73,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
   const onApiMessage = this._onApiMessage.bind(this);
   broker.subscribeTmp('api', `activity.#.${parentExecutionId}`, onApiMessage, {
     noAck: true,
-    consumerTag: `_api-parent-${parentExecutionId}`,
+    consumerTag: `_api-parent-${executionId}`,
   });
   broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
     noAck: true,
@@ -88,7 +88,6 @@ proto.executeCatch = function executeCatch(executeMessage) {
 
   const waitContent = cloneContent(executeContent, {
     executionId: parent.executionId,
-    parent: shiftParent(parent),
     signal: {...info.message},
   });
   waitContent.parent = shiftParent(parent);
@@ -164,10 +163,9 @@ proto._complete = function complete(output, options) {
 };
 
 proto._stop = function stop() {
-  const broker = this.broker;
-  const {executionId, parent} = this[executeMessageSymbol].content;
+  const broker = this.broker, executionId = this.executionId;
   broker.cancel(`_api-signal-${executionId}`);
-  broker.cancel(`_api-parent-${parent.executionId}`);
+  broker.cancel(`_api-parent-${executionId}`);
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_api-delegated-${executionId}`);
   if (this.activity.isStart) this[messageQSymbol].purge();

@@ -82,7 +82,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
 
   broker.subscribeTmp('api', `activity.#.${parentExecutionId}`, onApiMessage, {
     noAck: true,
-    consumerTag: `_api-parent-${parentExecutionId}`
+    consumerTag: `_api-parent-${executionId}`
   });
   broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
     noAck: true,
@@ -202,12 +202,9 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
 };
 
 proto._stop = function stop() {
-  const broker = this.broker;
-  const {
-    executionId,
-    parent
-  } = this[executeMessageSymbol].content;
-  broker.cancel(`_api-parent-${parent.executionId}`);
+  const broker = this.broker,
+        executionId = this.executionId;
+  broker.cancel(`_api-parent-${executionId}`);
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_oncancel-${executionId}`);
   broker.cancel(`_oncancelend-${executionId}`);

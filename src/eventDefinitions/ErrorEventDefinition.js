@@ -53,7 +53,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
   this[executeMessageSymbol] = executeMessage;
   this[completedSymbol] = false;
 
-  const executeContent = cloneContent(executeMessage.content);
+  const executeContent = executeMessage.content;
   const {executionId, parent} = executeContent;
   const parentExecutionId = parent && parent.executionId;
 
@@ -98,7 +98,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
 };
 
 proto.executeThrow = function executeThrow(executeMessage) {
-  const executeContent = cloneContent(executeMessage.content);
+  const executeContent = executeMessage.content;
   const {executionId, parent} = executeContent;
 
   const info = this._getReferenceInfo(executeMessage);
