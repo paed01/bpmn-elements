@@ -39,7 +39,6 @@ function MessageEventDefinition(activity, eventDefinition) {
   };
   this.isThrowing = isThrowing;
   this.activity = activity;
-  this.environment = environment;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
   const referenceElement = this[referenceElementSymbol] = reference.id && activity.getActivityById(reference.id);
@@ -74,7 +73,7 @@ proto.execute = function execute(executeMessage) {
 proto.executeCatch = function executeCatch(executeMessage) {
   this[executeMessageSymbol] = executeMessage;
   this[completedSymbol] = false;
-  const executeContent = (0, _messageHelper.cloneContent)(executeMessage.content);
+  const executeContent = executeMessage.content;
   const {
     executionId,
     parent

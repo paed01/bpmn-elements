@@ -12,9 +12,7 @@ describe('TerminateEventDefinition', () => {
   });
 
   it('publishes process terminate on parent broker and completes', () => {
-    const terminateDefinition = TerminateEventDefinition(event, {
-      type: 'bpmn:MessageEventDefinition',
-    });
+    const terminateDefinition = new TerminateEventDefinition(event, {});
 
     const messages = [];
     event.broker.subscribeTmp('event', 'process.*', (_, msg) => {

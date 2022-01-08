@@ -23,7 +23,6 @@ export default function MessageEventDefinition(activity, eventDefinition) {
 
   this.isThrowing = isThrowing;
   this.activity = activity;
-  this.environment = environment;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
 
@@ -54,7 +53,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
   this[executeMessageSymbol] = executeMessage;
   this[completedSymbol] = false;
 
-  const executeContent = cloneContent(executeMessage.content);
+  const executeContent = executeMessage.content;
   const {executionId, parent} = executeContent;
   const parentExecutionId = parent && parent.executionId;
 

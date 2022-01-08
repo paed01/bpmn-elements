@@ -20,7 +20,6 @@ export default function LinkEventDefinition(activity, eventDefinition) {
 
   this.isThrowing = isThrowing;
   this.activity = activity;
-  this.environment = environment;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
   this[completedSymbol] = false;
@@ -88,7 +87,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
 };
 
 proto.executeThrow = function executeThrow(executeMessage) {
-  const executeContent = cloneContent(executeMessage.content);
+  const executeContent = executeMessage.content;
   const {executionId, parent} = executeContent;
   const parentExecutionId = parent && parent.executionId;
 

@@ -7,34 +7,32 @@ exports.default = TerminateEventDefinition;
 
 var _messageHelper = require("../messageHelper");
 
-function TerminateEventDefinition(activity, eventDefinition = {}) {
+function TerminateEventDefinition(activity, eventDefinition) {
   const {
     id,
     broker,
     environment
   } = activity;
   const {
-    type = 'terminateeventdefinition'
+    type = 'TerminateEventDefinition'
   } = eventDefinition;
-  const {
-    debug
-  } = environment.Logger(type.toLowerCase());
-  const source = {
-    id,
-    type,
-    execute
-  };
-  return source;
-
-  function execute(executeMessage) {
-    const content = (0, _messageHelper.cloneContent)(executeMessage.content);
-    const terminateContent = (0, _messageHelper.cloneContent)(content);
-    terminateContent.parent = (0, _messageHelper.shiftParent)(terminateContent.parent);
-    terminateContent.state = 'terminate';
-    debug(`<${content.executionId} (${content.id})> terminate`);
-    broker.publish('event', 'process.terminate', terminateContent, {
-      type: 'terminate'
-    });
-    broker.publish('execution', 'execute.completed', content);
-  }
+  this.id = id;
+  this.type = type;
+  this.activity = activity;
+  this.broker = broker;
+  this.logger = environment.Logger(type.toLowerCase());
 }
+
+TerminateEventDefinition.prototype.execute = function execute(executeMessage) {
+  const executeContent = executeMessage.content;
+  const throwContent = (0, _messageHelper.cloneContent)(executeContent, {
+    state: 'terminate'
+  });
+  throwContent.parent = (0, _messageHelper.shiftParent)(executeContent.parent);
+  this.logger.debug(`<${executeContent.executionId} (${executeContent.id})> terminate`);
+  const broker = this.broker;
+  broker.publish('event', 'process.terminate', throwContent, {
+    type: 'terminate'
+  });
+  broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
+};

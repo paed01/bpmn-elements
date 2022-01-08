@@ -15,7 +15,6 @@ export default function CompensateEventDefinition(activity, eventDefinition, con
   const reference = this.reference = {referenceType: 'compensate'};
   this.isThrowing = isThrowing;
   this.activity = activity;
-  this.environment = environment;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
 

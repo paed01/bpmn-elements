@@ -23,7 +23,6 @@ export default function EscalationEventDefinition(activity, eventDefinition) {
 
   this.isThrowing = isThrowing;
   this.activity = activity;
-  this.environment = environment;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
 
