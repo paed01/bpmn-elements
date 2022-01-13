@@ -44,7 +44,7 @@ function makeErrorFromMessage(errorMessage) {
   if (isKnownError(content)) return content;
 
   const {error} = content;
-  if (!error) return;
+  if (!error) return new Error(`Malformatted error message with routing key ${errorMessage.fields && errorMessage.fields.routingKey}`);
 
   if (isKnownError(error)) return error;
   switch (error.type) {
@@ -57,10 +57,10 @@ function makeErrorFromMessage(errorMessage) {
   }
 
   return error;
+}
 
-  function isKnownError(test) {
-    if (test instanceof Error) return test;
-    if (test instanceof ActivityError) return test;
-    if (test instanceof BpmnError) return test;
-  }
+function isKnownError(test) {
+  if (test instanceof Error) return test;
+  if (test instanceof ActivityError) return test;
+  if (test instanceof BpmnError) return test;
 }

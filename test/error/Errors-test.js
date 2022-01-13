@@ -320,5 +320,16 @@ describe('Errors', () => {
         }
       })).to.be.instanceof(BpmnError).and.have.property('name', 'MyError');
     });
+
+    it('returns Error if error is missing from content', () => {
+      expect(makeErrorFromMessage({
+        fields: {routingKey: 'my.error'},
+        content: {},
+      })).to.be.instanceof(Error).that.match(/my\.error/);
+
+      expect(makeErrorFromMessage({
+        content: {},
+      })).to.be.instanceof(Error).that.match(/malformatted/i);
+    });
   });
 });

@@ -637,6 +637,83 @@ describe('Definition', () => {
     });
   });
 
+  describe('sendMessage([message])', () => {
+    it('sends anonymous message if called without argument', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start">
+            <messageEventDefinition />
+          </startEvent>
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+
+      const definition = new Definition(context);
+      definition.run();
+      definition.sendMessage();
+
+      expect(definition.getActivityById('start').counters).to.have.property('taken', 1);
+    });
+
+    it('can double as signal', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start">
+            <signalEventDefinition signalRef="signal_0" />
+          </startEvent>
+        </process>
+        <signal id="signal_0" />
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+
+      const definition = new Definition(context);
+      definition.run();
+      definition.sendMessage({id: 'signal_0'});
+
+      expect(definition.getActivityById('start').counters).to.have.property('taken', 1);
+    });
+
+    it('defaults to api message type message', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start">
+            <messageEventDefinition messageRef="message_0" />
+          </startEvent>
+        </process>
+        <message id="message_0" />
+      </definitions>`;
+
+      const context = await testHelpers.context(source, {
+        types: {
+          Message: function MyMessage() {
+            return {
+              id: 'message_0',
+              resolve() {
+                return {
+                  id: 'message_0',
+                };
+              }
+            };
+          },
+        },
+      });
+
+      const definition = new Definition(context);
+      definition.run();
+      definition.sendMessage({id: 'message_0'});
+
+      expect(definition.getActivityById('start').counters).to.have.property('taken', 1);
+    });
+  });
+
   describe('recover()', () => {
     const source = factory.userTask(undefined, 'recoverDef');
     let context;
@@ -755,6 +832,27 @@ describe('Definition', () => {
       definition.resume();
 
       expect(definition.getPostponed()[0].id).to.equal('userTask');
+    });
+
+    it('is resumable if stopped on error', async () => {
+      const definition = new Definition(context);
+      definition.once('wait', (api) => {
+        api.fail();
+      });
+      definition.once('error', () => {
+        definition.stop();
+      });
+
+      definition.run();
+
+      const error = definition.waitFor('error');
+      definition.resume();
+      await error;
+
+      expect(definition.isRunning).to.be.false;
+      expect(definition.counters).to.have.property('discarded', 1);
+
+      expect(definition.broker).to.have.property('consumerCount', 0);
     });
 
     it('resumes recovered with stopped state', () => {
@@ -1029,6 +1127,65 @@ describe('Definition', () => {
     });
   });
 
+  describe('getApi()', () => {
+    let context;
+    before(async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="flow1" sourceRef="start" targetRef="task1" />
+          <sequenceFlow id="flow2" sourceRef="start" targetRef="task2" />
+          <sequenceFlow id="flow3" sourceRef="start" targetRef="subProcess" />
+          <userTask id="task1" />
+          <userTask id="task2" />
+          <subProcess id="subProcess">
+            <userTask id="task3" />
+          </subProcess>
+          <sequenceFlow id="flow4" sourceRef="task1" targetRef="end" />
+          <sequenceFlow id="flow5" sourceRef="task2" targetRef="end" />
+          <sequenceFlow id="flow6" sourceRef="subProcess" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    it('returns api on each event', () => {
+      const definition = new Definition(context.clone());
+      definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
+        const api = definition.getApi(message);
+        expect(api, `api ${routingKey} ${message.content.id}`).to.be.ok;
+        expect(message.content.type).to.equal(api.content.type);
+      }, {noAck: true});
+
+      definition.run();
+    });
+
+    it('returns undefined if message parent path is not resolved', () => {
+      const definition = new Definition(context.clone());
+
+      let api = false;
+      definition.broker.subscribeTmp('event', 'activity.#', (routingKey, message) => {
+        if (message.content.id === 'task3') {
+          message.content.parent.path = [];
+          api = definition.getApi(message);
+        }
+      }, {noAck: true});
+
+      definition.run();
+
+      expect(api).to.be.undefined;
+    });
+
+    it('without message and running, returns current state api', () => {
+      const definition = new Definition(context.clone());
+      definition.run();
+      expect(definition.getApi()).to.have.property('content').with.property('state', 'start');
+    });
+  });
+
   describe('getExecutableProcesses()', () => {
     let definition;
     before('Given definition is initiated with two processes', async () => {
@@ -1159,6 +1316,33 @@ describe('Definition', () => {
       expect(definition.counters).to.have.property('discarded', 1);
     });
 
+    it('leaves and clears listeners on error', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <serviceTask id="task" implementation="\${environment.services.shaky}" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      context.environment.addService('shaky', (_, next) => {
+        next(Error('unstable'));
+      });
+
+      const definition = new Definition(context);
+
+      definition.once('error', () => {});
+
+      definition.run();
+
+      expect(definition.counters).to.have.property('discarded', 1);
+
+      definition.broker.cancel('_test-tag');
+
+      expect(definition.broker).to.have.property('consumerCount', 0);
+    });
+
     it('emits error on flow condition TypeError', async () => {
       const source = `
       <?xml version="1.0" encoding="UTF-8"?>
@@ -1196,6 +1380,30 @@ describe('Definition', () => {
 
       expect(error).to.be.ok;
       expect(error).to.match(/TypeError.+unsupported/);
+    });
+
+    it('ignores broker mandatory messages that are not of type error', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testError" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <userTask id="task" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const definition = new Definition(context);
+
+      const leave = definition.waitFor('leave');
+
+      definition.once('activity.wait', () => {
+        definition.broker.publish('event', 'definition.fatal', {}, {mandatory: true, type: 'ignore'});
+        definition.signal({id: 'task'});
+      });
+
+      definition.run();
+
+      return leave;
     });
 
     describe('child error', () => {
@@ -1447,65 +1655,6 @@ describe('Definition', () => {
       expect(messages[3].content.parent).to.have.property('path').with.length(2);
       expect(messages[3].content.parent.path[0]).to.have.property('id', 'process1');
       expect(messages[3].content.parent.path[1]).to.have.property('id', 'def1');
-    });
-  });
-
-  describe('getApi()', () => {
-    let context;
-    before(async () => {
-      const source = `
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <process id="theProcess" isExecutable="true">
-          <startEvent id="start" />
-          <sequenceFlow id="flow1" sourceRef="start" targetRef="task1" />
-          <sequenceFlow id="flow2" sourceRef="start" targetRef="task2" />
-          <sequenceFlow id="flow3" sourceRef="start" targetRef="subProcess" />
-          <userTask id="task1" />
-          <userTask id="task2" />
-          <subProcess id="subProcess">
-            <userTask id="task3" />
-          </subProcess>
-          <sequenceFlow id="flow4" sourceRef="task1" targetRef="end" />
-          <sequenceFlow id="flow5" sourceRef="task2" targetRef="end" />
-          <sequenceFlow id="flow6" sourceRef="subProcess" targetRef="end" />
-          <endEvent id="end" />
-        </process>
-      </definitions>`;
-
-      context = await testHelpers.context(source);
-    });
-
-    it('returns api on each event', () => {
-      const definition = new Definition(context.clone());
-      definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
-        const api = definition.getApi(message);
-        expect(api, `api ${routingKey} ${message.content.id}`).to.be.ok;
-        expect(message.content.type).to.equal(api.content.type);
-      }, {noAck: true});
-
-      definition.run();
-    });
-
-    it('returns undefined if message parent path is not resolved', () => {
-      const definition = new Definition(context.clone());
-
-      let api = false;
-      definition.broker.subscribeTmp('event', 'activity.#', (routingKey, message) => {
-        if (message.content.id === 'task3') {
-          message.content.parent.path = [];
-          api = definition.getApi(message);
-        }
-      }, {noAck: true});
-
-      definition.run();
-
-      expect(api).to.be.undefined;
-    });
-
-    it('without message and running, returns current state api', () => {
-      const definition = new Definition(context.clone());
-      definition.run();
-      expect(definition.getApi()).to.have.property('content').with.property('state', 'start');
     });
   });
 });

@@ -31,7 +31,12 @@ async function context(source, ...args) {
     });
   }
 
-  const serializer = Serializer(moddleCtx, typeResolver, options.extendFn);
+  let resolver = typeResolver;
+  if (options.types) {
+    resolver = TypeResolver({...types, ...options.types});
+  }
+
+  const serializer = Serializer(moddleCtx, resolver, options.extendFn);
 
   const extensions = options && options.extensions && Object.keys(options.extensions).reduce((result, name) => {
     const extension = options.extensions[name].extension;

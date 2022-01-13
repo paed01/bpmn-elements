@@ -5,15 +5,14 @@ import {getUniqueId, getOptionsAndCallback} from '../shared';
 import {makeErrorFromMessage} from '../error/Errors';
 import {cloneMessage, cloneContent} from '../messageHelper';
 
-const brokerSymbol = Symbol.for('broker');
+const consumingSymbol = Symbol.for('consuming');
 const countersSymbol = Symbol.for('counters');
+const execSymbol = Symbol.for('exec');
+const executeMessageSymbol = Symbol.for('executeMessage');
+const messageHandlersSymbol = Symbol.for('messageHandlers');
+const stateMessageSymbol = Symbol.for('stateMessage');
 const statusSymbol = Symbol.for('status');
 const stoppedSymbol = Symbol.for('stopped');
-const consumingSymbol = Symbol.for('consuming');
-const execSymbol = Symbol.for('exec');
-const stateMessageSymbol = Symbol.for('stateMessage');
-const executeMessageSymbol = Symbol.for('executeMessage');
-const onReturnSymbol = Symbol.for('onReturn');
 
 export default Definition;
 
@@ -43,9 +42,16 @@ export function Definition(context, options) {
   this[stoppedSymbol] = false;
   this[execSymbol] = {};
 
-  const onReturn = this[onReturnSymbol] = getBrokerReturnFunction(this);
-  const {broker, on, once, waitFor, emit, emitFatal} = DefinitionBroker(this, onReturn);
-  this[brokerSymbol] = broker;
+  const onBrokerReturn = this._onBrokerReturnFn.bind(this);
+  this[messageHandlersSymbol] = {
+    onBrokerReturn,
+    onApiMessage: this._onApiMessage.bind(this),
+    onRunMessage: this._onRunMessage.bind(this),
+    onExecutionMessage: this._onExecutionMessage.bind(this),
+  };
+
+  const {broker, on, once, waitFor, emit, emitFatal} = DefinitionBroker(this, onBrokerReturn);
+  this.broker = broker;
 
   this.on = on;
   this.once = once;
@@ -54,19 +60,9 @@ export function Definition(context, options) {
   this.emitFatal = emitFatal;
 
   this.logger = environment.Logger(type.toLowerCase());
-
-  this.onRunMessage = this.onRunMessage.bind(this);
-  this.onExecutionMessage = this.onExecutionMessage.bind(this);
 }
 
 const proto = Definition.prototype;
-
-Object.defineProperty(proto, 'broker', {
-  enumerable: true,
-  get() {
-    return this[brokerSymbol];
-  },
-});
 
 Object.defineProperty(proto, 'counters', {
   enumerable: true,
@@ -125,7 +121,7 @@ proto.run = function run(optionsOrCallback, optionalCallback) {
 
   const exec = this[execSymbol];
   exec.executionId = getUniqueId(this.id);
-  const content = this.createMessage({...runOptions});
+  const content = this._createMessage({...runOptions});
 
   const broker = this.broker;
   broker.publish('run', 'run.enter', content);
@@ -134,7 +130,7 @@ proto.run = function run(optionsOrCallback, optionalCallback) {
 
   this.logger.debug(`<${this.executionId} (${this.id})> run`);
 
-  this.activateRunConsumers();
+  this._activateRunConsumers();
 
   return this;
 };
@@ -155,9 +151,9 @@ proto.resume = function resume(callback) {
 
   this.logger.debug(`<${this.executionId} (${this.id})> resume`);
 
-  const content = this.createMessage();
+  const content = this._createMessage();
   this.broker.publish('run', 'run.resume', content, {persistent: false});
-  this.activateRunConsumers();
+  this._activateRunConsumers();
   return this;
 };
 
@@ -224,190 +220,8 @@ proto.shake = function shake(startId) {
   }
 };
 
-proto.activateRunConsumers = function activateRunConsumers() {
-  this[consumingSymbol] = true;
-  const broker = this.broker;
-  broker.subscribeTmp('api', `definition.*.${this.executionId}`, this.onApiMessage.bind(this), {
-    noAck: true,
-    consumerTag: '_definition-api',
-  });
-  broker.getQueue('run-q').assertConsumer(this.onRunMessage, {exclusive: true, consumerTag: '_definition-run'});
-};
-
-proto.deactivateRunConsumers = function deactivateRunConsumers() {
-  const broker = this.broker;
-  broker.cancel('_definition-api');
-  broker.cancel('_definition-run');
-  broker.cancel('_definition-execution');
-  this[consumingSymbol] = false;
-};
-
-proto.stop = function stop() {
-  if (!this.isRunning) return;
-  this.getApi().stop();
-};
-
-proto.createMessage = function createMessage(override) {
-  return {
-    id: this.id,
-    type: this.type,
-    name: this.name,
-    executionId: this.executionId,
-    ...override,
-  };
-};
-
-proto.onRunMessage = function onRunMessage(routingKey, message) {
-  const {content, ack, fields} = message;
-  if (routingKey === 'run.resume') {
-    return this.onResumeMessage(message);
-  }
-
-  const exec = this[execSymbol];
-  this[stateMessageSymbol] = message;
-
-  switch (routingKey) {
-    case 'run.enter': {
-      this.logger.debug(`<${this.executionId} (${this.id})> enter`);
-
-      this[statusSymbol] = 'entered';
-      if (fields.redelivered) break;
-
-      exec.execution = undefined;
-      this.publishEvent('enter', content);
-      break;
-    }
-    case 'run.start': {
-      this.logger.debug(`<${this.executionId} (${this.id})> start`);
-      this[statusSymbol] = 'start';
-      this.publishEvent('start', content);
-      break;
-    }
-    case 'run.execute': {
-      this[statusSymbol] = 'executing';
-      const executeMessage = cloneMessage(message);
-      if (fields.redelivered && !exec.execution) {
-        executeMessage.fields.redelivered = undefined;
-      }
-      this[executeMessageSymbol] = message;
-      this.broker.getQueue('execution-q').assertConsumer(this.onExecutionMessage, {exclusive: true, consumerTag: '_definition-execution'});
-
-      exec.execution = exec.execution || new DefinitionExecution(this, this.context);
-
-      if (executeMessage.fields.redelivered) {
-        this.publishEvent('resume', content);
-      }
-
-      return exec.execution.execute(executeMessage);
-    }
-    case 'run.end': {
-      if (this.status === 'end') break;
-
-      this[countersSymbol].completed++;
-
-      this.logger.debug(`<${this.executionId} (${this.id})> completed`);
-      this[statusSymbol] = 'end';
-      this.broker.publish('run', 'run.leave', content);
-      this.publishEvent('end', content);
-      break;
-    }
-    case 'run.discarded': {
-      if (this.status === 'discarded') break;
-
-      this[countersSymbol].discarded++;
-
-      this[statusSymbol] = 'discarded';
-      this.broker.publish('run', 'run.leave', content);
-      break;
-    }
-    case 'run.error': {
-      this.publishEvent('error', cloneContent(content, {
-        error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
-      }), {mandatory: true});
-      break;
-    }
-    case 'run.leave': {
-      ack();
-      this[statusSymbol] = undefined;
-      this.deactivateRunConsumers();
-
-      this.publishEvent('leave');
-      break;
-    }
-  }
-
-  ack();
-};
-
-proto.onResumeMessage = function onResumeMessage(message) {
-  message.ack();
-
-  const stateMessage = this[stateMessageSymbol];
-  switch (stateMessage.fields.routingKey) {
-    case 'run.enter':
-    case 'run.start':
-    case 'run.discarded':
-    case 'run.end':
-    case 'run.leave':
-      break;
-    default:
-      return;
-  }
-
-  if (!stateMessage.fields.redelivered) return;
-
-  this.debug(`resume from ${this.status}`);
-
-  return this.broker.publish('run', stateMessage.fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
-};
-
-proto.onExecutionMessage = function onExecutionMessage(routingKey, message) {
-  const {content, properties} = message;
-  const messageType = properties.type;
-
-  message.ack();
-
-  switch (messageType) {
-    case 'stopped': {
-      return this.onStop();
-    }
-    case 'error': {
-      this.broker.publish('run', 'run.error', content);
-      this.broker.publish('run', 'run.discarded', content);
-      break;
-    }
-    default: {
-      this.broker.publish('run', 'run.end', content);
-    }
-  }
-
-  const exeuteMessage = this[executeMessageSymbol];
-  if (exeuteMessage) {
-    const ackMessage = exeuteMessage;
-    this[executeMessageSymbol] = null;
-    ackMessage.ack();
-  }
-};
-
-proto.onApiMessage = function onApiMessage(routingKey, message) {
-  if (message.properties.type === 'stop') {
-    const execution = this.execution;
-    if (!execution || execution.completed) {
-      this.onStop();
-    }
-  }
-};
-
-proto.publishEvent = function publishEvent(action, content = {}, msgOpts) {
-  const execution = this.execution;
-  this.broker.publish('event', `definition.${action}`, execution ? execution.createMessage(content) : content, {
-    type: action,
-    ...msgOpts,
-  });
-};
-
 proto.getState = function getState() {
-  return this.createMessage({
+  return this._createMessage({
     status: this.status,
     stopped: this.stopped,
     counters: this.counters,
@@ -479,7 +293,7 @@ proto.sendMessage = function sendMessage(message) {
   let messageType = 'message';
   const reference = message && message.id && this.getElementById(message.id);
   if (reference && reference.resolve) {
-    const resolvedReference = reference.resolve(this.createMessage({message}));
+    const resolvedReference = reference.resolve(this._createMessage({message}));
     messageType = resolvedReference.messageType || messageType;
     messageContent.message = {...message, ...resolvedReference};
   }
@@ -487,27 +301,218 @@ proto.sendMessage = function sendMessage(message) {
   return this.getApi().sendApiMessage(messageType, messageContent, {delegate: true});
 };
 
-proto.onStop = function onStop() {
-  this[stoppedSymbol] = true;
-  this.deactivateRunConsumers();
-  return this.publishEvent('stop');
+proto.stop = function stop() {
+  if (!this.isRunning) return;
+  this.getApi().stop();
 };
 
-proto.reset = function reset() {
+proto._activateRunConsumers = function activateRunConsumers() {
+  this[consumingSymbol] = true;
+  const broker = this.broker;
+  const {onApiMessage, onRunMessage} = this[messageHandlersSymbol];
+  broker.subscribeTmp('api', `definition.*.${this.executionId}`, onApiMessage, {
+    noAck: true,
+    consumerTag: '_definition-api',
+  });
+  broker.getQueue('run-q').assertConsumer(onRunMessage, {
+    exclusive: true,
+    consumerTag: '_definition-run',
+  });
+};
+
+proto._deactivateRunConsumers = function deactivateRunConsumers() {
+  const broker = this.broker;
+  broker.cancel('_definition-api');
+  broker.cancel('_definition-run');
+  broker.cancel('_definition-execution');
+  this[consumingSymbol] = false;
+};
+
+proto._createMessage = function createMessage(override) {
+  return {
+    id: this.id,
+    type: this.type,
+    name: this.name,
+    executionId: this.executionId,
+    ...override,
+  };
+};
+
+proto._onRunMessage = function onRunMessage(routingKey, message) {
+  const {content, ack, fields} = message;
+  if (routingKey === 'run.resume') {
+    return this._onResumeMessage(message);
+  }
+
+  const exec = this[execSymbol];
+  this[stateMessageSymbol] = message;
+
+  switch (routingKey) {
+    case 'run.enter': {
+      this.logger.debug(`<${this.executionId} (${this.id})> enter`);
+
+      this[statusSymbol] = 'entered';
+      if (fields.redelivered) break;
+
+      exec.execution = undefined;
+      this._publishEvent('enter', content);
+      break;
+    }
+    case 'run.start': {
+      this.logger.debug(`<${this.executionId} (${this.id})> start`);
+      this[statusSymbol] = 'start';
+      this._publishEvent('start', content);
+      break;
+    }
+    case 'run.execute': {
+      this[statusSymbol] = 'executing';
+      const executeMessage = cloneMessage(message);
+      if (fields.redelivered && !exec.execution) {
+        executeMessage.fields.redelivered = undefined;
+      }
+      this[executeMessageSymbol] = message;
+      this.broker.getQueue('execution-q').assertConsumer(this[messageHandlersSymbol].onExecutionMessage, {
+        exclusive: true,
+        consumerTag: '_definition-execution',
+      });
+
+      exec.execution = exec.execution || new DefinitionExecution(this, this.context);
+
+      if (executeMessage.fields.redelivered) {
+        this._publishEvent('resume', content);
+      }
+
+      return exec.execution.execute(executeMessage);
+    }
+    case 'run.end': {
+      if (this.status === 'end') break;
+
+      this[countersSymbol].completed++;
+
+      this.logger.debug(`<${this.executionId} (${this.id})> completed`);
+      this[statusSymbol] = 'end';
+      this.broker.publish('run', 'run.leave', content);
+      this._publishEvent('end', content);
+      break;
+    }
+    case 'run.error': {
+      this._publishEvent('error', cloneContent(content, {
+        error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
+      }), {mandatory: true});
+      break;
+    }
+    case 'run.discarded': {
+      if (this.status === 'discarded') break;
+
+      this[countersSymbol].discarded++;
+
+      this[statusSymbol] = 'discarded';
+      this.broker.publish('run', 'run.leave', content);
+      break;
+    }
+    case 'run.leave': {
+      ack();
+      this[statusSymbol] = undefined;
+      this._deactivateRunConsumers();
+
+      this._publishEvent('leave');
+      break;
+    }
+  }
+
+  ack();
+};
+
+proto._onResumeMessage = function onResumeMessage(message) {
+  message.ack();
+
+  const stateMessage = this[stateMessageSymbol];
+
+  switch (stateMessage.fields.routingKey) {
+    case 'run.discarded':
+    case 'run.end':
+    case 'run.leave':
+      break;
+    default:
+      return;
+  }
+
+  if (!stateMessage.fields.redelivered) return;
+
+  this._debug(`resume from ${this.status}`);
+
+  return this.broker.publish('run', stateMessage.fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
+};
+
+proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
+  const {content, properties} = message;
+  const messageType = properties.type;
+
+  message.ack();
+
+  switch (messageType) {
+    case 'stopped': {
+      return this._onStop();
+    }
+    case 'error': {
+      this.broker.publish('run', 'run.error', content);
+      this.broker.publish('run', 'run.discarded', content);
+      break;
+    }
+    default: {
+      this.broker.publish('run', 'run.end', content);
+    }
+  }
+
+  const executeMessage = this[executeMessageSymbol];
+  this[executeMessageSymbol] = null;
+  executeMessage.ack();
+};
+
+proto._onApiMessage = function onApiMessage(routingKey, message) {
+  if (message.properties.type === 'stop') {
+    const execution = this.execution;
+    if (!execution || execution.completed) {
+      this._onStop();
+    }
+  }
+};
+
+proto._publishEvent = function publishEvent(action, content = {}, msgOpts) {
+  const execution = this.execution;
+  this.broker.publish('event', `definition.${action}`, execution ? execution._createMessage(content) : content, {
+    type: action,
+    ...msgOpts,
+  });
+};
+
+proto._onStop = function onStop() {
+  this[stoppedSymbol] = true;
+  this._deactivateRunConsumers();
+  return this._publishEvent('stop');
+};
+
+proto._onBrokerReturnFn = function onBrokerReturn(message) {
+  if (message.properties.type === 'error') {
+    this._deactivateRunConsumers();
+    const err = makeErrorFromMessage(message);
+    throw err;
+  }
+};
+
+proto._reset = function reset() {
   this[execSymbol].executionId = undefined;
-  this.deactivateRunConsumers();
+  this._deactivateRunConsumers();
   this.broker.purgeQueue('run-q');
   this.broker.purgeQueue('execution-q');
 };
 
-proto.debug = function debug(msg) {
+proto._debug = function debug(msg) {
   this.logger.debug(`<${this.id}> ${msg}`);
 };
 
 function addConsumerCallbacks(definition, callback) {
   const broker = definition.broker;
-  broker.off('return', definition[onReturnSymbol]);
-
   clearConsumers();
 
   broker.subscribeOnce('event', 'definition.stop', cbLeave, {consumerTag: '_definition-callback-stop'});
@@ -521,7 +526,7 @@ function addConsumerCallbacks(definition, callback) {
 
   function cbError(_, message) {
     clearConsumers();
-    definition.reset();
+    definition._reset();
     return callback(makeErrorFromMessage(message));
   }
 
@@ -529,16 +534,5 @@ function addConsumerCallbacks(definition, callback) {
     broker.cancel('_definition-callback-stop');
     broker.cancel('_definition-callback-leave');
     broker.cancel('_definition-callback-error');
-    broker.on('return', definition[onReturnSymbol]);
   }
-}
-
-function getBrokerReturnFunction(definition) {
-  return function onBrokerReturn(message) {
-    if (message.properties.type === 'error') {
-      definition.deactivateRunConsumers();
-      const err = makeErrorFromMessage(message);
-      throw err;
-    }
-  };
 }
