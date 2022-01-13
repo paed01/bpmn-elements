@@ -5,15 +5,15 @@ import {ProcessBroker} from '../EventBroker';
 import {cloneMessage, cloneContent, cloneParent} from '../messageHelper';
 import {makeErrorFromMessage} from '../error/Errors';
 
-const brokerSymbol = Symbol.for('broker');
+const consumingSymbol = Symbol.for('consuming');
 const countersSymbol = Symbol.for('counters');
+const execSymbol = Symbol.for('exec');
+const executeMessageSymbol = Symbol.for('executeMessage');
 const extensionsSymbol = Symbol.for('extensions');
+const messageHandlersSymbol = Symbol.for('messageHandlers');
+const stateMessageSymbol = Symbol.for('stateMessage');
 const statusSymbol = Symbol.for('status');
 const stoppedSymbol = Symbol.for('stopped');
-const consumingSymbol = Symbol.for('consuming');
-const execSymbol = Symbol.for('exec');
-const stateMessageSymbol = Symbol.for('stateMessage');
-const executeMessageSymbol = Symbol.for('executeMessage');
 
 export default Process;
 
@@ -38,26 +38,23 @@ export function Process(processDef, context) {
   this[execSymbol] = {};
 
   const {broker, on, once, waitFor} = ProcessBroker(this);
-  this[brokerSymbol] = broker;
+  this.broker = broker;
   this.on = on;
   this.once = once;
   this.waitFor = waitFor;
 
-  this.onRunMessage = this.onRunMessage.bind(this);
-  this.onExecutionMessage = this.onExecutionMessage.bind(this);
+  this[messageHandlersSymbol] = {
+    onApiMessage: this._onApiMessage.bind(this),
+    onRunMessage: this._onRunMessage.bind(this),
+    onExecutionMessage: this._onExecutionMessage.bind(this),
+  };
+
   this.logger = environment.Logger(type.toLowerCase());
 
   this[extensionsSymbol] = context.loadExtensions(this);
 }
 
 const proto = Process.prototype;
-
-Object.defineProperty(proto, 'broker', {
-  enumerable: true,
-  get() {
-    return this[brokerSymbol];
-  },
-});
 
 Object.defineProperty(proto, 'counters', {
   enumerable: true,
@@ -113,8 +110,8 @@ Object.defineProperty(proto, 'status', {
 proto.init = function init(useAsExecutionId) {
   const exec = this[execSymbol];
   const initExecutionId = exec.initExecutionId = useAsExecutionId || getUniqueId(this.id);
-  this.debug(`initialized with executionId <${initExecutionId}>`);
-  this.publishEvent('init', this.createMessage({executionId: initExecutionId}));
+  this._debug(`initialized with executionId <${initExecutionId}>`);
+  this._publishEvent('init', this._createMessage({executionId: initExecutionId}));
 };
 
 proto.run = function run(runContent) {
@@ -124,14 +121,14 @@ proto.run = function run(runContent) {
   const executionId = exec.executionId = exec.initExecutionId || getUniqueId(this.id);
   exec.initExecutionId = undefined;
 
-  const content = this.createMessage({...runContent, executionId});
+  const content = this._createMessage({...runContent, executionId});
 
   const broker = this.broker;
   broker.publish('run', 'run.enter', content);
   broker.publish('run', 'run.start', cloneContent(content));
   broker.publish('run', 'run.execute', cloneContent(content));
 
-  this.activateRunConsumers();
+  this._activateRunConsumers();
 };
 
 proto.resume = function resume() {
@@ -140,9 +137,9 @@ proto.resume = function resume() {
 
   this[stoppedSymbol] = false;
 
-  const content = this.createMessage();
+  const content = this._createMessage();
   this.broker.publish('run', 'run.resume', content, {persistent: false});
-  this.activateRunConsumers();
+  this._activateRunConsumers();
   return this;
 };
 
@@ -171,21 +168,6 @@ proto.shake = function shake(startId) {
   return new ProcessExecution(this, this.context).shake(startId);
 };
 
-proto.activateRunConsumers = function activateRunConsumers() {
-  this[consumingSymbol] = true;
-  const broker = this.broker;
-  broker.subscribeTmp('api', `process.*.${this.executionId}`, this.onApiMessage.bind(this), {noAck: true, consumerTag: '_process-api', priority: 100});
-  broker.getQueue('run-q').assertConsumer(this.onRunMessage, {exclusive: true, consumerTag: '_process-run'});
-};
-
-proto.deactivateRunConsumers = function deactivateRunConsumers() {
-  const broker = this.broker;
-  broker.cancel('_process-api');
-  broker.cancel('_process-run');
-  broker.cancel('_process-execution');
-  this[consumingSymbol] = false;
-};
-
 proto.stop = function stop() {
   if (!this.isRunning) return;
   this.getApi().stop();
@@ -201,15 +183,43 @@ proto.signal = function signal(message) {
   return this.getApi().signal(message, {delegate: true});
 };
 
+proto.getState = function getState() {
+  return this._createMessage({
+    environment: this.environment.getState(),
+    status: this.status,
+    stopped: this.stopped,
+    counters: this.counters,
+    broker: this.broker.getState(true),
+    execution: this.execution && this.execution.getState(),
+    output: {...this.environment.output},
+  });
+};
+
 proto.cancelActivity = function cancelActivity(message) {
   return this.getApi().cancel(message, {delegate: true});
 };
 
-proto.onRunMessage = function onRunMessage(routingKey, message) {
+proto._activateRunConsumers = function activateRunConsumers() {
+  this[consumingSymbol] = true;
+  const broker = this.broker;
+  const {onApiMessage, onRunMessage} = this[messageHandlersSymbol];
+  broker.subscribeTmp('api', `process.*.${this.executionId}`, onApiMessage, {noAck: true, consumerTag: '_process-api', priority: 100});
+  broker.getQueue('run-q').assertConsumer(onRunMessage, {exclusive: true, consumerTag: '_process-run'});
+};
+
+proto._deactivateRunConsumers = function deactivateRunConsumers() {
+  const broker = this.broker;
+  broker.cancel('_process-api');
+  broker.cancel('_process-run');
+  broker.cancel('_process-execution');
+  this[consumingSymbol] = false;
+};
+
+proto._onRunMessage = function onRunMessage(routingKey, message) {
   const {content, fields} = message;
 
   if (routingKey === 'run.resume') {
-    return this.onResumeMessage(message);
+    return this._onResumeMessage(message);
   }
 
   const exec = this[execSymbol];
@@ -217,20 +227,20 @@ proto.onRunMessage = function onRunMessage(routingKey, message) {
 
   switch (routingKey) {
     case 'run.enter': {
-      this.debug('enter');
+      this._debug('enter');
 
       this[statusSymbol] = 'entered';
       if (fields.redelivered) break;
 
       exec.execution = undefined;
-      this.publishEvent('enter', content);
+      this._publishEvent('enter', content);
 
       break;
     }
     case 'run.start': {
-      this.debug('start');
+      this._debug('start');
       this[statusSymbol] = 'start';
-      this.publishEvent('start', content);
+      this._publishEvent('start', content);
       break;
     }
     case 'run.execute': {
@@ -241,13 +251,16 @@ proto.onRunMessage = function onRunMessage(routingKey, message) {
       }
       this[executeMessageSymbol] = message;
 
-      this.broker.getQueue('execution-q').assertConsumer(this.onExecutionMessage, {exclusive: true, consumerTag: '_process-execution'});
+      this.broker.getQueue('execution-q').assertConsumer(this[messageHandlersSymbol].onExecutionMessage, {
+        exclusive: true,
+        consumerTag: '_process-execution',
+      });
 
       const execution = exec.execution = exec.execution || new ProcessExecution(this, this.context);
       return execution.execute(executeMessage);
     }
     case 'run.error': {
-      this.publishEvent('error', cloneContent(content, {
+      this._publishEvent('error', cloneContent(content, {
         error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
       }));
       break;
@@ -256,13 +269,13 @@ proto.onRunMessage = function onRunMessage(routingKey, message) {
       this[statusSymbol] = 'end';
 
       if (fields.redelivered) break;
-      this.debug('completed');
+      this._debug('completed');
 
       this[countersSymbol].completed++;
 
       this.broker.publish('run', 'run.leave', content);
 
-      this.publishEvent('end', content);
+      this._publishEvent('end', content);
       break;
     }
     case 'run.discarded': {
@@ -273,14 +286,14 @@ proto.onRunMessage = function onRunMessage(routingKey, message) {
 
       this.broker.publish('run', 'run.leave', content);
 
-      this.publishEvent('discarded', content);
+      this._publishEvent('discarded', content);
       break;
     }
     case 'run.leave': {
       this[statusSymbol] = undefined;
       this.broker.cancel('_process-api');
       const {output, ...rest} = content; // eslint-disable-line no-unused-vars
-      this.publishEvent('leave', rest);
+      this._publishEvent('leave', rest);
       break;
     }
   }
@@ -288,7 +301,7 @@ proto.onRunMessage = function onRunMessage(routingKey, message) {
   message.ack();
 };
 
-proto.onResumeMessage = function onResumeMessage(message) {
+proto._onResumeMessage = function onResumeMessage(message) {
   message.ack();
 
   const stateMessage = this[stateMessageSymbol];
@@ -305,19 +318,19 @@ proto.onResumeMessage = function onResumeMessage(message) {
 
   if (!stateMessage.fields.redelivered) return;
 
-  this.debug(`resume from ${this.status}`);
+  this._debug(`resume from ${this.status}`);
 
   return this.broker.publish('run', stateMessage.fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
 };
 
-proto.onExecutionMessage = function onExecutionMessage(routingKey, message) {
+proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
   const content = message.content;
   const messageType = message.properties.type;
   message.ack();
 
   switch (messageType) {
     case 'stopped': {
-      return this.onStop();
+      return this._onStop();
     }
     case 'error': {
       this.broker.publish('run', 'run.error', content);
@@ -339,8 +352,8 @@ proto.onExecutionMessage = function onExecutionMessage(routingKey, message) {
   }
 };
 
-proto.publishEvent = function publishEvent(state, content) {
-  const eventContent = this.createMessage({...content, state});
+proto._publishEvent = function publishEvent(state, content) {
+  const eventContent = this._createMessage({...content, state});
   this.broker.publish('event', `process.${state}`, eventContent, {type: state, mandatory: state === 'error'});
 };
 
@@ -384,25 +397,25 @@ proto.getPostponed = function getPostponed(...args) {
   return this.execution.getPostponed(...args);
 };
 
-proto.onApiMessage = function onApiMessage(routingKey, message) {
+proto._onApiMessage = function onApiMessage(routingKey, message) {
   const messageType = message.properties.type;
 
   switch (messageType) {
     case 'stop': {
       if (this.execution && !this.execution.completed) return;
-      this.onStop();
+      this._onStop();
       break;
     }
   }
 };
 
-proto.onStop = function onStop() {
+proto._onStop = function onStop() {
   this[stoppedSymbol] = true;
-  this.deactivateRunConsumers();
-  return this.publishEvent('stop');
+  this._deactivateRunConsumers();
+  return this._publishEvent('stop');
 };
 
-proto.createMessage = function createMessage(override = {}) {
+proto._createMessage = function createMessage(override = {}) {
   return {
     id: this.id,
     type: this.type,
@@ -413,19 +426,6 @@ proto.createMessage = function createMessage(override = {}) {
   };
 };
 
-proto.getState = function getState() {
-  return this.createMessage({
-    environment: this.environment.getState(),
-    status: this.status,
-    stopped: this.stopped,
-    counters: this.counters,
-    broker: this.broker.getState(true),
-    execution: this.execution && this.execution.getState(),
-    output: {...this.environment.output},
-  });
-};
-
-proto.debug = function debug(msg) {
+proto._debug = function debug(msg) {
   this.logger.debug(`<${this.id}> ${msg}`);
 };
-

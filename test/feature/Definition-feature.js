@@ -218,7 +218,21 @@ Feature('Definition', () => {
       definition.run();
     });
 
-    Then('the definition waits user input', () => {
+    let bpApis;
+    Then('the definition has one executing process', () => {
+      bpApis = definition.getApi().getExecuting();
+      expect(bpApis).to.have.length(1);
+      expect(bpApis[0]).to.have.property('id', 'motherOfAll');
+      expect(bpApis[0]).to.have.property('type', 'bpmn:Process');
+    });
+
+    And('one executing activity', () => {
+      const apis = bpApis[0].getExecuting();
+      expect(apis).to.have.length(1);
+      expect(apis[0]).to.have.property('type', 'bpmn:UserTask');
+    });
+
+    And('waits user input', () => {
       assertMessage('activity.wait', 'userTask1');
       const postponed = definition.getPostponed();
       expect(postponed).to.have.length(1);
@@ -283,8 +297,13 @@ Feature('Definition', () => {
       });
     });
 
-    Then('definition completes', () => {
-      return leave;
+    Then('definition completes', async () => {
+      const api = await leave;
+      bpApis = api.getExecuting();
+    });
+
+    And('the definition has no executing process', () => {
+      expect(bpApis).to.have.length(0);
     });
   });
 

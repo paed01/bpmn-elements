@@ -266,7 +266,7 @@ proto.getApi = function getApi(apiMessage) {
   const content = apiMessage.content;
 
   if (content.executionId !== this.executionId) {
-    return this._getApiByProcess(apiMessage);
+    return this._getProcessApi(apiMessage);
   }
 
   const api = (0, _Api.DefinitionApi)(this.broker, apiMessage);
@@ -275,8 +275,9 @@ proto.getApi = function getApi(apiMessage) {
 
   api.getExecuting = function getExecuting() {
     return postponed.reduce((result, msg) => {
-      if (msg.content.executionId === content.executionId) return result;
-      result.push(self.getApi(msg));
+      const bpApi = self._getProcessApi(msg);
+
+      if (bpApi) result.push(bpApi);
       return result;
     }, []);
   };
@@ -443,7 +444,7 @@ proto._onProcessMessage = function onProcessMessage(routingKey, message) {
         if (inbound && inbound.length) {
           const calledFrom = inbound[0];
 
-          this._getApiByProcess({
+          this._getProcessApi({
             content: calledFrom
           }).cancel({
             executionId: calledFrom.executionId
@@ -458,7 +459,7 @@ proto._onProcessMessage = function onProcessMessage(routingKey, message) {
         if (inbound && inbound.length) {
           const calledFrom = inbound[0];
 
-          this._getApiByProcess({
+          this._getProcessApi({
             content: calledFrom
           }).signal({
             executionId: calledFrom.executionId,
@@ -477,7 +478,7 @@ proto._onProcessMessage = function onProcessMessage(routingKey, message) {
         if (inbound && inbound.length) {
           const calledFrom = inbound[0];
 
-          this._getApiByProcess({
+          this._getProcessApi({
             content: calledFrom
           }).sendApiMessage('error', {
             executionId: calledFrom.executionId,
@@ -794,24 +795,24 @@ proto._createMessage = function createMessage(content = {}) {
   };
 };
 
-proto._getApiByProcess = function getApiByProcess(message) {
+proto._getProcessApi = function getProcessApi(message) {
   const content = message.content;
 
-  let api = this._getApiByExecutionId(content.executionId, message);
+  let api = this._getProcessApiByExecutionId(content.executionId, message);
 
   if (api) return api;
   if (!content.parent) return;
-  api = this._getApiByExecutionId(content.parent.executionId, message);
+  api = this._getProcessApiByExecutionId(content.parent.executionId, message);
   if (api) return api;
   if (!content.parent.path) return;
 
   for (const pp of content.parent.path) {
-    api = this._getApiByExecutionId(pp.executionId, message);
+    api = this._getProcessApiByExecutionId(pp.executionId, message);
     if (api) return api;
   }
 };
 
-proto._getApiByExecutionId = function getApiByExecutionId(parentExecutionId, message) {
+proto._getProcessApiByExecutionId = function getProcessApiByExecutionId(parentExecutionId, message) {
   const processInstance = this.getProcessByExecutionId(parentExecutionId);
   if (!processInstance) return;
   return processInstance.getApi(message);
