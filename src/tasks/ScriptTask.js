@@ -8,42 +8,39 @@ export default function ScriptTask(activityDef, context) {
 }
 
 export function ScriptTaskBehaviour(activity) {
-  const {id, type, behaviour, broker, logger, environment, emitFatal} = activity;
+  const {id, type, behaviour = {}} = activity;
 
-  const {scriptFormat} = activity.behaviour;
+  this.id = id;
+  this.type = type;
+  this.scriptFormat = behaviour.scriptFormat;
 
-  const loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  this.activity = activity;
+  const environment = this.environment = activity.environment;
 
   environment.registerScript(activity);
-
-  const source = {
-    id,
-    type,
-    loopCharacteristics,
-    execute,
-  };
-
-  return source;
-
-  function execute(executeMessage) {
-    const content = executeMessage.content;
-    if (loopCharacteristics && content.isRootScope) {
-      return loopCharacteristics.execute(executeMessage);
-    }
-
-    const script = environment.getScript(scriptFormat, activity, cloneMessage(executeMessage));
-    if (!script) {
-      return emitFatal(new ActivityError(`Script format ${scriptFormat} is unsupported or was not registered for <${activity.id}>`, executeMessage), content);
-    }
-
-    return script.execute(ExecutionScope(activity, executeMessage), scriptCallback);
-
-    function scriptCallback(err, output) {
-      if (err) {
-        logger.error(`<${content.executionId} (${id})>`, err);
-        return broker.publish('execution', 'execute.error', cloneContent(content, {error: new ActivityError(err.message, executeMessage, err)}, {mandatory: true}));
-      }
-      return broker.publish('execution', 'execute.completed', cloneContent(content, {output}));
-    }
-  }
 }
+
+ScriptTaskBehaviour.prototype.execute = function execute(executeMessage) {
+  const executeContent = executeMessage.content;
+  const loopCharacteristics = this.loopCharacteristics;
+  if (loopCharacteristics && executeContent.isRootScope) {
+    return loopCharacteristics.execute(executeMessage);
+  }
+
+  const activity = this.activity, scriptFormat = this.scriptFormat;
+  const script = this.environment.getScript(scriptFormat, activity, cloneMessage(executeMessage));
+  if (!script) {
+    return activity.emitFatal(new ActivityError(`Script format ${scriptFormat} is unsupported or was not registered for <${activity.id}>`, executeMessage), executeContent);
+  }
+
+  return script.execute(ExecutionScope(activity, executeMessage), scriptCallback);
+
+  function scriptCallback(err, output) {
+    if (err) {
+      activity.logger.error(`<${executeContent.executionId} (${activity.id})>`, err);
+      return activity.broker.publish('execution', 'execute.error', cloneContent(executeContent, {error: new ActivityError(err.message, executeMessage, err)}, {mandatory: true}));
+    }
+    return activity.broker.publish('execution', 'execute.completed', cloneContent(executeContent, {output}));
+  }
+};

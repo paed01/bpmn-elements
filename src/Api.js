@@ -44,27 +44,29 @@ function Api(pfx, broker, sourceMessage, environment) {
   this.messagePrefix = pfx;
 }
 
-Api.prototype.cancel = function cancel(message, options) {
+const proto = Api.prototype;
+
+proto.cancel = function cancel(message, options) {
   this.sendApiMessage('cancel', {message}, options);
 };
 
-Api.prototype.discard = function discard() {
+proto.discard = function discard() {
   this.sendApiMessage('discard');
 };
 
-Api.prototype.fail = function fail(error) {
+proto.fail = function fail(error) {
   this.sendApiMessage('error', {error});
 };
 
-Api.prototype.signal = function signal(message, options) {
+proto.signal = function signal(message, options) {
   this.sendApiMessage('signal', {message}, options);
 };
 
-Api.prototype.stop = function stop() {
+proto.stop = function stop() {
   this.sendApiMessage('stop');
 };
 
-Api.prototype.resolveExpression = function resolveExpression(expression) {
+proto.resolveExpression = function resolveExpression(expression) {
   return this.environment.resolveExpression(expression, {
     fields: this.fields,
     content: this.content,
@@ -72,20 +74,20 @@ Api.prototype.resolveExpression = function resolveExpression(expression) {
   }, this.owner);
 };
 
-Api.prototype.sendApiMessage = function sendApiMessage(action, content, options) {
+proto.sendApiMessage = function sendApiMessage(action, content, options) {
   const correlationId = (options && options.correlationId) || getUniqueId(`${this.id || this.messagePrefix}_signal`);
   let key = `${this.messagePrefix}.${action}`;
   if (this.executionId) key += `.${this.executionId}`;
   this.broker.publish('api', key, this.createMessage(content), {...options, correlationId, type: action});
 };
 
-Api.prototype.getPostponed = function getPostponed(...args) {
+proto.getPostponed = function getPostponed(...args) {
   if (this.owner.getPostponed) return this.owner.getPostponed(...args);
   if (this.owner.isSubProcess && this.owner.execution) return this.owner.execution.getPostponed(...args);
   return [];
 };
 
-Api.prototype.createMessage = function createMessage(content) {
+proto.createMessage = function createMessage(content) {
   return {
     ...this.content,
     ...content,

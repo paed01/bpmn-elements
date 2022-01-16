@@ -24,16 +24,13 @@ function ParallelGatewayBehaviour(activity) {
     type,
     broker
   } = activity;
-  const source = {
-    id,
-    type,
-    execute
-  };
-  return source;
-
-  function execute({
-    content
-  }) {
-    broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content));
-  }
+  this.id = id;
+  this.type = type;
+  this.broker = broker;
 }
+
+ParallelGatewayBehaviour.prototype.execute = function execute({
+  content
+}) {
+  this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content));
+};

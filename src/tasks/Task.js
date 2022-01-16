@@ -1,4 +1,5 @@
 import Activity from '../activity/Activity';
+import {cloneContent} from '../messageHelper';
 
 export default function Task(activityDef, context) {
   return new Activity(TaskBehaviour, activityDef, context);
@@ -13,11 +14,11 @@ export function TaskBehaviour(activity) {
 }
 
 TaskBehaviour.prototype.execute = function execute(executeMessage) {
-  const content = executeMessage.content;
+  const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;
-  if (loopCharacteristics && content.isRootScope) {
+  if (loopCharacteristics && executeContent.isRootScope) {
     return loopCharacteristics.execute(executeMessage);
   }
 
-  return this.broker.publish('execution', 'execute.completed', {...content});
+  return this.broker.publish('execution', 'execute.completed', cloneContent(executeContent));
 };

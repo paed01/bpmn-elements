@@ -60,12 +60,12 @@ SequentialLoopCharacteristics.prototype.execute = function execute(executeMessag
   if (isRedelivered && executeRoutingKey === 'execute.iteration.next') {
     startIndex = executeMessage.content.index;
   }
-  chr.subscribe(this.onCompleteMessage.bind(this));
+  chr.subscribe(this._onCompleteMessage.bind(this));
 
-  return this.startNext(startIndex, isRedelivered);
+  return this._startNext(startIndex, isRedelivered);
 };
 
-SequentialLoopCharacteristics.prototype.startNext = function startNext(index, ignoreIfExecuting) {
+SequentialLoopCharacteristics.prototype._startNext = function startNext(index, ignoreIfExecuting) {
   const chr = this.characteristics;
   const content = chr.next(index);
   if (!content) return;
@@ -90,7 +90,7 @@ SequentialLoopCharacteristics.prototype.startNext = function startNext(index, ig
   return content;
 };
 
-SequentialLoopCharacteristics.prototype.onCompleteMessage = function onCompleteMessage(_, message) {
+SequentialLoopCharacteristics.prototype._onCompleteMessage = function onCompleteMessage(_, message) {
   const {content} = message;
   const chr = this.characteristics;
   const loopOutput = chr.output;
@@ -107,7 +107,7 @@ SequentialLoopCharacteristics.prototype.onCompleteMessage = function onCompleteM
 
   if (chr.isCompletionConditionMet(message, loopOutput)) {
     chr.debug('complete condition met');
-  } else if (this.startNext(content.index + 1)) return;
+  } else if (this._startNext(content.index + 1)) return;
 
   chr.debug('sequential loop completed');
 
@@ -131,14 +131,14 @@ ParallelLoopCharacteristics.prototype.execute = function execute(executeMessage)
     if (!isNaN(executeMessage.content.index)) this.index = executeMessage.content.index;
     if (!isNaN(executeMessage.content.running)) this.running = executeMessage.content.running;
   }
-  chr.subscribe(this.onCompleteMessage.bind(this));
+  chr.subscribe(this._onCompleteMessage.bind(this));
 
   if (isRedelivered) return;
 
-  return this.startBatch();
+  return this._startBatch();
 };
 
-ParallelLoopCharacteristics.prototype.startBatch = function startBatch() {
+ParallelLoopCharacteristics.prototype._startBatch = function startBatch() {
   const chr = this.characteristics;
   const cardinality = chr.cardinality;
   const batch = [];
@@ -169,7 +169,7 @@ ParallelLoopCharacteristics.prototype.startBatch = function startBatch() {
   }
 };
 
-ParallelLoopCharacteristics.prototype.onCompleteMessage = function onCompleteMessage(_, message) {
+ParallelLoopCharacteristics.prototype._onCompleteMessage = function onCompleteMessage(_, message) {
   const chr = this.characteristics;
   const {content} = message;
   if (content.output !== undefined) chr.output[content.index] = content.output;
@@ -196,7 +196,7 @@ ParallelLoopCharacteristics.prototype.onCompleteMessage = function onCompleteMes
 
   if (this.running <= 0) {
     this.running = 0;
-    this.startBatch();
+    this._startBatch();
   }
 };
 

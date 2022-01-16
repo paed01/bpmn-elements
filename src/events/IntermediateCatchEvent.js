@@ -2,57 +2,53 @@ import Activity from '../activity/Activity';
 import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution';
 import {cloneContent} from '../messageHelper';
 
+const executionSymbol = Symbol.for('execution');
+
 export default function IntermediateCatchEvent(activityDef, context) {
   return new Activity(IntermediateCatchEventBehaviour, activityDef, context);
 }
 
 export function IntermediateCatchEventBehaviour(activity) {
-  const {id, type, broker, eventDefinitions} = activity;
-  const eventDefinitionExecution = eventDefinitions && new EventDefinitionExecution(activity, eventDefinitions);
+  this.id = activity.id;
+  this.type = activity.type;
+  this.broker = activity.broker;
+  this[executionSymbol] = activity.eventDefinitions && new EventDefinitionExecution(activity, activity.eventDefinitions);
+}
 
-  const source = {
-    id,
-    type,
-    execute,
-  };
+IntermediateCatchEventBehaviour.prototype.execute = function execute(executeMessage) {
+  const execution = this[executionSymbol];
+  if (execution) {
+    return execution.execute(executeMessage);
+  }
 
-  return source;
+  const executeContent = executeMessage.content;
+  const executionId = executeContent.executionId;
+  const broker = this.broker;
+  broker.subscribeTmp('api', `activity.#.${executionId}`, this._onApiMessage.bind(this, executeMessage), {
+    noAck: true,
+    consumerTag: '_api-behaviour-execution',
+  });
 
-  function execute(executeMessage) {
-    if (eventDefinitionExecution) {
-      return eventDefinitionExecution.execute(executeMessage);
+  return broker.publish('event', 'activity.wait', cloneContent(executeContent));
+};
+
+IntermediateCatchEventBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, routingKey, message) {
+  switch (message.properties.type) {
+    case 'message':
+    case 'signal': {
+      const broker = this.broker;
+      broker.cancel('_api-behaviour-execution');
+      return broker.publish('execution', 'execute.completed', cloneContent(executeMessage.content, {
+        output: message.content.message,
+      }));
     }
-
-    const content = cloneContent(executeMessage.content);
-    const {executionId} = content;
-    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
-
-    return broker.publish('event', 'activity.wait', cloneContent(content));
-
-    function onApiMessage(routingKey, message) {
-      const messageType = message.properties.type;
-      switch (messageType) {
-        case 'message':
-        case 'signal': {
-          return complete(message.content.message);
-        }
-        case 'discard': {
-          stop();
-          return broker.publish('execution', 'execute.discard', cloneContent(content));
-        }
-        case 'stop': {
-          return stop();
-        }
-      }
+    case 'discard': {
+      const broker = this.broker;
+      broker.cancel('_api-behaviour-execution');
+      return broker.publish('execution', 'execute.discard', cloneContent(executeMessage.content));
     }
-
-    function complete(output) {
-      stop();
-      return broker.publish('execution', 'execute.completed', cloneContent(content, {output}));
-    }
-
-    function stop() {
-      broker.cancel(`_api-${executionId}`);
+    case 'stop': {
+      return this.broker.cancel('_api-behaviour-execution');
     }
   }
-}
+};

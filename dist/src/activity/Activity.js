@@ -26,7 +26,6 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 const activityDefSymbol = Symbol.for('activityDefinition');
 const bpmnIoSymbol = Symbol.for('bpmnIo');
 const consumingSymbol = Symbol.for('consuming');
-const contextSymbol = Symbol.for('context');
 const countersSymbol = Symbol.for('counters');
 const eventDefinitionsSymbol = Symbol.for('eventDefinitions');
 const execSymbol = Symbol.for('exec');
@@ -51,9 +50,7 @@ function Activity(Behaviour, activityDef, context) {
     attachedTo: attachedToRef,
     eventDefinitions
   } = behaviour;
-  this.Behaviour = Behaviour;
   this[activityDefSymbol] = activityDef;
-  this[contextSymbol] = context;
   this.id = id;
   this.type = type;
   this.name = name;
@@ -63,6 +60,8 @@ function Activity(Behaviour, activityDef, context) {
   this.Behaviour = Behaviour;
   this.parent = activityDef.parent ? (0, _messageHelper.cloneParent)(activityDef.parent) : {};
   this.logger = context.environment.Logger(type.toLowerCase());
+  this.environment = context.environment;
+  this.context = context;
   this[countersSymbol] = {
     taken: 0,
     discarded: 0
@@ -145,32 +144,16 @@ function Activity(Behaviour, activityDef, context) {
     }
   }
 
-  this[eventDefinitionsSymbol] = eventDefinitions && eventDefinitions.map(ed => new ed.Behaviour(this, ed, this[contextSymbol]));
+  this[eventDefinitionsSymbol] = eventDefinitions && eventDefinitions.map(ed => new ed.Behaviour(this, ed, this.context));
 }
 
 const proto = Activity.prototype;
-Object.defineProperty(proto, 'context', {
-  enumerable: true,
-
-  get() {
-    return this[contextSymbol];
-  }
-
-});
 Object.defineProperty(proto, 'counters', {
   enumerable: true,
 
   get() {
     return { ...this[countersSymbol]
     };
-  }
-
-});
-Object.defineProperty(proto, 'environment', {
-  enumerable: true,
-
-  get() {
-    return this[contextSymbol].environment;
   }
 
 });
@@ -195,7 +178,7 @@ Object.defineProperty(proto, 'bpmnIo', {
 
   get() {
     if (bpmnIoSymbol in this) return this[bpmnIoSymbol];
-    const bpmnIo = this[bpmnIoSymbol] = (0, _BpmnIO.default)(this, this[contextSymbol]);
+    const bpmnIo = this[bpmnIoSymbol] = (0, _BpmnIO.default)(this, this.context);
     return bpmnIo;
   }
 
@@ -380,7 +363,7 @@ proto.recover = function recover(state) {
   };
 
   if (state.execution) {
-    exec.execution = new _ActivityExecution.default(this, this[contextSymbol]).recover(state.execution);
+    exec.execution = new _ActivityExecution.default(this, this.context).recover(state.execution);
   }
 
   this.broker.recover(state.broker);
@@ -468,7 +451,7 @@ proto.getApi = function getApi(message) {
 };
 
 proto.getActivityById = function getActivityById(elementId) {
-  return this[contextSymbol].getActivityById(elementId);
+  return this.context.getActivityById(elementId);
 };
 
 proto._runDiscard = function runDiscard(discardContent = {}) {

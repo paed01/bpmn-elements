@@ -74,12 +74,90 @@ describe('ServiceTask', () => {
     });
   });
 
+  describe('service behaviour', () => {
+    it('runs service behavior stop function on stop', () => {
+      let stopped = false;
+      let discarded = false;
+      const task = ServiceTask({
+        id: 'service',
+        behaviour: {
+          Service: function Service() {
+            return {
+              execute() {},
+              stop(msg) {
+                stopped = msg;
+              },
+              discard(msg) {
+                discarded = msg;
+              },
+            };
+          }
+        }
+      }, testHelpers.emptyContext());
+
+      task.run();
+      task.stop();
+
+      expect(stopped, 'stopped').to.have.property('fields').with.property('routingKey');
+      expect(discarded, 'discarded').to.be.false;
+    });
+
+    it('runs service behavior discard function on discard', () => {
+      let discarded = false;
+      let stopped = false;
+      const task = ServiceTask({
+        id: 'service',
+        behaviour: {
+          Service: function Service() {
+            return {
+              execute() {},
+              discard(msg) {
+                discarded = msg;
+              },
+              stop(msg) {
+                stopped = msg;
+              },
+            };
+          }
+        }
+      }, testHelpers.emptyContext());
+
+      task.run();
+      task.discard();
+
+      expect(discarded, 'discarded').to.have.property('fields').with.property('routingKey');
+      expect(stopped, 'stopped').to.be.false;
+    });
+
+    it('runs service behavior stop function on discard if no discard function', () => {
+      let stopped = false;
+      const task = ServiceTask({
+        id: 'service',
+        behaviour: {
+          Service: function Service() {
+            return {
+              execute() {},
+              stop(msg) {
+                stopped = msg;
+              },
+            };
+          }
+        }
+      }, testHelpers.emptyContext());
+
+      task.run();
+      task.discard();
+
+      expect(stopped, 'stopped').to.have.property('fields').with.property('routingKey');
+    });
+  });
+
   describe('recover and resume', () => {
     it('run stop resume while executing service function', () => {
       const task = ServiceTask({
         id: 'service',
         behaviour: {
-          Service() {
+          Service: function Service() {
             return {
               execute() {}
             };
@@ -96,7 +174,7 @@ describe('ServiceTask', () => {
       const task = ServiceTask({
         id: 'service',
         behaviour: {
-          Service() {
+          Service: function Service() {
             return {
               execute() {}
             };
@@ -111,7 +189,7 @@ describe('ServiceTask', () => {
       const recovered = ServiceTask({
         id: 'service',
         behaviour: {
-          Service() {
+          Service: function Service() {
             return {
               execute(...args) {
                 args.pop()();
@@ -130,7 +208,7 @@ describe('ServiceTask', () => {
       const task = ServiceTask({
         id: 'service',
         behaviour: {
-          Service(activity) {
+          Service: function Service(activity) {
             return {
               execute() {
                 activity.stop();
@@ -146,7 +224,7 @@ describe('ServiceTask', () => {
       const recovered = ServiceTask({
         id: 'service',
         behaviour: {
-          Service() {
+          Service: function Service() {
             return {
               execute(...args) {
                 args.pop()();

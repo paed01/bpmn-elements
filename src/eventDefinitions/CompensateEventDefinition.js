@@ -58,6 +58,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
   });
 
   broker.publish('execution', 'execute.detach', cloneContent(executeContent, {
+    sourceExchange: 'execution',
     bindExchange: 'compensate',
   }));
 

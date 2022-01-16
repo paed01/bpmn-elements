@@ -67,7 +67,7 @@ proto.execute = function execute(executeMessage) {
     const ed = eventDefinitions[index];
     const edExecutionId = `${executionId}_${index}`;
 
-    this._debug(`start event definition ${ed.type}, index ${index}`);
+    this._debug(executionId, `start event definition ${ed.type}, index ${index}`);
 
     const edContent = cloneContent(content, {
       isRootScope: undefined,

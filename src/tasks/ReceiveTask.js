@@ -1,6 +1,11 @@
 import Activity from '../activity/Activity';
 import {cloneContent} from '../messageHelper';
 
+const completedSymbol = Symbol.for('completed');
+const executeMessageSymbol = Symbol.for('executeMessage');
+const referenceElementSymbol = Symbol.for('referenceElement');
+const referenceInfoSymbol = Symbol.for('referenceInfo');
+
 export default function ReceiveTask(activityDef, context) {
   const task = new Activity(ReceiveTaskBehaviour, activityDef, context);
 
@@ -11,140 +16,202 @@ export default function ReceiveTask(activityDef, context) {
 }
 
 export function ReceiveTaskBehaviour(activity) {
-  const {id, type, broker, logger, behaviour = {}} = activity;
-  const reference = behaviour.messageRef || {name: 'anonymous'};
+  const {id, type, behaviour = {}} = activity;
 
-  const referenceElement = reference.id && activity.getActivityById(reference.id);
-  const loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  this.id = id;
+  this.type = type;
 
-  const source = {
-    id,
-    type,
-    reference: {...reference, referenceType: 'message'},
-    execute,
+  const reference = this.reference = {
+    name: 'anonymous',
+    ...behaviour.messageRef,
+    referenceType: 'message',
   };
 
-  return source;
+  this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  this.activity = activity;
+  this.broker = activity.broker;
 
-  function execute(executeMessage) {
-    const content = executeMessage.content;
-    const {executionId} = content;
-
-    if (content.isRootScope) setupMessageHandling(executionId);
-    if (loopCharacteristics && content.isRootScope) {
-      return loopCharacteristics.execute(executeMessage);
-    }
-
-    let completed;
-
-    const {message: referenceMessage, description} = resolveReference(executeMessage);
-    broker.consume('message', onCatchMessage, {noAck: true, consumerTag: `_onmessage-${executionId}`});
-
-    if (completed) return;
-
-    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`, priority: 400});
-
-    logger.debug(`<${executionId} (${id})> expect ${description}`);
-
-    broker.publish('event', 'activity.wait', cloneContent(content, {message: {...referenceMessage}}));
-
-    function onCatchMessage(routingKey, message) {
-      const {content: delegateContent} = message;
-
-      const {id: signalId, executionId: signalExecutionId} = delegateContent.message || {};
-      if (!referenceMessage.id && signalId || signalExecutionId) {
-        if (loopCharacteristics && signalExecutionId !== executionId) return;
-        if (signalId !== id && signalExecutionId !== executionId) return;
-        logger.debug(`<${executionId} (${id})> caught direct message`);
-      } else if (referenceMessage.id !== signalId) return;
-      else {
-        logger.debug(`<${executionId} (${id})> caught ${description}`);
-      }
-
-      const {type: messageType, correlationId} = message.properties;
-      broker.publish('event', 'activity.consumed', cloneContent(content, {message: {...message.content.message}}), {correlationId, type: messageType});
-      broker.publish('event', 'activity.catch', cloneContent(content, {message: message.content.message}), {type: 'catch', correlationId});
-
-      complete(message.content.message, {correlationId});
-    }
-
-    function onApiMessage(routingKey, message) {
-      const {type: messageType, correlationId} = message.properties;
-      switch (messageType) {
-        case 'message':
-        case 'signal': {
-          return complete(message.content.message, {correlationId});
-        }
-        case 'discard': {
-          completed = true;
-          stop();
-          return broker.publish('execution', 'execute.discard', cloneContent(content), {correlationId});
-        }
-        case 'stop': {
-          return stop();
-        }
-      }
-    }
-
-    function complete(output, options) {
-      completed = true;
-      stop();
-      return broker.publish('execution', 'execute.completed', cloneContent(content, {output}), options);
-    }
-
-    function stop() {
-      broker.cancel(`_onmessage-${executionId}`);
-      broker.cancel(`_api-${executionId}`);
-    }
-  }
-
-  function setupMessageHandling(executionId) {
-    broker.subscribeTmp('api', '#.signal.*', onDelegateMessage, {noAck: true, consumerTag: `_api-delegated-${executionId}`}, {noAck: true});
-    broker.subscribeTmp('api', `activity.stop.${executionId}`, onStopApiMessage, {noAck: true, consumerTag: `_api-stop-${executionId}`, priority: 400});
-    broker.subscribeTmp('execution', 'execute.#', onComplete, {noAck: true, consumerTag: `_execution-complete-${executionId}`}, {noAck: true});
-
-    function onDelegateMessage(_, message) {
-      if (!message.properties.delegate) return;
-      broker.sendToQueue('message', message.content, message.properties);
-    }
-
-    function onStopApiMessage() {
-      stop(true);
-    }
-
-    function onComplete(routingKey, {content}) {
-      if (!content.isRootScope) return;
-      switch (routingKey) {
-        case 'execute.completed':
-        case 'execute.error':
-        case 'execute.discard':
-          stop();
-          break;
-      }
-    }
-
-    function stop(keepMessageQ) {
-      broker.cancel(`_api-delegated-${executionId}`);
-      broker.cancel(`_api-stop-${executionId}`);
-      broker.cancel(`_execution-complete-${executionId}`);
-      if (!keepMessageQ) broker.purgeQueue('message');
-    }
-  }
-
-  function resolveReference(message) {
-    if (!referenceElement) {
-      return {
-        message: {...reference},
-        description: 'anonymous message',
-      };
-    }
-
-    const result = {
-      message: referenceElement.resolve(message),
-    };
-
-    result.description = `${result.message.name} <${result.message.id}>`;
-
-    return result;
-  }
+  this[referenceElementSymbol] = reference.id && activity.getActivityById(reference.id);
 }
+
+ReceiveTaskBehaviour.prototype.execute = function execute(executeMessage) {
+  return new ReceiveTaskExecution(this).execute(executeMessage);
+};
+
+function ReceiveTaskExecution(parent) {
+  const {activity, broker, loopCharacteristics, reference} = parent;
+
+  this.id = activity.id;
+  this.logger = activity.logger;
+  this.reference = reference;
+  this.broker = broker;
+  this.loopCharacteristics = loopCharacteristics;
+  this.referenceElement = parent[referenceElementSymbol];
+
+  this[completedSymbol] = false;
+}
+
+const proto = ReceiveTaskExecution.prototype;
+
+proto.execute = function execute(executeMessage) {
+  this[executeMessageSymbol] = executeMessage;
+
+  const executeContent = executeMessage.content;
+  const {executionId, isRootScope} = executeContent;
+  this.executionId = executionId;
+
+  const info = this[referenceInfoSymbol] = this._getReferenceInfo(executeMessage);
+
+  if (isRootScope) {
+    this._setupMessageHandling(executionId);
+  }
+
+  const loopCharacteristics = this.loopCharacteristics;
+  if (loopCharacteristics && executeMessage.content.isRootScope) {
+    return loopCharacteristics.execute(executeMessage);
+  }
+
+  const broker = this.broker;
+  broker.consume('message', this._onCatchMessage.bind(this), {
+    noAck: true,
+    consumerTag: `_onmessage-${executionId}`,
+  });
+
+  if (this[completedSymbol]) return;
+
+  broker.subscribeTmp('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {
+    noAck: true,
+    consumerTag: `_api-${executionId}`,
+    priority: 400,
+  });
+
+  this._debug(`expect ${info.description}`);
+
+  broker.publish('event', 'activity.wait', cloneContent(executeContent, {message: {...info.message}}));
+};
+
+proto._onCatchMessage = function onCatchMessage(routingKey, message) {
+  const content = message.content;
+
+  const {id: signalId, executionId: signalExecutionId} = content.message || {};
+  const {message: referenceMessage, description} = this[referenceInfoSymbol];
+
+  if (!referenceMessage.id && signalId || signalExecutionId) {
+    if (this.loopCharacteristics && signalExecutionId !== this.executionId) return;
+    if (signalId !== this.id && signalExecutionId !== this.executionId) return;
+    this._debug('caught direct message');
+  } else if (referenceMessage.id !== signalId) return;
+  else {
+    this._debug(`caught ${description}`);
+  }
+
+  const {type: messageType, correlationId} = message.properties;
+  const broker = this.broker;
+  const executeContent = this[executeMessageSymbol].content;
+
+  broker.publish('event', 'activity.consumed', cloneContent(executeContent, {message: {...message.content.message}}), {correlationId, type: messageType});
+  broker.publish('event', 'activity.catch', cloneContent(executeContent, {message: message.content.message}), {type: 'catch', correlationId});
+
+  this._complete(message.content.message, {correlationId});
+};
+
+proto._onApiMessage = function onApiMessage(routingKey, message) {
+  const {type: messageType, correlationId} = message.properties;
+  switch (messageType) {
+    case 'message':
+    case 'signal': {
+      return this._complete(message.content.message, {correlationId});
+    }
+    case 'discard': {
+      this[completedSymbol] = true;
+      this._stop();
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[executeMessageSymbol].content), {correlationId});
+    }
+    case 'stop': {
+      return this._stop();
+    }
+  }
+};
+
+proto._complete = function complete(output, options) {
+  this[completedSymbol] = true;
+  this._stop();
+  return this.broker.publish('execution', 'execute.completed', cloneContent(this[executeMessageSymbol].content, {output}), options);
+};
+
+proto._stop = function stop() {
+  const broker = this.broker, executionId = this.executionId;
+  broker.cancel(`_onmessage-${executionId}`);
+  broker.cancel(`_api-${executionId}`);
+};
+
+proto._setupMessageHandling = function setupMessageHandling(executionId) {
+  const broker = this.broker;
+  broker.subscribeTmp('api', '#.signal.*', this._onDelegateMessage.bind(this), {
+    noAck: true,
+    consumerTag: `_api-delegated-${executionId}`,
+  }, {
+    noAck: true,
+  });
+  broker.subscribeTmp('api', `activity.stop.${executionId}`, this._onStopApiMessage.bind(this), {
+    noAck: true,
+    consumerTag: `_api-stop-${executionId}`,
+    priority: 400,
+  });
+  broker.subscribeTmp('execution', 'execute.#', this._onExecutionComplete.bind(this), {
+    noAck: true,
+    consumerTag: `_execution-complete-${executionId}`,
+  }, {
+    noAck: true,
+  });
+};
+
+proto._onDelegateMessage = function onDelegateMessage(_, message) {
+  if (!message.properties.delegate) return;
+  this.broker.sendToQueue('message', message.content, message.properties);
+};
+
+proto._onStopApiMessage = function onStopApiMessage() {
+  this._stopMessageHandling(true);
+};
+
+proto._onExecutionComplete = function onExecutionComplete(routingKey, {content}) {
+  if (!content.isRootScope) return;
+  switch (routingKey) {
+    case 'execute.completed':
+    case 'execute.error':
+    case 'execute.discard':
+      this._stopMessageHandling();
+      break;
+  }
+};
+
+proto._stopMessageHandling = function stop(keepMessageQ) {
+  const broker = this.broker, executionId = this.executionId;
+  broker.cancel(`_api-delegated-${executionId}`);
+  broker.cancel(`_api-stop-${executionId}`);
+  broker.cancel(`_execution-complete-${executionId}`);
+  if (!keepMessageQ) broker.purgeQueue('message');
+};
+
+proto._getReferenceInfo = function getReferenceInfo(message) {
+  const referenceElement = this.referenceElement;
+  if (!referenceElement) {
+    return {
+      message: {...this.reference},
+      description: 'anonymous message',
+    };
+  }
+
+  const result = {
+    message: referenceElement.resolve(message),
+  };
+
+  result.description = `${result.message.name} <${result.message.id}>`;
+
+  return result;
+};
+
+proto._debug = function debug(msg) {
+  this.logger.debug(`<${this.executionId} (${this.id})> ${msg}`);
+};

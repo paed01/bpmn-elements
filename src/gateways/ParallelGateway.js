@@ -7,16 +7,11 @@ export default function ParallelGateway(activityDef, context) {
 
 export function ParallelGatewayBehaviour(activity) {
   const {id, type, broker} = activity;
-
-  const source = {
-    id,
-    type,
-    execute,
-  };
-
-  return source;
-
-  function execute({content}) {
-    broker.publish('execution', 'execute.completed', cloneContent(content));
-  }
+  this.id = id;
+  this.type = type;
+  this.broker = broker;
 }
+
+ParallelGatewayBehaviour.prototype.execute = function execute({content}) {
+  this.broker.publish('execution', 'execute.completed', cloneContent(content));
+};

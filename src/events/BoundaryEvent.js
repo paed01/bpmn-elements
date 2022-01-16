@@ -3,7 +3,7 @@ import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecuti
 import {cloneContent, cloneMessage} from '../messageHelper';
 import {brokerSafeId} from '../shared';
 
-const attachedConsumersSymbol = Symbol.for('attachedConsumers');
+const attachedTagsSymbol = Symbol.for('attachedConsumers');
 const completeContentSymbol = Symbol.for('completeContent');
 const executeMessageSymbol = Symbol.for('executeMessage');
 const executionSymbol = Symbol.for('execution');
@@ -22,7 +22,7 @@ export function BoundaryEventBehaviour(activity) {
   this.broker = activity.broker;
   this[executionSymbol] = activity.eventDefinitions && new EventDefinitionExecution(activity, activity.eventDefinitions, 'execute.bound.completed');
   this[shovelsSymbol] = [];
-  this[attachedConsumersSymbol] = [];
+  this[attachedTagsSymbol] = [];
 }
 
 const proto = BoundaryEventBehaviour.prototype;
@@ -63,7 +63,7 @@ proto.execute = function execute(executeMessage) {
       consumerTag,
       priority: 300,
     });
-    this[attachedConsumersSymbol].push(consumerTag);
+    this[attachedTagsSymbol].push(consumerTag);
 
     broker.subscribeOnce('execution', 'execute.detach', this._onDetachMessage.bind(this), {
       consumerTag: '_detach-tag',
@@ -81,13 +81,13 @@ proto.execute = function execute(executeMessage) {
   }
 };
 
-proto._onCompleted = function onCompleted(_, message) {
-  if (!this.cancelActivity && !message.content.cancelActivity) {
+proto._onCompleted = function onCompleted(_, {content}) {
+  if (!this.cancelActivity && !content.cancelActivity) {
     this._stop();
-    return this.broker.publish('execution', 'execute.completed', cloneContent(message.content));
+    return this.broker.publish('execution', 'execute.completed', cloneContent(content));
   }
 
-  this[completeContentSymbol] = message.content;
+  this[completeContentSymbol] = content;
 
   const {inbound} = this[executeMessageSymbol].content;
   const attachedToContent = inbound && inbound[0];
@@ -97,20 +97,20 @@ proto._onCompleted = function onCompleted(_, message) {
   attachedTo.getApi({content: attachedToContent}).discard();
 };
 
-proto._onAttachedLeave = function onAttachedLeave(routingKey, message) {
-  if (message.content.id !== this.attachedTo.id) return;
+proto._onAttachedLeave = function onAttachedLeave(_, {content}) {
+  if (content.id !== this.attachedTo.id) return;
   this._stop();
   const completeContent = this[completeContentSymbol];
   if (!completeContent) return this.broker.publish('execution', 'execute.discard', this[executeMessageSymbol].content);
   return this.broker.publish('execution', 'execute.completed', cloneContent(completeContent));
 };
 
-proto._onExpectMessage = function onExpectMessage(_, message) {
-  const {executionId, expectRoutingKey} = message.content;
+proto._onExpectMessage = function onExpectMessage(_, {content}) {
+  const {executionId, expectRoutingKey} = content;
   const attachedTo = this.attachedTo;
 
   const errorConsumerTag = `_bound-error-listener-${executionId}`;
-  this[attachedConsumersSymbol].push(errorConsumerTag);
+  this[attachedTagsSymbol].push(errorConsumerTag);
 
   attachedTo.broker.subscribeTmp('event', 'activity.error', (__, errorMessage) => {
     if (errorMessage.content.id !== attachedTo.id) return;
@@ -127,7 +127,7 @@ proto._onDetachMessage = function onDetachMessage(_, {content}) {
   this.activity.logger.debug(`<${executionId} (${id})> detach from activity <${attachedTo.id}>`);
   this._stop(true);
 
-  const {executionId: detachId, bindExchange, sourceExchange = 'execution', sourcePattern} = content;
+  const {executionId: detachId, bindExchange, sourceExchange, sourcePattern} = content;
 
   const shovelName = `_detached-${brokerSafeId(id)}_${detachId}`;
   this[shovelsSymbol].push(shovelName);
@@ -143,9 +143,9 @@ proto._onDetachMessage = function onDetachMessage(_, {content}) {
     cloneMessage,
   });
 
-  broker.subscribeOnce('execution', 'execute.bound.completed', (__, message) => {
+  broker.subscribeOnce('execution', 'execute.bound.completed', (__, {content: completeContent}) => {
     this._stop();
-    this.broker.publish('execution', 'execute.completed', cloneContent(message.content));
+    this.broker.publish('execution', 'execute.completed', cloneContent(completeContent));
   }, {
     consumerTag: `_execution-completed-${executionId}`,
   });
@@ -162,7 +162,7 @@ proto._onApiMessage = function onApiMessage(_, message) {
 
 proto._stop = function stop(detach) {
   const attachedTo = this.attachedTo, broker = this.broker, executionId = this.executionId;
-  for (const tag of this[attachedConsumersSymbol].splice(0)) attachedTo.broker.cancel(tag);
+  for (const tag of this[attachedTagsSymbol].splice(0)) attachedTo.broker.cancel(tag);
   for (const shovelName of this[shovelsSymbol].splice(0)) attachedTo.broker.closeShovel(shovelName);
 
   broker.cancel('_expect-tag');

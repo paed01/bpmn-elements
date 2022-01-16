@@ -14,6 +14,8 @@ var _messageHelper = require("../messageHelper");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+const executionSymbol = Symbol.for('execution');
+
 function EndEvent(activityDef, context) {
   return new _Activity.default(EndEventBehaviour, { ...activityDef,
     isThrowing: true
@@ -21,25 +23,18 @@ function EndEvent(activityDef, context) {
 }
 
 function EndEventBehaviour(activity) {
-  const {
-    id,
-    type,
-    broker,
-    eventDefinitions
-  } = activity;
-  const eventDefinitionExecution = eventDefinitions && new _EventDefinitionExecution.default(activity, eventDefinitions);
-  const source = {
-    id,
-    type,
-    execute
-  };
-  return source;
-
-  function execute(executeMessage) {
-    if (eventDefinitionExecution) {
-      return eventDefinitionExecution.execute(executeMessage);
-    }
-
-    return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeMessage.content));
-  }
+  this.id = activity.id;
+  this.type = activity.type;
+  this.broker = activity.broker;
+  this[executionSymbol] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions);
 }
+
+EndEventBehaviour.prototype.execute = function execute(executeMessage) {
+  const execution = this[executionSymbol];
+
+  if (execution) {
+    return execution.execute(executeMessage);
+  }
+
+  return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeMessage.content));
+};

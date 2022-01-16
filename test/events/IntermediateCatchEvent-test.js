@@ -20,6 +20,18 @@ describe('IntermediateCatchEvent', () => {
       expect(event.counters).to.have.property('taken', 1);
     });
 
+    it('completes when messaged', async () => {
+      const wait = event.waitFor('wait');
+      const leave = event.waitFor('leave');
+
+      event.run();
+      (await wait).sendApiMessage('message');
+
+      await leave;
+
+      expect(event.counters).to.have.property('taken', 1);
+    });
+
     it('leaves when discarded by api', async () => {
       const wait = event.waitFor('wait');
       const leave = event.waitFor('leave');

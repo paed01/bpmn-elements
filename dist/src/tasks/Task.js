@@ -8,6 +8,8 @@ exports.default = Task;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 
+var _messageHelper = require("../messageHelper");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function Task(activityDef, context) {
@@ -28,13 +30,12 @@ function TaskBehaviour(activity) {
 }
 
 TaskBehaviour.prototype.execute = function execute(executeMessage) {
-  const content = executeMessage.content;
+  const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;
 
-  if (loopCharacteristics && content.isRootScope) {
+  if (loopCharacteristics && executeContent.isRootScope) {
     return loopCharacteristics.execute(executeMessage);
   }
 
-  return this.broker.publish('execution', 'execute.completed', { ...content
-  });
+  return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };

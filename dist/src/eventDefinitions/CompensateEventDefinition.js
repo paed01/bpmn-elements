@@ -82,6 +82,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
     consumerTag: '_oncollect-messages'
   });
   broker.publish('execution', 'execute.detach', (0, _messageHelper.cloneContent)(executeContent, {
+    sourceExchange: 'execution',
     bindExchange: 'compensate'
   }));
   this[messageQSymbol].consume(this._onCompensateApiMessage.bind(this), {

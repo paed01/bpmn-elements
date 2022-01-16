@@ -1,7 +1,7 @@
 Bpmn IO
 =======
 
-The implementation of data storage in this project is rather basic. It relies on object assigned to `environment.variables._data`. Use it for referenceand preferably override it with your onw implementation.
+The implementation of data storage in this project is rather basic. It relies on object assigned to `environment.variables._data`. Use it for reference and preferably override it with your own implementation.
 
 # DataObject
 

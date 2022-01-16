@@ -7,16 +7,11 @@ export default function ExclusiveGateway(activityDef, context) {
 
 export function ExclusiveGatewayBehaviour(activity) {
   const {id, type, broker} = activity;
-
-  const source = {
-    id,
-    type,
-    execute,
-  };
-
-  return source;
-
-  function execute({content}) {
-    broker.publish('execution', 'execute.completed', cloneContent(content, {outboundTakeOne: true}));
-  }
+  this.id = id;
+  this.type = type;
+  this.broker = broker;
 }
+
+ExclusiveGatewayBehaviour.prototype.execute = function execute({content}) {
+  this.broker.publish('execution', 'execute.completed', cloneContent(content, {outboundTakeOne: true}));
+};

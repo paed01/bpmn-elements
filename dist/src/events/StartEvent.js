@@ -39,8 +39,10 @@ Object.defineProperty(proto, 'executionId', {
 });
 
 proto.execute = function execute(executeMessage) {
-  if (this[executionSymbol]) {
-    return this[executionSymbol].execute(executeMessage);
+  const execution = this[executionSymbol];
+
+  if (execution) {
+    return execution.execute(executeMessage);
   }
 
   const content = (0, _messageHelper.cloneContent)(executeMessage.content);
@@ -52,12 +54,12 @@ proto.execute = function execute(executeMessage) {
 
   const executionId = content.executionId;
   this[executeMessageSymbol] = executeMessage;
-  broker.subscribeTmp('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {
+  broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(...args), {
     noAck: true,
     consumerTag: `_api-${executionId}`,
     priority: 300
   });
-  broker.subscribeTmp('api', '#.signal.*', this._onDelegatedApiMessage.bind(this), {
+  broker.subscribeTmp('api', '#.signal.*', (...args) => this._onDelegatedApiMessage(...args), {
     noAck: true,
     consumerTag: `_api-delegated-${executionId}`
   });
