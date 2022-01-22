@@ -2532,7 +2532,7 @@ describe('Activity', () => {
         },
       });
 
-      const association = Association({id: 'association', parent: {id: 'process1'}}, context);
+      const association = new Association({id: 'association', parent: {id: 'process1'}}, context);
       associations.push(association);
 
       const activity = new Activity(behaviours.CompleteBehaviour, {
@@ -2566,7 +2566,7 @@ describe('Activity', () => {
         },
       });
 
-      const association = Association({id: 'association', parent: {id: 'process1'}}, context);
+      const association = new Association({id: 'association', parent: {id: 'process1'}}, context);
       associations.push(association);
 
       const activity = new Activity(behaviours.CompleteBehaviour, {

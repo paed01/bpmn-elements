@@ -13,6 +13,8 @@ var _Api = require("../Api");
 
 var _shared = require("../shared");
 
+const countersSymbol = Symbol.for('counters');
+
 function Association(associationDef, {
   environment
 }) {
@@ -20,131 +22,123 @@ function Association(associationDef, {
     id,
     type = 'association',
     name,
-    parent: originalParent,
+    parent,
     targetId,
     sourceId,
     behaviour = {}
   } = associationDef;
-  const parent = (0, _messageHelper.cloneParent)(originalParent);
-  const logger = environment.Logger(type.toLowerCase());
-  const counters = {
+  this.id = id;
+  this.type = type;
+  this.name = name;
+  this.parent = (0, _messageHelper.cloneParent)(parent);
+  this.behaviour = behaviour;
+  this.sourceId = sourceId;
+  this.targetId = targetId;
+  this.isAssociation = true;
+  this.environment = environment;
+  const logger = this.logger = environment.Logger(type.toLowerCase());
+  this[countersSymbol] = {
     complete: 0,
     take: 0,
     discard: 0
-  };
-  const associationApi = {
-    id,
-    type,
-    name,
-    parent,
-    behaviour,
-    sourceId,
-    targetId,
-    isAssociation: true,
-    environment,
-
-    get counters() {
-      return { ...counters
-      };
-    },
-
-    complete,
-    discard,
-    getApi,
-    getState,
-    recover,
-    stop,
-    take
   };
   const {
     broker,
     on,
     once,
     waitFor
-  } = new _EventBroker.EventBroker(associationApi, {
+  } = new _EventBroker.EventBroker(this, {
     prefix: 'association',
     durable: true,
     autoDelete: false
   });
-  associationApi.on = on;
-  associationApi.once = once;
-  associationApi.waitFor = waitFor;
-  Object.defineProperty(associationApi, 'broker', {
-    enumerable: true,
-    get: () => broker
-  });
+  this.broker = broker;
+  this.on = on;
+  this.once = once;
+  this.waitFor = waitFor;
   logger.debug(`<${id}> init, <${sourceId}> -> <${targetId}>`);
-  return associationApi;
-
-  function take(content = {}) {
-    logger.debug(`<${id}> take target <${targetId}>`);
-    ++counters.take;
-    publishEvent('take', content);
-    return true;
-  }
-
-  function discard(content = {}) {
-    logger.debug(`<${id}> discard target <${targetId}>`);
-    ++counters.discard;
-    publishEvent('discard', content);
-    return true;
-  }
-
-  function complete(content = {}) {
-    logger.debug(`<${id}> completed target <${targetId}>`);
-    ++counters.complete;
-    publishEvent('complete', content);
-    return true;
-  }
-
-  function publishEvent(action, content) {
-    const eventContent = createMessageContent({
-      action,
-      message: content,
-      sequenceId: (0, _shared.getUniqueId)(id)
-    });
-    broker.publish('event', `association.${action}`, eventContent, {
-      type: action
-    });
-  }
-
-  function createMessageContent(override = {}) {
-    return { ...override,
-      id,
-      type,
-      name,
-      sourceId,
-      targetId,
-      isAssociation: true,
-      parent: (0, _messageHelper.cloneParent)(parent)
-    };
-  }
-
-  function getState() {
-    return {
-      id,
-      type,
-      name,
-      sourceId,
-      targetId,
-      counters: { ...counters
-      },
-      broker: broker.getState(true)
-    };
-  }
-
-  function recover(state) {
-    Object.assign(counters, state.counters);
-    broker.recover(state.broker);
-  }
-
-  function getApi(message) {
-    return (0, _Api.FlowApi)(broker, message || {
-      content: createMessageContent()
-    });
-  }
-
-  function stop() {
-    broker.stop();
-  }
 }
+
+const proto = Association.prototype;
+Object.defineProperty(proto, 'counters', {
+  enumerable: true,
+
+  get() {
+    return { ...this[countersSymbol]
+    };
+  }
+
+});
+
+proto.take = function take(content = {}) {
+  this.logger.debug(`<${this.id}> take target <${this.targetId}>`);
+  ++this[countersSymbol].take;
+
+  this._publishEvent('take', content);
+
+  return true;
+};
+
+proto.discard = function discard(content = {}) {
+  this.logger.debug(`<${this.id}> discard target <${this.targetId}>`);
+  ++this[countersSymbol].discard;
+
+  this._publishEvent('discard', content);
+
+  return true;
+};
+
+proto.complete = function complete(content = {}) {
+  this.logger.debug(`<${this.id}> completed target <${this.targetId}>`);
+  ++this[countersSymbol].complete;
+
+  this._publishEvent('complete', content);
+
+  return true;
+};
+
+proto.getState = function getState() {
+  return this._createMessageContent({
+    counters: this.counters,
+    broker: this.broker.getState(true)
+  });
+};
+
+proto.recover = function recover(state) {
+  Object.assign(this[countersSymbol], state.counters);
+  this.broker.recover(state.broker);
+};
+
+proto.getApi = function getApi(message) {
+  return (0, _Api.FlowApi)(this.broker, message || {
+    content: this._createMessageContent()
+  });
+};
+
+proto.stop = function stop() {
+  this.broker.stop();
+};
+
+proto._publishEvent = function publishEvent(action, content) {
+  const eventContent = this._createMessageContent({
+    action,
+    message: content,
+    sequenceId: (0, _shared.getUniqueId)(this.id)
+  });
+
+  this.broker.publish('event', `association.${action}`, eventContent, {
+    type: action
+  });
+};
+
+proto._createMessageContent = function createMessageContent(override) {
+  return { ...override,
+    id: this.id,
+    type: this.type,
+    name: this.name,
+    sourceId: this.sourceId,
+    targetId: this.targetId,
+    isAssociation: true,
+    parent: (0, _messageHelper.cloneParent)(this.parent)
+  };
+};

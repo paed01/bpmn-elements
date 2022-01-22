@@ -15,6 +15,7 @@ describe('MessageFlow', () => {
     };
     const flow = new MessageFlow({
       id: 'message',
+      parent: {},
       source: {
         id: 'task',
       },
@@ -37,6 +38,7 @@ describe('MessageFlow', () => {
     const flow = new MessageFlow({
       id: 'message',
       type: 'messageflow',
+      parent: {},
       source: {
         id: 'task',
       },

@@ -339,6 +339,64 @@ Feature('Messaging', () => {
     });
   });
 
+  Scenario('Message flow emanates from lane', () => {
+    let definition;
+    Given('a task with formatted end message and message flow to participant process, and a start event waiting for that message', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <collaboration id="Collaboration_0">
+          <messageFlow id="fromMainToParticipant" sourceRef="mainProcess" targetRef="lane2" />
+          <participant id="lane2" name="Participant" processRef="participantProcess" />
+        </collaboration>
+        <process id="mainProcess" isExecutable="true">
+          <startEvent id="start1" />
+          <sequenceFlow id="toTask" sourceRef="start1" targetRef="send" />
+          <endEvent id="send">
+            <messageEventDefinition messageRef="Message1" />
+          </endEvent>
+        </process>
+        <process id="participantProcess">
+          <startEvent id="start2">
+            <messageEventDefinition messageRef="Message1" />
+          </startEvent>
+          <sequenceFlow id="toEnd" sourceRef="start2" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+        <message id="Message1" name="Start message" />
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let end;
+    let main, participant;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      [main, participant] = definition.getProcesses();
+      definition.run();
+    });
+
+    Then('definition completes', () => {
+      return end;
+    });
+
+    And('main process completed', async () => {
+      expect(main.counters).to.have.property('completed', 1);
+    });
+
+    And('participant process completed', async () => {
+      expect(participant.counters).to.have.property('completed', 1);
+    });
+
+    And('all activities were taken', () => {
+      expect(definition.getActivityById('start1').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('send').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('start2').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
+    });
+  });
+
   Scenario('Message flow targets empty participant lane', () => {
     let definition;
     Given('a task with formatted end message and message flow to participant process, and a start event waiting for that message', async () => {

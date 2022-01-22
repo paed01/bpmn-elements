@@ -17,7 +17,6 @@ var _Api = require("../Api");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const brokerSymbol = Symbol.for('broker');
 const countersSymbol = Symbol.for('counters');
 var _default = SequenceFlow;
 exports.default = _default;
@@ -29,7 +28,7 @@ function SequenceFlow(flowDef, {
     id,
     type = 'sequenceflow',
     name,
-    parent: originalParent,
+    parent,
     targetId,
     sourceId,
     isDefault,
@@ -38,15 +37,14 @@ function SequenceFlow(flowDef, {
   this.id = id;
   this.type = type;
   this.name = name;
-  this.parent = originalParent;
+  this.parent = (0, _messageHelper.cloneParent)(parent);
   this.behaviour = behaviour;
   this.sourceId = sourceId;
   this.targetId = targetId;
   this.isDefault = isDefault;
   this.isSequenceFlow = true;
   this.environment = environment;
-  this.logger = environment.Logger(type.toLowerCase());
-  this.parent = (0, _messageHelper.cloneParent)(originalParent);
+  const logger = this.logger = environment.Logger(type.toLowerCase());
   this[countersSymbol] = {
     looped: 0,
     take: 0,
@@ -64,23 +62,15 @@ function SequenceFlow(flowDef, {
     durable: true,
     autoDelete: false
   });
-  this[brokerSymbol] = broker;
+  this.broker = broker;
   this.on = on;
   this.once = once;
   this.waitFor = waitFor;
   this.emitFatal = emitFatal;
-  this.logger.debug(`<${id}> init, <${sourceId}> -> <${targetId}>`);
+  logger.debug(`<${id}> init, <${sourceId}> -> <${targetId}>`);
 }
 
 const proto = SequenceFlow.prototype;
-Object.defineProperty(proto, 'broker', {
-  enumerable: true,
-
-  get() {
-    return this[brokerSymbol];
-  }
-
-});
 Object.defineProperty(proto, 'counters', {
   enumerable: true,
 
@@ -98,7 +88,9 @@ proto.take = function take(content = {}) {
   } = content;
   this.logger.debug(`<${sequenceId} (${this.id})> take, target <${this.targetId}>`);
   ++this[countersSymbol].take;
-  this.publishEvent('take', content);
+
+  this._publishEvent('take', content);
+
   return true;
 };
 
@@ -111,36 +103,14 @@ proto.discard = function discard(content = {}) {
   if (discardSequence.indexOf(this.targetId) > -1) {
     ++this[countersSymbol].looped;
     this.logger.debug(`<${this.id}> discard loop detected <${this.sourceId}> -> <${this.targetId}>. Stop.`);
-    return this.publishEvent('looped', content);
+    return this._publishEvent('looped', content);
   }
 
   discardSequence.push(this.sourceId);
   this.logger.debug(`<${sequenceId} (${this.id})> discard, target <${this.targetId}>`);
   ++this[countersSymbol].discard;
-  this.publishEvent('discard', content);
-};
 
-proto.publishEvent = function publishEvent(action, content) {
-  const eventContent = this.createMessage({
-    action,
-    ...content
-  });
-  this.broker.publish('event', `flow.${action}`, eventContent, {
-    type: action
-  });
-};
-
-proto.createMessage = function createMessage(override) {
-  return { ...override,
-    id: this.id,
-    type: this.type,
-    name: this.name,
-    sourceId: this.sourceId,
-    targetId: this.targetId,
-    isSequenceFlow: true,
-    isDefault: this.isDefault,
-    parent: (0, _messageHelper.cloneParent)(this.parent)
-  };
+  this._publishEvent('discard', content);
 };
 
 proto.getState = function getState() {
@@ -151,9 +121,7 @@ proto.getState = function getState() {
 };
 
 proto.recover = function recover(state) {
-  this[countersSymbol] = { ...this[countersSymbol],
-    ...state.counters
-  };
+  Object.assign(this[countersSymbol], state.counters);
   this.broker.recover(state.broker);
 };
 
@@ -214,34 +182,63 @@ proto.getCondition = function getCondition() {
   return new ExpressionCondition(this, conditionExpression.body);
 };
 
-function ScriptCondition(owner, script, language) {
-  return {
-    language,
-
-    execute(message, callback) {
-      try {
-        return script.execute((0, _ExecutionScope.default)(owner, message), callback);
-      } catch (err) {
-        if (!callback) throw err;
-        owner.logger.error(`<${owner.id}>`, err);
-        callback(err);
-      }
-    }
-
+proto.createMessage = function createMessage(override) {
+  return { ...override,
+    id: this.id,
+    type: this.type,
+    name: this.name,
+    sourceId: this.sourceId,
+    targetId: this.targetId,
+    isSequenceFlow: true,
+    isDefault: this.isDefault,
+    parent: (0, _messageHelper.cloneParent)(this.parent)
   };
+};
+
+proto._publishEvent = function publishEvent(action, content) {
+  const eventContent = this.createMessage({
+    action,
+    ...content
+  });
+  this.broker.publish('event', `flow.${action}`, eventContent, {
+    type: action
+  });
+};
+
+function ScriptCondition(owner, script, language) {
+  this.type = 'script';
+  this.language = language;
+  this._owner = owner;
+  this._script = script;
 }
+
+ScriptCondition.prototype.execute = function execute(message, callback) {
+  const owner = this._owner;
+
+  try {
+    return this._script.execute((0, _ExecutionScope.default)(owner, message), callback);
+  } catch (err) {
+    if (!callback) throw err;
+    owner.logger.error(`<${owner.id}>`, err);
+    callback(err);
+  }
+};
 
 function ExpressionCondition(owner, expression) {
-  return {
-    execute: (message, callback) => {
-      try {
-        const result = owner.environment.resolveExpression(expression, owner.createMessage(message));
-        if (callback) return callback(null, result);
-        return result;
-      } catch (err) {
-        if (callback) return callback(err);
-        throw err;
-      }
-    }
-  };
+  this.type = 'expression';
+  this.expression = expression;
+  this._owner = owner;
 }
+
+ExpressionCondition.prototype.execute = function execute(message, callback) {
+  const owner = this._owner;
+
+  try {
+    const result = owner.environment.resolveExpression(this.expression, owner.createMessage(message));
+    if (callback) return callback(null, result);
+    return result;
+  } catch (err) {
+    if (callback) return callback(err);
+    throw err;
+  }
+};
