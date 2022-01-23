@@ -578,4 +578,33 @@ Feature('Activity IO', () => {
       expect(environmentData).to.have.property('datastore').that.deep.equal({value: 5});
     });
   });
+
+  Scenario('Activity with unreferenced property', () => {
+    let context, definition;
+    Given('a task with an expression value', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        id="io-def" targetNamespace="http://activiti.org/bpmn">
+        <process id="Process_15ozyjy" isExecutable="true">
+          <task id="task1">
+            <property id="prop-1" name="Lonely prop" />
+          </task>
+        </process>
+       </definitions>
+      `;
+      context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let end;
+    When('ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+  });
 });
