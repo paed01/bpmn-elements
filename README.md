@@ -48,6 +48,8 @@ The following elements are tested and supported.
 - MessageFlow
 - [MultiInstanceLoopCharacteristics](/docs/LoopCharacteristics.md)
 - [ParallelGateway](/docs/ParallelGateway.md)
+- Participant
+- Lane: exposed on activity
 - [Property](/docs/BpmnIO.md)
 - ReceiveTask
 - ScriptTask

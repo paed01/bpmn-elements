@@ -599,7 +599,7 @@ proto._onDelegateMessage = function onDelegateMessage(routingKey, executeMessage
   const reference = this.context.getActivityById(delegateMessage.id);
   const message = reference && reference.resolve(executeMessage);
 
-  this._debug(`<${reference ? `${messageType} <${delegateMessage.id}>` : `anonymous ${messageType}`} event received from <${content.parent.id}.${content.id}>. Delegating.`);
+  this._debug(`<${reference ? `${messageType} ${delegateMessage.id}>` : `anonymous ${messageType}`} event received from <${content.parent.id}.${content.id}>. Delegating.`);
 
   this.getApi().sendApiMessage(messageType, {
     source: {

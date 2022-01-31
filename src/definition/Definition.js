@@ -339,7 +339,7 @@ proto._createMessage = function createMessage(override) {
 };
 
 proto._onRunMessage = function onRunMessage(routingKey, message) {
-  const {content, ack, fields} = message;
+  const {content, fields} = message;
   if (routingKey === 'run.resume') {
     return this._onResumeMessage(message);
   }
@@ -396,9 +396,10 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
       break;
     }
     case 'run.error': {
-      this._publishEvent('error', cloneContent(content, {
+      this._publishEvent('error', {
+        ...content,
         error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
-      }), {mandatory: true});
+      }, {mandatory: true});
       break;
     }
     case 'run.discarded': {
@@ -411,16 +412,16 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
       break;
     }
     case 'run.leave': {
-      ack();
+      message.ack();
       this[statusSymbol] = undefined;
       this._deactivateRunConsumers();
 
-      this._publishEvent('leave');
-      break;
+      this._publishEvent('leave', this._createMessage());
+      return;
     }
   }
 
-  ack();
+  message.ack();
 };
 
 proto._onResumeMessage = function onResumeMessage(message) {
@@ -478,9 +479,9 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-proto._publishEvent = function publishEvent(action, content = {}, msgOpts) {
+proto._publishEvent = function publishEvent(action, content, msgOpts) {
   const execution = this.execution;
-  this.broker.publish('event', `definition.${action}`, execution ? execution._createMessage(content) : content, {
+  this.broker.publish('event', `definition.${action}`, execution ? execution._createMessage(content) : cloneContent(content), {
     type: action,
     ...msgOpts,
   });
@@ -489,7 +490,7 @@ proto._publishEvent = function publishEvent(action, content = {}, msgOpts) {
 proto._onStop = function onStop() {
   this[stoppedSymbol] = true;
   this._deactivateRunConsumers();
-  return this._publishEvent('stop');
+  return this._publishEvent('stop', this._createMessage());
 };
 
 proto._onBrokerReturnFn = function onBrokerReturn(message) {

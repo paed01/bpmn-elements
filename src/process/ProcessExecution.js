@@ -670,7 +670,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-proto._complete = function complete(completionType, content = {}) {
+proto._complete = function complete(completionType, content) {
   this._deactivate();
   this._debug(`process execution ${completionType}`);
   this[completedSymbol] = true;

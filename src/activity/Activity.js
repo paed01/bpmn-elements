@@ -381,7 +381,7 @@ proto.getActivityById = function getActivityById(elementId) {
   return this.context.getActivityById(elementId);
 };
 
-proto._runDiscard = function runDiscard(discardContent = {}) {
+proto._runDiscard = function runDiscard(discardContent) {
   const exec = this[execSymbol];
   const executionId = exec.executionId = exec.initExecutionId || getUniqueId(this.id);
   exec.initExecutionId = null;
@@ -585,10 +585,9 @@ proto._onRunMessage = function onRunMessage(routingKey, message, messageProperti
 };
 
 proto._continueRunMessage = function continueRunMessage(routingKey, message) {
-  const {fields, content: originalContent, ack} = message;
-  const isRedelivered = fields.redelivered;
-  const content = cloneContent(originalContent);
-  const {correlationId} = message.properties;
+  const isRedelivered = message.fields.redelivered;
+  const content = cloneContent(message.content);
+  const correlationId = message.properties.correlationId;
 
   const id = this.id;
   const step = this.environment.settings.step;
@@ -671,13 +670,14 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
 
       return this._doRunLeave(message, false, () => {
         this._publishEvent('end', content, {correlationId});
-        if (!step) ack();
+        if (!step) message.ack();
       });
     }
     case 'run.error': {
-      this._publishEvent('error', cloneContent(content, {
-        error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
-      }), {correlationId});
+      this._publishEvent('error', {
+        ...content,
+        error: isRedelivered ? makeErrorFromMessage(message) : content.error,
+      }, {correlationId});
       break;
     }
     case 'run.discarded': {
@@ -689,7 +689,7 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
 
       if (!isRedelivered) {
         return this._doRunLeave(message, true, () => {
-          if (!step) ack();
+          if (!step) message.ack();
         });
       }
 
@@ -697,12 +697,12 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
     }
     case 'run.outbound.take': {
       const flow = this._getOutboundSequenceFlowById(content.flow.id);
-      ack();
+      message.ack();
       return flow.take(content.flow);
     }
     case 'run.outbound.discard': {
       const flow = this._getOutboundSequenceFlowById(content.flow.id);
-      ack();
+      message.ack();
       return flow.discard(content.flow);
     }
     case 'run.leave': {
@@ -712,7 +712,7 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
       if (this.extensions) this.extensions.deactivate(message);
 
       if (!isRedelivered) {
-        this.broker.publish('run', 'run.next', cloneContent(content), {persistent: false});
+        this.broker.publish('run', 'run.next', content, {persistent: false});
         this._publishEvent('leave', content, {correlationId});
       }
 
@@ -723,7 +723,7 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
       break;
   }
 
-  if (!step) ack();
+  if (!step) message.ack();
 };
 
 proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
@@ -786,7 +786,7 @@ proto._doRunLeave = function doRunLeave(message, isDiscarded, onOutbound) {
 
   return this._doOutbound(cloneMessage(message), isDiscarded, (err, outbound) => {
     if (err) {
-      return this._publishEvent('error', cloneContent(content, {error: err}), {correlationId});
+      return this._publishEvent('error', {...content, error: err}, {correlationId});
     }
 
     this.broker.publish('run', 'run.leave', cloneContent(content, {
@@ -865,14 +865,12 @@ proto._onResumeMessage = function onResumeMessage(message) {
   return this.broker.publish('run', fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
 };
 
-proto._publishEvent = function publishEvent(state, content, messageProperties = {}) {
-  if (!content) content = this._createMessage();
-
-  this.broker.publish('event', `activity.${state}`, {...content, state}, {
-    ...messageProperties,
+proto._publishEvent = function publishEvent(state, content, properties = {}) {
+  this.broker.publish('event', `activity.${state}`, cloneContent(content, {state}), {
+    ...properties,
     type: state,
     mandatory: state === 'error',
-    persistent: 'persistent' in messageProperties ? messageProperties.persistent : state !== 'stop',
+    persistent: 'persistent' in properties ? properties.persistent : state !== 'stop',
   });
 };
 
@@ -891,7 +889,7 @@ proto._onStop = function onStop(message) {
 
   if (running) {
     if (this.extensions) this.extensions.deactivate(message || this._createMessage());
-    this._publishEvent('stop');
+    this._publishEvent('stop', this._createMessage());
   }
 };
 
@@ -917,7 +915,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-proto._createMessage = function createMessage(override = {}) {
+proto._createMessage = function createMessage(override) {
   const name = this.name, status = this.status, parent = this.parent;
   const result = {
     ...override,

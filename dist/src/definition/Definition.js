@@ -393,7 +393,6 @@ proto._createMessage = function createMessage(override) {
 proto._onRunMessage = function onRunMessage(routingKey, message) {
   const {
     content,
-    ack,
     fields
   } = message;
 
@@ -485,18 +484,18 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
 
     case 'run.leave':
       {
-        ack();
+        message.ack();
         this[statusSymbol] = undefined;
 
         this._deactivateRunConsumers();
 
         this._publishEvent('leave');
 
-        break;
+        return;
       }
   }
 
-  ack();
+  message.ack();
 };
 
 proto._onResumeMessage = function onResumeMessage(message) {

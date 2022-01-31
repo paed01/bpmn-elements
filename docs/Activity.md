@@ -38,6 +38,9 @@ Activity properties:
 - `parent`: activity parent
   - `id`: id of parent
   - `type`: parent type
+- `lane`: activity lane
+  - `id`: id of parent
+  - `type`: parent type
 - `status`: current status
 - `stopped`: boolean indicating if the activity is in a stopped state
 

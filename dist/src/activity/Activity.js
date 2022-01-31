@@ -706,8 +706,7 @@ proto._onRunMessage = function onRunMessage(routingKey, message, messageProperti
 proto._continueRunMessage = function continueRunMessage(routingKey, message) {
   const {
     fields,
-    content: originalContent,
-    ack
+    content: originalContent
   } = message;
   const isRedelivered = fields.redelivered;
   const content = (0, _messageHelper.cloneContent)(originalContent);
@@ -817,7 +816,7 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
             correlationId
           });
 
-          if (!step) ack();
+          if (!step) message.ack();
         });
       }
 
@@ -841,7 +840,7 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
 
         if (!isRedelivered) {
           return this._doRunLeave(message, true, () => {
-            if (!step) ack();
+            if (!step) message.ack();
           });
         }
 
@@ -852,7 +851,7 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
       {
         const flow = this._getOutboundSequenceFlowById(content.flow.id);
 
-        ack();
+        message.ack();
         return flow.take(content.flow);
       }
 
@@ -860,7 +859,7 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
       {
         const flow = this._getOutboundSequenceFlowById(content.flow.id);
 
-        ack();
+        message.ack();
         return flow.discard(content.flow);
       }
 
@@ -889,7 +888,7 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
       break;
   }
 
-  if (!step) ack();
+  if (!step) message.ack();
 };
 
 proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
