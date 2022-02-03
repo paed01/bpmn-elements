@@ -520,7 +520,7 @@ proto._onStop = function onStop() {
   return this._publishEvent('stop');
 };
 
-proto._createMessage = function createMessage(override = {}) {
+proto._createMessage = function createMessage(override) {
   return {
     id: this.id,
     type: this.type,

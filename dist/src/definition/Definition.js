@@ -464,9 +464,9 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
 
     case 'run.error':
       {
-        this._publishEvent('error', (0, _messageHelper.cloneContent)(content, {
+        this._publishEvent('error', { ...content,
           error: fields.redelivered ? (0, _Errors.makeErrorFromMessage)(message) : content.error
-        }), {
+        }, {
           mandatory: true
         });
 
@@ -489,7 +489,7 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
 
         this._deactivateRunConsumers();
 
-        this._publishEvent('leave');
+        this._publishEvent('leave', this._createMessage());
 
         return;
       }
@@ -561,9 +561,9 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-proto._publishEvent = function publishEvent(action, content = {}, msgOpts) {
+proto._publishEvent = function publishEvent(action, content, msgOpts) {
   const execution = this.execution;
-  this.broker.publish('event', `definition.${action}`, execution ? execution._createMessage(content) : content, {
+  this.broker.publish('event', `definition.${action}`, execution ? execution._createMessage(content) : (0, _messageHelper.cloneContent)(content), {
     type: action,
     ...msgOpts
   });
@@ -574,7 +574,7 @@ proto._onStop = function onStop() {
 
   this._deactivateRunConsumers();
 
-  return this._publishEvent('stop');
+  return this._publishEvent('stop', this._createMessage());
 };
 
 proto._onBrokerReturnFn = function onBrokerReturn(message) {

@@ -13,113 +13,183 @@ var _Errors = require("./error/Errors");
 
 var _smqp = require("smqp");
 
+const onMessageSymbol = Symbol.for('onMessage');
+const executionSymbol = Symbol.for('execution');
+
 function Formatter(element, formatQ) {
   const {
     id,
     broker,
     logger
   } = element;
-  return function formatRunMessage(runMessage, callback) {
-    const startFormatMsg = formatQ.get();
-    if (!startFormatMsg) return callback(null, runMessage.content, false);
-    const pendingFormats = [];
-    const {
-      fields,
-      content
-    } = runMessage;
-    const fundamentals = {
-      id: content.id,
-      type: content.type,
-      parent: (0, _messageHelper.cloneParent)(content.parent),
-      attachedTo: content.attachedTo,
-      executionId: content.executionId,
-      isSubProcess: content.isSubProcess,
-      isMultiInstance: content.isMultiInstance
-    };
-
-    if (content.inbound) {
-      fundamentals.inbound = content.inbound.slice();
-    }
-
-    if (content.outbound) {
-      fundamentals.outbound = content.outbound.slice();
-    }
-
-    let formattingError;
-    let formattedContent = (0, _messageHelper.cloneContent)(content);
-    const depleted = formatQ.on('depleted', () => {
-      if (pendingFormats.length) return;
-      depleted.cancel();
-      logger.debug(`<${id}> completed formatting ${fields.routingKey}`);
-      broker.cancel('_format-consumer');
-      if (formattingError) return callback(formattingError);
-      return callback(null, (0, _shared.filterUndefined)(formattedContent), true);
-    });
-    startFormatMsg.nack(false, true);
-    formatQ.assertConsumer(onFormatMessage, {
-      consumerTag: '_format-consumer',
-      prefetch: 100
-    });
-
-    function onFormatMessage(routingKey, message) {
-      const {
-        endRoutingKey,
-        error
-      } = message.content || {};
-
-      if (endRoutingKey) {
-        pendingFormats.push(message);
-        return logger.debug(`<${id}> start formatting ${fields.routingKey} message content with formatter ${routingKey}`);
-      }
-
-      const {
-        isError,
-        message: formatStart
-      } = popFormattingStart(routingKey);
-      logger.debug(`<${id}> format ${fields.routingKey} message content with formatter ${routingKey}`);
-      formattedContent = { ...formattedContent,
-        ...message.content,
-        ...fundamentals
-      };
-      message.ack();
-
-      if (formatStart) {
-        if (isError) {
-          const errMessage = error && error.message || 'formatting failed';
-          logger.debug(`<${id}> formatting of ${fields.routingKey} failed with ${routingKey}: ${errMessage}`);
-          formattingError = new _Errors.ActivityError(errMessage, (0, _messageHelper.cloneMessage)(runMessage, formattedContent), error);
-
-          for (const msg of pendingFormats.splice(0)) msg.nack(false, false);
-        }
-
-        formatStart.ack(isError);
-      }
-    }
-
-    function popFormattingStart(routingKey) {
-      for (let i = 0; i < pendingFormats.length; i++) {
-        const pendingFormat = pendingFormats[i];
-        const {
-          endRoutingKey,
-          errorRoutingKey = '#.error'
-        } = pendingFormat.content;
-
-        if ((0, _smqp.getRoutingKeyPattern)(endRoutingKey).test(routingKey)) {
-          logger.debug(`<${id}> completed formatting ${fields.routingKey} message content with formatter ${routingKey}`);
-          pendingFormats.splice(i, 1);
-          return {
-            message: pendingFormat
-          };
-        } else if ((0, _smqp.getRoutingKeyPattern)(errorRoutingKey).test(routingKey)) {
-          pendingFormats.splice(i, 1);
-          return {
-            isError: true,
-            message: pendingFormat
-          };
-        }
-      }
-
-      return {};
-    }
-  };
+  this.id = id;
+  this.broker = broker;
+  this.logger = logger;
+  this.formatQ = formatQ;
+  this.pendingFormats = [];
+  this[onMessageSymbol] = this._onMessage.bind(this);
 }
+
+Formatter.prototype.format = function format(message, callback) {
+  const correlationId = this._runId = (0, _shared.getUniqueId)(message.fields.routingKey);
+  const consumerTag = '_formatter-' + correlationId;
+  const formatQ = this.formatQ;
+  formatQ.queueMessage({
+    routingKey: '_formatting.exec'
+  }, {}, {
+    correlationId,
+    persistent: false
+  });
+  this[executionSymbol] = {
+    correlationId,
+    formatKey: message.fields.routingKey,
+    runMessage: (0, _messageHelper.cloneMessage)(message),
+    callback,
+    pending: [],
+    formatted: false,
+    executeMessage: null
+  };
+  formatQ.consume(this[onMessageSymbol], {
+    consumerTag,
+    prefetch: 100
+  });
+};
+
+Formatter.prototype._onMessage = function onMessage(routingKey, message) {
+  const {
+    formatKey,
+    correlationId,
+    pending,
+    executeMessage
+  } = this[executionSymbol];
+  const asyncFormatting = pending.length;
+
+  switch (routingKey) {
+    case '_formatting.exec':
+      if (message.properties.correlationId !== correlationId) return message.ack();
+
+      if (!asyncFormatting) {
+        message.ack();
+        return this._complete(message);
+      }
+
+      this[executionSymbol].executeMessage = message;
+      break;
+
+    default:
+      {
+        message.ack();
+        const endRoutingKey = message.content && message.content.endRoutingKey;
+
+        if (endRoutingKey) {
+          this._decorate(message.content);
+
+          pending.push(message);
+          return this._debug(`start formatting ${formatKey} message content with formatter ${routingKey}`);
+        }
+
+        if (asyncFormatting) {
+          const {
+            isError,
+            message: startMessage
+          } = this._popFormatStart(pending, routingKey);
+
+          if (startMessage) startMessage.ack();
+
+          if (isError) {
+            return this._complete(message, true);
+          }
+        }
+
+        this._decorate(message.content);
+
+        this._debug(`format ${message.fields.routingKey} message content with formatter ${routingKey}`);
+
+        if (executeMessage && asyncFormatting && !pending.length) {
+          this._complete(message);
+        }
+      }
+  }
+};
+
+Formatter.prototype._complete = function complete(message, isError) {
+  const {
+    runMessage,
+    formatKey,
+    callback,
+    formatted,
+    executeMessage
+  } = this[executionSymbol];
+  this[executionSymbol] = null;
+  if (executeMessage) executeMessage.ack();
+  this.broker.cancel(message.fields.consumerTag);
+
+  if (isError) {
+    const error = message.content && message.content.error || new Error('formatting failed');
+    const errMessage = error.message || 'formatting failed';
+
+    this._debug(`formatting of ${formatKey} failed with ${message.fields.routingKey}: ${errMessage}`);
+
+    return callback(new _Errors.ActivityError(errMessage, (0, _messageHelper.cloneMessage)(runMessage), error));
+  }
+
+  return callback(null, runMessage.content, formatted);
+};
+
+Formatter.prototype._decorate = function decorate(withContent) {
+  const content = this[executionSymbol].runMessage.content;
+
+  for (const key in withContent) {
+    switch (key) {
+      case 'id':
+      case 'type':
+      case 'parent':
+      case 'attachedTo':
+      case 'executionId':
+      case 'isSubProcess':
+      case 'isMultiInstance':
+      case 'inbound':
+      case 'outbound':
+      case 'endRoutingKey':
+      case 'errorRoutingKey':
+        break;
+
+      default:
+        {
+          content[key] = withContent[key];
+          this[executionSymbol].formatted = true;
+        }
+    }
+  }
+};
+
+Formatter.prototype._popFormatStart = function popFormattingStart(pending, routingKey) {
+  for (let idx = 0; idx < pending.length; idx++) {
+    const msg = pending[idx];
+    const {
+      endRoutingKey,
+      errorRoutingKey = '#.error'
+    } = msg.content;
+
+    if (endRoutingKey && (0, _smqp.getRoutingKeyPattern)(endRoutingKey).test(routingKey)) {
+      this._debug(`completed formatting ${msg.fields.routingKey} message content with formatter ${routingKey}`);
+
+      pending.splice(idx, 1);
+      return {
+        message: msg
+      };
+    } else if ((0, _smqp.getRoutingKeyPattern)(errorRoutingKey).test(routingKey)) {
+      pending.splice(idx, 1);
+      return {
+        isError: true,
+        message: msg
+      };
+    }
+  }
+
+  return {};
+};
+
+Formatter.prototype._debug = function debug(msg) {
+  this.logger.debug(`<${this.id}> ${msg}`);
+};

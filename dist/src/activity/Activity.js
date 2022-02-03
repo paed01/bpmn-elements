@@ -200,7 +200,7 @@ Object.defineProperty(proto, 'formatter', {
     let formatter = this[formatterSymbol];
     if (formatter) return formatter;
     const broker = this.broker;
-    formatter = this[formatterSymbol] = (0, _MessageFormatter.Formatter)({
+    formatter = this[formatterSymbol] = new _MessageFormatter.Formatter({
       id: this.id,
       broker,
       logger: this.logger
@@ -454,7 +454,7 @@ proto.getActivityById = function getActivityById(elementId) {
   return this.context.getActivityById(elementId);
 };
 
-proto._runDiscard = function runDiscard(discardContent = {}) {
+proto._runDiscard = function runDiscard(discardContent) {
   const exec = this[execSymbol];
   const executionId = exec.executionId = exec.initExecutionId || (0, _shared.getUniqueId)(this.id);
   exec.initExecutionId = null;
@@ -694,7 +694,7 @@ proto._onRunMessage = function onRunMessage(routingKey, message, messageProperti
 
   const preStatus = this.status;
   this.status = 'formatting';
-  return this.formatter(message, (err, formattedContent, formatted) => {
+  return this.formatter.format(message, (err, formattedContent, formatted) => {
     if (err) return this.emitFatal(err, message.content);
     if (formatted) message.content = formattedContent;
     this.status = preStatus;
@@ -704,15 +704,9 @@ proto._onRunMessage = function onRunMessage(routingKey, message, messageProperti
 };
 
 proto._continueRunMessage = function continueRunMessage(routingKey, message) {
-  const {
-    fields,
-    content: originalContent
-  } = message;
-  const isRedelivered = fields.redelivered;
-  const content = (0, _messageHelper.cloneContent)(originalContent);
-  const {
-    correlationId
-  } = message.properties;
+  const isRedelivered = message.fields.redelivered;
+  const content = (0, _messageHelper.cloneContent)(message.content);
+  const correlationId = message.properties.correlationId;
   const id = this.id;
   const step = this.environment.settings.step;
   this[stateMessageSymbol] = message;
@@ -822,9 +816,9 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
 
     case 'run.error':
       {
-        this._publishEvent('error', (0, _messageHelper.cloneContent)(content, {
-          error: fields.redelivered ? (0, _Errors.makeErrorFromMessage)(message) : content.error
-        }), {
+        this._publishEvent('error', { ...content,
+          error: isRedelivered ? (0, _Errors.makeErrorFromMessage)(message) : content.error
+        }, {
           correlationId
         });
 
@@ -870,7 +864,7 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
         if (this.extensions) this.extensions.deactivate(message);
 
         if (!isRedelivered) {
-          this.broker.publish('run', 'run.next', (0, _messageHelper.cloneContent)(content), {
+          this.broker.publish('run', 'run.next', content, {
             persistent: false
           });
 
@@ -976,9 +970,9 @@ proto._doRunLeave = function doRunLeave(message, isDiscarded, onOutbound) {
 
   return this._doOutbound((0, _messageHelper.cloneMessage)(message), isDiscarded, (err, outbound) => {
     if (err) {
-      return this._publishEvent('error', (0, _messageHelper.cloneContent)(content, {
+      return this._publishEvent('error', { ...content,
         error: err
-      }), {
+      }, {
         correlationId
       });
     }
@@ -1071,14 +1065,13 @@ proto._onResumeMessage = function onResumeMessage(message) {
   return this.broker.publish('run', fields.routingKey, (0, _messageHelper.cloneContent)(stateMessage.content), stateMessage.properties);
 };
 
-proto._publishEvent = function publishEvent(state, content, messageProperties = {}) {
-  if (!content) content = this._createMessage();
-  this.broker.publish('event', `activity.${state}`, { ...content,
+proto._publishEvent = function publishEvent(state, content, properties = {}) {
+  this.broker.publish('event', `activity.${state}`, (0, _messageHelper.cloneContent)(content, {
     state
-  }, { ...messageProperties,
+  }), { ...properties,
     type: state,
     mandatory: state === 'error',
-    persistent: 'persistent' in messageProperties ? messageProperties.persistent : state !== 'stop'
+    persistent: 'persistent' in properties ? properties.persistent : state !== 'stop'
   });
 };
 
@@ -1096,7 +1089,7 @@ proto._onStop = function onStop(message) {
   if (running) {
     if (this.extensions) this.extensions.deactivate(message || this._createMessage());
 
-    this._publishEvent('stop');
+    this._publishEvent('stop', this._createMessage());
   }
 };
 
@@ -1131,7 +1124,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-proto._createMessage = function createMessage(override = {}) {
+proto._createMessage = function createMessage(override) {
   const name = this.name,
         status = this.status,
         parent = this.parent;
@@ -1167,7 +1160,7 @@ proto._resumeExtensions = function resumeExtensions(message, callback) {
   if (extensions) extensions.activate((0, _messageHelper.cloneMessage)(message), this);
   if (bpmnIo) bpmnIo.activate((0, _messageHelper.cloneMessage)(message), this);
   this.status = 'formatting';
-  return this.formatter(message, (err, formattedContent, formatted) => {
+  return this.formatter.format(message, (err, formattedContent, formatted) => {
     if (err) return callback(err);
     return callback(null, formatted && formattedContent);
   });

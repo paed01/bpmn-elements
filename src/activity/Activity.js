@@ -155,7 +155,7 @@ Object.defineProperty(proto, 'formatter', {
     if (formatter) return formatter;
 
     const broker = this.broker;
-    formatter = this[formatterSymbol] = Formatter({
+    formatter = this[formatterSymbol] = new Formatter({
       id: this.id,
       broker,
       logger: this.logger,
@@ -576,7 +576,7 @@ proto._onRunMessage = function onRunMessage(routingKey, message, messageProperti
 
   const preStatus = this.status;
   this.status = 'formatting';
-  return this.formatter(message, (err, formattedContent, formatted) => {
+  return this.formatter.format(message, (err, formattedContent, formatted) => {
     if (err) return this.emitFatal(err, message.content);
     if (formatted) message.content = formattedContent;
     this.status = preStatus;
@@ -945,7 +945,7 @@ proto._resumeExtensions = function resumeExtensions(message, callback) {
   if (bpmnIo) bpmnIo.activate(cloneMessage(message), this);
 
   this.status = 'formatting';
-  return this.formatter(message, (err, formattedContent, formatted) => {
+  return this.formatter.format(message, (err, formattedContent, formatted) => {
     if (err) return callback(err);
     return callback(null, formatted && formattedContent);
   });
