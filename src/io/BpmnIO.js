@@ -1,19 +1,20 @@
 export default function BpmnIO(activity, context) {
+  this.activity = activity;
+  this.context = context;
+
   const {ioSpecification: ioSpecificationDef, properties: propertiesDef} = activity.behaviour;
-
-  const ioSpecification = ioSpecificationDef && ioSpecificationDef.Behaviour(activity, ioSpecificationDef, context);
-  const bpmnProperties = propertiesDef && propertiesDef.Behaviour(activity, propertiesDef, context);
-
-  if (!ioSpecification && !bpmnProperties) return;
-
-  return {
-    activate(message) {
-      if (bpmnProperties) bpmnProperties.activate(message);
-      if (ioSpecification) ioSpecification.activate(message);
-    },
-    deactivate(message) {
-      if (bpmnProperties) bpmnProperties.deactivate(message);
-      if (ioSpecification) ioSpecification.deactivate(message);
-    },
-  };
+  this.specification = ioSpecificationDef && new ioSpecificationDef.Behaviour(activity, ioSpecificationDef, context);
+  this.properties = propertiesDef && new propertiesDef.Behaviour(activity, propertiesDef, context);
 }
+
+BpmnIO.prototype.activate = function activate(message) {
+  const properties = this.properties, specification = this.specification;
+  if (properties) properties.activate(message);
+  if (specification) specification.activate(message);
+};
+
+BpmnIO.prototype.deactivate = function deactivate(message) {
+  const properties = this.properties, specification = this.specification;
+  if (properties) properties.deactivate(message);
+  if (specification) specification.deactivate(message);
+};

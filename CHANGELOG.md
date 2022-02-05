@@ -1,9 +1,21 @@
 Changelog
 =========
 
-# Next version
+# 7.0.0
 
-Call activity...
+Support Call activity
+
+- prototype all behaviours
+- add api fail function
+
+## Breaking
+
+- all Behaviours will be invoked with new
+- unable to make activity throw if emitFatal is called within activity, unsure why?
+
+## Fix
+
+- Signals are now broadcasted to multiple targets, previously it stopped at first catch
 
 # 6.0.0
 

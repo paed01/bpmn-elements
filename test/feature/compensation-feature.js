@@ -32,7 +32,7 @@ Feature('Compensation', () => {
       </definitions>`;
       const context = await testHelpers.context(source);
 
-      definition = Definition(context, {
+      definition = new Definition(context, {
         services: {
           exec(...args) {
             execService.push(args);
@@ -237,7 +237,7 @@ Feature('Compensation', () => {
       </definitions>`;
       const context = await testHelpers.context(source);
 
-      definition = Definition(context, {
+      definition = new Definition(context, {
         services: {
           exec(...args) {
             execService.push(args);
@@ -397,7 +397,7 @@ Feature('Compensation', () => {
       </definitions>`;
       context = await testHelpers.context(source);
 
-      definition = Definition(context, {
+      definition = new Definition(context, {
         services: {
           exec(...args) {
             execService.push(args);
@@ -584,7 +584,7 @@ Feature('Compensation', () => {
     let recovered;
     const resumedUndoService = [];
     When('recovered and resumed', () => {
-      recovered = Definition(context.clone(), {
+      recovered = new Definition(context.clone(), {
         services: {
           compensate(...args) {
             resumedUndoService.push(args);
@@ -593,7 +593,8 @@ Feature('Compensation', () => {
       }).recover(JSON.parse(JSON.stringify(state)));
       end = recovered.waitFor('end');
 
-      return recovered.resume();
+
+      recovered.resume();
     });
 
     Then('compensation service awaits callback', () => {

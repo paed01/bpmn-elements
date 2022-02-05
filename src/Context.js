@@ -3,194 +3,191 @@ import ExtensionsMapper from './ExtensionsMapper';
 import {getUniqueId} from './shared';
 
 export default function Context(definitionContext, environment) {
-  environment = environment ? environment.clone() : Environment();
-  return ContextInstance(definitionContext, environment);
+  environment = environment ? environment.clone() : new Environment();
+  return new ContextInstance(definitionContext, environment);
 }
 
 function ContextInstance(definitionContext, environment) {
   const {id = 'Def', name, type = 'context'} = definitionContext;
   const sid = getUniqueId(id);
-
-  const activityRefs = {}, dataObjectRefs = {}, dataStoreRefs = {}, messageFlows = [], processes = [], processRefs = {}, sequenceFlowRefs = {}, sequenceFlows = [], associationRefs = [];
-
-  const context = {
-    id,
-    name,
-    type,
-    sid,
-    definitionContext,
-    environment,
-    clone,
-    getActivities,
-    getActivityById,
-    getAssociations,
-    getExecutableProcesses,
-    getDataObjectById,
-    getDataStoreById,
-    getInboundAssociations,
-    getInboundSequenceFlows,
-    getMessageFlows,
-    getOutboundSequenceFlows,
-    getOutboundAssociations,
-    getProcessById,
-    getProcesses,
-    getSequenceFlowById,
-    getSequenceFlows,
-    getStartActivities,
-    loadExtensions,
+  this.id = id;
+  this.name = name;
+  this.type = type;
+  this.sid = sid;
+  this.definitionContext = definitionContext;
+  this.environment = environment;
+  this.extensionsMapper = ExtensionsMapper(this);
+  this.refs = {
+    activityRefs: {},
+    associationRefs: [],
+    dataObjectRefs: {},
+    dataStoreRefs: {},
+    messageFlows: [],
+    processes: [],
+    processRefs: {},
+    sequenceFlowRefs: {},
+    sequenceFlows: [],
   };
-
-  const extensionsMapper = ExtensionsMapper(context);
-
-  return context;
-
-  function getActivityById(activityId) {
-    const activityInstance = activityRefs[activityId];
-    if (activityInstance) return activityInstance;
-    const activity = definitionContext.getActivityById(activityId);
-    if (!activity) return null;
-    return upsertActivity(activity);
-  }
-
-  function upsertActivity(activityDef) {
-    let activityInstance = activityRefs[activityDef.id];
-    if (activityInstance) return activityInstance;
-
-    activityInstance = activityRefs[activityDef.id] = activityDef.Behaviour(activityDef, context);
-
-    return activityInstance;
-  }
-
-  function getSequenceFlowById(sequenceFlowId) {
-    const flowInstance = sequenceFlowRefs[sequenceFlowId];
-    if (flowInstance) return flowInstance;
-
-    const flowDef = definitionContext.getSequenceFlowById(sequenceFlowId);
-    if (!flowDef) return null;
-    return upsertSequenceFlow(flowDef);
-  }
-
-  function getInboundSequenceFlows(activityId) {
-    return (definitionContext.getInboundSequenceFlows(activityId) || []).map((flow) => upsertSequenceFlow(flow));
-  }
-
-  function getOutboundSequenceFlows(activityId) {
-    return (definitionContext.getOutboundSequenceFlows(activityId) || []).map((flow) => upsertSequenceFlow(flow));
-  }
-
-  function getInboundAssociations(activityId) {
-    return (definitionContext.getInboundAssociations(activityId) || []).map((association) => upsertAssociation(association));
-  }
-
-  function getOutboundAssociations(activityId) {
-    return (definitionContext.getOutboundAssociations(activityId) || []).map((association) => upsertAssociation(association));
-  }
-
-  function getActivities(scopeId) {
-    return (definitionContext.getActivities(scopeId) || []).map((activityDef) => upsertActivity(activityDef));
-  }
-
-  function getSequenceFlows(scopeId) {
-    return (definitionContext.getSequenceFlows(scopeId) || []).map((flow) => upsertSequenceFlow(flow));
-  }
-
-  function upsertSequenceFlow(flowDefinition) {
-    let flowInstance = sequenceFlowRefs[flowDefinition.id];
-    if (flowInstance) return flowInstance;
-
-    flowInstance = sequenceFlowRefs[flowDefinition.id] = flowDefinition.Behaviour(flowDefinition, context);
-    sequenceFlows.push(flowInstance);
-
-    return flowInstance;
-  }
-
-  function getAssociations(scopeId) {
-    return (definitionContext.getAssociations(scopeId) || []).map((association) => upsertAssociation(association));
-  }
-
-  function upsertAssociation(associationDefinition) {
-    let instance = associationRefs[associationDefinition.id];
-    if (instance) return instance;
-
-    instance = associationRefs[associationDefinition.id] = associationDefinition.Behaviour(associationDefinition, context);
-
-    return instance;
-  }
-
-  function clone(newEnvironment) {
-    return ContextInstance(definitionContext, newEnvironment || environment);
-  }
-
-  function getProcessById(processId) {
-    let processInstance = processRefs[processId];
-    if (processInstance) return processInstance;
-
-    const processDefinition = definitionContext.getProcessById(processId);
-    if (!processDefinition) return null;
-    processInstance = processRefs[processId] = processDefinition.Behaviour(processDefinition, context);
-    processes.push(processInstance);
-
-    return processInstance;
-  }
-
-  function getProcesses() {
-    return definitionContext.getProcesses().map(({id: processId}) => getProcessById(processId));
-  }
-
-  function getExecutableProcesses() {
-    return definitionContext.getExecutableProcesses().map(({id: processId}) => getProcessById(processId));
-  }
-
-  function getMessageFlows(sourceId) {
-    if (!messageFlows.length) {
-      const flows = definitionContext.getMessageFlows() || [];
-      messageFlows.push(...flows.map((flow) => flow.Behaviour(flow, context)));
-    }
-
-    return messageFlows.filter((flow) => flow.source.processId === sourceId);
-  }
-
-  function getDataObjectById(referenceId) {
-    let dataObject;
-    if ((dataObject = dataObjectRefs[referenceId])) return dataObject;
-
-    const dataObjectDef = definitionContext.getDataObjectById(referenceId);
-    if (!dataObjectDef) return;
-
-    dataObject = dataObjectRefs[dataObjectDef.id] = dataObjectDef.Behaviour(dataObjectDef, context);
-
-    return dataObject;
-  }
-
-  function getDataStoreById(referenceId) {
-    let dataStore;
-    if ((dataStore = dataStoreRefs[referenceId])) return dataStore;
-
-    const dataStoreDef = definitionContext.getDataStoreById(referenceId) || definitionContext.getDataStoreReferenceById(referenceId);
-    if (!dataStoreDef) return;
-
-    dataStore = dataStoreRefs[dataStoreDef.id] = dataStoreDef.Behaviour(dataStoreDef, context);
-
-    return dataStore;
-  }
-
-  function getStartActivities(filterOptions, scopeId) {
-    const {referenceId, referenceType = 'unknown'} = filterOptions || {};
-    return getActivities().filter((activity) => {
-      if (!activity.isStart) return false;
-      if (scopeId && activity.parent.id !== scopeId) return false;
-      if (!filterOptions) return true;
-
-      if (!activity.behaviour.eventDefinitions && !activity.behaviour.eventDefinitions) return false;
-
-      return activity.eventDefinitions.some((ed) => {
-        return ed.reference && ed.reference.id === referenceId && ed.reference.referenceType === referenceType;
-      });
-    });
-  }
-
-  function loadExtensions(activity) {
-    return extensionsMapper.get(activity);
-  }
 }
+
+ContextInstance.prototype.getActivityById = function getActivityById(activityId) {
+  const activityInstance = this.refs.activityRefs[activityId];
+  if (activityInstance) return activityInstance;
+  const activity = this.definitionContext.getActivityById(activityId);
+  if (!activity) return null;
+  return this.upsertActivity(activity);
+};
+
+ContextInstance.prototype.upsertActivity = function upsertActivity(activityDef) {
+  let activityInstance = this.refs.activityRefs[activityDef.id];
+  if (activityInstance) return activityInstance;
+
+  activityInstance = this.refs.activityRefs[activityDef.id] = new activityDef.Behaviour(activityDef, this);
+
+  return activityInstance;
+};
+
+ContextInstance.prototype.getSequenceFlowById = function getSequenceFlowById(sequenceFlowId) {
+  const flowInstance = this.refs.sequenceFlowRefs[sequenceFlowId];
+  if (flowInstance) return flowInstance;
+
+  const flowDef = this.definitionContext.getSequenceFlowById(sequenceFlowId);
+  if (!flowDef) return null;
+  return this.upsertSequenceFlow(flowDef);
+};
+
+ContextInstance.prototype.getInboundSequenceFlows = function getInboundSequenceFlows(activityId) {
+  return (this.definitionContext.getInboundSequenceFlows(activityId) || []).map((flow) => this.upsertSequenceFlow(flow));
+};
+
+ContextInstance.prototype.getOutboundSequenceFlows = function getOutboundSequenceFlows(activityId) {
+  return (this.definitionContext.getOutboundSequenceFlows(activityId) || []).map((flow) => this.upsertSequenceFlow(flow));
+};
+
+ContextInstance.prototype.getInboundAssociations = function getInboundAssociations(activityId) {
+  return (this.definitionContext.getInboundAssociations(activityId) || []).map((association) => this.upsertAssociation(association));
+};
+
+ContextInstance.prototype.getOutboundAssociations = function getOutboundAssociations(activityId) {
+  return (this.definitionContext.getOutboundAssociations(activityId) || []).map((association) => this.upsertAssociation(association));
+};
+
+ContextInstance.prototype.getActivities = function getActivities(scopeId) {
+  return (this.definitionContext.getActivities(scopeId) || []).map((activityDef) => this.upsertActivity(activityDef));
+};
+
+ContextInstance.prototype.getSequenceFlows = function getSequenceFlows(scopeId) {
+  return (this.definitionContext.getSequenceFlows(scopeId) || []).map((flow) => this.upsertSequenceFlow(flow));
+};
+
+ContextInstance.prototype.upsertSequenceFlow = function upsertSequenceFlow(flowDefinition) {
+  const refs = this.refs.sequenceFlowRefs;
+  let flowInstance = refs[flowDefinition.id];
+  if (flowInstance) return flowInstance;
+
+  flowInstance = refs[flowDefinition.id] = new flowDefinition.Behaviour(flowDefinition, this);
+  this.refs.sequenceFlows.push(flowInstance);
+
+  return flowInstance;
+};
+
+ContextInstance.prototype.getAssociations = function getAssociations(scopeId) {
+  return (this.definitionContext.getAssociations(scopeId) || []).map((association) => this.upsertAssociation(association));
+};
+
+ContextInstance.prototype.upsertAssociation = function upsertAssociation(associationDefinition) {
+  const refs = this.refs.associationRefs;
+  let instance = refs[associationDefinition.id];
+  if (instance) return instance;
+
+  instance = refs[associationDefinition.id] = new associationDefinition.Behaviour(associationDefinition, this);
+
+  return instance;
+};
+
+ContextInstance.prototype.clone = function clone(newEnvironment) {
+  return new ContextInstance(this.definitionContext, newEnvironment || this.environment);
+};
+
+ContextInstance.prototype.getProcessById = function getProcessById(processId) {
+  const refs = this.refs.processRefs;
+  let processInstance = this.refs.processRefs[processId];
+  if (processInstance) return processInstance;
+
+  const processDefinition = this.definitionContext.getProcessById(processId);
+  if (!processDefinition) return null;
+
+  processInstance = refs[processId] = new processDefinition.Behaviour(processDefinition, this);
+  this.refs.processes.push(processInstance);
+
+  return processInstance;
+};
+
+ContextInstance.prototype.getNewProcessById = function getNewProcessById(processId, processOptions) {
+  if (!this.getProcessById(processId)) return null;
+  const processDefinition = this.definitionContext.getProcessById(processId);
+  const processInstance = new processDefinition.Behaviour(processDefinition, this.clone(this.environment.clone({output: {}, ...processOptions})));
+  return processInstance;
+};
+
+ContextInstance.prototype.getProcesses = function getProcesses() {
+  return this.definitionContext.getProcesses().map(({id: processId}) => this.getProcessById(processId));
+};
+
+ContextInstance.prototype.getExecutableProcesses = function getExecutableProcesses() {
+  return this.definitionContext.getExecutableProcesses().map(({id: processId}) => this.getProcessById(processId));
+};
+
+ContextInstance.prototype.getMessageFlows = function getMessageFlows(sourceId) {
+  if (!this.refs.messageFlows.length) {
+    const flows = this.definitionContext.getMessageFlows() || [];
+    this.refs.messageFlows.push(...flows.map((flow) => new flow.Behaviour(flow, this)));
+  }
+
+  return this.refs.messageFlows.filter((flow) => flow.source.processId === sourceId);
+};
+
+ContextInstance.prototype.getDataObjectById = function getDataObjectById(referenceId) {
+  let dataObject;
+  if ((dataObject = this.refs.dataObjectRefs[referenceId])) return dataObject;
+
+  const dataObjectDef = this.definitionContext.getDataObjectById(referenceId);
+  if (!dataObjectDef) return;
+
+  dataObject = this.refs.dataObjectRefs[dataObjectDef.id] = new dataObjectDef.Behaviour(dataObjectDef, this);
+
+  return dataObject;
+};
+
+ContextInstance.prototype.getDataStoreById = function getDataStoreById(referenceId) {
+  let dataStore;
+  if ((dataStore = this.refs.dataStoreRefs[referenceId])) return dataStore;
+
+  const dataStoreDef = this.definitionContext.getDataStoreById(referenceId) || this.definitionContext.getDataStoreReferenceById(referenceId);
+  if (!dataStoreDef) return;
+
+  dataStore = this.refs.dataStoreRefs[dataStoreDef.id] = new dataStoreDef.Behaviour(dataStoreDef, this);
+
+  return dataStore;
+};
+
+ContextInstance.prototype.getStartActivities = function getStartActivities(filterOptions, scopeId) {
+  const {referenceId, referenceType = 'unknown'} = filterOptions || {};
+  return this.getActivities().filter((activity) => {
+    if (!activity.isStart) return false;
+    if (scopeId && activity.parent.id !== scopeId) return false;
+    if (!filterOptions) return true;
+
+    if (!activity.behaviour.eventDefinitions && !activity.behaviour.eventDefinitions) return false;
+
+
+    return activity.eventDefinitions.some((ed) => {
+      return ed.reference && ed.reference.id === referenceId && ed.reference.referenceType === referenceType;
+    });
+  });
+};
+
+ContextInstance.prototype.loadExtensions = function loadExtensions(activity) {
+  return this.extensionsMapper.get(activity);
+};
 

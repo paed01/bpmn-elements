@@ -1,9 +1,7 @@
 Process
 =======
 
-## `Process(processDefinition, context)`
-
-Process ctorish.
+## `new Process(processDefinition, context)`
 
 Arguments:
 - `processDefinition`: process definition object from serializable context

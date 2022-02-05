@@ -18,7 +18,7 @@ Feature('Format', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         services: {
           saveState({content}, ...args) {
             process.nextTick(() => {
@@ -79,7 +79,7 @@ Feature('Format', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         extensions: {
           formatSomethingOnEnd(activity) {
             if (activity.type === 'bpmn:Process') return;
@@ -129,7 +129,7 @@ Feature('Format', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         extensions: {
           formatSomethingOnEnterAndEnd(activity) {
             if (activity.type !== 'bpmn:StartEvent') return;
@@ -190,7 +190,7 @@ Feature('Format', () => {
 
     let definition;
     And('an extensions with sync formatting at enter and end', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         extensions: {
           formatSomethingOnEnterAndEnd(activity) {
             if (activity.type !== 'bpmn:StartEvent') return;
@@ -232,7 +232,7 @@ Feature('Format', () => {
     });
 
     Given('an extensions with sync formatting at enter and async at end', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         extensions: {
           formatSomethingOnEnterAndEnd(activity) {
             if (activity.type !== 'bpmn:StartEvent') return;
@@ -283,7 +283,7 @@ Feature('Format', () => {
     });
 
     Given('an extensions with async formatting at enter and sync end', () => {
-      definition = Definition(context.clone(), {
+      definition = new Definition(context.clone(), {
         extensions: {
           formatSomethingOnEnterAndEnd(activity) {
             if (activity.type !== 'bpmn:StartEvent') return;
@@ -340,7 +340,7 @@ Feature('Format', () => {
     });
 
     Given('an extension with async at enter and async at end', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         extensions: {
           formatSomethingOnEnterAndEnd(activity) {
             if (activity.type !== 'bpmn:StartEvent') return;
@@ -416,7 +416,7 @@ Feature('Format', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         extensions: {
           saveStateOnEnd(activity) {
             if (activity.type === 'bpmn:Process') return;
@@ -460,7 +460,7 @@ Feature('Format', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         extensions: {
           saveStateOnEnd(activity) {
             if (activity.type === 'bpmn:Process') return;
@@ -503,7 +503,7 @@ Feature('Format', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         extensions: {
           saveStateOnEnd(activity) {
             if (activity.type === 'bpmn:Process') return;
@@ -550,7 +550,7 @@ Feature('Format', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         extensions: {
           saveStateOnEnd(activity) {
             if (activity.type === 'bpmn:Process') return;

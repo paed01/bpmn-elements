@@ -7,7 +7,7 @@ import {Logger} from '../helpers/testHelpers';
 describe('MessageEventDefinition', () => {
   let event;
   beforeEach(() => {
-    const environment = Environment({Logger});
+    const environment = new Environment({Logger});
     event = {
       id: 'event',
       environment,
@@ -25,7 +25,7 @@ describe('MessageEventDefinition', () => {
 
   describe('catching', () => {
     it('publishes wait event on parent broker with resolved message', () => {
-      const catchMessage = MessageEventDefinition(event, {
+      const catchMessage = new MessageEventDefinition(event, {
         type: 'bpmn:MessageEventDefinition',
         behaviour: {
           messageRef: {
@@ -33,6 +33,7 @@ describe('MessageEventDefinition', () => {
           }
         }
       });
+      expect(catchMessage.executionId, 'executionId').to.be.undefined;
 
       const messages = [];
       event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
@@ -67,7 +68,7 @@ describe('MessageEventDefinition', () => {
     });
 
     it('ignores message and keeps listeners if message id doesn´t match', () => {
-      const catchMessage = MessageEventDefinition(event, {
+      const catchMessage = new MessageEventDefinition(event, {
         type: 'bpmn:MessageEventDefinition',
         behaviour: {
           messageRef: {
@@ -113,7 +114,7 @@ describe('MessageEventDefinition', () => {
     });
 
     it('completes and clears listeners when expected message is caught', () => {
-      const catchMessage = MessageEventDefinition(event, {
+      const catchMessage = new MessageEventDefinition(event, {
         type: 'bpmn:MessageEventDefinition',
         behaviour: {
           messageRef: {
@@ -174,7 +175,7 @@ describe('MessageEventDefinition', () => {
     });
 
     it('completes and clears listeners when anonymous message is caught', () => {
-      const catchMessage = MessageEventDefinition(event, {
+      const catchMessage = new MessageEventDefinition(event, {
         type: 'bpmn:MessageEventDefinition',
       });
 
@@ -209,7 +210,7 @@ describe('MessageEventDefinition', () => {
     });
 
     it('completes and clears listeners if messaged before execution', () => {
-      const catchMessage = MessageEventDefinition(event, {
+      const catchMessage = new MessageEventDefinition(event, {
         type: 'bpmn:MessageEventDefinition',
         behaviour: {
           messageRef: {
@@ -251,7 +252,7 @@ describe('MessageEventDefinition', () => {
     });
 
     it('completes and clears listeners if discarded', () => {
-      const catchMessage = MessageEventDefinition(event, {
+      const catchMessage = new MessageEventDefinition(event, {
         type: 'bpmn:MessageEventDefinition',
       });
 
@@ -286,7 +287,7 @@ describe('MessageEventDefinition', () => {
     });
 
     it('completes and clears listeners if signaled', () => {
-      const catchMessage = MessageEventDefinition(event, {
+      const catchMessage = new MessageEventDefinition(event, {
         type: 'bpmn:MessageEventDefinition',
       });
 
@@ -321,14 +322,9 @@ describe('MessageEventDefinition', () => {
     });
 
     it('stops and clears listeners if stopped', () => {
-      const catchMessage = MessageEventDefinition(event, {
+      const catchMessage = new MessageEventDefinition(event, {
         type: 'bpmn:MessageEventDefinition',
       });
-
-      const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.discard', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
 
       catchMessage.execute({
         fields: {},
@@ -346,13 +342,77 @@ describe('MessageEventDefinition', () => {
         },
       });
 
-      event.broker.publish('api', 'activity.discard.event_1_0', {}, {type: 'discard'});
+      event.broker.publish('api', 'activity.stop.event_1_0', {}, {type: 'stop'});
 
       event.broker.cancel('_test-tag');
 
-      expect(messages).to.have.length(1);
-
       expect(event.broker).to.have.property('consumerCount', 0);
+    });
+
+    it('completes if called with api message type signal', () => {
+      const definition = new MessageEventDefinition(event, {});
+
+      const messages = [];
+      event.broker.subscribeTmp('execution', 'execute.*', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      definition.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'event',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0'
+            }]
+          },
+        },
+      });
+
+      event.broker.publish('api', 'activity.sometype.event_1_0', {}, {type: 'signal'});
+
+      expect(messages).to.have.length(1);
+      expect(messages[0].fields).to.have.property('routingKey', 'execute.completed');
+      expect(messages[0].content).to.have.property('executionId', 'event_1_0');
+      expect(messages[0].content.parent).to.have.property('id', 'event');
+      expect(messages[0].content.parent).to.have.property('executionId', 'event_1');
+    });
+
+    it('completes if called with api message type message', () => {
+      const definition = new MessageEventDefinition(event, {});
+
+      const messages = [];
+      event.broker.subscribeTmp('execution', 'execute.*', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      definition.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'event',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0'
+            }]
+          },
+        },
+      });
+
+      event.broker.publish('api', 'activity.sometype.event_1_0', {}, {type: 'message'});
+
+      expect(messages).to.have.length(1);
+      expect(messages[0].fields).to.have.property('routingKey', 'execute.completed');
+      expect(messages[0].content).to.have.property('executionId', 'event_1_0');
+      expect(messages[0].content.parent).to.have.property('id', 'event');
+      expect(messages[0].content.parent).to.have.property('executionId', 'event_1');
     });
   });
 
@@ -360,7 +420,7 @@ describe('MessageEventDefinition', () => {
     it('publishes message event on parent broker with resolved message', () => {
       event.isThrowing = true;
 
-      const definition = MessageEventDefinition(event, {
+      const definition = new MessageEventDefinition(event, {
         type: 'bpmn:MessageEventDefinition',
         behaviour: {
           messageRef: {
@@ -404,7 +464,7 @@ describe('MessageEventDefinition', () => {
     it('publishes signal with input from execution message', () => {
       event.isThrowing = true;
 
-      const definition = MessageEventDefinition(event, {
+      const definition = new MessageEventDefinition(event, {
         type: 'bpmn:MessageEventDefinition',
         behaviour: {
           messageRef: {
@@ -449,7 +509,7 @@ describe('MessageEventDefinition', () => {
     it('without message reference publishes anonymous message', () => {
       event.isThrowing = true;
 
-      const definition = MessageEventDefinition(event, {
+      const definition = new MessageEventDefinition(event, {
         type: 'bpmn:MessageEventDefinition',
       });
 

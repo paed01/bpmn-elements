@@ -5,500 +5,535 @@ import {getUniqueId, getOptionsAndCallback} from '../shared';
 import {makeErrorFromMessage} from '../error/Errors';
 import {cloneMessage, cloneContent} from '../messageHelper';
 
+const consumingSymbol = Symbol.for('consuming');
+const countersSymbol = Symbol.for('counters');
+const execSymbol = Symbol.for('exec');
+const executeMessageSymbol = Symbol.for('executeMessage');
+const messageHandlersSymbol = Symbol.for('messageHandlers');
+const stateMessageSymbol = Symbol.for('stateMessage');
+const statusSymbol = Symbol.for('status');
+const stoppedSymbol = Symbol.for('stopped');
+
 export default Definition;
 
 export function Definition(context, options) {
+  if (!(this instanceof Definition)) return new Definition(context, options);
   if (!context) throw new Error('No context');
 
   const {id, name, type = 'definition'} = context;
-  let environment = context.environment;
+  this.id = id;
+  this.type = type;
+  this.name = name;
 
+  let environment;
   if (options) {
-    environment = environment.clone(options);
-    context = context.clone(environment);
+    environment = this.environment = context.environment.clone(options);
+    this.context = context.clone(environment);
+  } else {
+    environment = this.environment = context.environment;
+    this.context = context;
   }
 
-  const logger = environment.Logger(type.toLowerCase());
-
-  let execution, executionId, processes, executableProcesses, postponedMessage, stateMessage, stopped, consumingRunQ;
-  let status;
-
-  let counters = {
+  this[countersSymbol] = {
     completed: 0,
     discarded: 0,
   };
 
-  const definitionApi = {
-    id,
-    name,
-    type,
-    logger,
-    context,
-    get counters() {
-      return {...counters};
-    },
-    get executionId() {
-      return executionId;
-    },
-    get status() {
-      return status;
-    },
-    get execution() {
-      return execution;
-    },
-    get isRunning() {
-      if (!consumingRunQ) return false;
-      return !!status;
-    },
-    get environment() {
-      return environment;
-    },
-    run,
-    getApi,
-    getState,
-    getActivityById,
-    getElementById,
-    getPostponed,
-    getProcesses,
-    getExecutableProcesses,
-    getProcessById,
-    sendMessage,
-    recover,
-    resume,
-    shake,
-    signal,
-    cancelActivity,
-    stop,
+  this[stoppedSymbol] = false;
+  this[execSymbol] = {};
+
+  const onBrokerReturn = this._onBrokerReturnFn.bind(this);
+  this[messageHandlersSymbol] = {
+    onBrokerReturn,
+    onApiMessage: this._onApiMessage.bind(this),
+    onRunMessage: this._onRunMessage.bind(this),
+    onExecutionMessage: this._onExecutionMessage.bind(this),
   };
 
-  const {broker, on, once, waitFor, emit, emitFatal} = DefinitionBroker(definitionApi, onBrokerReturn);
+  const {broker, on, once, waitFor, emit, emitFatal} = DefinitionBroker(this, onBrokerReturn);
+  this.broker = broker;
 
-  definitionApi.on = on;
-  definitionApi.once = once;
-  definitionApi.waitFor = waitFor;
-  definitionApi.emit = emit;
-  definitionApi.emitFatal = emitFatal;
+  this.on = on;
+  this.once = once;
+  this.waitFor = waitFor;
+  this.emit = emit;
+  this.emitFatal = emitFatal;
 
-  const runQ = broker.getQueue('run-q');
-  const executionQ = broker.getQueue('execution-q');
+  this.logger = environment.Logger(type.toLowerCase());
+}
 
-  Object.defineProperty(definitionApi, 'broker', {
-    enumerable: true,
-    get: () => broker,
-  });
+const proto = Definition.prototype;
 
-  Object.defineProperty(definitionApi, 'stopped', {
-    enumerable: true,
-    get: () => execution && execution.stopped,
-  });
+Object.defineProperty(proto, 'counters', {
+  enumerable: true,
+  get() {
+    return {...this[countersSymbol]};
+  },
+});
 
-  return definitionApi;
+Object.defineProperty(proto, 'execution', {
+  enumerable: true,
+  get() {
+    return this[execSymbol].execution;
+  },
+});
 
-  function run(optionsOrCallback, optionalCallback) {
-    const [runOptions, callback] = getOptionsAndCallback(optionsOrCallback, optionalCallback);
-    if (definitionApi.isRunning) {
-      const err = new Error('definition is already running');
-      if (callback) return callback(err);
-      throw err;
-    }
+Object.defineProperty(proto, 'executionId', {
+  enumerable: true,
+  get() {
+    return this[execSymbol].executionId;
+  },
+});
 
-    addConsumerCallbacks(callback);
+Object.defineProperty(proto, 'isRunning', {
+  enumerable: true,
+  get() {
+    if (!this[consumingSymbol]) return false;
+    return !!this.status;
+  },
+});
 
-    executionId = getUniqueId(id);
-    const content = createMessage({...runOptions, executionId});
+Object.defineProperty(proto, 'status', {
+  enumerable: true,
+  get() {
+    return this[statusSymbol];
+  },
+});
 
-    broker.publish('run', 'run.enter', content);
-    broker.publish('run', 'run.start', cloneContent(content));
-    broker.publish('run', 'run.execute', cloneContent(content));
+Object.defineProperty(proto, 'stopped', {
+  enumerable: true,
+  get() {
+    return this[stoppedSymbol];
+  },
+});
 
-    logger.debug(`<${executionId} (${id})> run`);
-
-    activateRunConsumers();
-
-    return definitionApi;
+proto.run = function run(optionsOrCallback, optionalCallback) {
+  const [runOptions, callback] = getOptionsAndCallback(optionsOrCallback, optionalCallback);
+  if (this.isRunning) {
+    const err = new Error('definition is already running');
+    if (callback) return callback(err);
+    throw err;
   }
 
-  function resume(callback) {
-    if (definitionApi.isRunning) {
-      const err = new Error('cannot resume running definition');
-      if (callback) return callback(err);
-      throw err;
-    }
-
-    stopped = false;
-    if (!status) return definitionApi;
-
-    addConsumerCallbacks(callback);
-
-    logger.debug(`<${executionId} (${id})> resume`);
-
-    const content = createMessage({executionId});
-    broker.publish('run', 'run.resume', content, {persistent: false});
-    activateRunConsumers();
-    return definitionApi;
+  if (callback) {
+    addConsumerCallbacks(this, callback);
   }
 
-  function recover(state) {
-    if (definitionApi.isRunning) throw new Error('cannot recover running definition');
-    if (!state) return definitionApi;
+  const exec = this[execSymbol];
+  exec.executionId = getUniqueId(this.id);
+  const content = this._createMessage({...runOptions});
 
-    stopped = state.stopped;
-    status = state.status;
+  const broker = this.broker;
+  broker.publish('run', 'run.enter', content);
+  broker.publish('run', 'run.start', cloneContent(content));
+  broker.publish('run', 'run.execute', cloneContent(content));
 
-    executionId = state.executionId;
-    if (state.counters) {
-      counters = {...counters, ...state.counters};
-    }
+  this.logger.debug(`<${this.executionId} (${this.id})> run`);
 
-    environment.recover(state.environment);
+  this._activateRunConsumers();
 
-    if (state.execution) {
-      execution = DefinitionExecution(definitionApi, context).recover(state.execution);
-    }
+  return this;
+};
 
-    broker.recover(state.broker);
-
-    return definitionApi;
+proto.resume = function resume(callback) {
+  if (this.isRunning) {
+    const err = new Error('cannot resume running definition');
+    if (callback) return callback(err);
+    throw err;
   }
 
-  function shake(startId) {
-    let result = {};
+  this[stoppedSymbol] = false;
+  if (!this.status) return this;
 
-    let bps;
-    if (startId) {
-      const startActivity = getActivityById(startId);
-      if (!startActivity) return;
-      const bp = getProcessById(startActivity.parent.id);
-      if (!bp) return;
-      bps = [bp];
-    } else bps = getProcesses();
-
-    bps.forEach(shakeProcess);
-
-    return result;
-
-    function shakeProcess(shakeBp) {
-      let shovel;
-      if (!shakeBp.isRunning) {
-        shovel = shakeBp.broker.createShovel('shaker', {
-          exchange: 'event',
-          pattern: '*.shake#',
-        }, {
-          broker,
-          exchange: 'event',
-        });
-      }
-
-      const shakeResult = shakeBp.shake(startId);
-      if (shovel) shakeBp.broker.closeShovel('shaker');
-
-      result = {
-        ...result,
-        ...shakeResult,
-      };
-    }
+  if (callback) {
+    addConsumerCallbacks(this, callback);
   }
 
-  function activateRunConsumers() {
-    consumingRunQ = true;
-    broker.subscribeTmp('api', `definition.*.${executionId}`, onApiMessage, {noAck: true, consumerTag: '_definition-api'});
-    runQ.assertConsumer(onRunMessage, {exclusive: true, consumerTag: '_definition-run'});
+  this.logger.debug(`<${this.executionId} (${this.id})> resume`);
+
+  const content = this._createMessage();
+  this.broker.publish('run', 'run.resume', content, {persistent: false});
+  this._activateRunConsumers();
+  return this;
+};
+
+proto.recover = function recover(state) {
+  if (this.isRunning) throw new Error('cannot recover running definition');
+  if (!state) return this;
+
+  this[stoppedSymbol] = !!state.stopped;
+  this[statusSymbol] = state.status;
+
+  const exec = this[execSymbol];
+  exec.executionId = state.executionId;
+  if (state.counters) {
+    this[countersSymbol] = {...this[countersSymbol], ...state.counters};
   }
 
-  function deactivateRunConsumers() {
-    broker.cancel('_definition-api');
-    broker.cancel('_definition-run');
-    broker.cancel('_definition-execution');
-    consumingRunQ = false;
+  this.environment.recover(state.environment);
+
+  if (state.execution) {
+    exec.execution = new DefinitionExecution(this, this.context).recover(state.execution);
   }
 
-  function stop() {
-    if (!definitionApi.isRunning) return;
-    getApi().stop();
-  }
+  this.broker.recover(state.broker);
 
-  function addConsumerCallbacks(callback) {
-    if (!callback) return;
+  return this;
+};
 
-    broker.off('return', onBrokerReturn);
+proto.shake = function shake(startId) {
+  let result = {};
+  const broker = this.broker;
 
-    clearConsumers();
+  let bps;
+  if (startId) {
+    const startActivity = this.getActivityById(startId);
+    if (!startActivity) return;
+    const bp = this.getProcessById(startActivity.parent.id);
+    if (!bp) return;
+    bps = [bp];
+  } else bps = this.getProcesses();
 
-    broker.subscribeOnce('event', 'definition.stop', cbLeave, {consumerTag: '_definition-callback-stop'});
-    broker.subscribeOnce('event', 'definition.leave', cbLeave, {consumerTag: '_definition-callback-leave'});
-    broker.subscribeOnce('event', 'definition.error', cbError, {consumerTag: '_definition-callback-error'});
+  bps.forEach(shakeProcess);
 
-    function cbLeave(_, message) {
-      clearConsumers();
-      return callback(null, getApi(message));
-    }
-    function cbError(_, message) {
-      clearConsumers();
-      reset();
-      const err = makeErrorFromMessage(message);
-      return callback(err);
+  return result;
+
+  function shakeProcess(shakeBp) {
+    let shovel;
+    if (!shakeBp.isRunning) {
+      shovel = shakeBp.broker.createShovel('shaker', {
+        exchange: 'event',
+        pattern: '*.shake#',
+      }, {
+        broker,
+        exchange: 'event',
+      });
     }
 
-    function clearConsumers() {
-      broker.cancel('_definition-callback-stop');
-      broker.cancel('_definition-callback-leave');
-      broker.cancel('_definition-callback-error');
-      broker.on('return', onBrokerReturn);
-    }
-  }
+    const shakeResult = shakeBp.shake(startId);
+    if (shovel) shakeBp.broker.closeShovel('shaker');
 
-  function createMessage(override) {
-    return {
-      id,
-      type,
-      name,
-      ...override,
+    result = {
+      ...result,
+      ...shakeResult,
     };
   }
+};
 
-  function onBrokerReturn(message) {
-    if (message.properties.type === 'error') {
-      deactivateRunConsumers();
-      const err = makeErrorFromMessage(message);
-      throw err;
-    }
+proto.getState = function getState() {
+  return this._createMessage({
+    status: this.status,
+    stopped: this.stopped,
+    counters: this.counters,
+    environment: this.environment.getState(),
+    execution: this.execution && this.execution.getState(),
+    broker: this.broker.getState(true),
+  });
+};
+
+proto.getProcesses = function getProcesses() {
+  const execution = this.execution;
+  if (execution) return execution.getProcesses();
+  return this.context.getProcesses();
+};
+
+proto.getExecutableProcesses = function getExecutableProcesses() {
+  const execution = this.execution;
+  if (execution) return execution.getExecutableProcesses();
+  return this.context.getExecutableProcesses();
+};
+
+proto.getRunningProcesses = function getRunningProcesses() {
+  const execution = this.execution;
+  if (!execution) return [];
+  return execution.getRunningProcesses();
+};
+
+proto.getProcessById = function getProcessById(processId) {
+  return this.getProcesses().find((p) => p.id === processId);
+};
+
+proto.getActivityById = function getActivityById(childId) {
+  const siblings = this.getProcesses();
+  for (const sibling of siblings) {
+    const child = sibling.getActivityById(childId);
+    if (child) return child;
+  }
+  return null;
+};
+
+proto.getElementById = function getElementById(elementId) {
+  return this.context.getActivityById(elementId);
+};
+
+proto.getPostponed = function getPostponed(...args) {
+  const execution = this.execution;
+  if (!execution) return [];
+  return execution.getPostponed(...args);
+};
+
+proto.getApi = function getApi(message) {
+  const execution = this.execution;
+  if (execution) return execution.getApi(message);
+  message = message || this[stateMessageSymbol];
+  if (!message) throw new Error('Definition is not running');
+  return DefinitionApi(this.broker, message);
+};
+
+proto.signal = function signal(message) {
+  return this.getApi().signal(message, {delegate: true});
+};
+
+proto.cancelActivity = function cancelActivity(message) {
+  return this.getApi().cancel(message, {delegate: true});
+};
+
+proto.sendMessage = function sendMessage(message) {
+  const messageContent = {message};
+  let messageType = 'message';
+  const reference = message && message.id && this.getElementById(message.id);
+  if (reference && reference.resolve) {
+    const resolvedReference = reference.resolve(this._createMessage({message}));
+    messageType = resolvedReference.messageType || messageType;
+    messageContent.message = {...message, ...resolvedReference};
   }
 
-  function onRunMessage(routingKey, message) {
-    const {content, ack, fields} = message;
-    if (routingKey === 'run.resume') {
-      return onResumeMessage();
+  return this.getApi().sendApiMessage(messageType, messageContent, {delegate: true});
+};
+
+proto.stop = function stop() {
+  if (!this.isRunning) return;
+  this.getApi().stop();
+};
+
+proto._activateRunConsumers = function activateRunConsumers() {
+  this[consumingSymbol] = true;
+  const broker = this.broker;
+  const {onApiMessage, onRunMessage} = this[messageHandlersSymbol];
+  broker.subscribeTmp('api', `definition.*.${this.executionId}`, onApiMessage, {
+    noAck: true,
+    consumerTag: '_definition-api',
+  });
+  broker.getQueue('run-q').assertConsumer(onRunMessage, {
+    exclusive: true,
+    consumerTag: '_definition-run',
+  });
+};
+
+proto._deactivateRunConsumers = function deactivateRunConsumers() {
+  const broker = this.broker;
+  broker.cancel('_definition-api');
+  broker.cancel('_definition-run');
+  broker.cancel('_definition-execution');
+  this[consumingSymbol] = false;
+};
+
+proto._createMessage = function createMessage(override) {
+  return {
+    id: this.id,
+    type: this.type,
+    name: this.name,
+    executionId: this.executionId,
+    ...override,
+  };
+};
+
+proto._onRunMessage = function onRunMessage(routingKey, message) {
+  const {content, fields} = message;
+  if (routingKey === 'run.resume') {
+    return this._onResumeMessage(message);
+  }
+
+  const exec = this[execSymbol];
+  this[stateMessageSymbol] = message;
+
+  switch (routingKey) {
+    case 'run.enter': {
+      this.logger.debug(`<${this.executionId} (${this.id})> enter`);
+
+      this[statusSymbol] = 'entered';
+      if (fields.redelivered) break;
+
+      exec.execution = undefined;
+      this._publishEvent('enter', content);
+      break;
     }
-
-    stateMessage = message;
-
-    switch (routingKey) {
-      case 'run.enter': {
-        logger.debug(`<${executionId} (${id})> enter`);
-
-        status = 'entered';
-        if (fields.redelivered) break;
-
-        execution = undefined;
-        publishEvent('enter', content);
-        break;
-      }
-      case 'run.start': {
-        logger.debug(`<${executionId} (${id})> start`);
-        status = 'start';
-        publishEvent('start', content);
-        break;
-      }
-      case 'run.execute': {
-        status = 'executing';
-        const executeMessage = cloneMessage(message);
-        if (fields.redelivered && !execution) {
-          executeMessage.fields.redelivered = undefined;
-        }
-        postponedMessage = message;
-        executionQ.assertConsumer(onExecutionMessage, {exclusive: true, consumerTag: '_definition-execution'});
-
-        execution = execution || DefinitionExecution(definitionApi, context);
-
-        if (executeMessage.fields.redelivered) {
-          publishEvent('resume', content);
-        }
-
-        return execution.execute(executeMessage);
-      }
-      case 'run.end': {
-        if (status === 'end') break;
-
-        counters.completed++;
-
-        logger.debug(`<${executionId} (${id})> completed`);
-        status = 'end';
-        broker.publish('run', 'run.leave', content);
-        publishEvent('end', content);
-        break;
-      }
-      case 'run.discarded': {
-        if (status === 'discarded') break;
-
-        counters.discarded++;
-
-        status = 'discarded';
-        broker.publish('run', 'run.leave', content);
-        break;
-      }
-      case 'run.error': {
-        publishEvent('error', cloneContent(content, {
-          error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
-        }), {mandatory: true});
-        break;
-      }
-      case 'run.leave': {
-        ack();
-        status = undefined;
-        deactivateRunConsumers();
-
-        publishEvent('leave');
-        break;
-      }
+    case 'run.start': {
+      this.logger.debug(`<${this.executionId} (${this.id})> start`);
+      this[statusSymbol] = 'start';
+      this._publishEvent('start', content);
+      break;
     }
+    case 'run.execute': {
+      this[statusSymbol] = 'executing';
+      const executeMessage = cloneMessage(message);
+      if (fields.redelivered && !exec.execution) {
+        executeMessage.fields.redelivered = undefined;
+      }
+      this[executeMessageSymbol] = message;
+      this.broker.getQueue('execution-q').assertConsumer(this[messageHandlersSymbol].onExecutionMessage, {
+        exclusive: true,
+        consumerTag: '_definition-execution',
+      });
 
-    ack();
+      exec.execution = exec.execution || new DefinitionExecution(this, this.context);
 
-    function onResumeMessage() {
+      if (executeMessage.fields.redelivered) {
+        this._publishEvent('resume', content);
+      }
+
+      return exec.execution.execute(executeMessage);
+    }
+    case 'run.end': {
+      if (this.status === 'end') break;
+
+      this[countersSymbol].completed++;
+
+      this.logger.debug(`<${this.executionId} (${this.id})> completed`);
+      this[statusSymbol] = 'end';
+      this.broker.publish('run', 'run.leave', content);
+      this._publishEvent('end', content);
+      break;
+    }
+    case 'run.error': {
+      this._publishEvent('error', {
+        ...content,
+        error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
+      }, {mandatory: true});
+      break;
+    }
+    case 'run.discarded': {
+      if (this.status === 'discarded') break;
+
+      this[countersSymbol].discarded++;
+
+      this[statusSymbol] = 'discarded';
+      this.broker.publish('run', 'run.leave', content);
+      break;
+    }
+    case 'run.leave': {
       message.ack();
+      this[statusSymbol] = undefined;
+      this._deactivateRunConsumers();
 
-      switch (stateMessage.fields.routingKey) {
-        case 'run.enter':
-        case 'run.start':
-        case 'run.discarded':
-        case 'run.end':
-        case 'run.leave':
-          break;
-        default:
-          return;
-      }
-
-      if (!stateMessage.fields.redelivered) return;
-
-      logger.debug(`<${id}> resume from ${status}`);
-
-      return broker.publish('run', stateMessage.fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
+      this._publishEvent('leave', this._createMessage());
+      return;
     }
   }
 
-  function onExecutionMessage(routingKey, message) {
-    const {content, properties} = message;
-    const messageType = properties.type;
+  message.ack();
+};
 
-    message.ack();
+proto._onResumeMessage = function onResumeMessage(message) {
+  message.ack();
 
-    switch (messageType) {
-      case 'stopped': {
-        deactivateRunConsumers();
-        return publishEvent('stop');
-      }
-      case 'error': {
-        broker.publish('run', 'run.error', content);
-        broker.publish('run', 'run.discarded', content);
-        break;
-      }
-      default: {
-        broker.publish('run', 'run.end', content);
-      }
+  const stateMessage = this[stateMessageSymbol];
+
+  switch (stateMessage.fields.routingKey) {
+    case 'run.discarded':
+    case 'run.end':
+    case 'run.leave':
+      break;
+    default:
+      return;
+  }
+
+  if (!stateMessage.fields.redelivered) return;
+
+  this._debug(`resume from ${this.status}`);
+
+  return this.broker.publish('run', stateMessage.fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
+};
+
+proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
+  const {content, properties} = message;
+  const messageType = properties.type;
+
+  message.ack();
+
+  switch (messageType) {
+    case 'stopped': {
+      return this._onStop();
     }
-
-    if (postponedMessage) {
-      const ackMessage = postponedMessage;
-      postponedMessage = null;
-      ackMessage.ack();
+    case 'error': {
+      this.broker.publish('run', 'run.error', content);
+      this.broker.publish('run', 'run.discarded', content);
+      break;
     }
-  }
-
-  function publishEvent(action, content = {}, msgOpts) {
-    broker.publish('event', `definition.${action}`, execution ? execution.createMessage(content) : content, {type: action, ...msgOpts});
-  }
-
-  function getState() {
-    return createMessage({
-      executionId,
-      status,
-      stopped,
-      counters: {...counters},
-      environment: environment.getState(),
-      execution: execution && execution.getState(),
-      broker: broker.getState(true),
-    });
-  }
-
-  function getProcesses() {
-    if (!processes) loadProcesses();
-    return processes;
-  }
-
-  function getExecutableProcesses() {
-    if (!processes) loadProcesses();
-    return executableProcesses;
-  }
-
-  function getProcessById(processId) {
-    return getProcesses().find((p) => p.id === processId);
-  }
-
-  function loadProcesses() {
-    if (processes) return processes;
-    executableProcesses = context.getExecutableProcesses() || [];
-    processes = context.getProcesses() || [];
-    logger.debug(`<${id}> found ${processes.length} processes`);
-  }
-
-  function getActivityById(childId) {
-    let child;
-    const siblings = getProcesses();
-    for (let i = 0; i < siblings.length; i++) {
-      child = siblings[i].getActivityById(childId);
-      if (child) return child;
-    }
-    return child;
-  }
-
-  function getElementById(elementId) {
-    return context.getActivityById(elementId);
-  }
-
-  function getPostponed(...args) {
-    if (!execution) return [];
-    return execution.getPostponed(...args);
-  }
-
-  function getApi(message) {
-    if (execution) return execution.getApi(message);
-    if (!message || !stateMessage) throw new Error('Definition is not running');
-    return DefinitionApi(broker, message || stateMessage);
-  }
-
-  function signal(message) {
-    return getApi().signal(message, {delegate: true});
-  }
-
-  function cancelActivity(message) {
-    return getApi().cancel(message, {delegate: true});
-  }
-
-  function sendMessage(message) {
-    const messageContent = {message};
-    let messageType = 'message';
-    const reference = message && message.id && getElementById(message.id);
-    if (reference && reference.resolve) {
-      const resolvedReference = reference.resolve(createMessage({message}));
-      messageType = resolvedReference.messageType || messageType;
-      messageContent.message = {...message, ...resolvedReference};
-    }
-
-    return getApi().sendApiMessage(messageType, messageContent, {delegate: true});
-  }
-
-  function onApiMessage(routingKey, message) {
-    const messageType = message.properties.type;
-
-    switch (messageType) {
-      case 'stop': {
-        if (execution && !execution.completed) return;
-        onStop();
-        break;
-      }
+    default: {
+      this.broker.publish('run', 'run.end', content);
     }
   }
 
-  function onStop() {
-    stopped = true;
-    deactivateRunConsumers();
-    return publishEvent('stop');
+  const executeMessage = this[executeMessageSymbol];
+  this[executeMessageSymbol] = null;
+  executeMessage.ack();
+};
+
+proto._onApiMessage = function onApiMessage(routingKey, message) {
+  if (message.properties.type === 'stop') {
+    const execution = this.execution;
+    if (!execution || execution.completed) {
+      this._onStop();
+    }
+  }
+};
+
+proto._publishEvent = function publishEvent(action, content, msgOpts) {
+  const execution = this.execution;
+  this.broker.publish('event', `definition.${action}`, execution ? execution._createMessage(content) : cloneContent(content), {
+    type: action,
+    ...msgOpts,
+  });
+};
+
+proto._onStop = function onStop() {
+  this[stoppedSymbol] = true;
+  this._deactivateRunConsumers();
+  return this._publishEvent('stop', this._createMessage());
+};
+
+proto._onBrokerReturnFn = function onBrokerReturn(message) {
+  if (message.properties.type === 'error') {
+    this._deactivateRunConsumers();
+    const err = makeErrorFromMessage(message);
+    throw err;
+  }
+};
+
+proto._reset = function reset() {
+  this[execSymbol].executionId = undefined;
+  this._deactivateRunConsumers();
+  this.broker.purgeQueue('run-q');
+  this.broker.purgeQueue('execution-q');
+};
+
+proto._debug = function debug(msg) {
+  this.logger.debug(`<${this.id}> ${msg}`);
+};
+
+function addConsumerCallbacks(definition, callback) {
+  const broker = definition.broker;
+  clearConsumers();
+
+  broker.subscribeOnce('event', 'definition.stop', cbLeave, {consumerTag: '_definition-callback-stop'});
+  broker.subscribeOnce('event', 'definition.leave', cbLeave, {consumerTag: '_definition-callback-leave'});
+  broker.subscribeOnce('event', 'definition.error', cbError, {consumerTag: '_definition-callback-error'});
+
+  function cbLeave(_, message) {
+    clearConsumers();
+    return callback(null, definition.getApi(message));
   }
 
-  function reset() {
-    executionId = undefined;
-    deactivateRunConsumers();
-    runQ.purge();
-    executionQ.purge();
+  function cbError(_, message) {
+    clearConsumers();
+    definition._reset();
+    return callback(makeErrorFromMessage(message));
+  }
+
+  function clearConsumers() {
+    broker.cancel('_definition-callback-stop');
+    broker.cancel('_definition-callback-leave');
+    broker.cancel('_definition-callback-error');
   }
 }

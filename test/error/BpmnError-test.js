@@ -6,7 +6,7 @@ describe('BpmnError', () => {
     const bpmnError = BpmnErrorActivity({
       id: 'Error_0',
       name: 'TestError',
-    }, {environment: Environment()});
+    }, {environment: new Environment()});
 
     const err = bpmnError.resolve({}, new Error('Men'));
 
@@ -21,7 +21,7 @@ describe('BpmnError', () => {
       behaviour: {
         errorCode: 'EMES',
       },
-    }, {environment: Environment()});
+    }, {environment: new Environment()});
 
     const err = bpmnError.resolve({
       resolveExpression(errorCode) {

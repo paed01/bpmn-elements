@@ -2,20 +2,21 @@ import Environment from '../../src/Environment';
 import LoopCharacteristics from '../../src/tasks/LoopCharacteristics';
 import {ActivityBroker} from '../../src/EventBroker';
 import {Logger} from '../helpers/testHelpers';
+import {ActivityError} from '../../src/error/Errors';
 
 describe('LoopCharacteristics', () => {
   let task;
   beforeEach(() => {
     task = ActivityBroker();
     task.id = 'task';
-    task.environment = Environment({Logger});
+    task.environment = new Environment({Logger});
     task.broker.assertQueue('execute-q');
     task.broker.bindQueue('execute-q', 'execution', '#');
   });
 
-  describe('ctorish(activity, loopCharacteristics)', () => {
+  describe('constructor(activity, loopCharacteristics)', () => {
     it('returns loop characteristics api with execute function', () => {
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -30,26 +31,11 @@ describe('LoopCharacteristics', () => {
       expect(loop).to.have.property('elementVariable', 'testitem');
       expect(loop).to.have.property('execute').that.is.a('function');
     });
-
-    it('returns NO loop characteristics if collection and cardinality is absent', () => {
-      const loop = LoopCharacteristics(task, {
-        behaviour: {
-          isSequential: true,
-        },
-      });
-
-      expect(loop).to.not.be.ok;
-    });
-
-    it('empty behaviour is ok and returns no characteristics', () => {
-      const loop = LoopCharacteristics(task, {});
-      expect(loop).to.not.be.ok;
-    });
   });
 
   describe('execute(executeMessage)', () => {
     it('throws if executeMessage is missing', () => {
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -59,46 +45,22 @@ describe('LoopCharacteristics', () => {
       expect(loop.execute).to.throw(/requires message/);
     });
 
-    it('publishes error on activity broker if loopCardinality is not a number', (done) => {
-      const loop = LoopCharacteristics(task, {
+    it('throws error if loopCardinality is not a number', () => {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: '3 pcs',
           isSequential: true,
         },
       });
 
-      task.once('error', (err) => {
-        expect(err).to.match(/NaN/i);
-        done();
-      });
-
-      loop.execute({
-        content: {
-          isRootScope: true,
-          executionId: 'parent-execution-id',
-        },
-      });
-    });
-
-    it('publishes error on activity broker if loopCardinality is not a number', (done) => {
-      const loop = LoopCharacteristics(task, {
-        behaviour: {
-          loopCardinality: '3 pcs',
-          isSequential: true,
-        },
-      });
-
-      task.once('error', (err) => {
-        expect(err).to.match(/NaN/i);
-        done();
-      });
-
-      loop.execute({
-        content: {
-          isRootScope: true,
-          executionId: 'parent-execution-id',
-        },
-      });
+      expect(() => {
+        loop.execute({
+          content: {
+            isRootScope: true,
+            executionId: 'parent-execution-id',
+          },
+        });
+      }).to.throw(ActivityError, /cardinality/i);
     });
   });
 
@@ -109,7 +71,7 @@ describe('LoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -117,6 +79,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        fields: {},
         content: {
           isRootScope: true,
           executionId: 'parent-execution-id',
@@ -144,7 +107,7 @@ describe('LoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -152,6 +115,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        fields: {},
         content: {
           isRootScope: true,
           executionId: 'parent-execution-id',
@@ -170,7 +134,7 @@ describe('LoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -178,6 +142,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        fields: {},
         content: {
           id: 'task',
           type: 'bpmn:Task',
@@ -215,7 +180,7 @@ describe('LoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -223,6 +188,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        fields: {},
         content: {
           isRootScope: true,
           executionId: 'parent-execution-id',
@@ -262,7 +228,7 @@ describe('LoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -270,6 +236,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        fields: {},
         content: {
           isRootScope: true,
           executionId: 'parent-execution-id',
@@ -303,7 +270,7 @@ describe('LoopCharacteristics', () => {
         task.broker.publish('execution', 'execute.completed', {...msg.content});
       }, {noAck: true});
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -311,6 +278,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        fields: {},
         content: {
           isRootScope: true,
           executionId: 'parent-execution-id',
@@ -340,7 +308,7 @@ describe('LoopCharacteristics', () => {
         }
       }, {noAck: true, consumerTag: 'completed-consumer'});
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -348,6 +316,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        fields: {},
         content: {
           isRootScope: true,
           executionId: 'parent-execution-id',
@@ -370,7 +339,7 @@ describe('LoopCharacteristics', () => {
 
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 10,
@@ -379,6 +348,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        fields: {},
         content: {
           isRootScope: true,
           executionId: 'parent-execution-id',
@@ -417,7 +387,7 @@ describe('LoopCharacteristics', () => {
         }
       }, {noAck: true});
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -426,6 +396,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        fields: {},
         content: {
           isRootScope: true,
           executionId: 'parent-execution-id',
@@ -446,7 +417,7 @@ describe('LoopCharacteristics', () => {
     it('root api stop message drops consumers', () => {
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           collection: '${environment.variables.items}',
@@ -454,6 +425,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        fields: {},
         content: {
           isRootScope: true,
           executionId: 'parent-execution-id',
@@ -472,7 +444,7 @@ describe('LoopCharacteristics', () => {
           messages.push(msg);
         }, {noAck: true});
 
-        const loop = LoopCharacteristics(task, {
+        const loop = new LoopCharacteristics(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -511,7 +483,7 @@ describe('LoopCharacteristics', () => {
           messages.push(msg);
         }, {noAck: true});
 
-        const loop = LoopCharacteristics(task, {
+        const loop = new LoopCharacteristics(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -549,7 +521,7 @@ describe('LoopCharacteristics', () => {
           messages.push(msg);
         }, {noAck: true});
 
-        const loop = LoopCharacteristics(task, {
+        const loop = new LoopCharacteristics(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -585,7 +557,7 @@ describe('LoopCharacteristics', () => {
           messages.push(msg);
         }, {noAck: true});
 
-        const loop = LoopCharacteristics(task, {
+        const loop = new LoopCharacteristics(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -645,13 +617,14 @@ describe('LoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
         },
       });
 
       loop.execute({
+        fields: {},
         content: {
           id: 'task',
           type: 'bpmn:Task',
@@ -734,13 +707,14 @@ describe('LoopCharacteristics', () => {
 
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           collection: '${environment.variables.items}',
         },
       });
 
       loop.execute({
+        fields: {},
         content: {
           isRootScope: true,
           executionId: 'parent-execution-id',
@@ -776,13 +750,14 @@ describe('LoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
         },
       });
 
       loop.execute({
+        fields: {},
         content: {
           id: 'task',
           type: 'bpmn:Task',
@@ -808,13 +783,14 @@ describe('LoopCharacteristics', () => {
         messages.push(msg);
       }, {noAck: true});
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
         },
       });
 
       loop.execute({
+        fields: {},
         content: {
           isRootScope: true,
           executionId: 'parent-execution-id',
@@ -845,7 +821,7 @@ describe('LoopCharacteristics', () => {
         startMessages.push(msg);
       }, {noAck: true});
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
           completionCondition: '${content.output.stopLoop}',
@@ -853,6 +829,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        fields: {},
         content: {
           isRootScope: true,
           executionId: 'parent-execution-id',
@@ -873,13 +850,14 @@ describe('LoopCharacteristics', () => {
     it('root api stop message drops consumers', () => {
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = LoopCharacteristics(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           collection: '${environment.variables.items}',
         },
       });
 
       loop.execute({
+        fields: {},
         content: {
           isRootScope: true,
           executionId: 'parent-execution-id',
@@ -898,7 +876,7 @@ describe('LoopCharacteristics', () => {
           messages.push(msg);
         }, {noAck: true});
 
-        const loop = LoopCharacteristics(task, {
+        const loop = new LoopCharacteristics(task, {
           behaviour: {
             loopCardinality: 3,
             completionCondition: '${content.output.stopLoop}',
@@ -926,7 +904,7 @@ describe('LoopCharacteristics', () => {
           messages.push(msg);
         }, {noAck: true});
 
-        const loop = LoopCharacteristics(task, {
+        const loop = new LoopCharacteristics(task, {
           behaviour: {
             loopCardinality: 3,
             completionCondition: '${content.output.stopLoop}',
@@ -955,7 +933,7 @@ describe('LoopCharacteristics', () => {
           messages.push(msg);
         }, {noAck: true});
 
-        const loop = LoopCharacteristics(task, {
+        const loop = new LoopCharacteristics(task, {
           behaviour: {
             loopCardinality: 3,
           },

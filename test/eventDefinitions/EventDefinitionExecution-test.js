@@ -7,7 +7,7 @@ describe('EventDefinitionExecution', () => {
   it('publishes root message with prevent complete instruction when executed', () => {
     const event = getActivity();
 
-    const execution = EventDefinitionExecution(event, [{
+    const execution = new EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
       Behaviour() {},
     }]);
@@ -41,7 +41,7 @@ describe('EventDefinitionExecution', () => {
   it('publishes start definition message when executed', () => {
     const event = getActivity();
 
-    const execution = EventDefinitionExecution(event, [{
+    const execution = new EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
       Behaviour() {},
     }]);
@@ -86,7 +86,7 @@ describe('EventDefinitionExecution', () => {
 
   it('publishes no start message if redelivered execute message', () => {
     const event = getActivity();
-    const execution = EventDefinitionExecution(event, [{
+    const execution = new EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
       Behaviour() {},
     }]);
@@ -117,7 +117,7 @@ describe('EventDefinitionExecution', () => {
     const event = getActivity();
 
     let executeMessage;
-    const execution = EventDefinitionExecution(event, [{
+    const execution = new EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
       execute(msg) {
         executeMessage = msg;
@@ -155,7 +155,7 @@ describe('EventDefinitionExecution', () => {
 
   it('starts all event definitions', () => {
     const event = getActivity();
-    const execution = EventDefinitionExecution(event, [{
+    const execution = new EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
       execute() {},
     }, {
@@ -202,7 +202,7 @@ describe('EventDefinitionExecution', () => {
 
   it('publishes event definition complete message with output to update root scope', () => {
     const event = getActivity();
-    const execution = EventDefinitionExecution(event, [{
+    const execution = new EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
       execute() {},
     }]);
@@ -242,7 +242,7 @@ describe('EventDefinitionExecution', () => {
 
   it('publishes event definition complete message with message to update root scope', () => {
     const event = getActivity();
-    const execution = EventDefinitionExecution(event, [{
+    const execution = new EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
       execute() {},
     }]);
@@ -282,7 +282,7 @@ describe('EventDefinitionExecution', () => {
 
   it('completes execution when first event definition completes', () => {
     const event = getActivity();
-    const execution = EventDefinitionExecution(event, [{
+    const execution = new EventDefinitionExecution(event, [{
       type: 'bpmn:TimerEventDefinition',
       execute() {},
     }, {
@@ -326,7 +326,7 @@ describe('EventDefinitionExecution', () => {
   it('doesn´t start second event definition if first completes immediately', () => {
     const event = getActivity();
 
-    const execution = EventDefinitionExecution(event, [{
+    const execution = new EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
       execute(executeMessage) {
         return event.broker.publish('execution', 'execute.completed', {
@@ -366,10 +366,53 @@ describe('EventDefinitionExecution', () => {
     expect(messages).to.have.length(1);
   });
 
+  it('doesn´t start second event definition if first is stopped immediately', () => {
+    const event = getActivity();
+
+    const execution = new EventDefinitionExecution(event, [{
+      type: 'bpmn:MessageEventDefinition',
+      execute(executeMessage) {
+        return event.broker.publish('execution', 'execute.completed', {
+          ...executeMessage.content,
+          output: 1,
+        });
+      },
+    }, {
+      type: 'bpmn:MessageEventDefinition',
+      execute(executeMessage) {
+        return event.broker.publish('execution', 'execute.completed', {
+          ...executeMessage.content,
+          output: 2,
+        });
+      },
+    }]);
+
+    const messages = [];
+    event.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
+      messages.push(msg);
+      event.broker.publish('api', 'activity.stop.root-execution-id', {}, {type: 'stop'});
+    }, {noAck: true, consumerTag: 'test-consumer'});
+
+    execution.execute({
+      fields: {},
+      content: {
+        id: event.id,
+        isRootScope: true,
+        executionId: 'root-execution-id',
+        parent: {
+          id: 'theProcess',
+        },
+      },
+    });
+
+    expect(execution).to.have.property('completed', false);
+    expect(messages).to.have.length(1);
+  });
+
   it('leaves no lingering listeners when complete', () => {
     const event = getActivity();
 
-    const execution = EventDefinitionExecution(event, [{
+    const execution = new EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
       execute(executeMessage) {
         return event.broker.publish('execution', 'execute.completed', {
@@ -403,7 +446,7 @@ describe('EventDefinitionExecution', () => {
     const event = getActivity();
 
     let executeMessage;
-    const execution = EventDefinitionExecution(event, [{
+    const execution = new EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
       execute(msg) {
         executeMessage = msg;
@@ -444,7 +487,7 @@ describe('EventDefinitionExecution', () => {
   it('redelivered start event definition message with index that is not found is ignored', () => {
     const event = getActivity();
     let executeMessage;
-    const execution = EventDefinitionExecution(event, [{
+    const execution = new EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
       execute(msg) {
         executeMessage = msg;
@@ -482,7 +525,7 @@ describe('EventDefinitionExecution', () => {
 
   it('redelivered messages, completes execution when event definition completes', () => {
     const event = getActivity();
-    const execution = EventDefinitionExecution(event, [{
+    const execution = new EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
       execute() {},
     }]);
@@ -532,7 +575,7 @@ describe('EventDefinitionExecution', () => {
 
   it('stop cancels listeners', () => {
     const event = getActivity();
-    const execution = EventDefinitionExecution(event, [{
+    const execution = new EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
       execute() {},
     }]);
@@ -563,7 +606,7 @@ describe('EventDefinitionExecution', () => {
 
   it('completed routingKey overrides completed execution routingKey', (done) => {
     const event = getActivity();
-    const execution = EventDefinitionExecution(event, [{
+    const execution = new EventDefinitionExecution(event, [{
       type: 'bpmn:MessageEventDefinition',
       execute({content}) {
         event.broker.publish('execution', 'execute.completed', {...content});
@@ -589,6 +632,67 @@ describe('EventDefinitionExecution', () => {
         },
       },
     });
+  });
+
+  it('non root execute message is ignored', () => {
+    const event = getActivity();
+
+    const execution = new EventDefinitionExecution(event, [{
+      type: 'bpmn:MessageEventDefinition',
+      execute(executeMessage) {
+        return event.broker.publish('execution', 'execute.completed', {
+          ...executeMessage.content,
+          output: 1,
+        });
+      },
+    }]);
+
+    const messages = [];
+    event.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
+      messages.push(msg);
+    }, {noAck: true, consumerTag: 'test-consumer'});
+
+    execution.execute({
+      fields: {},
+      content: {
+        id: event.id,
+        executionId: 'root-execution-id',
+        parent: {
+          id: 'theProcess',
+        },
+      },
+    });
+
+    expect(messages).to.have.length(0);
+  });
+
+  it('parent complete message stops execution', () => {
+    const event = getActivity();
+
+    const execution = new EventDefinitionExecution(event, [{
+      type: 'bpmn:MessageEventDefinition',
+      execute() {},
+    }]);
+
+    execution.execute({
+      fields: {},
+      content: {
+        id: event.id,
+        isRootScope: true,
+        executionId: 'root-execution-id',
+        parent: {
+          id: 'theProcess',
+        },
+      },
+    });
+
+    event.broker.publish('execution', 'execute.completed', {
+      id: event.id,
+      isRootScope: true,
+      executionId: 'root-execution-id',
+    });
+
+    expect(execution).to.have.property('stopped', true);
   });
 });
 

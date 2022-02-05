@@ -7,7 +7,7 @@ describe('ExecutionScope', () => {
     const activity = {
       id: 'task1',
       type: 'task',
-      environment: Environment(),
+      environment: new Environment(),
       logger: {},
     };
     const message = {
@@ -44,7 +44,7 @@ describe('ExecutionScope', () => {
     const activity = {
       id: 'task1',
       type: 'task',
-      environment: Environment({
+      environment: new Environment({
         variables: {
           input: 1,
         },

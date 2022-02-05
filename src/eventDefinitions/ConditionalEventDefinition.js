@@ -1,127 +1,170 @@
 import {cloneContent, shiftParent} from '../messageHelper';
+import {ActivityError} from '../error/Errors';
+
+const executeMessageSymbol = Symbol.for('executeMessage');
 
 export default function ConditionalEventDefinition(activity, eventDefinition) {
   const {id, broker, environment, attachedTo} = activity;
+
   const {type = 'ConditionalEventDefinition', behaviour = {}} = eventDefinition;
-  const {debug} = environment.Logger(type.toLowerCase());
-  const condition = behaviour.expression;
-  const isWaiting = !attachedTo;
 
-  const source = {
-    type,
-    condition,
-    execute,
-  };
-
-  return source;
-
-  function execute(executeMessage) {
-    return isWaiting ? executeWait(executeMessage) : executeCatch(executeMessage);
-  }
-
-  function executeCatch(executeMessage) {
-    const attachedToBroker = attachedTo.broker;
-    const messageContent = cloneContent(executeMessage.content);
-
-    const {executionId, index} = messageContent;
-    messageContent.condition = condition;
-
-    const apiConsumerTag = `_api-${executionId}_${index}`;
-    const endConsumerTag = `_onend-${executionId}_${index}`;
-
-    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: apiConsumerTag});
-
-    debug(`<${executionId} (${id})> listen for execute completed from <${attachedTo.id}>`);
-    attachedToBroker.subscribeOnce('execution', 'execute.completed', onAttachedCompleted, {priority: 300, consumerTag: endConsumerTag});
-
-    function onAttachedCompleted(routingKey, endMessage) {
-      stop();
-
-      const output = environment.resolveExpression(condition, endMessage);
-      debug(`<${executionId} (${id})> condition from <${endMessage.content.executionId}> evaluated to`, !!output);
-
-      broker.publish('event', 'activity.condition', {
-        ...cloneContent(messageContent),
-        conditionResult: output,
-      });
-
-      if (output) {
-        broker.publish('execution', 'execute.completed', {
-          ...messageContent,
-          output,
-        });
-      }
-    }
-
-    function onApiMessage(routingKey, message) {
-      const messageType = message.properties.type;
-      switch (messageType) {
-        case 'discard': {
-          stop();
-          debug(`<${executionId} (${id})> discarded`);
-          return broker.publish('execution', 'execute.discard', {...messageContent, state: 'discard'});
-        }
-        case 'stop': {
-          stop();
-          return debug(`<${executionId} (${id})> stopped`);
-        }
-      }
-    }
-
-    function stop() {
-      attachedToBroker.cancel(endConsumerTag);
-      broker.cancel(apiConsumerTag);
-    }
-  }
-
-  function executeWait(executeMessage) {
-    const messageContent = cloneContent(executeMessage.content);
-    messageContent.condition = condition;
-    const {executionId, parent} = messageContent;
-    const parentExecutionId = parent && parent.executionId;
-
-    if (evaluate(executeMessage)) return;
-
-    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`});
-    broker.subscribeTmp('api', `activity.signal.${parentExecutionId}`, onApiMessage, {noAck: true, consumerTag: `_parent-signal-${executionId}`});
-
-    broker.publish('event', 'activity.wait', {...cloneContent(messageContent), executionId: parentExecutionId, parent: shiftParent(parent)});
-
-    function onApiMessage(routingKey, message) {
-      const messageType = message.properties.type;
-
-      switch (messageType) {
-        case 'signal': {
-          return evaluate(message);
-        }
-        case 'discard': {
-          stop();
-          return broker.publish('execution', 'execute.discard', {...messageContent, state: 'discard'});
-        }
-        case 'stop': {
-          stop();
-          break;
-        }
-      }
-    }
-
-    function evaluate(message) {
-      const output = environment.resolveExpression(condition, message);
-      debug(`<${executionId} (${id})> condition evaluated to`, !!output);
-
-      broker.publish('event', 'activity.condition', {
-        ...cloneContent(messageContent),
-        conditionResult: output,
-      });
-
-      if (!output) return;
-      stop();
-      return broker.publish('execution', 'execute.completed', {...messageContent, output});
-    }
-
-    function stop() {
-      broker.cancel(`_api-${executionId}`);
-      broker.cancel(`_parent-signal-${executionId}`);
-    }
-  }
+  this.id = id;
+  this.type = type;
+  this.isWaiting = !attachedTo;
+  this.condition = behaviour.expression;
+  this.activity = activity;
+  this.environment = environment;
+  this.broker = broker;
+  this.logger = environment.Logger(type.toLowerCase());
 }
+
+const proto = ConditionalEventDefinition.prototype;
+
+Object.defineProperty(proto, 'executionId', {
+  get() {
+    const message = this[executeMessageSymbol];
+    return message && message.content.executionId;
+  },
+});
+
+proto.execute = function execute(executeMessage) {
+  this[executeMessageSymbol] = executeMessage;
+  return this.isWaiting ? this.executeWait(executeMessage) : this.executeCatch(executeMessage);
+};
+
+proto.executeWait = function executeWait(executeMessage) {
+  const executeContent = executeMessage.content;
+  const {executionId, parent} = executeContent;
+  const parentExecutionId = parent.executionId;
+
+  if (this._evaluateWait(executeMessage)) return;
+
+  const broker = this.broker;
+  const onApiMessage = this._onWaitApiMessage.bind(this);
+  broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
+    noAck: true,
+    consumerTag: `_api-${executionId}`,
+  });
+  broker.subscribeTmp('api', `activity.signal.${parentExecutionId}`, onApiMessage, {
+    noAck: true,
+    consumerTag: `_parent-signal-${executionId}`,
+  });
+
+  const waitContent = cloneContent(executeContent, {
+    executionId: parentExecutionId,
+    condition: this.condition,
+  });
+  waitContent.parent = shiftParent(parent);
+
+  broker.publish('event', 'activity.wait', waitContent);
+};
+
+proto.executeCatch = function executeCatch(executeMessage) {
+  const executeContent = executeMessage.content;
+  const {executionId, index} = executeContent;
+
+  this.broker.subscribeTmp('api', `activity.#.${executionId}`, this._onCatchApiMessage.bind(this), {
+    noAck: true,
+    consumerTag: `_api-${executionId}_${index}`,
+  });
+
+  const {id: attachedToId, broker: attachedToBroker} = this.activity.attachedTo;
+
+  this._debug(`listen for execute completed from <${attachedToId}>`);
+
+  attachedToBroker.subscribeOnce('execution', 'execute.completed', this._onAttachedCompleted.bind(this), {
+    priority: 300,
+    consumerTag: `_onend-${executionId}_${index}`,
+  });
+};
+
+proto._onWaitApiMessage = function onWaitApiMessage(routingKey, message) {
+  const messageType = message.properties.type;
+
+  switch (messageType) {
+    case 'signal': {
+      return this._evaluateWait(message);
+    }
+    case 'discard': {
+      this._stopWait();
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[executeMessageSymbol].content, {state: 'discard'}));
+    }
+    case 'stop': {
+      return this._stopWait();
+    }
+  }
+};
+
+proto._evaluateWait = function evaluate(message) {
+  const executeMessage = this[executeMessageSymbol];
+  const broker = this.broker, executeContent = executeMessage.content;
+
+  try {
+    var output = this.environment.resolveExpression(this.condition, message); // eslint-disable-line no-var
+  } catch (err) {
+    return broker.publish('execution', 'execute.error', cloneContent(executeContent, {error: new ActivityError(err.message, executeMessage, err)}, {mandatory: true}));
+  }
+
+  this._debug(`condition evaluated to ${!!output}`);
+
+  broker.publish('event', 'activity.condition', cloneContent(executeContent, {
+    conditionResult: output,
+  }));
+
+  if (!output) return;
+  this._stopWait();
+  return broker.publish('execution', 'execute.completed', cloneContent(executeContent, {output}));
+};
+
+proto._stopWait = function stopWait() {
+  const broker = this.broker, executionId = this.executionId;
+  broker.cancel(`_api-${executionId}`);
+  broker.cancel(`_parent-signal-${executionId}`);
+};
+
+proto._onAttachedCompleted = function onAttachedCompleted(routingKey, message) {
+  this._stopCatch();
+
+  const executeMessage = this[executeMessageSymbol];
+  const broker = this.broker, executeContent = executeMessage.content;
+  try {
+    var output = this.environment.resolveExpression(this.condition, message); // eslint-disable-line no-var
+  } catch (err) {
+    return broker.publish('execution', 'execute.error', cloneContent(executeContent, {error: new ActivityError(err.message, executeMessage, err)}, {mandatory: true}));
+  }
+
+  this._debug(`condition from <${message.content.executionId}> evaluated to ${!!output}`);
+
+  broker.publish('event', 'activity.condition', cloneContent(executeContent, {
+    conditionResult: output,
+  }));
+
+  if (output) {
+    broker.publish('execution', 'execute.completed', cloneContent(executeContent, {output}));
+  }
+};
+
+proto._onCatchApiMessage = function onCatchApiMessage(routingKey, message) {
+  const messageType = message.properties.type;
+  switch (messageType) {
+    case 'discard': {
+      this._stopCatch();
+      this._debug('discarded');
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[executeMessageSymbol].content, {state: 'discard'}));
+    }
+    case 'stop': {
+      this._stopCatch();
+      return this._debug('stopped');
+    }
+  }
+};
+
+proto._stopCatch = function stopCatch() {
+  const {executionId, index} = this[executeMessageSymbol].content;
+  this.activity.attachedTo.broker.cancel(`_onend-${executionId}_${index}`);
+  this.broker.cancel(`_api-${executionId}_${index}`);
+};
+
+proto._debug = function debug(msg) {
+  this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
+};

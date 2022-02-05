@@ -2,68 +2,102 @@ import Activity from '../activity/Activity';
 import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution';
 import {cloneContent} from '../messageHelper';
 
+const executeMessageSymbol = Symbol.for('executeMessage');
+const executionSymbol = Symbol.for('execution');
+
 export default function StartEvent(activityDef, context) {
-  return Activity(StartEventBehaviour, activityDef, context);
+  return new Activity(StartEventBehaviour, activityDef, context);
 }
 
 export function StartEventBehaviour(activity) {
-  const {id, type = 'startevent', broker, eventDefinitions} = activity;
-  const eventDefinitionExecution = eventDefinitions && EventDefinitionExecution(activity, eventDefinitions);
+  this.id = activity.id;
+  this.type = activity.type;
+  this.activity = activity;
+  this.broker = activity.broker;
+  this[executionSymbol] = activity.eventDefinitions && new EventDefinitionExecution(activity, activity.eventDefinitions);
+}
 
-  const event = {
-    id,
-    type,
-    execute,
-  };
+const proto = StartEventBehaviour.prototype;
 
-  return event;
+Object.defineProperty(proto, 'executionId', {
+  get() {
+    const message = this[executeMessageSymbol];
+    return message && message.content.executionId;
+  },
+});
 
-  function execute(executeMessage) {
-    if (eventDefinitionExecution) {
-      return eventDefinitionExecution.execute(executeMessage);
+proto.execute = function execute(executeMessage) {
+  const execution = this[executionSymbol];
+  if (execution) {
+    return execution.execute(executeMessage);
+  }
+
+  const content = cloneContent(executeMessage.content);
+  const broker = this.broker;
+  if (!content.form) {
+    return broker.publish('execution', 'execute.completed', content);
+  }
+
+  const executionId = content.executionId;
+  this[executeMessageSymbol] = executeMessage;
+  broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(...args), {
+    noAck: true,
+    consumerTag: `_api-${executionId}`,
+    priority: 300,
+  });
+  broker.subscribeTmp('api', '#.signal.*', (...args) => this._onDelegatedApiMessage(...args), {
+    noAck: true,
+    consumerTag: `_api-delegated-${executionId}`,
+  });
+  broker.publish('event', 'activity.wait', {...content, executionId, state: 'wait'});
+};
+
+proto._onApiMessage = function onApiMessage(routingKey, message) {
+  const {type: messageType, correlationId} = message.properties;
+  switch (messageType) {
+    case 'stop':
+      return this._stop();
+    case 'signal': {
+      this._stop();
+      const content = this[executeMessageSymbol].content;
+      return this.broker.publish('execution', 'execute.completed', cloneContent(content, {
+        output: message.content.message,
+        state: 'signal',
+      }), {correlationId});
     }
-
-    const content = cloneContent(executeMessage.content);
-    if (!content.form) {
-      return broker.publish('execution', 'execute.completed', content);
-    }
-
-    const {executionId} = content;
-    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {noAck: true, consumerTag: `_api-${executionId}`, priority: 300});
-    broker.subscribeTmp('api', '#.signal.*', onDelegatedApiMessage, {noAck: true, consumerTag: `_api-delegated-${executionId}`});
-    broker.publish('event', 'activity.wait', {...content, executionId, state: 'wait'});
-
-    function onDelegatedApiMessage(routingKey, message) {
-      if (!message.properties.delegate) return;
-      const {content: delegateContent} = message;
-      if (!delegateContent || !delegateContent.message) return;
-
-      const {id: signalId, executionId: signalExecutionId} = delegateContent.message;
-      if (signalId !== id && signalExecutionId !== executionId) return;
-
-      const {type: messageType, correlationId} = message.properties;
-      broker.publish('event', 'activity.consumed', cloneContent(content, {message: {...delegateContent.message}}), {correlationId, type: messageType});
-      return onApiMessage(routingKey, message);
-    }
-
-    function onApiMessage(routingKey, message) {
-      const {type: messageType, correlationId} = message.properties;
-
-      switch (messageType) {
-        case 'stop':
-          return stop();
-        case 'signal':
-          stop();
-          return broker.publish('execution', 'execute.completed', cloneContent(content, {output: message.content.message, state: 'signal'}), {correlationId});
-        case 'discard':
-          stop();
-          return broker.publish('execution', 'execute.discard', cloneContent(content), {correlationId});
-      }
-    }
-
-    function stop() {
-      broker.cancel(`_api-${executionId}`);
-      broker.cancel(`_api-delegated-${executionId}`);
+    case 'discard': {
+      this._stop();
+      const content = this[executeMessageSymbol].content;
+      return this.broker.publish('execution', 'execute.discard', cloneContent(content), {correlationId});
     }
   }
-}
+};
+
+proto._onDelegatedApiMessage = function onDelegatedApiMessage(routingKey, message) {
+  if (!message.properties.delegate) return;
+
+  const content = message.content;
+  if (!content.message) return;
+
+  const {id: signalId, executionId: signalExecutionId} = content.message;
+  if (signalId !== this.id && signalExecutionId !== this.executionId) return;
+
+  const {type, correlationId} = message.properties;
+  const executeContent = this[executeMessageSymbol].content;
+  this.broker.publish('event', 'activity.consumed', cloneContent(executeContent, {
+    message: {
+      ...content.message,
+    },
+  }), {
+    correlationId,
+    type,
+  });
+
+  return this._onApiMessage(routingKey, message);
+};
+
+proto._stop = function stop() {
+  const broker = this.broker, executionId = this.executionId;
+  broker.cancel(`_api-${executionId}`);
+  broker.cancel(`_api-delegated-${executionId}`);
+};

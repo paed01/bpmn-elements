@@ -19,7 +19,7 @@ Feature('Task loop', () => {
       </definitions>`;
       const context = await testHelpers.context(source);
 
-      definition = Definition(context, {
+      definition = new Definition(context, {
         services: {
           stopLoop(completeMessage) {
             iterations.push(completeMessage);
@@ -61,7 +61,7 @@ Feature('Task loop', () => {
       </definitions>`;
       const context = await testHelpers.context(source);
 
-      definition = Definition(context, {
+      definition = new Definition(context, {
         services: {
           stopLoop(startMessage) {
             iterations.push(startMessage);
@@ -102,7 +102,7 @@ Feature('Task loop', () => {
       </definitions>`;
       const context = await testHelpers.context(source);
 
-      definition = Definition(context, {
+      definition = new Definition(context, {
         services: {
           stopLoop(startMessage) {
             iterations.push(startMessage);
@@ -148,7 +148,7 @@ Feature('Task loop', () => {
 
     let leave;
     When('definition is run with 500 items', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         settings: {
           batchSize: 100,
         },
@@ -170,7 +170,7 @@ Feature('Task loop', () => {
     });
 
     When('definition is run with 0 items', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         settings: {
           batchSize: 100,
         },
@@ -220,7 +220,7 @@ Feature('Task loop', () => {
 
     let leave;
     When('definition is run with 101 items and batch size 50', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         settings: {
           batchSize: 50,
         },
@@ -242,7 +242,7 @@ Feature('Task loop', () => {
     });
 
     When('definition is run with 0 items', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         settings: {
           batchSize: 100,
         },
@@ -292,7 +292,7 @@ Feature('Task loop', () => {
 
     let leave;
     When('definition is run with 101 items', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           list: new Array(101).fill().map((_, idx) => ({idx}))
         },
@@ -311,7 +311,7 @@ Feature('Task loop', () => {
     });
 
     When('definition is run with 0 items', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         settings: {
           batchSize: 100,
         },
@@ -357,7 +357,7 @@ Feature('Task loop', () => {
     let leave;
     const cardinality = 11;
     When('definition is run with collection and cardinality', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         settings: {
           batchSize: 10,
         },
@@ -403,7 +403,7 @@ Feature('Task loop', () => {
 
     let execError;
     When('definition is run with cardinality that is not a number', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         settings: {
           batchSize: 100,
         },
@@ -418,7 +418,48 @@ Feature('Task loop', () => {
 
     Then('definition breaks', async () => {
       const {content} = await execError;
-      expect(content.error.message).to.equal('<task> invalid loop cardinality >NaN<');
+      expect(content.error.message).to.equal('<task> invalid loop cardinality >apapap<');
+    });
+
+    Given('same process with bound anonymous error catcher', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="TaskLoopProcess" isExecutable="true">
+          <scriptTask id="task" scriptFormat="javascript" js:result="iterated">
+            <multiInstanceLoopCharacteristics isSequential="true">
+              <loopCardinality xsi:type="tFormalExpression">\${environment.variables.cardinality}</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+            <script><![CDATA[
+              next(null, content.item.idx);
+            ]]></script>
+          </scriptTask>
+          <boundaryEvent id="errorEvent" attachedToRef="task">
+            <errorEventDefinition />
+          </boundaryEvent>
+        </process>
+      </definitions>`;
+      context = await testHelpers.context(source, {
+        extensions: {js},
+      });
+    });
+
+    let end;
+    When('definition is run with cardinality that is not a number', () => {
+      definition = new Definition(context, {
+        settings: {
+          batchSize: 100,
+        },
+        variables: {
+          cardinality: 'apapap',
+        }
+      });
+
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('definition completes', () => {
+      return end;
     });
   });
 
@@ -445,7 +486,7 @@ Feature('Task loop', () => {
 
     let execError;
     When('definition is run with string cardinality', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           cardinality: 'apapap',
         }
@@ -457,11 +498,11 @@ Feature('Task loop', () => {
 
     Then('definition breaks', async () => {
       const {content} = await execError;
-      expect(content.error.message).to.equal('<task> invalid loop cardinality >NaN<');
+      expect(content.error.message).to.equal('<task> invalid loop cardinality >apapap<');
     });
 
     When('definition is run with negative cardinality', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           cardinality: -1,
         }
@@ -477,7 +518,7 @@ Feature('Task loop', () => {
     });
 
     When('definition is run without cardinality', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           cardinality: undefined,
         }
@@ -494,7 +535,7 @@ Feature('Task loop', () => {
 
     let runEnd;
     When('definition is run with boolean false (0) cardinality', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           cardinality: false,
         }
@@ -509,7 +550,7 @@ Feature('Task loop', () => {
     });
 
     When('definition is run with boolean true (1) cardinality', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           cardinality: false,
         }
@@ -544,7 +585,7 @@ Feature('Task loop', () => {
     });
 
     When('definition is run', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           cardinality: 'apapap',
         }
@@ -579,7 +620,7 @@ Feature('Task loop', () => {
     });
 
     When('definition is run', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           cardinality: 'apapap',
         }
@@ -614,7 +655,7 @@ Feature('Task loop', () => {
     });
 
     When('definition is run with collection that throws', () => {
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           list: {
             get length() {

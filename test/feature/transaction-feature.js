@@ -18,7 +18,7 @@ Feature('Transaction', () => {
         }
       },
       extensions: {
-        me({broker}, {environment}) {
+        me({broker, environment}) {
           broker.subscribeTmp('event', 'activity.#', (routingKey, {content}) => {
             switch (routingKey) {
               case 'activity.end': {
@@ -33,7 +33,7 @@ Feature('Transaction', () => {
 
     Given('a transaction a user task monitored by cancel- and error-listener', async () => {
       const context = await testHelpers.context(transactionSource);
-      definition = Definition(context, options);
+      definition = new Definition(context, options);
     });
 
     let end;
@@ -199,7 +199,7 @@ Feature('Transaction', () => {
     let recovered;
     When('recovered with state', async () => {
       const context = await testHelpers.context(transactionSource);
-      recovered = Definition(context, options).recover(definition.getState());
+      recovered = new Definition(context, options).recover(definition.getState());
 
       end = recovered.waitFor('end');
       recovered.resume();
@@ -265,7 +265,7 @@ Feature('Transaction', () => {
 
     Given('a transaction a user task monitored by cancel- and error-listener', async () => {
       const context = await testHelpers.context(transactionSource);
-      definition = Definition(context, options);
+      definition = new Definition(context, options);
     });
 
     let end;
@@ -430,7 +430,7 @@ Feature('Transaction', () => {
     let recovered;
     When('recovered with state', async () => {
       const context = await testHelpers.context(transactionSource);
-      recovered = Definition(context, options).recover(definition.getState());
+      recovered = new Definition(context, options).recover(definition.getState());
 
       end = recovered.waitFor('end');
       recovered.resume();
@@ -507,7 +507,7 @@ Feature('Transaction', () => {
 
     let definition, end;
     When('definition is ran', () => {
-      definition = Definition(context);
+      definition = new Definition(context);
       end = definition.waitFor('end');
       definition.run();
     });

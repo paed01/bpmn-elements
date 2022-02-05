@@ -51,8 +51,8 @@ const moddleOptions = {
 async function run() {
   const moddleContext = await getModdleContext(source);
 
-  const context = Context(serialize(moddleContext, typeResolver));
-  const definition = Definition(context, {
+  const context = new Context(serialize(moddleContext, typeResolver));
+  const definition = new Definition(context, {
     Logger,
     variables: {
       remoteFormUrl: 'https://exmple.com',

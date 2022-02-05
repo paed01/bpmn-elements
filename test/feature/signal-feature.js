@@ -162,6 +162,115 @@ Feature('Signals', () => {
     });
   });
 
+  Scenario('broadcasted signal across processes', () => {
+    let definition;
+    Given('broadcast main process, two anonymous signal, and two named signal processes', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="broadCastProcess" isExecutable="true">
+          <intermediateThrowEvent id="throw">
+            <signalEventDefinition />
+          </intermediateThrowEvent>
+        </process>
+        <process id="anonProcess1">
+          <startEvent id="start1">
+            <signalEventDefinition />
+          </startEvent>
+          <sequenceFlow id="to-broadcastNamed" sourceRef="start1" targetRef="broadcastNamed" />
+          <intermediateThrowEvent id="broadcastNamed">
+            <signalEventDefinition signalRef="NamedSignal" />
+          </intermediateThrowEvent>
+        </process>
+        <process id="anonProcess2">
+          <startEvent id="start2">
+            <signalEventDefinition />
+          </startEvent>
+        </process>
+        <process id="namedProcess1">
+          <startEvent id="start3">
+            <signalEventDefinition signalRef="NamedSignal" />
+          </startEvent>
+        </process>
+        <process id="namedProcess2">
+          <startEvent id="start4">
+            <signalEventDefinition signalRef="NamedSignal" />
+          </startEvent>
+        </process>
+        <signal id="NamedSignal" name="named signal" />
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let end;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    let broadcast, anonProcess1, anonProcess2, namedProcess1, namedProcess2;
+    Then('run completes', async () => {
+      await end;
+      [broadcast, anonProcess1, anonProcess2, namedProcess1, namedProcess2] = definition.getProcesses();
+    });
+
+    And('broadcast process completed', () => {
+      expect(broadcast.counters).to.have.property('completed', 1);
+    });
+
+    And('both anonymous signal processes have completed', () => {
+      expect(anonProcess1.counters, anonProcess1.id).to.have.property('completed', 1);
+      expect(anonProcess2.counters, anonProcess2.id).to.have.property('completed', 1);
+    });
+
+    And('both named signal processes have completed', () => {
+      expect(namedProcess1.counters, namedProcess1.id).to.have.property('completed', 1);
+      expect(namedProcess2.counters, namedProcess2.id).to.have.property('completed', 1);
+    });
+  });
+
+  Scenario('broadcast signal across process', () => {
+    let definition;
+    Given('signal is broadcasted within process', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="broadCastProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-catch1" sourceRef="start" targetRef="catch1" />
+          <sequenceFlow id="to-catch2" sourceRef="start" targetRef="catch2" />
+          <sequenceFlow id="to-throw" sourceRef="start" targetRef="throw" />
+          <intermediateCatchEvent id="catch1">
+            <signalEventDefinition />
+          </intermediateCatchEvent>
+          <intermediateCatchEvent id="catch2">
+            <signalEventDefinition />
+          </intermediateCatchEvent>
+          <intermediateThrowEvent id="throw">
+            <signalEventDefinition />
+          </intermediateThrowEvent>
+          <sequenceFlow id="from-catch1" sourceRef="catch1" targetRef="join" />
+          <sequenceFlow id="from-catch2" sourceRef="catch2" targetRef="join" />
+          <sequenceFlow id="from-throw" sourceRef="throw" targetRef="join" />
+          <parallelGateway id="join" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let end;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('run completes', async () => {
+      await end;
+    });
+  });
+
   Scenario('anonymous signal', () => {
     let definition;
     Given('anonymous signal process, anonymous signal catch start process, anonymous escalation process', async () => {
@@ -191,7 +300,7 @@ Feature('Signals', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -246,7 +355,7 @@ Feature('Signals', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('definition is ran', () => {
@@ -300,7 +409,7 @@ Feature('Signals', () => {
       const source = factory.resource('issue-3.bpmn');
       const context = await testHelpers.context(source);
 
-      definition = Definition(context, {
+      definition = new Definition(context, {
         services: {
           log(...args) {
             logBook.push(...args);
@@ -387,7 +496,7 @@ Feature('Signals', () => {
           js: JsExtension,
         }
       });
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -749,7 +858,7 @@ Feature('Signals', () => {
     let end, state, definition;
     const output = {};
     When('definition is ran', () => {
-      definition = Definition(context);
+      definition = new Definition(context);
       definition.run();
 
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
@@ -768,7 +877,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -791,7 +900,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -817,7 +926,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -845,7 +954,7 @@ Feature('Signals', () => {
 
     let wait;
     When('definition is resumed', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -879,7 +988,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -906,7 +1015,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -933,7 +1042,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -960,7 +1069,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -995,7 +1104,7 @@ Feature('Signals', () => {
     });
 
     When('definition is resumed and immediately signaled', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         output[msg.content.id] = msg.content.output;
       }, {noAck: true});
@@ -1026,7 +1135,7 @@ async function prepareSource() {
       }
     }
   });
-  const definition = Definition(context, {
+  const definition = new Definition(context, {
     variables: {
       spotPrice: 100
     },

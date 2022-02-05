@@ -9,28 +9,28 @@ var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+const propertiesSymbol = Symbol.for('properties');
+const consumingSymbol = Symbol.for('consuming');
+
 function Properties(activity, propertiesDef, context) {
-  if (!propertiesDef || !propertiesDef.values || !propertiesDef.values.length) return;
-  const {
-    broker,
-    environment
-  } = activity;
-  const formatQ = broker.getQueue('format-run-q');
-  let activityConsumer;
-  const {
-    properties,
-    dataInputObjects,
-    dataOutputObjects
-  } = propertiesDef.values.reduce((result, {
+  this.activity = activity;
+  this.broker = activity.broker;
+  const props = this[propertiesSymbol] = {
+    properties: [],
+    dataInputObjects: [],
+    dataOutputObjects: []
+  };
+
+  for (const {
     id,
     ...def
-  }) => {
+  } of propertiesDef.values) {
     const source = {
       id,
       type: def.type,
-      name: def.name
+      name: def.behaviour && def.behaviour.name
     };
-    result.properties.push(source);
+    props.properties.push(source);
     const inputDataObjectId = (0, _getPropertyValue.default)(def, 'behaviour.dataInput.association.source.dataObject.id');
     const outputDataObjectId = (0, _getPropertyValue.default)(def, 'behaviour.dataOutput.association.target.dataObject.id');
     const inputDataStoreId = (0, _getPropertyValue.default)(def, 'behaviour.dataInput.association.source.dataStore.id');
@@ -38,7 +38,7 @@ function Properties(activity, propertiesDef, context) {
 
     if (inputDataObjectId) {
       const reference = context.getDataObjectById(inputDataObjectId);
-      result.dataInputObjects.push({
+      props.dataInputObjects.push({
         id,
         reference
       });
@@ -49,7 +49,7 @@ function Properties(activity, propertiesDef, context) {
 
     if (outputDataObjectId) {
       const reference = context.getDataObjectById(outputDataObjectId);
-      result.dataOutputObjects.push({
+      props.dataOutputObjects.push({
         id,
         reference: reference
       });
@@ -60,7 +60,7 @@ function Properties(activity, propertiesDef, context) {
 
     if (inputDataStoreId) {
       const reference = context.getDataStoreById(inputDataStoreId);
-      result.dataInputObjects.push({
+      props.dataInputObjects.push({
         id,
         reference
       });
@@ -71,7 +71,7 @@ function Properties(activity, propertiesDef, context) {
 
     if (outputDataStoreId) {
       const reference = context.getDataStoreById(outputDataStoreId);
-      result.dataOutputObjects.push({
+      props.dataOutputObjects.push({
         id,
         reference
       });
@@ -79,131 +79,126 @@ function Properties(activity, propertiesDef, context) {
         reference
       };
     }
+  }
+}
 
-    return result;
-  }, {
-    properties: [],
-    dataInputObjects: [],
-    dataOutputObjects: []
+const proto = Properties.prototype;
+
+proto.activate = function activate(message) {
+  if (this[consumingSymbol]) return;
+
+  if (message.fields.redelivered && message.content.properties) {
+    this._onActivityEvent('activity.extension.resume', message);
+  }
+
+  this[consumingSymbol] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {
+    noAck: true
   });
-  const propertiesApi = {
-    type: 'properties',
-    activate,
-    deactivate
-  };
-  return propertiesApi;
+};
 
-  function activate(message) {
-    if (activityConsumer) return;
+proto.deactivate = function deactivate() {
+  if (this[consumingSymbol]) this[consumingSymbol] = this[consumingSymbol].cancel();
+};
 
-    if (message.fields.redelivered && message.content.properties) {
-      onActivityEvent('activity.extension.resume', message);
-    }
-
-    activityConsumer = broker.subscribeTmp('event', 'activity.#', onActivityEvent, {
-      noAck: true
-    });
+proto._onActivityEvent = function onActivityEvent(routingKey, message) {
+  if (routingKey === 'activity.enter') {
+    return this._formatOnEnter(message);
   }
 
-  function deactivate() {
-    if (activityConsumer) activityConsumer = activityConsumer.cancel();
+  if (routingKey === 'activity.extension.resume') {
+    return this._formatOnEnter(message);
   }
 
-  function onActivityEvent(routingKey, message) {
-    if (routingKey === 'activity.enter') {
-      return formatOnEnter(message);
-    }
-
-    if (routingKey === 'activity.extension.resume') {
-      return formatOnEnter(message);
-    }
-
-    if (routingKey === 'activity.execution.completed') {
-      return formatOnComplete(message);
-    }
+  if (routingKey === 'activity.execution.completed') {
+    return this._formatOnComplete(message);
   }
+};
 
-  function formatOnEnter(message) {
-    const startRoutingKey = 'run.enter.bpmn-properties';
+proto._formatOnEnter = function formatOnEnter(message) {
+  const startRoutingKey = 'run.enter.bpmn-properties';
+  const dataInputObjects = this[propertiesSymbol].dataInputObjects;
+  const broker = this.broker;
 
-    if (!dataInputObjects.length) {
-      return formatQ.queueMessage({
-        routingKey: startRoutingKey
-      }, {
-        properties: getProperties(message)
-      });
-    }
-
-    const endRoutingKey = 'run.enter.bpmn-properties.end';
-    formatQ.queueMessage({
+  if (!dataInputObjects.length) {
+    return broker.getQueue('format-run-q').queueMessage({
       routingKey: startRoutingKey
     }, {
-      endRoutingKey,
-      properties: getProperties(message)
-    });
-    return read(broker, dataInputObjects, (_, responses) => {
-      broker.publish('format', endRoutingKey, {
-        properties: getProperties(message, responses)
-      });
+      properties: this._getProperties(message)
     });
   }
 
-  function formatOnComplete(message) {
-    const startRoutingKey = 'run.end.bpmn-properties';
-    const messageOutput = (0, _getPropertyValue.default)(message, 'content.output.properties') || {};
-    const outputProperties = getProperties(message, messageOutput);
+  const endRoutingKey = 'run.enter.bpmn-properties.end';
+  broker.getQueue('format-run-q').queueMessage({
+    routingKey: startRoutingKey
+  }, {
+    endRoutingKey,
+    properties: this._getProperties(message)
+  });
+  return read(broker, dataInputObjects, (_, responses) => {
+    broker.publish('format', endRoutingKey, {
+      properties: this._getProperties(message, responses)
+    });
+  });
+};
 
-    if (!dataOutputObjects.length) {
-      return formatQ.queueMessage({
-        routingKey: startRoutingKey
-      }, {
-        properties: outputProperties
-      });
-    }
+proto._formatOnComplete = function formatOnComplete(message) {
+  const startRoutingKey = 'run.end.bpmn-properties';
+  const messageOutput = (0, _getPropertyValue.default)(message, 'content.output.properties') || {};
 
-    const endRoutingKey = 'run.end.bpmn-properties.end';
-    formatQ.queueMessage({
+  const outputProperties = this._getProperties(message, messageOutput);
+
+  const dataOutputObjects = this[propertiesSymbol].dataOutputObjects;
+  const broker = this.broker;
+
+  if (!dataOutputObjects.length) {
+    return broker.getQueue('format-run-q').queueMessage({
       routingKey: startRoutingKey
     }, {
-      endRoutingKey,
       properties: outputProperties
     });
-    return write(broker, dataOutputObjects, outputProperties, (_, responses) => {
-      broker.publish('format', endRoutingKey, {
-        properties: getProperties(message, responses)
-      });
-    });
   }
 
-  function getProperties(message, values) {
-    let response = {};
+  const endRoutingKey = 'run.end.bpmn-properties.end';
+  broker.getQueue('format-run-q').queueMessage({
+    routingKey: startRoutingKey
+  }, {
+    endRoutingKey,
+    properties: outputProperties
+  });
+  return write(broker, dataOutputObjects, outputProperties, (_, responses) => {
+    broker.publish('format', endRoutingKey, {
+      properties: this._getProperties(message, responses)
+    });
+  });
+};
 
-    if (message.content.properties) {
-      response = { ...message.content.properties
+proto._getProperties = function getProperties(message, values) {
+  let response = {};
+
+  if (message.content.properties) {
+    response = { ...message.content.properties
+    };
+  }
+
+  for (const {
+    id,
+    type,
+    name
+  } of this[propertiesSymbol].properties) {
+    if (!(id in response)) {
+      response[id] = {
+        id,
+        type,
+        name
       };
     }
 
-    return properties.reduce((result, {
-      id,
-      type,
-      name,
-      value
-    }) => {
-      if (!(id in result)) {
-        result[id] = {
-          id,
-          type,
-          name
-        };
-      }
-
-      if (value !== undefined) result[id].value = environment.resolveExpression(value, message);
-      if (!values || !(id in values)) return result;
-      result[id].value = values[id].value;
-      return result;
-    }, response);
+    if (!values || !(id in values)) continue;
+    response[id].value = values[id].value;
   }
-}
+
+  return response;
+};
 
 function read(broker, dataReferences, callback) {
   const responses = {};
@@ -212,11 +207,10 @@ function read(broker, dataReferences, callback) {
     noAck: true
   });
 
-  for (let i = 0; i < dataReferences.length; i++) {
-    const {
-      id: propertyId,
-      reference
-    } = dataReferences[i];
+  for (const {
+    id: propertyId,
+    reference
+  } of dataReferences) {
     reference.read(broker, 'data', 'data.read.', {
       correlationId: propertyId
     });
@@ -238,11 +232,10 @@ function write(broker, dataReferences, properties, callback) {
     noAck: true
   });
 
-  for (let i = 0; i < dataReferences.length; i++) {
-    const {
-      id: propertyId,
-      reference
-    } = dataReferences[i];
+  for (const {
+    id: propertyId,
+    reference
+  } of dataReferences) {
     const value = propertyId in properties ? properties[propertyId].value : undefined;
     reference.write(broker, 'data', 'data.write.', value, {
       correlationId: propertyId

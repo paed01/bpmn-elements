@@ -13,7 +13,7 @@ Arguments:
 
 Example:
 ```js
-const definition = Definition(context, {
+const definition = new Definition(context, {
   extensions: {
     saveAllOutputToEnvironmentExtension,
   },
@@ -35,7 +35,7 @@ The basic flow is to publish a formatting message on the activity format queue.
 ```js
 import {Definition} from 'bpmn-elements';
 
-const definition = Definition(context, {
+const definition = new Definition(context, {
   variables: {
     remoteFormUrl: 'https://exmple.com'
   },
@@ -73,7 +73,7 @@ import {resolve} from 'url';
 
 const getJSON = bent('json');
 
-const definition = Definition(context, {
+const definition = new Definition(context, {
   variables: {
     remoteFormUrl: 'https://exmple.com'
   },

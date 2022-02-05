@@ -12,25 +12,25 @@ describe('ActivityExecution', () => {
   describe('execute(executeMessage)', () => {
     it('requires executeMessage', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
       expect(execution.execute).to.throw(/requires message/i);
     });
 
     it('requires executeMessage content', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
       expect(() => execution.execute({})).to.throw(/requires execution id/i);
     });
 
     it('requires executeMessage content executionId', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
       expect(() => execution.execute({content: {}})).to.throw(/requires execution id/i);
     });
 
     it('publishes start execute message', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       let message;
       activity.broker.subscribeOnce('execution', 'execute.#', (_, msg) => {
@@ -60,7 +60,7 @@ describe('ActivityExecution', () => {
 
     it('completes on execute completed message', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       let startMessage;
       activity.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
@@ -97,7 +97,7 @@ describe('ActivityExecution', () => {
 
     it('assigns message to completed message', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       let startMessage;
       activity.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
@@ -138,7 +138,7 @@ describe('ActivityExecution', () => {
       const activity = createActivity();
       activity.isParallelGateway = true;
 
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       let startMessage;
       activity.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
@@ -167,7 +167,7 @@ describe('ActivityExecution', () => {
 
     it('discards sub executions by api on root execute complete message', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const startMessages = [];
       activity.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -207,7 +207,7 @@ describe('ActivityExecution', () => {
 
     it('discards sub executions by api on root execute discard message', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const startMessages = [];
       activity.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -247,7 +247,7 @@ describe('ActivityExecution', () => {
 
     it('execute wait and timer replaces postponed message', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const startMessages = [];
       activity.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -284,7 +284,7 @@ describe('ActivityExecution', () => {
 
     it('sub execute wait and timer replaces postponed message', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const startMessages = [];
       activity.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -326,7 +326,7 @@ describe('ActivityExecution', () => {
 
     it('execute error completes execution', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const startMessages = [];
       activity.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -358,7 +358,7 @@ describe('ActivityExecution', () => {
 
     it('sub execute error completes execution', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const startMessages = [];
       activity.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -397,7 +397,7 @@ describe('ActivityExecution', () => {
 
     it('sub execute error completes execution', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const startMessages = [];
       activity.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -437,7 +437,7 @@ describe('ActivityExecution', () => {
   describe('discard()', () => {
     it('discards execution', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       let message;
       activity.broker.subscribeOnce('execution', 'execution.discard', (_, msg) => {
@@ -472,7 +472,7 @@ describe('ActivityExecution', () => {
 
     it('discards sub executions', () => {
       const activity = createActivity(Behaviour);
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const discardApiMessages = [];
       activity.broker.subscribeTmp('api', 'activity.discard.*', (_, msg) => {
@@ -510,7 +510,7 @@ describe('ActivityExecution', () => {
 
     it('ignored if not executing', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       activity.broker.subscribeTmp('execution', 'execute.discard', () => {
         throw new Error('Shouldn´t happen');
@@ -521,7 +521,7 @@ describe('ActivityExecution', () => {
 
     it('ignored if completed', () => {
       const activity = createActivity(Behaviour);
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       activity.broker.subscribeTmp('execution', 'execute.discard', () => {
         throw new Error('Shouldn´t happen');
@@ -551,7 +551,7 @@ describe('ActivityExecution', () => {
 
     it('completes only once even if discard is handled by behaviour', () => {
       const activity = createActivity(Behaviour);
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const discardMessages = [];
       activity.broker.subscribeTmp('execution', 'execute.discard', (_, msg) => {
@@ -596,7 +596,7 @@ describe('ActivityExecution', () => {
   describe('stop()', () => {
     it('stops execution', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const executeQ = activity.broker.getQueue('execute-q');
 
@@ -619,7 +619,7 @@ describe('ActivityExecution', () => {
 
     it('stops sub executions', () => {
       const activity = createActivity(Behaviour);
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
       let stoppedSubExecution = false;
 
       execution.execute({
@@ -655,7 +655,7 @@ describe('ActivityExecution', () => {
 
     it('ignored if not executing', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       execution.stop();
       expect(activity.broker.getQueue('execute-q')).to.have.property('messageCount', 0);
@@ -664,7 +664,7 @@ describe('ActivityExecution', () => {
 
     it('ignored if completed', () => {
       const activity = createActivity(Behaviour);
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       activity.broker.subscribeTmp('execution', 'execute.discard', () => {
         throw new Error('Shouldn´t happen');
@@ -699,7 +699,7 @@ describe('ActivityExecution', () => {
   describe('complete', () => {
     it('forwards output and message from complete message', () => {
       const activity = createActivity(Behaviour);
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const messages = [];
       activity.broker.subscribeOnce('execution', 'execution.completed', (_, msg) => {
@@ -732,7 +732,7 @@ describe('ActivityExecution', () => {
 
     it('forwards output and message from updated execution', () => {
       const activity = createActivity(Behaviour);
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const messages = [];
       activity.broker.subscribeOnce('execution', 'execution.completed', (_, msg) => {
@@ -772,7 +772,7 @@ describe('ActivityExecution', () => {
   describe('instructions', () => {
     it('preventComplete instruction prevents execution to complete when last child execution ends', () => {
       const activity = createActivity(Behaviour);
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const messages = [];
       activity.broker.subscribeTmp('execution', 'execute.#', (_, msg) => {
@@ -813,7 +813,7 @@ describe('ActivityExecution', () => {
 
     it('ignoreIfExecuting ignores start message if already executing', () => {
       const activity = createActivity(Behaviour);
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const messages = [];
       activity.broker.subscribeTmp('execution', 'execute.#', (_, msg) => {
@@ -846,7 +846,7 @@ describe('ActivityExecution', () => {
 
     it('ignoreIfExecuting ignores state change message if already executing', () => {
       const activity = createActivity(Behaviour);
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const messages = [];
       activity.broker.subscribeTmp('execution', 'execute.#', (_, msg) => {
@@ -886,7 +886,7 @@ describe('ActivityExecution', () => {
     it('keep instruction keeps last execution message in queue until all executions are completed', () => {
       const activity = createActivity(Behaviour);
 
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const messages = [];
       activity.broker.subscribeTmp('execution', 'execute.#', (_, msg) => {
@@ -948,7 +948,7 @@ describe('ActivityExecution', () => {
   describe('getState()', () => {
     it('returns expected state when executing', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
       execution.execute({
         fields: {},
         content: {
@@ -964,7 +964,7 @@ describe('ActivityExecution', () => {
 
     it('returns expected state when completed', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
       execution.execute({
         fields: {},
         content: {
@@ -983,7 +983,7 @@ describe('ActivityExecution', () => {
   describe('recovered', () => {
     it('redelivered execute message runs behaviour execute with redelivered start message', () => {
       const activity = createActivity(Behaviour);
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const executeMessages = [];
 
@@ -1032,7 +1032,7 @@ describe('ActivityExecution', () => {
 
     it('redeliveres last execute message to behaviour execute function', () => {
       const activity = createActivity(Behaviour);
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const executeMessages = [];
       execution.execute({
@@ -1085,7 +1085,7 @@ describe('ActivityExecution', () => {
 
     it('publishes new start message if no messages where in queue', () => {
       const activity = createActivity(Behaviour);
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       const executeMessages = [];
       execution.execute({
@@ -1138,7 +1138,7 @@ describe('ActivityExecution', () => {
   describe('multi instance', () => {
     it('sequential loop completes when last iteration completes', () => {
       const task = createActivity(Behaviour);
-      const execution = ActivityExecution(task);
+      const execution = new ActivityExecution(task);
 
       const startMessages = [];
       task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -1174,7 +1174,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql([0, 1, 2]);
 
       function Behaviour(activity) {
-        const loopCharacteristics = LoopCharacteristics(activity, {
+        const loopCharacteristics = new LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
             isSequential: true,
@@ -1192,7 +1192,7 @@ describe('ActivityExecution', () => {
 
     it('sequential loop completes when iterations completes immediately', () => {
       const task = createActivity(Behaviour);
-      const execution = ActivityExecution(task);
+      const execution = new ActivityExecution(task);
 
       const startMessages = [];
       task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -1218,7 +1218,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql([0, 1, 2]);
 
       function Behaviour(activity) {
-        const loopCharacteristics = LoopCharacteristics(activity, {
+        const loopCharacteristics = new LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
             isSequential: true,
@@ -1236,7 +1236,7 @@ describe('ActivityExecution', () => {
 
     it('parallel loop completes execution loop completes asynchronously', () => {
       const task = createActivity(Behaviour);
-      const execution = ActivityExecution(task);
+      const execution = new ActivityExecution(task);
 
       const startMessages = [];
       task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -1268,7 +1268,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql([0, 1, 2]);
 
       function Behaviour(activity) {
-        const loopCharacteristics = LoopCharacteristics(activity, {
+        const loopCharacteristics = new LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
           },
@@ -1285,7 +1285,7 @@ describe('ActivityExecution', () => {
 
     it('parallel loop with just one iteration completes execution with output', () => {
       const task = createActivity(Behaviour);
-      const execution = ActivityExecution(task);
+      const execution = new ActivityExecution(task);
 
       const startMessages = [];
       task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -1315,7 +1315,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql([0]);
 
       function Behaviour(activity) {
-        const loopCharacteristics = LoopCharacteristics(activity, {
+        const loopCharacteristics = new LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 1,
           },
@@ -1335,7 +1335,7 @@ describe('ActivityExecution', () => {
 
     it('parallel loop completes execution loop completes synchronously', () => {
       const task = createActivity(Behaviour);
-      const execution = ActivityExecution(task);
+      const execution = new ActivityExecution(task);
 
       const startMessages = [];
       task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -1367,7 +1367,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql([0, 1, 2]);
 
       function Behaviour(activity) {
-        const loopCharacteristics = LoopCharacteristics(activity, {
+        const loopCharacteristics = new LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
           },
@@ -1387,7 +1387,7 @@ describe('ActivityExecution', () => {
 
     it('iteration error discards iterations and discards execution', () => {
       const task = createActivity(Behaviour);
-      const execution = ActivityExecution(task);
+      const execution = new ActivityExecution(task);
 
       const startMessages = [];
       task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -1427,7 +1427,7 @@ describe('ActivityExecution', () => {
       expect(task.broker.getQueue('execute-q')).to.have.property('messageCount', 0);
 
       function Behaviour(activity) {
-        const loopCharacteristics = LoopCharacteristics(activity, {
+        const loopCharacteristics = new LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
           },
@@ -1450,7 +1450,7 @@ describe('ActivityExecution', () => {
 
     it('all iterations discarded discards execution', () => {
       const task = createActivity(Behaviour);
-      const execution = ActivityExecution(task);
+      const execution = new ActivityExecution(task);
 
       const startMessages = [];
       task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -1486,7 +1486,7 @@ describe('ActivityExecution', () => {
       expect(task.broker.getQueue('execute-q')).to.have.property('messageCount', 0);
 
       function Behaviour(activity) {
-        const loopCharacteristics = LoopCharacteristics(activity, {
+        const loopCharacteristics = new LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
           },
@@ -1506,7 +1506,7 @@ describe('ActivityExecution', () => {
 
     it('last iteration canceled completes execution', () => {
       const task = createActivity(Behaviour);
-      const execution = ActivityExecution(task);
+      const execution = new ActivityExecution(task);
 
       const startMessages = [];
       task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -1538,7 +1538,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql([0, 1]);
 
       function Behaviour(activity) {
-        const loopCharacteristics = LoopCharacteristics(activity, {
+        const loopCharacteristics = new LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
           },
@@ -1561,7 +1561,7 @@ describe('ActivityExecution', () => {
 
     it('stop in the middle of parallel loop start keeps start messages', () => {
       const task = createActivity(Behaviour);
-      const execution = ActivityExecution(task);
+      const execution = new ActivityExecution(task);
 
       task.broker.subscribeOnce('event', 'activity.wait', () => {
         task.broker.publish('api', 'activity.stop.activity_1');
@@ -1588,7 +1588,7 @@ describe('ActivityExecution', () => {
       expect(executeQ.messages[3].content).to.have.property('isMultiInstance', true);
 
       function Behaviour(activity) {
-        const loopCharacteristics = LoopCharacteristics(activity, {
+        const loopCharacteristics = new LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
           },
@@ -1609,7 +1609,7 @@ describe('ActivityExecution', () => {
 
     it('recover in the middle of parallel loop recovers start messages', () => {
       const task = createActivity(Behaviour);
-      const execution = ActivityExecution(task);
+      const execution = new ActivityExecution(task);
 
       task.broker.subscribeOnce('event', 'activity.wait', () => {
         task.broker.publish('api', 'activity.stop.activity_1');
@@ -1634,7 +1634,7 @@ describe('ActivityExecution', () => {
       expect(executeQ.messages[3].content).to.have.property('isMultiInstance', true);
 
       function Behaviour(activity) {
-        const loopCharacteristics = LoopCharacteristics(activity, {
+        const loopCharacteristics = new LoopCharacteristics(activity, {
           behaviour: {
             loopCardinality: 3,
           },
@@ -1657,7 +1657,7 @@ describe('ActivityExecution', () => {
   describe('event definitions', () => {
     it('execution completes when event definition completes', () => {
       const task = createActivity(Behaviour);
-      const execution = ActivityExecution(task);
+      const execution = new ActivityExecution(task);
 
       const startMessages = [];
       task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -1695,7 +1695,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql(4);
 
       function Behaviour(activity) {
-        const eventDefinitionExecution = EventDefinitionExecution(activity, [{
+        const eventDefinitionExecution = new EventDefinitionExecution(activity, [{
           type: 'messageeventdef',
           execute() {},
         }]);
@@ -1710,7 +1710,7 @@ describe('ActivityExecution', () => {
 
     it('execution completes when first event definition completes', () => {
       const task = createActivity(Behaviour);
-      const execution = ActivityExecution(task);
+      const execution = new ActivityExecution(task);
 
       const startMessages = [];
       task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -1751,7 +1751,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql(4);
 
       function Behaviour(activity) {
-        const eventDefinitionExecution = EventDefinitionExecution(activity, [{
+        const eventDefinitionExecution = new EventDefinitionExecution(activity, [{
           type: 'messageeventdef1',
           execute() {},
         }, {
@@ -1769,7 +1769,7 @@ describe('ActivityExecution', () => {
 
     it('forwards output and message from completed event definition', () => {
       const task = createActivity(Behaviour);
-      const execution = ActivityExecution(task);
+      const execution = new ActivityExecution(task);
 
       const startMessages = [];
       task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -1812,7 +1812,7 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('message').that.eql(5);
 
       function Behaviour(activity) {
-        const eventDefinitionExecution = EventDefinitionExecution(activity, [{
+        const eventDefinitionExecution = new EventDefinitionExecution(activity, [{
           type: 'messageeventdef1',
           execute() {},
         }, {
@@ -1832,7 +1832,7 @@ describe('ActivityExecution', () => {
   describe('getApi()', () => {
     it('called without message returns api for root scope', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       execution.execute({
         fields: {},
@@ -1860,7 +1860,7 @@ describe('ActivityExecution', () => {
 
     it('called with message returns api for message scope', () => {
       const activity = createActivity();
-      const execution = ActivityExecution(activity);
+      const execution = new ActivityExecution(activity);
 
       execution.execute({
         fields: {},
@@ -1886,7 +1886,7 @@ describe('ActivityExecution', () => {
     describe('getExecuting()', () => {
       it('returns list of apis except the current one', () => {
         const activity = createActivity();
-        const execution = ActivityExecution(activity);
+        const execution = new ActivityExecution(activity);
 
         const startMessages = [];
         activity.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
@@ -1922,11 +1922,11 @@ describe('ActivityExecution', () => {
 });
 
 function createActivity(Behaviour) {
-  const environment = Environment({
+  const environment = new Environment({
     Logger,
   });
 
-  return Activity(Behaviour || ActivityBehaviour, {
+  return new Activity(Behaviour || ActivityBehaviour, {
     id: 'activity',
     type: 'task',
     parent: {
@@ -1936,7 +1936,7 @@ function createActivity(Behaviour) {
   }, {
     environment,
     getInboundSequenceFlows() {
-      return [SequenceFlow({id: 'flow', sourceId: 'task', targetId: 'end', parent: {id: 'process1'}}, {environment})];
+      return [new SequenceFlow({id: 'flow', sourceId: 'task', targetId: 'end', parent: {id: 'process1'}}, {environment})];
     },
     getOutboundSequenceFlows() {
       return [];

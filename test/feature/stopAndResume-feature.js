@@ -51,7 +51,7 @@ Feature('Stop and resume', () => {
           js: JsExtension,
         }
       });
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let stoppedAt;
@@ -192,7 +192,7 @@ Feature('Stop and resume', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     function Timers() {
@@ -241,7 +241,7 @@ Feature('Stop and resume', () => {
     When('recovered and resumed', async () => {
       ck.travel(Date.now() + 5000);
       const context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context);
+      definition = new Definition(context);
 
       definition.recover(state);
       timerEvent = definition.waitFor('activity.timer');
@@ -258,7 +258,7 @@ Feature('Stop and resume', () => {
 
     Given('a listener that will save state at activity timer', async () => {
       const context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     When('ran', () => {
@@ -292,7 +292,7 @@ Feature('Stop and resume', () => {
       ck.travel(Date.now() + 5000);
 
       const context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context);
+      definition = new Definition(context);
 
       definition.recover(state);
       timerEvent = definition.waitFor('activity.timer');
@@ -370,7 +370,7 @@ Feature('Stop and resume', () => {
 
     Given('a definition with a task with two timeouts, first loops back to previous task', async () => {
       context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let state;
@@ -378,7 +378,7 @@ Feature('Stop and resume', () => {
       definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
         if (msg.content.id !== 'timeout2') return;
         definition.broker.cancel(msg.fields.consumerTag);
-        setImmediate(definition.stop);
+        setImmediate(() => definition.stop());
       }, {noAck: true});
 
       definition.once('stop', () => {
@@ -396,7 +396,7 @@ Feature('Stop and resume', () => {
 
     When('recovered and resumed', async () => {
       context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context).recover(state);
+      definition = new Definition(context).recover(state);
       definition.resume();
     });
 
@@ -404,7 +404,7 @@ Feature('Stop and resume', () => {
       definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
         if (msg.content.id !== 'timeout1') return;
         definition.broker.cancel(msg.fields.consumerTag);
-        setImmediate(definition.stop);
+        setImmediate(() => definition.stop());
       }, {noAck: true});
 
       definition.once('stop', () => {
@@ -413,7 +413,7 @@ Feature('Stop and resume', () => {
       });
 
       expect(instances).to.have.length(2);
-      const idx = instances.findIndex(([,, msg]) => msg.content.id === 'timeout1');
+      const idx = instances.findIndex(([,, msg]) => msg.id === 'timeout1');
       const [cb,, ...args] = instances.splice(idx, 1).pop();
       cb(...args);
     });
@@ -424,7 +424,7 @@ Feature('Stop and resume', () => {
 
     When('recovered and resumed', async () => {
       context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context).recover(state);
+      definition = new Definition(context).recover(state);
       definition.resume();
     });
 
@@ -445,7 +445,7 @@ Feature('Stop and resume', () => {
       });
 
       expect(instances).to.have.length(2);
-      const idx = instances.findIndex(([,, msg]) => msg.content.id === 'timeout2');
+      const idx = instances.findIndex(([,, msg]) => msg.id === 'timeout2');
       const [cb,, ...args] = instances.splice(idx, 1).pop();
       cb(...args);
     });
@@ -453,13 +453,78 @@ Feature('Stop and resume', () => {
     let leave;
     When('recovered and resumed', async () => {
       context = await testHelpers.context(source, {timers: Timers()});
-      definition = Definition(context).recover(state);
+      definition = new Definition(context).recover(state);
       leave = definition.waitFor('leave');
       definition.resume();
     });
 
     Then('run completes', () => {
       return leave;
+    });
+  });
+
+  Scenario('Stop and resume different versions of flow', () => {
+    let context, definition;
+
+    const source1 = `
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <process id="theProcess" isExecutable="true">
+        <startEvent id="start" />
+        <sequenceFlow id="to-task1" sourceRef="start" targetRef="task1" />
+        <userTask id="task1" />
+        <sequenceFlow id="to-task2" sourceRef="task1" targetRef="task2" />
+        <userTask id="task2" />
+        <sequenceFlow id="to-end" sourceRef="task2" targetRef="end" />
+        <endEvent id="end" />
+      </process>
+    </definitions>`;
+
+    Given('a definition with a two user tasks', async () => {
+      context = await testHelpers.context(source1);
+      definition = new Definition(context);
+    });
+
+    let state;
+    When('first user task is signaled', () => {
+      definition.run();
+      definition.signal({id: 'task1'});
+    });
+
+    Then('state is saved', () => {
+      state = definition.getState();
+    });
+
+    const source2 = `
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <process id="theProcess" isExecutable="true">
+        <startEvent id="start" />
+        <sequenceFlow id="to-task2" sourceRef="start" targetRef="task2" />
+        <userTask id="task2" />
+        <sequenceFlow id="to-end2" sourceRef="task2" targetRef="end2" />
+        <endEvent id="end2" />
+      </process>
+    </definitions>`;
+
+    Given('flow is altered and removed first user task and renamed end event', () => {
+      // no-op
+    });
+
+    let completed;
+    When('recovered and resumed with old state', async () => {
+      context = await testHelpers.context(source2);
+      definition = new Definition(context).recover(state);
+      completed = definition.waitFor('end');
+      definition.resume();
+
+      expect(definition.getProcesses()[0].getSequenceFlows()).to.have.length(2);
+    });
+
+    And('second user task is signaled', () => {
+      definition.signal({id: 'task2'});
+    });
+
+    Then('resumed flow completes', () => {
+      return completed;
     });
   });
 });

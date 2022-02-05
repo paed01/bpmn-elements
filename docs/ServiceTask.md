@@ -20,7 +20,7 @@ Example source:
 Define your [environment](/docs/Environment.md) with the service functions.
 
 ```js
-Environment({
+new Environment({
   services: {
     get(executionContext, callback) {
       callback();

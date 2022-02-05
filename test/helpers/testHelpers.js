@@ -31,7 +31,12 @@ async function context(source, ...args) {
     });
   }
 
-  const serializer = Serializer(moddleCtx, typeResolver, options.extendFn);
+  let resolver = typeResolver;
+  if (options.types) {
+    resolver = TypeResolver({...types, ...options.types});
+  }
+
+  const serializer = Serializer(moddleCtx, resolver, options.extendFn);
 
   const extensions = options && options.extensions && Object.keys(options.extensions).reduce((result, name) => {
     const extension = options.extensions[name].extension;
@@ -39,7 +44,7 @@ async function context(source, ...args) {
     return result;
   }, {});
 
-  const ctx = Context(serializer, Environment({Logger, scripts: Scripts(), settings: {enableDummyService: true}, ...options, extensions}));
+  const ctx = Context(serializer, new Environment({Logger, scripts: Scripts(), settings: {enableDummyService: true}, ...options, extensions}));
   logger.debug('context complete');
   if (callback) {
     callback(null, ctx);
@@ -71,13 +76,25 @@ function emptyContext(override, options) {
     getActivities() {},
     getActivityExtensions() {},
     getAssociations() {},
-    getInboundAssociations() {},
-    getInboundSequenceFlows() {},
+    getInboundAssociations() {
+      return [];
+    },
+    getInboundSequenceFlows() {
+      return [];
+    },
     getMessageFlows() {},
-    getOutboundSequenceFlows() {},
+    getOutboundSequenceFlows() {
+      return [];
+    },
+    getProcesses() {
+      return [];
+    },
+    getExecutableProcesses() {
+      return [];
+    },
     getSequenceFlows() {},
     ...override,
-  }, Environment({Logger, scripts: Scripts(), settings: {enableDummyService: true}, ...options}));
+  }, new Environment({Logger, scripts: Scripts(), settings: {enableDummyService: true}, ...options}));
 }
 
 function AssertMessage(processContext, messages, inSequence) {

@@ -16,7 +16,7 @@ Feature('Definition', () => {
     let definition, context;
     Given('a definition with a user task', async () => {
       context = await testHelpers.context(source, {extensions});
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -102,7 +102,7 @@ Feature('Definition', () => {
     });
 
     When('definition is recovered', () => {
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.recover(state);
     });
 

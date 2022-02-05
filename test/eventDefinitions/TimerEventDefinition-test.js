@@ -12,7 +12,7 @@ describe('TimerEventDefinition', () => {
     event = {
       id: 'event',
       type: 'bpmn:Event',
-      environment: Environment({Logger: testHelpers.Logger}),
+      environment: new Environment({Logger: testHelpers.Logger}),
     };
     event.broker = ActivityBroker(event).broker;
   });
@@ -23,7 +23,7 @@ describe('TimerEventDefinition', () => {
 
   describe('timeDuration', () => {
     it('resolves duration from event scope', () => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDuration: '${content.input.duration}',
@@ -64,7 +64,7 @@ describe('TimerEventDefinition', () => {
     });
 
     it('completes when timed out', (done) => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDuration: 'PT0.005S',
@@ -87,7 +87,7 @@ describe('TimerEventDefinition', () => {
     });
 
     it('publish timeout event when timed out', (done) => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDuration: 'PT0.01S',
@@ -114,7 +114,7 @@ describe('TimerEventDefinition', () => {
     });
 
     it('unresolved time duration completes at once', (done) => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDuration: '${environment.variables.myDuration}',
@@ -140,7 +140,7 @@ describe('TimerEventDefinition', () => {
     });
 
     it('invalid ISO duration executes stalls execution', () => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDuration: 'Just do it in 10 secs',
@@ -172,7 +172,7 @@ describe('TimerEventDefinition', () => {
 
     describe('resume execution', () => {
       it('recovers with message timeout', (done) => {
-        const definition = TimerEventDefinition(event, {
+        const definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
             id: 'recover_1',
@@ -224,7 +224,7 @@ describe('TimerEventDefinition', () => {
       it('completes once', () => {
         ck.freeze();
 
-        const definition = TimerEventDefinition(event, {
+        const definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
             timeDuration: 'PT0.1S',
@@ -313,7 +313,7 @@ describe('TimerEventDefinition', () => {
       });
 
       it('completes immediately if timeout has passed', (done) => {
-        const definition = TimerEventDefinition(event, {
+        const definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
             timeDuration: 'PT0.1S',
@@ -356,7 +356,7 @@ describe('TimerEventDefinition', () => {
       });
 
       it('can be stopped again', (done) => {
-        const definition = TimerEventDefinition(event, {
+        const definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
             id: 'stopped_again',
@@ -390,7 +390,7 @@ describe('TimerEventDefinition', () => {
       });
 
       it('can be discarded', (done) => {
-        const definition = TimerEventDefinition(event, {
+        const definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
             timeDuration: 'PT0.1S',
@@ -430,7 +430,7 @@ describe('TimerEventDefinition', () => {
     afterEach(ck.reset);
 
     it('resolves date from event scope', () => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDate: '${content.input.date}',
@@ -468,7 +468,7 @@ describe('TimerEventDefinition', () => {
     });
 
     it('completes when timed out', (done) => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDate: new Date(Date.now() + 100).toISOString(),
@@ -491,7 +491,7 @@ describe('TimerEventDefinition', () => {
     });
 
     it('completes immediately if date is due', () => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDate: '${content.input.date}',
@@ -529,7 +529,7 @@ describe('TimerEventDefinition', () => {
     });
 
     it('unresolved expression completes the execution', (done) => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDate: '${environment.variables.dueDate}',
@@ -556,7 +556,7 @@ describe('TimerEventDefinition', () => {
     });
 
     it('invalid date stalls', () => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDate: 'Last tuesday',
@@ -593,7 +593,7 @@ describe('TimerEventDefinition', () => {
 
     describe('resume execution', () => {
       it('publishes timer event message with resume message timeDate', (done) => {
-        const definition = TimerEventDefinition(event, {
+        const definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
             timeDate: '1993-06-27',
@@ -625,7 +625,7 @@ describe('TimerEventDefinition', () => {
       });
 
       it('publishes timer event message with resolved timeDate as fallback', (done) => {
-        const definition = TimerEventDefinition(event, {
+        const definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
             timeDate: '1993-06-27',
@@ -656,7 +656,7 @@ describe('TimerEventDefinition', () => {
       });
 
       it('completes immediately if date is due', (done) => {
-        const definition = TimerEventDefinition(event, {
+        const definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
             timeDate: '1993-06-27',
@@ -700,7 +700,7 @@ describe('TimerEventDefinition', () => {
       });
 
       it('invalid date stalls the execution', () => {
-        const definition = TimerEventDefinition(event, {
+        const definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
             timeDate: 'Last tuesday',
@@ -736,7 +736,7 @@ describe('TimerEventDefinition', () => {
 
   describe('timeCycle', () => {
     it('resolves cycle from event scope', () => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeCycle: '${content.input.cycle}',
@@ -775,7 +775,7 @@ describe('TimerEventDefinition', () => {
 
     describe('resume execution', () => {
       it('publishes timer event message with resume message timeCycle', (done) => {
-        const definition = TimerEventDefinition(event, {
+        const definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
             timeCycle: 'R5/PT12H',
@@ -805,7 +805,7 @@ describe('TimerEventDefinition', () => {
       });
 
       it('publishes timer event message with resolved timeCycle as fallback', (done) => {
-        const definition = TimerEventDefinition(event, {
+        const definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
             timeCycle: 'R3/PT10H',
@@ -834,7 +834,7 @@ describe('TimerEventDefinition', () => {
       });
 
       it('can be stopped again', (done) => {
-        const definition = TimerEventDefinition(event, {
+        const definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
             timeCycle: 'R5/PT12H',
@@ -862,7 +862,7 @@ describe('TimerEventDefinition', () => {
       });
 
       it('can be discarded', (done) => {
-        const definition = TimerEventDefinition(event, {
+        const definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
             timeCycle: 'R5/PT12H',
@@ -891,7 +891,7 @@ describe('TimerEventDefinition', () => {
       });
 
       it('can be canceled', (done) => {
-        const definition = TimerEventDefinition(event, {
+        const definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
             timeCycle: 'R5/PT12H',
@@ -925,7 +925,7 @@ describe('TimerEventDefinition', () => {
     it('publishes one execute timer message', () => {
       ck.freeze('1993-06-26T10:00Z');
 
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDuration: 'PT1M',
@@ -964,7 +964,7 @@ describe('TimerEventDefinition', () => {
     });
 
     it('publishes one execute activity timer message', () => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDuration: 'PT1M',
@@ -1005,7 +1005,7 @@ describe('TimerEventDefinition', () => {
     it('completes when time date is due', (done) => {
       ck.reset();
 
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDuration: 'P1Y',
@@ -1038,7 +1038,7 @@ describe('TimerEventDefinition', () => {
     it('completes when duration expires', (done) => {
       ck.travel('1993-06-24T10:00Z');
 
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDuration: 'PT0.1S',
@@ -1083,7 +1083,7 @@ describe('TimerEventDefinition', () => {
       let definition;
       beforeEach(() => {
         ck.travel('1993-06-26');
-        definition = TimerEventDefinition(event, {
+        definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
             ...timer,
@@ -1423,7 +1423,7 @@ describe('TimerEventDefinition', () => {
 
   describe('formatted message', () => {
     it('with timeout completes when timed out', (done) => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {},
       });
@@ -1450,7 +1450,7 @@ describe('TimerEventDefinition', () => {
     });
 
     it('with expireAt completes when timed out', (done) => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {},
       });
@@ -1479,7 +1479,7 @@ describe('TimerEventDefinition', () => {
 
   describe('no timer', () => {
     it('completes without any timers', (done) => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
       });
 
@@ -1503,7 +1503,7 @@ describe('TimerEventDefinition', () => {
 
   describe('edge cases', () => {
     it('resets timer if executed twice', () => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDuration: 'PT1M',
@@ -1549,7 +1549,7 @@ describe('TimerEventDefinition', () => {
     });
 
     it('cancel message from outside without delegate is ignored', () => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeCycle: '* * * * * * 5',
@@ -1580,7 +1580,7 @@ describe('TimerEventDefinition', () => {
     });
 
     it('delegated cancel message without message is ignored', () => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeCycle: '0 0/5 * 1/1 * ? *',
@@ -1609,7 +1609,7 @@ describe('TimerEventDefinition', () => {
     });
 
     it('resets timer if resumed twice due to lingering execute timer message', () => {
-      const definition = TimerEventDefinition(event, {
+      const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDuration: 'PT1M',

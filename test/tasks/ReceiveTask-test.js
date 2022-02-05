@@ -1,32 +1,26 @@
 import Message from '../../src/activity/Message';
-import Environment from '../../src/Environment';
 import ReceiveTask from '../../src/tasks/ReceiveTask';
-import {Logger} from '../helpers/testHelpers';
+import testHelpers from '../helpers/testHelpers';
 
 describe('ReceiveTask', () => {
   let task;
   beforeEach(() => {
-    const environment = Environment({Logger});
     task = ReceiveTask({
       id: 'task',
       parent: {
         id: 'theProcess'
       }
-    }, {
-      environment,
+    }, testHelpers.emptyContext({
       getActivityById(id) {
         if (id !== 'message_1') return;
-        return Message({
+        return {
           id: 'message_1',
           type: 'bpmn:Message',
           name: 'My Message ${content.id}',
-        }, {environment});
+          Behaviour: Message,
+        };
       },
-      getInboundAssociations() {},
-      getInboundSequenceFlows() {},
-      getOutboundSequenceFlows() {},
-      loadExtensions() {},
-    });
+    }));
   });
 
   it('publishes wait event on parent broker with resolved message', () => {

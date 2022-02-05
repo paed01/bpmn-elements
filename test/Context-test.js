@@ -31,6 +31,13 @@ describe('Context', () => {
 
   describe('getProcessById(id)', () => {
     it('return process', () => {
+      function Behaviour(def) {
+        return {
+          id: def.id,
+          run() {},
+        };
+      }
+
       const ctx = Context({
         id: 'newDef',
         name: 'New def',
@@ -40,12 +47,7 @@ describe('Context', () => {
             id: 'theProcess',
             type: 'bpmn:Process',
             behaviour: {},
-            Behaviour(def) {
-              return {
-                id: def.id,
-                run() {},
-              };
-            },
+            Behaviour,
           };
         },
         getInboundSequenceFlows() {
@@ -78,6 +80,10 @@ describe('Context', () => {
 
   describe('getActivityById(id)', () => {
     it('return Activity', () => {
+      function Behaviour(def, context) {
+        return new Activity(this, def, context);
+      }
+
       const activityDef = {
         id: 'task',
         type: 'bpmn:Task',
@@ -85,9 +91,7 @@ describe('Context', () => {
           id: 'theProcess',
         },
         behaviour: {},
-        Behaviour(def, context) {
-          return Activity(this, def, context);
-        },
+        Behaviour,
       };
 
       const ctx = Context({

@@ -3,9 +3,7 @@ Activity execution
 
 Shared activity execution.
 
-## `ActivityExecution(activity, context)`
-
-Activity execution ctorish.
+## `new ActivityExecution(activity, context)`
 
 Arguments:
 - `activity`: parent [activity](/docs/Activity.md) function

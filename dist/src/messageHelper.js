@@ -6,9 +6,9 @@ Object.defineProperty(exports, "__esModule", {
 exports.cloneContent = cloneContent;
 exports.cloneMessage = cloneMessage;
 exports.cloneParent = cloneParent;
+exports.pushParent = pushParent;
 exports.shiftParent = shiftParent;
 exports.unshiftParent = unshiftParent;
-exports.pushParent = pushParent;
 
 function cloneContent(content, extend) {
   const {

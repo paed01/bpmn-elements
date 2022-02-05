@@ -450,7 +450,7 @@ describe('SequenceFlow', () => {
         },
       };
 
-      const flow = SequenceFlow(flowDef, {environment: Environment()});
+      const flow = new SequenceFlow(flowDef, {environment: new Environment()});
 
       expect(() => {
         flow.getCondition().execute({
@@ -473,7 +473,7 @@ describe('SequenceFlow', () => {
         },
       };
 
-      const flow = SequenceFlow(flowDef, {environment: Environment()});
+      const flow = new SequenceFlow(flowDef, {environment: new Environment()});
 
       expect(() => {
         flow.getCondition().execute({

@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.RunError = exports.BpmnError = exports.ActivityError = void 0;
 exports.makeErrorFromMessage = makeErrorFromMessage;
-exports.BpmnError = exports.ActivityError = void 0;
 
 var _messageHelper = require("../messageHelper");
 
@@ -28,6 +28,10 @@ class ActivityError extends Error {
 }
 
 exports.ActivityError = ActivityError;
+
+class RunError extends ActivityError {}
+
+exports.RunError = RunError;
 
 class BpmnError extends Error {
   constructor(description, behaviour = {}, sourceMessage, inner) {
@@ -58,7 +62,7 @@ function makeErrorFromMessage(errorMessage) {
   const {
     error
   } = content;
-  if (!error) return;
+  if (!error) return new Error(`Malformatted error message with routing key ${errorMessage.fields && errorMessage.fields.routingKey}`);
   if (isKnownError(error)) return error;
 
   switch (error.type) {
@@ -68,15 +72,21 @@ function makeErrorFromMessage(errorMessage) {
         name: error.name
       });
 
+    case 'RunError':
+      return new RunError(error.message || error.description, error.source, error.inner ? error.inner : {
+        code: error.code,
+        name: error.name
+      });
+
     case 'BpmnError':
       return new BpmnError(error.message || error.description, error, error.source);
   }
 
   return error;
+}
 
-  function isKnownError(test) {
-    if (test instanceof Error) return test;
-    if (test instanceof ActivityError) return test;
-    if (test instanceof BpmnError) return test;
-  }
+function isKnownError(test) {
+  if (test instanceof ActivityError) return test;
+  if (test instanceof BpmnError) return test;
+  if (test instanceof Error) return test;
 }

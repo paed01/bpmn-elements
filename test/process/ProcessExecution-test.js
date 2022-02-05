@@ -17,13 +17,13 @@ describe('Process execution', () => {
   describe('execute()', () => {
     it('requires message', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       expect(execution.execute).to.throw(/requires message/i);
     });
 
     it('requires message content executionId', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       expect(() => {
         execution.execute({content: {}});
       }).to.throw(/requires execution id/i);
@@ -31,7 +31,7 @@ describe('Process execution', () => {
 
     it('publishes start execute message', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       let message;
       bp.broker.subscribeOnce('execution', 'execute.#', (_, msg) => {
@@ -62,7 +62,7 @@ describe('Process execution', () => {
 
     it('creates execution queue', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
         fields: {},
@@ -80,7 +80,7 @@ describe('Process execution', () => {
 
     it('starts with start activities', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       let message;
       bp.broker.subscribeOnce('event', 'activity.enter', (_, msg) => {
@@ -112,7 +112,7 @@ describe('Process execution', () => {
 
     it('publishes start message if recovered on init', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       let message;
       bp.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
@@ -138,7 +138,7 @@ describe('Process execution', () => {
 
     it('completes if recovered on executing when all activities are completed', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.recover({status: 'executing'});
 
       let message;
@@ -164,7 +164,7 @@ describe('Process execution', () => {
 
     it('forwards activity events', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       const messages = [];
       bp.broker.subscribeTmp('event', 'activity.#', (_, msg) => {
@@ -195,7 +195,7 @@ describe('Process execution', () => {
 
     it('forwards sequence flow events', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       let message;
       bp.broker.subscribeOnce('event', 'flow.#', (_, msg) => {
@@ -247,7 +247,7 @@ describe('Process execution', () => {
         return [activity];
       };
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       let message;
       execution.broker.subscribeOnce('execution', 'execution.error.*', (_, msg) => {
@@ -311,7 +311,7 @@ describe('Process execution', () => {
       };
       activities.push(boundEvent);
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       let errorMessage;
       execution.broker.subscribeOnce('execution', 'execution.error.*', (_, msg) => {
@@ -335,7 +335,7 @@ describe('Process execution', () => {
     it('completes immediately if no activities', async () => {
       const bp = createProcess({getActivities() {}});
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -361,7 +361,7 @@ describe('Process execution', () => {
         }
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -382,7 +382,7 @@ describe('Process execution', () => {
 
       const activities = bp.getActivities();
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -416,7 +416,7 @@ describe('Process execution', () => {
         }
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -443,7 +443,7 @@ describe('Process execution', () => {
       const [activity1, activity2] = bp.getActivities();
       const [sequenceflow] = bp.getSequenceFlows();
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -473,7 +473,7 @@ describe('Process execution', () => {
         }
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -517,7 +517,7 @@ describe('Process execution', () => {
         }
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
         fields: {},
@@ -540,7 +540,7 @@ describe('Process execution', () => {
         }
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -574,7 +574,7 @@ describe('Process execution', () => {
         });
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -602,7 +602,7 @@ describe('Process execution', () => {
         }
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -651,7 +651,7 @@ describe('Process execution', () => {
         });
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -717,7 +717,7 @@ describe('Process execution', () => {
         });
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -750,7 +750,7 @@ describe('Process execution', () => {
         }
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -779,7 +779,7 @@ describe('Process execution', () => {
         }
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -846,7 +846,7 @@ describe('Process execution', () => {
         });
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -876,7 +876,7 @@ describe('Process execution', () => {
         }
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       const state = execution.getState();
 
       expect(state).to.have.property('children').with.length(1);
@@ -890,7 +890,7 @@ describe('Process execution', () => {
         }
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       const state = execution.getState();
 
       expect(state).to.have.property('completed', false);
@@ -903,7 +903,7 @@ describe('Process execution', () => {
         }
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -920,13 +920,13 @@ describe('Process execution', () => {
   describe('recover(state)', () => {
     it('is ignored if no state is passed', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context).recover();
+      const execution = new ProcessExecution(bp, bp.context).recover();
       expect(execution).to.be.ok;
     });
 
     it('sets stopped and completed from state', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -938,14 +938,14 @@ describe('Process execution', () => {
 
       const state = execution.getState();
 
-      const recoveredExecution = ProcessExecution(bp, bp.context).recover(state);
+      const recoveredExecution = new ProcessExecution(bp, bp.context).recover(state);
       expect(recoveredExecution).to.have.property('stopped', true);
       expect(recoveredExecution).to.have.property('completed', false);
     });
 
     it('recovers children and flows', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -957,7 +957,7 @@ describe('Process execution', () => {
 
       const state = execution.getState();
 
-      const recoveredExecution = ProcessExecution(bp, bp.context).recover(state);
+      const recoveredExecution = new ProcessExecution(bp, bp.context).recover(state);
 
       const [start, task, end] = recoveredExecution.getActivities();
       expect(start).to.have.property('counters').with.property('taken', 1);
@@ -975,7 +975,7 @@ describe('Process execution', () => {
   describe('resume', () => {
     it('resumes if execution message is redelivered', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -1027,7 +1027,7 @@ describe('Process execution', () => {
         }
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -1066,7 +1066,7 @@ describe('Process execution', () => {
         }
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -1078,7 +1078,7 @@ describe('Process execution', () => {
       expect(execution).to.have.property('completed', true);
 
       const state = execution.getState();
-      const recoveredExecution = ProcessExecution(bp, bp.context);
+      const recoveredExecution = new ProcessExecution(bp, bp.context);
       recoveredExecution.recover(state);
 
       let message;
@@ -1109,7 +1109,7 @@ describe('Process execution', () => {
         }
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -1121,7 +1121,7 @@ describe('Process execution', () => {
       expect(execution).to.have.property('completed', true);
 
       const state = execution.getState();
-      const recoveredExecution = ProcessExecution(bp, bp.context);
+      const recoveredExecution = new ProcessExecution(bp, bp.context);
       recoveredExecution.recover(state);
 
       let message;
@@ -1149,7 +1149,7 @@ describe('Process execution', () => {
   describe('getPostponed()', () => {
     it('returns running activity apis', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
         fields: {},
@@ -1176,7 +1176,7 @@ describe('Process execution', () => {
       const bp = createProcess();
       const [, task] = bp.getActivities();
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
         fields: {},
@@ -1206,7 +1206,7 @@ describe('Process execution', () => {
   describe('getApi()', () => {
     it('without message returns process api', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
         fields: {},
@@ -1223,7 +1223,7 @@ describe('Process execution', () => {
 
     it('with message returns process api', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
         fields: {},
@@ -1248,7 +1248,7 @@ describe('Process execution', () => {
 
     it('with activity message returns activity api', () => {
       const bp = createProcess();
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
         fields: {},
@@ -1300,7 +1300,7 @@ describe('Process execution', () => {
         getSequenceFlows() {}
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       const messages = [];
       bp.broker.subscribeTmp('event', 'activity.start', (_, msg) => {
         messages.push(msg);
@@ -1364,7 +1364,7 @@ describe('Process execution', () => {
         getSequenceFlows() {}
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       const messages = [];
       bp.broker.subscribeTmp('event', 'activity.start', (_, msg) => {
         messages.push(msg);
@@ -1415,7 +1415,7 @@ describe('Process execution', () => {
         getSequenceFlows() {}
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       const messages = [];
       bp.broker.subscribeTmp('event', 'activity.wait', (_, msg) => {
         messages.push(msg);
@@ -1466,7 +1466,7 @@ describe('Process execution', () => {
         getSequenceFlows() {}
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
       const messages = [];
       bp.broker.subscribeTmp('event', 'activity.wait', (_, msg) => {
         messages.push(msg);
@@ -1521,7 +1521,7 @@ describe('Process execution', () => {
         getSequenceFlows() {}
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
         fields: {},
@@ -1558,7 +1558,7 @@ describe('Process execution', () => {
         getSequenceFlows() {},
       });
 
-      const execution = ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(bp, bp.context);
 
       let completed;
       execution.broker.subscribeTmp('execution', 'execution.completed.*', () => {
@@ -1620,18 +1620,8 @@ function createProcess(override, step) {
     ...override
   }, {step});
 
-  return Process({
+  return new Process({
     id: 'process1',
     type: 'bpmn:Process',
-  }, {
-    getActivities() {
-      return activities;
-    },
-    getActivityById(id) {
-      return this.getActivities().find((a) => a.id === id);
-    },
-    getDataObjects() {},
-    getMessageFlows() {},
-    ...context,
-  });
+  }, context);
 }

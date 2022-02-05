@@ -38,7 +38,7 @@ Feature('Errors', () => {
       </definitions>`;
 
       context = await testHelpers.context(source);
-      definition = Definition(context, options);
+      definition = new Definition(context, options);
     });
 
     let error;
@@ -102,7 +102,7 @@ Feature('Errors', () => {
 
     let recovered;
     Given('definition is recovered', () => {
-      recovered = Definition(context.clone(), options).recover(state);
+      recovered = new Definition(context.clone(), options).recover(state);
     });
 
     When('resumed', () => {
@@ -135,7 +135,7 @@ Feature('Errors', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end, thrown;
@@ -183,7 +183,7 @@ Feature('Errors', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end, thrown;
@@ -241,7 +241,7 @@ Feature('Errors', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end, thrown;
@@ -302,7 +302,7 @@ Feature('Errors', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end, thrown, caught;
@@ -386,7 +386,7 @@ Feature('Errors', () => {
       context.environment.addService('get', function get(_, next) {
         serviceCallback = next;
       });
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let end;
@@ -491,7 +491,7 @@ Feature('Errors', () => {
         serviceCallback = next;
       });
 
-      recoveredDefinition = Definition(newContext);
+      recoveredDefinition = new Definition(newContext);
       recoveredDefinition.recover(JSON.parse(state));
     });
 
@@ -518,7 +518,7 @@ Feature('Errors', () => {
 
     Given('definition is ran with error listener where state is saved', () => {
       state = undefined;
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.once('error', () => {
         state = JSON.stringify(definition.getState(), null, 2);
       });
@@ -545,7 +545,7 @@ Feature('Errors', () => {
         serviceCallback = next;
       });
 
-      recoveredDefinition = Definition(newContext);
+      recoveredDefinition = new Definition(newContext);
       recoveredDefinition.recover(JSON.parse(state));
     });
 
@@ -664,7 +664,7 @@ Feature('Errors', () => {
     let context, definition;
     Given('process with task with bound named error', async () => {
       context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let execution, end;
@@ -719,7 +719,7 @@ Feature('Errors', () => {
     let context, definition;
     Given('process with task with bound named error', async () => {
       context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let execution, end;
@@ -779,6 +779,80 @@ Feature('Errors', () => {
         taken: 1,
         discarded: 1,
       });
+    });
+  });
+
+  Scenario('strict mode', () => {
+    let context, definition, serviceCallback, source;
+    Given('a service task with a catch anonymous error boundary event', async () => {
+      source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="Process_0" isExecutable="true">
+          <serviceTask id="service" implementation="\${environment.services.get}" />
+          <boundaryEvent id="catchError" attachedToRef="service">
+            <errorEventDefinition errorRef="Error_0" />
+          </boundaryEvent>
+        </process>
+        <error id="Error_0" errorCode="404" />
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      context.environment.addService('get', function get(_, next) {
+        serviceCallback = next;
+      });
+      definition = new Definition(context, {
+        settings: {
+          strict: true,
+        }
+      });
+    });
+
+    let errored, end;
+    When('definition is ran in strict mode', () => {
+      errored = definition.waitFor('error');
+      definition.run();
+    });
+
+    And('service encounters custom error with error code that match known error', () => {
+      const error = new Error('Not found');
+      error.code = 404;
+      serviceCallback(error);
+    });
+
+    Then('run is errored', async () => {
+      const err = await errored;
+      expect(err.content.error)
+        .to.have.property('source')
+        .with.property('content')
+        .with.property('id', 'service');
+    });
+
+    And('error was not caught', () => {
+      const catchError = definition.getActivityById('catchError');
+      expect(catchError.counters).to.have.property('taken', 0);
+      expect(catchError.counters).to.have.property('discarded', 1);
+    });
+
+    When('definition is ran again in non-strict mode', () => {
+      end = definition.waitFor('end');
+      definition.environment.settings.strict = false;
+      definition.run();
+    });
+
+    And('service encounters custom error with error code that match known error', () => {
+      const error = new Error('Not found');
+      error.code = 404;
+      serviceCallback(error);
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('error was caught', () => {
+      const catchError = definition.getActivityById('catchError');
+      expect(catchError.counters).to.have.property('taken', 1);
+      expect(catchError.counters).to.have.property('discarded', 1);
     });
   });
 });

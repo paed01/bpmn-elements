@@ -17,6 +17,7 @@ The following elements are tested and supported.
 - [Process](/docs/Process.md): Executes and keeps track of activity elements
 - BpmnError
 - BoundaryEvent
+- [CallActivity](/docs/CallActivity.md)
 - CancelEventDefinition
 - ConditionalEventDefinition
 - CompensateEventDefinition
@@ -47,6 +48,8 @@ The following elements are tested and supported.
 - MessageFlow
 - [MultiInstanceLoopCharacteristics](/docs/LoopCharacteristics.md)
 - [ParallelGateway](/docs/ParallelGateway.md)
+- Participant
+- Lane: exposed on activity
 - [Property](/docs/BpmnIO.md)
 - ReceiveTask
 - ScriptTask

@@ -43,7 +43,7 @@ Feature('EventBasedGateway', () => {
       return end;
     });
 
-    When('process is again', () => {
+    When('process is ran again', () => {
       wait = bp.waitFor('activity.wait');
       timer = bp.waitFor('activity.timer');
       end = bp.waitFor('end');
@@ -112,7 +112,7 @@ Feature('EventBasedGateway', () => {
       </definitions>`;
 
       context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     let wait, timer, state;
@@ -136,7 +136,6 @@ Feature('EventBasedGateway', () => {
       });
     });
 
-    // let timerApi;
     Then('message event is waiting and timer is started', async () => {
       await timer;
       await wait;
@@ -149,7 +148,7 @@ Feature('EventBasedGateway', () => {
     let end;
     When('definition is resumed and signaled', async () => {
       definition.stop();
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       end = definition.waitFor('end');
 
       definition.recover(state);

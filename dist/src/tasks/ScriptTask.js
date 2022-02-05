@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = ScriptTask;
 exports.ScriptTaskBehaviour = ScriptTaskBehaviour;
+exports.default = ScriptTask;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 
@@ -17,60 +17,54 @@ var _messageHelper = require("../messageHelper");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function ScriptTask(activityDef, context) {
-  return (0, _Activity.default)(ScriptTaskBehaviour, activityDef, context);
+  return new _Activity.default(ScriptTaskBehaviour, activityDef, context);
 }
 
 function ScriptTaskBehaviour(activity) {
   const {
     id,
     type,
-    behaviour,
-    broker,
-    logger,
-    environment,
-    emitFatal
+    behaviour
   } = activity;
-  const {
-    scriptFormat
-  } = activity.behaviour;
-  const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  this.id = id;
+  this.type = type;
+  this.scriptFormat = behaviour.scriptFormat;
+  this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  this.activity = activity;
+  const environment = this.environment = activity.environment;
   environment.registerScript(activity);
-  const source = {
-    id,
-    type,
-    loopCharacteristics,
-    execute
-  };
-  return source;
+}
 
-  function execute(executeMessage) {
-    const content = executeMessage.content;
+ScriptTaskBehaviour.prototype.execute = function execute(executeMessage) {
+  const executeContent = executeMessage.content;
+  const loopCharacteristics = this.loopCharacteristics;
 
-    if (loopCharacteristics && content.isRootScope) {
-      return loopCharacteristics.execute(executeMessage);
-    }
+  if (loopCharacteristics && executeContent.isRootScope) {
+    return loopCharacteristics.execute(executeMessage);
+  }
 
-    const script = environment.getScript(scriptFormat, activity, (0, _messageHelper.cloneMessage)(executeMessage));
+  const activity = this.activity,
+        scriptFormat = this.scriptFormat;
+  const script = this.environment.getScript(scriptFormat, activity, (0, _messageHelper.cloneMessage)(executeMessage));
 
-    if (!script) {
-      return emitFatal(new _Errors.ActivityError(`Script format ${scriptFormat} is unsupported or was not registered for <${activity.id}>`, executeMessage), content);
-    }
+  if (!script) {
+    return activity.emitFatal(new _Errors.ActivityError(`Script format ${scriptFormat} is unsupported or was not registered for <${activity.id}>`, executeMessage), executeContent);
+  }
 
-    return script.execute((0, _ExecutionScope.default)(activity, executeMessage), scriptCallback);
+  return script.execute((0, _ExecutionScope.default)(activity, executeMessage), scriptCallback);
 
-    function scriptCallback(err, output) {
-      if (err) {
-        logger.error(`<${content.executionId} (${id})>`, err);
-        return broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(content, {
-          error: new _Errors.ActivityError(err.message, executeMessage, err)
-        }, {
-          mandatory: true
-        }));
-      }
-
-      return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
-        output
+  function scriptCallback(err, output) {
+    if (err) {
+      activity.logger.error(`<${executeContent.executionId} (${activity.id})>`, err);
+      return activity.broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(executeContent, {
+        error: new _Errors.ActivityError(err.message, executeMessage, err)
+      }, {
+        mandatory: true
       }));
     }
+
+    return activity.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent, {
+      output
+    }));
   }
-}
+};

@@ -3,8 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = EventBasedGateway;
 exports.EventBasedGatewayBehaviour = EventBasedGatewayBehaviour;
+exports.default = EventBasedGateway;
 
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
 
@@ -12,94 +12,98 @@ var _messageHelper = require("../messageHelper");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+const completedSymbol = Symbol.for('completed');
+const targetsSymbol = Symbol.for('targets');
+
 function EventBasedGateway(activityDef, context) {
-  return (0, _Activity.default)(EventBasedGatewayBehaviour, { ...activityDef
-  }, context);
+  return new _Activity.default(EventBasedGatewayBehaviour, activityDef, context);
 }
 
 function EventBasedGatewayBehaviour(activity, context) {
-  const {
-    id,
-    type,
-    broker,
-    logger,
-    outbound: outboundSequenceFlows = []
-  } = activity;
-  let executing = false;
-  const source = {
-    id,
-    type,
-    execute
-  };
-  return source;
-
-  function execute(executeMessage) {
-    const isRedelivered = executeMessage.fields.redelivered;
-    const content = executeMessage.content;
-    const {
-      executionId,
-      outbound = [],
-      outboundTaken
-    } = content;
-    const targets = [];
-
-    for (let i = 0; i < outboundSequenceFlows.length; i++) {
-      const flow = outboundSequenceFlows[i];
-      targets.push(context.getActivityById(flow.targetId));
-      outbound.push({
-        id: flow.id,
-        action: 'take'
-      });
-    }
-
-    if (!targets.length) return complete(content);
-    if (executing && outboundTaken) return;
-    const targetConsumerTag = `_gateway-listener-${id}`;
-    targets.forEach(target => {
-      target.broker.subscribeOnce('event', 'activity.end', onTargetCompleted, {
-        consumerTag: targetConsumerTag
-      });
-    });
-    broker.subscribeOnce('api', `activity.stop.${executionId}`, stop, {
-      noAck: true,
-      consumerTag: `_api-stop-${executionId}`
-    });
-    executing = true;
-    if (!isRedelivered) return broker.publish('execution', 'execute.outbound.take', (0, _messageHelper.cloneContent)(content, {
-      outboundTaken: true
-    }));
-
-    function onTargetCompleted(_, message, owner) {
-      const {
-        id: targetId,
-        exexutionId: targetExecutionId
-      } = message.content;
-      logger.debug(`<${executionId} (${id})> <${targetExecutionId}> completed run, discarding the rest`);
-      targets.forEach(target => {
-        if (target === owner) return;
-        target.broker.cancel(targetConsumerTag);
-        target.discard();
-      });
-      const completedContent = (0, _messageHelper.cloneContent)(executeMessage.content, {
-        taken: {
-          id: targetId,
-          executionId: targetExecutionId
-        },
-        ignoreOutbound: true
-      });
-      complete(completedContent);
-    }
-
-    function complete(completedContent) {
-      broker.publish('execution', 'execute.completed', completedContent);
-    }
-
-    function stop() {
-      executing = false;
-      targets.forEach(target => {
-        target.broker.cancel(targetConsumerTag);
-      });
-      broker.cancel(`_api-stop-${executionId}`);
-    }
-  }
+  this.id = activity.id;
+  this.type = activity.type;
+  this.activity = activity;
+  this.broker = activity.broker;
+  this.context = context;
+  this[targetsSymbol] = activity.outbound.map(flow => context.getActivityById(flow.targetId));
 }
+
+EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) {
+  const executeContent = executeMessage.content;
+  const {
+    executionId,
+    outbound = [],
+    outboundTaken
+  } = executeContent;
+  const targets = this[targetsSymbol];
+  this[completedSymbol] = false;
+  if (!targets.length) return this._complete(executeContent);
+
+  for (const flow of this.activity.outbound) {
+    outbound.push({
+      id: flow.id,
+      action: 'take'
+    });
+  }
+
+  if (!this[completedSymbol] && outboundTaken) return;
+  const targetConsumerTag = `_gateway-listener-${this.id}`;
+
+  const onTargetCompleted = this._onTargetCompleted.bind(this, executeMessage);
+
+  for (const target of this[targetsSymbol]) {
+    target.broker.subscribeOnce('event', 'activity.end', onTargetCompleted, {
+      consumerTag: targetConsumerTag
+    });
+  }
+
+  const broker = this.activity.broker;
+  broker.subscribeOnce('api', `activity.stop.${executionId}`, () => this._stop(), {
+    noAck: true,
+    consumerTag: '_api-stop-execution'
+  });
+  this[completedSymbol] = false;
+  if (!executeMessage.fields.redelivered) return broker.publish('execution', 'execute.outbound.take', (0, _messageHelper.cloneContent)(executeContent, {
+    outboundTaken: true
+  }));
+};
+
+EventBasedGatewayBehaviour.prototype._onTargetCompleted = function onTargetCompleted(executeMessage, _, message, owner) {
+  const {
+    id: targetId,
+    exexutionId: targetExecutionId
+  } = message.content;
+  const executeContent = executeMessage.content;
+  const executionId = executeContent.executionId;
+  this.activity.logger.debug(`<${executionId} (${this.id})> <${targetExecutionId}> completed run, discarding the rest`);
+
+  this._stop();
+
+  for (const target of this[targetsSymbol]) {
+    if (target === owner) continue;
+    target.discard();
+  }
+
+  const completedContent = (0, _messageHelper.cloneContent)(executeContent, {
+    taken: {
+      id: targetId,
+      executionId: targetExecutionId
+    },
+    ignoreOutbound: true
+  });
+
+  this._complete(completedContent);
+};
+
+EventBasedGatewayBehaviour.prototype._complete = function complete(completedContent) {
+  this[completedSymbol] = true;
+  this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(completedContent));
+};
+
+EventBasedGatewayBehaviour.prototype._stop = function stop() {
+  const targetConsumerTag = `_gateway-listener-${this.id}`;
+
+  for (const target of this[targetsSymbol]) target.broker.cancel(targetConsumerTag);
+
+  this.broker.cancel('_api-stop-execution');
+};

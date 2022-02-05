@@ -32,7 +32,6 @@ export default {
   userTask,
   multipleInbound,
   resource,
-  // create,
 };
 
 const invalidProcess = `

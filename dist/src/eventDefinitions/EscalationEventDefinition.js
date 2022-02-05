@@ -13,169 +13,203 @@ var _messageHelper = require("../messageHelper");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+const completedSymbol = Symbol.for('completed');
+const messageQSymbol = Symbol.for('messageQ');
+const executeMessageSymbol = Symbol.for('executeMessage');
+const referenceElementSymbol = Symbol.for('referenceElement');
+const referenceInfoSymbol = Symbol.for('reference');
+
 function EscalationEventDefinition(activity, eventDefinition) {
   const {
     id,
     broker,
     environment,
-    isThrowing,
-    getActivityById
+    isThrowing
   } = activity;
   const {
     type,
     behaviour = {}
   } = eventDefinition;
-  const {
-    debug
-  } = environment.Logger(type.toLowerCase());
-  const reference = behaviour.escalationRef || {
-    name: 'anonymous'
+  this.id = id;
+  this.type = type;
+  const reference = this.reference = {
+    name: 'anonymous',
+    ...behaviour.escalationRef,
+    referenceType: 'escalate'
   };
-  const referenceElement = reference.id && getActivityById(reference.id);
-  const escalationId = referenceElement ? referenceElement.id : 'anonymous';
-  const escalationQueueName = `escalate-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(escalationId)}-q`;
-  if (!isThrowing) setupCatch();
-  const source = {
-    id,
-    type,
-    reference: { ...reference,
-      referenceType: 'escalate'
-    },
-    execute: isThrowing ? executeThrow : executeCatch
-  };
-  return source;
+  this.isThrowing = isThrowing;
+  this.activity = activity;
+  this.broker = broker;
+  this.logger = environment.Logger(type.toLowerCase());
+  const referenceElement = this[referenceElementSymbol] = reference.id && activity.getActivityById(reference.id);
 
-  function executeCatch(executeMessage) {
-    let completed;
-    const messageContent = (0, _messageHelper.cloneContent)(executeMessage.content);
-    const {
-      executionId,
-      parent
-    } = messageContent;
-    const parentExecutionId = parent && parent.executionId;
-    const {
-      message: referenceMessage,
-      description
-    } = resolveMessage(executeMessage);
-    broker.consume(escalationQueueName, onEscalationApiMessage, {
-      noAck: true,
-      consumerTag: `_onescalate-${executionId}`
-    });
-    if (completed) return;
-    broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
-      noAck: true,
-      consumerTag: `_api-${executionId}`
-    });
-    if (completed) return stop();
-    debug(`<${executionId} (${id})> expect ${description}`);
-    broker.publish('event', 'activity.wait', { ...messageContent,
-      executionId: parentExecutionId,
-      parent: (0, _messageHelper.shiftParent)(parent),
-      escalation: { ...referenceMessage
-      }
-    });
-
-    function onEscalationApiMessage(routingKey, message) {
-      if ((0, _getPropertyValue.default)(message, 'content.message.id') !== referenceMessage.id) return;
-      const output = message.content.message;
-      completed = true;
-      stop();
-      debug(`<${executionId} (${id})> caught ${description}`);
-      broker.publish('event', 'activity.catch', { ...messageContent,
-        message: { ...output
-        },
-        executionId: parentExecutionId,
-        parent: (0, _messageHelper.shiftParent)(executeMessage.content.parent)
-      }, {
-        type: 'catch'
-      });
-      return broker.publish('execution', 'execute.completed', { ...messageContent,
-        output,
-        state: 'catch'
-      });
-    }
-
-    function onApiMessage(routingKey, message) {
-      const messageType = message.properties.type;
-
-      switch (messageType) {
-        case 'escalate':
-          {
-            return onEscalationApiMessage(routingKey, message);
-          }
-
-        case 'discard':
-          {
-            completed = true;
-            stop();
-            return broker.publish('execution', 'execute.discard', { ...messageContent
-            });
-          }
-
-        case 'stop':
-          {
-            stop();
-            break;
-          }
-      }
-    }
-
-    function stop() {
-      broker.cancel(`_api-${executionId}`);
-      broker.cancel(`_onescalate-${executionId}`);
-    }
-  }
-
-  function executeThrow(executeMessage) {
-    const messageContent = (0, _messageHelper.cloneContent)(executeMessage.content);
-    const {
-      executionId,
-      parent
-    } = messageContent;
-    const parentExecutionId = parent && parent.executionId;
-    const {
-      message: referenceMessage,
-      description
-    } = resolveMessage(executeMessage);
-    debug(`<${executionId} (${id})> escalate ${description}`);
-    broker.publish('event', 'activity.escalate', { ...(0, _messageHelper.cloneContent)(messageContent),
-      executionId: parentExecutionId,
-      parent: (0, _messageHelper.shiftParent)(parent),
-      message: { ...referenceMessage
-      },
-      state: 'throw'
-    }, {
-      type: 'escalate',
-      delegate: true
-    });
-    return broker.publish('execution', 'execute.completed', { ...messageContent
-    });
-  }
-
-  function resolveMessage(message) {
-    if (!referenceElement) {
-      return {
-        message: { ...reference
-        },
-        description: 'anonymous escalation'
-      };
-    }
-
-    const result = {
-      message: referenceElement.resolve(message)
-    };
-    result.description = `${result.message.name} <${result.message.id}>`;
-    return result;
-  }
-
-  function setupCatch() {
-    broker.assertQueue(escalationQueueName, {
+  if (!isThrowing) {
+    this[completedSymbol] = false;
+    const referenceId = referenceElement ? referenceElement.id : 'anonymous';
+    const messageQueueName = `${reference.referenceType}-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(referenceId)}-q`;
+    this[messageQSymbol] = broker.assertQueue(messageQueueName, {
       autoDelete: false,
       durable: true
     });
-    broker.bindQueue(escalationQueueName, 'api', '*.escalate.#', {
+    broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, {
       durable: true,
       priority: 400
     });
   }
 }
+
+const proto = EscalationEventDefinition.prototype;
+Object.defineProperty(proto, 'executionId', {
+  get() {
+    const message = this[executeMessageSymbol];
+    return message && message.content.executionId;
+  }
+
+});
+
+proto.execute = function execute(executeMessage) {
+  return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
+};
+
+proto.executeCatch = function executeCatch(executeMessage) {
+  this[executeMessageSymbol] = executeMessage;
+  this[completedSymbol] = false;
+  const executeContent = executeMessage.content;
+  const {
+    executionId,
+    parent
+  } = executeContent;
+
+  const info = this[referenceInfoSymbol] = this._getReferenceInfo(executeMessage);
+
+  const broker = this.broker;
+  this[messageQSymbol].consume(this._onCatchMessage.bind(this), {
+    noAck: true,
+    consumerTag: `_onescalate-${executionId}`
+  });
+  if (this[completedSymbol]) return;
+  broker.subscribeTmp('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {
+    noAck: true,
+    consumerTag: `_api-${executionId}`
+  });
+
+  this._debug(`expect ${info.description}`);
+
+  const waitContent = (0, _messageHelper.cloneContent)(executeContent, {
+    executionId: parent.executionId,
+    parent: (0, _messageHelper.shiftParent)(parent),
+    escalation: { ...info.message
+    }
+  });
+  waitContent.parent = (0, _messageHelper.shiftParent)(parent);
+  broker.publish('event', 'activity.wait', waitContent);
+};
+
+proto.executeThrow = function executeThrow(executeMessage) {
+  const executeContent = executeMessage.content;
+  const {
+    executionId,
+    parent
+  } = executeContent;
+
+  const info = this._getReferenceInfo(executeMessage);
+
+  this.logger.debug(`<${executionId} (${this.activity.id})> escalate ${info.description}`);
+  const broker = this.broker;
+  const throwContent = (0, _messageHelper.cloneContent)(executeContent, {
+    executionId: parent.executionId,
+    message: info.message,
+    state: 'throw'
+  });
+  throwContent.parent = (0, _messageHelper.shiftParent)(parent);
+  broker.publish('event', 'activity.escalate', throwContent, {
+    type: 'escalate',
+    delegate: true
+  });
+  return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
+};
+
+proto._onCatchMessage = function onCatchMessage(routingKey, message) {
+  const info = this[referenceInfoSymbol];
+  if ((0, _getPropertyValue.default)(message, 'content.message.id') !== info.message.id) return;
+  const output = message.content.message;
+  this[completedSymbol] = true;
+
+  this._stop();
+
+  this._debug(`caught ${info.description}`);
+
+  const executeContent = this[executeMessageSymbol].content;
+  const {
+    parent,
+    ...content
+  } = executeContent;
+  const catchContent = (0, _messageHelper.cloneContent)(content, {
+    message: { ...output
+    },
+    executionId: parent.executionId
+  });
+  catchContent.parent = (0, _messageHelper.shiftParent)(parent);
+  const broker = this.broker;
+  broker.publish('event', 'activity.catch', catchContent, {
+    type: 'catch'
+  });
+  return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent, {
+    output,
+    state: 'catch'
+  }));
+};
+
+proto._onApiMessage = function onApiMessage(routingKey, message) {
+  switch (message.properties.type) {
+    case 'escalate':
+      {
+        return this._onCatchMessage(routingKey, message);
+      }
+
+    case 'discard':
+      {
+        this[completedSymbol] = true;
+
+        this._stop();
+
+        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[executeMessageSymbol].content));
+      }
+
+    case 'stop':
+      {
+        this._stop();
+
+        break;
+      }
+  }
+};
+
+proto._stop = function stop() {
+  const broker = this.broker,
+        executionId = this.executionId;
+  broker.cancel(`_api-${executionId}`);
+  broker.cancel(`_onescalate-${executionId}`);
+};
+
+proto._getReferenceInfo = function getReferenceInfo(message) {
+  const referenceElement = this[referenceElementSymbol];
+
+  if (!referenceElement) {
+    return {
+      message: { ...this.reference
+      },
+      description: 'anonymous escalation'
+    };
+  }
+
+  const result = {
+    message: referenceElement.resolve(message)
+  };
+  result.description = `${result.message.name} <${result.message.id}>`;
+  return result;
+};
+
+proto._debug = function debug(msg) {
+  this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
+};

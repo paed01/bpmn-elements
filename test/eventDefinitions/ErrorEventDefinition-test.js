@@ -8,7 +8,7 @@ describe('ErrorEventDefinition', () => {
   describe('catching', () => {
     let event;
     beforeEach(() => {
-      const environment = Environment({ Logger: testHelpers.Logger });
+      const environment = new Environment({ Logger: testHelpers.Logger });
 
       event = {
         id: 'bound',
@@ -31,7 +31,7 @@ describe('ErrorEventDefinition', () => {
     });
 
     it('publishes wait event on parent broker', () => {
-      const catchError = ErrorEventDefinition(event, {
+      const catchError = new ErrorEventDefinition(event, {
         type: 'bpmn:ErrorEventDefinition',
       });
 
@@ -64,7 +64,7 @@ describe('ErrorEventDefinition', () => {
     });
 
     it('completes and clears listeners when error is caught', () => {
-      const catchError = ErrorEventDefinition(event, {
+      const catchError = new ErrorEventDefinition(event, {
         type: 'bpmn:ErrorEventDefinition',
       });
 
@@ -100,7 +100,7 @@ describe('ErrorEventDefinition', () => {
 
 
     it('completes and clears listeners if caught before execution', () => {
-      const catchError = ErrorEventDefinition(event, {
+      const catchError = new ErrorEventDefinition(event, {
         type: 'bpmn:ErrorEventDefinition',
       });
 
@@ -135,7 +135,7 @@ describe('ErrorEventDefinition', () => {
     });
 
     it('completes and clears listeners if discarded', () => {
-      const catchError = ErrorEventDefinition(event, {
+      const catchError = new ErrorEventDefinition(event, {
         type: 'bpmn:ErrorEventDefinition',
       });
 
@@ -170,7 +170,7 @@ describe('ErrorEventDefinition', () => {
     });
 
     it('stops and clears listeners if stopped', () => {
-      const catchError = ErrorEventDefinition(event, {
+      const catchError = new ErrorEventDefinition(event, {
         type: 'bpmn:ErrorEventDefinition',
       });
 
@@ -206,7 +206,7 @@ describe('ErrorEventDefinition', () => {
 
     describe('thrown error', () => {
       it('publishes expect message with expected error and expect routingKey', () => {
-        const definition = ErrorEventDefinition(event, {
+        const definition = new ErrorEventDefinition(event, {
           type: 'bpmn:ErrorEventDefinition',
           behaviour: {
             errorRef: {
@@ -245,7 +245,7 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('redelivered execute message resends expect', () => {
-        const definition = ErrorEventDefinition(event, {
+        const definition = new ErrorEventDefinition(event, {
           type: 'bpmn:ErrorEventDefinition',
           behaviour: {
             errorRef: {
@@ -292,7 +292,7 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('publishes catch message with source and error when expected routingKey is published', () => {
-        const definition = ErrorEventDefinition(event, {
+        const definition = new ErrorEventDefinition(event, {
           type: 'bpmn:ErrorEventDefinition',
         });
 
@@ -332,7 +332,7 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('without expected error catches any error and publishes activity catch message', () => {
-        const definition = ErrorEventDefinition(event, {
+        const definition = new ErrorEventDefinition(event, {
           type: 'bpmn:ErrorEventDefinition',
         });
 
@@ -359,7 +359,7 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('catches expected errorCode and publishes activity catch message', () => {
-        const definition = ErrorEventDefinition(event, {
+        const definition = new ErrorEventDefinition(event, {
           type: 'bpmn:ErrorEventDefinition',
           behaviour: {
             errorRef: {
@@ -396,7 +396,7 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('ignores error if code doesn´t match', () => {
-        const definition = ErrorEventDefinition(event, {
+        const definition = new ErrorEventDefinition(event, {
           type: 'bpmn:ErrorEventDefinition',
           behaviour: {
             errorRef: {
@@ -430,7 +430,7 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('catches any error if errorCode is undefined', () => {
-        const definition = ErrorEventDefinition(event, {
+        const definition = new ErrorEventDefinition(event, {
           type: 'bpmn:ErrorEventDefinition',
           behaviour: {},
         });
@@ -458,7 +458,7 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('catches error and completes with caught error as output', () => {
-        const definition = ErrorEventDefinition(event, {
+        const definition = new ErrorEventDefinition(event, {
           type: 'bpmn:ErrorEventDefinition',
           behaviour: {
             errorRef: {
@@ -496,7 +496,7 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('releases execution and api listeners when completed', () => {
-        const definition = ErrorEventDefinition(event, {
+        const definition = new ErrorEventDefinition(event, {
           type: 'bpmn:ErrorEventDefinition',
         });
 
@@ -521,7 +521,7 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('ignores messages after error is caught', () => {
-        const definition = ErrorEventDefinition(event, {
+        const definition = new ErrorEventDefinition(event, {
           type: 'bpmn:ErrorEventDefinition',
         });
 
@@ -553,11 +553,87 @@ describe('ErrorEventDefinition', () => {
 
         expect(messages).to.have.length(4);
       });
+
+      it('completes if error is caught on expect message', () => {
+        const definition = new ErrorEventDefinition(event, {});
+
+        const messages = [];
+        event.broker.subscribeOnce('execution', 'execute.expect', (_, msg) => {
+          event.broker.publish('execution', msg.content.expectRoutingKey, {error: new Error('unstable')});
+        });
+
+        event.broker.subscribeTmp('execution', 'execute.*', (_, msg) => {
+          messages.push(msg);
+        }, {noAck: true, consumerTag: '_test-tag-1'});
+        event.broker.subscribeTmp('event', '#', (_, msg) => {
+          messages.push(msg);
+        }, {noAck: true, consumerTag: '_test-tag-2'});
+
+        definition.execute({
+          fields: {},
+          content: {
+            executionId: 'bound_1_0',
+            index: 0,
+            parent: {
+              id: 'bound',
+              executionId: 'bound_1',
+            },
+          },
+        });
+
+        expect(messages).to.have.length(3);
+
+        event.broker.cancel('_test-tag-1');
+        event.broker.cancel('_test-tag-2');
+
+        expect(event.broker).to.have.property('consumerCount', 0);
+      });
+
+      it('ignores expected message if error is not in expected message', () => {
+        const definition = new ErrorEventDefinition(event, {
+          behaviour: {
+            errorRef: {
+              id: 'error_1',
+            },
+          },
+        });
+
+        const messages = [];
+        event.broker.subscribeOnce('execution', 'execute.expect', (_, msg) => {
+          event.broker.publish('execution', msg.content.expectRoutingKey, {});
+        });
+
+        event.broker.subscribeTmp('execution', 'execute.*', (_, msg) => {
+          messages.push(msg);
+        }, {noAck: true, consumerTag: '_test-tag-1'});
+        event.broker.subscribeTmp('event', '#', (_, msg) => {
+          messages.push(msg);
+        }, {noAck: true, consumerTag: '_test-tag-2'});
+
+        definition.execute({
+          fields: {},
+          content: {
+            executionId: 'bound_1_0',
+            index: 0,
+            parent: {
+              id: 'bound',
+              executionId: 'bound_1',
+            },
+          },
+        });
+
+        expect(messages).to.have.length(2);
+
+        event.broker.cancel('_test-tag-1');
+        event.broker.cancel('_test-tag-2');
+
+        expect(event.broker).to.have.property('consumerCount').that.is.above(1);
+      });
     });
 
     describe('api', () => {
       it('publishes catch message with source and error when delegated anonymous error is published', () => {
-        const definition = ErrorEventDefinition(event, {
+        const definition = new ErrorEventDefinition(event, {
           type: 'bpmn:ErrorEventDefinition',
         });
 
@@ -597,7 +673,7 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('publishes catch message with source and error when delegated expected error is published', () => {
-        const definition = ErrorEventDefinition(event, {
+        const definition = new ErrorEventDefinition(event, {
           type: 'bpmn:ErrorEventDefinition',
           behaviour: {
             errorRef: {
@@ -642,7 +718,7 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('ignored when delegated error id doesn´t match', () => {
-        const definition = ErrorEventDefinition(event, {
+        const definition = new ErrorEventDefinition(event, {
           type: 'bpmn:ErrorEventDefinition',
           behaviour: {
             errorRef: {
@@ -680,7 +756,7 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('ignored if exepecting known error and an anonymous error is delegated', () => {
-        const definition = ErrorEventDefinition(event, {
+        const definition = new ErrorEventDefinition(event, {
           type: 'bpmn:ErrorEventDefinition',
           behaviour: {
             errorRef: {
@@ -722,7 +798,7 @@ describe('ErrorEventDefinition', () => {
   describe('throw', () => {
     let event, bpmnError;
     beforeEach(() => {
-      const environment = Environment();
+      const environment = new Environment();
       bpmnError = BpmnError({
         id: 'Error_0',
         type: 'bpmn:Error',
@@ -748,7 +824,7 @@ describe('ErrorEventDefinition', () => {
 
     it('publishes delegated throw event on execute', () => {
       event.environment.variables.errorCode = 'ERR_CODE';
-      const definition = ErrorEventDefinition(event, {
+      const definition = new ErrorEventDefinition(event, {
         type: 'bpmn:ErrorEventDefinition',
         behaviour: {
           errorRef: {
@@ -782,7 +858,7 @@ describe('ErrorEventDefinition', () => {
     });
 
     it('without error reference publishes delegated throw event on execute', () => {
-      const definition = ErrorEventDefinition(event, {
+      const definition = new ErrorEventDefinition(event, {
         type: 'bpmn:ErrorEventDefinition',
         behaviour: {},
       });
@@ -810,7 +886,7 @@ describe('ErrorEventDefinition', () => {
     });
 
     it('with non-existing error reference publishes activity error on execute', () => {
-      const definition = ErrorEventDefinition(event, {
+      const definition = new ErrorEventDefinition(event, {
         type: 'bpmn:ErrorEventDefinition',
         behaviour: {
           errorRef: {

@@ -3,11 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.generateId = generateId;
 exports.brokerSafeId = brokerSafeId;
-exports.getUniqueId = getUniqueId;
 exports.filterUndefined = filterUndefined;
+exports.generateId = generateId;
 exports.getOptionsAndCallback = getOptionsAndCallback;
+exports.getUniqueId = getUniqueId;
 const safePattern = /[./\\#*:\s]/g;
 
 function generateId() {

@@ -9,24 +9,23 @@ import {Scripts as JavaScripts} from '../helpers/JavaScripts';
 const lanesSource = factory.resource('lanes.bpmn');
 
 describe('Definition', () => {
+  describe('#ctor', () => {
+    it('can be invoked without new', () => {
+      const newNewDefinition = Definition({
+        id: 'Def_1',
+        environment: new Environment(),
+      });
+      expect(newNewDefinition.run).to.be.a('function');
+    });
+  });
+
   describe('requirements', () => {
     it('requires a context with id and environment', () => {
-      const definition = Definition({
+      const definition = new Definition({
         id: 'Def_1',
-        environment: Environment(),
+        environment: new Environment(),
       });
       expect(definition.run).to.be.a('function');
-    });
-
-    it('requires context with getProcesses() and getExecutableProcesses() to run', () => {
-      const definition = Definition({
-        id: 'Def_1',
-        environment: Environment({ Logger: testHelpers.Logger }),
-        getProcesses() {},
-        getExecutableProcesses() {},
-      });
-      definition.run();
-      expect(definition.counters).to.have.property('completed', 1);
     });
 
     it('inherits environment from context', () => {
@@ -34,11 +33,15 @@ describe('Definition', () => {
       const services = {
         myService: () => {},
       };
-      const definition = Definition({
+      const definition = new Definition({
         id: 'Def_1',
-        environment: Environment({ Logger, services }),
-        getProcesses() {},
-        getExecutableProcesses() {},
+        environment: new Environment({ Logger, services }),
+        getProcesses() {
+          return [];
+        },
+        getExecutableProcesses() {
+          return [];
+        },
         getMessageFlows() {},
       });
       definition.run();
@@ -54,8 +57,8 @@ describe('Definition', () => {
 
     it('takes environment override options as second argument', () => {
       const scripts = JavaScripts();
-      const environment = Environment({ Logger: testHelpers.Logger, scripts });
-      const definition = Definition({
+      const environment = new Environment({ Logger: testHelpers.Logger, scripts });
+      const definition = new Definition({
         id: 'Def_1',
         environment,
         getProcesses() {},
@@ -83,11 +86,15 @@ describe('Definition', () => {
 
   describe('run([options, callback])', () => {
     it('returns api', async () => {
-      const definition = Definition({
+      const definition = new Definition({
         id: 'Def_1',
-        environment: Environment({ Logger: testHelpers.Logger }),
-        getProcesses() {},
-        getExecutableProcesses() {},
+        environment: new Environment({ Logger: testHelpers.Logger }),
+        getProcesses() {
+          return [];
+        },
+        getExecutableProcesses() {
+          return [];
+        },
         getMessageFlows() {},
         getDataObjects() {},
       });
@@ -95,11 +102,15 @@ describe('Definition', () => {
     });
 
     it('publishes enter on run', async () => {
-      const definition = Definition({
+      const definition = new Definition({
         id: 'Def_1',
-        environment: Environment({ Logger: testHelpers.Logger }),
-        getProcesses() {},
-        getExecutableProcesses() {},
+        environment: new Environment({ Logger: testHelpers.Logger }),
+        getProcesses() {
+          return [];
+        },
+        getExecutableProcesses() {
+          return [];
+        },
         getMessageFlows() {},
         getDataObjects() {},
       });
@@ -111,11 +122,15 @@ describe('Definition', () => {
     });
 
     it('publishes start when started', async () => {
-      const definition = Definition({
+      const definition = new Definition({
         id: 'Def_1',
-        environment: Environment({ Logger: testHelpers.Logger }),
-        getProcesses() {},
-        getExecutableProcesses() {},
+        environment: new Environment({ Logger: testHelpers.Logger }),
+        getProcesses() {
+          return [];
+        },
+        getExecutableProcesses() {
+          return [];
+        },
         getMessageFlows() {},
       });
 
@@ -129,15 +144,14 @@ describe('Definition', () => {
     it('publishes end when all processes are completed', async () => {
       const context = await testHelpers.context(lanesSource);
 
-      const definition = Definition(context);
-      const processes = definition.getProcesses();
-      expect(processes).to.have.length(2);
-
+      const definition = new Definition(context);
       const end = definition.waitFor('end');
 
       definition.run();
 
       await end;
+
+      const processes = definition.execution.processes;
 
       expect(processes[0].counters, processes[0].id).to.have.property('completed', 1);
       expect(processes[1].counters, processes[1].id).to.have.property('completed', 1);
@@ -152,7 +166,7 @@ describe('Definition', () => {
         services,
       });
 
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const processes = definition.getProcesses();
       expect(processes).to.have.length(2);
 
@@ -165,7 +179,7 @@ describe('Definition', () => {
     it('publishes leave when all processes are completed', async () => {
       const context = await testHelpers.context(lanesSource);
 
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const processes = definition.getProcesses();
       expect(processes).to.have.length(2);
 
@@ -175,14 +189,16 @@ describe('Definition', () => {
 
       await leave;
 
-      expect(processes[0].counters, processes[0].id).to.have.property('completed', 1);
-      expect(processes[1].counters, processes[1].id).to.have.property('completed', 1);
+      const bps = definition.execution.processes;
+
+      expect(bps[0].counters, bps[0].id).to.have.property('completed', 1);
+      expect(bps[1].counters, bps[1].id).to.have.property('completed', 1);
     });
 
     it('leaves no messages in run queue when completed', async () => {
       const context = await testHelpers.context(lanesSource);
 
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const processes = definition.getProcesses();
       expect(processes).to.have.length(2);
 
@@ -198,7 +214,7 @@ describe('Definition', () => {
     it('leaves no messages in run queue when completed with callback', async () => {
       const context = await testHelpers.context(lanesSource);
 
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const processes = definition.getProcesses();
       expect(processes).to.have.length(2);
 
@@ -216,7 +232,7 @@ describe('Definition', () => {
 
     it('calls optional callback when completed', (done) => {
       testHelpers.context(factory.valid(), {}, (_, moddleContext) => {
-        const def = Definition(moddleContext, {scripts: JavaScripts()});
+        const def = new Definition(moddleContext, {scripts: JavaScripts()});
         def.run((err) => {
           if (err) return done(err);
           done();
@@ -226,7 +242,7 @@ describe('Definition', () => {
 
     it('calls callback if stopped', (done) => {
       testHelpers.context(factory.userTask(), {}, (_, moddleContext) => {
-        const def = Definition(moddleContext, {scripts: JavaScripts()});
+        const def = new Definition(moddleContext, {scripts: JavaScripts()});
         def.run((err) => {
           if (err) return done(err);
           done();
@@ -238,7 +254,7 @@ describe('Definition', () => {
 
     it('calls second callback when ran and completed again', (done) => {
       testHelpers.context(factory.valid(), {}, (_, moddleContext) => {
-        const def = Definition(moddleContext, {scripts: JavaScripts()});
+        const def = new Definition(moddleContext, {scripts: JavaScripts()});
         def.run((errRun1) => {
           if (errRun1) return done(errRun1);
 
@@ -260,7 +276,7 @@ describe('Definition', () => {
       testHelpers.context(source, (merr, result) => {
         if (merr) return done(merr);
 
-        const def = Definition(result);
+        const def = new Definition(result);
         def.run((err) => {
           expect(err).to.be.an('error').with.property('message', 'No executable process');
           done();
@@ -276,9 +292,9 @@ describe('Definition', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      const def = Definition(context);
+      const def = new Definition(context);
 
-      expect(def.run).to.throw('No executable process');
+      expect(() => def.run()).to.throw('No executable process');
     });
 
     it('emits error if no executable process', async () => {
@@ -289,7 +305,7 @@ describe('Definition', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      const def = Definition(context);
+      const def = new Definition(context);
 
       let error;
       def.once('error', (err) => {
@@ -313,7 +329,7 @@ describe('Definition', () => {
         next(Error('unstable'));
       });
 
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       let error;
       definition.on('error', (err) => {
@@ -340,9 +356,9 @@ describe('Definition', () => {
         next(Error('unstable'));
       });
 
-      const def = Definition(context);
+      const def = new Definition(context);
 
-      expect(def.run).to.throw(/unstable/);
+      expect(() => def.run()).to.throw(/unstable/);
     });
 
     it('throws if called while definition is running', async () => {
@@ -355,7 +371,7 @@ describe('Definition', () => {
       </definitions>`;
       const context = await testHelpers.context(source);
 
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
 
       expect(() => {
@@ -373,7 +389,7 @@ describe('Definition', () => {
       </definitions>`;
       const context = await testHelpers.context(source);
 
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
 
       let error;
@@ -393,7 +409,7 @@ describe('Definition', () => {
     });
 
     it('returns state when not running', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       const state = definition.getState();
 
@@ -403,13 +419,13 @@ describe('Definition', () => {
     });
 
     it('returns context, broker, and execution when running', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
 
       const state = definition.getState();
 
       expect(state.status).to.equal('executing');
-      expect(state.stopped).to.be.undefined;
+      expect(state.stopped).to.be.false;
       expect(state).to.have.property('broker').that.is.ok;
       expect(state).to.have.property('execution').that.is.ok;
       expect(state).to.have.property('counters');
@@ -417,7 +433,7 @@ describe('Definition', () => {
     });
 
     it('returns context, broker, and execution when stopped', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.stop();
 
@@ -440,13 +456,13 @@ describe('Definition', () => {
     });
 
     it('ignored if not executing', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.stop();
-      expect(definition.getState().stopped).to.be.undefined;
+      expect(definition.getState().stopped).to.be.false;
     });
 
     it('stops running processes', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.stop();
       expect(definition.stopped).to.equal(true);
@@ -460,7 +476,7 @@ describe('Definition', () => {
     });
 
     it('stops run queue and leaves run message', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.stop();
       expect(definition.stopped).to.equal(true);
@@ -472,7 +488,7 @@ describe('Definition', () => {
     });
 
     it('publishes stop message when processes are stopped', (done) => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.once('stop', () => {
         expect(definition.stopped).to.equal(true);
 
@@ -488,7 +504,7 @@ describe('Definition', () => {
     });
 
     it('publishes stop message after processes are stopped', (done) => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const [bp] = definition.getProcesses();
       let bpStopped;
       bp.once('stop', () => {
@@ -505,7 +521,7 @@ describe('Definition', () => {
     });
 
     it('stop on activity start stops process', (done) => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const [bp] = definition.getProcesses();
       let bpStopped;
       bp.once('stop', () => {
@@ -535,7 +551,7 @@ describe('Definition', () => {
       </definitions>`;
 
       const stopContext = await testHelpers.context(stopSource);
-      const definition = Definition(stopContext);
+      const definition = new Definition(stopContext);
 
       const stop = definition.waitFor('stop');
       await definition.run();
@@ -554,6 +570,24 @@ describe('Definition', () => {
       expect(task2).to.have.property('isRunning', false);
       expect(task3).to.have.property('isRunning', false);
     });
+
+    it('publishes stop message if execution is stopped', (done) => {
+      const definition = new Definition(context);
+      const [bp] = definition.getProcesses();
+
+      let bpStopped;
+      bp.once('stop', () => {
+        bpStopped = true;
+      });
+
+      definition.once('stop', () => {
+        expect(bpStopped).to.be.true;
+        done();
+      });
+
+      definition.run();
+      definition.execution.stop();
+    });
   });
 
   describe('signal()', () => {
@@ -564,14 +598,14 @@ describe('Definition', () => {
     });
 
     it('throws if not executing and called without message', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       expect(() => {
         definition.signal();
       }).to.throw('Definition is not running');
     });
 
     it('signal with id of running user task completes task', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.signal({id: 'userTask'});
 
@@ -579,7 +613,7 @@ describe('Definition', () => {
     });
 
     it('signal without id of running user task is ignored', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.signal({});
 
@@ -587,7 +621,7 @@ describe('Definition', () => {
     });
 
     it('signal with unknown id is ignored', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.signal({id: 'hittepa'});
 
@@ -595,11 +629,88 @@ describe('Definition', () => {
     });
 
     it('signal without message is ignored', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.signal();
 
       expect(definition.getActivityById('userTask').counters).to.have.property('taken', 0);
+    });
+  });
+
+  describe('sendMessage([message])', () => {
+    it('sends anonymous message if called without argument', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start">
+            <messageEventDefinition />
+          </startEvent>
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+
+      const definition = new Definition(context);
+      definition.run();
+      definition.sendMessage();
+
+      expect(definition.getActivityById('start').counters).to.have.property('taken', 1);
+    });
+
+    it('can double as signal', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start">
+            <signalEventDefinition signalRef="signal_0" />
+          </startEvent>
+        </process>
+        <signal id="signal_0" />
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+
+      const definition = new Definition(context);
+      definition.run();
+      definition.sendMessage({id: 'signal_0'});
+
+      expect(definition.getActivityById('start').counters).to.have.property('taken', 1);
+    });
+
+    it('defaults to api message type message', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start">
+            <messageEventDefinition messageRef="message_0" />
+          </startEvent>
+        </process>
+        <message id="message_0" />
+      </definitions>`;
+
+      const context = await testHelpers.context(source, {
+        types: {
+          Message: function MyMessage() {
+            return {
+              id: 'message_0',
+              resolve() {
+                return {
+                  id: 'message_0',
+                };
+              }
+            };
+          },
+        },
+      });
+
+      const definition = new Definition(context);
+      definition.run();
+      definition.sendMessage({id: 'message_0'});
+
+      expect(definition.getActivityById('start').counters).to.have.property('taken', 1);
     });
   });
 
@@ -611,7 +722,7 @@ describe('Definition', () => {
     });
 
     it('recovers without state', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       definition.run();
       definition.stop();
@@ -620,7 +731,7 @@ describe('Definition', () => {
     });
 
     it('recovers with only counters', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       definition.recover({
         counters: {
@@ -633,7 +744,7 @@ describe('Definition', () => {
     });
 
     it('recovers with only environment', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       definition.recover({
         environment: {...definition.environment.getState(), output: {recovered: 1}},
@@ -646,17 +757,17 @@ describe('Definition', () => {
     });
 
     it('recovers with state', () => {
-      const definition1 = Definition(context);
+      const definition1 = new Definition(context);
 
       definition1.run();
       definition1.stop();
 
-      const definition2 = Definition(context.clone()).recover(definition1.getState());
+      const definition2 = new Definition(context.clone()).recover(definition1.getState());
       expect(definition2).to.have.property('status', 'executing');
     });
 
     it('throws if called while definition is running', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
 
       const state = definition.getState();
@@ -675,7 +786,7 @@ describe('Definition', () => {
     });
 
     it('resumes execution if stopped', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.stop();
 
@@ -694,7 +805,7 @@ describe('Definition', () => {
     });
 
     it('is resumable if stopped on enter', async () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const stopped = definition.waitFor('stop');
       definition.once('enter', (api) => {
         api.stop();
@@ -709,7 +820,7 @@ describe('Definition', () => {
     });
 
     it('is resumable if stopped on start', async () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       const stopped = definition.waitFor('stop');
       definition.once('start', (api) => {
         api.stop();
@@ -723,12 +834,33 @@ describe('Definition', () => {
       expect(definition.getPostponed()[0].id).to.equal('userTask');
     });
 
+    it('is resumable if stopped on error', async () => {
+      const definition = new Definition(context);
+      definition.once('wait', (api) => {
+        api.fail();
+      });
+      definition.once('error', () => {
+        definition.stop();
+      });
+
+      definition.run();
+
+      const error = definition.waitFor('error');
+      definition.resume();
+      await error;
+
+      expect(definition.isRunning).to.be.false;
+      expect(definition.counters).to.have.property('discarded', 1);
+
+      expect(definition.broker).to.have.property('consumerCount', 0);
+    });
+
     it('resumes recovered with stopped state', () => {
-      const startDefinition = Definition(context);
+      const startDefinition = new Definition(context);
       startDefinition.run();
       startDefinition.stop();
 
-      const definition = Definition(context.clone()).recover(startDefinition.getState());
+      const definition = new Definition(context.clone()).recover(startDefinition.getState());
 
       definition.resume();
 
@@ -742,11 +874,11 @@ describe('Definition', () => {
     });
 
     it('resumes recovered with running state', () => {
-      const startDefinition = Definition(context);
+      const startDefinition = new Definition(context);
       startDefinition.run();
       const state = startDefinition.getState();
 
-      const definition = Definition(context.clone()).recover(state);
+      const definition = new Definition(context.clone()).recover(state);
       definition.resume();
 
       const [activity] = definition.getPostponed();
@@ -757,7 +889,7 @@ describe('Definition', () => {
     });
 
     it('resumes recovered with state from stopped on activity event', async () => {
-      const startDefinition = Definition(context);
+      const startDefinition = new Definition(context);
       const stopped = startDefinition.waitFor('stop');
 
       let state;
@@ -770,7 +902,7 @@ describe('Definition', () => {
 
       await stopped;
 
-      const definition = Definition(context.clone()).recover(state);
+      const definition = new Definition(context.clone()).recover(state);
 
       definition.resume();
 
@@ -784,7 +916,7 @@ describe('Definition', () => {
     });
 
     it('calls callback when definition completes', (done) => {
-      const startDefinition = Definition(context);
+      const startDefinition = new Definition(context);
 
       let state;
       startDefinition.once('wait', () => {
@@ -794,7 +926,7 @@ describe('Definition', () => {
 
       startDefinition.run();
 
-      const definition = Definition(context.clone()).recover(state);
+      const definition = new Definition(context.clone()).recover(state);
       definition.once('wait', (api) => {
         api.signal();
       });
@@ -803,7 +935,7 @@ describe('Definition', () => {
     });
 
     it('throws if called while definition is running', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
 
       expect(() => {
@@ -812,7 +944,7 @@ describe('Definition', () => {
     });
 
     it('returns error in callback if called while definition is running', (done) => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
 
       definition.resume((err) => {
@@ -822,7 +954,7 @@ describe('Definition', () => {
     });
 
     it('resumes recovered with stopped on enter state', async () => {
-      const startDefinition = Definition(context);
+      const startDefinition = new Definition(context);
       const stop = startDefinition.waitFor('stop');
       startDefinition.once('enter', (api) => {
         api.stop();
@@ -833,7 +965,7 @@ describe('Definition', () => {
       await stop;
       const state = startDefinition.getState();
 
-      const definition = Definition(context.clone()).recover(state);
+      const definition = new Definition(context.clone()).recover(state);
       definition.resume();
 
       const [activity] = definition.getPostponed();
@@ -846,7 +978,7 @@ describe('Definition', () => {
     });
 
     it('resumes recovered with stopped on start state', async () => {
-      const startDefinition = Definition(context);
+      const startDefinition = new Definition(context);
       const stop = startDefinition.waitFor('stop');
       startDefinition.once('start', (api) => {
         api.stop();
@@ -857,7 +989,7 @@ describe('Definition', () => {
       await stop;
       const state = startDefinition.getState();
 
-      const definition = Definition(context.clone()).recover(state);
+      const definition = new Definition(context.clone()).recover(state);
       definition.resume();
 
       const [activity] = definition.getPostponed();
@@ -870,7 +1002,7 @@ describe('Definition', () => {
     });
 
     it('resumes recovered with stopped on end state', async () => {
-      const startDefinition = Definition(context);
+      const startDefinition = new Definition(context);
       const stop = startDefinition.waitFor('stop');
       startDefinition.once('end', (api) => {
         api.stop();
@@ -887,14 +1019,14 @@ describe('Definition', () => {
       await stop;
       const state = startDefinition.getState();
 
-      const definition = Definition(context.clone()).recover(state);
+      const definition = new Definition(context.clone()).recover(state);
       definition.resume();
 
       expect(definition.counters).to.have.property('completed', 1);
     });
 
     it('ignored if never started', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.broker.subscribeOnce('event', '#', () => {
         throw new Error('Shouldn´t happen');
       });
@@ -902,7 +1034,7 @@ describe('Definition', () => {
     });
 
     it('ignored if completed', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       definition.on('wait', (activityApi) => {
         activityApi.signal();
@@ -919,7 +1051,7 @@ describe('Definition', () => {
     });
 
     it('publish resume event when resumed', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.stop();
 
@@ -934,13 +1066,13 @@ describe('Definition', () => {
     });
 
     it('publish resume event when recovered and resumed', () => {
-      let definition = Definition(context);
+      let definition = new Definition(context);
       definition.run();
       definition.stop();
 
       const state = definition.getState();
 
-      definition = Definition(context.clone());
+      definition = new Definition(context.clone());
       definition.recover(state);
 
       const messages = [];
@@ -954,7 +1086,7 @@ describe('Definition', () => {
     });
 
     it('ignores stop on resume event', async () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       definition.run();
       definition.stop();
 
@@ -979,7 +1111,7 @@ describe('Definition', () => {
     let definition;
     before('Given definition is initiated with two processes', async () => {
       const context = await testHelpers.context(lanesSource);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     it('returns processes from passed moddle context', () => {
@@ -995,11 +1127,70 @@ describe('Definition', () => {
     });
   });
 
+  describe('getApi()', () => {
+    let context;
+    before(async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="flow1" sourceRef="start" targetRef="task1" />
+          <sequenceFlow id="flow2" sourceRef="start" targetRef="task2" />
+          <sequenceFlow id="flow3" sourceRef="start" targetRef="subProcess" />
+          <userTask id="task1" />
+          <userTask id="task2" />
+          <subProcess id="subProcess">
+            <userTask id="task3" />
+          </subProcess>
+          <sequenceFlow id="flow4" sourceRef="task1" targetRef="end" />
+          <sequenceFlow id="flow5" sourceRef="task2" targetRef="end" />
+          <sequenceFlow id="flow6" sourceRef="subProcess" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    it('returns api on each event', () => {
+      const definition = new Definition(context.clone());
+      definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
+        const api = definition.getApi(message);
+        expect(api, `api ${routingKey} ${message.content.id}`).to.be.ok;
+        expect(message.content.type).to.equal(api.content.type);
+      }, {noAck: true});
+
+      definition.run();
+    });
+
+    it('returns undefined if message parent path is not resolved', () => {
+      const definition = new Definition(context.clone());
+
+      let api = false;
+      definition.broker.subscribeTmp('event', 'activity.#', (routingKey, message) => {
+        if (message.content.id === 'task3') {
+          message.content.parent.path = [];
+          api = definition.getApi(message);
+        }
+      }, {noAck: true});
+
+      definition.run();
+
+      expect(api).to.be.undefined;
+    });
+
+    it('without message and running, returns current state api', () => {
+      const definition = new Definition(context.clone());
+      definition.run();
+      expect(definition.getApi()).to.have.property('content').with.property('state', 'start');
+    });
+  });
+
   describe('getExecutableProcesses()', () => {
     let definition;
     before('Given definition is initiated with two processes', async () => {
       const context = await testHelpers.context(lanesSource);
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     it('returns executable processes from passed moddle context', () => {
@@ -1011,6 +1202,69 @@ describe('Definition', () => {
       const result2 = definition.getExecutableProcesses();
       expect(result1.length).to.equal(1);
       expect(result1[0] === result2[0]).to.be.true;
+    });
+
+    it('returns same process instances when called while running', () => {
+      const result1 = definition.getExecutableProcesses();
+
+      definition.run();
+
+      const result2 = definition.getExecutableProcesses();
+      expect(result1.length).to.equal(1);
+      expect(result1[0] === result2[0]).to.be.true;
+    });
+  });
+
+  describe('getRunningProcesses()', () => {
+    let context;
+    before('Given definition is initiated with two processes', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <callActivity id="call-activity" calledElement="called-process">
+            <multiInstanceLoopCharacteristics isSequential="false">
+              <loopCardinality>3</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+          </callActivity>
+          <endEvent id="end" />
+          <sequenceFlow id="to-end" sourceRef="call-activity" targetRef="end" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+        </process>
+        <process id="called-process" isExecutable="false">
+          <userTask id="task1" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    it('returns no processes if not running', () => {
+      const definition = new Definition(context.clone());
+      expect(definition.getRunningProcesses().length).to.equal(0);
+    });
+
+    it('returns same process instances when called again', () => {
+      const definition = new Definition(context.clone());
+      definition.run();
+      const result1 = definition.getRunningProcesses();
+      const result2 = definition.getRunningProcesses();
+      expect(result1.length).to.equal(4);
+      expect(result1[0] === result2[0]).to.be.true;
+      expect(result1[1] === result2[1]).to.be.true;
+      expect(result1[2] === result2[2]).to.be.true;
+      expect(result1[3] === result2[3]).to.be.true;
+    });
+
+    it('returns only running processes', () => {
+      const definition = new Definition(context.clone());
+      definition.run();
+
+      const waitingTask = definition.getPostponed().find(({id}) => id === 'task1');
+      waitingTask.signal();
+
+      const running = definition.getRunningProcesses();
+      expect(running.length).to.equal(3);
     });
   });
 
@@ -1028,9 +1282,9 @@ describe('Definition', () => {
       context.environment.addService('shaky', (_, next) => {
         next(Error('unstable'));
       });
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
-      expect(definition.run).to.throw('unstable');
+      expect(() => definition.run()).to.throw('unstable');
     });
 
     it('emits error on activity error', async () => {
@@ -1046,7 +1300,7 @@ describe('Definition', () => {
       context.environment.addService('shaky', (_, next) => {
         next(Error('unstable'));
       });
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       const errors = [];
       definition.on('error', (err) => {
@@ -1060,6 +1314,33 @@ describe('Definition', () => {
       expect(errors[0].message).to.equal('unstable');
 
       expect(definition.counters).to.have.property('discarded', 1);
+    });
+
+    it('leaves and clears listeners on error', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <serviceTask id="task" implementation="\${environment.services.shaky}" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      context.environment.addService('shaky', (_, next) => {
+        next(Error('unstable'));
+      });
+
+      const definition = new Definition(context);
+
+      definition.once('error', () => {});
+
+      definition.run();
+
+      expect(definition.counters).to.have.property('discarded', 1);
+
+      definition.broker.cancel('_test-tag');
+
+      expect(definition.broker).to.have.property('consumerCount', 0);
     });
 
     it('emits error on flow condition TypeError', async () => {
@@ -1086,7 +1367,7 @@ describe('Definition', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      const definition = Definition(context, {
+      const definition = new Definition(context, {
         scripts: JavaScripts(false),
       });
 
@@ -1099,6 +1380,30 @@ describe('Definition', () => {
 
       expect(error).to.be.ok;
       expect(error).to.match(/TypeError.+unsupported/);
+    });
+
+    it('ignores broker mandatory messages that are not of type error', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testError" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <userTask id="task" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const definition = new Definition(context);
+
+      const leave = definition.waitFor('leave');
+
+      definition.once('activity.wait', () => {
+        definition.broker.publish('event', 'definition.fatal', {}, {mandatory: true, type: 'ignore'});
+        definition.signal({id: 'task'});
+      });
+
+      definition.run();
+
+      return leave;
     });
 
     describe('child error', () => {
@@ -1116,9 +1421,9 @@ describe('Definition', () => {
           next(Error('unstable'));
         });
 
-        const definition = Definition(context);
+        const definition = new Definition(context);
 
-        expect(definition.run).to.throw('unstable');
+        expect(() => definition.run()).to.throw('unstable');
       });
 
       it('error event handler catches error', async () => {
@@ -1131,7 +1436,7 @@ describe('Definition', () => {
         </definitions>`;
 
         const context = await testHelpers.context(source);
-        const definition = Definition(context);
+        const definition = new Definition(context);
 
         let error;
         definition.once('error', (childErr) => {
@@ -1162,7 +1467,7 @@ describe('Definition', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source, {Logger});
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       definition.run();
 
@@ -1197,7 +1502,7 @@ describe('Definition', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       const leave = definition.waitFor('leave');
 
@@ -1216,7 +1521,7 @@ describe('Definition', () => {
       </definitions>`;
 
       testHelpers.context(source).then((context) => {
-        const definition = Definition(context);
+        const definition = new Definition(context);
 
         definition.once('wait', () => {
           definition.broker.publish('execution', 'execution.error', {error: new Error('unstable')}, {mandatory: true, type: 'error'});
@@ -1239,17 +1544,17 @@ describe('Definition', () => {
     });
 
     it('returns child activity', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       expect(definition.getActivityById('task1')).to.exist;
     });
 
     it('returns child activity from participant process', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       expect(definition.getActivityById('completeTask')).to.exist;
     });
 
     it('returns null if activity is not found', () => {
-      const definition = Definition(context);
+      const definition = new Definition(context);
       expect(definition.getActivityById('whoAmITask')).to.be.null;
     });
   });
@@ -1280,12 +1585,12 @@ describe('Definition', () => {
     });
 
     it('returns none if not executing', () => {
-      const def = Definition(context);
+      const def = new Definition(context);
       expect(def.getPostponed()).to.have.length(0);
     });
 
     it('returns executing activities', () => {
-      const def = Definition(context);
+      const def = new Definition(context);
       def.run();
 
       const activities = def.getPostponed();
@@ -1309,7 +1614,7 @@ describe('Definition', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      const definition = Definition(context);
+      const definition = new Definition(context);
 
       const messages = [];
       definition.broker.subscribeTmp('event', 'process.start', (_, message) => {
@@ -1350,65 +1655,6 @@ describe('Definition', () => {
       expect(messages[3].content.parent).to.have.property('path').with.length(2);
       expect(messages[3].content.parent.path[0]).to.have.property('id', 'process1');
       expect(messages[3].content.parent.path[1]).to.have.property('id', 'def1');
-    });
-  });
-
-  describe('getApi()', () => {
-    let context;
-    before(async () => {
-      const source = `
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <process id="theProcess" isExecutable="true">
-          <startEvent id="start" />
-          <sequenceFlow id="flow1" sourceRef="start" targetRef="task1" />
-          <sequenceFlow id="flow2" sourceRef="start" targetRef="task2" />
-          <sequenceFlow id="flow3" sourceRef="start" targetRef="subProcess" />
-          <userTask id="task1" />
-          <userTask id="task2" />
-          <subProcess id="subProcess">
-            <userTask id="task3" />
-          </subProcess>
-          <sequenceFlow id="flow4" sourceRef="task1" targetRef="end" />
-          <sequenceFlow id="flow5" sourceRef="task2" targetRef="end" />
-          <sequenceFlow id="flow6" sourceRef="subProcess" targetRef="end" />
-          <endEvent id="end" />
-        </process>
-      </definitions>`;
-
-      context = await testHelpers.context(source);
-    });
-
-    it('returns api on each event', () => {
-      const definition = Definition(context.clone());
-      definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
-        const api = definition.getApi(message);
-        expect(api, message.content.id).to.be.ok;
-        expect(message.content.type).to.equal(api.content.type);
-      }, {noAck: true});
-
-      definition.run();
-    });
-
-    it('returns undefined if message parent path is not resolved', () => {
-      const definition = Definition(context.clone());
-
-      let api = false;
-      definition.broker.subscribeTmp('event', 'activity.#', (routingKey, message) => {
-        if (message.content.id === 'task3') {
-          message.content.parent.path = [];
-          api = definition.getApi(message);
-        }
-      }, {noAck: true});
-
-      definition.run();
-
-      expect(api).to.be.undefined;
-    });
-
-    it('without message and running, returns current state api', () => {
-      const definition = Definition(context.clone());
-      definition.run();
-      expect(definition.getApi()).to.have.property('content').with.property('state', 'start');
     });
   });
 });

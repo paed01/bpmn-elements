@@ -8,7 +8,7 @@ Feature('Activity IO', () => {
     Given('a process with an activity with property', async () => {
       const source = factory.resource('engine-issue-139.bpmn');
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           _data: {
             DataObject_14zge3i: 1,
@@ -77,7 +77,7 @@ Feature('Activity IO', () => {
        </definitions>
       `;
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           _data: {
             DataObject_1: 1,
@@ -151,7 +151,7 @@ Feature('Activity IO', () => {
        </definitions>
       `;
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           _data: {
             DataObject_1: 1,
@@ -188,7 +188,7 @@ Feature('Activity IO', () => {
     });
   });
 
-  Scenario('Activity with IO specification and properties', () => {
+  Scenario('both IO specification and properties', () => {
     let definition, taskMessage;
     Given('a user task with properties and IO specification', async () => {
       const source = `<?xml version="1.0" encoding="UTF-8"?>
@@ -199,24 +199,24 @@ Feature('Activity IO', () => {
            <startEvent id="start" />
            <sequenceFlow id="to-task" sourceRef="start" targetRef="task" />
            <userTask id="task">
-              <property id="prop_1" />
-              <property id="prop_2" />
-              <ioSpecification id="inputSpec">
-                <dataInput id="userInput" name="input" />
-                <dataInput id="userInfo" name="info" />
-                <dataOutput id="userOutput" name="input" />
-              </ioSpecification>
-              <dataInputAssociation id="dia_1" sourceRef="DataObjectReference_1" targetRef="userInput" />
-              <dataInputAssociation id="dia_2" sourceRef="DataObjectReference_2" targetRef="userInfo" />
-              <dataOutputAssociation id="doa_2" sourceRef="userOutput" targetRef="DataObjectReference_3" />
-              <dataInputAssociation id="association_1">
-                 <sourceRef>DataObjectReference_1</sourceRef>
-                 <targetRef>prop_1</targetRef>
-              </dataInputAssociation>
-              <dataInputAssociation id="association_3">
-                 <sourceRef>DataObjectReference_2</sourceRef>
-                 <targetRef>prop_2</targetRef>
-              </dataInputAssociation>
+             <property id="prop_1" />
+             <property id="prop_2" />
+             <ioSpecification id="inputSpec">
+               <dataInput id="userInput" name="input" />
+               <dataInput id="userInfo" name="info" />
+               <dataOutput id="userOutput" name="input" />
+             </ioSpecification>
+             <dataInputAssociation id="dia_1" sourceRef="DataObjectReference_1" targetRef="userInput" />
+             <dataInputAssociation id="dia_2" sourceRef="DataObjectReference_2" targetRef="userInfo" />
+             <dataOutputAssociation id="doa_2" sourceRef="userOutput" targetRef="DataObjectReference_3" />
+             <dataInputAssociation id="association_1">
+               <sourceRef>DataObjectReference_1</sourceRef>
+               <targetRef>prop_1</targetRef>
+             </dataInputAssociation>
+             <dataInputAssociation id="association_3">
+               <sourceRef>DataObjectReference_2</sourceRef>
+               <targetRef>prop_2</targetRef>
+             </dataInputAssociation>
            </userTask>
            <dataObjectReference id="DataObjectReference_1" dataObjectRef="DataObject_1" />
            <dataObjectReference id="DataObjectReference_2" dataObjectRef="DataObject_2" />
@@ -228,7 +228,7 @@ Feature('Activity IO', () => {
        </definitions>
       `;
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           _data: {
             DataObject_1: 1,
@@ -300,7 +300,7 @@ Feature('Activity IO', () => {
     });
   });
 
-  Scenario('Activity with property with data store reference only', () => {
+  Scenario('property with data store reference only', () => {
     let context, definition, taskMessage1, taskMessage2;
     Given('a process with user task and a sub sequenct task, both with properties referencing data store', async () => {
       const source = `<?xml version="1.0" encoding="UTF-8"?>
@@ -334,7 +334,7 @@ Feature('Activity IO', () => {
        </definitions>
       `;
       context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           _data: {
             DataStoreReference_1: {
@@ -395,7 +395,7 @@ Feature('Activity IO', () => {
     let resumedTaskMessage1;
     When('resumed from user task and data has been updated', () => {
 
-      definition = Definition(context.clone()).recover(state);
+      definition = new Definition(context.clone()).recover(state);
       end = definition.waitFor('end');
 
       definition.broker.subscribeTmp('event', 'activity.#', (_, msg) => {
@@ -434,7 +434,7 @@ Feature('Activity IO', () => {
     });
   });
 
-  Scenario('Activity with property referencing data store ', () => {
+  Scenario('property referencing data store ', () => {
     let context, definition, taskMessage1, taskMessage2;
     Given('a process with user task and a sub sequenct task, both with properties referencing data store', async () => {
       const source = `<?xml version="1.0" encoding="UTF-8"?>
@@ -479,7 +479,7 @@ Feature('Activity IO', () => {
        </definitions>
       `;
       context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         variables: {
           _data: {
             datastore: {
@@ -540,7 +540,7 @@ Feature('Activity IO', () => {
     let resumedTaskMessage1;
     When('resumed from user task and data has been updated', () => {
 
-      definition = Definition(context.clone()).recover(state);
+      definition = new Definition(context.clone()).recover(state);
       end = definition.waitFor('end');
 
       definition.broker.subscribeTmp('event', 'activity.#', (_, msg) => {
@@ -576,6 +576,76 @@ Feature('Activity IO', () => {
     And('data has been updated', () => {
       const environmentData = definition.environment.variables._data;
       expect(environmentData).to.have.property('datastore').that.deep.equal({value: 5});
+    });
+  });
+
+  Scenario('edge cases', () => {
+    let context, definition;
+    Given('a lonely property', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        id="io-def" targetNamespace="http://activiti.org/bpmn">
+        <process id="Process_15ozyjy" isExecutable="true">
+          <task id="task1">
+            <property id="prop-1" name="Lonely prop" />
+          </task>
+        </process>
+       </definitions>
+      `;
+      context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let end, activity;
+    When('ran', () => {
+      end = definition.waitFor('end');
+      activity = definition.waitFor('activity.start');
+      definition.run();
+    });
+
+    Then('activity get property with name only', async () => {
+      const api = await activity;
+      expect(api.content).to.have.property('properties').that.deep.equal({
+        'prop-1': {
+          id: 'prop-1',
+          name: 'Lonely prop',
+          type: 'bpmn:Property',
+        },
+      });
+      return end;
+    });
+
+    Given('a data output object reference pointing to a non-existing data object', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        id="io-def" targetNamespace="http://activiti.org/bpmn">
+        <process id="Process_1" isExecutable="true">
+           <task id="task">
+             <ioSpecification>
+               <dataOutput id="output_1" name="Surname" />
+             </ioSpecification>
+             <dataOutputAssociation id="associatedOutput" sourceRef="output_1" targetRef="DataObjectReference_1" />
+           </task>
+           <dataObjectReference id="DataObjectReference_1" dataObjectRef="DataObject_0" />
+           <dataObject id="DataObject_1" />
+         </process>
+       </definitions>`;
+      context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    When('ran', () => {
+      end = definition.waitFor('end');
+      activity = definition.waitFor('activity.end');
+      definition.run();
+    });
+
+    Then('activity has the expected io', async () => {
+      const api = await activity;
+      expect(api.content).to.have.property('ioSpecification').with.property('dataOutputs').with.length(1);
+      return end;
     });
   });
 });

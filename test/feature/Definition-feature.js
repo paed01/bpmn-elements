@@ -25,7 +25,7 @@ Feature('Definition', () => {
     let definition, assertMessage;
     Given('a definition', async () => {
       const context = await testHelpers.context(source);
-      definition = Definition(context);
+      definition = new Definition(context);
       assertMessage = AssertMessage(definition, messages, true);
     });
 
@@ -75,7 +75,7 @@ Feature('Definition', () => {
     let definition, assertMessage;
     Given('a definition with lanes and extensions', async () => {
       const context = await testHelpers.context(factory.resource('lanes.bpmn'), {extensions});
-      definition = Definition(context, {
+      definition = new Definition(context, {
         Logger: testHelpers.Logger,
       });
       assertMessage = AssertMessage(definition, messages, true);
@@ -118,6 +118,7 @@ Feature('Definition', () => {
       assertMessage('activity.execution.completed', 'task1');
       assertMessage('activity.end', 'task1');
 
+      assertMessage('process.init', 'participantProcess');
       assertMessage('process.enter', 'participantProcess');
       assertMessage('process.start', 'participantProcess');
 
@@ -195,7 +196,7 @@ Feature('Definition', () => {
 
     Given('a definition', async () => {
       const context = await testHelpers.context(bigSource, {extensions});
-      definition = Definition(context, {
+      definition = new Definition(context, {
         Logger: testHelpers.Logger,
       });
       assertMessage = AssertMessage(context, messages, false);
@@ -217,7 +218,21 @@ Feature('Definition', () => {
       definition.run();
     });
 
-    Then('the definition waits user input', () => {
+    let bpApis;
+    Then('the definition has one executing process', () => {
+      bpApis = definition.getApi().getExecuting();
+      expect(bpApis).to.have.length(1);
+      expect(bpApis[0]).to.have.property('id', 'motherOfAll');
+      expect(bpApis[0]).to.have.property('type', 'bpmn:Process');
+    });
+
+    And('one executing activity', () => {
+      const apis = bpApis[0].getExecuting();
+      expect(apis).to.have.length(1);
+      expect(apis[0]).to.have.property('type', 'bpmn:UserTask');
+    });
+
+    And('waits user input', () => {
       assertMessage('activity.wait', 'userTask1');
       const postponed = definition.getPostponed();
       expect(postponed).to.have.length(1);
@@ -233,7 +248,7 @@ Feature('Definition', () => {
       processes = definition.getProcesses();
       expect(processes).to.have.length(2);
       expect(processes[0]).to.have.property('stopped', true);
-      expect(processes[1]).to.have.property('stopped', undefined);
+      expect(processes[1]).to.have.property('stopped', false);
     });
 
     And('all running activities are stopped', async () => {
@@ -260,7 +275,7 @@ Feature('Definition', () => {
       processes = definition.getProcesses();
       expect(processes).to.have.length(2);
       expect(processes[0]).to.have.property('stopped', false);
-      expect(processes[1]).to.have.property('stopped', undefined);
+      expect(processes[1]).to.have.property('stopped', false);
     });
 
     And('all running activities are resumed', async () => {
@@ -282,8 +297,13 @@ Feature('Definition', () => {
       });
     });
 
-    Then('definition completes', () => {
-      return leave;
+    Then('definition completes', async () => {
+      const api = await leave;
+      bpApis = api.getExecuting();
+    });
+
+    And('the definition has no executing process', () => {
+      expect(bpApis).to.have.length(0);
     });
   });
 
@@ -291,7 +311,7 @@ Feature('Definition', () => {
     let definition;
     Given('a definition with user task, timer event, and loop', async () => {
       const context = await testHelpers.context(bigSource, {extensions});
-      definition = Definition(context, {
+      definition = new Definition(context, {
         Logger: testHelpers.Logger,
         extensions: {
           saveAllOutputToEnvironmentExtension
@@ -321,7 +341,7 @@ Feature('Definition', () => {
     let recoveredDefinition;
     Then('new definition can be recovered', async () => {
       const newContext = await testHelpers.context(bigSource, {extensions});
-      recoveredDefinition = Definition(newContext).recover(state);
+      recoveredDefinition = new Definition(newContext).recover(state);
     });
 
     let leave;
@@ -333,11 +353,10 @@ Feature('Definition', () => {
     });
 
     let processes;
-    Then('processes are resumed', async () => {
-      processes = recoveredDefinition.getProcesses();
-      expect(processes).to.have.length(2);
-      expect(processes[0]).to.have.property('stopped', false);
-      expect(processes[1]).to.have.property('stopped', undefined);
+    Then('main process is resumed', async () => {
+      processes = recoveredDefinition.getRunningProcesses();
+      expect(processes).to.have.length(1);
+      expect(processes[0], processes[0].id).to.have.property('stopped', false);
     });
 
     And('all running activities are resumed', async () => {
@@ -422,7 +441,7 @@ Feature('Definition', () => {
 
     Then('new definition can be recovered', async () => {
       const newContext = await testHelpers.context(bigSource, {extensions});
-      recoveredDefinition = Definition(newContext, {
+      recoveredDefinition = new Definition(newContext, {
         myOption: true,
         extensions: {
           saveAllOutputToEnvironmentExtension
@@ -463,7 +482,7 @@ Feature('Definition', () => {
     let assertMessage, definition;
     Given('a definition with user task, timer event, and loop', async () => {
       const context = await testHelpers.context(factory.resource('two-executable-processes.bpmn'), {extensions});
-      definition = Definition(context);
+      definition = new Definition(context);
       assertMessage = AssertMessage(definition, messages, true);
     });
 
@@ -559,16 +578,16 @@ Feature('Definition', () => {
     });
 
     Given('a definition with no executable process', async () => {
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     Then('throws on run', () => {
-      expect(definition.run).to.throw('No executable process');
+      expect(() => definition.run()).to.throw('No executable process');
       expect(definition.isRunning).to.be.false;
     });
 
     And('returns error in callback on run', (done) => {
-      definition = Definition(context);
+      definition = new Definition(context);
       definition.run((err) => {
         expect(err).to.have.property('message', 'No executable process');
         expect(definition.isRunning).to.be.false;
@@ -586,7 +605,7 @@ Feature('Definition', () => {
 
     let definition;
     And('a definition', () => {
-      definition = Definition(context);
+      definition = new Definition(context);
     });
 
     And('expects to be stopped at first user task wait', () => {

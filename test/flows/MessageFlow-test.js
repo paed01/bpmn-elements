@@ -8,14 +8,14 @@ describe('MessageFlow', () => {
   it('requires target, source, and context with environment and getActivityById', () => {
     const activity = ActivityBroker();
     const context = {
-      environment: Environment(),
+      environment: new Environment(),
       getActivityById() {
         return activity;
       },
     };
-    MessageFlow({
+    const flow = new MessageFlow({
       id: 'message',
-      type: 'messageflow',
+      parent: {},
       source: {
         id: 'task',
       },
@@ -23,19 +23,22 @@ describe('MessageFlow', () => {
         id: 'task1',
       },
     }, context);
+
+    expect(flow).to.have.property('type', 'messageflow');
   });
 
   it('listens for run end, and message messages from source activity', () => {
     const activity = ActivityBroker();
     const context = {
-      environment: Environment(),
+      environment: new Environment(),
       getActivityById() {
         return activity;
       },
     };
-    const flow = MessageFlow({
+    const flow = new MessageFlow({
       id: 'message',
       type: 'messageflow',
+      parent: {},
       source: {
         id: 'task',
       },

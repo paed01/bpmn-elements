@@ -14,18 +14,12 @@ Feature('Backward compatability 5.2', () => {
 
     let definition, state;
     Given('a state from version 5', async () => {
-      // definition = Definition(context);
-      // definition.run();
-      // definition.signal({id: 'userTask1'});
-      // definition.signal({id: 'subUserTask1'});
-
-      // return fs.writeFile('./test/resources/mother-of-all-state-5.json', JSON.stringify(definition.getState(), null, 2));
       state = JSON.parse(await fs.readFile('./test/resources/mother-of-all-state-5.json'));
     });
 
     let leave;
     When('recovered and resumed with state from version 5', () => {
-      definition = Definition(context).recover(state);
+      definition = new Definition(context).recover(state);
       leave = definition.waitFor('leave');
       definition.resume();
     });

@@ -22,7 +22,7 @@ Feature('expressions', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      definition = Definition(context, {
+      definition = new Definition(context, {
         expressions: {resolveExpression},
       });
     });

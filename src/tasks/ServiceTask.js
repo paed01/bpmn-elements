@@ -3,80 +3,87 @@ import {ActivityError} from '../error/Errors';
 import {cloneMessage, cloneContent} from '../messageHelper';
 
 export default function ServiceTask(activityDef, context) {
-  return Activity(ServiceTaskBehaviour, activityDef, context);
+  return new Activity(ServiceTaskBehaviour, activityDef, context);
 }
 
 export function ServiceTaskBehaviour(activity) {
-  const {id, type, broker, logger, behaviour, environment, emitFatal} = activity;
-  const loopCharacteristics = behaviour.loopCharacteristics && behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  const {id, type, behaviour} = activity;
 
-  const source = {
-    id,
-    type,
-    loopCharacteristics,
-    execute,
-    getService,
-  };
-
-  return source;
-
-  function execute(executeMessage) {
-    const content = executeMessage.content;
-    if (loopCharacteristics && content.isRootScope) {
-      return loopCharacteristics.execute(executeMessage);
-    }
-
-    const {executionId} = content;
-    const service = getService(executeMessage);
-    if (!service) return emitFatal(new ActivityError(`<${id}> service not defined`, executeMessage), content);
-
-    broker.subscribeTmp('api', `activity.#.${content.executionId}`, onApiMessage, {consumerTag: `_api-${executionId}`});
-
-    return service.execute(executeMessage, (err, output) => {
-      broker.cancel(`_api-${executionId}`);
-      if (err) {
-        logger.error(`<${content.executionId} (${id})>`, err);
-        return broker.publish('execution', 'execute.error', cloneContent(content, {error: new ActivityError(err.message, executeMessage, err)}, {mandatory: true}));
-      }
-
-      return broker.publish('execution', 'execute.completed', cloneContent(content, {output, state: 'complete'}));
-    });
-
-    function onApiMessage(_, message) {
-      if (message.properties.type === 'discard') {
-        broker.cancel(`_api-${executionId}`);
-        if (service && service.discard) service.discard(message);
-        logger.debug(`<${content.executionId} (${id})> discarded`);
-        return broker.publish('execution', 'execute.discard', cloneContent(content, {state: 'discard'}));
-      }
-      if (message.properties.type === 'stop') {
-        broker.cancel(`_api-${executionId}`);
-        if (service && service.stop) service.stop(message);
-        return logger.debug(`<${content.executionId} (${id})> stopped`);
-      }
-    }
-  }
-
-  function getService(message) {
-    const Service = behaviour.Service;
-    if (!Service) {
-      return environment.settings.enableDummyService ? DummyService(activity) : null;
-    }
-    return Service(activity, cloneMessage(message));
-  }
-
-  function DummyService() {
-    logger.debug(`<${id}> returning dummy service`);
-
-    return {
-      type: 'dummyservice',
-      execute: executeDummyService,
-    };
-
-    function executeDummyService(...args) {
-      logger.debug(`<${id}> executing dummy service`);
-      const next = args.pop();
-      next();
-    }
-  }
+  this.id = id;
+  this.type = type;
+  this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  this.activity = activity;
+  this.environment = activity.environment;
+  this.broker = activity.broker;
 }
+
+const proto = ServiceTaskBehaviour.prototype;
+
+proto.execute = function execute(executeMessage) {
+  const executeContent = executeMessage.content;
+  const loopCharacteristics = this.loopCharacteristics;
+  if (loopCharacteristics && executeContent.isRootScope) {
+    return loopCharacteristics.execute(executeMessage);
+  }
+
+  const executionId = executeContent.executionId;
+  const service = this.service = this.getService(executeMessage);
+  if (!service) return this.activity.emitFatal(new ActivityError(`<${this.id}> service not defined`, executeMessage), executeContent);
+
+  const broker = this.broker;
+  broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(executeMessage, ...args), {consumerTag: `_api-${executionId}`});
+
+  return service.execute(executeMessage, (err, output) => {
+    broker.cancel(`_api-${executionId}`);
+    if (err) {
+      this.activity.logger.error(`<${executionId} (${this.id})>`, err);
+      return broker.publish('execution', 'execute.error', cloneContent(executeContent, {error: new ActivityError(err.message, executeMessage, err)}, {mandatory: true}));
+    }
+
+    return broker.publish('execution', 'execute.completed', cloneContent(executeContent, {output, state: 'complete'}));
+  });
+};
+
+proto.getService = function getService(message) {
+  let Service = this.activity.behaviour.Service;
+  if (!Service) {
+    Service = this.environment.settings.enableDummyService ? DummyService : null;
+  }
+  return Service && new Service(this.activity, cloneMessage(message));
+};
+
+proto._onApiMessage = function onApiMessage(executeMessage, _, message) {
+  const broker = this.broker;
+  switch (message.properties.type) {
+    case 'discard': {
+      const executionId = executeMessage.content.executionId;
+      broker.cancel(`_api-${executionId}`);
+      const service = this.service;
+      if (service) {
+        if (service.discard) service.discard(message);
+        else if (service.stop) service.stop(message);
+      }
+      this.activity.logger.debug(`<${executionId} (${this.id})> discarded`);
+      return broker.publish('execution', 'execute.discard', cloneContent(executeMessage.content, {state: 'discard'}));
+    }
+    case 'stop': {
+      const executionId = executeMessage.content.executionId;
+      broker.cancel(`_api-${executionId}`);
+      const service = this.service;
+      if (service && service.stop) service.stop(message);
+      return this.activity.logger.debug(`<${executionId} (${this.id})> stopped`);
+    }
+  }
+};
+
+function DummyService(activity) {
+  this.type = 'dummyservice';
+  this.activity = activity;
+}
+
+DummyService.prototype.execute = function executeDummyService(...args) {
+  const activity = this.activity;
+  activity.logger.debug(`<${activity.id}> executing dummy service`);
+  const next = args.pop();
+  next();
+};

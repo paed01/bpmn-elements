@@ -1,4 +1,3 @@
-import Environment from '../../src/Environment';
 import IntermediateCatchEvent from '../../src/events/IntermediateCatchEvent';
 import testHelpers from '../helpers/testHelpers';
 
@@ -6,13 +5,7 @@ describe('IntermediateCatchEvent', () => {
   describe('without event definitions', () => {
     let event;
     beforeEach(() => {
-      event = IntermediateCatchEvent({id: 'emptyEvent'}, {
-        environment: Environment({Logger: testHelpers.Logger}),
-        getInboundAssociations() {},
-        getInboundSequenceFlows() {},
-        getOutboundSequenceFlows() {},
-        loadExtensions() {},
-      });
+      event = IntermediateCatchEvent({id: 'emptyEvent'}, testHelpers.emptyContext());
     });
 
     it('completes when signaled', async () => {
@@ -21,6 +14,18 @@ describe('IntermediateCatchEvent', () => {
 
       event.run();
       (await wait).signal();
+
+      await leave;
+
+      expect(event.counters).to.have.property('taken', 1);
+    });
+
+    it('completes when messaged', async () => {
+      const wait = event.waitFor('wait');
+      const leave = event.waitFor('leave');
+
+      event.run();
+      (await wait).sendApiMessage('message');
 
       await leave;
 
