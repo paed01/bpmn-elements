@@ -178,7 +178,7 @@ Object.defineProperty(proto, 'bpmnIo', {
 
   get() {
     if (bpmnIoSymbol in this) return this[bpmnIoSymbol];
-    const bpmnIo = this[bpmnIoSymbol] = (0, _BpmnIO.default)(this, this.context);
+    const bpmnIo = this[bpmnIoSymbol] = new _BpmnIO.default(this, this.context);
     return bpmnIo;
   }
 

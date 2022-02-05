@@ -3,21 +3,10 @@ Changelog
 
 # 7.0.0
 
-Call activity...
+Support Call activity
 
+- prototype all behaviours
 - add api fail function
-- prototype BoundaryEvent
-- prototype StartEvent
-- prototype TimerEventDefinition
-- prototype Environment
-- prototype ProcessExecution
-- prototype SubProcess behaviour
-- prototype LoopCharacteristics
-- prototype Context
-- prototype SequenceFlow
-- prototype MessageFlow
-- prototype Activity
-- prototype ActivityExecution
 
 ## Breaking
 

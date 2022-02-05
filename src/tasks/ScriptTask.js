@@ -8,7 +8,7 @@ export default function ScriptTask(activityDef, context) {
 }
 
 export function ScriptTaskBehaviour(activity) {
-  const {id, type, behaviour = {}} = activity;
+  const {id, type, behaviour} = activity;
 
   this.id = id;
   this.type = type;

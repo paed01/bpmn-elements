@@ -12,8 +12,8 @@ function DummyActivity(activityDef) {
     id,
     type = 'dummy',
     name,
-    parent: originalParent = {},
-    behaviour = {}
+    parent,
+    behaviour
   } = activityDef;
   return {
     id,
@@ -21,7 +21,7 @@ function DummyActivity(activityDef) {
     name,
     behaviour: { ...behaviour
     },
-    parent: (0, _messageHelper.cloneParent)(originalParent),
+    parent: (0, _messageHelper.cloneParent)(parent),
     placeholder: true
   };
 }

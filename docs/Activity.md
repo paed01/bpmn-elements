@@ -12,7 +12,7 @@ All activities except EventBasedGateway share this lifecycle. The EventBasedGate
 ## `new Activity(Behaviour, activityDefinition, context)`
 
 Arguments:
-- `Behaviour`: activity [Behaviour](/docs/Extend.md) function
+- `Behaviour`: activity [Behaviour](/docs/Extend.md) function, called with new
 - `activityDefinition`: activity definition object from serializable context
 - `context`: [shared context](/docs/Context.md)
 

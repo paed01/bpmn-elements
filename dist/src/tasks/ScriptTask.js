@@ -24,7 +24,7 @@ function ScriptTaskBehaviour(activity) {
   const {
     id,
     type,
-    behaviour = {}
+    behaviour
   } = activity;
   this.id = id;
   this.type = type;

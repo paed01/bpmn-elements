@@ -16,7 +16,7 @@ export default function ReceiveTask(activityDef, context) {
 }
 
 export function ReceiveTaskBehaviour(activity) {
-  const {id, type, behaviour = {}} = activity;
+  const {id, type, behaviour} = activity;
 
   this.id = id;
   this.type = type;

@@ -86,7 +86,7 @@ function makeErrorFromMessage(errorMessage) {
 }
 
 function isKnownError(test) {
-  if (test instanceof Error) return test;
   if (test instanceof ActivityError) return test;
   if (test instanceof BpmnError) return test;
+  if (test instanceof Error) return test;
 }

@@ -3,7 +3,7 @@ import testHelpers from '../helpers/testHelpers';
 import Definition from '../../src/definition/Definition';
 
 Feature('Call activity', () => {
-  Scenario('Call process in the same diagram', () => {
+  Scenario('call process in the same diagram', () => {
     let definition;
     Given('a process with a call activity referencing a process', async () => {
       const context = await testHelpers.context(factory.resource('call-activity.bpmn'));
@@ -109,7 +109,7 @@ Feature('Call activity', () => {
 
   Scenario('call activity is canceled', () => {
     let definition;
-    Given('a process with a call activity referencing a process that throws', async () => {
+    Given('a process with a call activity referencing a process', async () => {
       const source = `
       <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="main-process" isExecutable="true">
@@ -163,12 +163,114 @@ Feature('Call activity', () => {
     Then('run completes', () => {
       return end;
     });
+
+    Given('a process with a call activity not referencing any process', async () => {
+      const source = `
+      <definitions id="Def_2" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="no-call-activity" />
+          <callActivity id="no-call-activity" />
+          <sequenceFlow id="to-end" sourceRef="no-call-activity" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    When('ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    And('call activity is cancelled', () => {
+      const callActivity = definition.getPostponed()[0];
+      expect(callActivity.id).to.equal('no-call-activity');
+      callActivity.cancel();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+  });
+
+  Scenario('call activity is discarded mid run', () => {
+    let definition;
+    Given('a process with a call activity referencing a process', async () => {
+      const source = `
+      <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+          <callActivity id="call-activity" calledElement="called-process" />
+          <endEvent id="end" />
+          <sequenceFlow id="to-end" sourceRef="call-activity" targetRef="end" />
+        </process>
+        <process id="called-process" isExecutable="false">
+          <userTask id="task" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let end;
+    When('ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('call activity has started process', () => {
+      expect(definition.getRunningProcesses()).to.have.length(2);
+    });
+
+    When('call activity is discarded', () => {
+      const callActivity = definition.getPostponed()[0];
+      callActivity.discard();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    Given('a process with a call activity not referencing any process', async () => {
+      const source = `
+      <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+          <callActivity id="call-activity" />
+          <sequenceFlow id="to-end" sourceRef="call-activity" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    When('ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    And('call activity is discarded', () => {
+      const callActivity = definition.getPostponed()[0];
+      callActivity.discard();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
   });
 
   Scenario('a process with a parallel multi-instance call activity with cardinality of three', () => {
     let context, definition;
     const serviceCalls = [];
-    Given('a process', async () => {
+    Given('two processes', async () => {
       const source = `
       <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="main-process" isExecutable="true">
@@ -343,7 +445,7 @@ Feature('Call activity', () => {
 
   Scenario('a process with a parallel multi-instance call activity referencing process with two user tasks', () => {
     let context, definition;
-    Given('a process', async () => {
+    Given('two processes', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="main-process" isExecutable="true">
@@ -611,6 +713,66 @@ Feature('Call activity', () => {
 
     Then('run completes', () => {
       return end;
+    });
+  });
+
+  Scenario('a process with a call activity called element expression', () => {
+    let definition;
+    Given('a process', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+          <callActivity id="call-activity" calledElement="\${environment.services.getProcessById('called-process')}" />
+          <sequenceFlow id="to-end" sourceRef="call-activity" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+        <process id="called-process" isExecutable="false">
+          <userTask id="task1" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let end;
+    When('ran', () => {
+      definition.environment.addService('getProcessById', (name) => {
+        return name;
+      });
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    let activity;
+    Then('called process activity is waiting', () => {
+      activity = definition.getPostponed()[1];
+      expect(activity).to.have.property('id', 'task1');
+    });
+
+    When('call activity is signaled', () => {
+      definition.signal({
+        executionId: activity.content.executionId,
+      });
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    When('ran when expression throws', () => {
+      definition.environment.addService('getProcessById', () => {
+        throw new Error('not found');
+      });
+      end = definition.waitFor('error');
+      definition.run();
+    });
+
+    Then('run fails', async () => {
+      const err = await end;
+      expect(err.content.error).to.match(/not found/i);
     });
   });
 });

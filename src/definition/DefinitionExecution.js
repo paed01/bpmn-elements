@@ -551,6 +551,7 @@ proto._onMessageOutbound = function onMessageOutbound(routingKey, message) {
 proto._onCallActivity = function onCallActivity(routingKey, message) {
   const content = message.content;
   const {calledElement, id: fromId, executionId: fromExecutionId, name: fromName, parent: fromParent} = content;
+  if (!calledElement) return;
 
   const bpExecutionId = `${brokerSafeId(calledElement)}_${fromExecutionId}`;
   if (content.isRecovered) {
@@ -579,8 +580,8 @@ proto._onCallActivity = function onCallActivity(routingKey, message) {
 };
 
 proto._onCancelCallActivity = function onCancelCallActivity(routingKey, message) {
-  const content = message.content;
-  const {calledElement, id: fromId, executionId: fromExecutionId, parent: fromParent} = content;
+  const {calledElement, id: fromId, executionId: fromExecutionId, parent: fromParent} = message.content;
+  if (!calledElement) return;
 
   const bpExecutionId = `${brokerSafeId(calledElement)}_${fromExecutionId}`;
   const targetProcess = this.getProcessByExecutionId(bpExecutionId);

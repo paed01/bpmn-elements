@@ -134,7 +134,7 @@ Object.defineProperty(proto, 'bpmnIo', {
   enumerable: true,
   get() {
     if (bpmnIoSymbol in this) return this[bpmnIoSymbol];
-    const bpmnIo = this[bpmnIoSymbol] = BpmnIO(this, this.context);
+    const bpmnIo = this[bpmnIoSymbol] = new BpmnIO(this, this.context);
     return bpmnIo;
   },
 });

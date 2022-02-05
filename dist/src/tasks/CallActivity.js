@@ -43,6 +43,8 @@ proto.execute = function execute(executeMessage) {
     return loopCharacteristics.execute(executeMessage);
   }
 
+  const broker = this.broker;
+
   try {
     var calledElement = this.environment.resolveExpression(this.calledElement); // eslint-disable-line no-var
   } catch (err) {
@@ -54,12 +56,12 @@ proto.execute = function execute(executeMessage) {
   }
 
   const executionId = executeContent.executionId;
-  const broker = this.broker;
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => {
     this._onApiMessage(calledElement, executeMessage, ...args);
   }, {
     noAck: true,
-    consumerTag: `_api-${executionId}`
+    consumerTag: `_api-${executionId}`,
+    priority: 300
   });
   broker.subscribeTmp('api', '#.signal.*', (...args) => this._onDelegatedApiMessage(calledElement, executeMessage, ...args), {
     noAck: true,
@@ -112,12 +114,14 @@ proto._onApiMessage = function onApiMessage(calledElement, executeMessage, routi
       return this._stop(executeContent.executionId);
 
     case 'cancel':
-      this.broker.publish('event', 'activity.call.cancel', (0, _messageHelper.cloneContent)(executeContent, {
-        state: 'cancel',
-        calledElement
-      }), {
-        type: 'cancel'
-      });
+      {
+        this.broker.publish('event', 'activity.call.cancel', (0, _messageHelper.cloneContent)(executeContent, {
+          state: 'cancel',
+          calledElement
+        }), {
+          type: 'cancel'
+        });
+      }
 
     case 'signal':
       this._stop(executeContent.executionId);
@@ -140,10 +144,11 @@ proto._onApiMessage = function onApiMessage(calledElement, executeMessage, routi
       }));
 
     case 'discard':
-      this._stop(executeContent.executionId);
-
-      return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(executeContent), {
-        correlationId
+      return this.broker.publish('event', 'activity.call.cancel', (0, _messageHelper.cloneContent)(executeContent, {
+        state: 'discard',
+        calledElement
+      }), {
+        type: 'discard'
       });
   }
 };

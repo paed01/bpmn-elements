@@ -9,53 +9,54 @@ function getPropertyValue(inputContext, propertyPath, fnScope) {
   if (!inputContext) return;
 
   let resultValue;
-  let next = iterateProps(inputContext, inputContext, propertyPath.trim());
+  let next = iterateProps(inputContext, inputContext, propertyPath.trim(), fnScope);
   while (next) {
     resultValue = next.getResult();
     next = next();
   }
   return resultValue;
-
-  function iterateProps(base, iterateContext, iteratePropertyPath) {
-    let result;
-    const rest = iteratePropertyPath.replace(propertyPattern, (match, fnName, args, p, prop) => {
-      if (fnName) {
-        result = executeFn(getNamedValue(iterateContext, fnName), args, base);
-      } else {
-        result = getNamedValue(iterateContext, prop);
-      }
-      return '';
-    });
-
-    if (rest === iteratePropertyPath) return;
-    if (result === undefined || result === null) return;
-
-    const iterateNext = () => iterateProps(base, result, rest);
-    iterateNext.getResult = () => {
-      if (rest !== '') return;
-      return result;
-    };
-
-    return iterateNext;
-  }
-
-  function executeFn(fn, args, base) {
-    if (!fn) return;
-
-    let callArguments = [];
-    if (args) {
-      callArguments = splitArguments(args, base, fnScope);
-    } else {
-      callArguments.push(base);
-    }
-
-    if (!fnScope) return fn.apply(null, callArguments);
-
-    return (function ScopedIIFE() { // eslint-disable-line no-extra-parens
-      return fn.apply(this, callArguments);
-    }).call(fnScope);
-  }
 }
+
+function iterateProps(base, iterateContext, iteratePropertyPath, fnScope) {
+  let result;
+  const rest = iteratePropertyPath.replace(propertyPattern, (match, fnName, args, p, prop) => {
+    if (fnName) {
+      result = executeFn(getNamedValue(iterateContext, fnName), args, base, fnScope);
+    } else {
+      result = getNamedValue(iterateContext, prop);
+    }
+    return '';
+  });
+
+  if (rest === iteratePropertyPath) return;
+  if (result === undefined || result === null) return;
+
+  const iterateNext = () => iterateProps(base, result, rest, fnScope);
+  iterateNext.getResult = () => {
+    if (rest !== '') return;
+    return result;
+  };
+
+  return iterateNext;
+}
+
+function executeFn(fn, args, base, fnScope) {
+  if (!fn) return;
+
+  let callArguments = [];
+  if (args) {
+    callArguments = splitArguments(args, base, fnScope);
+  } else {
+    callArguments.push(base);
+  }
+
+  if (!fnScope) return fn.apply(null, callArguments);
+
+  return (function ScopedIIFE() { // eslint-disable-line no-extra-parens
+    return fn.apply(this, callArguments);
+  }).call(fnScope);
+}
+
 function splitArguments(args, base, fnScope) {
   let insideString = false;
   let delimiter = '';

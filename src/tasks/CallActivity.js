@@ -27,6 +27,7 @@ proto.execute = function execute(executeMessage) {
     return loopCharacteristics.execute(executeMessage);
   }
 
+  const broker = this.broker;
   try {
     var calledElement = this.environment.resolveExpression(this.calledElement); // eslint-disable-line no-var
   } catch (err) {
@@ -38,12 +39,12 @@ proto.execute = function execute(executeMessage) {
   }
 
   const executionId = executeContent.executionId;
-  const broker = this.broker;
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => {
     this._onApiMessage(calledElement, executeMessage, ...args);
   }, {
     noAck: true,
     consumerTag: `_api-${executionId}`,
+    priority: 300,
   });
   broker.subscribeTmp('api', '#.signal.*', (...args) => this._onDelegatedApiMessage(calledElement, executeMessage, ...args), {
     noAck: true,
@@ -83,18 +84,19 @@ proto._onDelegatedApiMessage = function onDelegatedApiMessage(calledElement, exe
 
 proto._onApiMessage = function onApiMessage(calledElement, executeMessage, routingKey, message) {
   const {type: messageType, correlationId} = message.properties;
-
   const executeContent = executeMessage.content;
+
   switch (messageType) {
     case 'stop':
       return this._stop(executeContent.executionId);
-    case 'cancel':
+    case 'cancel': {
       this.broker.publish('event', 'activity.call.cancel', cloneContent(executeContent, {
         state: 'cancel',
         calledElement,
       }), {
         type: 'cancel',
       });
+    }
     case 'signal':
       this._stop(executeContent.executionId);
       return this.broker.publish('execution', 'execute.completed', cloneContent(executeContent, {
@@ -112,8 +114,12 @@ proto._onApiMessage = function onApiMessage(calledElement, executeMessage, routi
         correlationId,
       }));
     case 'discard':
-      this._stop(executeContent.executionId);
-      return this.broker.publish('execution', 'execute.discard', cloneContent(executeContent), {correlationId});
+      return this.broker.publish('event', 'activity.call.cancel', cloneContent(executeContent, {
+        state: 'discard',
+        calledElement,
+      }), {
+        type: 'discard',
+      });
   }
 };
 
