@@ -28,7 +28,7 @@ function Properties(activity, propertiesDef, context) {
     const source = {
       id,
       type: def.type,
-      name: def.name
+      name: def.behaviour && def.behaviour.name
     };
     props.properties.push(source);
     const inputDataObjectId = (0, _getPropertyValue.default)(def, 'behaviour.dataInput.association.source.dataObject.id');

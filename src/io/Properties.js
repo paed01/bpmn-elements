@@ -13,11 +13,12 @@ export default function Properties(activity, propertiesDef, context) {
     dataOutputObjects: [],
   };
 
+
   for (const {id, ...def} of propertiesDef.values) {
     const source = {
       id,
       type: def.type,
-      name: def.name,
+      name: def.behaviour && def.behaviour.name,
     };
     props.properties.push(source);
 

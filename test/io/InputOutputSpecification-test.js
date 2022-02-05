@@ -5,13 +5,13 @@ import {ActivityBroker} from '../../src/EventBroker';
 describe('InputOutputSpecification', () => {
   it('listens on parent activity when activated', () => {
     const activity = ActivityBroker();
-    InputOutputSpecification(activity, {}).activate();
+    new InputOutputSpecification(activity, {}).activate();
     expect(activity.broker.consumerCount).to.equal(1);
   });
 
   it('listens only once when activated', () => {
     const activity = ActivityBroker();
-    const ioSpec = InputOutputSpecification(activity, {});
+    const ioSpec = new InputOutputSpecification(activity, {});
     ioSpec.activate();
     ioSpec.activate();
     expect(activity.broker.consumerCount).to.equal(1);
@@ -19,7 +19,7 @@ describe('InputOutputSpecification', () => {
 
   it('removes listener when deactivated', () => {
     const activity = ActivityBroker();
-    const ioSpec = InputOutputSpecification(activity, {});
+    const ioSpec = new InputOutputSpecification(activity, {});
     ioSpec.activate();
     ioSpec.deactivate();
     ioSpec.deactivate();
@@ -28,7 +28,7 @@ describe('InputOutputSpecification', () => {
 
   it('sends format start message on activity enter', () => {
     const activity = ActivityBroker();
-    InputOutputSpecification(activity, {
+    new InputOutputSpecification(activity, {
       type: 'bpmn:InputOutputSpecification',
       behaviour: {
         dataInputs: [],
@@ -43,7 +43,7 @@ describe('InputOutputSpecification', () => {
 
   it('doesn\'t send start message if no dataInputs', () => {
     const activity = ActivityBroker();
-    InputOutputSpecification(activity, {
+    new InputOutputSpecification(activity, {
       type: 'bpmn:InputOutputSpecification',
     }).activate();
 
@@ -54,7 +54,7 @@ describe('InputOutputSpecification', () => {
 
   it('sends format start message with input on activity start', () => {
     const activity = ActivityBroker();
-    InputOutputSpecification(activity, {
+    new InputOutputSpecification(activity, {
       type: 'bpmn:InputOutputSpecification',
       behaviour: {
         dataInputs: [],
@@ -70,7 +70,7 @@ describe('InputOutputSpecification', () => {
 
   it('fetches input data object value', () => {
     const activity = ActivityBroker();
-    InputOutputSpecification(activity, {
+    new InputOutputSpecification(activity, {
       type: 'bpmn:InputOutputSpecification',
       behaviour: {
         dataInputs: [{
@@ -132,7 +132,7 @@ describe('InputOutputSpecification', () => {
 
   it('publishes input without data object value if not found', () => {
     const activity = ActivityBroker();
-    InputOutputSpecification(activity, {
+    new InputOutputSpecification(activity, {
       type: 'bpmn:InputOutputSpecification',
       behaviour: {
         dataInputs: [{
@@ -168,7 +168,7 @@ describe('InputOutputSpecification', () => {
 
   it('publishes input without data object if unreferenced', () => {
     const activity = ActivityBroker();
-    InputOutputSpecification(activity, {
+    new InputOutputSpecification(activity, {
       type: 'bpmn:InputOutputSpecification',
       behaviour: {
         dataInputs: [{
