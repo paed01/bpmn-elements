@@ -288,10 +288,10 @@ proto.getProcessById = function getProcessById(processId) {
 };
 
 proto.getActivityById = function getActivityById(childId) {
-  const siblings = this.getProcesses();
+  const bps = this.getProcesses();
 
-  for (const sibling of siblings) {
-    const child = sibling.getActivityById(childId);
+  for (const bp of bps) {
+    const child = bp.getActivityById(childId);
     if (child) return child;
   }
 

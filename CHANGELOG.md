@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 8.0.0
+
+## Breaking
+
+- all processes will be executed with new context, thus activities will not be reused
+
 # 7.0.0
 
 Support Call activity

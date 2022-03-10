@@ -14,8 +14,8 @@ var _messageHelper = require("../messageHelper");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const executionsSymbol = Symbol.for('executions');
-const messageHandlersSymbol = Symbol.for('messageHandlers');
+const kExecutions = Symbol.for('executions');
+const kMessageHandlers = Symbol.for('messageHandlers');
 
 function SubProcess(activityDef, context) {
   const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
@@ -62,8 +62,8 @@ function SubProcessBehaviour(activity, context) {
   this.environment = activity.environment;
   this.broker = activity.broker;
   this.executionId = undefined;
-  this[executionsSymbol] = [];
-  this[messageHandlersSymbol] = {
+  this[kExecutions] = [];
+  this[kMessageHandlers] = {
     onApiRootMessage: this._onApiRootMessage.bind(this),
     onExecutionCompleted: this._onExecutionCompleted.bind(this)
   };
@@ -72,13 +72,13 @@ function SubProcessBehaviour(activity, context) {
 const proto = SubProcessBehaviour.prototype;
 Object.defineProperty(proto, 'execution', {
   get() {
-    return this[executionsSymbol][0];
+    return this[kExecutions][0];
   }
 
 });
 Object.defineProperty(proto, 'executions', {
   get() {
-    return this[executionsSymbol].slice();
+    return this[kExecutions].slice();
   }
 
 });
@@ -94,7 +94,7 @@ proto.execute = function execute(executeMessage) {
   const loopCharacteristics = this.loopCharacteristics;
 
   if (loopCharacteristics && content.isRootScope) {
-    this.broker.subscribeTmp('api', `activity.#.${executionId}`, this[messageHandlersSymbol].onApiRootMessage, {
+    this.broker.subscribeTmp('api', `activity.#.${executionId}`, this[kMessageHandlers].onApiRootMessage, {
       noAck: true,
       consumerTag: `_api-${executionId}`,
       priority: 200
@@ -109,7 +109,7 @@ proto.execute = function execute(executeMessage) {
 };
 
 proto.stop = function stop() {
-  for (const execution of this[executionsSymbol]) {
+  for (const execution of this[kExecutions]) {
     this.broker.cancel(`_sub-process-execution-${execution.executionId}`);
     this.broker.cancel(`_sub-process-api-${execution.executionId}`);
     execution.stop();
@@ -117,7 +117,7 @@ proto.stop = function stop() {
 };
 
 proto.discard = function discard() {
-  for (const execution of this[executionsSymbol]) {
+  for (const execution of this[kExecutions]) {
     this.broker.cancel(`_sub-process-execution-${execution.executionId}`);
     this.broker.cancel(`_sub-process-api-${execution.executionId}`);
     execution.discard();
@@ -127,7 +127,7 @@ proto.discard = function discard() {
 proto.getState = function getState() {
   if (this.loopCharacteristics) {
     return {
-      executions: this[executionsSymbol].map(pe => {
+      executions: this[kExecutions].map(pe => {
         const state = pe.getState();
         state.environment = pe.environment.getState();
         return state;
@@ -146,7 +146,7 @@ proto.getState = function getState() {
 
 proto.recover = function recover(state) {
   if (!state) return;
-  const executions = this[executionsSymbol];
+  const executions = this[kExecutions];
   const loopCharacteristics = this.loopCharacteristics;
 
   if (loopCharacteristics && state.executions) {
@@ -171,7 +171,7 @@ proto.recover = function recover(state) {
 };
 
 proto.getPostponed = function getPostponed() {
-  return this[executionsSymbol].reduce((result, pe) => {
+  return this[kExecutions].reduce((result, pe) => {
     result = result.concat(pe.getPostponed());
     return result;
   }, []);
@@ -209,7 +209,7 @@ proto._upsertExecution = function upsertExecution(executeMessage) {
   });
   const subContext = this.context.clone(subEnvironment);
   execution = new _ProcessExecution.default(this.activity, subContext);
-  this[executionsSymbol].push(execution);
+  this[kExecutions].push(execution);
 
   this._addListeners(execution, executionId);
 
@@ -217,7 +217,7 @@ proto._upsertExecution = function upsertExecution(executeMessage) {
 };
 
 proto._addListeners = function addListeners(processExecution, executionId) {
-  this.broker.subscribeTmp('subprocess-execution', `execution.#.${executionId}`, this[messageHandlersSymbol].onExecutionCompleted, {
+  this.broker.subscribeTmp('subprocess-execution', `execution.#.${executionId}`, this[kMessageHandlers].onExecutionCompleted, {
     noAck: true,
     consumerTag: `_sub-process-execution-${executionId}`
   });
@@ -278,5 +278,5 @@ proto.getApi = function getApi(apiMessage) {
 };
 
 proto._getExecutionById = function getExecutionById(executionId) {
-  return this[executionsSymbol].find(pe => pe.executionId === executionId);
+  return this[kExecutions].find(pe => pe.executionId === executionId);
 };

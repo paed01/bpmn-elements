@@ -82,7 +82,7 @@ Feature('Signals', () => {
     });
   });
 
-  Scenario('Resume processes that communicates with signals', () => {
+  Scenario('Stop and resume processes that communicates with signals', () => {
     let definition;
     Given('a trade process waiting for spot price update signal and another admin processs that updates price', async () => {
       definition = await prepareSource();
@@ -158,6 +158,82 @@ Feature('Signals', () => {
     });
 
     And('run is completed', async () => {
+      return end;
+    });
+  });
+
+  Scenario('Recover processes that communicates with signals', () => {
+    let definition;
+    Given('a trade process waiting for spot price update signal and another admin processs that updates price', async () => {
+      definition = await prepareSource();
+    });
+
+    When('definition is ran', () => {
+      definition.run();
+    });
+
+    let tradeTask;
+    Then('trader is considering to trade', async () => {
+      [, tradeTask] = definition.getPostponed();
+      expect(tradeTask).to.be.ok;
+      expect(tradeTask.content.form.fields.price.defaultValue).to.equal(100);
+    });
+
+    When('spot price is updated', () => {
+      const signal = definition.getActivityById('spotPriceUpdate');
+
+      const wait = definition.waitFor('activity.wait', (_, api) => {
+        return api.content.type === 'bpmn:UserTask';
+      });
+
+      definition.signal(signal.resolve());
+
+      return wait;
+    });
+
+    let state;
+    Then('run is stopped and state is saved', async () => {
+      definition.stop();
+      state = definition.getState();
+    });
+
+    Given('run is recovered and resumed', async () => {
+      definition = await prepareSource();
+      definition.recover(state);
+      definition.resume();
+    });
+
+    When('admin approves new spot price', () => {
+      const wait = definition.waitFor('activity.wait', (_, api) => {
+        return api.content.type === 'bpmn:UserTask';
+      });
+
+      definition.signal({
+        id: 'approveSpotPrice',
+        form: {
+          newPrice: 101
+        }
+      });
+
+      return wait;
+    });
+
+    Then('trader is presented new price', () => {
+      const postponed = definition.getPostponed();
+      expect(postponed).to.have.length(2);
+
+      [tradeTask] = postponed;
+
+      expect(tradeTask.content.form.fields.price.defaultValue).to.equal(101);
+    });
+
+    let end;
+    When('trader trades', () => {
+      end = definition.waitFor('end');
+      tradeTask.signal({amount: 42});
+    });
+
+    Then('run completes', async () => {
       return end;
     });
   });

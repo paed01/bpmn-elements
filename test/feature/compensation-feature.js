@@ -104,7 +104,8 @@ Feature('Compensation', () => {
     });
 
     And('association was taken', () => {
-      const [association] = definition.context.getAssociations();
+      const [bp] = definition.getProcesses();
+      const [association] = bp.context.getAssociations();
       expect(association.counters).to.deep.equal({
         complete: 1,
         take: 1,
@@ -593,7 +594,6 @@ Feature('Compensation', () => {
       }).recover(JSON.parse(JSON.stringify(state)));
       end = recovered.waitFor('end');
 
-
       recovered.resume();
     });
 
@@ -601,17 +601,21 @@ Feature('Compensation', () => {
       expect(resumedUndoService).to.have.length(1);
     });
 
-    When('compensation service completes', () => {
+    When('compensation service compensates for completed iteration', () => {
+      expect(resumedUndoService[0][0].content.inbound[0].message.content).to.have.property('index', 0);
+
       const [, callback] = resumedUndoService.pop();
       callback(null, true);
     });
 
-    And('again', () => {
+    And('compensation service compensates for errored iteration', () => {
+      expect(resumedUndoService[0][0].content.inbound[0].message.content).to.have.property('index', 2);
+
       const [, callback] = resumedUndoService.pop();
       callback(null, true);
     });
 
-    And('definition completes', () => {
+    Then('definition completes', () => {
       return end;
     });
 
@@ -620,7 +624,7 @@ Feature('Compensation', () => {
       expect(service.counters).to.have.property('discarded', 3);
     });
 
-    And('compensation service is taken once again', () => {
+    And('compensation service is taken again', () => {
       const task = recovered.getActivityById('undoService');
       expect(task.counters).to.have.property('taken', 6);
     });

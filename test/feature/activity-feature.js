@@ -15,7 +15,7 @@ Feature('Activity', () => {
 
     let wait;
     When('definition is run', () => {
-      wait = definition.getActivityById('task').waitFor('wait');
+      wait = definition.waitFor('activity.wait');
       definition.run();
     });
 

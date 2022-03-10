@@ -13,23 +13,24 @@ var _Timers = require("./Timers");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const optionsSymbol = Symbol.for('options');
-const variablesSymbol = Symbol.for('variables');
+const kOptions = Symbol.for('options');
+const kServices = Symbol.for('services');
+const kVariables = Symbol.for('variables');
 const defaultOptions = ['extensions', 'output', 'services', 'scripts', 'settings', 'variables', 'Logger'];
 
 function Environment(options = {}) {
-  this[optionsSymbol] = options;
   this.options = validateOptions(options);
   this.expressions = options.expressions || (0, _Expressions.default)();
   this.extensions = options.extensions;
   this.output = options.output || {};
   this.scripts = options.scripts || (0, _Scripts.Scripts)();
-  this.services = options.services || {};
+  this.timers = options.timers || (0, _Timers.Timers)();
   this.settings = { ...options.settings
   };
-  this.timers = options.timers || (0, _Timers.Timers)();
   this.Logger = options.Logger || DummyLogger;
-  this[variablesSymbol] = options.variables || {};
+  this[kOptions] = options;
+  this[kServices] = options.services || {};
+  this[kVariables] = options.variables || {};
 }
 
 const proto = Environment.prototype;
@@ -37,7 +38,25 @@ Object.defineProperty(proto, 'variables', {
   enumerable: true,
 
   get() {
-    return this[variablesSymbol];
+    return this[kVariables];
+  }
+
+});
+Object.defineProperty(proto, 'services', {
+  enumerable: true,
+
+  get() {
+    return this[kServices];
+  },
+
+  set(value) {
+    const services = this[kServices];
+
+    for (const name in services) {
+      if (!(name in value)) delete services[name];
+    }
+
+    Object.assign(services, value);
   }
 
 });
@@ -46,7 +65,7 @@ proto.getState = function getState() {
   return {
     settings: { ...this.settings
     },
-    variables: { ...this.variables
+    variables: { ...this[kVariables]
     },
     output: { ...this.output
     }
@@ -56,19 +75,19 @@ proto.getState = function getState() {
 proto.recover = function recover(state) {
   if (!state) return this;
   const recoverOptions = validateOptions(state);
-  Object.assign(this[optionsSymbol], recoverOptions);
+  Object.assign(this[kOptions], recoverOptions);
   if (state.settings) Object.assign(this.settings, state.settings);
-  if (state.variables) Object.assign(this[variablesSymbol], state.variables);
+  if (state.variables) Object.assign(this[kVariables], state.variables);
   if (state.output) Object.assign(this.output, state.output);
   return this;
 };
 
 proto.clone = function clone(overrideOptions = {}) {
-  const services = this.services;
+  const services = this[kServices];
   const newOptions = {
     settings: { ...this.settings
     },
-    variables: { ...this.variables
+    variables: { ...this[kVariables]
     },
     output: { ...this.output
     },
@@ -89,8 +108,15 @@ proto.clone = function clone(overrideOptions = {}) {
 
 proto.assignVariables = function assignVariables(newVars) {
   if (!newVars || typeof newVars !== 'object') return;
-  this[variablesSymbol] = { ...this.variables,
+  this[kVariables] = { ...this.variables,
     ...newVars
+  };
+};
+
+proto.assignSettings = function assignVariables(newSettings) {
+  if (!newSettings || typeof newSettings !== 'object') return;
+  this.settings = { ...this.settings,
+    ...newSettings
   };
 };
 
@@ -103,7 +129,7 @@ proto.registerScript = function registerScript(...args) {
 };
 
 proto.getServiceByName = function getServiceByName(serviceName) {
-  return this.services[serviceName];
+  return this[kServices][serviceName];
 };
 
 proto.resolveExpression = function resolveExpression(expression, message = {}, expressionFnContext) {
@@ -115,7 +141,7 @@ proto.resolveExpression = function resolveExpression(expression, message = {}, e
 };
 
 proto.addService = function addService(name, fn) {
-  this.services[name] = fn;
+  this[kServices][name] = fn;
 };
 
 function validateOptions(input) {

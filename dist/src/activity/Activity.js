@@ -23,10 +23,10 @@ var _Errors = require("../error/Errors");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const activityDefSymbol = Symbol.for('activityDefinition');
-const bpmnIoSymbol = Symbol.for('bpmnIo');
-const consumingSymbol = Symbol.for('consuming');
-const countersSymbol = Symbol.for('counters');
+const kActivityDef = Symbol.for('activityDefinition');
+const kBpmnIo = Symbol.for('bpmnIo');
+const kConsuming = Symbol.for('consuming');
+const kCounters = Symbol.for('counters');
 const eventDefinitionsSymbol = Symbol.for('eventDefinitions');
 const execSymbol = Symbol.for('exec');
 const executeMessageSymbol = Symbol.for('executeMessage');
@@ -50,7 +50,7 @@ function Activity(Behaviour, activityDef, context) {
     attachedTo: attachedToRef,
     eventDefinitions
   } = behaviour;
-  this[activityDefSymbol] = activityDef;
+  this[kActivityDef] = activityDef;
   this.id = id;
   this.type = type;
   this.name = name;
@@ -62,7 +62,7 @@ function Activity(Behaviour, activityDef, context) {
   this.logger = context.environment.Logger(type.toLowerCase());
   this.environment = context.environment;
   this.context = context;
-  this[countersSymbol] = {
+  this[kCounters] = {
     taken: 0,
     discarded: 0
   };
@@ -152,7 +152,7 @@ Object.defineProperty(proto, 'counters', {
   enumerable: true,
 
   get() {
-    return { ...this[countersSymbol]
+    return { ...this[kCounters]
     };
   }
 
@@ -177,8 +177,8 @@ Object.defineProperty(proto, 'bpmnIo', {
   enumerable: true,
 
   get() {
-    if (bpmnIoSymbol in this) return this[bpmnIoSymbol];
-    const bpmnIo = this[bpmnIoSymbol] = new _BpmnIO.default(this, this.context);
+    if (kBpmnIo in this) return this[kBpmnIo];
+    const bpmnIo = this[kBpmnIo] = new _BpmnIO.default(this, this.context);
     return bpmnIo;
   }
 
@@ -213,7 +213,7 @@ Object.defineProperty(proto, 'isRunning', {
   enumerable: true,
 
   get() {
-    if (!this[consumingSymbol]) return false;
+    if (!this[kConsuming]) return false;
     return !!this.status;
   }
 
@@ -286,7 +286,7 @@ Object.defineProperty(proto, 'triggeredByEvent', {
   enumerable: true,
 
   get() {
-    return this[activityDefSymbol].triggeredByEvent;
+    return this[kActivityDef].triggeredByEvent;
   }
 
 });
@@ -358,7 +358,7 @@ proto.recover = function recover(state) {
   this.status = state.status;
   const exec = this[execSymbol];
   exec.executionId = state.executionId;
-  this[countersSymbol] = { ...this[countersSymbol],
+  this[kCounters] = { ...this[kCounters],
     ...state.counters
   };
 
@@ -371,7 +371,7 @@ proto.recover = function recover(state) {
 };
 
 proto.resume = function resume() {
-  if (this[consumingSymbol]) {
+  if (this[kConsuming]) {
     throw new Error(`cannot resume running activity <${this.id}>`);
   }
 
@@ -404,7 +404,7 @@ proto.discard = function discard(discardContent) {
 };
 
 proto.stop = function stop() {
-  if (!this[consumingSymbol]) return;
+  if (!this[kConsuming]) return;
   return this.getApi().stop();
 };
 
@@ -671,8 +671,8 @@ proto._onInboundEvent = function onInboundEvent(routingKey, message) {
 };
 
 proto._consumeRunQ = function consumeRunQ() {
-  if (this[consumingSymbol]) return;
-  this[consumingSymbol] = true;
+  if (this[kConsuming]) return;
+  this[kConsuming] = true;
   this.broker.getQueue('run-q').assertConsumer(this[messageHandlersSymbol].onRunMessage, {
     exclusive: true,
     consumerTag: '_activity-run'
@@ -802,7 +802,7 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
     case 'run.end':
       {
         if (this.status === 'end') break;
-        this[countersSymbol].taken++;
+        this[kCounters].taken++;
         this.status = 'end';
         if (isRedelivered) break;
         return this._doRunLeave(message, false, () => {
@@ -828,7 +828,7 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
     case 'run.discarded':
       {
         this.logger.debug(`<${content.executionId} (${id})> discarded`);
-        this[countersSymbol].discarded++;
+        this[kCounters].discarded++;
         this.status = 'discarded';
         content.outbound = undefined;
 
@@ -1076,9 +1076,9 @@ proto._publishEvent = function publishEvent(state, content, properties = {}) {
 };
 
 proto._onStop = function onStop(message) {
-  const running = this[consumingSymbol];
+  const running = this[kConsuming];
   this.stopped = true;
-  this[consumingSymbol] = false;
+  this[kConsuming] = false;
   const broker = this.broker;
   broker.cancel('_activity-run');
   broker.cancel('_activity-api');
@@ -1171,7 +1171,7 @@ proto._deactivateRunConsumers = function _deactivateRunConsumers() {
   broker.cancel('_activity-api');
   broker.cancel('_activity-run');
   broker.cancel('_activity-execution');
-  this[consumingSymbol] = false;
+  this[kConsuming] = false;
 };
 
 function OutboundEvaluator(activity, outboundFlows) {

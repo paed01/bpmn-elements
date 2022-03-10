@@ -21,6 +21,7 @@ export function Definition(context, options) {
   if (!context) throw new Error('No context');
 
   const {id, name, type = 'definition'} = context;
+
   this.id = id;
   this.type = type;
   this.name = name;
@@ -254,9 +255,9 @@ proto.getProcessById = function getProcessById(processId) {
 };
 
 proto.getActivityById = function getActivityById(childId) {
-  const siblings = this.getProcesses();
-  for (const sibling of siblings) {
-    const child = sibling.getActivityById(childId);
+  const bps = this.getProcesses();
+  for (const bp of bps) {
+    const child = bp.getActivityById(childId);
     if (child) return child;
   }
   return null;

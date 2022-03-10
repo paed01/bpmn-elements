@@ -45,7 +45,9 @@ function ContextInstance(definitionContext, environment) {
   };
 }
 
-ContextInstance.prototype.getActivityById = function getActivityById(activityId) {
+const proto = ContextInstance.prototype;
+
+proto.getActivityById = function getActivityById(activityId) {
   const activityInstance = this.refs.activityRefs[activityId];
   if (activityInstance) return activityInstance;
   const activity = this.definitionContext.getActivityById(activityId);
@@ -53,14 +55,14 @@ ContextInstance.prototype.getActivityById = function getActivityById(activityId)
   return this.upsertActivity(activity);
 };
 
-ContextInstance.prototype.upsertActivity = function upsertActivity(activityDef) {
+proto.upsertActivity = function upsertActivity(activityDef) {
   let activityInstance = this.refs.activityRefs[activityDef.id];
   if (activityInstance) return activityInstance;
   activityInstance = this.refs.activityRefs[activityDef.id] = new activityDef.Behaviour(activityDef, this);
   return activityInstance;
 };
 
-ContextInstance.prototype.getSequenceFlowById = function getSequenceFlowById(sequenceFlowId) {
+proto.getSequenceFlowById = function getSequenceFlowById(sequenceFlowId) {
   const flowInstance = this.refs.sequenceFlowRefs[sequenceFlowId];
   if (flowInstance) return flowInstance;
   const flowDef = this.definitionContext.getSequenceFlowById(sequenceFlowId);
@@ -68,31 +70,31 @@ ContextInstance.prototype.getSequenceFlowById = function getSequenceFlowById(seq
   return this.upsertSequenceFlow(flowDef);
 };
 
-ContextInstance.prototype.getInboundSequenceFlows = function getInboundSequenceFlows(activityId) {
+proto.getInboundSequenceFlows = function getInboundSequenceFlows(activityId) {
   return (this.definitionContext.getInboundSequenceFlows(activityId) || []).map(flow => this.upsertSequenceFlow(flow));
 };
 
-ContextInstance.prototype.getOutboundSequenceFlows = function getOutboundSequenceFlows(activityId) {
+proto.getOutboundSequenceFlows = function getOutboundSequenceFlows(activityId) {
   return (this.definitionContext.getOutboundSequenceFlows(activityId) || []).map(flow => this.upsertSequenceFlow(flow));
 };
 
-ContextInstance.prototype.getInboundAssociations = function getInboundAssociations(activityId) {
+proto.getInboundAssociations = function getInboundAssociations(activityId) {
   return (this.definitionContext.getInboundAssociations(activityId) || []).map(association => this.upsertAssociation(association));
 };
 
-ContextInstance.prototype.getOutboundAssociations = function getOutboundAssociations(activityId) {
+proto.getOutboundAssociations = function getOutboundAssociations(activityId) {
   return (this.definitionContext.getOutboundAssociations(activityId) || []).map(association => this.upsertAssociation(association));
 };
 
-ContextInstance.prototype.getActivities = function getActivities(scopeId) {
+proto.getActivities = function getActivities(scopeId) {
   return (this.definitionContext.getActivities(scopeId) || []).map(activityDef => this.upsertActivity(activityDef));
 };
 
-ContextInstance.prototype.getSequenceFlows = function getSequenceFlows(scopeId) {
+proto.getSequenceFlows = function getSequenceFlows(scopeId) {
   return (this.definitionContext.getSequenceFlows(scopeId) || []).map(flow => this.upsertSequenceFlow(flow));
 };
 
-ContextInstance.prototype.upsertSequenceFlow = function upsertSequenceFlow(flowDefinition) {
+proto.upsertSequenceFlow = function upsertSequenceFlow(flowDefinition) {
   const refs = this.refs.sequenceFlowRefs;
   let flowInstance = refs[flowDefinition.id];
   if (flowInstance) return flowInstance;
@@ -101,11 +103,11 @@ ContextInstance.prototype.upsertSequenceFlow = function upsertSequenceFlow(flowD
   return flowInstance;
 };
 
-ContextInstance.prototype.getAssociations = function getAssociations(scopeId) {
+proto.getAssociations = function getAssociations(scopeId) {
   return (this.definitionContext.getAssociations(scopeId) || []).map(association => this.upsertAssociation(association));
 };
 
-ContextInstance.prototype.upsertAssociation = function upsertAssociation(associationDefinition) {
+proto.upsertAssociation = function upsertAssociation(associationDefinition) {
   const refs = this.refs.associationRefs;
   let instance = refs[associationDefinition.id];
   if (instance) return instance;
@@ -113,44 +115,44 @@ ContextInstance.prototype.upsertAssociation = function upsertAssociation(associa
   return instance;
 };
 
-ContextInstance.prototype.clone = function clone(newEnvironment) {
+proto.clone = function clone(newEnvironment) {
   return new ContextInstance(this.definitionContext, newEnvironment || this.environment);
 };
 
-ContextInstance.prototype.getProcessById = function getProcessById(processId) {
+proto.getProcessById = function getProcessById(processId) {
   const refs = this.refs.processRefs;
-  let processInstance = this.refs.processRefs[processId];
-  if (processInstance) return processInstance;
+  let bp = this.refs.processRefs[processId];
+  if (bp) return bp;
   const processDefinition = this.definitionContext.getProcessById(processId);
   if (!processDefinition) return null;
-  processInstance = refs[processId] = new processDefinition.Behaviour(processDefinition, this);
-  this.refs.processes.push(processInstance);
-  return processInstance;
+  const bpContext = this.clone(this.environment.clone());
+  bp = refs[processId] = new processDefinition.Behaviour(processDefinition, bpContext);
+  this.refs.processes.push(bp);
+  return bp;
 };
 
-ContextInstance.prototype.getNewProcessById = function getNewProcessById(processId, processOptions) {
+proto.getNewProcessById = function getNewProcessById(processId) {
   if (!this.getProcessById(processId)) return null;
-  const processDefinition = this.definitionContext.getProcessById(processId);
-  const processInstance = new processDefinition.Behaviour(processDefinition, this.clone(this.environment.clone({
-    output: {},
-    ...processOptions
+  const bpDef = this.definitionContext.getProcessById(processId);
+  const bp = new bpDef.Behaviour(bpDef, this.clone(this.environment.clone({
+    output: {}
   })));
-  return processInstance;
+  return bp;
 };
 
-ContextInstance.prototype.getProcesses = function getProcesses() {
+proto.getProcesses = function getProcesses() {
   return this.definitionContext.getProcesses().map(({
     id: processId
   }) => this.getProcessById(processId));
 };
 
-ContextInstance.prototype.getExecutableProcesses = function getExecutableProcesses() {
+proto.getExecutableProcesses = function getExecutableProcesses() {
   return this.definitionContext.getExecutableProcesses().map(({
     id: processId
   }) => this.getProcessById(processId));
 };
 
-ContextInstance.prototype.getMessageFlows = function getMessageFlows(sourceId) {
+proto.getMessageFlows = function getMessageFlows(sourceId) {
   if (!this.refs.messageFlows.length) {
     const flows = this.definitionContext.getMessageFlows() || [];
     this.refs.messageFlows.push(...flows.map(flow => new flow.Behaviour(flow, this)));
@@ -159,7 +161,7 @@ ContextInstance.prototype.getMessageFlows = function getMessageFlows(sourceId) {
   return this.refs.messageFlows.filter(flow => flow.source.processId === sourceId);
 };
 
-ContextInstance.prototype.getDataObjectById = function getDataObjectById(referenceId) {
+proto.getDataObjectById = function getDataObjectById(referenceId) {
   let dataObject;
   if (dataObject = this.refs.dataObjectRefs[referenceId]) return dataObject;
   const dataObjectDef = this.definitionContext.getDataObjectById(referenceId);
@@ -168,7 +170,7 @@ ContextInstance.prototype.getDataObjectById = function getDataObjectById(referen
   return dataObject;
 };
 
-ContextInstance.prototype.getDataStoreById = function getDataStoreById(referenceId) {
+proto.getDataStoreById = function getDataStoreById(referenceId) {
   let dataStore;
   if (dataStore = this.refs.dataStoreRefs[referenceId]) return dataStore;
   const dataStoreDef = this.definitionContext.getDataStoreById(referenceId) || this.definitionContext.getDataStoreReferenceById(referenceId);
@@ -177,7 +179,7 @@ ContextInstance.prototype.getDataStoreById = function getDataStoreById(reference
   return dataStore;
 };
 
-ContextInstance.prototype.getStartActivities = function getStartActivities(filterOptions, scopeId) {
+proto.getStartActivities = function getStartActivities(filterOptions, scopeId) {
   const {
     referenceId,
     referenceType = 'unknown'
@@ -193,6 +195,6 @@ ContextInstance.prototype.getStartActivities = function getStartActivities(filte
   });
 };
 
-ContextInstance.prototype.loadExtensions = function loadExtensions(activity) {
+proto.loadExtensions = function loadExtensions(activity) {
   return this.extensionsMapper.get(activity);
 };

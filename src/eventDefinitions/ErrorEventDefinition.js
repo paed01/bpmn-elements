@@ -1,7 +1,7 @@
 import {brokerSafeId} from '../shared';
 import {cloneContent, shiftParent} from '../messageHelper';
 
-const completedSymbol = Symbol.for('completed');
+const kCompleted = Symbol.for('completed');
 const messageQSymbol = Symbol.for('messageQ');
 const executeMessageSymbol = Symbol.for('executeMessage');
 const referenceElementSymbol = Symbol.for('referenceElement');
@@ -28,7 +28,7 @@ export default function ErrorEventDefinition(activity, eventDefinition) {
 
   const referenceElement = this[referenceElementSymbol] = reference.id && activity.getActivityById(reference.id);
   if (!isThrowing) {
-    this[completedSymbol] = false;
+    this[kCompleted] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(referenceId)}-q`;
     this[messageQSymbol] = broker.assertQueue(messageQueueName, {autoDelete: false, durable: true});
@@ -51,7 +51,7 @@ proto.execute = function execute(executeMessage) {
 
 proto.executeCatch = function executeCatch(executeMessage) {
   this[executeMessageSymbol] = executeMessage;
-  this[completedSymbol] = false;
+  this[kCompleted] = false;
 
   const executeContent = executeMessage.content;
   const {executionId, parent} = executeContent;
@@ -64,7 +64,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
     consumerTag: `_onthrow-${executionId}`,
   });
 
-  if (this[completedSymbol]) return;
+  if (this[kCompleted]) return;
 
   this._debug(`expect ${info.description}`);
 
@@ -85,7 +85,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
       expect: {...info.message},
     }));
 
-    if (this[completedSymbol]) return this._stop();
+    if (this[kCompleted]) return this._stop();
   }
 
   const waitContent = cloneContent(executeContent, {
@@ -142,7 +142,7 @@ proto._onThrowApiMessage = function onThrowApiMessage(routingKey, message) {
 };
 
 proto._catchError = function catchError(routingKey, message, error) {
-  this[completedSymbol] = true;
+  this[kCompleted] = true;
 
   this._stop();
 
@@ -176,7 +176,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
 
   switch (messageType) {
     case 'discard': {
-      this[completedSymbol] = true;
+      this[kCompleted] = true;
       this._stop();
       return this.broker.publish('execution', 'execute.discard', cloneContent(this[executeMessageSymbol].content));
     }

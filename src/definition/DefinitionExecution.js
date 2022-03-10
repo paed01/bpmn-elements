@@ -3,45 +3,54 @@ import {DefinitionApi} from '../Api';
 import {brokerSafeId} from '../shared';
 import {cloneContent, cloneMessage, pushParent, cloneParent} from '../messageHelper';
 
-const activatedSymbol = Symbol.for('activated');
-const processesQSymbol = Symbol.for('processesQ');
-const completedSymbol = Symbol.for('completed');
-const executeMessageSymbol = Symbol.for('executeMessage');
-const messageHandlersSymbol = Symbol.for('messageHandlers');
-const parentSymbol = Symbol.for('definition');
-const processesSymbol = Symbol.for('processes');
-const statusSymbol = Symbol.for('status');
-const stoppedSymbol = Symbol.for('stopped');
+const kActivated = Symbol.for('activated');
+const kProcessesQ = Symbol.for('processesQ');
+const kCompleted = Symbol.for('completed');
+const kExecuteMessage = Symbol.for('executeMessage');
+const kMessageHandlers = Symbol.for('messageHandlers');
+const kParent = Symbol.for('definition');
+const kProcesses = Symbol.for('processes');
+const kStatus = Symbol.for('status');
+const kStopped = Symbol.for('stopped');
 
 export default function DefinitionExecution(definition, context) {
   const broker = definition.broker;
 
-  this[parentSymbol] = definition;
+  this[kParent] = definition;
   this.id = definition.id;
   this.type = definition.type;
   this.broker = broker;
-  this.environment = definition.environment;
+  const environment = this.environment = definition.environment;
   this.context = context;
 
-  const processes = this[processesSymbol] = context.getProcesses();
-  this[processesSymbol] = {
+  const processes = context.getProcesses();
+  const ids = [];
+  const executable = [];
+  for (const bp of processes) {
+    bp.environment.assignVariables(environment.variables);
+    bp.environment.assignSettings(environment.settings);
+    ids.push(bp.id);
+    if (bp.isExecutable) executable.push(bp);
+  }
+
+  this[kProcesses] = {
     processes,
     running: [],
-    ids: processes.map(({id: childId}) => childId),
-    executable: context.getExecutableProcesses(),
+    ids,
+    executable,
     postponed: [],
   };
 
   broker.assertExchange('execution', 'topic', {autoDelete: false, durable: true});
   broker.assertQueue('activity-q', {autoDelete: false, durable: false});
 
-  this[completedSymbol] = false;
-  this[stoppedSymbol] = false;
-  this[activatedSymbol] = false;
-  this[statusSymbol] = 'init';
+  this[kCompleted] = false;
+  this[kStopped] = false;
+  this[kActivated] = false;
+  this[kStatus] = 'init';
   this.executionId = undefined;
 
-  this[messageHandlersSymbol] = {
+  this[kMessageHandlers] = {
     onApiMessage: this._onApiMessage.bind(this),
     onCallActivity: this._onCallActivity.bind(this),
     onCancelCallActivity: this._onCancelCallActivity.bind(this),
@@ -57,40 +66,40 @@ const proto = DefinitionExecution.prototype;
 Object.defineProperty(proto, 'stopped', {
   enumerable: true,
   get() {
-    return this[stoppedSymbol];
+    return this[kStopped];
   },
 });
 
 Object.defineProperty(proto, 'completed', {
   enumerable: true,
   get() {
-    return this[completedSymbol];
+    return this[kCompleted];
   },
 });
 
 Object.defineProperty(proto, 'status', {
   enumerable: true,
   get() {
-    return this[statusSymbol];
+    return this[kStatus];
   },
 });
 
 Object.defineProperty(proto, 'processes', {
   enumerable: true,
   get() {
-    return this[processesSymbol].running;
+    return this[kProcesses].running;
   },
 });
 
 Object.defineProperty(proto, 'postponedCount', {
   get() {
-    return this[processesSymbol].postponed.length;
+    return this[kProcesses].postponed.length;
   },
 });
 
 Object.defineProperty(proto, 'isRunning', {
   get() {
-    return this[activatedSymbol];
+    return this[kActivated];
   },
 });
 
@@ -100,21 +109,20 @@ proto.execute = function execute(executeMessage) {
   const executionId = this.executionId = content.executionId;
   if (!executionId) throw new Error('Definition execution requires execution id');
 
-
-  this[executeMessageSymbol] = cloneMessage(executeMessage, {
+  this[kExecuteMessage] = cloneMessage(executeMessage, {
     executionId,
     state: 'start',
   });
 
-  this[stoppedSymbol] = false;
+  this[kStopped] = false;
 
-  this[processesQSymbol] = this.broker.assertQueue(`execute-${executionId}-q`, {durable: true, autoDelete: false});
+  this[kProcessesQ] = this.broker.assertQueue(`execute-${executionId}-q`, {durable: true, autoDelete: false});
 
   if (executeMessage.fields.redelivered) {
     return this.resume();
   }
 
-  const {running, executable} = this[processesSymbol];
+  const {running, executable} = this[kProcesses];
 
   if (content.processId) {
     const startWithProcess = this.getProcessById(content.processId);
@@ -136,10 +144,10 @@ proto.resume = function resume() {
 
   if (this.completed) return this._complete('completed');
 
-  const {running, postponed} = this[processesSymbol];
+  const {running, postponed} = this[kProcesses];
   this._activate(running);
   postponed.splice(0);
-  this[processesQSymbol].consume(this[messageHandlersSymbol].onProcessMessage, {
+  this[kProcessesQ].consume(this[kMessageHandlers].onProcessMessage, {
     prefetch: 1000,
     consumerTag: `_definition-activity-${this.executionId}`,
   });
@@ -161,13 +169,13 @@ proto.recover = function recover(state) {
   if (!state) return this;
   this.executionId = state.executionId;
 
-  this[stoppedSymbol] = state.stopped;
-  this[completedSymbol] = state.completed;
-  this[statusSymbol] = state.status;
+  this[kStopped] = state.stopped;
+  this[kCompleted] = state.completed;
+  this[kStatus] = state.status;
 
   this._debug(`recover ${this.status} definition execution`);
 
-  const running = this[processesSymbol].running;
+  const running = this[kProcesses].running;
   running.splice(0);
 
   state.processes.map((processState) => {
@@ -185,7 +193,7 @@ proto.stop = function stop() {
 };
 
 proto.getProcesses = function getProcesses() {
-  const {running, processes} = this[processesSymbol];
+  const {running, processes} = this[kProcesses];
   const result = running.slice();
   for (const bp of processes) {
     if (!result.find((runningBp) => bp.id === runningBp.id)) result.push(bp);
@@ -202,17 +210,17 @@ proto.getProcessesById = function getProcessesById(processId) {
 };
 
 proto.getProcessByExecutionId = function getProcessByExecutionId(processExecutionId) {
-  const running = this[processesSymbol].running;
+  const running = this[kProcesses].running;
   return running.find((bp) => bp.executionId === processExecutionId);
 };
 
 proto.getRunningProcesses = function getRunningProcesses() {
-  const running = this[processesSymbol].running;
+  const running = this[kProcesses].running;
   return running.filter((bp) => bp.executionId);
 };
 
 proto.getExecutableProcesses = function getExecutableProcesses() {
-  return this[processesSymbol].executable.slice();
+  return this[kProcesses].executable.slice();
 };
 
 proto.getState = function getState() {
@@ -221,12 +229,12 @@ proto.getState = function getState() {
     stopped: this.stopped,
     completed: this.completed,
     status: this.status,
-    processes: this[processesSymbol].running.map((bp) => bp.getState()),
+    processes: this[kProcesses].running.map((bp) => bp.getState()),
   };
 };
 
 proto.getApi = function getApi(apiMessage) {
-  if (!apiMessage) apiMessage = this[executeMessageSymbol] || {content: this._createMessage()};
+  if (!apiMessage) apiMessage = this[kExecuteMessage] || {content: this._createMessage()};
 
   const content = apiMessage.content;
   if (content.executionId !== this.executionId) {
@@ -234,7 +242,7 @@ proto.getApi = function getApi(apiMessage) {
   }
 
   const api = DefinitionApi(this.broker, apiMessage);
-  const postponed = this[processesSymbol].postponed;
+  const postponed = this[kProcesses].postponed;
   const self = this;
 
   api.getExecuting = function getExecuting() {
@@ -249,7 +257,7 @@ proto.getApi = function getApi(apiMessage) {
 };
 
 proto.getPostponed = function getPostponed(...args) {
-  const running = this[processesSymbol].running;
+  const running = this[kProcesses].running;
   return running.reduce((result, p) => {
     result = result.concat(p.getPostponed(...args));
     return result;
@@ -257,37 +265,38 @@ proto.getPostponed = function getPostponed(...args) {
 };
 
 proto._start = function start() {
-  const {ids, executable, postponed} = this[processesSymbol];
+  const {ids, executable, postponed} = this[kProcesses];
   if (!ids.length) {
     return this.publishCompletionMessage('completed');
   }
+
   if (!executable.length) {
     return this._complete('error', {error: new Error('No executable process')});
   }
 
-  this[statusSymbol] = 'start';
+  this[kStatus] = 'start';
 
   for (const bp of executable) bp.init();
   for (const bp of executable) bp.run();
 
   postponed.splice(0);
-  this[processesQSymbol].assertConsumer(this[messageHandlersSymbol].onProcessMessage, {
+  this[kProcessesQ].assertConsumer(this[kMessageHandlers].onProcessMessage, {
     prefetch: 1000,
     consumerTag: `_definition-activity-${this.executionId}`,
   });
 };
 
 proto._activate = function activate(processList) {
-  this.broker.subscribeTmp('api', '#', this[messageHandlersSymbol].onApiMessage, {
+  this.broker.subscribeTmp('api', '#', this[kMessageHandlers].onApiMessage, {
     noAck: true,
     consumerTag: '_definition-api-consumer',
   });
   for (const bp of processList) this._activateProcess(bp);
-  this[activatedSymbol] = true;
+  this[kActivated] = true;
 };
 
 proto._activateProcess = function activateProcess(bp) {
-  const handlers = this[messageHandlersSymbol];
+  const handlers = this[kMessageHandlers];
 
   bp.broker.subscribeTmp('message', 'message.outbound', handlers.onMessageOutbound, {
     noAck: true,
@@ -325,7 +334,7 @@ proto._onChildEvent = function onChildEvent(routingKey, originalMessage) {
   const content = message.content;
   const parent = content.parent = content.parent || {};
 
-  const isDirectChild = this[processesSymbol].ids.indexOf(content.id) > -1;
+  const isDirectChild = this[kProcesses].ids.indexOf(content.id) > -1;
   if (isDirectChild) {
     parent.executionId = this.executionId;
   } else {
@@ -335,14 +344,14 @@ proto._onChildEvent = function onChildEvent(routingKey, originalMessage) {
   this.broker.publish('event', routingKey, content, {...message.properties, mandatory: false});
   if (!isDirectChild) return;
 
-  this[processesQSymbol].queueMessage(message.fields, cloneContent(content), message.properties);
+  this[kProcessesQ].queueMessage(message.fields, cloneContent(content), message.properties);
 };
 
 proto._deactivate = function deactivate() {
   this.broker.cancel('_definition-api-consumer');
   this.broker.cancel(`_definition-activity-${this.executionId}`);
-  for (const bp of this[processesSymbol].running) this._deactivateProcess(bp);
-  this[activatedSymbol] = false;
+  for (const bp of this[kProcesses].running) this._deactivateProcess(bp);
+  this[kActivated] = false;
 };
 
 proto._deactivateProcess = function deactivateProcess(bp) {
@@ -379,7 +388,7 @@ proto._onProcessMessage = function onProcessMessage(routingKey, message) {
   switch (routingKey) {
     case 'process.discard':
     case 'process.enter':
-      this[statusSymbol] = 'executing';
+      this[kStatus] = 'executing';
       break;
     case 'process.discarded': {
       if (inbound && inbound.length) {
@@ -412,7 +421,7 @@ proto._onProcessMessage = function onProcessMessage(routingKey, message) {
           error: content.error,
         }, {mandatory: true, type: 'error'});
       } else {
-        for (const bp of this[processesSymbol].running.slice()) {
+        for (const bp of this[kProcesses].running.slice()) {
           if (bp.id !== childId) bp.stop();
         }
 
@@ -425,7 +434,7 @@ proto._onProcessMessage = function onProcessMessage(routingKey, message) {
 
 proto._stateChangeMessage = function stateChangeMessage(message, postponeMessage) {
   let previousMsg;
-  const postponed = this[processesSymbol].postponed;
+  const postponed = this[kProcesses].postponed;
   const idx = postponed.findIndex((msg) => msg.content.executionId === message.content.executionId);
   if (idx > -1) {
     previousMsg = postponed.splice(idx, 1)[0];
@@ -454,15 +463,14 @@ proto._onProcessCompleted = function onProcessCompleted(message) {
 };
 
 proto._onStopped = function onStopped(message) {
-  const running = this[processesSymbol].running;
+  const running = this[kProcesses].running;
   this._debug(`stop definition execution (stop process executions ${running.length})`);
-  this[processesQSymbol].close();
+  this[kProcessesQ].close();
+  for (const bp of running.slice()) bp.stop();
   this._deactivate();
 
-  for (const bp of running.slice()) bp.stop();
-
-  this[stoppedSymbol] = true;
-  return this.broker.publish('execution', `execution.stopped.${this.executionId}`, cloneContent(this[executeMessageSymbol].content, {
+  this[kStopped] = true;
+  return this.broker.publish('execution', `execution.stopped.${this.executionId}`, cloneContent(this[kExecuteMessage].content, {
     ...message.content,
   }), {type: 'stopped', persistent: false});
 };
@@ -477,7 +485,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 
   if (delegate) {
-    for (const bp of this[processesSymbol].running.slice()) {
+    for (const bp of this[kProcesses].running.slice()) {
       bp.broker.publish('api', routingKey, cloneContent(message.content), message.properties);
     }
   }
@@ -485,12 +493,12 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   if (this.executionId !== message.content.executionId) return;
 
   if (messageType === 'stop') {
-    this[processesQSymbol].queueMessage({routingKey: 'execution.stop'}, cloneContent(message.content), {persistent: false});
+    this[kProcessesQ].queueMessage({routingKey: 'execution.stop'}, cloneContent(message.content), {persistent: false});
   }
 };
 
 proto._startProcessesByMessage = function startProcessesByMessage(reference) {
-  const {processes: bps, running} = this[processesSymbol];
+  const {processes: bps, running} = this[kProcesses];
   if (bps.length < 2) return;
 
   for (const bp of bps) {
@@ -542,7 +550,7 @@ proto._onMessageOutbound = function onMessageOutbound(routingKey, message) {
   targetProcess = targetProcess || this.context.getNewProcessById(target.processId);
 
   this._activateProcess(targetProcess);
-  this[processesSymbol].running.push(targetProcess);
+  this[kProcesses].running.push(targetProcess);
   targetProcess.init();
   targetProcess.run();
   targetProcess.sendMessage(message);
@@ -574,7 +582,7 @@ proto._onCallActivity = function onCallActivity(routingKey, message) {
   this._debug(`call from <${fromParent.id}.${fromId}> to <${calledElement}>`);
 
   this._activateProcess(targetProcess);
-  this[processesSymbol].running.push(targetProcess);
+  this[kProcesses].running.push(targetProcess);
   targetProcess.init(bpExecutionId);
   targetProcess.run({inbound: [cloneContent(content)]});
 };
@@ -619,7 +627,7 @@ proto._onDelegateMessage = function onDelegateMessage(routingKey, executeMessage
 };
 
 proto._removeProcessByExecutionId = function removeProcessByExecutionId(processExecutionId) {
-  const running = this[processesSymbol].running;
+  const running = this[kProcesses].running;
   const idx = running.findIndex((p) => p.executionId === processExecutionId);
   if (idx === -1) return;
   return running.splice(idx, 1)[0];
@@ -627,12 +635,12 @@ proto._removeProcessByExecutionId = function removeProcessByExecutionId(processE
 
 proto._complete = function complete(completionType, content, options) {
   this._deactivate();
-  const stateMessage = this[executeMessageSymbol];
+  const stateMessage = this[kExecuteMessage];
   this._debug(`definition execution ${completionType} in ${Date.now() - stateMessage.properties.timestamp}ms`);
   if (!content) content = this._createMessage();
-  this[completedSymbol] = true;
-  if (this.status !== 'terminated') this[statusSymbol] = completionType;
-  this.broker.deleteQueue(this[processesQSymbol].name);
+  this[kCompleted] = true;
+  if (this.status !== 'terminated') this[kStatus] = completionType;
+  this.broker.deleteQueue(this[kProcessesQ].name);
 
   return this.broker.publish('execution', `execution.${completionType}.${this.executionId}`, {
     ...stateMessage.content,
@@ -684,5 +692,5 @@ proto._getProcessApiByExecutionId = function getProcessApiByExecutionId(parentEx
 };
 
 proto._debug = function debug(logMessage) {
-  this[parentSymbol].logger.debug(`<${this.executionId} (${this.id})> ${logMessage}`);
+  this[kParent].logger.debug(`<${this.executionId} (${this.id})> ${logMessage}`);
 };

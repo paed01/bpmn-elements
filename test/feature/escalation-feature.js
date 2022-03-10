@@ -144,7 +144,7 @@ Feature('Escalate', () => {
 
   Scenario('a process with start escalation event', () => {
     let definition;
-    Given('escalate event, an escalation manager sub process, a boss that expects not to be bothered, and a anonymous signal process', async () => {
+    Given('escalate event, an escalation manager sub process, a boss that expects not to be bothered, and an anonymous signal process', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="escalateProcess" isExecutable="true">
@@ -197,7 +197,7 @@ Feature('Escalate', () => {
     });
 
     And('the boss wasn´t bothered', () => {
-      const boss = definition.getElementById('boss');
+      const boss = escalateProcess.getActivityById('boss');
       expect(boss.counters).to.have.property('discarded', 1);
       expect(boss.counters).to.have.property('taken', 0);
     });
@@ -229,7 +229,7 @@ Feature('Escalate', () => {
               <userTask id="call" />
               <intermediateThrowEvent id="timeout">
                 <timerEventDefinition>
-                  <timeDuration xsi:type="tFormalExpression">\${environment.variables.alarmDuration}</timeDuration>
+                  <timeDuration xsi:type="tFormalExpression">\${environment.settings.alarmDuration}</timeDuration>
                 </timerEventDefinition>
               </intermediateThrowEvent>
               <sequenceFlow id="toEscalateToBoss" sourceRef="timeout" targetRef="notifyBoss"/>
@@ -260,7 +260,7 @@ Feature('Escalate', () => {
       definition.on('activity.catch', (api) => {
         caught.push(api);
       });
-      definition.environment.variables.alarmDuration = 'PT0.01S';
+      definition.environment.settings.alarmDuration = 'PT0.01S';
 
       end = definition.waitFor('end');
       definition.run();
@@ -291,7 +291,7 @@ Feature('Escalate', () => {
 
     let wait;
     When('a second run is initiated with sligthly longer alarm duration', () => {
-      definition.environment.variables.alarmDuration = 'PT1M';
+      definition.environment.settings.alarmDuration = 'PT1M';
 
       end = definition.waitFor('end');
       wait = definition.waitFor('wait', (_, msg) => msg.content.id === 'call');
@@ -363,7 +363,7 @@ Feature('Escalate', () => {
     });
 
     When('a fourth run is initiated', () => {
-      definition.environment.variables.alarmDuration = 'PT0.05S';
+      definition.environment.settings.alarmDuration = 'PT0.05S';
 
       end = definition.waitFor('end');
       wait = definition.waitFor('wait', (_, msg) => msg.content.id === 'call');

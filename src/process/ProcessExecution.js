@@ -4,20 +4,20 @@ import {getUniqueId} from '../shared';
 
 export default ProcessExecution;
 
-const activatedSymbol = Symbol.for('activated');
-const activityQSymbol = Symbol.for('activityQ');
-const completedSymbol = Symbol.for('completed');
-const elementsSymbol = Symbol.for('elements');
-const executeMessageSymbol = Symbol.for('executeMessage');
-const messageHandlersSymbol = Symbol.for('messageHandlers');
-const parentSymbol = Symbol.for('parent');
-const statusSymbol = Symbol.for('status');
-const stoppedSymbol = Symbol.for('stopped');
+const kActivated = Symbol.for('activated');
+const kActivityQ = Symbol.for('activityQ');
+const kCompleted = Symbol.for('completed');
+const kElements = Symbol.for('elements');
+const kExecuteMessage = Symbol.for('executeMessage');
+const kMessageHandlers = Symbol.for('messageHandlers');
+const kParent = Symbol.for('parent');
+const kStatus = Symbol.for('status');
+const kStopped = Symbol.for('stopped');
 
 function ProcessExecution(parentActivity, context) {
   const {id, type, broker, isSubProcess} = parentActivity;
 
-  this[parentSymbol] = parentActivity;
+  this[kParent] = parentActivity;
   this.id = id;
   this.type = type;
   this.isSubProcess = isSubProcess;
@@ -25,7 +25,7 @@ function ProcessExecution(parentActivity, context) {
   this.environment = context.environment;
   this.context = context;
 
-  this[elementsSymbol] = {
+  this[kElements] = {
     children: context.getActivities(id),
     associations: context.getAssociations(id),
     flows: context.getSequenceFlows(id),
@@ -40,13 +40,13 @@ function ProcessExecution(parentActivity, context) {
   const exchangeName = this._exchangeName = isSubProcess ? 'subprocess-execution' : 'execution';
   broker.assertExchange(exchangeName, 'topic', {autoDelete: false, durable: true});
 
-  this[completedSymbol] = false;
-  this[stoppedSymbol] = false;
-  this[activatedSymbol] = false;
-  this[statusSymbol] = 'init';
+  this[kCompleted] = false;
+  this[kStopped] = false;
+  this[kActivated] = false;
+  this[kStatus] = 'init';
   this.executionId = undefined;
 
-  this[messageHandlersSymbol] = {
+  this[kMessageHandlers] = {
     onActivityEvent: this._onActivityEvent.bind(this),
     onApiMessage: this._onApiMessage.bind(this),
     onChildMessage: this._onChildMessage.bind(this),
@@ -59,33 +59,33 @@ const proto = ProcessExecution.prototype;
 Object.defineProperty(proto, 'stopped', {
   enumerable: true,
   get() {
-    return this[stoppedSymbol];
+    return this[kStopped];
   },
 });
 
 Object.defineProperty(proto, 'completed', {
   enumerable: true,
   get() {
-    return this[completedSymbol];
+    return this[kCompleted];
   },
 });
 
 Object.defineProperty(proto, 'status', {
   enumerable: true,
   get() {
-    return this[statusSymbol];
+    return this[kStatus];
   },
 });
 
 Object.defineProperty(proto, 'postponedCount', {
   get() {
-    return this[elementsSymbol].postponed.length;
+    return this[kElements].postponed.length;
   },
 });
 
 Object.defineProperty(proto, 'isRunning', {
   get() {
-    return this[activatedSymbol];
+    return this[kActivated];
   },
 });
 
@@ -95,15 +95,15 @@ proto.execute = function execute(executeMessage) {
 
   const executionId = this.executionId = executeMessage.content.executionId;
 
-  this[executeMessageSymbol] = cloneMessage(executeMessage, {
+  this[kExecuteMessage] = cloneMessage(executeMessage, {
     executionId,
     state: 'start',
   });
 
-  this[stoppedSymbol] = false;
+  this[kStopped] = false;
 
   this.environment.assignVariables(executeMessage);
-  this[activityQSymbol] = this.broker.assertQueue(`execute-${executionId}-q`, {durable: true, autoDelete: false});
+  this[kActivityQ] = this.broker.assertQueue(`execute-${executionId}-q`, {durable: true, autoDelete: false});
 
   if (executeMessage.fields.redelivered) {
     return this.resume();
@@ -118,11 +118,11 @@ proto.execute = function execute(executeMessage) {
 proto.resume = function resume() {
   this._debug(`resume process execution at ${this.status}`);
 
-  if (this[completedSymbol]) return this._complete('completed');
+  if (this[kCompleted]) return this._complete('completed');
 
   this._activate();
 
-  const {startActivities, detachedActivities, postponed} = this[elementsSymbol];
+  const {startActivities, detachedActivities, postponed} = this[kElements];
 
   if (startActivities.length > 1) {
     for (const a of startActivities) a.shake();
@@ -131,12 +131,12 @@ proto.resume = function resume() {
   postponed.splice(0);
   detachedActivities.splice(0);
 
-  this[activityQSymbol].consume(this[messageHandlersSymbol].onChildMessage, {
+  this[kActivityQ].consume(this[kMessageHandlers].onChildMessage, {
     prefetch: 1000,
     consumerTag: `_process-activity-${this.executionId}`,
   });
 
-  if (this[completedSymbol]) return this._complete('completed');
+  if (this[kCompleted]) return this._complete('completed');
 
   switch (this.status) {
     case 'init':
@@ -159,9 +159,9 @@ proto.recover = function recover(state) {
   if (!state) return this;
   this.executionId = state.executionId;
 
-  this[stoppedSymbol] = state.stopped;
-  this[completedSymbol] = state.completed;
-  this[statusSymbol] = state.status;
+  this[kStopped] = state.stopped;
+  this[kCompleted] = state.completed;
+  this[kStatus] = state.status;
 
   this._debug(`recover process execution at ${this.status}`);
 
@@ -209,7 +209,7 @@ proto.shake = function shake(fromId) {
     this.executionId = getUniqueId(id);
     this._activate();
   }
-  const toShake = fromId ? [this.getActivityById(fromId)].filter(Boolean) : this[elementsSymbol].startActivities;
+  const toShake = fromId ? [this.getActivityById(fromId)].filter(Boolean) : this[kElements].startActivities;
 
   const result = {};
   this.broker.subscribeTmp('event', '*.shake.*', (routingKey, {content}) => {
@@ -241,7 +241,7 @@ proto.stop = function stop() {
 };
 
 proto.getPostponed = function getPostponed(filterFn) {
-  return this[elementsSymbol].postponed.slice().reduce((result, msg) => {
+  return this[kElements].postponed.slice().reduce((result, msg) => {
     const api = this._getChildApi(msg);
     if (api) {
       if (filterFn && !filterFn(api)) return result;
@@ -252,8 +252,8 @@ proto.getPostponed = function getPostponed(filterFn) {
 };
 
 proto.discard = function discard() {
-  this[statusSymbol] = 'discard';
-  return this[activityQSymbol].queueMessage({routingKey: 'execution.discard'}, {
+  this[kStatus] = 'discard';
+  return this[kActivityQ].queueMessage({routingKey: 'execution.discard'}, {
     id: this.id,
     type: this.type,
     executionId: this.executionId,
@@ -262,13 +262,13 @@ proto.discard = function discard() {
 
 
 proto.getState = function getState() {
-  const {flows, outboundMessageFlows, associations} = this[elementsSymbol];
+  const {flows, outboundMessageFlows, associations} = this[kElements];
   return {
     executionId: this.executionId,
-    stopped: this[stoppedSymbol],
-    completed: this[completedSymbol],
+    stopped: this[kStopped],
+    completed: this[kCompleted],
     status: this.status,
-    children: this[elementsSymbol].children.reduce((result, activity) => {
+    children: this[kElements].children.reduce((result, activity) => {
       if (activity.placeholder) return result;
       result.push(activity.getState());
       return result;
@@ -280,19 +280,19 @@ proto.getState = function getState() {
 };
 
 proto.getActivities = function getActivities() {
-  return this[elementsSymbol].children.slice();
+  return this[kElements].children.slice();
 };
 
 proto.getActivityById = function getActivityById(activityId) {
-  return this[elementsSymbol].children.find((child) => child.id === activityId);
+  return this[kElements].children.find((child) => child.id === activityId);
 };
 
 proto.getSequenceFlows = function getSequenceFlows() {
-  return this[elementsSymbol].flows.slice();
+  return this[kElements].flows.slice();
 };
 
 proto.getApi = function getApi(message) {
-  if (!message) return ProcessApi(this.broker, this[executeMessageSymbol]);
+  if (!message) return ProcessApi(this.broker, this[kExecuteMessage]);
 
   const content = message.content;
 
@@ -301,7 +301,7 @@ proto.getApi = function getApi(message) {
   }
 
   const api = ProcessApi(this.broker, message);
-  const postponed = this[elementsSymbol].postponed;
+  const postponed = this[kElements].postponed;
   const self = this;
 
   api.getExecuting = function getExecuting() {
@@ -316,17 +316,17 @@ proto.getApi = function getApi(message) {
 };
 
 proto._start = function start() {
-  if (this[elementsSymbol].children.length === 0) {
+  if (this[kElements].children.length === 0) {
     return this._complete('completed');
   }
 
-  this[statusSymbol] = 'start';
+  this[kStatus] = 'start';
 
-  const executeContent = {...this[executeMessageSymbol].content, state: this.status};
+  const executeContent = {...this[kExecuteMessage].content, state: this.status};
 
   this.broker.publish(this._exchangeName, 'execute.start', cloneContent(executeContent));
 
-  const {startActivities, postponed, detachedActivities} = this[elementsSymbol];
+  const {startActivities, postponed, detachedActivities} = this[kElements];
   if (startActivities.length > 1) {
     for (const a of startActivities) a.shake();
   }
@@ -336,14 +336,14 @@ proto._start = function start() {
 
   postponed.splice(0);
   detachedActivities.splice(0);
-  this[activityQSymbol].assertConsumer(this[messageHandlersSymbol].onChildMessage, {
+  this[kActivityQ].assertConsumer(this[kMessageHandlers].onChildMessage, {
     prefetch: 1000,
     consumerTag: `_process-activity-${this.executionId}`,
   });
 };
 
 proto._activate = function activate() {
-  const {onApiMessage, onMessageFlowEvent, onActivityEvent} = this[messageHandlersSymbol];
+  const {onApiMessage, onMessageFlowEvent, onActivityEvent} = this[kMessageHandlers];
 
   this.broker.subscribeTmp('api', '#', onApiMessage, {
     noAck: true,
@@ -351,7 +351,7 @@ proto._activate = function activate() {
     priority: 200,
   });
 
-  const {outboundMessageFlows, flows, associations, startActivities, triggeredByEvent, children} = this[elementsSymbol];
+  const {outboundMessageFlows, flows, associations, startActivities, triggeredByEvent, children} = this[kElements];
 
   for (const flow of outboundMessageFlows) {
     flow.activate();
@@ -393,7 +393,7 @@ proto._activate = function activate() {
     if (activity.triggeredByEvent) triggeredByEvent.push(activity);
   }
 
-  this[activatedSymbol] = true;
+  this[kActivated] = true;
 };
 
 proto._deactivate = function deactivate() {
@@ -402,7 +402,7 @@ proto._deactivate = function deactivate() {
   broker.cancel(`_process-api-consumer-${executionId}`);
   broker.cancel(`_process-activity-${executionId}`);
 
-  const {children, flows, associations, outboundMessageFlows} = this[elementsSymbol];
+  const {children, flows, associations, outboundMessageFlows} = this[kElements];
 
   for (const activity of children) {
     if (activity.placeholder) continue;
@@ -423,7 +423,7 @@ proto._deactivate = function deactivate() {
     flow.broker.cancel('_process-message-consumer');
   }
 
-  this[activatedSymbol] = false;
+  this[kActivated] = false;
 };
 
 proto._onDelegateEvent = function onDelegateEvent(message) {
@@ -437,7 +437,7 @@ proto._onDelegateEvent = function onDelegateEvent(message) {
     this._debug(`delegate ${eventType} anonymous event`);
   }
 
-  for (const activity of this[elementsSymbol].triggeredByEvent) {
+  for (const activity of this[kElements].triggeredByEvent) {
     if (activity.getStartActivities({referenceId: content.message && content.message.id, referenceType: eventType}).length) {
       delegate = false;
       activity.run(content.message);
@@ -477,12 +477,12 @@ proto._onActivityEvent = function onActivityEvent(routingKey, message) {
 
   switch (routingKey) {
     case 'process.terminate':
-      return this[activityQSymbol].queueMessage({routingKey: 'execution.terminate'}, cloneContent(content), {type: 'terminate', persistent: true});
+      return this[kActivityQ].queueMessage({routingKey: 'execution.terminate'}, cloneContent(content), {type: 'terminate', persistent: true});
     case 'activity.stop':
       return;
   }
 
-  this[activityQSymbol].queueMessage(message.fields, cloneContent(content), {persistent: true, ...message.properties});
+  this[kActivityQ].queueMessage(message.fields, cloneContent(content), {persistent: true, ...message.properties});
 };
 
 proto._onChildMessage = function onChildMessage(routingKey, message) {
@@ -510,13 +510,13 @@ proto._onChildMessage = function onChildMessage(routingKey, message) {
 
   switch (routingKey) {
     case 'activity.detach': {
-      this[elementsSymbol].detachedActivities.push(cloneMessage(message));
+      this[kElements].detachedActivities.push(cloneMessage(message));
       break;
     }
     case 'activity.discard':
     case 'activity.compensation.start':
     case 'activity.enter': {
-      this[statusSymbol] = 'executing';
+      this[kStatus] = 'executing';
       if (!content.inbound) break;
 
       for (const inbound of content.inbound) {
@@ -529,7 +529,7 @@ proto._onChildMessage = function onChildMessage(routingKey, message) {
     }
     case 'flow.error':
     case 'activity.error': {
-      const eventCaughtBy = this[elementsSymbol].postponed.find((msg) => {
+      const eventCaughtBy = this[kElements].postponed.find((msg) => {
         if (msg.fields.routingKey !== 'activity.catch') return;
         return msg.content.source && msg.content.source.executionId === content.executionId;
       });
@@ -544,11 +544,11 @@ proto._onChildMessage = function onChildMessage(routingKey, message) {
 proto._stateChangeMessage = function stateChangeMessage(message, postponeMessage) {
   const previousMsg = this._popPostponed(message.content);
   if (previousMsg) previousMsg.ack();
-  if (postponeMessage) this[elementsSymbol].postponed.push(message);
+  if (postponeMessage) this[kElements].postponed.push(message);
 };
 
 proto._popPostponed = function popPostponed(byContent) {
-  const {postponed, detachedActivities} = this[elementsSymbol];
+  const {postponed, detachedActivities} = this[kElements];
 
   const postponedIdx = postponed.findIndex((msg) => {
     if (msg.content.isSequenceFlow) return msg.content.sequenceId === byContent.sequenceId;
@@ -572,7 +572,7 @@ proto._onChildCompleted = function onChildCompleted(message) {
 
   const {id, type, isEnd} = message.content;
 
-  const {postponed, detachedActivities, startActivities} = this[elementsSymbol];
+  const {postponed, detachedActivities, startActivities} = this[kElements];
   const postponedCount = postponed.length;
 
   if (!postponedCount) {
@@ -589,7 +589,7 @@ proto._onChildCompleted = function onChildCompleted(message) {
   }
 
   if (isEnd && startActivities.length) {
-    const startSequences = this[elementsSymbol].startSequences;
+    const startSequences = this[kElements].startSequences;
     for (const msg of postponed) {
       const postponedId = msg.content.id;
       const startSequence = startSequences[postponedId];
@@ -603,29 +603,29 @@ proto._onChildCompleted = function onChildCompleted(message) {
 };
 
 proto._stopExecution = function stopExecution(message) {
-  if (this[stoppedSymbol]) return;
+  if (this[kStopped]) return;
   const postponedCount = this.postponedCount;
   this._debug(`stop process execution (stop child executions ${postponedCount})`);
   if (postponedCount) {
     for (const api of this.getPostponed()) api.stop();
   }
   this._deactivate();
-  this[stoppedSymbol] = true;
+  this[kStopped] = true;
   return this.broker.publish(this._exchangeName, `execution.stopped.${this.executionId}`, {
-    ...this[executeMessageSymbol].content,
+    ...this[kExecuteMessage].content,
     ...(message && message.content),
   }, {type: 'stopped', persistent: false});
 };
 
 proto._onDiscard = function onDiscard() {
   this._deactivate();
-  const running = this[elementsSymbol].postponed.splice(0);
+  const running = this[kElements].postponed.splice(0);
   this._debug(`discard process execution (discard child executions ${running.length})`);
 
   for (const flow of this.getSequenceFlows()) flow.stop();
   for (const msg of running) this._getChildApi(msg).discard();
 
-  this[activityQSymbol].purge();
+  this[kActivityQ].purge();
   return this._complete('discard');
 };
 
@@ -644,7 +644,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
       }
     }, {consumerTag: `_ct-delegate-${correlationId}`, noAck: true});
 
-    for (const child of this[elementsSymbol].children) {
+    for (const child of this[kElements].children) {
       if (child.placeholder) continue;
       child.broker.publish('api', routingKey, cloneContent(message.content), message.properties);
       if (consumed) break;
@@ -665,7 +665,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
     case 'discard':
       return this.discard(message);
     case 'stop':
-      this[activityQSymbol].queueMessage({routingKey: 'execution.stop'}, cloneContent(message.content), {persistent: false});
+      this[kActivityQ].queueMessage({routingKey: 'execution.stop'}, cloneContent(message.content), {persistent: false});
       break;
   }
 };
@@ -673,12 +673,12 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
 proto._complete = function complete(completionType, content) {
   this._deactivate();
   this._debug(`process execution ${completionType}`);
-  this[completedSymbol] = true;
-  if (this.status !== 'terminated') this[statusSymbol] = completionType;
+  this[kCompleted] = true;
+  if (this.status !== 'terminated') this[kStatus] = completionType;
   const broker = this.broker;
-  this[activityQSymbol].delete();
+  this[kActivityQ].delete();
 
-  return broker.publish(this._exchangeName, `execution.${completionType}.${this.executionId}`, cloneContent(this[executeMessageSymbol].content, {
+  return broker.publish(this._exchangeName, `execution.${completionType}.${this.executionId}`, cloneContent(this[kExecuteMessage].content, {
     output: {...this.environment.output},
     ...content,
     state: completionType,
@@ -686,10 +686,10 @@ proto._complete = function complete(completionType, content) {
 };
 
 proto._terminate = function terminate(message) {
-  this[statusSymbol] = 'terminated';
+  this[kStatus] = 'terminated';
   this._debug('terminating process execution');
 
-  const running = this[elementsSymbol].postponed.splice(0);
+  const running = this[kElements].postponed.splice(0);
   for (const flow of this.getSequenceFlows()) flow.stop();
 
   for (const msg of running) {
@@ -700,19 +700,19 @@ proto._terminate = function terminate(message) {
     msg.ack();
   }
 
-  this[activityQSymbol].purge();
+  this[kActivityQ].purge();
 };
 
 proto._getFlowById = function getFlowById(flowId) {
-  return this[elementsSymbol].flows.find((f) => f.id === flowId);
+  return this[kElements].flows.find((f) => f.id === flowId);
 };
 
 proto._getAssociationById = function getAssociationById(associationId) {
-  return this[elementsSymbol].associations.find((a) => a.id === associationId);
+  return this[kElements].associations.find((a) => a.id === associationId);
 };
 
 proto._getMessageFlowById = function getMessageFlowById(flowId) {
-  return this[elementsSymbol].outboundMessageFlows.find((f) => f.id === flowId);
+  return this[kElements].outboundMessageFlows.find((f) => f.id === flowId);
 };
 
 proto._getChildById = function getChildById(childId) {
@@ -741,9 +741,9 @@ proto._getChildApi = function getChildApi(message) {
 proto._onShookEnd = function onShookEnd(message) {
   const routingKey = message.fields.routingKey;
   if (routingKey !== 'activity.shake.end') return;
-  this[elementsSymbol].startSequences[message.content.id] = cloneMessage(message);
+  this[kElements].startSequences[message.content.id] = cloneMessage(message);
 };
 
 proto._debug = function debugMessage(logMessage) {
-  this[parentSymbol].logger.debug(`<${this.executionId} (${this.id})> ${logMessage}`);
+  this[kParent].logger.debug(`<${this.executionId} (${this.id})> ${logMessage}`);
 };

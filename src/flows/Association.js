@@ -3,7 +3,7 @@ import {EventBroker} from '../EventBroker';
 import {FlowApi} from '../Api';
 import {getUniqueId} from '../shared';
 
-const countersSymbol = Symbol.for('counters');
+const kCounters = Symbol.for('counters');
 
 export default function Association(associationDef, {environment}) {
   const {id, type = 'association', name, parent, targetId, sourceId, behaviour = {}} = associationDef;
@@ -19,7 +19,7 @@ export default function Association(associationDef, {environment}) {
   this.environment = environment;
   const logger = this.logger = environment.Logger(type.toLowerCase());
 
-  this[countersSymbol] = {
+  this[kCounters] = {
     complete: 0,
     take: 0,
     discard: 0,
@@ -39,13 +39,13 @@ const proto = Association.prototype;
 Object.defineProperty(proto, 'counters', {
   enumerable: true,
   get() {
-    return {...this[countersSymbol]};
+    return {...this[kCounters]};
   },
 });
 
 proto.take = function take(content = {}) {
   this.logger.debug(`<${this.id}> take target <${this.targetId}>`);
-  ++this[countersSymbol].take;
+  ++this[kCounters].take;
 
   this._publishEvent('take', content);
 
@@ -54,7 +54,7 @@ proto.take = function take(content = {}) {
 
 proto.discard = function discard(content = {}) {
   this.logger.debug(`<${this.id}> discard target <${this.targetId}>`);
-  ++this[countersSymbol].discard;
+  ++this[kCounters].discard;
 
   this._publishEvent('discard', content);
 
@@ -63,7 +63,7 @@ proto.discard = function discard(content = {}) {
 
 proto.complete = function complete(content = {}) {
   this.logger.debug(`<${this.id}> completed target <${this.targetId}>`);
-  ++this[countersSymbol].complete;
+  ++this[kCounters].complete;
 
   this._publishEvent('complete', content);
 
@@ -78,7 +78,7 @@ proto.getState = function getState() {
 };
 
 proto.recover = function recover(state) {
-  Object.assign(this[countersSymbol], state.counters);
+  Object.assign(this[kCounters], state.counters);
   this.broker.recover(state.broker);
 };
 

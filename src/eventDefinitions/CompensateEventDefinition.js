@@ -1,11 +1,11 @@
 import {brokerSafeId} from '../shared';
 import {cloneContent, cloneMessage, shiftParent} from '../messageHelper';
 
-const completedSymbol = Symbol.for('completed');
-const executeMessageSymbol = Symbol.for('executeMessage');
-const messageQSymbol = Symbol.for('messageQ');
-const compensateQSymbol = Symbol.for('compensateQ');
-const associationsSymbol = Symbol.for('associations');
+const kCompleted = Symbol.for('completed');
+const kExecuteMessage = Symbol.for('executeMessage');
+const kMessageQ = Symbol.for('messageQ');
+const kCompensateQ = Symbol.for('compensateQ');
+const kAssociations = Symbol.for('associations');
 
 export default function CompensateEventDefinition(activity, eventDefinition, context) {
   const {id, broker, environment, isThrowing} = activity;
@@ -19,10 +19,10 @@ export default function CompensateEventDefinition(activity, eventDefinition, con
   this.logger = environment.Logger(type.toLowerCase());
 
   if (!isThrowing) {
-    this[completedSymbol] = false;
-    this[associationsSymbol] = context.getOutboundAssociations(id) || [];
+    this[kCompleted] = false;
+    this[kAssociations] = context.getOutboundAssociations(id) || [];
     const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-q`;
-    this[messageQSymbol] = broker.assertQueue(messageQueueName, {autoDelete: false, durable: true});
+    this[kMessageQ] = broker.assertQueue(messageQueueName, {autoDelete: false, durable: true});
     broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, {durable: true, priority: 400});
   }
 }
@@ -31,7 +31,7 @@ const proto = CompensateEventDefinition.prototype;
 
 Object.defineProperty(proto, 'executionId', {
   get() {
-    const message = this[executeMessageSymbol];
+    const message = this[kExecuteMessage];
     return message && message.content.executionId;
   },
 });
@@ -41,8 +41,8 @@ proto.execute = function execute(executeMessage) {
 };
 
 proto.executeCatch = function executeCatch(executeMessage) {
-  this[executeMessageSymbol] = executeMessage;
-  this[completedSymbol] = false;
+  this[kExecuteMessage] = executeMessage;
+  this[kCompleted] = false;
 
   const executeContent = executeMessage.content;
   const {executionId, parent} = executeContent;
@@ -51,7 +51,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
 
   const broker = this.broker;
   broker.assertExchange('compensate', 'topic');
-  this[compensateQSymbol] = broker.assertQueue('compensate-q', {durable: true, autoDelete: false});
+  this[kCompensateQ] = broker.assertQueue('compensate-q', {durable: true, autoDelete: false});
   broker.subscribeTmp('compensate', 'execute.#', this._onCollect.bind(this), {
     noAck: true,
     consumerTag: '_oncollect-messages',
@@ -62,12 +62,12 @@ proto.executeCatch = function executeCatch(executeMessage) {
     bindExchange: 'compensate',
   }));
 
-  this[messageQSymbol].consume(this._onCompensateApiMessage.bind(this), {
+  this[kMessageQ].consume(this._onCompensateApiMessage.bind(this), {
     noAck: true,
     consumerTag: `_oncompensate-${executionId}`,
   });
 
-  if (this[completedSymbol]) return;
+  if (this[kCompleted]) return;
 
   const onApiMessage = this._onApiMessage.bind(this);
   broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
@@ -103,23 +103,24 @@ proto.executeThrow = function executeThrow(executeMessage) {
 };
 
 proto._onCollect = function onCollect(routingKey, message) {
+
   switch (routingKey) {
     case 'execute.error':
     case 'execute.completed': {
-      return this[compensateQSymbol].queueMessage(message.fields, cloneContent(message.content), message.properties);
+      return this[kCompensateQ].queueMessage(message.fields, cloneContent(message.content), message.properties);
     }
   }
 };
 
 proto._onCompensateApiMessage = function onCompensateApiMessage(routingKey, message) {
   const output = message.content.message;
-  this[completedSymbol] = true;
+  this[kCompleted] = true;
 
   this._stop();
 
   this._debug('caught compensate event');
   const broker = this.broker;
-  const executeContent = this[executeMessageSymbol].content;
+  const executeContent = this[kExecuteMessage].content;
   const catchContent = cloneContent(executeContent, {
     message: {...output},
     executionId: executeContent.parent.executionId,
@@ -128,11 +129,11 @@ proto._onCompensateApiMessage = function onCompensateApiMessage(routingKey, mess
 
   broker.publish('event', 'activity.catch', catchContent, {type: 'catch'});
 
-  const compensateQ = this[compensateQSymbol];
+  const compensateQ = this[kCompensateQ];
   compensateQ.on('depleted', onDepleted);
   compensateQ.consume(this._onCollected.bind(this), {noAck: true, consumerTag: '_convey-messages'});
 
-  for (const association of this[associationsSymbol]) association.complete(cloneMessage(message));
+  for (const association of this[kAssociations]) association.complete(cloneMessage(message));
 
   function onDepleted() {
     compensateQ.off('depleted', onDepleted);
@@ -141,7 +142,7 @@ proto._onCompensateApiMessage = function onCompensateApiMessage(routingKey, mess
 };
 
 proto._onCollected = function onCollected(routingKey, message) {
-  for (const association of this[associationsSymbol]) association.take(cloneMessage(message));
+  for (const association of this[kAssociations]) association.take(cloneMessage(message));
 };
 
 proto._onApiMessage = function onApiMessage(routingKey, message) {
@@ -152,10 +153,10 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
       return this._onCompensateApiMessage(routingKey, message);
     }
     case 'discard': {
-      this[completedSymbol] = true;
+      this[kCompleted] = true;
       this._stop();
-      for (const association of this[associationsSymbol]) association.discard(cloneMessage(message));
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[executeMessageSymbol].content));
+      for (const association of this[kAssociations]) association.discard(cloneMessage(message));
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content));
     }
     case 'stop': {
       this._stop();
@@ -170,7 +171,7 @@ proto._stop = function stop() {
   broker.cancel(`_oncompensate-${executionId}`);
   broker.cancel('_oncollect-messages');
   broker.cancel('_convey-messages');
-  this[messageQSymbol].purge();
+  this[kMessageQ].purge();
 };
 
 proto._debug = function debug(msg) {

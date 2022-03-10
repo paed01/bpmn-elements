@@ -39,6 +39,9 @@ describe('Definition', () => {
         getProcesses() {
           return [];
         },
+        getNewProcesses() {
+          return [];
+        },
         getExecutableProcesses() {
           return [];
         },
@@ -92,6 +95,9 @@ describe('Definition', () => {
         getProcesses() {
           return [];
         },
+        getNewProcesses() {
+          return [];
+        },
         getExecutableProcesses() {
           return [];
         },
@@ -106,6 +112,9 @@ describe('Definition', () => {
         id: 'Def_1',
         environment: new Environment({ Logger: testHelpers.Logger }),
         getProcesses() {
+          return [];
+        },
+        getNewProcesses() {
           return [];
         },
         getExecutableProcesses() {
@@ -126,6 +135,9 @@ describe('Definition', () => {
         id: 'Def_1',
         environment: new Environment({ Logger: testHelpers.Logger }),
         getProcesses() {
+          return [];
+        },
+        getNewProcesses() {
           return [];
         },
         getExecutableProcesses() {
@@ -505,9 +517,9 @@ describe('Definition', () => {
 
     it('publishes stop message after processes are stopped', (done) => {
       const definition = new Definition(context);
-      const [bp] = definition.getProcesses();
       let bpStopped;
-      bp.once('stop', () => {
+
+      definition.once('process.stop', () => {
         bpStopped = true;
       });
 
@@ -520,11 +532,10 @@ describe('Definition', () => {
       definition.stop();
     });
 
-    it('stop on activity start stops process', (done) => {
+    it('stop definition execution on activity start stops process', (done) => {
       const definition = new Definition(context);
-      const [bp] = definition.getProcesses();
       let bpStopped;
-      bp.once('stop', () => {
+      definition.once('process.stop', () => {
         bpStopped = true;
       });
 
@@ -573,10 +584,8 @@ describe('Definition', () => {
 
     it('publishes stop message if execution is stopped', (done) => {
       const definition = new Definition(context);
-      const [bp] = definition.getProcesses();
-
       let bpStopped;
-      bp.once('stop', () => {
+      definition.once('process.stop', () => {
         bpStopped = true;
       });
 
@@ -1108,9 +1117,9 @@ describe('Definition', () => {
   });
 
   describe('getProcesses()', () => {
-    let definition;
+    let context, definition;
     before('Given definition is initiated with two processes', async () => {
-      const context = await testHelpers.context(lanesSource);
+      context = await testHelpers.context(lanesSource);
       definition = new Definition(context);
     });
 
@@ -1124,6 +1133,73 @@ describe('Definition', () => {
       expect(result1.length).to.equal(2);
       expect(result1[0] === result2[0]).to.be.true;
       expect(result1[1] === result2[1]).to.be.true;
+    });
+
+    it('processes share services but not variables', () => {
+      const [bp1, bp2] = definition.getProcesses();
+
+      definition.environment.addService('afterGet', () => {});
+
+      expect(bp1.environment === definition.environment, 'environment').to.be.false;
+      expect(bp2.environment === definition.environment, 'environment').to.be.false;
+      expect(bp1.environment.variables === definition.environment.variables, 'environment variables').to.be.false;
+      expect(bp2.environment.variables === definition.environment.variables, 'environment variables').to.be.false;
+
+      expect(bp1.environment.services === definition.environment.services, 'environment services').to.be.true;
+      expect(bp1.environment.services.afterGet, 'environment service').to.be.a('function');
+      expect(bp2.environment.services === definition.environment.services, 'environment services').to.be.true;
+      expect(bp2.environment.services.afterGet, 'environment service').to.be.a('function');
+    });
+
+    it('recovered processes share services but not variables', async () => {
+      definition.once('activity.start', () => definition.stop());
+      definition.run();
+
+      const recovered = new Definition(context.clone()).recover(definition.getState());
+      expect(recovered).to.have.property('status', 'executing');
+
+      const [bp1, bp2] = definition.getProcesses();
+
+      definition.environment.addService('afterGet', () => {});
+
+      expect(bp1.environment === definition.environment, 'environment').to.be.false;
+      expect(bp2.environment === definition.environment, 'environment').to.be.false;
+      expect(bp1.environment.variables === definition.environment.variables, 'environment variables').to.be.false;
+      expect(bp2.environment.variables === definition.environment.variables, 'environment variables').to.be.false;
+
+      expect(bp1.environment.services === definition.environment.services, 'environment services').to.be.true;
+      expect(bp1.environment.services.afterGet, 'environment service').to.be.a('function');
+      expect(bp2.environment.services === definition.environment.services, 'environment services').to.be.true;
+      expect(bp2.environment.services.afterGet, 'environment service').to.be.a('function');
+    });
+  });
+
+  describe('getExecutableProcesses()', () => {
+    let definition;
+    before('Given definition is initiated with two processes', async () => {
+      const context = await testHelpers.context(lanesSource);
+      definition = new Definition(context);
+    });
+
+    it('returns executable processes from passed moddle context', () => {
+      expect(definition.getExecutableProcesses().length).to.equal(1);
+    });
+
+    it('returns same process instances when called again', () => {
+      const result1 = definition.getExecutableProcesses();
+      const result2 = definition.getExecutableProcesses();
+      expect(result1.length).to.equal(1);
+      expect(result1[0] === result2[0]).to.be.true;
+    });
+
+    it('returns same process instances when called while running', () => {
+      const result1 = definition.getExecutableProcesses();
+
+      definition.run();
+
+      const result2 = definition.getExecutableProcesses();
+      expect(result1.length).to.equal(1);
+      expect(result1[0] === result2[0]).to.be.true;
     });
   });
 
@@ -1183,35 +1259,6 @@ describe('Definition', () => {
       const definition = new Definition(context.clone());
       definition.run();
       expect(definition.getApi()).to.have.property('content').with.property('state', 'start');
-    });
-  });
-
-  describe('getExecutableProcesses()', () => {
-    let definition;
-    before('Given definition is initiated with two processes', async () => {
-      const context = await testHelpers.context(lanesSource);
-      definition = new Definition(context);
-    });
-
-    it('returns executable processes from passed moddle context', () => {
-      expect(definition.getExecutableProcesses().length).to.equal(1);
-    });
-
-    it('returns same process instances when called again', () => {
-      const result1 = definition.getExecutableProcesses();
-      const result2 = definition.getExecutableProcesses();
-      expect(result1.length).to.equal(1);
-      expect(result1[0] === result2[0]).to.be.true;
-    });
-
-    it('returns same process instances when called while running', () => {
-      const result1 = definition.getExecutableProcesses();
-
-      definition.run();
-
-      const result2 = definition.getExecutableProcesses();
-      expect(result1.length).to.equal(1);
-      expect(result1[0] === result2[0]).to.be.true;
     });
   });
 
