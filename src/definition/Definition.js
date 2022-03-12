@@ -6,12 +6,12 @@ import {makeErrorFromMessage} from '../error/Errors';
 import {cloneMessage, cloneContent} from '../messageHelper';
 
 const consumingSymbol = Symbol.for('consuming');
-const countersSymbol = Symbol.for('counters');
-const execSymbol = Symbol.for('exec');
+const kCounters = Symbol.for('counters');
+const kExec = Symbol.for('execution');
 const executeMessageSymbol = Symbol.for('executeMessage');
 const messageHandlersSymbol = Symbol.for('messageHandlers');
 const stateMessageSymbol = Symbol.for('stateMessage');
-const statusSymbol = Symbol.for('status');
+const kStatus = Symbol.for('status');
 const stoppedSymbol = Symbol.for('stopped');
 
 export default Definition;
@@ -35,13 +35,13 @@ export function Definition(context, options) {
     this.context = context;
   }
 
-  this[countersSymbol] = {
+  this[kCounters] = {
     completed: 0,
     discarded: 0,
   };
 
   this[stoppedSymbol] = false;
-  this[execSymbol] = {};
+  this[kExec] = {};
 
   const onBrokerReturn = this._onBrokerReturnFn.bind(this);
   this[messageHandlersSymbol] = {
@@ -68,21 +68,21 @@ const proto = Definition.prototype;
 Object.defineProperty(proto, 'counters', {
   enumerable: true,
   get() {
-    return {...this[countersSymbol]};
+    return {...this[kCounters]};
   },
 });
 
 Object.defineProperty(proto, 'execution', {
   enumerable: true,
   get() {
-    return this[execSymbol].execution;
+    return this[kExec].execution;
   },
 });
 
 Object.defineProperty(proto, 'executionId', {
   enumerable: true,
   get() {
-    return this[execSymbol].executionId;
+    return this[kExec].executionId;
   },
 });
 
@@ -97,7 +97,7 @@ Object.defineProperty(proto, 'isRunning', {
 Object.defineProperty(proto, 'status', {
   enumerable: true,
   get() {
-    return this[statusSymbol];
+    return this[kStatus];
   },
 });
 
@@ -120,7 +120,7 @@ proto.run = function run(optionsOrCallback, optionalCallback) {
     addConsumerCallbacks(this, callback);
   }
 
-  const exec = this[execSymbol];
+  const exec = this[kExec];
   exec.executionId = getUniqueId(this.id);
   const content = this._createMessage({...runOptions});
 
@@ -163,12 +163,12 @@ proto.recover = function recover(state) {
   if (!state) return this;
 
   this[stoppedSymbol] = !!state.stopped;
-  this[statusSymbol] = state.status;
+  this[kStatus] = state.status;
 
-  const exec = this[execSymbol];
+  const exec = this[kExec];
   exec.executionId = state.executionId;
   if (state.counters) {
-    this[countersSymbol] = {...this[countersSymbol], ...state.counters};
+    this[kCounters] = {...this[kCounters], ...state.counters};
   }
 
   this.environment.recover(state.environment);
@@ -345,14 +345,14 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
     return this._onResumeMessage(message);
   }
 
-  const exec = this[execSymbol];
+  const exec = this[kExec];
   this[stateMessageSymbol] = message;
 
   switch (routingKey) {
     case 'run.enter': {
       this.logger.debug(`<${this.executionId} (${this.id})> enter`);
 
-      this[statusSymbol] = 'entered';
+      this[kStatus] = 'entered';
       if (fields.redelivered) break;
 
       exec.execution = undefined;
@@ -361,12 +361,12 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
     }
     case 'run.start': {
       this.logger.debug(`<${this.executionId} (${this.id})> start`);
-      this[statusSymbol] = 'start';
+      this[kStatus] = 'start';
       this._publishEvent('start', content);
       break;
     }
     case 'run.execute': {
-      this[statusSymbol] = 'executing';
+      this[kStatus] = 'executing';
       const executeMessage = cloneMessage(message);
       if (fields.redelivered && !exec.execution) {
         executeMessage.fields.redelivered = undefined;
@@ -386,12 +386,12 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
       return exec.execution.execute(executeMessage);
     }
     case 'run.end': {
-      if (this.status === 'end') break;
+      if (this[kStatus] === 'end') break;
 
-      this[countersSymbol].completed++;
+      this[kCounters].completed++;
 
       this.logger.debug(`<${this.executionId} (${this.id})> completed`);
-      this[statusSymbol] = 'end';
+      this[kStatus] = 'end';
       this.broker.publish('run', 'run.leave', content);
       this._publishEvent('end', content);
       break;
@@ -404,17 +404,17 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
       break;
     }
     case 'run.discarded': {
-      if (this.status === 'discarded') break;
+      if (this[kStatus] === 'discarded') break;
 
-      this[countersSymbol].discarded++;
+      this[kCounters].discarded++;
 
-      this[statusSymbol] = 'discarded';
+      this[kStatus] = 'discarded';
       this.broker.publish('run', 'run.leave', content);
       break;
     }
     case 'run.leave': {
       message.ack();
-      this[statusSymbol] = undefined;
+      this[kStatus] = undefined;
       this._deactivateRunConsumers();
 
       this._publishEvent('leave', this._createMessage());
@@ -503,7 +503,7 @@ proto._onBrokerReturnFn = function onBrokerReturn(message) {
 };
 
 proto._reset = function reset() {
-  this[execSymbol].executionId = undefined;
+  this[kExec].executionId = undefined;
   this._deactivateRunConsumers();
   this.broker.purgeQueue('run-q');
   this.broker.purgeQueue('execution-q');

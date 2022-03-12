@@ -181,7 +181,7 @@ proto.resume = function resume() {
     prefetch: 1000,
     consumerTag: `_definition-activity-${this.executionId}`
   });
-  if (this.completed) return this._complete('completed');
+  if (this.completed) return;
 
   switch (this.status) {
     case 'init':

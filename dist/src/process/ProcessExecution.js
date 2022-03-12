@@ -155,7 +155,7 @@ proto.resume = function resume() {
     prefetch: 1000,
     consumerTag: `_process-activity-${this.executionId}`
   });
-  if (this[kCompleted]) return this._complete('completed');
+  if (this[kCompleted]) return;
 
   switch (this.status) {
     case 'init':

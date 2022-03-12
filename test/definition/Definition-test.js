@@ -1453,6 +1453,34 @@ describe('Definition', () => {
       return leave;
     });
 
+    it('resume on activity error emits error', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testError" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <serviceTask id="task" implementation="none" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const definition = new Definition(context);
+
+      const stop = definition.waitFor('stop');
+      const error = definition.waitFor('error');
+
+      definition.once('activity.error', () => {
+        definition.stop();
+      });
+
+      definition.run();
+
+      await stop;
+
+      definition.resume();
+
+      await error;
+    });
+
     describe('child error', () => {
       it('throws', async () => {
         const source = `

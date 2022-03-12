@@ -1435,6 +1435,34 @@ describe('Process', () => {
       expect(errors[0]).to.be.instanceof(Error);
       expect(errors[0].message).to.match(/service not defined/);
     });
+
+    it('resume on activity error emits error', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testError" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <serviceTask id="task" implementation="none" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const bp = context.getProcessById('theProcess');
+
+      const stop = bp.waitFor('stop');
+      const error = bp.waitFor('error');
+
+      bp.once('activity.error', () => {
+        bp.stop();
+      });
+
+      bp.run();
+
+      await stop;
+
+      bp.resume();
+
+      await error;
+    });
   });
 
   describe('waitFor()', () => {

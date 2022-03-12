@@ -346,10 +346,8 @@ proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
   }
 
   const executeMessage = this[executeMessageSymbol];
-  if (executeMessage) {
-    this[executeMessageSymbol] = null;
-    executeMessage.ack();
-  }
+  this[executeMessageSymbol] = null;
+  executeMessage.ack();
 };
 
 proto._publishEvent = function publishEvent(state, content) {

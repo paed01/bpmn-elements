@@ -5,7 +5,11 @@ Changelog
 
 ## Breaking
 
-- all processes will be executed with new context, thus activities will not be reused
+- all processes will initiated with a new context
+
+## Fix
+
+- Remove double definition completion if resumed after error
 
 # 7.0.0
 

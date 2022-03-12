@@ -152,7 +152,8 @@ proto.resume = function resume() {
     consumerTag: `_definition-activity-${this.executionId}`,
   });
 
-  if (this.completed) return this._complete('completed');
+  if (this.completed) return;
+
   switch (this.status) {
     case 'init':
       return this._start();
@@ -384,6 +385,7 @@ proto._onProcessMessage = function onProcessMessage(routingKey, message) {
   }
 
   this._stateChangeMessage(message, true);
+
 
   switch (routingKey) {
     case 'process.discard':
