@@ -23,7 +23,7 @@
     "comma-dangle": [
       "warn",
       {
-        "arrays": "never",
+        "arrays": "always-multiline",
         "objects": "always-multiline",
         "imports": "ignore",
         "exports": "ignore",

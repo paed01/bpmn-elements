@@ -258,4 +258,17 @@ describe('Definition execution', () => {
       expect(bps[1]).to.have.property('stopped', true);
     });
   });
+
+  describe('recover', () => {
+    it('ignored if no state', () => {
+      const context = testHelpers.emptyContext();
+      const execution = new DefinitionExecution({
+        id: 'Def_1',
+        environment: context.environment,
+        broker: new DefinitionBroker(this).broker,
+      }, context);
+
+      expect(execution === execution.recover()).to.be.true;
+    });
+  });
 });

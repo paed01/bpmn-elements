@@ -9,8 +9,8 @@ module.exports = function babelRoot(api) {
           targets: {
             node: 'current',
           },
-        }
-      ]
+        },
+      ],
     ],
   };
 };

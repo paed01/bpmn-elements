@@ -807,6 +807,84 @@ describe('Process', () => {
     });
   });
 
+  describe('getApi()', () => {
+    let context;
+    before(async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="flow1" sourceRef="start" targetRef="task1" />
+          <sequenceFlow id="flow2" sourceRef="start" targetRef="task2" />
+          <sequenceFlow id="flow3" sourceRef="start" targetRef="subProcess" />
+          <userTask id="task1" />
+          <userTask id="task2" />
+          <subProcess id="subProcess">
+            <userTask id="task3" />
+          </subProcess>
+          <sequenceFlow id="flow4" sourceRef="task1" targetRef="end" />
+          <sequenceFlow id="flow5" sourceRef="task2" targetRef="end" />
+          <sequenceFlow id="flow6" sourceRef="subProcess" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    it('returns api on each event', () => {
+      const [bp] = context.clone().getProcesses();
+      bp.broker.subscribeTmp('event', '#', (routingKey, message) => {
+        const api = bp.getApi(message);
+        expect(api, `api ${routingKey} ${message.content.id}`).to.be.ok;
+        expect(message.content.type).to.equal(api.content.type);
+      }, {noAck: true});
+
+      bp.run();
+    });
+
+    it('returns undefined if message parent path is not resolved', () => {
+      const [bp] = context.clone().getProcesses();
+
+      let api = false;
+      bp.broker.subscribeTmp('event', 'activity.#', (routingKey, message) => {
+        if (message.content.id === 'task3') {
+          delete message.content.parent;
+          api = bp.getApi(message);
+        }
+      }, {noAck: true});
+
+      bp.run();
+
+      expect(api).to.be.undefined;
+    });
+
+    it('without message and running, returns current state api', () => {
+      const [bp] = context.clone().getProcesses();
+      bp.run();
+      expect(bp.getApi()).to.have.property('content').with.property('state', 'start');
+    });
+
+    it('with unknown id return nothing', () => {
+      const [bp] = context.clone().getProcesses();
+      bp.run();
+      expect(bp.getApi({content: {id: 'who?'}})).to.not.be.ok;
+    });
+
+    it('with unknown parent id return nothing', () => {
+      const [bp] = context.clone().getProcesses();
+      bp.run();
+      expect(bp.getApi({
+        content: {
+          id: 'who?',
+          parent: {
+            id: 'me?',
+          },
+        },
+      })).to.not.be.ok;
+    });
+  });
+
   describe('sub process', () => {
     it('waitFor() activity returns activity api', async () => {
       const source = `
@@ -1223,23 +1301,39 @@ describe('Process', () => {
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="theProcess" isExecutable="true">
           <startEvent id="start">
-            <messageEventDefinition />
+            <messageEventDefinition messageRef="Message_1" />
           </startEvent>
           <sequenceFlow id="flow1" sourceRef="start" targetRef="task" />
           <userTask id="task" />
         </process>
+        <message id="Message_1" />
       </definitions>`;
 
       const context = await testHelpers.context(source);
       [bp] = context.getProcesses();
     });
 
-    it('starts process if message content target id is found', () => {
+    it('starts process if start event matches target id', () => {
       bp.sendMessage({
         fields: {},
         content: {
           id: 'messageFlow',
           target: {id: 'start'},
+        },
+        properties: {}
+      });
+
+      expect(bp.isRunning).to.be.true;
+    });
+
+    it('starts process if start message event message ref matches id', () => {
+      bp.sendMessage({
+        fields: {},
+        content: {
+          message: {
+            id: 'Message_1',
+            messageType: 'message',
+          },
         },
         properties: {}
       });
@@ -1256,6 +1350,12 @@ describe('Process', () => {
         },
         properties: {}
       });
+
+      expect(bp.isRunning).to.be.false;
+    });
+
+    it('ignored if no message', () => {
+      bp.sendMessage();
 
       expect(bp.isRunning).to.be.false;
     });
@@ -1448,7 +1548,6 @@ describe('Process', () => {
       const context = await testHelpers.context(source);
       const bp = context.getProcessById('theProcess');
 
-      const stop = bp.waitFor('stop');
       const error = bp.waitFor('error');
 
       bp.once('activity.error', () => {
@@ -1457,11 +1556,98 @@ describe('Process', () => {
 
       bp.run();
 
-      await stop;
-
       bp.resume();
 
       await error;
+    });
+
+    it('resume on flow condition error emits error', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testError" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-end" sourceRef="start" targetRef="end">
+            <conditionExpression xsi:type="tFormalExpression" language="javascript"><![CDATA[
+              next(new Error('failed expr'));
+            ]]></conditionExpression>
+          </sequenceFlow>
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const bp = context.getProcessById('theProcess');
+
+      const error = bp.waitFor('error');
+
+      bp.once('activity.error', () => {
+        bp.stop();
+      });
+
+      bp.run();
+      expect(bp.stopped).to.be.true;
+
+      bp.resume();
+
+      const err = await error;
+      expect(err.content.error.message).to.equal('failed expr');
+    });
+
+    it('resume on process error emits error', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testError" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <serviceTask id="task" implementation="none" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const bp = context.getProcessById('theProcess');
+
+      bp.broker.subscribeOnce('event', 'process.error', () => {
+        bp.stop();
+      }, {priority: 1000});
+
+      bp.run();
+
+      expect(bp.stopped).to.be.true;
+      expect(bp.status).to.equal('errored');
+
+      const error = bp.waitFor('error');
+      bp.resume();
+
+      const err = await error;
+      expect(err.content.error.message).to.match(/implementation none/i);
+    });
+
+    it('recover resume on process error emits error', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testError" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <serviceTask id="task" implementation="none" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const bp = context.getProcessById('theProcess');
+
+      bp.broker.subscribeOnce('event', 'process.error', () => {
+        bp.stop();
+      }, {priority: 1000});
+
+      bp.run();
+
+      const recovered = context.getProcessById('theProcess').recover(bp.getState());
+
+      const error = bp.waitFor('error');
+      recovered.resume();
+
+      const err = await error;
+      expect(err.content.error).to.be.an('error');
+      expect(err.content.error.message).to.match(/implementation none/i);
     });
   });
 

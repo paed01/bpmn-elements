@@ -785,6 +785,40 @@ describe('Definition', () => {
         definition.recover(state);
       }).to.throw('cannot recover running definition');
     });
+
+    it('reuses process instances', () => {
+      const definition = new Definition(context);
+
+      definition.run();
+      definition.stop();
+
+      const state = definition.getState();
+
+      const ctx = context.clone();
+      const recoverable = new Definition(ctx);
+      const bps = recoverable.getProcesses();
+      recoverable.recover(state);
+
+      expect(recoverable.getRunningProcesses().length).to.equal(1);
+
+      expect(bps[0] === recoverable.getProcesses()[0], 'same process').to.be.true;
+    });
+
+    it('ignores state process if not found', async () => {
+      const definition = new Definition(context);
+
+      definition.run();
+      definition.stop();
+
+      const state = definition.getState();
+
+      const ctx = await testHelpers.context(factory.valid());
+      const recoverable = new Definition(ctx);
+
+      recoverable.recover(state);
+
+      expect(recoverable.getRunningProcesses().length).to.equal(0);
+    });
   });
 
   describe('resume()', () => {
@@ -1260,6 +1294,25 @@ describe('Definition', () => {
       definition.run();
       expect(definition.getApi()).to.have.property('content').with.property('state', 'start');
     });
+
+    it('with unknown id return nothing', () => {
+      const definition = new Definition(context.clone());
+      definition.run();
+      expect(definition.getApi({content: {id: 'who?'}})).to.not.be.ok;
+    });
+
+    it('with unknown parent id return nothing', () => {
+      const definition = new Definition(context.clone());
+      definition.run();
+      expect(definition.getApi({
+        content: {
+          id: 'who?',
+          parent: {
+            id: 'me?',
+          },
+        },
+      })).to.not.be.ok;
+    });
   });
 
   describe('getRunningProcesses()', () => {
@@ -1730,6 +1783,273 @@ describe('Definition', () => {
       expect(messages[3].content.parent).to.have.property('path').with.length(2);
       expect(messages[3].content.parent.path[0]).to.have.property('id', 'process1');
       expect(messages[3].content.parent.path[1]).to.have.property('id', 'def1');
+    });
+  });
+
+  describe('call activity', () => {
+    it('recovered and resumed process instances receives settings', async () => {
+      const source = `
+      <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <callActivity id="call-activity" calledElement="called-process">
+            <multiInstanceLoopCharacteristics isSequential="false">
+              <loopCardinality>3</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+          </callActivity>
+          <endEvent id="end" />
+          <sequenceFlow id="to-end" sourceRef="call-activity" targetRef="end" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+        </process>
+        <process id="called-process" isExecutable="false">
+          <serviceTask id="task" implementation="\${environment.services.serviceFn}" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      function mydata() {}
+      const definition = new Definition(context, {
+        settings: {
+          strict: true,
+          mydata,
+        },
+        services: {
+          serviceFn() {},
+        },
+      });
+
+      definition.run();
+
+      const bps = definition.getRunningProcesses();
+      expect(bps.length).to.equal(4);
+
+      for (const bp of bps) {
+        expect(bp.environment.settings, 'strict setting ' + bp.executionId).to.have.property('strict', true);
+        expect(bp.environment.settings, 'mydata setting ' + bp.executionId).to.have.property('mydata', mydata);
+      }
+
+      definition.stop();
+      const state = definition.getState();
+
+      const recovered = new Definition(context.clone(), {
+        settings: {
+          strict: false,
+          mydata,
+        },
+        services: {
+          serviceFn() {},
+        },
+      }).recover(JSON.parse(JSON.stringify(state)));
+
+      recovered.resume();
+
+      const rbps = recovered.getRunningProcesses();
+      expect(rbps.length).to.equal(4);
+
+      for (const bp of rbps) {
+        expect(bp.environment.settings, 'recovered mydata setting ' + bp.executionId).to.have.property('mydata', mydata);
+        expect(bp.environment.settings, 'recovered strict setting ' + bp.executionId).to.have.property('strict', true);
+      }
+    });
+
+    it('stopped call process stalls execution', async () => {
+      const source = `
+      <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <callActivity id="call-activity" calledElement="called-process">
+            <multiInstanceLoopCharacteristics isSequential="false">
+              <loopCardinality>3</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+          </callActivity>
+          <endEvent id="end" />
+          <sequenceFlow id="to-end" sourceRef="call-activity" targetRef="end" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+        </process>
+        <process id="called-process" isExecutable="false">
+          <userTask id="task" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const definition = new Definition(context);
+
+      definition.run();
+
+      const bps = definition.getRunningProcesses();
+      expect(bps.length).to.equal(4);
+
+      const postponed = definition.getPostponed();
+
+      bps[2].stop();
+
+      expect(definition.getPostponed().length).to.equal(4);
+
+      for (const task of postponed) {
+        if (task.type === 'bpmn:UserTask') task.signal();
+      }
+
+      expect(definition.getPostponed().length).to.equal(2);
+    });
+
+    it('loop back to call activity completes execution', async () => {
+      const source = `
+      <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+          <callActivity id="call-activity" calledElement="called-process">
+            <multiInstanceLoopCharacteristics isSequential="false">
+              <loopCardinality>3</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+          </callActivity>
+          <sequenceFlow id="to-catch" sourceRef="call-activity" targetRef="catch" />
+          <intermediateCatchEvent id="catch">
+            <signalEventDefinition />
+          </intermediateCatchEvent>
+          <sequenceFlow id="catch-to-call" sourceRef="catch" targetRef="call-activity" />
+        </process>
+        <process id="called-process" isExecutable="false">
+          <userTask id="task" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const definition = new Definition(context);
+
+      definition.run();
+
+      const bps = definition.getRunningProcesses();
+      expect(bps.length).to.equal(4);
+
+      let postponed = definition.getPostponed();
+      expect(postponed.length, postponed.map(({id}) => id)).to.equal(4);
+
+      for (const task of postponed) {
+        if (task.type === 'bpmn:UserTask') task.signal();
+      }
+
+      postponed = definition.getPostponed();
+      expect(postponed.length).to.equal(1);
+
+      postponed[0].signal();
+
+      expect(definition.getPostponed().length).to.equal(4);
+    });
+
+    it('double call activity cancel is ignored', async () => {
+      const source = `
+      <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+          <callActivity id="call-activity" calledElement="called-process">
+            <multiInstanceLoopCharacteristics isSequential="false">
+              <loopCardinality>3</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+          </callActivity>
+          <sequenceFlow id="to-catch" sourceRef="call-activity" targetRef="catch" />
+          <intermediateCatchEvent id="catch">
+            <signalEventDefinition />
+          </intermediateCatchEvent>
+          <sequenceFlow id="catch-to-call" sourceRef="catch" targetRef="call-activity" />
+        </process>
+        <process id="called-process" isExecutable="false">
+          <userTask id="task" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      function mydata() {}
+      const definition = new Definition(context, {
+        settings: {
+          strict: true,
+          mydata,
+        },
+        services: {
+          serviceFn() {},
+        },
+      });
+
+      definition.run();
+
+      const bps = definition.getRunningProcesses();
+      expect(bps.length).to.equal(4);
+
+      const postponed = definition.getPostponed();
+      const [callActivity] = postponed;
+      expect(callActivity).to.have.property('id', 'call-activity');
+
+      const iterations = callActivity.getExecuting();
+      expect(iterations.length).to.equal(3);
+      iterations[0].cancel();
+
+      expect(callActivity.getExecuting()).to.have.length(2);
+
+      iterations[0].cancel();
+
+      expect(callActivity.getExecuting()).to.have.length(2);
+    });
+
+    it('call process signals are forwarded', async () => {
+      const source = `
+      <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+          <callActivity id="call-activity" calledElement="called-process">
+            <multiInstanceLoopCharacteristics isSequential="false">
+              <loopCardinality>3</loopCardinality>
+            </multiInstanceLoopCharacteristics>
+          </callActivity>
+          <sequenceFlow id="to-end" sourceRef="call-activity" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+        <process id="called-process" isExecutable="false">
+          <intermediateCatchEvent id="event">
+            <signalEventDefinition signalRef="Signal_0" />
+          </intermediateCatchEvent>
+        </process>
+        <signal id="Signal_0" />
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const definition = new Definition(context);
+
+      const leave = definition.waitFor('leave');
+      definition.run();
+
+      expect(definition.getRunningProcesses().length).to.equal(4);
+
+      definition.signal({id: 'Signal_1'});
+
+      expect(definition.getRunningProcesses().length).to.equal(4);
+
+      definition.signal({id: 'Signal_0'});
+
+      return leave;
+    });
+  });
+
+  describe('process discarded', () => {
+    it('completes when process execution is discarded', async () => {
+      const source = `
+      <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="called-process" isExecutable="true">
+          <userTask id="task" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const definition = new Definition(context);
+
+      const leave = definition.waitFor('leave');
+      definition.run();
+
+      const [bp] = definition.getRunningProcesses();
+      bp.execution.discard();
+
+      return leave;
     });
   });
 });

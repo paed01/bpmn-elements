@@ -305,6 +305,7 @@ proto.discard = function discard() {
 
 proto.getState = function getState() {
   const {
+    children,
     flows,
     outboundMessageFlows,
     associations
@@ -314,14 +315,20 @@ proto.getState = function getState() {
     stopped: this[kStopped],
     completed: this[kCompleted],
     status: this.status,
-    children: this[kElements].children.reduce((result, activity) => {
+    children: children.reduce((result, activity) => {
       if (activity.placeholder) return result;
       result.push(activity.getState());
       return result;
     }, []),
-    flows: flows.map(f => f.getState()),
-    messageFlows: outboundMessageFlows.map(f => f.getState()),
-    associations: associations.map(f => f.getState())
+    ...(flows.length && {
+      flows: flows.map(f => f.getState())
+    }),
+    ...(outboundMessageFlows.length && {
+      messageFlows: outboundMessageFlows.length && outboundMessageFlows.map(f => f.getState())
+    }),
+    ...(associations.length && {
+      associations: associations.map(f => f.getState())
+    })
   };
 };
 
@@ -617,7 +624,6 @@ proto._onChildMessage = function onChildMessage(routingKey, message) {
         break;
       }
 
-    case 'flow.error':
     case 'activity.error':
       {
         const eventCaughtBy = this[kElements].postponed.find(msg => {
@@ -753,9 +759,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   const broker = this.broker;
 
   if (message.properties.delegate) {
-    const {
-      correlationId
-    } = message.properties || (0, _shared.getUniqueId)(executionId);
+    const correlationId = message.properties.correlationId || (0, _shared.getUniqueId)(executionId);
 
     this._debug(`delegate api ${routingKey} message to children, with correlationId <${correlationId}>`);
 

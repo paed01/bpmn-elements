@@ -262,20 +262,20 @@ proto.discard = function discard() {
 
 
 proto.getState = function getState() {
-  const {flows, outboundMessageFlows, associations} = this[kElements];
+  const {children, flows, outboundMessageFlows, associations} = this[kElements];
   return {
     executionId: this.executionId,
     stopped: this[kStopped],
     completed: this[kCompleted],
     status: this.status,
-    children: this[kElements].children.reduce((result, activity) => {
+    children: children.reduce((result, activity) => {
       if (activity.placeholder) return result;
       result.push(activity.getState());
       return result;
     }, []),
-    flows: flows.map((f) => f.getState()),
-    messageFlows: outboundMessageFlows.map((f) => f.getState()),
-    associations: associations.map((f) => f.getState()),
+    ...(flows.length && {flows: flows.map((f) => f.getState())}),
+    ...(outboundMessageFlows.length && {messageFlows: outboundMessageFlows.length && outboundMessageFlows.map((f) => f.getState())}),
+    ...(associations.length && {associations: associations.map((f) => f.getState())}),
   };
 };
 
@@ -527,7 +527,6 @@ proto._onChildMessage = function onChildMessage(routingKey, message) {
 
       break;
     }
-    case 'flow.error':
     case 'activity.error': {
       const eventCaughtBy = this[kElements].postponed.find((msg) => {
         if (msg.fields.routingKey !== 'activity.catch') return;
@@ -603,7 +602,6 @@ proto._onChildCompleted = function onChildCompleted(message) {
 };
 
 proto._stopExecution = function stopExecution(message) {
-  if (this[kStopped]) return;
   const postponedCount = this.postponedCount;
   this._debug(`stop process execution (stop child executions ${postponedCount})`);
   if (postponedCount) {
@@ -633,7 +631,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   const executionId = this.executionId;
   const broker = this.broker;
   if (message.properties.delegate) {
-    const {correlationId} = message.properties || getUniqueId(executionId);
+    const correlationId = message.properties.correlationId || getUniqueId(executionId);
     this._debug(`delegate api ${routingKey} message to children, with correlationId <${correlationId}>`);
 
     let consumed = false;

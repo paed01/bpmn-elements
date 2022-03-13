@@ -20,15 +20,15 @@ var _Errors = require("../error/Errors");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const consumingSymbol = Symbol.for('consuming');
-const countersSymbol = Symbol.for('counters');
-const execSymbol = Symbol.for('exec');
-const executeMessageSymbol = Symbol.for('executeMessage');
-const extensionsSymbol = Symbol.for('extensions');
-const messageHandlersSymbol = Symbol.for('messageHandlers');
-const stateMessageSymbol = Symbol.for('stateMessage');
-const statusSymbol = Symbol.for('status');
-const stoppedSymbol = Symbol.for('stopped');
+const kConsuming = Symbol.for('consuming');
+const kCounters = Symbol.for('counters');
+const kExec = Symbol.for('execution');
+const kExecuteMessage = Symbol.for('executeMessage');
+const kExtensions = Symbol.for('extensions');
+const kMessageHandlers = Symbol.for('messageHandlers');
+const kStateMessage = Symbol.for('stateMessage');
+const kStatus = Symbol.for('status');
+const kStopped = Symbol.for('stopped');
 var _default = Process;
 exports.default = _default;
 
@@ -51,12 +51,14 @@ function Process(processDef, context) {
   this.isExecutable = isExecutable;
   const environment = this.environment = context.environment;
   this.context = context;
-  this[countersSymbol] = {
+  this[kCounters] = {
     completed: 0,
     discarded: 0
   };
-  this[stoppedSymbol] = false;
-  this[execSymbol] = {};
+  this[kConsuming] = false;
+  this[kExec] = {};
+  this[kStatus] = undefined;
+  this[kStopped] = false;
   const {
     broker,
     on,
@@ -67,13 +69,13 @@ function Process(processDef, context) {
   this.on = on;
   this.once = once;
   this.waitFor = waitFor;
-  this[messageHandlersSymbol] = {
+  this[kMessageHandlers] = {
     onApiMessage: this._onApiMessage.bind(this),
     onRunMessage: this._onRunMessage.bind(this),
     onExecutionMessage: this._onExecutionMessage.bind(this)
   };
   this.logger = environment.Logger(type.toLowerCase());
-  this[extensionsSymbol] = context.loadExtensions(this);
+  this[kExtensions] = context.loadExtensions(this);
 }
 
 const proto = Process.prototype;
@@ -81,7 +83,7 @@ Object.defineProperty(proto, 'counters', {
   enumerable: true,
 
   get() {
-    return { ...this[countersSymbol]
+    return { ...this[kCounters]
     };
   }
 
@@ -90,7 +92,7 @@ Object.defineProperty(proto, 'extensions', {
   enumerable: true,
 
   get() {
-    return this[extensionsSymbol];
+    return this[kExtensions];
   }
 
 });
@@ -98,7 +100,7 @@ Object.defineProperty(proto, 'stopped', {
   enumerable: true,
 
   get() {
-    return this[stoppedSymbol];
+    return this[kStopped];
   }
 
 });
@@ -106,7 +108,7 @@ Object.defineProperty(proto, 'isRunning', {
   enumerable: true,
 
   get() {
-    if (!this[consumingSymbol]) return false;
+    if (!this[kConsuming]) return false;
     return !!this.status;
   }
 
@@ -118,7 +120,7 @@ Object.defineProperty(proto, 'executionId', {
     const {
       executionId,
       initExecutionId
-    } = this[execSymbol];
+    } = this[kExec];
     return executionId || initExecutionId;
   }
 
@@ -127,7 +129,7 @@ Object.defineProperty(proto, 'execution', {
   enumerable: true,
 
   get() {
-    return this[execSymbol].execution;
+    return this[kExec].execution;
   }
 
 });
@@ -135,13 +137,13 @@ Object.defineProperty(proto, 'status', {
   enumerable: true,
 
   get() {
-    return this[statusSymbol];
+    return this[kStatus];
   }
 
 });
 
 proto.init = function init(useAsExecutionId) {
-  const exec = this[execSymbol];
+  const exec = this[kExec];
   const initExecutionId = exec.initExecutionId = useAsExecutionId || (0, _shared.getUniqueId)(this.id);
 
   this._debug(`initialized with executionId <${initExecutionId}>`);
@@ -153,7 +155,7 @@ proto.init = function init(useAsExecutionId) {
 
 proto.run = function run(runContent) {
   if (this.isRunning) throw new Error(`process <${this.id}> is already running`);
-  const exec = this[execSymbol];
+  const exec = this[kExec];
   const executionId = exec.executionId = exec.initExecutionId || (0, _shared.getUniqueId)(this.id);
   exec.initExecutionId = undefined;
 
@@ -172,7 +174,7 @@ proto.run = function run(runContent) {
 proto.resume = function resume() {
   if (this.isRunning) throw new Error(`cannot resume running process <${this.id}>`);
   if (!this.status) return this;
-  this[stoppedSymbol] = false;
+  this[kStopped] = false;
 
   const content = this._createMessage();
 
@@ -188,11 +190,11 @@ proto.resume = function resume() {
 proto.recover = function recover(state) {
   if (this.isRunning) throw new Error(`cannot recover running process <${this.id}>`);
   if (!state) return this;
-  this[stoppedSymbol] = !!state.stopped;
-  this[statusSymbol] = state.status;
-  const exec = this[execSymbol];
+  this[kStopped] = !!state.stopped;
+  this[kStatus] = state.status;
+  const exec = this[kExec];
   exec.executionId = state.executionId;
-  this[countersSymbol] = { ...this[countersSymbol],
+  this[kCounters] = { ...this[kCounters],
     ...state.counters
   };
   this.environment.recover(state.environment);
@@ -218,7 +220,7 @@ proto.stop = function stop() {
 proto.getApi = function getApi(message) {
   const execution = this.execution;
   if (execution) return execution.getApi(message);
-  return (0, _Api.ProcessApi)(this.broker, message || this[stateMessageSymbol]);
+  return (0, _Api.ProcessApi)(this.broker, message || this[kStateMessage]);
 };
 
 proto.signal = function signal(message) {
@@ -234,9 +236,7 @@ proto.getState = function getState() {
     stopped: this.stopped,
     counters: this.counters,
     broker: this.broker.getState(true),
-    execution: this.execution && this.execution.getState(),
-    output: { ...this.environment.output
-    }
+    execution: this.execution && this.execution.getState()
   });
 };
 
@@ -247,12 +247,12 @@ proto.cancelActivity = function cancelActivity(message) {
 };
 
 proto._activateRunConsumers = function activateRunConsumers() {
-  this[consumingSymbol] = true;
+  this[kConsuming] = true;
   const broker = this.broker;
   const {
     onApiMessage,
     onRunMessage
-  } = this[messageHandlersSymbol];
+  } = this[kMessageHandlers];
   broker.subscribeTmp('api', `process.*.${this.executionId}`, onApiMessage, {
     noAck: true,
     consumerTag: '_process-api',
@@ -269,7 +269,7 @@ proto._deactivateRunConsumers = function deactivateRunConsumers() {
   broker.cancel('_process-api');
   broker.cancel('_process-run');
   broker.cancel('_process-execution');
-  this[consumingSymbol] = false;
+  this[kConsuming] = false;
 };
 
 proto._onRunMessage = function onRunMessage(routingKey, message) {
@@ -282,15 +282,15 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
     return this._onResumeMessage(message);
   }
 
-  const exec = this[execSymbol];
-  this[stateMessageSymbol] = message;
+  const exec = this[kExec];
+  this[kStateMessage] = message;
 
   switch (routingKey) {
     case 'run.enter':
       {
         this._debug('enter');
 
-        this[statusSymbol] = 'entered';
+        this[kStatus] = 'entered';
         if (fields.redelivered) break;
         exec.execution = undefined;
 
@@ -303,7 +303,7 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
       {
         this._debug('start');
 
-        this[statusSymbol] = 'start';
+        this[kStatus] = 'start';
 
         this._publishEvent('start', content);
 
@@ -312,15 +312,15 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
 
     case 'run.execute':
       {
-        this[statusSymbol] = 'executing';
+        this[kStatus] = 'executing';
         const executeMessage = (0, _messageHelper.cloneMessage)(message);
 
         if (fields.redelivered && !exec.execution) {
           executeMessage.fields.redelivered = undefined;
         }
 
-        this[executeMessageSymbol] = message;
-        this.broker.getQueue('execution-q').assertConsumer(this[messageHandlersSymbol].onExecutionMessage, {
+        this[kExecuteMessage] = message;
+        this.broker.getQueue('execution-q').assertConsumer(this[kMessageHandlers].onExecutionMessage, {
           exclusive: true,
           consumerTag: '_process-execution'
         });
@@ -330,6 +330,8 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
 
     case 'run.error':
       {
+        this[kStatus] = 'errored';
+
         this._publishEvent('error', (0, _messageHelper.cloneContent)(content, {
           error: fields.redelivered ? (0, _Errors.makeErrorFromMessage)(message) : content.error
         }));
@@ -339,12 +341,12 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
 
     case 'run.end':
       {
-        this[statusSymbol] = 'end';
+        this[kStatus] = 'end';
         if (fields.redelivered) break;
 
         this._debug('completed');
 
-        this[countersSymbol].completed++;
+        this[kCounters].completed++;
         this.broker.publish('run', 'run.leave', content);
 
         this._publishEvent('end', content);
@@ -354,9 +356,9 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
 
     case 'run.discarded':
       {
-        this[statusSymbol] = 'discarded';
+        this[kStatus] = 'discarded';
         if (fields.redelivered) break;
-        this[countersSymbol].discarded++;
+        this[kCounters].discarded++;
         this.broker.publish('run', 'run.leave', content);
 
         this._publishEvent('discarded', content);
@@ -366,7 +368,7 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
 
     case 'run.leave':
       {
-        this[statusSymbol] = undefined;
+        this[kStatus] = undefined;
         this.broker.cancel('_process-api');
         const {
           output,
@@ -384,7 +386,7 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
 
 proto._onResumeMessage = function onResumeMessage(message) {
   message.ack();
-  const stateMessage = this[stateMessageSymbol];
+  const stateMessage = this[kStateMessage];
 
   switch (stateMessage.fields.routingKey) {
     case 'run.enter':
@@ -433,8 +435,8 @@ proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
       }
   }
 
-  const executeMessage = this[executeMessageSymbol];
-  this[executeMessageSymbol] = null;
+  const executeMessage = this[kExecuteMessage];
+  this[kExecuteMessage] = null;
   executeMessage.ack();
 };
 
@@ -450,7 +452,7 @@ proto._publishEvent = function publishEvent(state, content) {
 };
 
 proto.sendMessage = function sendMessage(message) {
-  const messageContent = message.content;
+  const messageContent = message && message.content;
   if (!messageContent) return;
   let targetsFound = false;
 
@@ -471,12 +473,14 @@ proto.sendMessage = function sendMessage(message) {
 };
 
 proto.getActivityById = function getActivityById(childId) {
-  if (this.execution) return this.execution.getActivityById(childId);
+  const execution = this.execution;
+  if (execution) return execution.getActivityById(childId);
   return this.context.getActivityById(childId);
 };
 
 proto.getActivities = function getActivities() {
-  if (this.execution) return this.execution.getActivities();
+  const execution = this.execution;
+  if (execution) return execution.getActivities();
   return this.context.getActivities(this.id);
 };
 
@@ -485,13 +489,15 @@ proto.getStartActivities = function getStartActivities(filterOptions) {
 };
 
 proto.getSequenceFlows = function getSequenceFlows() {
-  if (this.execution) return this.execution.getSequenceFlows();
+  const execution = this.execution;
+  if (execution) return execution.getSequenceFlows();
   return this.context.getSequenceFlows();
 };
 
 proto.getPostponed = function getPostponed(...args) {
-  if (!this.execution) return [];
-  return this.execution.getPostponed(...args);
+  const execution = this.execution;
+  if (!execution) return [];
+  return execution.getPostponed(...args);
 };
 
 proto._onApiMessage = function onApiMessage(routingKey, message) {
@@ -510,7 +516,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
 };
 
 proto._onStop = function onStop() {
-  this[stoppedSymbol] = true;
+  this[kStopped] = true;
 
   this._deactivateRunConsumers();
 

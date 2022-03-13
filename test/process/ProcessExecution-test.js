@@ -740,6 +740,16 @@ describe('Process execution', () => {
       expect(start.owner).to.have.property('id', 'start');
       expect(start.owner).to.have.property('stopped', true);
     });
+
+    it('stop on stop is ignored', () => {
+      const bp = createProcess();
+      bp.run();
+
+      bp.execution.stop();
+      bp.execution.stop();
+
+      expect(bp.execution.stopped).to.be.true;
+    });
   });
 
   describe('discard()', () => {

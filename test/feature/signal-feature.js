@@ -1,3 +1,4 @@
+import camunda from '../resources/extensions/CamundaExtension';
 import Definition from '../../src/definition/Definition';
 import factory from '../helpers/factory';
 import JsExtension from '../resources/extensions/JsExtension';
@@ -35,7 +36,7 @@ Feature('Signals', () => {
         return api.content.type === 'bpmn:UserTask';
       });
 
-      const signal = definition.getActivityById('spotPriceUpdate');
+      const signal = definition.getActivityById('updateSpotPrice');
       definition.signal(signal.resolve());
 
       approveNewPriceTask = await wait;
@@ -105,7 +106,7 @@ Feature('Signals', () => {
         return api.content.type === 'bpmn:UserTask';
       });
 
-      const signal = definition.getActivityById('spotPriceUpdate');
+      const signal = definition.getActivityById('updateSpotPrice');
       definition.signal(signal.resolve());
 
       approveNewPriceTask = await wait;
@@ -180,7 +181,7 @@ Feature('Signals', () => {
     });
 
     When('spot price is updated', () => {
-      const signal = definition.getActivityById('spotPriceUpdate');
+      const signal = definition.getActivityById('updateSpotPrice');
 
       const wait = definition.waitFor('activity.wait', (_, api) => {
         return api.content.type === 'bpmn:UserTask';
@@ -1205,100 +1206,52 @@ Feature('Signals', () => {
 
 async function prepareSource() {
   const context = await testHelpers.context(signalsSource, {
+    extensions: {camunda},
+  });
+
+  const definition = new Definition(context, {
+    settings: {
+      dataStores: new DataStores({
+        SpotPriceDb: {price: 100},
+      }),
+    },
+    services: {
+      getSpotPrice(msg, callback) {
+        return callback(null, this.environment.settings.dataStores.getDataStore(msg.content.db).price);
+      }
+    },
     extensions: {
-      camunda: {
-        moddleOptions: require('camunda-bpmn-moddle/resources/camunda'),
+      camunda: camunda.extension,
+      datastore(activity) {
+        if (activity.behaviour.dataInputAssociations) {
+          activity.on('enter', () => {
+            activity.broker.publish('format', 'run.enter.format', {
+              db: activity.behaviour.dataInputAssociations[0].behaviour.sourceRef.id,
+            });
+          });
+        }
+
+        if (activity.behaviour.dataOutputAssociations) {
+          activity.on('end', (api) => {
+            const db = activity.behaviour.dataOutputAssociations[0].behaviour.targetRef.id;
+            activity.environment.settings.dataStores.setDataStore(db, {...api.content.output});
+          });
+        }
       }
     }
   });
-  const definition = new Definition(context, {
-    variables: {
-      spotPrice: 100
-    },
-    services: {
-      getSpotPrice,
-    },
-    extensions: {
-      camunda(activity) {
-        if (activity.behaviour.extensionElements) {
-          for (const extension of activity.behaviour.extensionElements.values) {
-            switch (extension.$type) {
-              case 'camunda:FormData':
-                formFormatting(activity, extension);
-                break;
-              case 'camunda:InputOutput':
-                ioFormatting(activity, extension);
-                break;
-            }
-          }
-        }
-        if (activity.behaviour.expression) {
-          activity.behaviour.Service = ServiceExpression;
-        }
-        if (activity.behaviour.resultVariable) {
-          activity.on('end', (api) => {
-            activity.environment.output[activity.behaviour.resultVariable] = api.content.output;
-          });
-        }
-      },
-    }
-  });
-
-  function formFormatting(activity, formData) {
-    const {broker, environment} = activity;
-    broker.subscribeTmp('event', 'activity.enter', (_, message) => {
-      const form = {
-        fields: {}
-      };
-      formData.fields.forEach((field) => {
-        form.fields[field.id] = {...field};
-        form.fields[field.id].defaultValue = environment.resolveExpression(form.fields[field.id].defaultValue, message);
-      });
-      broker.publish('format', 'run.form', { form });
-    }, {noAck: true});
-  }
-
-  function ioFormatting(activity, ioData) {
-    const {broker, environment} = activity;
-    if (ioData.inputParameters) {
-      broker.subscribeTmp('event', 'activity.enter', (_, message) => {
-        const input = ioData.inputParameters.reduce((result, data) => {
-          result[data.name] = environment.resolveExpression(data.value, message);
-          return result;
-        }, {});
-        broker.publish('format', 'run.input', { input });
-      }, {noAck: true});
-    }
-    if (ioData.outputParameters) {
-      broker.subscribeTmp('event', 'activity.end', (_, message) => {
-        ioData.outputParameters.forEach((data) => {
-          definition.environment.variables[data.name] = environment.output[data.name] = environment.resolveExpression(data.value, message);
-        });
-      }, {noAck: true});
-    }
-  }
-
-  function getSpotPrice(ctx, callback) {
-    const price = definition.environment.variables.spotPrice;
-    return callback(null, price);
-  }
-
-  function ServiceExpression(activity) {
-    const {type: atype, behaviour, environment} = activity;
-    const expression = behaviour.expression;
-    const type = `${atype}:expression`;
-    return {
-      type,
-      expression,
-      execute,
-    };
-    function execute(executionMessage, callback) {
-      const serviceFn = environment.resolveExpression(expression, executionMessage);
-      serviceFn.call(activity, executionMessage, (err, result) => {
-        callback(err, result);
-      });
-    }
-  }
 
   return definition;
 }
+
+function DataStores(data) {
+  this.data = data;
+}
+
+DataStores.prototype.getDataStore = function getDataStore(id) {
+  return this.data[id];
+};
+
+DataStores.prototype.setDataStore = function setDataStore(id, value) {
+  this.data[id] = value;
+};

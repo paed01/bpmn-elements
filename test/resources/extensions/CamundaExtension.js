@@ -103,10 +103,15 @@ function Camunda(activity) {
       }, {noAck: true});
     }
     if (ioData.outputParameters) {
-      broker.subscribeTmp('event', 'activity.end', (_, message) => {
+      broker.subscribeTmp('event', 'activity.execution.completed', (_, message) => {
+        const output = {};
         ioData.outputParameters.forEach((data) => {
-          environment.output[data.name] = environment.resolveExpression(data.value, message);
+          output[data.name] = environment.resolveExpression(data.value, message);
         });
+
+        Object.assign(environment.output, output);
+
+        broker.publish('format', 'run.output', { output });
       }, {noAck: true, consumerTag: '_camunda_io'});
     }
   }

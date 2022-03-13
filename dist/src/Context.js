@@ -125,7 +125,9 @@ proto.getProcessById = function getProcessById(processId) {
   if (bp) return bp;
   const processDefinition = this.definitionContext.getProcessById(processId);
   if (!processDefinition) return null;
-  const bpContext = this.clone(this.environment.clone());
+  const bpContext = this.clone(this.environment.clone({
+    output: {}
+  }));
   bp = refs[processId] = new processDefinition.Behaviour(processDefinition, bpContext);
   this.refs.processes.push(bp);
   return bp;
@@ -184,15 +186,25 @@ proto.getStartActivities = function getStartActivities(filterOptions, scopeId) {
     referenceId,
     referenceType = 'unknown'
   } = filterOptions || {};
-  return this.getActivities().filter(activity => {
-    if (!activity.isStart) return false;
-    if (scopeId && activity.parent.id !== scopeId) return false;
-    if (!filterOptions) return true;
-    if (!activity.behaviour.eventDefinitions && !activity.behaviour.eventDefinitions) return false;
-    return activity.eventDefinitions.some(ed => {
+  const result = [];
+
+  for (const activity of this.getActivities()) {
+    if (!activity.isStart) continue;
+    if (scopeId && activity.parent.id !== scopeId) continue;
+
+    if (!filterOptions) {
+      result.push(activity);
+      continue;
+    }
+
+    if (!activity.behaviour.eventDefinitions && !activity.behaviour.eventDefinitions) continue;
+    const ref = activity.eventDefinitions.some(ed => {
       return ed.reference && ed.reference.id === referenceId && ed.reference.referenceType === referenceType;
     });
-  });
+    if (ref) result.push(activity);
+  }
+
+  return result;
 };
 
 proto.loadExtensions = function loadExtensions(activity) {

@@ -2,7 +2,11 @@ export default function BpmnIO(activity, context) {
   this.activity = activity;
   this.context = context;
 
-  const {ioSpecification: ioSpecificationDef, properties: propertiesDef} = activity.behaviour;
+  const {
+    ioSpecification: ioSpecificationDef,
+    properties: propertiesDef,
+  } = activity.behaviour;
+
   this.specification = ioSpecificationDef && new ioSpecificationDef.Behaviour(activity, ioSpecificationDef, context);
   this.properties = propertiesDef && new propertiesDef.Behaviour(activity, propertiesDef, context);
 }

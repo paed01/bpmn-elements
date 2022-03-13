@@ -5,14 +5,14 @@ import {getUniqueId, getOptionsAndCallback} from '../shared';
 import {makeErrorFromMessage} from '../error/Errors';
 import {cloneMessage, cloneContent} from '../messageHelper';
 
-const consumingSymbol = Symbol.for('consuming');
+const kConsuming = Symbol.for('consuming');
 const kCounters = Symbol.for('counters');
 const kExec = Symbol.for('execution');
-const executeMessageSymbol = Symbol.for('executeMessage');
-const messageHandlersSymbol = Symbol.for('messageHandlers');
-const stateMessageSymbol = Symbol.for('stateMessage');
+const kExecuteMessage = Symbol.for('executeMessage');
+const kMessageHandlers = Symbol.for('messageHandlers');
+const kStateMessage = Symbol.for('stateMessage');
 const kStatus = Symbol.for('status');
-const stoppedSymbol = Symbol.for('stopped');
+const kStopped = Symbol.for('stopped');
 
 export default Definition;
 
@@ -40,11 +40,11 @@ export function Definition(context, options) {
     discarded: 0,
   };
 
-  this[stoppedSymbol] = false;
+  this[kStopped] = false;
   this[kExec] = {};
 
   const onBrokerReturn = this._onBrokerReturnFn.bind(this);
-  this[messageHandlersSymbol] = {
+  this[kMessageHandlers] = {
     onBrokerReturn,
     onApiMessage: this._onApiMessage.bind(this),
     onRunMessage: this._onRunMessage.bind(this),
@@ -89,7 +89,7 @@ Object.defineProperty(proto, 'executionId', {
 Object.defineProperty(proto, 'isRunning', {
   enumerable: true,
   get() {
-    if (!this[consumingSymbol]) return false;
+    if (!this[kConsuming]) return false;
     return !!this.status;
   },
 });
@@ -104,7 +104,7 @@ Object.defineProperty(proto, 'status', {
 Object.defineProperty(proto, 'stopped', {
   enumerable: true,
   get() {
-    return this[stoppedSymbol];
+    return this[kStopped];
   },
 });
 
@@ -143,7 +143,7 @@ proto.resume = function resume(callback) {
     throw err;
   }
 
-  this[stoppedSymbol] = false;
+  this[kStopped] = false;
   if (!this.status) return this;
 
   if (callback) {
@@ -162,7 +162,7 @@ proto.recover = function recover(state) {
   if (this.isRunning) throw new Error('cannot recover running definition');
   if (!state) return this;
 
-  this[stoppedSymbol] = !!state.stopped;
+  this[kStopped] = !!state.stopped;
   this[kStatus] = state.status;
 
   const exec = this[kExec];
@@ -276,7 +276,7 @@ proto.getPostponed = function getPostponed(...args) {
 proto.getApi = function getApi(message) {
   const execution = this.execution;
   if (execution) return execution.getApi(message);
-  message = message || this[stateMessageSymbol];
+  message = message || this[kStateMessage];
   if (!message) throw new Error('Definition is not running');
   return DefinitionApi(this.broker, message);
 };
@@ -308,9 +308,9 @@ proto.stop = function stop() {
 };
 
 proto._activateRunConsumers = function activateRunConsumers() {
-  this[consumingSymbol] = true;
+  this[kConsuming] = true;
   const broker = this.broker;
-  const {onApiMessage, onRunMessage} = this[messageHandlersSymbol];
+  const {onApiMessage, onRunMessage} = this[kMessageHandlers];
   broker.subscribeTmp('api', `definition.*.${this.executionId}`, onApiMessage, {
     noAck: true,
     consumerTag: '_definition-api',
@@ -326,7 +326,7 @@ proto._deactivateRunConsumers = function deactivateRunConsumers() {
   broker.cancel('_definition-api');
   broker.cancel('_definition-run');
   broker.cancel('_definition-execution');
-  this[consumingSymbol] = false;
+  this[kConsuming] = false;
 };
 
 proto._createMessage = function createMessage(override) {
@@ -346,7 +346,7 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
   }
 
   const exec = this[kExec];
-  this[stateMessageSymbol] = message;
+  this[kStateMessage] = message;
 
   switch (routingKey) {
     case 'run.enter': {
@@ -371,8 +371,8 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
       if (fields.redelivered && !exec.execution) {
         executeMessage.fields.redelivered = undefined;
       }
-      this[executeMessageSymbol] = message;
-      this.broker.getQueue('execution-q').assertConsumer(this[messageHandlersSymbol].onExecutionMessage, {
+      this[kExecuteMessage] = message;
+      this.broker.getQueue('execution-q').assertConsumer(this[kMessageHandlers].onExecutionMessage, {
         exclusive: true,
         consumerTag: '_definition-execution',
       });
@@ -428,7 +428,7 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
 proto._onResumeMessage = function onResumeMessage(message) {
   message.ack();
 
-  const stateMessage = this[stateMessageSymbol];
+  const stateMessage = this[kStateMessage];
 
   switch (stateMessage.fields.routingKey) {
     case 'run.discarded':
@@ -466,8 +466,8 @@ proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
     }
   }
 
-  const executeMessage = this[executeMessageSymbol];
-  this[executeMessageSymbol] = null;
+  const executeMessage = this[kExecuteMessage];
+  this[kExecuteMessage] = null;
   executeMessage.ack();
 };
 
@@ -489,7 +489,7 @@ proto._publishEvent = function publishEvent(action, content, msgOpts) {
 };
 
 proto._onStop = function onStop() {
-  this[stoppedSymbol] = true;
+  this[kStopped] = true;
   this._deactivateRunConsumers();
   return this._publishEvent('stop', this._createMessage());
 };

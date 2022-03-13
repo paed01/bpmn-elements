@@ -132,5 +132,17 @@ Feature('Definition', () => {
       await end;
       expect(definition.environment.variables).to.deep.equal({data: 1});
     });
+
+    When('ran again with a assigned service object', () => {
+      end = definition.waitFor('leave');
+      definition.environment.services = {newFn() {}, extraFn() {}};
+      definition.run();
+    });
+
+    Then('process environment services has the expected functions', async () => {
+      [runningBp] = definition.getProcesses();
+      expect(runningBp.environment.services).to.have.property('newFn').that.is.a('function');
+      expect(runningBp.environment.services).to.have.property('extraFn').that.is.a('function');
+    });
   });
 });

@@ -13,10 +13,9 @@ var _Timers = require("./Timers");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const kOptions = Symbol.for('options');
 const kServices = Symbol.for('services');
 const kVariables = Symbol.for('variables');
-const defaultOptions = ['extensions', 'output', 'services', 'scripts', 'settings', 'variables', 'Logger'];
+const defaultOptions = ['expressions', 'extensions', 'Logger', 'output', 'scripts', 'services', 'settings', 'timers', 'variables'];
 
 function Environment(options = {}) {
   this.options = validateOptions(options);
@@ -28,7 +27,6 @@ function Environment(options = {}) {
   this.settings = { ...options.settings
   };
   this.Logger = options.Logger || DummyLogger;
-  this[kOptions] = options;
   this[kServices] = options.services || {};
   this[kVariables] = options.variables || {};
 }
@@ -74,8 +72,6 @@ proto.getState = function getState() {
 
 proto.recover = function recover(state) {
   if (!state) return this;
-  const recoverOptions = validateOptions(state);
-  Object.assign(this[kOptions], recoverOptions);
   if (state.settings) Object.assign(this.settings, state.settings);
   if (state.variables) Object.assign(this[kVariables], state.variables);
   if (state.output) Object.assign(this.output, state.output);

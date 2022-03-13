@@ -90,7 +90,7 @@ EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
   return new Promise((resolve, reject) => {
     const consumers = [
       this.broker.subscribeTmp('event', key, eventCallback, {noAck: true}),
-      this.broker.subscribeTmp('event', '*.error', errorCallback, {noAck: true})
+      this.broker.subscribeTmp('event', '*.error', errorCallback, {noAck: true}),
     ];
 
     function eventCallback(routingKey, message, owner) {

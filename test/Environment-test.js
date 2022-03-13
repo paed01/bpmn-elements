@@ -246,6 +246,31 @@ describe('Environment', () => {
     });
   });
 
+  describe('assignSettings()', () => {
+    it('assigns new settings', () => {
+      const environment = new Environment({settings: {before: true, init: 0}});
+
+      environment.assignSettings({
+        init: 1,
+      });
+
+      expect(environment.settings.init).to.equal(1);
+      expect(environment.settings.before).to.be.true;
+    });
+
+    it('ignored if non-object is passed', () => {
+      const environment = new Environment({settings: {before: true}});
+      environment.assignSettings();
+      expect(environment.settings).to.eql({before: true});
+      environment.assignSettings(null);
+      expect(environment.settings).to.eql({before: true});
+      environment.assignSettings('null');
+      expect(environment.settings).to.eql({before: true});
+      environment.assignSettings(1);
+      expect(environment.settings).to.eql({before: true});
+    });
+  });
+
   describe('clone()', () => {
     it('clones variables, settings, output, and options but keeps services, scripts, expressions, timers, and Logger', () => {
       const variables = {

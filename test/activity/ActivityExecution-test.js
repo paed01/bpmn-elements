@@ -980,7 +980,20 @@ describe('ActivityExecution', () => {
     });
   });
 
-  describe('recovered', () => {
+  describe('recover()', () => {
+    it('without state is ignored', () => {
+      const activity = createActivity(function Behaviour() {});
+      const execution = new ActivityExecution(activity);
+      expect(execution === execution.recover()).to.be.true;
+    });
+
+    it('completed and resumed is ignored', () => {
+      const activity = createActivity(function Behaviour() {});
+      const execution = new ActivityExecution(activity);
+      execution.recover({completed: true});
+      expect(execution.completed).to.be.true;
+    });
+
     it('redelivered execute message runs behaviour execute with redelivered start message', () => {
       const activity = createActivity(Behaviour);
       const execution = new ActivityExecution(activity);

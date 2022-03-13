@@ -5,11 +5,13 @@ Changelog
 
 ## Breaking
 
-- all processes will initiated with a new context
+- all processes will invoked with a cloned context and environment
+- remove output prop from process state. Why was it there in the first place?
+- remove mysterious options symbol from Environment
 
 ## Fix
 
-- Remove double definition completion if resumed after error
+- fix double completion if resumed on error
 
 # 7.0.0
 

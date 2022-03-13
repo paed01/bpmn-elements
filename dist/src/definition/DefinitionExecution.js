@@ -55,15 +55,12 @@ function DefinitionExecution(definition, context) {
     autoDelete: false,
     durable: true
   });
-  broker.assertQueue('activity-q', {
-    autoDelete: false,
-    durable: false
-  });
+  this.executionId = undefined;
   this[kCompleted] = false;
   this[kStopped] = false;
   this[kActivated] = false;
   this[kStatus] = 'init';
-  this.executionId = undefined;
+  this[kProcessesQ] = undefined;
   this[kMessageHandlers] = {
     onApiMessage: this._onApiMessage.bind(this),
     onCallActivity: this._onCallActivity.bind(this),
@@ -166,9 +163,9 @@ proto.execute = function execute(executeMessage) {
 };
 
 proto.resume = function resume() {
-  this._debug(`resume ${this.status} definition execution`);
+  this._debug(`resume ${this[kStatus]} definition execution`);
 
-  if (this.completed) return this._complete('completed');
+  if (this[kCompleted]) return this._complete('completed');
   const {
     running,
     postponed
@@ -181,18 +178,7 @@ proto.resume = function resume() {
     prefetch: 1000,
     consumerTag: `_definition-activity-${this.executionId}`
   });
-  if (this.completed) return;
-
-  switch (this.status) {
-    case 'init':
-      return this._start();
-
-    case 'executing':
-      {
-        if (!this.postponedCount) return this._complete('completed');
-        break;
-      }
-  }
+  if (this[kCompleted]) return;
 
   for (const bp of running) bp.resume();
 };
@@ -204,16 +190,28 @@ proto.recover = function recover(state) {
   this[kCompleted] = state.completed;
   this[kStatus] = state.status;
 
-  this._debug(`recover ${this.status} definition execution`);
+  this._debug(`recover ${this[kStatus]} definition execution`);
 
   const running = this[kProcesses].running;
   running.splice(0);
-  state.processes.map(processState => {
-    const instance = this.context.getNewProcessById(processState.id);
-    if (!instance) return;
-    instance.recover(processState);
-    running.push(instance);
-  });
+  const ids = [];
+
+  for (const bpState of state.processes) {
+    const bpid = bpState.id;
+    let bp;
+
+    if (ids.indexOf(bpid) > -1) {
+      bp = this.context.getNewProcessById(bpid);
+    } else {
+      bp = this.getProcessById(bpid);
+    }
+
+    if (!bp) return;
+    ids.push(bpid);
+    bp.recover(bpState);
+    running.push(bp);
+  }
+
   return this;
 };
 
@@ -260,9 +258,9 @@ proto.getExecutableProcesses = function getExecutableProcesses() {
 proto.getState = function getState() {
   return {
     executionId: this.executionId,
-    stopped: this.stopped,
-    completed: this.completed,
-    status: this.status,
+    stopped: this[kStopped],
+    completed: this[kCompleted],
+    status: this[kStatus],
     processes: this[kProcesses].running.map(bp => bp.getState())
   };
 };
@@ -309,7 +307,7 @@ proto._start = function start() {
   } = this[kProcesses];
 
   if (!ids.length) {
-    return this.publishCompletionMessage('completed');
+    return this._complete('completed');
   }
 
   if (!executable.length) {
@@ -417,7 +415,6 @@ proto._onProcessMessage = function onProcessMessage(routingKey, message) {
   const isRedelivered = message.fields.redelivered;
   const {
     id: childId,
-    executionId: childExecutionId,
     inbound
   } = content;
   if (isRedelivered && message.properties.persistent === false) return;
@@ -425,12 +422,8 @@ proto._onProcessMessage = function onProcessMessage(routingKey, message) {
   switch (routingKey) {
     case 'execution.stop':
       {
-        if (childExecutionId === this.executionId) {
-          message.ack();
-          return this._onStopped(message);
-        }
-
-        break;
+        message.ack();
+        return this._onStopped(message);
       }
 
     case 'process.leave':
@@ -442,7 +435,6 @@ proto._onProcessMessage = function onProcessMessage(routingKey, message) {
   this._stateChangeMessage(message, true);
 
   switch (routingKey) {
-    case 'process.discard':
     case 'process.enter':
       this[kStatus] = 'executing';
       break;
@@ -769,7 +761,7 @@ proto._complete = function complete(completionType, content, options) {
 
   if (!content) content = this._createMessage();
   this[kCompleted] = true;
-  if (this.status !== 'terminated') this[kStatus] = completionType;
+  this[kStatus] = completionType;
   this.broker.deleteQueue(this[kProcessesQ].name);
   return this.broker.publish('execution', `execution.${completionType}.${this.executionId}`, { ...stateMessage.content,
     output: { ...this.environment.output
@@ -783,23 +775,12 @@ proto._complete = function complete(completionType, content, options) {
   });
 };
 
-proto.publishCompletionMessage = function publishCompletionMessage(completionType, content) {
-  this._deactivate();
-
-  this._debug(completionType);
-
-  if (!content) content = this._createMessage();
-  return this.broker.publish('execution', `execution.${completionType}.${this.executionId}`, content, {
-    type: completionType
-  });
-};
-
 proto._createMessage = function createMessage(content = {}) {
   return {
     id: this.id,
     type: this.type,
     executionId: this.executionId,
-    status: this.status,
+    status: this[kStatus],
     ...content
   };
 };

@@ -716,7 +716,7 @@ Feature('Call activity', () => {
     });
   });
 
-  Scenario('a process with a call activity called element expression', () => {
+  Scenario('call activity with called element expression', () => {
     let definition;
     Given('a process', async () => {
       const source = `
