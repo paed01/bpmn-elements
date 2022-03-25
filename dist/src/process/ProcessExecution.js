@@ -719,7 +719,6 @@ proto._onChildCompleted = function onChildCompleted(message) {
 };
 
 proto._stopExecution = function stopExecution(message) {
-  if (this[kStopped]) return;
   const postponedCount = this.postponedCount;
 
   this._debug(`stop process execution (stop child executions ${postponedCount})`);

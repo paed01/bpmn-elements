@@ -119,7 +119,7 @@ proto.getProcessById = function getProcessById(processId) {
   const processDefinition = this.definitionContext.getProcessById(processId);
   if (!processDefinition) return null;
 
-  const bpContext = this.clone(this.environment.clone({output: {}}));
+  const bpContext = this.clone(this.environment.clone());
   bp = refs[processId] = new processDefinition.Behaviour(processDefinition, bpContext);
   this.refs.processes.push(bp);
 
@@ -129,7 +129,7 @@ proto.getProcessById = function getProcessById(processId) {
 proto.getNewProcessById = function getNewProcessById(processId) {
   if (!this.getProcessById(processId)) return null;
   const bpDef = this.definitionContext.getProcessById(processId);
-  const bp = new bpDef.Behaviour(bpDef, this.clone(this.environment.clone({output: {}})));
+  const bp = new bpDef.Behaviour(bpDef, this.clone(this.environment.clone()));
   return bp;
 };
 

@@ -9,9 +9,9 @@ var _shared = require("../shared");
 
 var _messageHelper = require("../messageHelper");
 
-const messageQSymbol = Symbol.for('cancelQ');
-const completedSymbol = Symbol.for('completed');
-const executeMessageSymbol = Symbol.for('executeMessage');
+const kMessageQ = Symbol.for('cancelQ');
+const kCompleted = Symbol.for('completed');
+const kExecuteMessage = Symbol.for('executeMessage');
 
 function CancelEventDefinition(activity, eventDefinition) {
   const {
@@ -33,9 +33,9 @@ function CancelEventDefinition(activity, eventDefinition) {
   this.logger = environment.Logger(type.toLowerCase());
 
   if (!isThrowing) {
-    this[completedSymbol] = false;
+    this[kCompleted] = false;
     const messageQueueName = `${reference.referenceType}-${(0, _shared.brokerSafeId)(id)}-q`;
-    this[messageQSymbol] = broker.assertQueue(messageQueueName, {
+    this[kMessageQ] = broker.assertQueue(messageQueueName, {
       autoDelete: false,
       durable: true
     });
@@ -49,7 +49,7 @@ function CancelEventDefinition(activity, eventDefinition) {
 const proto = CancelEventDefinition.prototype;
 Object.defineProperty(proto, 'executionId', {
   get() {
-    const message = this[executeMessageSymbol];
+    const message = this[kExecuteMessage];
     return message && message.content.executionId;
   }
 
@@ -60,8 +60,8 @@ proto.execute = function execute(executeMessage) {
 };
 
 proto.executeCatch = function executeCatch(executeMessage) {
-  this[executeMessageSymbol] = executeMessage;
-  this[completedSymbol] = false;
+  this[kExecuteMessage] = executeMessage;
+  this[kCompleted] = false;
   const executeContent = executeMessage.content;
   const {
     executionId,
@@ -72,11 +72,11 @@ proto.executeCatch = function executeCatch(executeMessage) {
 
   const onCatchMessage = this._onCatchMessage.bind(this);
 
-  this[messageQSymbol].consume(onCatchMessage, {
+  this[kMessageQ].consume(onCatchMessage, {
     noAck: true,
     consumerTag: `_oncancel-${executionId}`
   });
-  if (this[completedSymbol]) return;
+  if (this[kCompleted]) return;
 
   const onApiMessage = this._onApiMessage.bind(this);
 
@@ -137,7 +137,7 @@ proto._onCatchMessage = function onCatchMessage(_, message) {
 proto._onCancelTransaction = function onCancelTransaction(_, message) {
   const broker = this.broker,
         executionId = this.executionId;
-  const executeContent = this[executeMessageSymbol].content;
+  const executeContent = this[kExecuteMessage].content;
   broker.cancel(`_oncancel-${executionId}`);
 
   this._debug(`cancel transaction thrown by <${message.content.id}>`);
@@ -167,13 +167,13 @@ proto._onCancelTransaction = function onCancelTransaction(_, message) {
 };
 
 proto._complete = function complete(output) {
-  this[completedSymbol] = true;
+  this[kCompleted] = true;
 
   this._stop();
 
   this._debug('completed');
 
-  const content = (0, _messageHelper.cloneContent)(this[executeMessageSymbol].content, {
+  const content = (0, _messageHelper.cloneContent)(this[kExecuteMessage].content, {
     output,
     state: 'cancel'
   });
@@ -184,11 +184,11 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   switch (message.properties.type) {
     case 'discard':
       {
-        this[completedSymbol] = true;
+        this[kCompleted] = true;
 
         this._stop();
 
-        const content = (0, _messageHelper.cloneContent)(this[executeMessageSymbol].content);
+        const content = (0, _messageHelper.cloneContent)(this[kExecuteMessage].content);
         return this.broker.publish('execution', 'execute.discard', content);
       }
 
@@ -209,7 +209,7 @@ proto._stop = function stop() {
   broker.cancel(`_oncancel-${executionId}`);
   broker.cancel(`_oncancelend-${executionId}`);
   broker.cancel(`_onattached-cancel-${executionId}`);
-  this[messageQSymbol].purge();
+  this[kMessageQ].purge();
 };
 
 proto._debug = function debug(msg) {

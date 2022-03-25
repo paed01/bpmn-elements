@@ -2,9 +2,9 @@ import getPropertyValue from '../getPropertyValue';
 import {brokerSafeId} from '../shared';
 import {cloneContent, shiftParent} from '../messageHelper';
 
-const completedSymbol = Symbol.for('completed');
-const messageQSymbol = Symbol.for('messageQ');
-const executeMessageSymbol = Symbol.for('executeMessage');
+const kCompleted = Symbol.for('completed');
+const kMessageQ = Symbol.for('messageQ');
+const kExecuteMessage = Symbol.for('executeMessage');
 
 export default function LinkEventDefinition(activity, eventDefinition) {
   const {id, broker, environment, isThrowing} = activity;
@@ -22,11 +22,11 @@ export default function LinkEventDefinition(activity, eventDefinition) {
   this.activity = activity;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
-  this[completedSymbol] = false;
+  this[kCompleted] = false;
 
   if (!isThrowing) {
     const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(reference.linkName)}-q`;
-    this[messageQSymbol] = broker.assertQueue(messageQueueName, {autoDelete: false, durable: true});
+    this[kMessageQ] = broker.assertQueue(messageQueueName, {autoDelete: false, durable: true});
     broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, {durable: true});
   } else {
     broker.subscribeTmp('event', 'activity.discard', this._onDiscard.bind(this), {
@@ -40,7 +40,7 @@ const proto = LinkEventDefinition.prototype;
 
 Object.defineProperty(proto, 'executionId', {
   get() {
-    const message = this[executeMessageSymbol];
+    const message = this[kExecuteMessage];
     return message && message.content.executionId;
   },
 });
@@ -50,19 +50,19 @@ proto.execute = function execute(executeMessage) {
 };
 
 proto.executeCatch = function executeCatch(executeMessage) {
-  this[executeMessageSymbol] = executeMessage;
-  this[completedSymbol] = false;
+  this[kExecuteMessage] = executeMessage;
+  this[kCompleted] = false;
 
   const executeContent = executeMessage.content;
   const {executionId, parent} = executeContent;
   const parentExecutionId = parent.executionId;
 
-  this[messageQSymbol].consume(this._onCatchLink.bind(this), {
+  this[kMessageQ].consume(this._onCatchLink.bind(this), {
     noAck: true,
     consumerTag: `_api-link-${executionId}`,
   });
 
-  if (this[completedSymbol]) return;
+  if (this[kCompleted]) return;
 
   const broker = this.broker;
   const onApiMessage = this._onApiMessage.bind(this);
@@ -127,13 +127,13 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
 };
 
 proto._complete = function complete(verb, output) {
-  this[completedSymbol] = true;
+  this[kCompleted] = true;
 
   this._stop();
 
   this._debug(`${verb} link ${this.reference.linkName}`);
 
-  const executeContent = this[executeMessageSymbol].content;
+  const executeContent = this[kExecuteMessage].content;
   const parent = executeContent.parent;
   const catchContent = cloneContent(executeContent, {
     link: {...this.reference},
@@ -149,9 +149,9 @@ proto._complete = function complete(verb, output) {
 };
 
 proto._discard = function discard() {
-  this[completedSymbol] = true;
+  this[kCompleted] = true;
   this._stop();
-  return this.broker.publish('execution', 'execute.discard', cloneContent(this[executeMessageSymbol].content));
+  return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content));
 };
 
 proto._stop = function stop() {
@@ -159,7 +159,7 @@ proto._stop = function stop() {
   broker.cancel(`_api-link-${executionId}`);
   broker.cancel(`_api-parent-${executionId}`);
   broker.cancel(`_api-${executionId}`);
-  this[messageQSymbol].purge();
+  this[kMessageQ].purge();
 };
 
 proto._onDiscard = function onDiscard(_, message) {

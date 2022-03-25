@@ -1,7 +1,7 @@
 import {cloneContent, shiftParent} from '../messageHelper';
 import {ActivityError} from '../error/Errors';
 
-const executeMessageSymbol = Symbol.for('executeMessage');
+const kExecuteMessage = Symbol.for('executeMessage');
 
 export default function ConditionalEventDefinition(activity, eventDefinition) {
   const {id, broker, environment, attachedTo} = activity;
@@ -22,13 +22,13 @@ const proto = ConditionalEventDefinition.prototype;
 
 Object.defineProperty(proto, 'executionId', {
   get() {
-    const message = this[executeMessageSymbol];
+    const message = this[kExecuteMessage];
     return message && message.content.executionId;
   },
 });
 
 proto.execute = function execute(executeMessage) {
-  this[executeMessageSymbol] = executeMessage;
+  this[kExecuteMessage] = executeMessage;
   return this.isWaiting ? this.executeWait(executeMessage) : this.executeCatch(executeMessage);
 };
 
@@ -87,7 +87,7 @@ proto._onWaitApiMessage = function onWaitApiMessage(routingKey, message) {
     }
     case 'discard': {
       this._stopWait();
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[executeMessageSymbol].content, {state: 'discard'}));
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content, {state: 'discard'}));
     }
     case 'stop': {
       return this._stopWait();
@@ -96,7 +96,7 @@ proto._onWaitApiMessage = function onWaitApiMessage(routingKey, message) {
 };
 
 proto._evaluateWait = function evaluate(message) {
-  const executeMessage = this[executeMessageSymbol];
+  const executeMessage = this[kExecuteMessage];
   const broker = this.broker, executeContent = executeMessage.content;
 
   try {
@@ -125,7 +125,7 @@ proto._stopWait = function stopWait() {
 proto._onAttachedCompleted = function onAttachedCompleted(routingKey, message) {
   this._stopCatch();
 
-  const executeMessage = this[executeMessageSymbol];
+  const executeMessage = this[kExecuteMessage];
   const broker = this.broker, executeContent = executeMessage.content;
   try {
     var output = this.environment.resolveExpression(this.condition, message); // eslint-disable-line no-var
@@ -150,7 +150,7 @@ proto._onCatchApiMessage = function onCatchApiMessage(routingKey, message) {
     case 'discard': {
       this._stopCatch();
       this._debug('discarded');
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[executeMessageSymbol].content, {state: 'discard'}));
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content, {state: 'discard'}));
     }
     case 'stop': {
       this._stopCatch();
@@ -160,7 +160,7 @@ proto._onCatchApiMessage = function onCatchApiMessage(routingKey, message) {
 };
 
 proto._stopCatch = function stopCatch() {
-  const {executionId, index} = this[executeMessageSymbol].content;
+  const {executionId, index} = this[kExecuteMessage].content;
   this.activity.attachedTo.broker.cancel(`_onend-${executionId}_${index}`);
   this.broker.cancel(`_api-${executionId}_${index}`);
 };

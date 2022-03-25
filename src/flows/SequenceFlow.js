@@ -4,7 +4,7 @@ import {getUniqueId} from '../shared';
 import {EventBroker} from '../EventBroker';
 import {FlowApi} from '../Api';
 
-const countersSymbol = Symbol.for('counters');
+const kCounters = Symbol.for('counters');
 
 export default SequenceFlow;
 
@@ -23,7 +23,7 @@ function SequenceFlow(flowDef, {environment}) {
   this.environment = environment;
   const logger = this.logger = environment.Logger(type.toLowerCase());
 
-  this[countersSymbol] = {
+  this[kCounters] = {
     looped: 0,
     take: 0,
     discard: 0,
@@ -45,7 +45,7 @@ const proto = SequenceFlow.prototype;
 Object.defineProperty(proto, 'counters', {
   enumerable: true,
   get() {
-    return {...this[countersSymbol]};
+    return {...this[kCounters]};
   },
 });
 
@@ -55,7 +55,7 @@ proto.take = function take(content = {}) {
   const {sequenceId} = content;
 
   this.logger.debug(`<${sequenceId} (${this.id})> take, target <${this.targetId}>`);
-  ++this[countersSymbol].take;
+  ++this[kCounters].take;
 
   this._publishEvent('take', content);
 
@@ -66,7 +66,7 @@ proto.discard = function discard(content = {}) {
   const {sequenceId = getUniqueId(this.id)} = content;
   const discardSequence = content.discardSequence = (content.discardSequence || []).slice();
   if (discardSequence.indexOf(this.targetId) > -1) {
-    ++this[countersSymbol].looped;
+    ++this[kCounters].looped;
     this.logger.debug(`<${this.id}> discard loop detected <${this.sourceId}> -> <${this.targetId}>. Stop.`);
     return this._publishEvent('looped', content);
   }
@@ -74,7 +74,7 @@ proto.discard = function discard(content = {}) {
   discardSequence.push(this.sourceId);
 
   this.logger.debug(`<${sequenceId} (${this.id})> discard, target <${this.targetId}>`);
-  ++this[countersSymbol].discard;
+  ++this[kCounters].discard;
   this._publishEvent('discard', content);
 };
 
@@ -86,7 +86,7 @@ proto.getState = function getState() {
 };
 
 proto.recover = function recover(state) {
-  Object.assign(this[countersSymbol], state.counters);
+  Object.assign(this[kCounters], state.counters);
   this.broker.recover(state.broker);
 };
 

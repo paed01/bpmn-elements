@@ -1,8 +1,8 @@
 import Activity from '../activity/Activity';
 import {cloneContent} from '../messageHelper';
 
-const completedSymbol = Symbol.for('completed');
-const targetsSymbol = Symbol.for('targets');
+const kCompleted = Symbol.for('completed');
+const kTargets = Symbol.for('targets');
 
 export default function EventBasedGateway(activityDef, context) {
   return new Activity(EventBasedGatewayBehaviour, activityDef, context);
@@ -14,27 +14,27 @@ export function EventBasedGatewayBehaviour(activity, context) {
   this.activity = activity;
   this.broker = activity.broker;
   this.context = context;
-  this[targetsSymbol] = activity.outbound.map((flow) => context.getActivityById(flow.targetId));
+  this[kTargets] = activity.outbound.map((flow) => context.getActivityById(flow.targetId));
 }
 
 EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const {executionId, outbound = [], outboundTaken} = executeContent;
 
-  const targets = this[targetsSymbol];
-  this[completedSymbol] = false;
+  const targets = this[kTargets];
+  this[kCompleted] = false;
   if (!targets.length) return this._complete(executeContent);
 
   for (const flow of this.activity.outbound) {
     outbound.push({id: flow.id, action: 'take'});
   }
 
-  if (!this[completedSymbol] && outboundTaken) return;
+  if (!this[kCompleted] && outboundTaken) return;
 
   const targetConsumerTag = `_gateway-listener-${this.id}`;
 
   const onTargetCompleted = this._onTargetCompleted.bind(this, executeMessage);
-  for (const target of this[targetsSymbol]) {
+  for (const target of this[kTargets]) {
     target.broker.subscribeOnce('event', 'activity.end', onTargetCompleted, {consumerTag: targetConsumerTag});
   }
 
@@ -44,7 +44,7 @@ EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) 
     consumerTag: '_api-stop-execution',
   });
 
-  this[completedSymbol] = false;
+  this[kCompleted] = false;
   if (!executeMessage.fields.redelivered) return broker.publish('execution', 'execute.outbound.take', cloneContent(executeContent, {outboundTaken: true}));
 };
 
@@ -55,7 +55,7 @@ EventBasedGatewayBehaviour.prototype._onTargetCompleted = function onTargetCompl
   this.activity.logger.debug(`<${executionId} (${this.id})> <${targetExecutionId}> completed run, discarding the rest`);
 
   this._stop();
-  for (const target of this[targetsSymbol]) {
+  for (const target of this[kTargets]) {
     if (target === owner) continue;
     target.discard();
   }
@@ -72,13 +72,13 @@ EventBasedGatewayBehaviour.prototype._onTargetCompleted = function onTargetCompl
 };
 
 EventBasedGatewayBehaviour.prototype._complete = function complete(completedContent) {
-  this[completedSymbol] = true;
+  this[kCompleted] = true;
   this.broker.publish('execution', 'execute.completed', cloneContent(completedContent));
 };
 
 EventBasedGatewayBehaviour.prototype._stop = function stop() {
   const targetConsumerTag = `_gateway-listener-${this.id}`;
-  for (const target of this[targetsSymbol]) target.broker.cancel(targetConsumerTag);
+  for (const target of this[kTargets]) target.broker.cancel(targetConsumerTag);
   this.broker.cancel('_api-stop-execution');
 };
 

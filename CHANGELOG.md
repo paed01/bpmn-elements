@@ -6,7 +6,8 @@ Changelog
 ## Breaking
 
 - all processes will invoked with a cloned context and environment
-- remove output prop from process state. Why was it there in the first place?
+- a cloned environment will no longer forward output
+- remove output prop from process state. Not sure why it was there in the first place?
 - remove mysterious options symbol from Environment
 
 ## Fix

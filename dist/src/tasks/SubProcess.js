@@ -204,9 +204,7 @@ proto._upsertExecution = function upsertExecution(executeMessage) {
     return execution;
   }
 
-  const subEnvironment = this.environment.clone({
-    output: {}
-  });
+  const subEnvironment = this.environment.clone();
   const subContext = this.context.clone(subEnvironment);
   execution = new _ProcessExecution.default(this.activity, subContext);
   this[kExecutions].push(execution);

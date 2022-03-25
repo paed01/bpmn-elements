@@ -2,8 +2,8 @@ import {brokerSafeId} from '../shared';
 import {cloneParent} from '../messageHelper';
 import {MessageFlowBroker} from '../EventBroker';
 
-const countersSymbol = Symbol.for('counters');
-const sourceElementSymbol = Symbol.for('sourceElement');
+const kCounters = Symbol.for('counters');
+const kSourceElement = Symbol.for('sourceElement');
 
 export default function MessageFlow(flowDef, context) {
   const {id, type = 'messageflow', name, target, source, behaviour, parent} = flowDef;
@@ -18,7 +18,7 @@ export default function MessageFlow(flowDef, context) {
   this.environment = context.environment;
   this.context = context;
 
-  this[countersSymbol] = {
+  this[kCounters] = {
     messages: 0,
   };
 
@@ -29,7 +29,7 @@ export default function MessageFlow(flowDef, context) {
   this.emit = emit;
   this.waitFor = waitFor;
 
-  this[sourceElementSymbol] = context.getActivityById(source.id) || context.getProcessById(source.processId);
+  this[kSourceElement] = context.getActivityById(source.id) || context.getProcessById(source.processId);
   this.logger = context.environment.Logger(type.toLowerCase());
 }
 
@@ -38,7 +38,7 @@ const proto = MessageFlow.prototype;
 Object.defineProperty(proto, 'counters', {
   enumerable: true,
   get() {
-    return {...this[countersSymbol]};
+    return {...this[kCounters]};
   },
 });
 
@@ -51,7 +51,7 @@ proto.getState = function getState() {
 };
 
 proto.recover = function recover(state) {
-  Object.assign(this[countersSymbol], state.counters);
+  Object.assign(this[kCounters], state.counters);
 };
 
 proto.getApi = function getApi() {
@@ -59,21 +59,21 @@ proto.getApi = function getApi() {
 };
 
 proto.activate = function activate() {
-  const sourceElement = this[sourceElementSymbol];
+  const sourceElement = this[kSourceElement];
   const safeId = brokerSafeId(this.id);
   sourceElement.on('message', this.deactivate.bind(this), {consumerTag: `_message-on-message-${safeId}`});
   sourceElement.on('end', this._onSourceEnd.bind(this), {consumerTag: `_message-on-end-${safeId}`});
 };
 
 proto.deactivate = function deactivate() {
-  const sourceElement = this[sourceElementSymbol];
+  const sourceElement = this[kSourceElement];
   const safeId = brokerSafeId(this.id);
   sourceElement.broker.cancel(`_message-on-end-${safeId}`);
   sourceElement.broker.cancel(`_message-on-message-${safeId}`);
 };
 
 proto._onSourceEnd = function onSourceEnd({content}) {
-  ++this[countersSymbol].messages;
+  ++this[kCounters].messages;
   const source = this.source;
   const target = this.target;
   this.logger.debug(`<${this.id}> sending message from <${source.processId}.${source.id}> to <${target.id ? `${target.processId}.${target.id}` : target.processId}>`);

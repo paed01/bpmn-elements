@@ -1,9 +1,9 @@
 import {cloneContent} from '../messageHelper';
 import {toSeconds, parse} from 'iso8601-duration';
 
-const stoppedSymbol = Symbol.for('stopped');
-const timerContentSymbol = Symbol.for('timerContent');
-const timerSymbol = Symbol.for('timer');
+const kStopped = Symbol.for('stopped');
+const kTimerContent = Symbol.for('timerContent');
+const kTimer = Symbol.for('timer');
 
 export default function TimerEventDefinition(activity, eventDefinition) {
   const type = this.type = eventDefinition.type || 'TimerEventDefinition';
@@ -19,15 +19,15 @@ export default function TimerEventDefinition(activity, eventDefinition) {
   this.broker = activity.broker;
   this.logger = environment.Logger(type.toLowerCase());
 
-  this[stoppedSymbol] = false;
-  this[timerSymbol] = null;
+  this[kStopped] = false;
+  this[kTimer] = null;
 }
 
 const proto = TimerEventDefinition.prototype;
 
 Object.defineProperty(proto, 'executionId', {
   get() {
-    const content = this[timerContentSymbol];
+    const content = this[kTimerContent];
     return content && content.executionId;
   },
 });
@@ -35,33 +35,33 @@ Object.defineProperty(proto, 'executionId', {
 Object.defineProperty(proto, 'stopped', {
   enumerable: true,
   get() {
-    return this[stoppedSymbol];
+    return this[kStopped];
   },
 });
 
 Object.defineProperty(proto, 'timer', {
   enumerable: true,
   get() {
-    return this[timerSymbol];
+    return this[kTimer];
   },
 });
 
 proto.execute = function execute(executeMessage) {
   const {routingKey: executeKey, redelivered: isResumed} = executeMessage.fields;
-  const timer = this[timerSymbol];
+  const timer = this[kTimer];
   if (timer && executeKey === 'execute.timer') {
     return;
   }
 
-  if (timer) this[timerSymbol] = this.environment.timers.clearTimeout(timer);
-  this[stoppedSymbol] = false;
+  if (timer) this[kTimer] = this.environment.timers.clearTimeout(timer);
+  this[kStopped] = false;
 
   const content = executeMessage.content;
   const executionId = content.executionId;
   const startedAt = this.startedAt = 'startedAt' in content ? new Date(content.startedAt) : new Date();
 
   const resolvedTimer = this._getTimers(executeMessage);
-  const timerContent = this[timerContentSymbol] = cloneContent(content, {
+  const timerContent = this[kTimerContent] = cloneContent(content, {
     ...resolvedTimer,
     ...(isResumed ? {isResumed} : undefined),
     startedAt,
@@ -86,7 +86,7 @@ proto.execute = function execute(executeMessage) {
   if (timerContent.timeout <= 0) return this._completed();
 
   const timers = this.environment.timers.register(timerContent);
-  this[timerSymbol] = timers.setTimeout(this._completed.bind(this), timerContent.timeout, {
+  this[kTimer] = timers.setTimeout(this._completed.bind(this), timerContent.timeout, {
     id: content.id,
     type: this.type,
     executionId,
@@ -95,8 +95,8 @@ proto.execute = function execute(executeMessage) {
 };
 
 proto.stop = function stopTimer() {
-  const timer = this[timerSymbol];
-  if (timer) this[timerSymbol] = this.environment.timers.clearTimeout(timer);
+  const timer = this[kTimer];
+  if (timer) this[kTimer] = this.environment.timers.clearTimeout(timer);
 };
 
 proto._completed = function completed(completeContent, options) {
@@ -107,7 +107,7 @@ proto._completed = function completed(completeContent, options) {
   const runningTime = stoppedAt.getTime() - this.startedAt.getTime();
   this._debug(`completed in ${runningTime}ms`);
 
-  const timerContent = this[timerContentSymbol];
+  const timerContent = this[kTimerContent];
   const content = {stoppedAt, runningTime, state: 'timeout', ...completeContent};
 
   const broker = this.broker;
@@ -129,7 +129,7 @@ proto._onDelegatedApiMessage = function onDelegatedApiMessage(routingKey, messag
   if (signalExecutionId && signalId === id && signalExecutionId !== executionId) return;
 
   const {type, correlationId} = message.properties;
-  this.broker.publish('event', 'activity.consumed', cloneContent(this[timerContentSymbol], {
+  this.broker.publish('event', 'activity.consumed', cloneContent(this[kTimerContent], {
     message: {
       ...content.message,
     },
@@ -156,15 +156,15 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
     case 'discard': {
       this._stop();
       this._debug('discarded');
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[timerContentSymbol], {state: 'discard'}), {correlationId});
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kTimerContent], {state: 'discard'}), {correlationId});
     }
   }
 };
 
 proto._stop = function stop() {
-  this[stoppedSymbol] = true;
-  const timer = this[timerSymbol];
-  if (timer) this[timerSymbol] = this.environment.timers.clearTimeout(timer);
+  this[kStopped] = true;
+  const timer = this[kTimer];
+  if (timer) this[kTimer] = this.environment.timers.clearTimeout(timer);
   const broker = this.broker;
   broker.cancel(`_api-${this.executionId}`);
   broker.cancel(`_api-delegated-${this.executionId}`);

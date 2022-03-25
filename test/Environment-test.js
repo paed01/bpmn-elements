@@ -272,7 +272,7 @@ describe('Environment', () => {
   });
 
   describe('clone()', () => {
-    it('clones variables, settings, output, and options but keeps services, scripts, expressions, timers, and Logger', () => {
+    it('clones variables, settings, and options but keeps services, scripts, expressions, timers, and Logger', () => {
       const variables = {
         init: true,
       };
@@ -297,6 +297,9 @@ describe('Environment', () => {
           get() {},
         },
         Logger() {},
+        output: {
+          result: true,
+        },
       });
 
       expect(environment.options).to.have.property('listener', listener);
@@ -315,6 +318,20 @@ describe('Environment', () => {
       expect(clone.scripts === environment.scripts, 'keeps scripts').to.be.true;
       expect(clone.timers === environment.timers, 'keeps timers').to.be.true;
       expect(clone.expressions === environment.expressions, 'keeps expressions').to.be.true;
+    });
+
+    it('ignores output', () => {
+      const environment = new Environment({
+        output: {
+          result: true,
+        },
+      });
+
+      const clone = environment.clone();
+
+      expect(clone.output === environment.output, 'same output').to.be.false;
+      expect(environment.output).to.have.property('result');
+      expect(clone.output).to.not.have.property('result');
     });
 
     it('extends options', () => {
@@ -752,6 +769,40 @@ describe('Environment', () => {
           });
         }).to.throw(/clearTimeout is not a function/);
       });
+    });
+  });
+
+  describe('services', () => {
+    it('set services overwrites services but keeps reference', () => {
+      const services = {
+        myFn1() {},
+        myFn2() {},
+      };
+
+      const environment = new Environment({
+        services
+      });
+
+      const clone = environment.clone();
+
+      environment.services = {
+        myFn1() {},
+        myFn3() {},
+      };
+
+      expect(environment.services === clone.services, 'services ref').to.be.true;
+      expect(environment.services).to.not.have.property('myFn2');
+      expect(clone.services).to.have.property('myFn3');
+    });
+  });
+
+  describe('dummy logger', () => {
+    it('has debug, error, and warn', () => {
+      const environment = new Environment();
+      const logger = environment.Logger('pfx:');
+      expect(logger.debug()).to.be.undefined;
+      expect(logger.error()).to.be.undefined;
+      expect(logger.warn()).to.be.undefined;
     });
   });
 });

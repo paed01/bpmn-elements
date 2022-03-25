@@ -16,11 +16,11 @@ var _shared = require("../shared");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const attachedTagsSymbol = Symbol.for('attachedConsumers');
-const completeContentSymbol = Symbol.for('completeContent');
-const executeMessageSymbol = Symbol.for('executeMessage');
-const executionSymbol = Symbol.for('execution');
-const shovelsSymbol = Symbol.for('shovels');
+const kAttachedTags = Symbol.for('attachedConsumers');
+const kCompleteContent = Symbol.for('completeContent');
+const kExecuteMessage = Symbol.for('executeMessage');
+const kExecution = Symbol.for('execution');
+const kShovels = Symbol.for('shovels');
 
 function BoundaryEvent(activityDef, context) {
   return new _Activity.default(BoundaryEventBehaviour, activityDef, context);
@@ -33,15 +33,15 @@ function BoundaryEventBehaviour(activity) {
   this.activity = activity;
   this.environment = activity.environment;
   this.broker = activity.broker;
-  this[executionSymbol] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions, 'execute.bound.completed');
-  this[shovelsSymbol] = [];
-  this[attachedTagsSymbol] = [];
+  this[kExecution] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions, 'execute.bound.completed');
+  this[kShovels] = [];
+  this[kAttachedTags] = [];
 }
 
 const proto = BoundaryEventBehaviour.prototype;
 Object.defineProperty(proto, 'executionId', {
   get() {
-    const message = this[executeMessageSymbol];
+    const message = this[kExecuteMessage];
     return message && message.content.executionId;
   }
 
@@ -61,10 +61,10 @@ proto.execute = function execute(executeMessage) {
     isRootScope,
     executionId
   } = executeMessage.content;
-  const eventDefinitionExecution = this[executionSymbol];
+  const eventDefinitionExecution = this[kExecution];
 
   if (isRootScope) {
-    this[executeMessageSymbol] = executeMessage;
+    this[kExecuteMessage] = executeMessage;
     const broker = this.broker;
 
     if (eventDefinitionExecution && !this.environment.settings.strict) {
@@ -80,7 +80,7 @@ proto.execute = function execute(executeMessage) {
       consumerTag,
       priority: 300
     });
-    this[attachedTagsSymbol].push(consumerTag);
+    this[kAttachedTags].push(consumerTag);
     broker.subscribeOnce('execution', 'execute.detach', this._onDetachMessage.bind(this), {
       consumerTag: '_detach-tag'
     });
@@ -106,10 +106,10 @@ proto._onCompleted = function onCompleted(_, {
     return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content));
   }
 
-  this[completeContentSymbol] = content;
+  this[kCompleteContent] = content;
   const {
     inbound
-  } = this[executeMessageSymbol].content;
+  } = this[kExecuteMessage].content;
   const attachedToContent = inbound && inbound[0];
   const attachedTo = this.attachedTo;
   this.activity.logger.debug(`<${this.executionId} (${this.id})> cancel ${attachedTo.status} activity <${attachedToContent.executionId} (${attachedToContent.id})>`);
@@ -125,8 +125,8 @@ proto._onAttachedLeave = function onAttachedLeave(_, {
 
   this._stop();
 
-  const completeContent = this[completeContentSymbol];
-  if (!completeContent) return this.broker.publish('execution', 'execute.discard', this[executeMessageSymbol].content);
+  const completeContent = this[kCompleteContent];
+  if (!completeContent) return this.broker.publish('execution', 'execute.discard', this[kExecuteMessage].content);
   return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(completeContent));
 };
 
@@ -139,7 +139,7 @@ proto._onExpectMessage = function onExpectMessage(_, {
   } = content;
   const attachedTo = this.attachedTo;
   const errorConsumerTag = `_bound-error-listener-${executionId}`;
-  this[attachedTagsSymbol].push(errorConsumerTag);
+  this[kAttachedTags].push(errorConsumerTag);
   attachedTo.broker.subscribeTmp('event', 'activity.error', (__, errorMessage) => {
     if (errorMessage.content.id !== attachedTo.id) return;
     this.broker.publish('execution', expectRoutingKey, (0, _messageHelper.cloneContent)(errorMessage.content));
@@ -167,7 +167,7 @@ proto._onDetachMessage = function onDetachMessage(_, {
     sourcePattern
   } = content;
   const shovelName = `_detached-${(0, _shared.brokerSafeId)(id)}_${detachId}`;
-  this[shovelsSymbol].push(shovelName);
+  this[kShovels].push(shovelName);
   const broker = this.broker;
   attachedTo.broker.createShovel(shovelName, {
     exchange: sourceExchange,
@@ -204,9 +204,9 @@ proto._stop = function stop(detach) {
         broker = this.broker,
         executionId = this.executionId;
 
-  for (const tag of this[attachedTagsSymbol].splice(0)) attachedTo.broker.cancel(tag);
+  for (const tag of this[kAttachedTags].splice(0)) attachedTo.broker.cancel(tag);
 
-  for (const shovelName of this[shovelsSymbol].splice(0)) attachedTo.broker.closeShovel(shovelName);
+  for (const shovelName of this[kShovels].splice(0)) attachedTo.broker.closeShovel(shovelName);
 
   broker.cancel('_expect-tag');
   broker.cancel('_detach-tag');

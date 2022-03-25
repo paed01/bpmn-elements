@@ -1,10 +1,10 @@
 import Activity from '../activity/Activity';
 import {cloneContent} from '../messageHelper';
 
-const completedSymbol = Symbol.for('completed');
-const executeMessageSymbol = Symbol.for('executeMessage');
-const referenceElementSymbol = Symbol.for('referenceElement');
-const referenceInfoSymbol = Symbol.for('referenceInfo');
+const kCompleted = Symbol.for('completed');
+const kExecuteMessage = Symbol.for('executeMessage');
+const kReferenceElement = Symbol.for('referenceElement');
+const kReferenceInfo = Symbol.for('referenceInfo');
 
 export default function ReceiveTask(activityDef, context) {
   const task = new Activity(ReceiveTaskBehaviour, activityDef, context);
@@ -31,7 +31,7 @@ export function ReceiveTaskBehaviour(activity) {
   this.activity = activity;
   this.broker = activity.broker;
 
-  this[referenceElementSymbol] = reference.id && activity.getActivityById(reference.id);
+  this[kReferenceElement] = reference.id && activity.getActivityById(reference.id);
 }
 
 ReceiveTaskBehaviour.prototype.execute = function execute(executeMessage) {
@@ -46,21 +46,21 @@ function ReceiveTaskExecution(parent) {
   this.reference = reference;
   this.broker = broker;
   this.loopCharacteristics = loopCharacteristics;
-  this.referenceElement = parent[referenceElementSymbol];
+  this.referenceElement = parent[kReferenceElement];
 
-  this[completedSymbol] = false;
+  this[kCompleted] = false;
 }
 
 const proto = ReceiveTaskExecution.prototype;
 
 proto.execute = function execute(executeMessage) {
-  this[executeMessageSymbol] = executeMessage;
+  this[kExecuteMessage] = executeMessage;
 
   const executeContent = executeMessage.content;
   const {executionId, isRootScope} = executeContent;
   this.executionId = executionId;
 
-  const info = this[referenceInfoSymbol] = this._getReferenceInfo(executeMessage);
+  const info = this[kReferenceInfo] = this._getReferenceInfo(executeMessage);
 
   if (isRootScope) {
     this._setupMessageHandling(executionId);
@@ -77,7 +77,7 @@ proto.execute = function execute(executeMessage) {
     consumerTag: `_onmessage-${executionId}`,
   });
 
-  if (this[completedSymbol]) return;
+  if (this[kCompleted]) return;
 
   broker.subscribeTmp('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {
     noAck: true,
@@ -94,7 +94,7 @@ proto._onCatchMessage = function onCatchMessage(routingKey, message) {
   const content = message.content;
 
   const {id: signalId, executionId: signalExecutionId} = content.message || {};
-  const {message: referenceMessage, description} = this[referenceInfoSymbol];
+  const {message: referenceMessage, description} = this[kReferenceInfo];
 
   if (!referenceMessage.id && signalId || signalExecutionId) {
     if (this.loopCharacteristics && signalExecutionId !== this.executionId) return;
@@ -107,7 +107,7 @@ proto._onCatchMessage = function onCatchMessage(routingKey, message) {
 
   const {type: messageType, correlationId} = message.properties;
   const broker = this.broker;
-  const executeContent = this[executeMessageSymbol].content;
+  const executeContent = this[kExecuteMessage].content;
 
   broker.publish('event', 'activity.consumed', cloneContent(executeContent, {message: {...message.content.message}}), {correlationId, type: messageType});
   broker.publish('event', 'activity.catch', cloneContent(executeContent, {message: message.content.message}), {type: 'catch', correlationId});
@@ -123,9 +123,9 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
       return this._complete(message.content.message, {correlationId});
     }
     case 'discard': {
-      this[completedSymbol] = true;
+      this[kCompleted] = true;
       this._stop();
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[executeMessageSymbol].content), {correlationId});
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content), {correlationId});
     }
     case 'stop': {
       return this._stop();
@@ -134,9 +134,9 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
 };
 
 proto._complete = function complete(output, options) {
-  this[completedSymbol] = true;
+  this[kCompleted] = true;
   this._stop();
-  return this.broker.publish('execution', 'execute.completed', cloneContent(this[executeMessageSymbol].content, {output}), options);
+  return this.broker.publish('execution', 'execute.completed', cloneContent(this[kExecuteMessage].content, {output}), options);
 };
 
 proto._stop = function stop() {

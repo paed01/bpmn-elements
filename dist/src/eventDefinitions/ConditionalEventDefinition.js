@@ -9,7 +9,7 @@ var _messageHelper = require("../messageHelper");
 
 var _Errors = require("../error/Errors");
 
-const executeMessageSymbol = Symbol.for('executeMessage');
+const kExecuteMessage = Symbol.for('executeMessage');
 
 function ConditionalEventDefinition(activity, eventDefinition) {
   const {
@@ -35,14 +35,14 @@ function ConditionalEventDefinition(activity, eventDefinition) {
 const proto = ConditionalEventDefinition.prototype;
 Object.defineProperty(proto, 'executionId', {
   get() {
-    const message = this[executeMessageSymbol];
+    const message = this[kExecuteMessage];
     return message && message.content.executionId;
   }
 
 });
 
 proto.execute = function execute(executeMessage) {
-  this[executeMessageSymbol] = executeMessage;
+  this[kExecuteMessage] = executeMessage;
   return this.isWaiting ? this.executeWait(executeMessage) : this.executeCatch(executeMessage);
 };
 
@@ -110,7 +110,7 @@ proto._onWaitApiMessage = function onWaitApiMessage(routingKey, message) {
       {
         this._stopWait();
 
-        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[executeMessageSymbol].content, {
+        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[kExecuteMessage].content, {
           state: 'discard'
         }));
       }
@@ -123,7 +123,7 @@ proto._onWaitApiMessage = function onWaitApiMessage(routingKey, message) {
 };
 
 proto._evaluateWait = function evaluate(message) {
-  const executeMessage = this[executeMessageSymbol];
+  const executeMessage = this[kExecuteMessage];
   const broker = this.broker,
         executeContent = executeMessage.content;
 
@@ -161,7 +161,7 @@ proto._stopWait = function stopWait() {
 proto._onAttachedCompleted = function onAttachedCompleted(routingKey, message) {
   this._stopCatch();
 
-  const executeMessage = this[executeMessageSymbol];
+  const executeMessage = this[kExecuteMessage];
   const broker = this.broker,
         executeContent = executeMessage.content;
 
@@ -198,7 +198,7 @@ proto._onCatchApiMessage = function onCatchApiMessage(routingKey, message) {
 
         this._debug('discarded');
 
-        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[executeMessageSymbol].content, {
+        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[kExecuteMessage].content, {
           state: 'discard'
         }));
       }
@@ -216,7 +216,7 @@ proto._stopCatch = function stopCatch() {
   const {
     executionId,
     index
-  } = this[executeMessageSymbol].content;
+  } = this[kExecuteMessage].content;
   this.activity.attachedTo.broker.cancel(`_onend-${executionId}_${index}`);
   this.broker.cancel(`_api-${executionId}_${index}`);
 };

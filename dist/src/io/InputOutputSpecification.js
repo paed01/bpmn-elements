@@ -11,7 +11,7 @@ var _shared = require("../shared");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const consumingSymbol = Symbol.for('consuming');
+const kConsuming = Symbol.for('consuming');
 
 function IoSpecification(activity, ioSpecificationDef, context) {
   const {
@@ -30,14 +30,14 @@ function IoSpecification(activity, ioSpecificationDef, context) {
 const proto = IoSpecification.prototype;
 
 proto.activate = function activate() {
-  if (this[consumingSymbol]) return;
-  this[consumingSymbol] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {
+  if (this[kConsuming]) return;
+  this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {
     noAck: true
   });
 };
 
 proto.deactivate = function deactivate() {
-  if (this[consumingSymbol]) this[consumingSymbol] = this[consumingSymbol].cancel();
+  if (this[kConsuming]) this[kConsuming] = this[kConsuming].cancel();
 };
 
 proto._onActivityEvent = function onActivityEvent(routingKey, message) {

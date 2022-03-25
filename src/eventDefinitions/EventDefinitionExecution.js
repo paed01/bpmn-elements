@@ -1,8 +1,8 @@
 import {cloneContent, unshiftParent, shiftParent, cloneParent} from '../messageHelper';
 
-const completedSymbol = Symbol.for('completed');
-const executeMessageSymbol = Symbol.for('executeMessage');
-const stoppedSymbol = Symbol.for('stopped');
+const kCompleted = Symbol.for('completed');
+const kExecuteMessage = Symbol.for('executeMessage');
+const kStopped = Symbol.for('stopped');
 
 export default function EventDefinitionExecution(activity, eventDefinitions, completedRoutingKey = 'execute.completed') {
   this.id = activity.id;
@@ -10,9 +10,9 @@ export default function EventDefinitionExecution(activity, eventDefinitions, com
   this.broker = activity.broker;
   this.eventDefinitions = eventDefinitions;
   this.completedRoutingKey = completedRoutingKey;
-  this[completedSymbol] = false;
-  this[stoppedSymbol] = false;
-  this[executeMessageSymbol] = null;
+  this[kCompleted] = false;
+  this[kStopped] = false;
+  this[kExecuteMessage] = null;
 }
 
 const proto = EventDefinitionExecution.prototype;
@@ -20,14 +20,14 @@ const proto = EventDefinitionExecution.prototype;
 Object.defineProperty(proto, 'completed', {
   enumerable: true,
   get() {
-    return this[completedSymbol];
+    return this[kCompleted];
   },
 });
 
 Object.defineProperty(proto, 'stopped', {
   enumerable: true,
   get() {
-    return this[stoppedSymbol];
+    return this[kStopped];
   },
 });
 
@@ -39,7 +39,7 @@ proto.execute = function execute(executeMessage) {
 
   const broker = this.broker;
 
-  this[executeMessageSymbol] = executeMessage;
+  this[kExecuteMessage] = executeMessage;
   const executionId = content.executionId;
 
   broker.subscribeTmp('execution', 'execute.#', this._onExecuteMessage.bind(this), {
@@ -61,8 +61,8 @@ proto.execute = function execute(executeMessage) {
   const eventDefinitions = this.eventDefinitions;
 
   for (let index = 0; index < eventDefinitions.length; ++index) {
-    if (this[completedSymbol]) break;
-    if (this[stoppedSymbol]) break;
+    if (this[kCompleted]) break;
+    if (this[kStopped]) break;
 
     const ed = eventDefinitions[index];
     const edExecutionId = `${executionId}_${index}`;
@@ -113,12 +113,12 @@ proto._onExecuteMessage = function onExecuteMessage(routingKey, message) {
 
 proto._complete = function complete(message) {
   const {executionId, type, index, parent} = message.content;
-  this[completedSymbol] = true;
+  this[kCompleted] = true;
 
   this._debug(executionId, `event definition ${type} completed, index ${index}`);
 
   const completeContent = cloneContent(message.content, {
-    executionId: this[executeMessageSymbol].content.executionId,
+    executionId: this[kExecuteMessage].content.executionId,
     isRootScope: true,
   });
   completeContent.parent = shiftParent(parent);
@@ -135,7 +135,7 @@ proto._executeDefinition = function executeDefinition(message) {
 };
 
 proto._stop = function stop() {
-  this[stoppedSymbol] = true;
+  this[kStopped] = true;
   this.broker.cancel('_eventdefinition-execution-execute-tag');
   this.broker.cancel('_eventdefinition-execution-api-tag');
 };

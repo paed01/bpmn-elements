@@ -12,10 +12,10 @@ var _messageHelper = require("../messageHelper");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const completedSymbol = Symbol.for('completed');
-const executeMessageSymbol = Symbol.for('executeMessage');
-const referenceElementSymbol = Symbol.for('referenceElement');
-const referenceInfoSymbol = Symbol.for('referenceInfo');
+const kCompleted = Symbol.for('completed');
+const kExecuteMessage = Symbol.for('executeMessage');
+const kReferenceElement = Symbol.for('referenceElement');
+const kReferenceInfo = Symbol.for('referenceInfo');
 
 function ReceiveTask(activityDef, context) {
   const task = new _Activity.default(ReceiveTaskBehaviour, activityDef, context);
@@ -45,7 +45,7 @@ function ReceiveTaskBehaviour(activity) {
   this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
   this.broker = activity.broker;
-  this[referenceElementSymbol] = reference.id && activity.getActivityById(reference.id);
+  this[kReferenceElement] = reference.id && activity.getActivityById(reference.id);
 }
 
 ReceiveTaskBehaviour.prototype.execute = function execute(executeMessage) {
@@ -64,14 +64,14 @@ function ReceiveTaskExecution(parent) {
   this.reference = reference;
   this.broker = broker;
   this.loopCharacteristics = loopCharacteristics;
-  this.referenceElement = parent[referenceElementSymbol];
-  this[completedSymbol] = false;
+  this.referenceElement = parent[kReferenceElement];
+  this[kCompleted] = false;
 }
 
 const proto = ReceiveTaskExecution.prototype;
 
 proto.execute = function execute(executeMessage) {
-  this[executeMessageSymbol] = executeMessage;
+  this[kExecuteMessage] = executeMessage;
   const executeContent = executeMessage.content;
   const {
     executionId,
@@ -79,7 +79,7 @@ proto.execute = function execute(executeMessage) {
   } = executeContent;
   this.executionId = executionId;
 
-  const info = this[referenceInfoSymbol] = this._getReferenceInfo(executeMessage);
+  const info = this[kReferenceInfo] = this._getReferenceInfo(executeMessage);
 
   if (isRootScope) {
     this._setupMessageHandling(executionId);
@@ -96,7 +96,7 @@ proto.execute = function execute(executeMessage) {
     noAck: true,
     consumerTag: `_onmessage-${executionId}`
   });
-  if (this[completedSymbol]) return;
+  if (this[kCompleted]) return;
   broker.subscribeTmp('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {
     noAck: true,
     consumerTag: `_api-${executionId}`,
@@ -120,7 +120,7 @@ proto._onCatchMessage = function onCatchMessage(routingKey, message) {
   const {
     message: referenceMessage,
     description
-  } = this[referenceInfoSymbol];
+  } = this[kReferenceInfo];
 
   if (!referenceMessage.id && signalId || signalExecutionId) {
     if (this.loopCharacteristics && signalExecutionId !== this.executionId) return;
@@ -136,7 +136,7 @@ proto._onCatchMessage = function onCatchMessage(routingKey, message) {
     correlationId
   } = message.properties;
   const broker = this.broker;
-  const executeContent = this[executeMessageSymbol].content;
+  const executeContent = this[kExecuteMessage].content;
   broker.publish('event', 'activity.consumed', (0, _messageHelper.cloneContent)(executeContent, {
     message: { ...message.content.message
     }
@@ -173,11 +173,11 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
 
     case 'discard':
       {
-        this[completedSymbol] = true;
+        this[kCompleted] = true;
 
         this._stop();
 
-        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[executeMessageSymbol].content), {
+        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[kExecuteMessage].content), {
           correlationId
         });
       }
@@ -190,11 +190,11 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
 };
 
 proto._complete = function complete(output, options) {
-  this[completedSymbol] = true;
+  this[kCompleted] = true;
 
   this._stop();
 
-  return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(this[executeMessageSymbol].content, {
+  return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(this[kExecuteMessage].content, {
     output
   }), options);
 };

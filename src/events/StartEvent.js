@@ -2,8 +2,8 @@ import Activity from '../activity/Activity';
 import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution';
 import {cloneContent} from '../messageHelper';
 
-const executeMessageSymbol = Symbol.for('executeMessage');
-const executionSymbol = Symbol.for('execution');
+const kExecuteMessage = Symbol.for('executeMessage');
+const kExecution = Symbol.for('execution');
 
 export default function StartEvent(activityDef, context) {
   return new Activity(StartEventBehaviour, activityDef, context);
@@ -14,20 +14,20 @@ export function StartEventBehaviour(activity) {
   this.type = activity.type;
   this.activity = activity;
   this.broker = activity.broker;
-  this[executionSymbol] = activity.eventDefinitions && new EventDefinitionExecution(activity, activity.eventDefinitions);
+  this[kExecution] = activity.eventDefinitions && new EventDefinitionExecution(activity, activity.eventDefinitions);
 }
 
 const proto = StartEventBehaviour.prototype;
 
 Object.defineProperty(proto, 'executionId', {
   get() {
-    const message = this[executeMessageSymbol];
+    const message = this[kExecuteMessage];
     return message && message.content.executionId;
   },
 });
 
 proto.execute = function execute(executeMessage) {
-  const execution = this[executionSymbol];
+  const execution = this[kExecution];
   if (execution) {
     return execution.execute(executeMessage);
   }
@@ -39,7 +39,7 @@ proto.execute = function execute(executeMessage) {
   }
 
   const executionId = content.executionId;
-  this[executeMessageSymbol] = executeMessage;
+  this[kExecuteMessage] = executeMessage;
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(...args), {
     noAck: true,
     consumerTag: `_api-${executionId}`,
@@ -59,7 +59,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
       return this._stop();
     case 'signal': {
       this._stop();
-      const content = this[executeMessageSymbol].content;
+      const content = this[kExecuteMessage].content;
       return this.broker.publish('execution', 'execute.completed', cloneContent(content, {
         output: message.content.message,
         state: 'signal',
@@ -67,7 +67,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
     }
     case 'discard': {
       this._stop();
-      const content = this[executeMessageSymbol].content;
+      const content = this[kExecuteMessage].content;
       return this.broker.publish('execution', 'execute.discard', cloneContent(content), {correlationId});
     }
   }
@@ -83,7 +83,7 @@ proto._onDelegatedApiMessage = function onDelegatedApiMessage(routingKey, messag
   if (signalId !== this.id && signalExecutionId !== this.executionId) return;
 
   const {type, correlationId} = message.properties;
-  const executeContent = this[executeMessageSymbol].content;
+  const executeContent = this[kExecuteMessage].content;
   this.broker.publish('event', 'activity.consumed', cloneContent(executeContent, {
     message: {
       ...content.message,

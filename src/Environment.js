@@ -77,7 +77,6 @@ proto.clone = function clone(overrideOptions = {}) {
   const newOptions = {
     settings: {...this.settings},
     variables: {...this[kVariables]},
-    output: {...this.output},
     Logger: this.Logger,
     extensions: this.extensions,
     scripts: this.scripts,

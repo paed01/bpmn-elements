@@ -1,13 +1,13 @@
 import getPropertyValue from '../getPropertyValue';
 
-const propertiesSymbol = Symbol.for('properties');
-const consumingSymbol = Symbol.for('consuming');
+const kProperties = Symbol.for('properties');
+const kConsuming = Symbol.for('consuming');
 
 export default function Properties(activity, propertiesDef, context) {
   this.activity = activity;
   this.broker = activity.broker;
 
-  const props = this[propertiesSymbol] = {
+  const props = this[kProperties] = {
     properties: [],
     dataInputObjects: [],
     dataOutputObjects: [],
@@ -61,17 +61,17 @@ export default function Properties(activity, propertiesDef, context) {
 const proto = Properties.prototype;
 
 proto.activate = function activate(message) {
-  if (this[consumingSymbol]) return;
+  if (this[kConsuming]) return;
 
   if (message.fields.redelivered && message.content.properties) {
     this._onActivityEvent('activity.extension.resume', message);
   }
 
-  this[consumingSymbol] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {noAck: true});
+  this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {noAck: true});
 };
 
 proto.deactivate = function deactivate() {
-  if (this[consumingSymbol]) this[consumingSymbol] = this[consumingSymbol].cancel();
+  if (this[kConsuming]) this[kConsuming] = this[kConsuming].cancel();
 };
 
 proto._onActivityEvent = function onActivityEvent(routingKey, message) {
@@ -91,7 +91,7 @@ proto._onActivityEvent = function onActivityEvent(routingKey, message) {
 proto._formatOnEnter = function formatOnEnter(message) {
   const startRoutingKey = 'run.enter.bpmn-properties';
 
-  const dataInputObjects = this[propertiesSymbol].dataInputObjects;
+  const dataInputObjects = this[kProperties].dataInputObjects;
   const broker = this.broker;
   if (!dataInputObjects.length) {
     return broker.getQueue('format-run-q').queueMessage({routingKey: startRoutingKey}, {
@@ -118,7 +118,7 @@ proto._formatOnComplete = function formatOnComplete(message) {
   const messageOutput = getPropertyValue(message, 'content.output.properties') || {};
   const outputProperties = this._getProperties(message, messageOutput);
 
-  const dataOutputObjects = this[propertiesSymbol].dataOutputObjects;
+  const dataOutputObjects = this[kProperties].dataOutputObjects;
   const broker = this.broker;
   if (!dataOutputObjects.length) {
     return broker.getQueue('format-run-q').queueMessage({routingKey: startRoutingKey}, {
@@ -146,7 +146,7 @@ proto._getProperties = function getProperties(message, values) {
     response = {...message.content.properties};
   }
 
-  for (const {id, type, name} of this[propertiesSymbol].properties) {
+  for (const {id, type, name} of this[kProperties].properties) {
     if (!(id in response)) {
       response[id] = {id, type, name};
     }

@@ -11,8 +11,8 @@ var _messageHelper = require("../messageHelper");
 
 var _EventBroker = require("../EventBroker");
 
-const countersSymbol = Symbol.for('counters');
-const sourceElementSymbol = Symbol.for('sourceElement');
+const kCounters = Symbol.for('counters');
+const kSourceElement = Symbol.for('sourceElement');
 
 function MessageFlow(flowDef, context) {
   const {
@@ -33,7 +33,7 @@ function MessageFlow(flowDef, context) {
   this.behaviour = behaviour;
   this.environment = context.environment;
   this.context = context;
-  this[countersSymbol] = {
+  this[kCounters] = {
     messages: 0
   };
   const {
@@ -48,7 +48,7 @@ function MessageFlow(flowDef, context) {
   this.once = once;
   this.emit = emit;
   this.waitFor = waitFor;
-  this[sourceElementSymbol] = context.getActivityById(source.id) || context.getProcessById(source.processId);
+  this[kSourceElement] = context.getActivityById(source.id) || context.getProcessById(source.processId);
   this.logger = context.environment.Logger(type.toLowerCase());
 }
 
@@ -57,7 +57,7 @@ Object.defineProperty(proto, 'counters', {
   enumerable: true,
 
   get() {
-    return { ...this[countersSymbol]
+    return { ...this[kCounters]
     };
   }
 
@@ -72,7 +72,7 @@ proto.getState = function getState() {
 };
 
 proto.recover = function recover(state) {
-  Object.assign(this[countersSymbol], state.counters);
+  Object.assign(this[kCounters], state.counters);
 };
 
 proto.getApi = function getApi() {
@@ -80,7 +80,7 @@ proto.getApi = function getApi() {
 };
 
 proto.activate = function activate() {
-  const sourceElement = this[sourceElementSymbol];
+  const sourceElement = this[kSourceElement];
   const safeId = (0, _shared.brokerSafeId)(this.id);
   sourceElement.on('message', this.deactivate.bind(this), {
     consumerTag: `_message-on-message-${safeId}`
@@ -91,7 +91,7 @@ proto.activate = function activate() {
 };
 
 proto.deactivate = function deactivate() {
-  const sourceElement = this[sourceElementSymbol];
+  const sourceElement = this[kSourceElement];
   const safeId = (0, _shared.brokerSafeId)(this.id);
   sourceElement.broker.cancel(`_message-on-end-${safeId}`);
   sourceElement.broker.cancel(`_message-on-message-${safeId}`);
@@ -100,7 +100,7 @@ proto.deactivate = function deactivate() {
 proto._onSourceEnd = function onSourceEnd({
   content
 }) {
-  ++this[countersSymbol].messages;
+  ++this[kCounters].messages;
   const source = this.source;
   const target = this.target;
   this.logger.debug(`<${this.id}> sending message from <${source.processId}.${source.id}> to <${target.id ? `${target.processId}.${target.id}` : target.processId}>`);

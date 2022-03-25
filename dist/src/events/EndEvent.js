@@ -14,7 +14,7 @@ var _messageHelper = require("../messageHelper");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const executionSymbol = Symbol.for('execution');
+const kExecution = Symbol.for('execution');
 
 function EndEvent(activityDef, context) {
   return new _Activity.default(EndEventBehaviour, { ...activityDef,
@@ -26,11 +26,11 @@ function EndEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
   this.broker = activity.broker;
-  this[executionSymbol] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions);
+  this[kExecution] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions);
 }
 
 EndEventBehaviour.prototype.execute = function execute(executeMessage) {
-  const execution = this[executionSymbol];
+  const execution = this[kExecution];
 
   if (execution) {
     return execution.execute(executeMessage);

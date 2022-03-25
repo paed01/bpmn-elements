@@ -9,9 +9,9 @@ var _messageHelper = require("../messageHelper");
 
 var _iso8601Duration = require("iso8601-duration");
 
-const stoppedSymbol = Symbol.for('stopped');
-const timerContentSymbol = Symbol.for('timerContent');
-const timerSymbol = Symbol.for('timer');
+const kStopped = Symbol.for('stopped');
+const kTimerContent = Symbol.for('timerContent');
+const kTimer = Symbol.for('timer');
 
 function TimerEventDefinition(activity, eventDefinition) {
   const type = this.type = eventDefinition.type || 'TimerEventDefinition';
@@ -28,14 +28,14 @@ function TimerEventDefinition(activity, eventDefinition) {
   if (timeDate) this.timeDate = timeDate;
   this.broker = activity.broker;
   this.logger = environment.Logger(type.toLowerCase());
-  this[stoppedSymbol] = false;
-  this[timerSymbol] = null;
+  this[kStopped] = false;
+  this[kTimer] = null;
 }
 
 const proto = TimerEventDefinition.prototype;
 Object.defineProperty(proto, 'executionId', {
   get() {
-    const content = this[timerContentSymbol];
+    const content = this[kTimerContent];
     return content && content.executionId;
   }
 
@@ -44,7 +44,7 @@ Object.defineProperty(proto, 'stopped', {
   enumerable: true,
 
   get() {
-    return this[stoppedSymbol];
+    return this[kStopped];
   }
 
 });
@@ -52,7 +52,7 @@ Object.defineProperty(proto, 'timer', {
   enumerable: true,
 
   get() {
-    return this[timerSymbol];
+    return this[kTimer];
   }
 
 });
@@ -62,21 +62,21 @@ proto.execute = function execute(executeMessage) {
     routingKey: executeKey,
     redelivered: isResumed
   } = executeMessage.fields;
-  const timer = this[timerSymbol];
+  const timer = this[kTimer];
 
   if (timer && executeKey === 'execute.timer') {
     return;
   }
 
-  if (timer) this[timerSymbol] = this.environment.timers.clearTimeout(timer);
-  this[stoppedSymbol] = false;
+  if (timer) this[kTimer] = this.environment.timers.clearTimeout(timer);
+  this[kStopped] = false;
   const content = executeMessage.content;
   const executionId = content.executionId;
   const startedAt = this.startedAt = 'startedAt' in content ? new Date(content.startedAt) : new Date();
 
   const resolvedTimer = this._getTimers(executeMessage);
 
-  const timerContent = this[timerContentSymbol] = (0, _messageHelper.cloneContent)(content, { ...resolvedTimer,
+  const timerContent = this[kTimerContent] = (0, _messageHelper.cloneContent)(content, { ...resolvedTimer,
     ...(isResumed ? {
       isResumed
     } : undefined),
@@ -99,7 +99,7 @@ proto.execute = function execute(executeMessage) {
   if (timerContent.timeout === undefined) return this._debug(`waiting for ${timerContent.timerType || 'signal'}`);
   if (timerContent.timeout <= 0) return this._completed();
   const timers = this.environment.timers.register(timerContent);
-  this[timerSymbol] = timers.setTimeout(this._completed.bind(this), timerContent.timeout, {
+  this[kTimer] = timers.setTimeout(this._completed.bind(this), timerContent.timeout, {
     id: content.id,
     type: this.type,
     executionId,
@@ -108,8 +108,8 @@ proto.execute = function execute(executeMessage) {
 };
 
 proto.stop = function stopTimer() {
-  const timer = this[timerSymbol];
-  if (timer) this[timerSymbol] = this.environment.timers.clearTimeout(timer);
+  const timer = this[kTimer];
+  if (timer) this[kTimer] = this.environment.timers.clearTimeout(timer);
 };
 
 proto._completed = function completed(completeContent, options) {
@@ -120,7 +120,7 @@ proto._completed = function completed(completeContent, options) {
 
   this._debug(`completed in ${runningTime}ms`);
 
-  const timerContent = this[timerContentSymbol];
+  const timerContent = this[kTimerContent];
   const content = {
     stoppedAt,
     runningTime,
@@ -148,7 +148,7 @@ proto._onDelegatedApiMessage = function onDelegatedApiMessage(routingKey, messag
     type,
     correlationId
   } = message.properties;
-  this.broker.publish('event', 'activity.consumed', (0, _messageHelper.cloneContent)(this[timerContentSymbol], {
+  this.broker.publish('event', 'activity.consumed', (0, _messageHelper.cloneContent)(this[kTimerContent], {
     message: { ...content.message
     }
   }), {
@@ -192,7 +192,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
 
         this._debug('discarded');
 
-        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[timerContentSymbol], {
+        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[kTimerContent], {
           state: 'discard'
         }), {
           correlationId
@@ -202,9 +202,9 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
 };
 
 proto._stop = function stop() {
-  this[stoppedSymbol] = true;
-  const timer = this[timerSymbol];
-  if (timer) this[timerSymbol] = this.environment.timers.clearTimeout(timer);
+  this[kStopped] = true;
+  const timer = this[kTimer];
+  if (timer) this[kTimer] = this.environment.timers.clearTimeout(timer);
   const broker = this.broker;
   broker.cancel(`_api-${this.executionId}`);
   broker.cancel(`_api-delegated-${this.executionId}`);

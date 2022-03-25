@@ -1,11 +1,11 @@
 import {ActivityApi} from '../Api';
 import {cloneContent, cloneMessage} from '../messageHelper';
 
-const completedSymbol = Symbol.for('completed');
-const executeQSymbol = Symbol.for('executeQ');
-const executeMessageSymbol = Symbol.for('executeMessage');
-const messageHandlersSymbol = Symbol.for('messageHandlers');
-const postponedSymbol = Symbol.for('postponed');
+const kCompleted = Symbol.for('completed');
+const kExecuteQ = Symbol.for('executeQ');
+const kExecuteMessage = Symbol.for('executeMessage');
+const kMessageHandlers = Symbol.for('messageHandlers');
+const kPostponed = Symbol.for('postponed');
 
 export default ActivityExecution;
 
@@ -14,11 +14,11 @@ function ActivityExecution(activity, context) {
   this.context = context;
   this.id = activity.id;
   this.broker = activity.broker;
-  this[postponedSymbol] = [];
-  this[completedSymbol] = false;
-  this[executeQSymbol] = this.broker.assertQueue('execute-q', {durable: true, autoDelete: false});
+  this[kPostponed] = [];
+  this[kCompleted] = false;
+  this[kExecuteQ] = this.broker.assertQueue('execute-q', {durable: true, autoDelete: false});
 
-  this[messageHandlersSymbol] = {
+  this[kMessageHandlers] = {
     onParentApiMessage: this._onParentApiMessage.bind(this),
     onExecuteMessage: this._onExecuteMessage.bind(this),
   };
@@ -29,7 +29,7 @@ const proto = ActivityExecution.prototype;
 Object.defineProperty(proto, 'completed', {
   enumerable: true,
   get() {
-    return this[completedSymbol];
+    return this[kCompleted];
   },
 });
 
@@ -39,14 +39,14 @@ proto.execute = function execute(executeMessage) {
   if (!executionId) throw new Error('Execution requires execution id');
 
   this.executionId = executionId;
-  const initMessage = this[executeMessageSymbol] = cloneMessage(executeMessage, {
+  const initMessage = this[kExecuteMessage] = cloneMessage(executeMessage, {
     executionId,
     state: 'start',
     isRootScope: true,
   });
 
   if (executeMessage.fields.redelivered) {
-    this[postponedSymbol].splice(0);
+    this[kPostponed].splice(0);
     this._debug('resume execution');
 
     if (!this.source) this.source = new this.activity.Behaviour(this.activity, this.context);
@@ -62,21 +62,21 @@ proto.execute = function execute(executeMessage) {
 };
 
 proto.activate = function activate() {
-  if (this[completedSymbol]) return;
+  if (this[kCompleted]) return;
 
   const broker = this.broker;
   const batchSize = this.activity.environment.settings.batchSize || 50;
   broker.bindQueue('execute-q', 'execution', 'execute.#', {priority: 100});
 
-  const {onExecuteMessage, onParentApiMessage} = this[messageHandlersSymbol];
-  this[executeQSymbol].assertConsumer(onExecuteMessage, {
+  const {onExecuteMessage, onParentApiMessage} = this[kMessageHandlers];
+  this[kExecuteQ].assertConsumer(onExecuteMessage, {
     exclusive: true,
     prefetch: batchSize * 2,
     priority: 100,
     consumerTag: '_activity-execute',
   });
 
-  if (this[completedSymbol]) return this.deactivate();
+  if (this[kCompleted]) return this.deactivate();
 
   broker.subscribeTmp('api', `activity.*.${this.executionId}`, onParentApiMessage, {
     noAck: true,
@@ -93,15 +93,15 @@ proto.deactivate = function deactivate() {
 };
 
 proto.discard = function discard() {
-  if (this[completedSymbol]) return;
-  const initMessage = this[executeMessageSymbol];
+  if (this[kCompleted]) return;
+  const initMessage = this[kExecuteMessage];
   if (!initMessage) return this.activity.logger.warn(`<${this.id}> is not executing`);
   this.getApi(initMessage).discard();
 };
 
 proto.getApi = function getApi(apiMessage) {
   const self = this;
-  if (!apiMessage) apiMessage = this[executeMessageSymbol];
+  if (!apiMessage) apiMessage = this[kExecuteMessage];
 
   if (self.source.getApi) {
     const sourceApi = self.source.getApi(apiMessage);
@@ -111,7 +111,7 @@ proto.getApi = function getApi(apiMessage) {
   const api = ActivityApi(self.broker, apiMessage);
 
   api.getExecuting = function getExecuting() {
-    return self[postponedSymbol].reduce((result, msg) => {
+    return self[kPostponed].reduce((result, msg) => {
       if (msg.content.executionId === apiMessage.content.executionId) return result;
       result.push(self.getApi(msg));
       return result;
@@ -127,14 +127,14 @@ proto.passthrough = function passthrough(executeMessage) {
 };
 
 proto.getPostponed = function getPostponed() {
-  let apis = this[postponedSymbol].map((msg) => this.getApi(msg));
+  let apis = this[kPostponed].map((msg) => this.getApi(msg));
   if (!this.activity.isSubProcess || !this.source) return apis;
   apis = apis.concat(this.source.getPostponed());
   return apis;
 };
 
 proto.getState = function getState() {
-  const result = {completed: this[completedSymbol]};
+  const result = {completed: this[kCompleted]};
   const source = this.source;
 
   if (!source || !source.getState) return result;
@@ -142,10 +142,10 @@ proto.getState = function getState() {
 };
 
 proto.recover = function recover(state) {
-  this[postponedSymbol].splice(0);
+  this[kPostponed].splice(0);
 
   if (!state) return this;
-  if ('completed' in state) this[completedSymbol] = state.completed;
+  if ('completed' in state) this[kCompleted] = state.completed;
 
   const source = this.source = new this.activity.Behaviour(this.activity, this.context);
   if (source.recover) {
@@ -156,7 +156,7 @@ proto.recover = function recover(state) {
 };
 
 proto.stop = function stop() {
-  const executeMessage = this[executeMessageSymbol];
+  const executeMessage = this[kExecuteMessage];
   if (!executeMessage) return;
   this.getApi(executeMessage).stop();
 };
@@ -177,7 +177,7 @@ proto._onExecuteMessage = function onExecuteMessage(routingKey, message) {
 
   switch (routingKey) {
     case 'execute.resume.execution': {
-      if (!this[postponedSymbol].length) return this.broker.publish('execution', 'execute.start', cloneContent(this[executeMessageSymbol].content));
+      if (!this[kPostponed].length) return this.broker.publish('execution', 'execute.start', cloneContent(this[kExecuteMessage].content));
       break;
     }
     case 'execute.error':
@@ -215,7 +215,7 @@ proto._onExecuteMessage = function onExecuteMessage(routingKey, message) {
 
 proto._onStateChangeMessage = function onStateChangeMessage(message) {
   const {ignoreIfExecuting, executionId} = message.content;
-  const postponed = this[postponedSymbol];
+  const postponed = this[kPostponed];
   const idx = postponed.findIndex((msg) => msg.content.executionId === executionId);
   let previousMsg;
   if (idx > -1) {
@@ -237,7 +237,7 @@ proto._onStateChangeMessage = function onStateChangeMessage(message) {
 proto._onExecutionCompleted = function onExecutionCompleted(message) {
   const postponedMsg = this._ackPostponed(message);
   if (!postponedMsg) return;
-  const postponed = this[postponedSymbol];
+  const postponed = this[kPostponed];
 
   const {executionId, keep, isRootScope} = message.content;
   if (!isRootScope) {
@@ -250,7 +250,7 @@ proto._onExecutionCompleted = function onExecutionCompleted(message) {
   }
 
   this._debug('completed execution', executionId);
-  this[completedSymbol] = true;
+  this[kCompleted] = true;
 
   message.ack(true);
 
@@ -268,7 +268,7 @@ proto._onExecutionDiscarded = function onExecutionDiscarded(message) {
   const {isRootScope, error} = message.content;
   if (!isRootScope && !postponedMsg) return;
 
-  const postponed = this[postponedSymbol];
+  const postponed = this[kPostponed];
   const correlationId = message.properties.correlationId;
   if (!error && !isRootScope) {
     message.ack();
@@ -294,7 +294,7 @@ proto._onExecutionDiscarded = function onExecutionDiscarded(message) {
 };
 
 proto._publishExecutionCompleted = function publishExecutionCompleted(completionType, completeContent, correlationId) {
-  this[completedSymbol] = true;
+  this[kCompleted] = true;
 
   this.broker.publish('execution', `execution.${completionType}`, {
     ...completeContent,
@@ -305,7 +305,7 @@ proto._publishExecutionCompleted = function publishExecutionCompleted(completion
 proto._ackPostponed = function ackPostponed(completeMessage) {
   const {executionId: eid} = completeMessage.content;
 
-  const postponed = this[postponedSymbol];
+  const postponed = this[kPostponed];
   const idx = postponed.findIndex(({content: c}) => c.executionId === eid);
   if (idx === -1) return;
   const [msg] = postponed.splice(idx, 1);
@@ -316,9 +316,9 @@ proto._ackPostponed = function ackPostponed(completeMessage) {
 proto._onParentApiMessage = function onParentApiMessage(routingKey, message) {
   switch (message.properties.type) {
     case 'error':
-      return this[executeQSymbol].queueMessage({routingKey: 'execute.error'}, {error: message.content.error});
+      return this[kExecuteQ].queueMessage({routingKey: 'execute.error'}, {error: message.content.error});
     case 'discard':
-      return this[executeQSymbol].queueMessage({routingKey: 'execute.discard'}, cloneContent(this[executeMessageSymbol].content));
+      return this[kExecuteQ].queueMessage({routingKey: 'execute.discard'}, cloneContent(this[kExecuteMessage].content));
     case 'stop': {
       return this._onStop(message);
     }

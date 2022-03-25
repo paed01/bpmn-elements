@@ -3,8 +3,8 @@ import {getUniqueId} from './shared';
 import {ActivityError} from './error/Errors';
 import {getRoutingKeyPattern} from 'smqp';
 
-const onMessageSymbol = Symbol.for('onMessage');
-const executionSymbol = Symbol.for('execution');
+const kOnMessage = Symbol.for('onMessage');
+const kExecution = Symbol.for('execution');
 
 export {Formatter};
 
@@ -17,7 +17,7 @@ function Formatter(element, formatQ) {
 
   this.pendingFormats = [];
 
-  this[onMessageSymbol] = this._onMessage.bind(this);
+  this[kOnMessage] = this._onMessage.bind(this);
 }
 
 Formatter.prototype.format = function format(message, callback) {
@@ -32,7 +32,7 @@ Formatter.prototype.format = function format(message, callback) {
     persistent: false,
   });
 
-  this[executionSymbol] = {
+  this[kExecution] = {
     correlationId,
     formatKey: message.fields.routingKey,
     runMessage: cloneMessage(message),
@@ -42,14 +42,14 @@ Formatter.prototype.format = function format(message, callback) {
     executeMessage: null,
   };
 
-  formatQ.consume(this[onMessageSymbol], {
+  formatQ.consume(this[kOnMessage], {
     consumerTag,
     prefetch: 100,
   });
 };
 
 Formatter.prototype._onMessage = function onMessage(routingKey, message) {
-  const {formatKey, correlationId, pending, executeMessage} = this[executionSymbol];
+  const {formatKey, correlationId, pending, executeMessage} = this[kExecution];
   const asyncFormatting = pending.length;
 
   switch (routingKey) {
@@ -59,7 +59,7 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
         message.ack();
         return this._complete(message);
       }
-      this[executionSymbol].executeMessage = message;
+      this[kExecution].executeMessage = message;
       break;
     default: {
       message.ack();
@@ -91,8 +91,8 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
 };
 
 Formatter.prototype._complete = function complete(message, isError) {
-  const {runMessage, formatKey, callback, formatted, executeMessage} = this[executionSymbol];
-  this[executionSymbol] = null;
+  const {runMessage, formatKey, callback, formatted, executeMessage} = this[kExecution];
+  this[kExecution] = null;
   if (executeMessage) executeMessage.ack();
 
   this.broker.cancel(message.fields.consumerTag);
@@ -108,7 +108,7 @@ Formatter.prototype._complete = function complete(message, isError) {
 };
 
 Formatter.prototype._decorate = function decorate(withContent) {
-  const content = this[executionSymbol].runMessage.content;
+  const content = this[kExecution].runMessage.content;
   for (const key in withContent) {
     switch (key) {
       case 'id':
@@ -125,7 +125,7 @@ Formatter.prototype._decorate = function decorate(withContent) {
         break;
       default: {
         content[key] = withContent[key];
-        this[executionSymbol].formatted = true;
+        this[kExecution].formatted = true;
       }
     }
   }

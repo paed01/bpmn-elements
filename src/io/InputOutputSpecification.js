@@ -1,7 +1,7 @@
 import getPropertyValue from '../getPropertyValue';
 import {brokerSafeId} from '../shared';
 
-const consumingSymbol = Symbol.for('consuming');
+const kConsuming = Symbol.for('consuming');
 
 export default function IoSpecification(activity, ioSpecificationDef, context) {
   const {id, type = 'iospecification', behaviour = {}} = ioSpecificationDef;
@@ -16,12 +16,12 @@ export default function IoSpecification(activity, ioSpecificationDef, context) {
 const proto = IoSpecification.prototype;
 
 proto.activate = function activate() {
-  if (this[consumingSymbol]) return;
-  this[consumingSymbol] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {noAck: true});
+  if (this[kConsuming]) return;
+  this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {noAck: true});
 };
 
 proto.deactivate = function deactivate() {
-  if (this[consumingSymbol]) this[consumingSymbol] = this[consumingSymbol].cancel();
+  if (this[kConsuming]) this[kConsuming] = this[kConsuming].cancel();
 };
 
 proto._onActivityEvent = function onActivityEvent(routingKey, message) {

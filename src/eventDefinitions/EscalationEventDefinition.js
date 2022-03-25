@@ -2,11 +2,11 @@ import getPropertyValue from '../getPropertyValue';
 import {brokerSafeId} from '../shared';
 import {cloneContent, shiftParent} from '../messageHelper';
 
-const completedSymbol = Symbol.for('completed');
-const messageQSymbol = Symbol.for('messageQ');
-const executeMessageSymbol = Symbol.for('executeMessage');
-const referenceElementSymbol = Symbol.for('referenceElement');
-const referenceInfoSymbol = Symbol.for('reference');
+const kCompleted = Symbol.for('completed');
+const kMessageQ = Symbol.for('messageQ');
+const kExecuteMessage = Symbol.for('executeMessage');
+const kReferenceElement = Symbol.for('referenceElement');
+const kReference = Symbol.for('reference');
 
 export default function EscalationEventDefinition(activity, eventDefinition) {
   const {id, broker, environment, isThrowing} = activity;
@@ -26,12 +26,12 @@ export default function EscalationEventDefinition(activity, eventDefinition) {
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
 
-  const referenceElement = this[referenceElementSymbol] = reference.id && activity.getActivityById(reference.id);
+  const referenceElement = this[kReferenceElement] = reference.id && activity.getActivityById(reference.id);
   if (!isThrowing) {
-    this[completedSymbol] = false;
+    this[kCompleted] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(referenceId)}-q`;
-    this[messageQSymbol] = broker.assertQueue(messageQueueName, {autoDelete: false, durable: true});
+    this[kMessageQ] = broker.assertQueue(messageQueueName, {autoDelete: false, durable: true});
     broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, {durable: true, priority: 400});
   }
 }
@@ -40,7 +40,7 @@ const proto = EscalationEventDefinition.prototype;
 
 Object.defineProperty(proto, 'executionId', {
   get() {
-    const message = this[executeMessageSymbol];
+    const message = this[kExecuteMessage];
     return message && message.content.executionId;
   },
 });
@@ -50,20 +50,20 @@ proto.execute = function execute(executeMessage) {
 };
 
 proto.executeCatch = function executeCatch(executeMessage) {
-  this[executeMessageSymbol] = executeMessage;
-  this[completedSymbol] = false;
+  this[kExecuteMessage] = executeMessage;
+  this[kCompleted] = false;
 
   const executeContent = executeMessage.content;
   const {executionId, parent} = executeContent;
 
-  const info = this[referenceInfoSymbol] = this._getReferenceInfo(executeMessage);
+  const info = this[kReference] = this._getReferenceInfo(executeMessage);
   const broker = this.broker;
-  this[messageQSymbol].consume(this._onCatchMessage.bind(this), {
+  this[kMessageQ].consume(this._onCatchMessage.bind(this), {
     noAck: true,
     consumerTag: `_onescalate-${executionId}`,
   });
 
-  if (this[completedSymbol]) return;
+  if (this[kCompleted]) return;
 
   broker.subscribeTmp('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {
     noAck: true,
@@ -103,17 +103,17 @@ proto.executeThrow = function executeThrow(executeMessage) {
 };
 
 proto._onCatchMessage = function onCatchMessage(routingKey, message) {
-  const info = this[referenceInfoSymbol];
+  const info = this[kReference];
   if (getPropertyValue(message, 'content.message.id') !== info.message.id) return;
 
   const output = message.content.message;
-  this[completedSymbol] = true;
+  this[kCompleted] = true;
 
   this._stop();
 
   this._debug(`caught ${info.description}`);
 
-  const executeContent = this[executeMessageSymbol].content;
+  const executeContent = this[kExecuteMessage].content;
   const {parent, ...content} = executeContent;
   const catchContent = cloneContent(content, {
     message: {...output},
@@ -133,9 +133,9 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
       return this._onCatchMessage(routingKey, message);
     }
     case 'discard': {
-      this[completedSymbol] = true;
+      this[kCompleted] = true;
       this._stop();
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[executeMessageSymbol].content));
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content));
     }
     case 'stop': {
       this._stop();
@@ -151,7 +151,7 @@ proto._stop = function stop() {
 };
 
 proto._getReferenceInfo = function getReferenceInfo(message) {
-  const referenceElement = this[referenceElementSymbol];
+  const referenceElement = this[kReferenceElement];
   if (!referenceElement) {
     return {
       message: {...this.reference},
