@@ -961,4 +961,239 @@ Feature('Issues', () => {
       return leave;
     }
   });
+
+  Scenario('two bound timer events on task with async formatting prevents activity from completing', () => {
+    let context;
+    Given('a task with two boundary timeout events, timeout is interrupting, reminder timer is non-interrupting', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Double-timer-issue" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="double-timeout-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-task" sourceRef="start" targetRef="timers-task" />
+          <userTask id="timers-task" />
+          <boundaryEvent id="approvalTimeout" attachedToRef="timers-task">
+            <timerEventDefinition id="TimerEventDefinition_0">
+              <timeDuration xsi:type="tFormalExpression">P3D</timeDuration>
+            </timerEventDefinition>
+          </boundaryEvent>
+          <boundaryEvent id="approvalReminder" cancelActivity="false" attachedToRef="timers-task">
+            <timerEventDefinition id="TimerEventDefinition_1">
+              <timeDuration xsi:type="tFormalExpression">PT3M</timeDuration>
+            </timerEventDefinition>
+          </boundaryEvent>
+          <sequenceFlow id="to-reminder-email" sourceRef="approvalReminder" targetRef="reminder-email" />
+          <sequenceFlow id="to-update-ticket" sourceRef="timers-task" targetRef="update-ticket" />
+          <task id="reminder-email" name="Send reminder mail to manager" />
+          <task id="update-ticket" name="Update ticket" />
+          <sequenceFlow id="to-end-reminder" sourceRef="reminder-email" targetRef="end-reminder" />
+          <sequenceFlow id="to-end-timeout" sourceRef="approvalTimeout" targetRef="end-timeout" />
+          <endEvent id="end-timeout" />
+          <endEvent id="end-reminder" />
+        </process>
+      </definitions>`;
+      context = await testHelpers.context(source);
+    });
+
+    let definition, state;
+    When('run', () => {
+      definition = new Definition(context, {
+        extensions: {AsyncFormatting},
+      });
+      definition.waitFor('activity.wait', () => {
+        state = definition.getState();
+      });
+      definition.run();
+    });
+
+    let postponed;
+    Then('timers and user tasks are in waiting', () => {
+      postponed = definition.getPostponed();
+      expect(postponed).to.have.length(3);
+      expect(postponed[0].id).to.equal('approvalTimeout');
+      expect(postponed[1].id).to.equal('approvalReminder');
+      expect(postponed[2].id).to.equal('timers-task');
+    });
+
+    Given('stopped', () => {
+      definition.stop();
+    });
+
+    When('recovered and resumed', () => {
+      definition = new Definition(context.clone(), {
+        extensions: {AsyncFormatting},
+      }).recover(state);
+      definition.resume();
+    });
+
+    Then('timers and user tasks are in waiting again', () => {
+      postponed = definition.getPostponed();
+      expect(postponed).to.have.length(3);
+      expect(postponed[0].id).to.equal('approvalTimeout');
+      expect(postponed[1].id).to.equal('approvalReminder');
+      expect(postponed[2].id).to.equal('timers-task');
+    });
+
+    When('reminder times out', () => {
+      const timer = definition.environment.timers.executing.find((t) => t.owner.id === 'approvalReminder');
+      timer.callback(...timer.args);
+    });
+
+    Then('one timer and user tasks are still in waiting', () => {
+      postponed = definition.getPostponed();
+      expect(postponed).to.have.length(2);
+      expect(postponed[0].id).to.equal('approvalTimeout');
+      expect(postponed[1].id).to.equal('timers-task');
+    });
+
+    Given('stopped', () => {
+      state = definition.getState();
+      definition.stop();
+    });
+
+    const recoveredTimers = [];
+    When('recovered and resumed', () => {
+      definition = new Definition(context.clone(), {
+        extensions: {AsyncFormatting},
+      }).recover(state);
+
+      definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
+        recoveredTimers.push(msg);
+      });
+
+      definition.resume();
+    });
+
+    Then('non-interrupting timer is not resumed', () => {
+      postponed = definition.getPostponed();
+      expect(postponed).to.have.length(2);
+      expect(postponed[0].id).to.equal('approvalTimeout');
+      expect(postponed[1].id).to.equal('timers-task');
+    });
+
+    let end;
+    When('interrupting timeout timer is canceled', () => {
+      postponed = definition.getPostponed();
+      expect(postponed).to.have.length(2);
+      expect(postponed[0].id).to.equal('approvalTimeout');
+      expect(postponed[1].id).to.equal('timers-task');
+
+      end = definition.waitFor('leave');
+      postponed[0].getExecuting()[0].cancel();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    Given('ran again', () => {
+      definition = new Definition(context.clone(), {
+        extensions: {AsyncFormatting},
+      });
+      definition.waitFor('activity.wait', () => {
+        state = definition.getState();
+      });
+      definition.run();
+    });
+
+    And('stopped', () => {
+      definition.stop();
+    });
+
+    And('recovered and resumed', () => {
+      definition = new Definition(context.clone(), {
+        extensions: {AsyncFormatting},
+      }).recover(state);
+      definition.resume();
+    });
+
+    And('reminder times out and state is saved', () => {
+      const timer = definition.environment.timers.executing.find((t) => t.owner.id === 'approvalReminder');
+      timer.callback(...timer.args);
+      definition.stop();
+      state = definition.getState();
+    });
+
+    When('user task is signaled', () => {
+      definition = new Definition(context.clone()).recover(state);
+      definition.resume();
+
+      end = definition.waitFor('end');
+      definition.signal({id: 'timers-task'});
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    Given('ran again', () => {
+      definition = new Definition(context.clone(), {
+        extensions: {AsyncFormatting},
+      });
+      definition.waitFor('activity.wait', () => {
+        state = definition.getState();
+      });
+      definition.run();
+    });
+
+    And('stopped', () => {
+      definition.stop();
+    });
+
+    And('recovered and resumed', () => {
+      definition = new Definition(context.clone(), {
+        extensions: {AsyncFormatting},
+      }).recover(state);
+      definition.resume();
+    });
+
+    When('user task is signaled', () => {
+      end = definition.waitFor('end');
+      definition.signal({id: 'timers-task'});
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+  });
 });
+
+function AsyncFormatting(element) {
+  if (element.type === 'bpmn:Process') return;
+  const broker = element.broker;
+  const formatQ = broker.getQueue('format-run-q');
+
+
+  return {
+    type: 'async:extension',
+    activate(msg) {
+      element.on('enter', (elementApi) => {
+        if (!elementApi.fields.redelivered && !elementApi.fields.isRecovered) {
+          formatQ.queueMessage({routingKey: 'run.enter.format'}, {endRoutingKey: 'run.enter.complete'});
+        }
+        setImmediate(() => {
+          broker.publish('format', 'run.enter.complete', {enter_formatted: true});
+          elementApi.environment.output[element.id] = ['enter_formatted'];
+        });
+      }, {consumerTag: '_async-extension-on-enter'});
+
+      element.on('activity.execution.completed', async (elementApi) => {
+        if (!elementApi.fields.redelivered && !elementApi.fields.isRecovered) {
+          formatQ.queueMessage({routingKey: 'run.end.format'}, {endRoutingKey: 'run.end.complete'});
+        }
+
+        if (msg.fields.redelivered && msg.fields.routingKey === 'run.execute') {
+          elementApi.environment.output[element.id] = elementApi.environment.output[element.id] || ['enter_formatted'];
+        }
+
+        setImmediate(() => {
+          broker.publish('format', 'run.end.complete', {end_formatted: true});
+          elementApi.environment.output[element.id].push('end_formatted');
+        });
+      }, {consumerTag: '_async-extension-on-executed'});
+    },
+    deactivate() {
+      broker.cancel('_async-extension-on-enter');
+      broker.cancel('_async-extension-on-executed');
+    }
+  };
+}

@@ -804,7 +804,6 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
         if (this.status === 'end') break;
         this[kCounters].taken++;
         this.status = 'end';
-        if (isRedelivered) break;
         return this._doRunLeave(message, false, () => {
           this._publishEvent('end', content, {
             correlationId
