@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 8.0.1
+
+## Fix
+
+- fix activity stuck in async formatting when resuming, preventing it to complete
+
 # 8.0.0
 
 ## Breaking
