@@ -40,7 +40,9 @@ Behaves the same as `timeDuration`. Due date will timeout immediately. An invali
 
 # `timeCycle`
 
-No default support for time cycles. The event definition will wait until canceled. One reason is that cycles can have different formats, e.g. ISO or cron. There are several modules to handle time cycles and this project tries to keep the number of dependencies to a minimum.
+Default support for ISO8601 repeating interval.
+
+If another format is used, e.g. cron, the event definition will wait until canceled. There are several modules to handle time cycles and this project tries to keep the number of dependencies to a minimum.
 
 # Combined `timeDuration` and `timeDate`
 

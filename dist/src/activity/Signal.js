@@ -30,9 +30,9 @@ function Signal(signalDef, context) {
       id,
       type,
       messageType: 'signal',
-      ...(name ? {
+      ...(name && {
         name: environment.resolveExpression(name, executionMessage)
-      } : undefined),
+      }),
       parent: { ...parent
       }
     };

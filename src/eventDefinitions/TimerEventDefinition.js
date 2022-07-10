@@ -4,6 +4,7 @@ import {toSeconds, parse} from 'iso8601-duration';
 const kStopped = Symbol.for('stopped');
 const kTimerContent = Symbol.for('timerContent');
 const kTimer = Symbol.for('timer');
+const repeatPattern = /^\s*R(\d+)\//;
 
 export default function TimerEventDefinition(activity, eventDefinition) {
   const type = this.type = eventDefinition.type || 'TimerEventDefinition';
@@ -63,7 +64,7 @@ proto.execute = function execute(executeMessage) {
   const resolvedTimer = this._getTimers(executeMessage);
   const timerContent = this[kTimerContent] = cloneContent(content, {
     ...resolvedTimer,
-    ...(isResumed ? {isResumed} : undefined),
+    ...(isResumed && {isResumed}),
     startedAt,
     state: 'timer',
   });
@@ -112,6 +113,12 @@ proto._completed = function completed(completeContent, options) {
 
   const broker = this.broker;
   broker.publish('event', 'activity.timeout', cloneContent(timerContent, content), options);
+
+  if (timerContent.repeat > 1) {
+    const repeat = timerContent.repeat - 1;
+    broker.publish('execution', 'execute.repeat', cloneContent(timerContent, {...content, repeat}), options);
+  }
+
   broker.publish('execution', 'execute.completed', cloneContent(timerContent, content), options);
 };
 
@@ -146,7 +153,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
       this._stop();
       return this._completed({
         state: 'cancel',
-        ...(message.content.message ? {message: message.content.message} : undefined),
+        ...(message.content.message && {message: message.content.message}),
       }, {correlationId});
     }
     case 'stop': {
@@ -175,7 +182,7 @@ proto._getTimers = function getTimers(executeMessage) {
 
   const now = Date.now();
   const result = {
-    ...('expireAt' in content ? {expireAt: new Date(content.expireAt)} : undefined),
+    ...('expireAt' in content && {expireAt: new Date(content.expireAt)}),
   };
 
   for (const t of ['timeDuration', 'timeDate', 'timeCycle']) {
@@ -183,33 +190,39 @@ proto._getTimers = function getTimers(executeMessage) {
     else if (t in this) result[t] = this.environment.resolveExpression(this[t], executeMessage);
     else continue;
 
-    let expireAtDate;
-    if (t === 'timeDuration') {
-      const durationStr = result[t];
-      if (durationStr) {
-        const delay = this._getDurationInMilliseconds(durationStr);
-        if (delay !== undefined) expireAtDate = new Date(now + delay);
-      } else {
-        expireAtDate = new Date(now);
-      }
-    } else if (t === 'timeDate') {
-      const dateStr = result[t];
-      if (dateStr) {
-        const ms = Date.parse(dateStr);
-        if (!isNaN(ms)) {
-          expireAtDate = new Date(ms);
-        } else {
-          this._warn(`invalid timeDate >${dateStr}<`);
+    let expireAtDate, repeat;
+    const timerStr = result[t];
+    if (timerStr) {
+      switch (t) {
+        case 'timeCycle': {
+          const mRepeat = timerStr.match(repeatPattern);
+          if (mRepeat && mRepeat.length) repeat = parseInt(mRepeat[1]);
         }
-      } else {
-        expireAtDate = new Date(now);
+        case 'timeDuration': {
+          const delay = this._getDurationInMilliseconds(timerStr);
+          if (delay !== undefined) expireAtDate = new Date(now + delay);
+          break;
+        }
+        case 'timeDate': {
+          const dateStr = result[t];
+          const ms = Date.parse(dateStr);
+          if (!isNaN(ms)) {
+            expireAtDate = new Date(ms);
+          } else {
+            this._warn(`invalid timeDate >${dateStr}<`);
+          }
+          break;
+        }
       }
+    } else {
+      expireAtDate = new Date(now);
     }
 
     if (!expireAtDate) continue;
     if (!('expireAt' in result) || result.expireAt > expireAtDate) {
       result.timerType = t;
       result.expireAt = expireAtDate;
+      if (repeat) result.repeat = repeat;
     }
   }
 
@@ -221,6 +234,10 @@ proto._getTimers = function getTimers(executeMessage) {
     result.timeout = 0;
   }
 
+  if (content.inbound && 'repeat' in content.inbound[0]) {
+    result.repeat = content.inbound[0].repeat;
+  }
+
   return result;
 };
 
@@ -228,7 +245,7 @@ proto._getDurationInMilliseconds = function getDurationInMilliseconds(duration) 
   try {
     return toSeconds(parse(duration)) * 1000;
   } catch (err) {
-    this._warn(`failed to parse timeDuration >${duration}<: ${err.message}`);
+    this._warn(`failed to parse ${this.timerType} >${duration}<: ${err.message}`);
   }
 };
 

@@ -30,9 +30,9 @@ function Message(messageDef, context) {
       id,
       type,
       messageType: 'message',
-      ...(name ? {
+      ...(name && {
         name: environment.resolveExpression(name, executionMessage)
-      } : undefined),
+      }),
       parent: { ...parent
       }
     };

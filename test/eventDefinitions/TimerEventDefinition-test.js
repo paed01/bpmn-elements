@@ -766,7 +766,7 @@ describe('TimerEventDefinition', () => {
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.timer');
       expect(messages[0].content).to.have.property('timeCycle', 'R3/PT10H');
-      expect(messages[0].content).to.not.have.property('timeout');
+      expect(messages[0].content).to.have.property('timeout');
       expect(messages[0].content).to.have.property('state', 'timer');
       expect(messages[0].content).to.have.property('parent').with.property('id', 'bound');
 
@@ -802,6 +802,8 @@ describe('TimerEventDefinition', () => {
             },
           },
         });
+
+        definition.stop();
       });
 
       it('publishes timer event message with resolved timeCycle as fallback', (done) => {
@@ -831,6 +833,8 @@ describe('TimerEventDefinition', () => {
             },
           },
         });
+
+        definition.stop();
       });
 
       it('can be stopped again', (done) => {
@@ -1658,6 +1662,5 @@ describe('TimerEventDefinition', () => {
 
       definition.stop();
     });
-
   });
 });

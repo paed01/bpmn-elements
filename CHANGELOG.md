@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 8.1.0
+
+- support non-interrupting BoundaryEvent with ISO8601 repeating interval timeCycle
+
 # 8.0.1
 
 ## Fix

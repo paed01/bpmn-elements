@@ -452,6 +452,7 @@ proto._onInbound = function onInbound(routingKey, message) {
   switch (routingKey) {
     case 'association.take':
     case 'flow.take':
+    case 'activity.restart':
     case 'activity.enter':
       return this.run({
         message: content.message,
@@ -788,7 +789,7 @@ proto._doRunLeave = function doRunLeave(message, isDiscarded, onOutbound) {
     }
 
     this.broker.publish('run', 'run.leave', cloneContent(content, {
-      ...(outbound.length ? {outbound} : undefined),
+      ...(outbound.length && {outbound}),
     }), {correlationId});
 
     onOutbound();
@@ -832,7 +833,7 @@ proto._doRunOutbound = function doRunOutbound(outboundList, content, discardSequ
       flow: {
         ...outboundFlow,
         sequenceId: getUniqueId(`${flowId}_${action}`),
-        ...(discardSequence ? {discardSequence: discardSequence.slice()} : undefined),
+        ...(discardSequence && {discardSequence: discardSequence.slice()}),
       },
     }));
   }
@@ -919,9 +920,9 @@ proto._createMessage = function createMessage(override) {
     ...override,
     id: this.id,
     type: this.type,
-    ...(name ? {name} : undefined),
-    ...(status ? {status} : undefined),
-    ...(parent ? {parent: cloneParent(parent)} : undefined),
+    ...(name && {name}),
+    ...(status && {status}),
+    ...(parent && {parent: cloneParent(parent)}),
   };
 
   for (const [flag, value] of Object.entries(this[kFlags])) {
@@ -1070,7 +1071,7 @@ OutboundEvaluator.prototype.completed = function completed(err) {
   for (const flow of Object.values(result)) {
     evaluationResult.push({
       ...flow,
-      ...(message !== undefined ? {message} : undefined),
+      ...(message !== undefined && {message}),
     });
   }
 
@@ -1082,6 +1083,6 @@ function formatFlowAction(flow, options) {
     ...options,
     id: flow.id,
     action: options.action,
-    ...(flow.isDefault ? {isDefault: true} : undefined),
+    ...(flow.isDefault && {isDefault: true}),
   };
 }

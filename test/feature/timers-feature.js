@@ -3,6 +3,7 @@ import Definition from '../../src/definition/Definition';
 import testHelpers from '../helpers/testHelpers';
 import factory from '../helpers/factory';
 import CamundaExtension from '../resources/extensions/CamundaExtension';
+import {resolveExpression} from '@aircall/expression-parser';
 
 const extensions = {
   camunda: CamundaExtension,
@@ -48,8 +49,9 @@ Feature('Timers', () => {
       expect(execution.content).to.have.property('timeCycle', 'R3/PT10H');
     });
 
-    When('start event is canceled', () => {
-      definition.cancelActivity({id: 'start-cycle'});
+    When('start event times out', () => {
+      expect(definition.environment.timers.executing).to.have.length(1);
+      definition.environment.timers.executing[0].callback();
     });
 
     let task;
@@ -121,6 +123,7 @@ Feature('Timers', () => {
     And('time cycle is executing', () => {
       const [execution] = activity.getExecuting();
       expect(execution.content).to.have.property('timeCycle', 'R3/PT10H');
+      definition.stop();
     });
 
     Given('the definition is recovered and resumed somewhere else', () => {
@@ -218,7 +221,7 @@ Feature('Timers', () => {
 
   Scenario('override timers in environment', () => {
     let context, definition;
-    When('a definition with various timers and overridden timers', async () => {
+    Given('a definition with various timers and overridden timers', async () => {
       function Timers() {
         const timers = {};
 
@@ -428,6 +431,226 @@ Feature('Timers', () => {
     Then('throw time date has timed out', () => {
       expect(timeoutMessage.content).to.have.property('timeDate').to.equal('1993-06-26');
       expect(timeoutMessage.content).to.have.property('expireAt').to.deep.equal(new Date('1993-06-26'));
+    });
+  });
+
+  Scenario('bound activity non-interrupting timer cycle', () => {
+    let context, definition;
+    Given('a task with a bound non-interrupting repeated timer cycle', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        id="Definitions_1l30pnv" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="Process_0cn5rdh" isExecutable="true">
+          <startEvent id="start-cycle" />
+          <sequenceFlow id="to-task" sourceRef="start-cycle" targetRef="task" />
+          <manualTask id="task" />
+          <boundaryEvent id="bound-cycle" cancelActivity="false" attachedToRef="task">
+            <timerEventDefinition>
+              <timeCycle xsi:type="tFormalExpression">R3/PT1M</timeCycle>
+            </timerEventDefinition>
+          </boundaryEvent>
+          <sequenceFlow id="to-cycle-end" sourceRef="bound-cycle" targetRef="cycle-end" />
+          <endEvent id="cycle-end" />
+          <sequenceFlow id="to-end" sourceRef="task" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    When('definition is ran', () => {
+      definition.run();
+    });
+
+    let activity;
+    Then('the bound cycle event is waiting', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'bound-cycle');
+    });
+
+    And('time cycle is executing', () => {
+      const [execution] = activity.getExecuting();
+      expect(execution.content).to.have.property('timeCycle', 'R3/PT1M');
+    });
+
+    When('cycle times out', () => {
+      definition.environment.timers.executing[0].callback();
+    });
+
+    Then('bound outbound flows are taken', () => {
+      expect(definition.getActivityById('cycle-end').counters).to.have.property('taken', 1);
+    });
+
+    And('time cycle is still executing', () => {
+      expect(definition.environment.timers.executing).to.have.length(1);
+
+      [, activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'bound-cycle');
+      const [execution] = activity.getExecuting();
+      expect(execution.content).to.have.property('timeCycle', 'R3/PT1M');
+      expect(execution.content).to.have.property('repeat', 2);
+    });
+
+    When('cycle times out a second time', () => {
+      definition.environment.timers.executing[0].callback();
+    });
+
+    Then('bound outbound flows are taken', () => {
+      expect(definition.getActivityById('cycle-end').counters).to.have.property('taken', 2);
+    });
+
+    And('time cycle is still executing', () => {
+      expect(definition.environment.timers.executing).to.have.length(1);
+
+      [, activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'bound-cycle');
+      const [execution] = activity.getExecuting();
+      expect(execution.content).to.have.property('timeCycle', 'R3/PT1M');
+      expect(execution.content).to.have.property('repeat', 1);
+    });
+
+    When('cycle times out a third time', () => {
+      definition.environment.timers.executing[0].callback();
+    });
+
+    Then('bound outbound flows are taken', () => {
+      expect(definition.getActivityById('cycle-end').counters).to.have.property('taken', 3);
+    });
+
+    And('time cycle has completed', () => {
+      expect(definition.environment.timers.executing).to.have.length(0);
+
+      const postponed = definition.getPostponed();
+      expect(postponed.length).to.equal(1);
+      expect(postponed[0]).to.have.property('id', 'task');
+    });
+
+    let end;
+    When('task is signaled', () => {
+      end = definition.waitFor('leave');
+      definition.signal({id: 'task'});
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    When('definition is ran again', () => {
+      definition.run();
+    });
+
+    Then('the bound cycle event is waiting', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'bound-cycle');
+    });
+
+    And('time cycle is executing', () => {
+      const [execution] = activity.getExecuting();
+      expect(execution.content).to.have.property('timeCycle', 'R3/PT1M');
+    });
+
+    When('cycle times out', () => {
+      definition.environment.timers.executing[0].callback();
+      definition.cancelActivity({id: 'start-cycle'});
+    });
+
+    When('task is signaled', () => {
+      end = definition.waitFor('leave');
+      definition.signal({id: 'task'});
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+  });
+
+  Scenario('bound activity interrupting timer cycle', () => {
+    let context, definition;
+    Given('a task with a bound interrupting repeated timer cycle', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        id="Definitions_1l30pnv" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="Process_0cn5rdh" isExecutable="true">
+          <startEvent id="start-cycle" />
+          <sequenceFlow id="to-task" sourceRef="start-cycle" targetRef="task" />
+          <manualTask id="task" />
+          <boundaryEvent id="bound-cycle" attachedToRef="task">
+            <timerEventDefinition>
+              <timeCycle xsi:type="tFormalExpression">R3/PT1M</timeCycle>
+            </timerEventDefinition>
+          </boundaryEvent>
+          <sequenceFlow id="to-cycle-end" sourceRef="bound-cycle" targetRef="cycle-end" />
+          <endEvent id="cycle-end" />
+          <sequenceFlow id="to-end" sourceRef="task" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    When('definition is ran', () => {
+      definition.run();
+    });
+
+    let activity;
+    Then('the bound cycle event is waiting', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'bound-cycle');
+    });
+
+    And('time cycle is executing', () => {
+      const [execution] = activity.getExecuting();
+      expect(execution.content).to.have.property('timeCycle', 'R3/PT1M');
+    });
+
+    let end;
+    When('cycle times out', () => {
+      end = definition.waitFor('leave');
+      definition.environment.timers.executing[0].callback();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+  });
+
+  Scenario('faulty timer expression', () => {
+    let context, definition;
+    Given('a source with a faulty timer expression', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="Process_0" isExecutable="true">
+          <startEvent id="start-cycle">
+            <timerEventDefinition>
+              <timeCycle xsi:type="tFormalExpression">\${true === "false'}</timeCycle>
+            </timerEventDefinition>
+          </startEvent>
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = new Definition(context, {
+        expressions: {resolveExpression},
+      });
+    });
+
+    let errored;
+    When('definition is ran', () => {
+      errored = definition.waitFor('error');
+      definition.run();
+    });
+
+    Then('run fails', async () => {
+      const err = await errored;
+      expect(err.content.error).to.match(/syntax/i);
     });
   });
 });

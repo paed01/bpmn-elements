@@ -16,7 +16,7 @@ export default function Signal(signalDef, context) {
       id,
       type,
       messageType: 'signal',
-      ...(name ? {name: environment.resolveExpression(name, executionMessage)} : undefined),
+      ...(name && {name: environment.resolveExpression(name, executionMessage)}),
       parent: {...parent},
     };
   }

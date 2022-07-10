@@ -543,6 +543,7 @@ proto._onInbound = function onInbound(routingKey, message) {
   switch (routingKey) {
     case 'association.take':
     case 'flow.take':
+    case 'activity.restart':
     case 'activity.enter':
       return this.run({
         message: content.message,
@@ -976,9 +977,9 @@ proto._doRunLeave = function doRunLeave(message, isDiscarded, onOutbound) {
       });
     }
 
-    this.broker.publish('run', 'run.leave', (0, _messageHelper.cloneContent)(content, { ...(outbound.length ? {
+    this.broker.publish('run', 'run.leave', (0, _messageHelper.cloneContent)(content, { ...(outbound.length && {
         outbound
-      } : undefined)
+      })
     }), {
       correlationId
     });
@@ -1030,9 +1031,9 @@ proto._doRunOutbound = function doRunOutbound(outboundList, content, discardSequ
     this.broker.publish('run', 'run.outbound.' + action, (0, _messageHelper.cloneContent)(content, {
       flow: { ...outboundFlow,
         sequenceId: (0, _shared.getUniqueId)(`${flowId}_${action}`),
-        ...(discardSequence ? {
+        ...(discardSequence && {
           discardSequence: discardSequence.slice()
-        } : undefined)
+        })
       }
     }));
   }
@@ -1130,15 +1131,15 @@ proto._createMessage = function createMessage(override) {
   const result = { ...override,
     id: this.id,
     type: this.type,
-    ...(name ? {
+    ...(name && {
       name
-    } : undefined),
-    ...(status ? {
+    }),
+    ...(status && {
       status
-    } : undefined),
-    ...(parent ? {
+    }),
+    ...(parent && {
       parent: (0, _messageHelper.cloneParent)(parent)
-    } : undefined)
+    })
   };
 
   for (const [flag, value] of Object.entries(this[kFlags])) {
@@ -1315,9 +1316,9 @@ OutboundEvaluator.prototype.completed = function completed(err) {
 
   for (const flow of Object.values(result)) {
     evaluationResult.push({ ...flow,
-      ...(message !== undefined ? {
+      ...(message !== undefined && {
         message
-      } : undefined)
+      })
     });
   }
 
@@ -1328,8 +1329,8 @@ function formatFlowAction(flow, options) {
   return { ...options,
     id: flow.id,
     action: options.action,
-    ...(flow.isDefault ? {
+    ...(flow.isDefault && {
       isDefault: true
-    } : undefined)
+    })
   };
 }

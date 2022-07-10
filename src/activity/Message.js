@@ -16,7 +16,7 @@ export default function Message(messageDef, context) {
       id,
       type,
       messageType: 'message',
-      ...(name ? {name: environment.resolveExpression(name, executionMessage)} : undefined),
+      ...(name && {name: environment.resolveExpression(name, executionMessage)}),
       parent: {...parent},
     };
   }

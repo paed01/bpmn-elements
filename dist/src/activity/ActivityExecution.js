@@ -414,9 +414,9 @@ proto._debug = function debug(logMessage, executionId) {
 };
 
 function getExecuteMessage(message) {
-  const result = (0, _messageHelper.cloneMessage)(message, { ...(message.fields.redelivered ? {
+  const result = (0, _messageHelper.cloneMessage)(message, { ...(message.fields.redelivered && {
       isRecovered: true
-    } : undefined),
+    }),
     ignoreIfExecuting: undefined
   });
   return result;

@@ -345,7 +345,7 @@ proto._debug = function debug(logMessage, executionId) {
 
 function getExecuteMessage(message) {
   const result = cloneMessage(message, {
-    ...(message.fields.redelivered ? {isRecovered: true} : undefined),
+    ...(message.fields.redelivered && {isRecovered: true}),
     ignoreIfExecuting: undefined,
   });
   return result;

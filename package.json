@@ -1,9 +1,10 @@
 {
   "name": "bpmn-elements",
-  "version": "8.0.1",
+  "version": "8.1.0",
   "description": "Executable workflow elements based on BPMN 2.0",
   "main": "dist/index.js",
   "module": "index.js",
+  "sideEffects": false,
   "scripts": {
     "test": "mocha -R dot",
     "posttest": "npm run dist && eslint . --cache",
@@ -11,9 +12,7 @@
     "cov:html": "nyc mocha -R dot && nyc report --reporter=html",
     "test:lcov": "nyc mocha -R dot && nyc report --reporter lcov && npm run posttest",
     "dist": "babel index.js -d dist && babel src -d dist/src",
-    "predist": "node -e \"fs.rmdirSync('./dist/src', {recursive: true});\"",
-    "test-md": "node scripts/test-markdown ./API.md && node scripts/test-markdown ./docs/Examples.md",
-    "toc": "node scripts/generate-api-toc ./API.md,./docs/Examples.md,./docs/Form.md"
+    "predist": "node -e \"fs.rmdirSync('./dist/src', {recursive: true});\""
   },
   "repository": {
     "type": "git",
@@ -47,10 +46,10 @@
   ],
   "devDependencies": {
     "@aircall/expression-parser": "^1.0.4",
-    "@babel/cli": "^7.17.10",
-    "@babel/core": "^7.18.5",
-    "@babel/preset-env": "^7.18.2",
-    "@babel/register": "^7.17.7",
+    "@babel/cli": "^7.18.6",
+    "@babel/core": "^7.18.6",
+    "@babel/preset-env": "^7.18.6",
+    "@babel/register": "^7.18.6",
     "bpmn-moddle": "^7.1.2",
     "camunda-bpmn-moddle": "^6.1.2",
     "chai": "^4.3.6",
@@ -61,7 +60,7 @@
     "mocha": "^9.2.2",
     "mocha-cakes-2": "^3.3.0",
     "moddle-context-serializer": "^2.1.0",
-    "nock": "^13.2.6",
+    "nock": "^13.2.8",
     "nyc": "^15.1.0"
   },
   "dependencies": {

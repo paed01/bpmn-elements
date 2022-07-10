@@ -50,13 +50,6 @@ proto.execute = function execute(executeMessage) {
     this[kExecuteMessage] = executeMessage;
 
     const broker = this.broker;
-    if (eventDefinitionExecution && !this.environment.settings.strict) {
-      broker.subscribeTmp('execution', 'execute.expect', this._onExpectMessage.bind(this), {
-        noAck: true,
-        consumerTag: '_expect-tag',
-      });
-    }
-
     const consumerTag = `_bound-listener-${executionId}`;
     this.attachedTo.broker.subscribeTmp('event', 'activity.leave', this._onAttachedLeave.bind(this), {
       noAck: true,
@@ -65,15 +58,19 @@ proto.execute = function execute(executeMessage) {
     });
     this[kAttachedTags].push(consumerTag);
 
-    broker.subscribeOnce('execution', 'execute.detach', this._onDetachMessage.bind(this), {
-      consumerTag: '_detach-tag',
-    });
     broker.subscribeOnce('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {
       consumerTag: `_api-${executionId}`,
     });
-    broker.subscribeOnce('execution', 'execute.bound.completed', this._onCompleted.bind(this), {
-      consumerTag: `_execution-completed-${executionId}`,
-    });
+
+    const execQ = broker.assertQueue(`_bound-execution-${executionId}`, {durable: false, autoDelete: true});
+    broker.bindQueue(execQ.name, 'execution', 'execute.detach');
+    broker.bindQueue(execQ.name, 'execution', 'execute.bound.completed');
+    broker.bindQueue(execQ.name, 'execution', 'execute.repeat');
+    if (eventDefinitionExecution && !this.environment.settings.strict) {
+      broker.bindQueue(execQ.name, 'execution', 'execute.expect');
+    }
+
+    execQ.consume(this._onExecutionMessage.bind(this), {consumerTag: '_execution-tag'});
   }
 
   if (eventDefinitionExecution) {
@@ -81,15 +78,29 @@ proto.execute = function execute(executeMessage) {
   }
 };
 
+proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
+  message.ack();
+  switch (routingKey) {
+    case 'execute.detach':
+      return this._onDetachMessage(routingKey, message);
+    case 'execute.bound.completed':
+      return this._onCompleted(routingKey, message);
+    case 'execute.repeat':
+      return this._onRepeatMessage(routingKey, message);
+    case 'execute.expect':
+      return this._onExpectMessage(routingKey, message);
+  }
+};
+
 proto._onCompleted = function onCompleted(_, {content}) {
   if (!this.cancelActivity && !content.cancelActivity) {
     this._stop();
-    return this.broker.publish('execution', 'execute.completed', cloneContent(content));
+    return this.broker.publish('execution', 'execute.completed', cloneContent(content, {cancelActivity: false}));
   }
 
   this[kCompleteContent] = content;
 
-  const {inbound} = this[kExecuteMessage].content;
+  const inbound = this[kExecuteMessage].content.inbound;
   const attachedToContent = inbound && inbound[0];
   const attachedTo = this.attachedTo;
   this.activity.logger.debug(`<${this.executionId} (${this.id})> cancel ${attachedTo.status} activity <${attachedToContent.executionId} (${attachedToContent.id})>`);
@@ -160,13 +171,19 @@ proto._onApiMessage = function onApiMessage(_, message) {
   }
 };
 
+proto._onRepeatMessage = function onRepeatMessage(_, message) {
+  if (this.cancelActivity) return;
+  const executeMessage = this[kExecuteMessage];
+  const repeat = message.content.repeat;
+  this.broker.getQueue('inbound-q').queueMessage({routingKey: 'activity.restart'}, cloneContent(executeMessage.content.inbound[0], {repeat}));
+};
+
 proto._stop = function stop(detach) {
   const attachedTo = this.attachedTo, broker = this.broker, executionId = this.executionId;
   for (const tag of this[kAttachedTags].splice(0)) attachedTo.broker.cancel(tag);
   for (const shovelName of this[kShovels].splice(0)) attachedTo.broker.closeShovel(shovelName);
 
-  broker.cancel('_expect-tag');
-  broker.cancel('_detach-tag');
+  broker.cancel('_execution-tag');
   broker.cancel(`_execution-completed-${executionId}`);
 
   if (detach) return;
