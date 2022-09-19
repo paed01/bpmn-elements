@@ -1,42 +1,35 @@
 export default function ExtensionsMapper(context) {
-  const {extensions: envExtensions} = context.environment;
-  const extensions = getExtensions();
+  this.context = context;
+}
 
-  return {
-    get,
-  };
+ExtensionsMapper.prototype.get = function get(activity) {
+  return new Extensions(activity, this.context, this._getExtensions());
+};
 
-  function get(activity) {
-    const activityExtensions = extensions.reduce(applyExtension, []);
-    return {
-      activate,
-      deactivate,
-    };
+ExtensionsMapper.prototype._getExtensions = function getExtensions() {
+  let extensions;
+  if (!(extensions = this.context.environment.extensions)) return [];
+  return Object.values(extensions);
+};
 
-    function applyExtension(result, Extension) {
-      const extension = Extension(activity, context);
-      if (extension) result.push(extension);
-      return result;
-    }
-
-    function activate(message) {
-      for (const extension of activityExtensions) extension.activate(message);
-    }
-    function deactivate(message) {
-      for (const extension of activityExtensions) extension.deactivate(message);
-    }
-  }
-
-  function getExtensions() {
-    const result = [];
-    if (!envExtensions) return result;
-
-    for (const key in envExtensions) {
-      const extension = envExtensions[key];
-      if (extension) {
-        result.push(extension);
-      }
-    }
-    return result;
+function Extensions(activity, context, extensions) {
+  const result = this.extensions = [];
+  for (const Extension of extensions) {
+    const extension = Extension(activity, context);
+    if (extension) result.push(extension);
   }
 }
+
+Object.defineProperty(Extensions.prototype, 'count', {
+  get() {
+    return this.extensions.length;
+  },
+});
+
+Extensions.prototype.activate = function activate(message) {
+  for (const extension of this.extensions) extension.activate(message);
+};
+
+Extensions.prototype.deactivate = function deactivate(message) {
+  for (const extension of this.extensions) extension.deactivate(message);
+};
