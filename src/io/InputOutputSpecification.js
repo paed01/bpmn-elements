@@ -15,8 +15,14 @@ export default function IoSpecification(activity, ioSpecificationDef, context) {
 
 const proto = IoSpecification.prototype;
 
-proto.activate = function activate() {
+proto.activate = function activate(message) {
   if (this[kConsuming]) return;
+  if (message && message.fields.redelivered && message.fields.routingKey === 'run.start') {
+    this._onFormatEnter();
+  }
+  if (message && message.fields.redelivered && message.fields.routingKey === 'run.end') {
+    this._onFormatComplete(message);
+  }
   this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {noAck: true});
 };
 
@@ -107,6 +113,7 @@ proto._onFormatComplete = function formatOnComplete(message) {
   const broker = this.broker;
   const context = this.context;
 
+
   const {dataObjects, sources} = dataOutputs.reduce((result, ioSource, index) => {
     const {value} = messageOutputs.find((output) => output.id === ioSource.id) || {};
     const source = {
@@ -116,7 +123,6 @@ proto._onFormatComplete = function formatOnComplete(message) {
       value,
     };
     result.sources.push(source);
-
 
     const dataObjectId = getPropertyValue(ioSource, 'behaviour.association.target.dataObject.id');
     if (!dataObjectId) return result;
@@ -143,8 +149,10 @@ proto._onFormatComplete = function formatOnComplete(message) {
   broker.publish('format', `${startRoutingKey}.begin`, {
     endRoutingKey,
     ioSpecification: {
-      dataInputs: sources.map((input) => {
-        return {...input};
+      ...(messageInputs && {
+        dataInputs: messageInputs.map((input) => {
+          return {...input};
+        }),
       }),
       dataOutputs: this._getDataOutputs(dataOutputs),
     },
@@ -155,8 +163,12 @@ proto._onFormatComplete = function formatOnComplete(message) {
 
     broker.publish('format', endRoutingKey, {
       ioSpecification: {
-        dataInputs: sources,
-        dataOutputs: this._getDataOutputs(dataOutputs),
+        ...(messageInputs && {
+          dataInputs: messageInputs.map((input) => {
+            return {...input};
+          }),
+        }),
+        dataOutputs: sources,
       },
     });
   });

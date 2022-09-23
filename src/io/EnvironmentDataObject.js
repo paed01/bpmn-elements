@@ -9,6 +9,7 @@ export default function EnvironmentDataObject(dataObjectDef, {environment}) {
 }
 
 EnvironmentDataObject.prototype.read = function read(broker, exchange, routingKeyPrefix, messageProperties) {
+
   const environment = this.environment;
   const value = environment.variables._data && environment.variables._data[this.id];
   const content = this._createContent(value);

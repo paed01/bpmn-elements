@@ -581,4 +581,235 @@ Feature('Format', () => {
       return error;
     });
   });
+
+  Scenario('Recover and resume with async formatting execution', () => {
+    let context, definition;
+    const serviceCalls = [];
+    Given('a process with a service task and extensions handling service', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="script-definition" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="my-process" isExecutable="true">
+          <dataObjectReference id="globalInputRef" dataObjectRef="input" />
+          <dataObjectReference id="inputFromUserRef" dataObjectRef="inputFromUser" />
+          <dataObjectReference id="dorProp" dataObjectRef="prop" />
+          <dataObject id="input" />
+          <dataObject id="inputFromUser" />
+          <dataObject id="prop" />
+          <serviceTask id="task">
+            <property id="Property_1" name="bpmnprop" />
+            <ioSpecification id="inputSpec">
+              <dataInput id="input_1" name="Surname" />
+              <dataOutput id="userInput" name="result" />
+            </ioSpecification>
+            <dataInputAssociation id="associatedInput" sourceRef="globalInputRef" targetRef="input_1" />
+            <dataInputAssociation id="DataInputAssociation_0xue5vg">
+              <sourceRef>dorProp</sourceRef>
+              <targetRef>Property_1</targetRef>
+            </dataInputAssociation>
+            <dataOutputAssociation id="associatedOutput" sourceRef="userInput" targetRef="inputFromUserRef" />
+          </serviceTask>
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    function asyncExtensions(element) {
+      if (element.type === 'bpmn:Process') return;
+      return elementExtensions(element);
+    }
+
+    function elementExtensions(activity) {
+      if (activity.type === 'bpmn:ServiceTask') {
+        activity.behaviour.Service = function Service() {
+          return {
+            execute(...args) {
+              serviceCalls.push(args);
+            }
+          };
+        };
+      }
+
+      return {
+        activate(msg) {
+          const formatQ = activity.broker.getQueue('format-run-q');
+          if (msg.fields.redelivered && msg.fields.routingKey === 'run.start') {
+            formatQ.queueMessage({routingKey: 'run.enter.format'}, {endRoutingKey: 'run.enter.complete'}, {persistent: false});
+          }
+          if (msg.fields.redelivered && msg.fields.routingKey === 'run.end') {
+            formatQ.queueMessage({routingKey: 'run.end.format'}, {endRoutingKey: 'run.end.complete'}, {persistent: false});
+          }
+
+          activity.on('enter', () => {
+            formatQ.queueMessage({routingKey: 'run.enter.format'}, {endRoutingKey: 'run.enter.complete'}, {persistent: false});
+          }, {consumerTag: '_extension-on-enter'});
+
+          activity.on('activity.execution.completed', () => {
+            formatQ.queueMessage({routingKey: 'run.end.format'}, {endRoutingKey: 'run.end.complete'}, {persistent: false});
+          }, {consumerTag: '_extension-on-end'});
+        },
+        deactivate() {
+          activity.broker.cancel('_extension-on-enter');
+          activity.broker.cancel('_extension-on-end');
+        }
+      };
+    }
+
+    When('definition run', () => {
+      definition = new Definition(context, {
+        variables: {
+          _data: {input: 'startio', prop: 72},
+        },
+        settings: {
+          enableDummyService: false,
+        },
+        extensions: {
+          asyncExtensions,
+        },
+      });
+
+      definition.run();
+    });
+
+    Then('async enter formatting is waiting to complete', () => {
+      const [api] = definition.getPostponed();
+      expect(api.owner.status).to.equal('formatting');
+    });
+
+    let state;
+    Given('state is saved and run is stopped', () => {
+      state = definition.getState();
+      definition.stop();
+    });
+
+    When('definition recovered and resumed', () => {
+      definition = new Definition(context.clone(), {
+        settings: {
+          enableDummyService: false,
+        },
+        extensions: {
+          asyncExtensions,
+        },
+      });
+
+      definition.recover(state).resume();
+    });
+
+    And('resumed enter formatting completes', () => {
+      const [api] = definition.getPostponed();
+      const formatQ = api.owner.broker.getQueue('format-run-q');
+      formatQ.queueMessage({routingKey: 'run.enter.complete'}, {extended: true}, {persistent: false});
+    });
+
+    let serviceCall;
+    Then('service is called', () => {
+      expect(serviceCalls).to.have.length(1);
+      serviceCall = serviceCalls.pop();
+    });
+
+    And('format input is set', () => {
+      const [msg] = serviceCall;
+      expect(msg.content).to.have.property('extended', true);
+      expect(msg.content).to.have.property('ioSpecification');
+      expect(msg.content.ioSpecification).to.have.property('dataInputs').with.length(1);
+      expect(msg.content.ioSpecification.dataInputs[0]).to.deep.equal({
+        id: 'input_1',
+        name: 'Surname',
+        type: 'bpmn:DataInput',
+        value: 'startio',
+      });
+      expect(msg.content).to.have.property('properties').that.deep.equal({
+        Property_1: {
+          id: 'Property_1',
+          name: 'bpmnprop',
+          type: 'bpmn:Property',
+          value: 72,
+        },
+      });
+    });
+
+    When('service completes', () => {
+      const [, callback] = serviceCall;
+      callback(null, {
+        ioSpecification: {
+          dataOutputs: [{
+            id: 'userInput',
+            value: 'endio',
+          }],
+        },
+      });
+    });
+
+    Then('async end formatting is waiting to complete', () => {
+      const [api] = definition.getPostponed();
+      expect(api.owner.status).to.equal('formatting');
+    });
+
+    Given('state is saved and run is stopped', () => {
+      state = definition.getState();
+      definition.stop();
+    });
+
+    let activityEnd, end;
+    When('definition recovered and resumed', () => {
+      definition = new Definition(context.clone(), {
+        settings: {
+          enableDummyService: false,
+        },
+        extensions: {
+          asyncExtensions,
+        },
+      });
+
+      end = definition.waitFor('end');
+      activityEnd = definition.waitFor('activity.end');
+
+      definition.recover(state).resume();
+    });
+
+    Then('format input is still set', () => {
+      const [api] = definition.getPostponed();
+      expect(api.owner.status).to.equal('formatting');
+      expect(api.content).to.have.property('extended', true);
+    });
+
+    When('resumed end formatting completes', () => {
+      const [api] = definition.getPostponed();
+      const formatQ = api.owner.broker.getQueue('format-run-q');
+      formatQ.queueMessage({routingKey: 'run.end.complete'}, {serviceOutput: true}, {persistent: false});
+    });
+
+    Then('resumed definition completes', () => {
+      return end;
+    });
+
+    And('async end formatting is set', async () => {
+      const api = await activityEnd;
+      expect(api.content).to.have.property('extended', true);
+      expect(api.content).to.have.property('ioSpecification');
+      expect(api.content.ioSpecification).to.have.property('dataInputs').with.length(1);
+      expect(api.content.ioSpecification.dataInputs[0]).to.deep.equal({
+        id: 'input_1',
+        name: 'Surname',
+        type: 'bpmn:DataInput',
+        value: 'startio',
+      });
+      expect(api.content).to.have.property('properties').that.deep.equal({
+        Property_1: {
+          id: 'Property_1',
+          name: 'bpmnprop',
+          type: 'bpmn:Property',
+          value: 72,
+        },
+      });
+      expect(api.content).to.have.property('serviceOutput', true);
+      expect(api.content.ioSpecification).to.have.property('dataOutputs').with.length(1);
+      expect(api.content.ioSpecification.dataOutputs[0]).to.deep.equal({
+        id: 'userInput',
+        name: 'result',
+        type: 'bpmn:DataOutput',
+        value: 'endio',
+      });
+    });
+  });
 });

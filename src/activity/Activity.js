@@ -631,7 +631,6 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
         this.broker.publish('run', 'run.execute', content, {correlationId});
         this._publishEvent('start', content, {correlationId});
       }
-
       break;
     }
     case 'run.execute.passthrough': {
@@ -661,7 +660,8 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
       return exec.execution.execute(message);
     }
     case 'run.end': {
-      if (this.status === 'end') break;
+      this.logger.debug(`<${id}> end`, isRedelivered ? 'redelivered' : '');
+      if (isRedelivered) break;
 
       this[kCounters].taken++;
 
@@ -844,7 +844,8 @@ proto._onResumeMessage = function onResumeMessage(message) {
   message.ack();
 
   const stateMessage = this[kStateMessage];
-  const {fields} = stateMessage;
+  const fields = stateMessage.fields;
+  if (!fields.redelivered) return;
 
   switch (fields.routingKey) {
     case 'run.enter':
@@ -857,7 +858,8 @@ proto._onResumeMessage = function onResumeMessage(message) {
       return;
   }
 
-  if (!fields.redelivered) return;
+  if (this.extensions) this.extensions.activate(cloneMessage(stateMessage));
+  if (this.bpmnIo) this.bpmnIo.activate(cloneMessage(stateMessage));
 
   this.logger.debug(`<${this.id}> resume from ${message.content.status}`);
 

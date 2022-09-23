@@ -194,6 +194,43 @@ describe('InputOutputSpecification', () => {
     }]);
   });
 
+  it('publishes output without value if data object if unreferenced', () => {
+    const activity = ActivityBroker();
+    new InputOutputSpecification(activity, {
+      type: 'bpmn:InputOutputSpecification',
+      behaviour: {
+        dataOutputs: [{
+          id: 'userOutput',
+          type: 'iospecdataoutput',
+          name: 'Output from user',
+          behaviour: {
+            association: {
+              target: {
+                dataObject: {
+                  id: 'missing'
+                },
+              },
+            },
+          },
+        }],
+      },
+    }, {
+      getDataObjectById() {},
+    }).activate();
+
+    activity.broker.publish('event', 'activity.execution.completed');
+
+    const formatMsg = activity.broker.getQueue('format-run-q').peek();
+
+    expect(formatMsg.content).to.have.property('ioSpecification');
+    expect(formatMsg.content.ioSpecification).to.have.property('dataOutputs').that.deep.equal([{
+      id: 'userOutput',
+      type: 'iospecdataoutput',
+      name: 'Output from user',
+      value: undefined,
+    }]);
+  });
+
   it('formats message before run execute and after run complete', async () => {
     const source = `
     <?xml version="1.0" encoding="UTF-8"?>

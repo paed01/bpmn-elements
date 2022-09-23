@@ -29,8 +29,17 @@ function IoSpecification(activity, ioSpecificationDef, context) {
 
 const proto = IoSpecification.prototype;
 
-proto.activate = function activate() {
+proto.activate = function activate(message) {
   if (this[kConsuming]) return;
+
+  if (message && message.fields.redelivered && message.fields.routingKey === 'run.start') {
+    this._onFormatEnter();
+  }
+
+  if (message && message.fields.redelivered && message.fields.routingKey === 'run.end') {
+    this._onFormatComplete(message);
+  }
+
   this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {
     noAck: true
   });
@@ -177,10 +186,11 @@ proto._onFormatComplete = function formatOnComplete(message) {
   const endRoutingKey = `run.onend.${safeType}.end`;
   broker.publish('format', `${startRoutingKey}.begin`, {
     endRoutingKey,
-    ioSpecification: {
-      dataInputs: sources.map(input => {
-        return { ...input
-        };
+    ioSpecification: { ...(messageInputs && {
+        dataInputs: messageInputs.map(input => {
+          return { ...input
+          };
+        })
       }),
       dataOutputs: this._getDataOutputs(dataOutputs)
     }
@@ -189,9 +199,13 @@ proto._onFormatComplete = function formatOnComplete(message) {
     for (const response of responses) sources[response.index].value = response.value;
 
     broker.publish('format', endRoutingKey, {
-      ioSpecification: {
-        dataInputs: sources,
-        dataOutputs: this._getDataOutputs(dataOutputs)
+      ioSpecification: { ...(messageInputs && {
+          dataInputs: messageInputs.map(input => {
+            return { ...input
+            };
+          })
+        }),
+        dataOutputs: sources
       }
     });
   });

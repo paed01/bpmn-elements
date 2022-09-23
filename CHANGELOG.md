@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# Unreleased
+
+- fix resume at formatting
+- fix InputOutputSpecification output now passed as dataOutput instead of dataInput, as it should
+
 # 8.1.0
 
 - support non-interrupting BoundaryEvent with ISO8601 repeating interval timeCycle

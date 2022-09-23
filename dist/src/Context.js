@@ -31,7 +31,7 @@ function ContextInstance(definitionContext, environment) {
   this.sid = sid;
   this.definitionContext = definitionContext;
   this.environment = environment;
-  this.extensionsMapper = (0, _ExtensionsMapper.default)(this);
+  this.extensionsMapper = new _ExtensionsMapper.default(this);
   this.refs = {
     activityRefs: {},
     associationRefs: [],

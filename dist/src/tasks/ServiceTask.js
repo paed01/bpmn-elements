@@ -70,11 +70,7 @@ proto.execute = function execute(executeMessage) {
 
 proto.getService = function getService(message) {
   let Service = this.activity.behaviour.Service;
-
-  if (!Service) {
-    Service = this.environment.settings.enableDummyService ? DummyService : null;
-  }
-
+  if (!Service && this.environment.settings.enableDummyService) Service = DummyService;
   return Service && new Service(this.activity, (0, _messageHelper.cloneMessage)(message));
 };
 

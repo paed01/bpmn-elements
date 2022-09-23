@@ -87,6 +87,10 @@ const proto = Properties.prototype;
 proto.activate = function activate(message) {
   if (this[kConsuming]) return;
 
+  if (message.fields.redelivered && message.fields.routingKey === 'run.start') {
+    this._onActivityEvent('activity.enter', message);
+  }
+
   if (message.fields.redelivered && message.content.properties) {
     this._onActivityEvent('activity.extension.resume', message);
   }

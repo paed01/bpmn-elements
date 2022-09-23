@@ -802,7 +802,8 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
 
     case 'run.end':
       {
-        if (this.status === 'end') break;
+        this.logger.debug(`<${id}> end`, isRedelivered ? 'redelivered' : '');
+        if (isRedelivered) break;
         this[kCounters].taken++;
         this.status = 'end';
         return this._doRunLeave(message, false, () => {
@@ -1044,9 +1045,8 @@ proto._doRunOutbound = function doRunOutbound(outboundList, content, discardSequ
 proto._onResumeMessage = function onResumeMessage(message) {
   message.ack();
   const stateMessage = this[kStateMessage];
-  const {
-    fields
-  } = stateMessage;
+  const fields = stateMessage.fields;
+  if (!fields.redelivered) return;
 
   switch (fields.routingKey) {
     case 'run.enter':
@@ -1060,7 +1060,8 @@ proto._onResumeMessage = function onResumeMessage(message) {
       return;
   }
 
-  if (!fields.redelivered) return;
+  if (this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(stateMessage));
+  if (this.bpmnIo) this.bpmnIo.activate((0, _messageHelper.cloneMessage)(stateMessage));
   this.logger.debug(`<${this.id}> resume from ${message.content.status}`);
   return this.broker.publish('run', fields.routingKey, (0, _messageHelper.cloneContent)(stateMessage.content), stateMessage.properties);
 };
