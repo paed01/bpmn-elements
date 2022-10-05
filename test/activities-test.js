@@ -485,7 +485,6 @@ describe('activity', () => {
 
         const state = activity.getState();
 
-
         const assertMessage = AssertMessage(context, messages, true);
         assertMessage('activity.enter');
         assertMessage('activity.start');

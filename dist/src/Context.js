@@ -5,6 +5,8 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Context;
 
+var _BpmnIO = _interopRequireDefault(require("./io/BpmnIO"));
+
 var _Environment = _interopRequireDefault(require("./Environment"));
 
 var _ExtensionsMapper = _interopRequireDefault(require("./ExtensionsMapper"));
@@ -204,5 +206,9 @@ proto.getStartActivities = function getStartActivities(filterOptions, scopeId) {
 };
 
 proto.loadExtensions = function loadExtensions(activity) {
-  return this.extensionsMapper.get(activity);
+  const io = new _BpmnIO.default(activity, this);
+  const extensions = this.extensionsMapper.get(activity);
+  if (io.hasIo) extensions.extensions.push(io);
+  if (!extensions.extensions.length) return;
+  return extensions;
 };

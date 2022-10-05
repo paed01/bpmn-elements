@@ -8,6 +8,7 @@ exports.default = BpmnIO;
 function BpmnIO(activity, context) {
   this.activity = activity;
   this.context = context;
+  this.type = 'bpmnio';
   const {
     ioSpecification: ioSpecificationDef,
     properties: propertiesDef
@@ -15,6 +16,13 @@ function BpmnIO(activity, context) {
   this.specification = ioSpecificationDef && new ioSpecificationDef.Behaviour(activity, ioSpecificationDef, context);
   this.properties = propertiesDef && new propertiesDef.Behaviour(activity, propertiesDef, context);
 }
+
+Object.defineProperty(BpmnIO.prototype, 'hasIo', {
+  get() {
+    return this.specification || this.properties;
+  }
+
+});
 
 BpmnIO.prototype.activate = function activate(message) {
   const properties = this.properties,

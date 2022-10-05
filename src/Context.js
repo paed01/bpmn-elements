@@ -1,3 +1,4 @@
+import BpmnIO from './io/BpmnIO';
 import Environment from './Environment';
 import ExtensionsMapper from './ExtensionsMapper';
 import {getUniqueId} from './shared';
@@ -196,6 +197,10 @@ proto.getStartActivities = function getStartActivities(filterOptions, scopeId) {
 };
 
 proto.loadExtensions = function loadExtensions(activity) {
-  return this.extensionsMapper.get(activity);
+  const io = new BpmnIO(activity, this);
+  const extensions = this.extensionsMapper.get(activity);
+  if (io.hasIo) extensions.extensions.push(io);
+  if (!extensions.extensions.length) return;
+  return extensions;
 };
 

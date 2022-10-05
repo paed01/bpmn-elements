@@ -1,10 +1,11 @@
 Changelog
 =========
 
-# Unreleased
+# 8.2.0
 
-- fix resume at formatting
+- fix resume when activity has formatting status, extensions were not re-activated
 - fix InputOutputSpecification output now passed as dataOutput instead of dataInput, as it should
+- refactor Extensions loading, bpmn io is now pushed to the end of the extensions list
 
 # 8.1.0
 

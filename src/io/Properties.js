@@ -77,16 +77,12 @@ proto.deactivate = function deactivate() {
 };
 
 proto._onActivityEvent = function onActivityEvent(routingKey, message) {
-  if (routingKey === 'activity.enter') {
-    return this._formatOnEnter(message);
-  }
-
-  if (routingKey === 'activity.extension.resume') {
-    return this._formatOnEnter(message);
-  }
-
-  if (routingKey === 'activity.execution.completed') {
-    return this._formatOnComplete(message);
+  switch (routingKey) {
+    case 'activity.enter':
+    case 'activity.extension.resume':
+      return this._formatOnEnter(message);
+    case 'activity.execution.completed':
+      return this._formatOnComplete(message);
   }
 };
 

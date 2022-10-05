@@ -1,5 +1,4 @@
 import ActivityExecution from './ActivityExecution';
-import BpmnIO from '../io/BpmnIO';
 import {brokerSafeId, getUniqueId} from '../shared';
 import {ActivityApi} from '../Api';
 import {ActivityBroker} from '../EventBroker';
@@ -8,7 +7,6 @@ import {cloneContent, cloneParent, cloneMessage} from '../messageHelper';
 import {makeErrorFromMessage, ActivityError} from '../error/Errors';
 
 const kActivityDef = Symbol.for('activityDefinition');
-const kBpmnIo = Symbol.for('bpmnIo');
 const kConsuming = Symbol.for('consuming');
 const kCounters = Symbol.for('counters');
 const kEventDefinitions = Symbol.for('eventDefinitions');
@@ -105,6 +103,7 @@ function Activity(Behaviour, activityDef, context) {
   }
 
   this[kEventDefinitions] = eventDefinitions && eventDefinitions.map((ed) => new ed.Behaviour(this, ed, this.context));
+  this[kExtensions] = context.loadExtensions(this);
 }
 
 const proto = Activity.prototype;
@@ -130,21 +129,18 @@ Object.defineProperty(proto, 'executionId', {
   },
 });
 
-Object.defineProperty(proto, 'bpmnIo', {
-  enumerable: true,
-  get() {
-    if (kBpmnIo in this) return this[kBpmnIo];
-    const bpmnIo = this[kBpmnIo] = new BpmnIO(this, this.context);
-    return bpmnIo;
-  },
-});
-
 Object.defineProperty(proto, 'extensions', {
   enumerable: true,
   get() {
-    if (kExtensions in this) return this[kExtensions];
-    const extensions = this[kExtensions] = this.context.loadExtensions(this);
-    return extensions;
+    return this[kExtensions];
+  },
+});
+
+Object.defineProperty(proto, 'bpmnIo', {
+  enumerable: true,
+  get() {
+    const extensions = this[kExtensions];
+    return extensions && extensions.extensions.find(e => e.type === 'bpmnio');
   },
 });
 
@@ -408,10 +404,12 @@ proto._discardRun = function discardRun() {
   }
 
   this._deactivateRunConsumers();
-  if (this.extensions) this.extensions.deactivate();
+
+  const message = this[kStateMessage];
+  if (this.extensions) this.extensions.deactivate(cloneMessage(message));
   const broker = this.broker;
   broker.getQueue('run-q').purge();
-  broker.publish('run', 'run.discard', cloneContent(this[kStateMessage].content));
+  broker.publish('run', 'run.discard', cloneContent(message.content));
   this._consumeRunQ();
 };
 
@@ -603,8 +601,7 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
         this[kExec].execution = null;
       }
 
-      if (this.extensions) this.extensions.activate(cloneMessage(message), this);
-      if (this.bpmnIo) this.bpmnIo.activate(message);
+      if (this.extensions) this.extensions.activate(cloneMessage(message));
 
       if (!isRedelivered) this._publishEvent('enter', content, {correlationId});
       break;
@@ -615,8 +612,7 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
       this.status = 'discard';
       this[kExec].execution = null;
 
-      if (this.extensions) this.extensions.activate(cloneMessage(message), this);
-      if (this.bpmnIo) this.bpmnIo.activate(message);
+      if (this.extensions) this.extensions.activate(cloneMessage(message));
 
       if (!isRedelivered) {
         this.broker.publish('run', 'run.discarded', content, {correlationId});
@@ -707,8 +703,7 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
     case 'run.leave': {
       this.status = undefined;
 
-      if (this.bpmnIo) this.bpmnIo.deactivate(message);
-      if (this.extensions) this.extensions.deactivate(message);
+      if (this.extensions) this.extensions.deactivate(cloneMessage(message));
 
       if (!isRedelivered) {
         this.broker.publish('run', 'run.next', content, {persistent: false});
@@ -859,7 +854,6 @@ proto._onResumeMessage = function onResumeMessage(message) {
   }
 
   if (this.extensions) this.extensions.activate(cloneMessage(stateMessage));
-  if (this.bpmnIo) this.bpmnIo.activate(cloneMessage(stateMessage));
 
   this.logger.debug(`<${this.id}> resume from ${message.content.status}`);
 
@@ -889,7 +883,7 @@ proto._onStop = function onStop(message) {
   broker.cancel('_format-consumer');
 
   if (running) {
-    if (this.extensions) this.extensions.deactivate(message || this._createMessage());
+    if (this.extensions) this.extensions.deactivate(message ? cloneMessage(message) : this._createMessage());
     this._publishEvent('stop', this._createMessage());
   }
 };
@@ -939,11 +933,10 @@ proto._getOutboundSequenceFlowById = function getOutboundSequenceFlowById(flowId
 };
 
 proto._resumeExtensions = function resumeExtensions(message, callback) {
-  const extensions = this.extensions, bpmnIo = this.bpmnIo;
-  if (!extensions && !bpmnIo) return callback();
+  const extensions = this.extensions;
+  if (!extensions) return callback();
 
-  if (extensions) extensions.activate(cloneMessage(message), this);
-  if (bpmnIo) bpmnIo.activate(cloneMessage(message), this);
+  extensions.activate(cloneMessage(message));
 
   this.status = 'formatting';
   return this.formatter.format(message, (err, formattedContent, formatted) => {

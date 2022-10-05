@@ -93,6 +93,12 @@ function emptyContext(override, options) {
       return [];
     },
     getSequenceFlows() {},
+    loadExtensions() {
+      return {
+        activate() {},
+        deactivate() {},
+      };
+    },
     ...override,
   }, new Environment({Logger, scripts: Scripts(), settings: {enableDummyService: true}, ...options}));
 }

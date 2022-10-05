@@ -676,6 +676,12 @@ Feature('Format', () => {
       expect(api.owner.status).to.equal('formatting');
     });
 
+    And('io is exposed on task', () => {
+      const [api] = definition.getPostponed();
+      expect(api.owner.extensions.count).to.equal(2);
+      expect(api.owner.bpmnIo).to.be.ok;
+    });
+
     let state;
     Given('state is saved and run is stopped', () => {
       state = definition.getState();

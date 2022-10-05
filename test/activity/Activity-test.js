@@ -1805,6 +1805,7 @@ describe('Activity', () => {
       const context = getContext({
         loadExtensions() {
           return {
+            count: 1,
             activate(msg) {
               activateMessage = msg;
             },
@@ -2678,7 +2679,12 @@ function getContext(override) {
     getOutboundSequenceFlows() {
       return [];
     },
-    loadExtensions() {},
+    loadExtensions() {
+      return {
+        activate() {},
+        deactivate() {},
+      };
+    },
     getInboundAssociations() {},
     ...override,
   };

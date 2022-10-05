@@ -507,7 +507,12 @@ function getContext(override) {
     getOutboundSequenceFlows() {
       return [];
     },
-    loadExtensions() {},
+    loadExtensions() {
+      return {
+        activate() {},
+        deactivate() {},
+      };
+    },
     getInboundAssociations() {},
     ...override,
   };
