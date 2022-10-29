@@ -716,12 +716,13 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
 
         if (!isRedelivered) {
           this[kExec].execution = null;
+          if (this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(message));
+
+          this._publishEvent('enter', content, {
+            correlationId
+          });
         }
 
-        if (this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(message));
-        if (!isRedelivered) this._publishEvent('enter', content, {
-          correlationId
-        });
         break;
       }
 
@@ -775,22 +776,13 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
       {
         this.status = 'executing';
         this[kExecuteMessage] = message;
+        const exec = this[kExec];
+        if (isRedelivered && this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(message));
+        if (!exec.execution) exec.execution = new _ActivityExecution.default(this, this.context);
         this.broker.getQueue('execution-q').assertConsumer(this[kMessageHandlers].onExecutionMessage, {
           exclusive: true,
           consumerTag: '_activity-execution'
         });
-        const exec = this[kExec];
-        if (!exec.execution) exec.execution = new _ActivityExecution.default(this, this.context);
-
-        if (isRedelivered) {
-          return this._resumeExtensions(message, (err, formattedContent) => {
-            if (err) return this.emitFatal(err, message.content);
-            if (formattedContent) message.content = formattedContent;
-            this.status = 'executing';
-            return exec.execution.execute(message);
-          });
-        }
-
         return exec.execution.execute(message);
       }
 
@@ -1144,17 +1136,6 @@ proto._createMessage = function createMessage(override) {
 
 proto._getOutboundSequenceFlowById = function getOutboundSequenceFlowById(flowId) {
   return this[kFlows].outboundSequenceFlows.find(flow => flow.id === flowId);
-};
-
-proto._resumeExtensions = function resumeExtensions(message, callback) {
-  const extensions = this.extensions;
-  if (!extensions) return callback();
-  extensions.activate((0, _messageHelper.cloneMessage)(message));
-  this.status = 'formatting';
-  return this.formatter.format(message, (err, formattedContent, formatted) => {
-    if (err) return callback(err);
-    return callback(null, formatted && formattedContent);
-  });
 };
 
 proto._deactivateRunConsumers = function _deactivateRunConsumers() {

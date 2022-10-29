@@ -4,6 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = ExtensionsMapper;
+const kActivated = Symbol.for('activated');
 
 function ExtensionsMapper(context) {
   this.context = context;
@@ -26,6 +27,8 @@ function Extensions(activity, context, extensions) {
     const extension = Extension(activity, context);
     if (extension) result.push(extension);
   }
+
+  this[kActivated] = false;
 }
 
 Object.defineProperty(Extensions.prototype, 'count', {
@@ -36,9 +39,15 @@ Object.defineProperty(Extensions.prototype, 'count', {
 });
 
 Extensions.prototype.activate = function activate(message) {
+  if (this[kActivated]) return;
+  this[kActivated] = true;
+
   for (const extension of this.extensions) extension.activate(message);
 };
 
 Extensions.prototype.deactivate = function deactivate(message) {
+  if (!this[kActivated]) return;
+  this[kActivated] = false;
+
   for (const extension of this.extensions) extension.deactivate(message);
 };

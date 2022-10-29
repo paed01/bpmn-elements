@@ -469,6 +469,45 @@ describe('activity run', () => {
       expect(activityEvents).to.eql([true, false, true, false]);
     });
   });
+
+  describe('run resume', () => {
+    it('resumes last run message only', () => {
+      const states = [];
+      const activity = new Activity(TaskBehaviour, {
+        id: 'activity',
+        type: 'task',
+        parent: {
+          id: 'process1',
+        },
+      }, getContext({
+        loadExtensions(me) {
+          return {
+            activate(msg) {
+              states.push([msg.fields.routingKey, me.getState()]);
+            },
+            deactivate() {},
+          };
+        },
+      }));
+
+      const runMessages = [];
+      const broker = activity.broker;
+      broker.subscribeTmp('run', '#', (_, message) => {
+        runMessages.push({...message});
+      }, {noAck: true, consumerTag: '_run_test'});
+
+      activity.run();
+      activity.stop();
+
+      let state = states.shift();
+      expect(state[0]).to.equal('run.enter');
+
+      activity.recover(state[1]).resume();
+
+      state = states.shift();
+      expect(state[0]).to.equal('run.start');
+    });
+  });
 });
 
 function createActivity(step = true) {

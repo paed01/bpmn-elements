@@ -599,11 +599,9 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
       this.status = 'entered';
       if (!isRedelivered) {
         this[kExec].execution = null;
+        if (this.extensions) this.extensions.activate(cloneMessage(message));
+        this._publishEvent('enter', content, {correlationId});
       }
-
-      if (this.extensions) this.extensions.activate(cloneMessage(message));
-
-      if (!isRedelivered) this._publishEvent('enter', content, {correlationId});
       break;
     }
     case 'run.discard': {
@@ -640,19 +638,10 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
       this.status = 'executing';
       this[kExecuteMessage] = message;
 
-      this.broker.getQueue('execution-q').assertConsumer(this[kMessageHandlers].onExecutionMessage, {exclusive: true, consumerTag: '_activity-execution'});
       const exec = this[kExec];
+      if (isRedelivered && this.extensions) this.extensions.activate(cloneMessage(message));
       if (!exec.execution) exec.execution = new ActivityExecution(this, this.context);
-
-      if (isRedelivered) {
-        return this._resumeExtensions(message, (err, formattedContent) => {
-          if (err) return this.emitFatal(err, message.content);
-          if (formattedContent) message.content = formattedContent;
-          this.status = 'executing';
-          return exec.execution.execute(message);
-        });
-      }
-
+      this.broker.getQueue('execution-q').assertConsumer(this[kMessageHandlers].onExecutionMessage, {exclusive: true, consumerTag: '_activity-execution'});
       return exec.execution.execute(message);
     }
     case 'run.end': {
@@ -930,19 +919,6 @@ proto._createMessage = function createMessage(override) {
 
 proto._getOutboundSequenceFlowById = function getOutboundSequenceFlowById(flowId) {
   return this[kFlows].outboundSequenceFlows.find((flow) => flow.id === flowId);
-};
-
-proto._resumeExtensions = function resumeExtensions(message, callback) {
-  const extensions = this.extensions;
-  if (!extensions) return callback();
-
-  extensions.activate(cloneMessage(message));
-
-  this.status = 'formatting';
-  return this.formatter.format(message, (err, formattedContent, formatted) => {
-    if (err) return callback(err);
-    return callback(null, formatted && formattedContent);
-  });
 };
 
 proto._deactivateRunConsumers = function _deactivateRunConsumers() {

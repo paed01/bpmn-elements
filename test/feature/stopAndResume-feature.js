@@ -527,4 +527,74 @@ Feature('Stop and resume', () => {
       return completed;
     });
   });
+
+  Scenario('Stop and resume at activity execution completed', () => {
+    let context, definition;
+
+    const source1 = `
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <process id="theProcess" isExecutable="true">
+        <task id="task1" />
+      </process>
+    </definitions>`;
+
+    const events = [];
+    Given('activity is stopped at activity execution completed', async () => {
+      context = await testHelpers.context(source1);
+      definition = new Definition(context);
+
+      const activity = definition.getActivityById('task1');
+      activity.broker.subscribeOnce('event', 'activity.execution.completed', () => {
+        activity.broker.publish('format', 'run.end.format', {endRoutingKey: 'run.end.format.complete'});
+        definition.stop();
+      });
+
+      definition.broker.subscribeTmp('event', 'activity.#', (rk) => events.push(rk), {noAck: true});
+    });
+
+    let stopped;
+    When('run', () => {
+      definition.run();
+    });
+
+    let state;
+    Then('run is stopped', async () => {
+      await stopped;
+      state = definition.getState();
+    });
+
+    And('activity events are emitted as expected', () => {
+      expect(events).to.deep.equal([
+        'activity.init',
+        'activity.enter',
+        'activity.start',
+        'activity.execution.completed',
+        'activity.stop',
+      ]);
+    });
+
+    let end;
+    When('recovered and resumed', () => {
+      definition = new Definition(context.clone()).recover(state);
+      end = definition.waitFor('end');
+      definition.broker.subscribeTmp('event', 'activity.#', (rk) => events.push(rk), {noAck: true});
+      definition.resume();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('activity events are emitted as expected', () => {
+      expect(events).to.deep.equal([
+        'activity.init',
+        'activity.enter',
+        'activity.start',
+        'activity.execution.completed',
+        'activity.stop',
+        'activity.end',
+        'activity.leave'
+      ]);
+    });
+  });
 });

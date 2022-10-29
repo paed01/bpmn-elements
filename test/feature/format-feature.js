@@ -818,4 +818,158 @@ Feature('Format', () => {
       });
     });
   });
+
+  Scenario('State is saved when in async extension', () => {
+    let context, definition;
+    Given('a process with a service task and extensions handling service', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="script-definition" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="my-process" isExecutable="true">
+          <serviceTask id="task" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    function asyncExtensions(element) {
+      if (element.type === 'bpmn:Process') return;
+      return elementExtensions(element);
+    }
+
+    function elementExtensions(activity) {
+      if (activity.type === 'bpmn:ServiceTask') {
+        activity.behaviour.Service = function Service() {
+          return {
+            execute(msg, callback) {
+              callback(null, {result: msg.content.entered});
+            }
+          };
+        };
+      }
+
+      return {
+        activate(msg) {
+          const formatQ = activity.broker.getQueue('format-run-q');
+          if (msg.fields.redelivered) {
+            if (msg.fields.routingKey === 'run.start') {
+              formatQ.queueMessage({routingKey: 'run.enter.format'}, {endRoutingKey: 'run.enter.complete'}, {persistent: false});
+            }
+            if (msg.fields.routingKey === 'run.execute') {
+              return activity.on('activity.execution.completed', () => {
+                formatQ.queueMessage({routingKey: 'run.end.format'}, {endRoutingKey: 'run.end.complete'}, {persistent: false});
+              }, {consumerTag: '_extension-on-end'});
+            }
+          }
+
+          activity.on('enter', (api) => {
+            formatQ.queueMessage({routingKey: 'run.enter.format'}, {endRoutingKey: 'run.enter.complete'}, {persistent: false});
+            api.environment.services.saveState(api);
+          }, {consumerTag: '_extension-on-enter'});
+
+          activity.on('activity.execution.completed', (api) => {
+            formatQ.queueMessage({routingKey: 'run.end.format'}, {endRoutingKey: 'run.end.complete'}, {persistent: false});
+            api.environment.services.saveState(api);
+          }, {consumerTag: '_extension-on-end'});
+        },
+        deactivate() {
+          activity.broker.cancel('_extension-on-enter');
+          activity.broker.cancel('_extension-on-end');
+        }
+      };
+    }
+
+    const states = [];
+    When('definition run', () => {
+      definition = new Definition(context, {
+        settings: {
+          enableDummyService: false,
+        },
+        extensions: {
+          asyncExtensions,
+        },
+      });
+
+      definition.environment.addService('saveState', () => {
+        states.push(definition.getState());
+      });
+
+      definition.run();
+    });
+
+    Then('enter formatting is waiting to complete', () => {
+      const [api] = definition.getPostponed();
+      expect(api.fields.routingKey).to.equal('activity.enter');
+      expect(api.owner.status).to.equal('formatting');
+
+      definition.stop();
+    });
+
+    When('definition recovered and resumed at formatting enter message', () => {
+      definition = new Definition(context.clone(), {
+        settings: {
+          enableDummyService: false,
+        },
+        extensions: {
+          asyncExtensions,
+        },
+      });
+
+      definition.environment.addService('saveState', () => {
+        states.push(definition.getState());
+      });
+
+      definition.recover(states.shift()).resume();
+    });
+
+    And('resumed enter formatting completes', () => {
+      const [api] = definition.getPostponed();
+      api.broker.getExchange('format').publish('run.enter.complete', { entered: 3 }, {persistent: false});
+    });
+
+    Then('run is stopped on formatting execution complete message', () => {
+      definition.stop();
+      const [api] = definition.getPostponed();
+      expect(api.fields.routingKey).to.equal('activity.execution.completed');
+      expect(api.owner.status).to.equal('formatting');
+    });
+
+    let activityEnd, end;
+    When('definition recovered and resumed again', () => {
+      definition = new Definition(context.clone(), {
+        settings: {
+          enableDummyService: false,
+        },
+        extensions: {
+          asyncExtensions,
+        },
+      });
+
+      definition.recover(states.shift()).resume();
+    });
+
+    Then('run is formatting end message', () => {
+      const [api] = definition.getPostponed();
+      expect(api.fields.routingKey).to.equal('activity.execution.completed');
+      expect(api.owner.status).to.equal('formatting');
+    });
+
+    When('end formatting completes', () => {
+      activityEnd = definition.waitFor('activity.end');
+      end = definition.waitFor('end');
+
+      const [api] = definition.getPostponed();
+      api.broker.publish('format', 'run.end.complete', { sum: api.content.output.result });
+    });
+
+    Then('resumed definition completes', () => {
+      return end;
+    });
+
+    And('async end formatting is set', async () => {
+      const api = await activityEnd;
+      expect(api.content).to.have.property('entered', 3);
+      expect(api.content).to.have.property('sum', 3);
+    });
+  });
 });
