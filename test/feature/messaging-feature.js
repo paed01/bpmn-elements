@@ -99,11 +99,11 @@ Feature('Messaging', () => {
       definition.run();
     });
 
-    And('message 2 is sent', async () => {
+    And('message 2 is sent', () => {
       definition.sendMessage(definition.getElementById('Message2').resolve());
     });
 
-    And('message 3 is sent', async () => {
+    And('message 3 is sent', () => {
       definition.sendMessage(definition.getElementById('Message3').resolve());
     });
 
@@ -144,7 +144,7 @@ Feature('Messaging', () => {
       expect(postponed).to.have.length(2);
     });
 
-    When('message 3 is sent', async () => {
+    When('message 3 is sent', () => {
       definition.sendMessage(definition.getElementById('Message3').resolve());
     });
 
@@ -153,7 +153,7 @@ Feature('Messaging', () => {
       expect(postponed[0]).to.property('id', 'interim1');
     });
 
-    When('message 2 is sent', async () => {
+    When('message 2 is sent', () => {
       definition.sendMessage(definition.getElementById('Message2').resolve());
     });
 
@@ -206,12 +206,12 @@ Feature('Messaging', () => {
       return end;
     });
 
-    And('main process completed', async () => {
+    And('main process completed', () => {
       [main, participant] = definition.getProcesses();
       expect(main.counters).to.have.property('completed', 1);
     });
 
-    And('participant process completed', async () => {
+    And('participant process completed', () => {
       expect(participant.counters).to.have.property('completed', 1);
     });
 
@@ -265,11 +265,11 @@ Feature('Messaging', () => {
       return end;
     });
 
-    And('main process completed', async () => {
+    And('main process completed', () => {
       expect(main.counters).to.have.property('completed', 1);
     });
 
-    And('participant process completed', async () => {
+    And('participant process completed', () => {
       expect(participant.counters).to.have.property('completed', 1);
     });
 
@@ -323,11 +323,11 @@ Feature('Messaging', () => {
       return end;
     });
 
-    And('main process completed', async () => {
+    And('main process completed', () => {
       expect(main.counters).to.have.property('completed', 1);
     });
 
-    And('participant process completed', async () => {
+    And('participant process completed', () => {
       expect(participant.counters).to.have.property('completed', 1);
     });
 
@@ -381,11 +381,11 @@ Feature('Messaging', () => {
       return end;
     });
 
-    And('main process completed', async () => {
+    And('main process completed', () => {
       expect(main.counters).to.have.property('completed', 1);
     });
 
-    And('participant process completed', async () => {
+    And('participant process completed', () => {
       expect(participant.counters).to.have.property('completed', 1);
     });
 
@@ -436,12 +436,12 @@ Feature('Messaging', () => {
       definition.run();
     });
 
-    Then('main process waits for message from participant', async () => {
+    Then('main process waits for message from participant', () => {
       expect(main.counters).to.have.property('completed', 0);
       expect(main.getPostponed()[0]).to.have.property('id', 'receive');
     });
 
-    And('participant process is postponed since nothing happened', async () => {
+    And('participant process is postponed since nothing happened', () => {
       expect(participant.counters).to.have.property('completed', 0);
     });
 
@@ -501,11 +501,11 @@ Feature('Messaging', () => {
       return end;
     });
 
-    And('main process completed', async () => {
+    And('main process completed', () => {
       expect(main.counters).to.have.property('completed', 1);
     });
 
-    And('participant process completed', async () => {
+    And('participant process completed', () => {
       expect(participant.counters).to.have.property('completed', 1);
     });
 
@@ -553,7 +553,7 @@ Feature('Messaging', () => {
       expect(api.content).to.not.have.property('isResumed');
     });
 
-    When('message is sent', async () => {
+    When('message is sent', () => {
       definition.sendMessage({
         id: 'Message1'
       });
@@ -579,7 +579,7 @@ Feature('Messaging', () => {
       expect(receive).to.have.property('id', 'receive');
     });
 
-    When('receive task is signaled', async () => {
+    When('receive task is signaled', () => {
       receive.signal();
     });
 
@@ -603,7 +603,7 @@ Feature('Messaging', () => {
       expect(receive).to.have.property('id', 'receive');
     });
 
-    When('receive task is discarded', async () => {
+    When('receive task is discarded', () => {
       receive.discard();
     });
 
@@ -630,7 +630,7 @@ Feature('Messaging', () => {
     });
 
     let state;
-    Given('definition is stopped and state is saved', async () => {
+    Given('definition is stopped and state is saved', () => {
       definition.stop();
       state = definition.getState();
     });
@@ -714,11 +714,11 @@ Feature('Messaging', () => {
       return end;
     });
 
-    And('main process completed', async () => {
+    And('main process completed', () => {
       expect(main.counters).to.have.property('completed', 1);
     });
 
-    And('first participant processe have completed', async () => {
+    And('first participant processe have completed', () => {
       expect(participant1.counters).to.have.property('completed', 1);
       expect(participant2.counters).to.have.property('completed', 0);
     });
@@ -769,15 +769,15 @@ Feature('Messaging', () => {
       return end;
     });
 
-    And('main process completed', async () => {
+    And('main process completed', () => {
       expect(main.counters).to.have.property('completed', 1);
     });
 
-    And('first participant process has completed', async () => {
+    And('first participant process has completed', () => {
       expect(participant.counters).to.have.property('completed', 1);
     });
 
-    And('and a second participant process has completed', async () => {
+    And('and a second participant process has completed', () => {
       [,, participant2] = definition.getProcesses();
       expect(participant2.counters).to.have.property('completed', 1);
     });
@@ -833,11 +833,11 @@ Feature('Messaging', () => {
       return end;
     });
 
-    And('main process completed', async () => {
+    And('main process completed', () => {
       expect(main.counters).to.have.property('completed', 1);
     });
 
-    And('both participant processes have completed', async () => {
+    And('both participant processes have completed', () => {
       expect(participant1.counters).to.have.property('completed', 1);
       expect(participant2.counters).to.have.property('completed', 1);
     });

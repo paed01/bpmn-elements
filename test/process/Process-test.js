@@ -445,7 +445,7 @@ describe('Process', () => {
       });
     });
 
-    it('resumes after stopped', async () => {
+    it('resumes after stopped', () => {
       const bp = new Process({id: 'theProcess'}, Context());
 
       bp.run();
@@ -458,7 +458,7 @@ describe('Process', () => {
       expect(bp.counters).to.have.property('completed', 1);
     });
 
-    it('resumes with stopped state', async () => {
+    it('resumes with stopped state', () => {
       const bp1 = new Process({id: 'theProcess'}, Context());
 
       bp1.run();
@@ -474,7 +474,7 @@ describe('Process', () => {
       expect(bp2.counters).to.have.property('completed', 1);
     });
 
-    it('resumes with running state', async () => {
+    it('resumes with running state', () => {
       const bp1 = new Process({id: 'theProcess'}, Context());
 
       bp1.run();
@@ -489,25 +489,7 @@ describe('Process', () => {
       expect(bp2.counters).to.have.property('completed', 1);
     });
 
-    it('resumes on enter', async () => {
-      const bp1 = new Process({id: 'theProcess'}, Context());
-      bp1.once('enter', (api) => {
-        api.stop();
-      });
-
-      bp1.run();
-
-      const bp2 = new Process({id: 'theProcess'}, Context());
-      bp2.recover(bp1.getState());
-
-      bp2.resume();
-
-      bp2.getPostponed()[0].signal();
-
-      expect(bp2.counters).to.have.property('completed', 1);
-    });
-
-    it('resumes stopped recovered on enter', async () => {
+    it('resumes on enter', () => {
       const bp1 = new Process({id: 'theProcess'}, Context());
       bp1.once('enter', (api) => {
         api.stop();
@@ -525,7 +507,25 @@ describe('Process', () => {
       expect(bp2.counters).to.have.property('completed', 1);
     });
 
-    it('resumes stopped recovered on start', async () => {
+    it('resumes stopped recovered on enter', () => {
+      const bp1 = new Process({id: 'theProcess'}, Context());
+      bp1.once('enter', (api) => {
+        api.stop();
+      });
+
+      bp1.run();
+
+      const bp2 = new Process({id: 'theProcess'}, Context());
+      bp2.recover(bp1.getState());
+
+      bp2.resume();
+
+      bp2.getPostponed()[0].signal();
+
+      expect(bp2.counters).to.have.property('completed', 1);
+    });
+
+    it('resumes stopped recovered on start', () => {
       const bp1 = new Process({id: 'theProcess'}, Context());
       bp1.once('start', (api) => {
         api.stop();
@@ -543,7 +543,7 @@ describe('Process', () => {
       expect(bp2.counters).to.have.property('completed', 1);
     });
 
-    it('resumes on start state', async () => {
+    it('resumes on start state', () => {
       const bp1 = new Process({id: 'theProcess'}, Context());
       let state;
       bp1.once('enter', () => {
@@ -582,7 +582,7 @@ describe('Process', () => {
       expect(bp2.counters).to.have.property('completed', 1);
     });
 
-    it('resumes stopped recovered on activity event', async () => {
+    it('resumes stopped recovered on activity event', () => {
       const bp1 = new Process({id: 'theProcess'}, Context());
       bp1.once('wait', (api) => {
         api.stop();
@@ -1652,7 +1652,7 @@ describe('Process', () => {
   });
 
   describe('waitFor()', () => {
-    it('returns promise that resolves when event occur', async () => {
+    it('returns promise that resolves when event occur', () => {
       const bp = new Process({id: 'theProcess'}, testHelpers.emptyContext());
 
       const leave = bp.waitFor('leave');

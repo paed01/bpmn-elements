@@ -31,15 +31,15 @@ Feature('EventBasedGateway', () => {
       signalApi = await wait;
     });
 
-    When('process receives signal', async () => {
+    When('process receives signal', () => {
       bp.signal(signalApi.content.signal);
     });
 
-    Then('timer is discarded', async () => {
+    Then('timer is discarded', () => {
       expect(timerApi.owner.counters).to.have.property('discarded', 1);
     });
 
-    And('process completes run', async () => {
+    And('process completes run', () => {
       return end;
     });
 
@@ -59,21 +59,21 @@ Feature('EventBasedGateway', () => {
       signalApi = await wait;
     });
 
-    When('timer is canceled', async () => {
+    When('timer is canceled', () => {
       bp.cancelActivity({id: timerApi.id});
     });
 
-    Then('timer is taken', async () => {
+    Then('timer is taken', () => {
       expect(timerApi.owner.counters).to.have.property('taken', 1);
       expect(timerApi.owner.counters).to.have.property('discarded', 1);
     });
 
-    And('signal was discarded', async () => {
+    And('signal was discarded', () => {
       expect(signalApi.owner.counters).to.have.property('taken', 1);
       expect(signalApi.owner.counters).to.have.property('discarded', 1);
     });
 
-    And('process completes run', async () => {
+    And('process completes run', () => {
       return end;
     });
   });
@@ -146,7 +146,7 @@ Feature('EventBasedGateway', () => {
     });
 
     let end;
-    When('definition is resumed and signaled', async () => {
+    When('definition is resumed and signaled', () => {
       definition.stop();
       definition = new Definition(context.clone());
       end = definition.waitFor('end');
@@ -157,7 +157,7 @@ Feature('EventBasedGateway', () => {
       definition.signal({id: 'Message_1'});
     });
 
-    Then('definition completes run', async () => {
+    Then('definition completes run', () => {
       return end;
     });
   });
@@ -192,7 +192,7 @@ Feature('EventBasedGateway', () => {
     });
 
     let end;
-    And('resumed', async () => {
+    And('resumed', () => {
       wait = bp.waitFor('activity.wait');
       timer = bp.waitFor('activity.timer');
       end = bp.waitFor('end');
@@ -207,15 +207,15 @@ Feature('EventBasedGateway', () => {
       timerApi = await timer;
     });
 
-    And('process is signaled', async () => {
+    And('process is signaled', () => {
       bp.signal(signalApi.content.signal);
     });
 
-    Then('timer is discarded', async () => {
+    Then('timer is discarded', () => {
       expect(timerApi.owner.counters).to.have.property('discarded', 1);
     });
 
-    And('process completes run', async () => {
+    And('process completes run', () => {
       return end;
     });
   });

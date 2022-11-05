@@ -317,7 +317,7 @@ describe('StartEvent', () => {
       expect(event.counters).to.have.property('discarded', 0);
     });
 
-    it('completes immediately if condtion is met', async () => {
+    it('completes immediately if condtion is met', () => {
       context.environment.variables.conditionMet = true;
 
       const event = context.getActivityById('start');

@@ -20,13 +20,13 @@ Feature('Signals', () => {
     });
 
     let tradeTask, spotPriceChanged;
-    Then('trader is considering to trade', async () => {
+    Then('trader is considering to trade', () => {
       [spotPriceChanged, tradeTask] = definition.getPostponed();
       expect(tradeTask).to.be.ok;
       expect(tradeTask.content.form.fields.price.defaultValue).to.equal(100);
     });
 
-    And('spot price is monitored by process', async () => {
+    And('spot price is monitored by process', () => {
       expect(spotPriceChanged).to.be.ok;
     });
 
@@ -56,12 +56,12 @@ Feature('Signals', () => {
       return wait;
     });
 
-    Then('trade task is discarded', async () => {
+    Then('trade task is discarded', () => {
       [tradeTask, spotPriceChanged] = definition.getPostponed();
       expect(tradeTask.owner.counters).to.have.property('discarded', 1);
     });
 
-    And('update price is taken', async () => {
+    And('update price is taken', () => {
       expect(spotPriceChanged.owner.counters).to.have.property('taken', 1);
     });
 
@@ -78,7 +78,7 @@ Feature('Signals', () => {
       expect(tradeTask.owner.counters).to.have.property('discarded', 1);
     });
 
-    And('run is completed', async () => {
+    And('run is completed', () => {
       return end;
     });
   });
@@ -94,7 +94,7 @@ Feature('Signals', () => {
     });
 
     let tradeTask, spotPriceChanged;
-    Then('trader is considering to trade', async () => {
+    Then('trader is considering to trade', () => {
       [spotPriceChanged, tradeTask] = definition.getPostponed();
       expect(tradeTask).to.be.ok;
       expect(tradeTask.content.form.fields.price.defaultValue).to.equal(100);
@@ -126,12 +126,12 @@ Feature('Signals', () => {
       return wait;
     });
 
-    Then('trade task is discarded', async () => {
+    Then('trade task is discarded', () => {
       [tradeTask, spotPriceChanged] = definition.getPostponed();
       expect(tradeTask.owner.counters).to.have.property('discarded', 1);
     });
 
-    And('update price is taken', async () => {
+    And('update price is taken', () => {
       expect(spotPriceChanged.owner.counters).to.have.property('taken', 1);
     });
 
@@ -158,7 +158,7 @@ Feature('Signals', () => {
       tradeTask.signal({amount: 42});
     });
 
-    And('run is completed', async () => {
+    And('run is completed', () => {
       return end;
     });
   });
@@ -174,7 +174,7 @@ Feature('Signals', () => {
     });
 
     let tradeTask;
-    Then('trader is considering to trade', async () => {
+    Then('trader is considering to trade', () => {
       [, tradeTask] = definition.getPostponed();
       expect(tradeTask).to.be.ok;
       expect(tradeTask.content.form.fields.price.defaultValue).to.equal(100);
@@ -193,7 +193,7 @@ Feature('Signals', () => {
     });
 
     let state;
-    Then('run is stopped and state is saved', async () => {
+    Then('run is stopped and state is saved', () => {
       definition.stop();
       state = definition.getState();
     });
@@ -234,7 +234,7 @@ Feature('Signals', () => {
       tradeTask.signal({amount: 42});
     });
 
-    Then('run completes', async () => {
+    Then('run completes', () => {
       return end;
     });
   });
@@ -440,7 +440,7 @@ Feature('Signals', () => {
     });
 
     let task1, start2;
-    Then('first user task is waiting for input and second start event waits for signal', async () => {
+    Then('first user task is waiting for input and second start event waits for signal', () => {
       const postponed = definition.getPostponed();
       expect(postponed).to.have.length(2);
       [task1, start2] = postponed;
@@ -449,7 +449,7 @@ Feature('Signals', () => {
       expect(start2).to.have.property('id', 'start2');
     });
 
-    When('first user task receives input', async () => {
+    When('first user task receives input', () => {
       task1.signal();
     });
 
@@ -462,7 +462,7 @@ Feature('Signals', () => {
     });
 
     let task2;
-    And('second user task is awaiting input', async () => {
+    And('second user task is awaiting input', () => {
       const postponed = definition.getPostponed();
       expect(postponed).to.have.length(1);
       [task2] = postponed;
@@ -470,7 +470,7 @@ Feature('Signals', () => {
       expect(task2).to.have.property('id', 'task2');
     });
 
-    When('second user task receives input', async () => {
+    When('second user task receives input', () => {
       task2.signal();
     });
 

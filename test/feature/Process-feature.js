@@ -49,7 +49,7 @@ Feature('Process', () => {
       assertMessage('process.start', 'theProcess');
     });
 
-    And('the process has the expected execution sequence', async () => {
+    And('the process has the expected execution sequence', () => {
       assertMessage('activity.init', 'activity');
       assertMessage('activity.enter', 'activity');
       assertMessage('activity.start', 'activity');
@@ -1675,7 +1675,7 @@ Feature('Process', () => {
       processInstance.resume();
     });
 
-    And('the postponed activities were resumed', async () => {
+    And('the postponed activities were resumed', () => {
       assertMessage('activity.timer', 'attached');
       assertMessage('activity.wait', 'userInput');
     });
@@ -1998,20 +1998,20 @@ Feature('Process', () => {
       processInstance.run();
     });
 
-    Then('the task is entered', async () => {
+    Then('the task is entered', () => {
       assertMessage('process.enter');
       assertMessage('process.start');
       assertMessage('activity.init', 'task');
       assertMessage('activity.enter', 'task');
     });
 
-    And('timer is started', async () => {
+    And('timer is started', () => {
       assertMessage('activity.enter', 'bound');
       assertMessage('activity.start', 'bound');
       assertMessage('activity.timer', 'bound');
     });
 
-    And('task is started', async () => {
+    And('task is started', () => {
       assertMessage('activity.start', 'task');
     });
 
@@ -2219,16 +2219,16 @@ Feature('Process', () => {
       expect(messages.length).to.equal(0);
     });
 
-    When('stopped', async () => {
+    When('stopped', () => {
       processInstance.stop();
     });
 
-    Then('the processes is stopped', async () => {
+    Then('the processes is stopped', () => {
       assertMessage('process.stop');
       expect(processInstance).to.have.property('stopped', true);
     });
 
-    And('all running activities are stopped', async () => {
+    And('all running activities are stopped', () => {
       const runningActivities = processInstance.getActivities().filter((a) => a.status);
       expect(runningActivities.length).to.be.above(0);
       runningActivities.forEach((a) => {

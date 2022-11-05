@@ -32,7 +32,7 @@ Feature('Definition', () => {
     });
 
     let runningBp;
-    Then('process environment variables has the expected properties', async () => {
+    Then('process environment variables has the expected properties', () => {
       [runningBp] = definition.getProcesses();
       expect(runningBp.environment.variables).to.have.property('data', 1);
       expect(runningBp.environment.variables).to.have.property('content');
@@ -90,7 +90,7 @@ Feature('Definition', () => {
       definition.run();
     });
 
-    Then('process environment variables has the expected properties', async () => {
+    Then('process environment variables has the expected properties', () => {
       [runningBp] = definition.getProcesses();
       expect(runningBp.environment.variables).to.have.property('data', 1);
       expect(runningBp.environment.variables).to.have.property('content').with.property('id', 'theProcess');
@@ -139,7 +139,7 @@ Feature('Definition', () => {
       definition.run();
     });
 
-    Then('process environment services has the expected functions', async () => {
+    Then('process environment services has the expected functions', () => {
       [runningBp] = definition.getProcesses();
       expect(runningBp.environment.services).to.have.property('newFn').that.is.a('function');
       expect(runningBp.environment.services).to.have.property('extraFn').that.is.a('function');

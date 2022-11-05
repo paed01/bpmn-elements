@@ -24,7 +24,7 @@ Feature('Backward compatability 5.2', () => {
       definition.resume();
     });
 
-    And('waiting tasks are signaled', async () => {
+    And('waiting tasks are signaled', () => {
       definition.signal({id: 'userTask1'});
       definition.signal({id: 'subUserTask1'});
     });

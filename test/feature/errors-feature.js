@@ -72,7 +72,7 @@ Feature('Errors', () => {
       serviceCallback(new CustomError('Known', 'ERR_ASSERTION'));
     });
 
-    Then('definition completes', async () => {
+    Then('definition completes', () => {
       return leave;
     });
 
@@ -407,7 +407,7 @@ Feature('Errors', () => {
       expect(service.counters).to.have.property('discarded', 1);
     });
 
-    And('error was caught', async () => {
+    And('error was caught', () => {
       const catchError = definition.getActivityById('catchError');
       expect(catchError.counters).to.have.property('taken', 1);
       expect(catchError.counters).to.have.property('discarded', 0);
@@ -438,7 +438,7 @@ Feature('Errors', () => {
       expect(errApi.content.error).to.have.property('message', 'Unauthorized');
     });
 
-    And('boundary event was discarded', async () => {
+    And('boundary event was discarded', () => {
       const catchError = definition.getActivityById('catchError');
       expect(catchError.counters).to.have.property('taken', 1);
       expect(catchError.counters).to.have.property('discarded', 1);
@@ -467,7 +467,7 @@ Feature('Errors', () => {
       return end;
     });
 
-    And('error was caught', async () => {
+    And('error was caught', () => {
       const catchError = definition.getActivityById('catchError');
       expect(catchError.counters).to.have.property('taken', 2);
       expect(catchError.counters).to.have.property('discarded', 1);
@@ -510,7 +510,7 @@ Feature('Errors', () => {
       return end;
     });
 
-    And('error was caught', async () => {
+    And('error was caught', () => {
       const catchError = recoveredDefinition.getActivityById('catchError');
       expect(catchError.counters).to.have.property('taken', 3);
       expect(catchError.counters).to.have.property('discarded', 1);
@@ -539,7 +539,7 @@ Feature('Errors', () => {
       expect(state).to.be.ok;
     });
 
-    When('definition is recovered somewhere else', async () => {
+    When('definition is recovered somewhere else', () => {
       const newContext = context.clone();
       newContext.environment.addService('get', function get(_, next) {
         serviceCallback = next;
@@ -620,7 +620,7 @@ Feature('Errors', () => {
       expect(endApi.owner.counters).to.have.property('discarded', 1);
     });
 
-    And('sub process was discarded', async () => {
+    And('sub process was discarded', () => {
       expect(orderProcess.owner.counters).to.have.property('taken', 0);
       expect(orderProcess.owner.counters).to.have.property('discarded', 1);
     });
@@ -641,7 +641,7 @@ Feature('Errors', () => {
       });
     });
 
-    And('run is completed', async () => {
+    And('run is completed', () => {
       return end;
     });
   });
@@ -756,7 +756,7 @@ Feature('Errors', () => {
       });
     });
 
-    When('executed', async () => {
+    When('executed', () => {
       end = definition.waitFor('end');
       execution = definition.run();
     });

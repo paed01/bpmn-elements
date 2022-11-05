@@ -88,7 +88,7 @@ describe('Definition', () => {
   });
 
   describe('run([options, callback])', () => {
-    it('returns api', async () => {
+    it('returns api', () => {
       const definition = new Definition({
         id: 'Def_1',
         environment: new Environment({ Logger: testHelpers.Logger }),
@@ -1128,7 +1128,7 @@ describe('Definition', () => {
       expect(messages).to.have.length(1);
     });
 
-    it('ignores stop on resume event', async () => {
+    it('ignores stop on resume event', () => {
       const definition = new Definition(context);
       definition.run();
       definition.stop();
@@ -1185,7 +1185,7 @@ describe('Definition', () => {
       expect(bp2.environment.services.afterGet, 'environment service').to.be.a('function');
     });
 
-    it('recovered processes share services but not variables', async () => {
+    it('recovered processes share services but not variables', () => {
       definition.once('activity.start', () => definition.stop());
       definition.run();
 

@@ -772,7 +772,7 @@ describe('SubProcess', () => {
         context = await getLoopContext(false);
       });
 
-      it('starts all process executions at once with cloned context and environment', async () => {
+      it('starts all process executions at once with cloned context and environment', () => {
         const task = context.getActivityById('sub-process-task');
 
         task.run();
@@ -790,7 +790,7 @@ describe('SubProcess', () => {
         expect(executions[2].environment.variables).to.have.property('content').with.property('item', 'shopping');
       });
 
-      it('getPostponed() returns all process child executions', async () => {
+      it('getPostponed() returns all process child executions', () => {
         const task = context.getActivityById('sub-process-task');
 
         task.run();

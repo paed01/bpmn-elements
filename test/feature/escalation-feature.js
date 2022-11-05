@@ -66,7 +66,7 @@ Feature('Escalate', () => {
       });
     });
 
-    And('run is completed', async () => {
+    And('run is completed', () => {
       return end;
     });
 
@@ -137,7 +137,7 @@ Feature('Escalate', () => {
       });
     });
 
-    And('run is completed', async () => {
+    And('run is completed', () => {
       return end;
     });
   });
@@ -275,7 +275,7 @@ Feature('Escalate', () => {
       expect(caught).to.have.length(2);
     });
 
-    And('manager was notified', async () => {
+    And('manager was notified', () => {
       const manager = caught[0];
       expect(manager).to.have.property('id', 'wakeManager');
       expect(manager.owner.counters).to.have.property('taken', 1);
@@ -314,7 +314,7 @@ Feature('Escalate', () => {
       expect(caught).to.have.length(3);
     });
 
-    And('manager took the call', async () => {
+    And('manager took the call', () => {
       const manager = caught[2];
       expect(manager).to.have.property('id', 'wakeManager');
       expect(manager.owner.counters).to.have.property('taken', 1);
@@ -355,7 +355,7 @@ Feature('Escalate', () => {
       expect(caught).to.have.length(4);
     });
 
-    And('manager took the call', async () => {
+    And('manager took the call', () => {
       const manager = caught[3];
       expect(manager).to.have.property('id', 'wakeManager');
       expect(manager.owner.counters).to.have.property('taken', 1);
@@ -392,7 +392,7 @@ Feature('Escalate', () => {
       expect(caught).to.have.length(6);
     });
 
-    And('manager failed to take the call', async () => {
+    And('manager failed to take the call', () => {
       const manager = caught[4];
       expect(manager).to.have.property('id', 'wakeManager');
       expect(manager.owner.counters).to.have.property('taken', 1);
@@ -452,7 +452,7 @@ Feature('Escalate', () => {
       await end;
     });
 
-    And('manager was notified', async () => {
+    And('manager was notified', () => {
       expect(manager).to.have.property('id', 'wakeManager');
       expect(manager.owner.counters).to.have.property('taken', 1);
       expect(manager.owner.counters).to.have.property('discarded', 0);
@@ -516,7 +516,7 @@ Feature('Escalate', () => {
       expect(subProcess.counters).to.have.property('discarded', 0);
     });
 
-    And('boss was not notified', async () => {
+    And('boss was not notified', () => {
       expect(boss).to.have.property('id', 'wakeBoss');
       expect(boss.owner.counters).to.have.property('taken', 1);
       expect(boss.owner.counters).to.have.property('discarded', 0);

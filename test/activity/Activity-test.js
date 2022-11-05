@@ -812,7 +812,7 @@ describe('Activity', () => {
       return leave;
     });
 
-    it('discards execution if executing', async () => {
+    it('discards execution if executing', () => {
       const sequenceFlows = [];
       const context = getContext({
         getOutboundSequenceFlows() {
@@ -847,7 +847,7 @@ describe('Activity', () => {
       return leave;
     });
 
-    it('runs discard if not executing', async () => {
+    it('runs discard if not executing', () => {
       const sequenceFlows = [];
       const context = getContext({
         getOutboundSequenceFlows() {
@@ -1122,7 +1122,7 @@ describe('Activity', () => {
       expect(activity.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
     });
 
-    it('stop on event publishes activity.stop', async () => {
+    it('stop on event publishes activity.stop', () => {
       function SpecialBehaviour({broker}) {
         return {
           execute({content}) {
@@ -2062,7 +2062,7 @@ describe('Activity', () => {
   });
 
   describe('waitFor()', () => {
-    it('returns promise that resolves when event occur', async () => {
+    it('returns promise that resolves when event occur', () => {
       const activity = getActivity(undefined, TaskBehaviour);
       const leave = activity.waitFor('leave');
 

@@ -56,7 +56,7 @@ Feature('Shaking', () => {
     });
 
     let start1, start2;
-    And('both start events are waiting for message', async () => {
+    And('both start events are waiting for message', () => {
       [start1, start2] = definition.getPostponed();
       expect(start1).to.have.property('id', 'start1');
       expect(start2).to.have.property('id', 'start2');
@@ -148,7 +148,7 @@ Feature('Shaking', () => {
     });
 
     let start1, start2;
-    And('both start events are waiting for message', async () => {
+    And('both start events are waiting for message', () => {
       [start1, start2] = definition.getPostponed();
       expect(start1).to.have.property('id', 'start1');
       expect(start2).to.have.property('id', 'start2');

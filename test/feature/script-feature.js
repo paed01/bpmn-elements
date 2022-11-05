@@ -57,7 +57,7 @@ Feature('Script', () => {
     });
 
     let waitError;
-    When('definition run', async () => {
+    When('definition run', () => {
       waitError = definition.waitFor('error');
       definition.run();
     });

@@ -275,7 +275,7 @@ Feature('Gateway', () => {
 
         const {broker, environment} = activity;
 
-        broker.subscribeTmp('event', 'activity.end', async (_, {content}) => {
+        broker.subscribeTmp('event', 'activity.end', (_, {content}) => {
           environment.output.amount = content.output.amount;
         }, {noAck: true});
       }
@@ -380,7 +380,7 @@ Feature('Gateway', () => {
 
     When('definition is ran with falsy second and first condition script', () => {
       definition.environment.variables.condition = {var1: false};
-      definition.environment.services.evaluateRule = async function evaluateRule(name, variables, callback) {
+      definition.environment.services.evaluateRule = function evaluateRule(name, variables, callback) {
         return new Promise((resolve) => {
           resolve(variables.condition.var1);
         }).then((result) => {

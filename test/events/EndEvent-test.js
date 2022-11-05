@@ -112,7 +112,7 @@ describe('EndEvent', () => {
   });
 
   describe('with multiple inbounds', () => {
-    it('publish enter or discard on each inbound', async () => {
+    it('publish enter or discard on each inbound', () => {
       const parent = {id: 'process'};
       const context = testHelpers.emptyContext({
         getInboundSequenceFlows() {

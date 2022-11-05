@@ -224,7 +224,7 @@ describe('Process execution', () => {
   });
 
   describe('error', () => {
-    it('uncaught activity error throws', async () => {
+    it('uncaught activity error throws', () => {
       const bp = createProcess();
       const activity = ServiceTask({
         id: 'service',
@@ -268,7 +268,7 @@ describe('Process execution', () => {
       expect(message).to.have.property('properties').with.property('type', 'error');
     });
 
-    it('caught activity error is swallowed', async () => {
+    it('caught activity error is swallowed', () => {
       const activities = [];
       const bp = createProcess({
         getActivities() {
@@ -332,7 +332,7 @@ describe('Process execution', () => {
   });
 
   describe('execution flow', () => {
-    it('completes immediately if no activities', async () => {
+    it('completes immediately if no activities', () => {
       const bp = createProcess({getActivities() {}});
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -346,7 +346,7 @@ describe('Process execution', () => {
       expect(execution).to.have.property('completed', true);
     });
 
-    it('completes when activity leaves', async () => {
+    it('completes when activity leaves', () => {
       const bp = createProcess({
         getSequenceFlows() {},
         getActivities() {
@@ -377,7 +377,7 @@ describe('Process execution', () => {
       expect(execution).to.have.property('completed', true);
     });
 
-    it('completes when last activity leaves', async () => {
+    it('completes when last activity leaves', () => {
       const bp = createProcess();
 
       const activities = bp.getActivities();
@@ -406,7 +406,7 @@ describe('Process execution', () => {
       });
     });
 
-    it('multiple start activities completes when last activity leaves', async () => {
+    it('multiple start activities completes when last activity leaves', () => {
       const bp = createProcess({
         getActivities() {
           return [
@@ -438,7 +438,7 @@ describe('Process execution', () => {
       expect(execution).to.have.property('completed', true);
     });
 
-    it('completes when no pending activities', async () => {
+    it('completes when no pending activities', () => {
       const bp = createProcess();
       const [activity1, activity2] = bp.getActivities();
       const [sequenceflow] = bp.getSequenceFlows();
@@ -463,7 +463,7 @@ describe('Process execution', () => {
       expect(execution).to.have.property('completed', true);
     });
 
-    it('deletes execution queue when completed', async () => {
+    it('deletes execution queue when completed', () => {
       const bp = createProcess({
         getActivities() {
           return [
@@ -533,7 +533,7 @@ describe('Process execution', () => {
   });
 
   describe('stop()', () => {
-    it('stops all activity', async () => {
+    it('stops all activity', () => {
       const bp = createProcess({
         getActivities() {
           return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
@@ -595,7 +595,7 @@ describe('Process execution', () => {
       expect(execution.getActivityById('start')).to.have.property('stopped', true);
     });
 
-    it('closes execution queue and keeps messages', async () => {
+    it('closes execution queue and keeps messages', () => {
       const bp = createProcess({
         getActivities() {
           return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
@@ -753,7 +753,7 @@ describe('Process execution', () => {
   });
 
   describe('discard()', () => {
-    it('discards all running activities', async () => {
+    it('discards all running activities', () => {
       const bp = createProcess({
         getActivities() {
           return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
@@ -782,7 +782,7 @@ describe('Process execution', () => {
       expect(activity.counters).to.have.property('taken', 0);
     });
 
-    it('api.discard() discards all running activities', async () => {
+    it('api.discard() discards all running activities', () => {
       const bp = createProcess({
         getActivities() {
           return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];

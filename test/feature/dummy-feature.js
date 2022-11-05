@@ -16,7 +16,7 @@ Feature('Dummy', () => {
       definition.run();
     });
 
-    Then('it runs to end', async () => {
+    Then('it runs to end', () => {
       return ended;
     });
   });

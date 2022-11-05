@@ -280,7 +280,7 @@ describe('ServiceTask', () => {
       expect(api.content.output).to.eql([true]);
     });
 
-    it('is called with input context', async () => {
+    it('is called with input context', () => {
       context.environment.addService('postMessage', (scope, callback) => {
         expect(scope).to.have.property('environment');
         expect(scope).to.have.property('content');
@@ -361,7 +361,7 @@ describe('ServiceTask', () => {
       expect(task.outbound[0].counters).to.have.property('discard', 1);
     });
 
-    it('times out if bound timeout event if callback is not called within timeout duration', async () => {
+    it('times out if bound timeout event if callback is not called within timeout duration', () => {
       context.environment.addService('postMessage', () => {});
 
       const task = context.getActivityById('serviceTask');

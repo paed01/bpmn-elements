@@ -438,7 +438,7 @@ describe('SequenceFlow', () => {
       expect(flow.getCondition()).to.be.null;
     });
 
-    it('throws if script type is unsupported', async () => {
+    it('throws if script type is unsupported', () => {
       const flowDef = {
         id: 'flow',
         type: 'bpmn:SequenceFlow',
@@ -461,7 +461,7 @@ describe('SequenceFlow', () => {
       }).to.throw(Error, /Java is unsupported/i);
     });
 
-    it('throws if condition body is empty', async () => {
+    it('throws if condition body is empty', () => {
       const flowDef = {
         id: 'flow',
         type: 'bpmn:SequenceFlow',

@@ -1176,7 +1176,7 @@ function AsyncFormatting(element) {
         });
       }, {consumerTag: '_async-extension-on-enter'});
 
-      element.on('activity.execution.completed', async (elementApi) => {
+      element.on('activity.execution.completed', (elementApi) => {
         if (!elementApi.fields.redelivered && !elementApi.fields.isRecovered) {
           formatQ.queueMessage({routingKey: 'run.end.format'}, {endRoutingKey: 'run.end.complete'});
         }

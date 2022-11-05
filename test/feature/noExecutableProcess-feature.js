@@ -65,7 +65,7 @@ Feature('Definition', () => {
       });
     });
 
-    Then('user task is waiting', async () => {
+    Then('user task is waiting', () => {
       const [task] = definition.getPostponed();
       expect(task).to.have.property('type', 'bpmn:UserTask');
     });
@@ -77,7 +77,7 @@ Feature('Definition', () => {
       });
     });
 
-    Then('definition completes', async () => {
+    Then('definition completes', () => {
       return end;
     });
 
@@ -110,7 +110,7 @@ Feature('Definition', () => {
       definition.resume();
     });
 
-    Then('user task is waiting', async () => {
+    Then('user task is waiting', () => {
       const [task] = definition.getPostponed();
       expect(task).to.have.property('type', 'bpmn:UserTask');
     });
@@ -122,7 +122,7 @@ Feature('Definition', () => {
       });
     });
 
-    Then('definition completes', async () => {
+    Then('definition completes', () => {
       return end;
     });
 

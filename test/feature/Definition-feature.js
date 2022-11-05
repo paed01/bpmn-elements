@@ -52,7 +52,7 @@ Feature('Definition', () => {
       expect(msg.content).to.have.property('name', 'Definition');
     });
 
-    And('the definition has the expected execution sequence', async () => {
+    And('the definition has the expected execution sequence', () => {
       assertMessage('definition.start', 'theDefinition');
       assertMessage('process.init', 'theProcess');
       assertMessage('process.enter', 'theProcess');
@@ -98,7 +98,7 @@ Feature('Definition', () => {
       return completed;
     });
 
-    Then('the definition has the expected execution sequence', async () => {
+    Then('the definition has the expected execution sequence', () => {
       assertMessage('definition.enter', 'Definitions_1');
       assertMessage('definition.start', 'Definitions_1');
 
@@ -239,19 +239,19 @@ Feature('Definition', () => {
       expect(postponed[0].content).to.have.property('state', 'wait');
     });
 
-    When('stopped', async () => {
+    When('stopped', () => {
       definition.stop();
     });
 
     let processes;
-    Then('no processes are running', async () => {
+    Then('no processes are running', () => {
       processes = definition.getProcesses();
       expect(processes).to.have.length(2);
       expect(processes[0]).to.have.property('stopped', true);
       expect(processes[1]).to.have.property('stopped', false);
     });
 
-    And('all running activities are stopped', async () => {
+    And('all running activities are stopped', () => {
       const runningActivities = processes[0].getActivities().filter((a) => a.status);
       expect(runningActivities.length).to.be.above(0);
       runningActivities.forEach((a) => {
@@ -271,14 +271,14 @@ Feature('Definition', () => {
       definition.resume();
     });
 
-    Then('processes are resumed', async () => {
+    Then('processes are resumed', () => {
       processes = definition.getProcesses();
       expect(processes).to.have.length(2);
       expect(processes[0]).to.have.property('stopped', false);
       expect(processes[1]).to.have.property('stopped', false);
     });
 
-    And('all running activities are resumed', async () => {
+    And('all running activities are resumed', () => {
       const runningActivities = processes[0].getActivities().filter((a) => a.status);
       expect(runningActivities.length).to.be.above(0);
       runningActivities.forEach((a) => {
@@ -329,12 +329,12 @@ Feature('Definition', () => {
       expect(postponed[0].content).to.have.property('state', 'wait');
     });
 
-    When('stopped', async () => {
+    When('stopped', () => {
       definition.stop();
     });
 
     let state;
-    And('state is saved', async () => {
+    And('state is saved', () => {
       state = JSON.parse(JSON.stringify(definition.getState()));
     });
 
@@ -353,13 +353,13 @@ Feature('Definition', () => {
     });
 
     let processes;
-    Then('main process is resumed', async () => {
+    Then('main process is resumed', () => {
       processes = recoveredDefinition.getRunningProcesses();
       expect(processes).to.have.length(1);
       expect(processes[0], processes[0].id).to.have.property('stopped', false);
     });
 
-    And('all running activities are resumed', async () => {
+    And('all running activities are resumed', () => {
       const runningActivities = processes[0].getActivities().filter((a) => a.status);
       expect(runningActivities.length).to.be.above(0);
       runningActivities.forEach((a) => {
@@ -504,7 +504,7 @@ Feature('Definition', () => {
       return completed;
     });
 
-    Then('the definition has the expected execution sequence', async () => {
+    Then('the definition has the expected execution sequence', () => {
       assertMessage('definition.enter', 'theDefinition');
       assertMessage('definition.start', 'theDefinition');
 
@@ -577,7 +577,7 @@ Feature('Definition', () => {
       context = await testHelpers.context(source);
     });
 
-    Given('a definition with no executable process', async () => {
+    Given('a definition with no executable process', () => {
       definition = new Definition(context);
     });
 
@@ -615,7 +615,7 @@ Feature('Definition', () => {
     });
 
     let callbackCalled, stopped;
-    When('definition is executed with a callback', async () => {
+    When('definition is executed with a callback', () => {
       stopped = definition.waitFor('stop');
 
       callbackCalled = new Promise((resolve, reject) => {
@@ -642,7 +642,7 @@ Feature('Definition', () => {
     });
 
     let ended;
-    When('definition is resumed with a callback', async () => {
+    When('definition is resumed with a callback', () => {
       ended = definition.waitFor('leave');
 
       callbackCalled = new Promise((resolve, reject) => {

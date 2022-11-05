@@ -691,7 +691,7 @@ describe('BoundaryEvent', () => {
         expect(task.counters).to.have.property('discarded', 1);
       });
 
-      it('leaves when error is caught', async () => {
+      it('leaves when error is caught', () => {
         context.environment.addService('test', (arg, next) => {
           next(new Error('FAIL'));
         });
