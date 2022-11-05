@@ -64,7 +64,7 @@ describe('ConditionalEventDefinition', () => {
       const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
-          expression: '${content.output.value}'
+          expression: '${content.output.value}',
         },
       });
 
@@ -94,8 +94,8 @@ describe('ConditionalEventDefinition', () => {
         id: 'task',
         executionId: 'task_0',
         output: {
-          value: {data: 1}
-        }
+          value: {data: 1},
+        },
       });
 
       expect(conditionMessage).to.be.ok;
@@ -142,8 +142,8 @@ describe('ConditionalEventDefinition', () => {
         id: 'task',
         executionId: 'task_0',
         output: {
-          value: {data: 1}
-        }
+          value: {data: 1},
+        },
       });
 
       expect(message).to.be.ok;
@@ -193,7 +193,7 @@ describe('ConditionalEventDefinition', () => {
       const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
-          expression: '${content.message.value}'
+          expression: '${content.message.value}',
         },
       });
 
@@ -240,7 +240,7 @@ describe('ConditionalEventDefinition', () => {
       const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
-          expression: '${content.output.value}'
+          expression: '${content.output.value}',
         },
       });
 
@@ -282,7 +282,7 @@ describe('ConditionalEventDefinition', () => {
       const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
-          expression: '${content.message.value}'
+          expression: '${content.message.value}',
         },
       });
 
@@ -315,7 +315,7 @@ describe('ConditionalEventDefinition', () => {
       const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
-          expression: '${content.output.value}'
+          expression: '${content.output.value}',
         },
       });
 
@@ -343,8 +343,8 @@ describe('ConditionalEventDefinition', () => {
         id: 'task',
         executionId: 'task_0',
         output: {
-          value: {data: 1}
-        }
+          value: {data: 1},
+        },
       });
 
       expect(task.broker.getExchange('execution').bindingCount).to.equal(1);
@@ -357,7 +357,7 @@ describe('ConditionalEventDefinition', () => {
       const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
-          expression: '${content.output.value}'
+          expression: '${content.output.value}',
         },
       });
 
@@ -390,7 +390,7 @@ describe('ConditionalEventDefinition', () => {
       const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
-          expression: '${content.output.value}'
+          expression: '${content.output.value}',
         },
       });
 

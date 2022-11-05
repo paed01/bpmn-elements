@@ -29,22 +29,22 @@ describe('Environment', () => {
     it('throws if scripts interface validation is not met', () => {
       expect(() => {
         new Environment({
-          scripts: {}
+          scripts: {},
         });
       }).to.throw(/scripts.register is not a function/);
       expect(() => {
         new Environment({
-          scripts: {register: {}}
+          scripts: {register: {}},
         });
       }).to.throw(/scripts.register is not a function/);
       expect(() => {
         new Environment({
-          scripts: {register() {}}
+          scripts: {register() {}},
         });
       }).to.throw(/scripts.getScript is not a function/);
       expect(() => {
         new Environment({
-          scripts: {register() {}, getScript: 1}
+          scripts: {register() {}, getScript: 1},
         });
       }).to.throw(/scripts.getScript is not a function/);
     });
@@ -52,14 +52,14 @@ describe('Environment', () => {
     it('throws if extensions interface validation is not met', () => {
       expect(() => {
         new Environment({
-          extensions: 1
+          extensions: 1,
         });
       }).to.throw(/extensions is not an object/);
       expect(() => {
         new Environment({
           extensions: {
-            js: {}
-          }
+            js: {},
+          },
         });
       }).to.throw(/extensions\[js\] is not a function/);
     });
@@ -280,7 +280,7 @@ describe('Environment', () => {
         init: true,
       };
       const listener = {
-        emit() {}
+        emit() {},
       };
       const expressions = {};
       const environment = new Environment({
@@ -368,7 +368,7 @@ describe('Environment', () => {
         scripts: {
           register() {},
           getScript() {},
-        }
+        },
       });
 
       const myScripts = {
@@ -383,7 +383,7 @@ describe('Environment', () => {
     it('allows override of expressions', () => {
       const expressions = {};
       const environment = new Environment({
-        expressions
+        expressions,
       });
 
       const newExpressions = {};
@@ -483,7 +483,7 @@ describe('Environment', () => {
       const {timers} = new Environment({
         timers: Timers({
           setTimeout() {},
-        })
+        }),
       });
 
       timers.setTimeout(() => {}, 11);
@@ -500,7 +500,7 @@ describe('Environment', () => {
           setTimeout(callback) {
             onTimeout = callback;
           },
-        })
+        }),
       });
 
       timers.setTimeout(() => {}, 11);
@@ -519,7 +519,7 @@ describe('Environment', () => {
           setTimeout(callback) {
             onTimeout = callback;
           },
-        })
+        }),
       });
 
       timers.setTimeout(() => {}, 11);
@@ -537,7 +537,7 @@ describe('Environment', () => {
         timers: Timers({
           setTimeout() {},
           clearTimeout() {},
-        })
+        }),
       });
 
       const ref = timers.setTimeout(() => {}, 12);
@@ -554,7 +554,7 @@ describe('Environment', () => {
         timers: Timers({
           setTimeout() {},
           clearTimeout() {},
-        })
+        }),
       });
 
       const ref = timers.setTimeout(() => {}, 12);
@@ -590,7 +590,7 @@ describe('Environment', () => {
         const {timers} = new Environment({
           timers: Timers({
             setTimeout() {},
-          })
+          }),
         });
 
         const owner = {id: 'a'};
@@ -607,7 +607,7 @@ describe('Environment', () => {
         const {timers} = new Environment({
           timers: Timers({
             setTimeout() {},
-          })
+          }),
         });
 
         const owner = {id: 'a'};
@@ -624,7 +624,7 @@ describe('Environment', () => {
         const {timers} = new Environment({
           timers: Timers({
             setTimeout() {},
-          })
+          }),
         });
 
         const owner = {id: 'a'};
@@ -648,7 +648,7 @@ describe('Environment', () => {
           timers: Timers({
             setTimeout() {},
             clearTimeout() {},
-          })
+          }),
         });
 
         const owner = {id: 'a'};
@@ -666,7 +666,7 @@ describe('Environment', () => {
         const {timers} = new Environment({
           timers: Timers({
             setTimeout() {},
-          })
+          }),
         });
 
         const owner = {id: 'a'};
@@ -688,7 +688,7 @@ describe('Environment', () => {
           timers: Timers({
             setTimeout() {},
             clearTimeout() {},
-          })
+          }),
         });
 
         const owner = {id: 'a'};
@@ -707,7 +707,7 @@ describe('Environment', () => {
           timers: Timers({
             setTimeout() {},
             clearTimeout() {},
-          })
+          }),
         });
 
         const owner = {id: 'a'};
@@ -727,7 +727,7 @@ describe('Environment', () => {
           timers: Timers({
             setTimeout() {},
             clearTimeout() {},
-          })
+          }),
         });
 
         const owner = {id: 'a'};
@@ -756,7 +756,7 @@ describe('Environment', () => {
           new Environment({
             timers: {
               register() {},
-            }
+            },
           });
         }).to.throw(/setTimeout is not a function/);
 
@@ -765,7 +765,7 @@ describe('Environment', () => {
             timers: {
               register() {},
               setTimeout() {},
-            }
+            },
           });
         }).to.throw(/clearTimeout is not a function/);
       });
@@ -780,7 +780,7 @@ describe('Environment', () => {
       };
 
       const environment = new Environment({
-        services
+        services,
       });
 
       const clone = environment.clone();

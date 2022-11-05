@@ -119,17 +119,17 @@ describe('EndEvent', () => {
           return [{
             id: 'flow1',
             parent,
-            Behaviour: SequenceFlow
+            Behaviour: SequenceFlow,
           }, {
             id: 'flow2',
             parent,
-            Behaviour: SequenceFlow
+            Behaviour: SequenceFlow,
           }, {
             id: 'flow3',
             parent,
-            Behaviour: SequenceFlow
+            Behaviour: SequenceFlow,
           }];
-        }
+        },
       });
 
       const event = EndEvent({

@@ -11,7 +11,7 @@ describe('BoundaryEvent', () => {
       it('defaults to true', () => {
         const attachedTo = {
           id: 'task',
-          broker: ActivityBroker(this).broker
+          broker: ActivityBroker(this).broker,
         };
         const behaviour = new BoundaryEventBehaviour({
           broker: ActivityBroker(this).broker,
@@ -24,12 +24,12 @@ describe('BoundaryEvent', () => {
       it('returns behaviour value', () => {
         const attachedTo = {
           id: 'task',
-          broker: ActivityBroker(this).broker
+          broker: ActivityBroker(this).broker,
         };
         const behaviour = new BoundaryEventBehaviour({
           broker: ActivityBroker(this).broker,
           attachedTo,
-          behaviour: {cancelActivity: false}
+          behaviour: {cancelActivity: false},
         });
 
         expect(behaviour).to.have.property('cancelActivity', false);
@@ -40,7 +40,7 @@ describe('BoundaryEvent', () => {
       it('adds listener to attached to on execute', () => {
         const attachedTo = {
           id: 'task',
-          broker: ActivityBroker(this).broker
+          broker: ActivityBroker(this).broker,
         };
         const behaviour = new BoundaryEventBehaviour({
           id: 'event',
@@ -67,7 +67,7 @@ describe('BoundaryEvent', () => {
       it('adds api listener on execute', () => {
         const attachedTo = {
           id: 'task',
-          broker: ActivityBroker(this).broker
+          broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
         const behaviour = new BoundaryEventBehaviour({
@@ -95,7 +95,7 @@ describe('BoundaryEvent', () => {
       it('discards event and cancels listeners on attachedTo leave', () => {
         const attachedTo = {
           id: 'task',
-          broker: ActivityBroker(this).broker
+          broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
         const behaviour = new BoundaryEventBehaviour({
@@ -133,7 +133,7 @@ describe('BoundaryEvent', () => {
       it('discards event and cancels listeners on attachedTo leave', () => {
         const attachedTo = {
           id: 'task',
-          broker: ActivityBroker(this).broker
+          broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
         const behaviour = new BoundaryEventBehaviour({
@@ -169,7 +169,7 @@ describe('BoundaryEvent', () => {
       it('api stop cancels listeners', () => {
         const attachedTo = {
           id: 'task',
-          broker: ActivityBroker(this).broker
+          broker: ActivityBroker(this).broker,
         };
 
         const broker = ActivityBroker().broker;
@@ -201,7 +201,7 @@ describe('BoundaryEvent', () => {
         let discarded = 0;
         const attachedTo = {
           id: 'task',
-          broker: ActivityBroker(this).broker
+          broker: ActivityBroker(this).broker,
         };
 
         attachedTo.getApi = ({content}) => {
@@ -222,7 +222,7 @@ describe('BoundaryEvent', () => {
             cancelActivity: true,
           },
           environment: new Environment(),
-          logger: testHelpers.Logger('boundaryevent')
+          logger: testHelpers.Logger('boundaryevent'),
         }, {
           getOutboundAssociations() {},
         });
@@ -256,7 +256,7 @@ describe('BoundaryEvent', () => {
       it('adds listener to attached to on execute', () => {
         const attachedTo = {
           id: 'task',
-          broker: ActivityBroker(this).broker
+          broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
         const environment = new Environment({Logger: testHelpers.Logger});
@@ -269,7 +269,7 @@ describe('BoundaryEvent', () => {
           get eventDefinitions() {
             const self = this;
             return self._eds || (self._eds = [new ErrorEventDefinition(self, {}), new MessageEventDefinition(self, {})]);
-          }
+          },
         };
         const behaviour = new BoundaryEventBehaviour(activity, {
           getOutboundAssociations() {},
@@ -296,7 +296,7 @@ describe('BoundaryEvent', () => {
       it('discards event and cancels listeners on attachedTo end', () => {
         const attachedTo = {
           id: 'task',
-          broker: ActivityBroker(this).broker
+          broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
         const environment = new Environment({Logger: testHelpers.Logger});
@@ -343,7 +343,7 @@ describe('BoundaryEvent', () => {
       it('discards event and cancels listeners on attachedTo leave', () => {
         const attachedTo = {
           id: 'task',
-          broker: ActivityBroker(this).broker
+          broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
         const environment = new Environment({Logger: testHelpers.Logger});
@@ -390,7 +390,7 @@ describe('BoundaryEvent', () => {
       it('api stop cancels listeners', () => {
         const attachedTo = {
           id: 'task',
-          broker: ActivityBroker(this).broker
+          broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
         const environment = new Environment({Logger: testHelpers.Logger});
@@ -433,7 +433,7 @@ describe('BoundaryEvent', () => {
       beforeEach(() => {
         const attachedTo = {
           id: 'task',
-          broker: ActivityBroker(this).broker
+          broker: ActivityBroker(this).broker,
         };
         broker = ActivityBroker().broker;
         const environment = new Environment({Logger: testHelpers.Logger});
@@ -470,10 +470,10 @@ describe('BoundaryEvent', () => {
           sourceExchange: 'execution',
           bindExchange: 'execution',
           sourcePattern: '#',
-          executionId: 'event_0_1'
+          executionId: 'event_0_1',
         });
         broker.publish('api', 'activity.stop.bound_1', {}, {
-          type: 'stop'
+          type: 'stop',
         });
 
         expect(broker).to.have.property('consumerCount', 0);
@@ -496,7 +496,7 @@ describe('BoundaryEvent', () => {
         broker.publish('execution', 'execute.detach', {
           sourceExchange: 'execution',
           bindExchange: 'execution',
-          sourcePattern: '#'
+          sourcePattern: '#',
         });
         broker.publish('api', 'activity.discard.bound_1', {}, {type: 'discard'});
 

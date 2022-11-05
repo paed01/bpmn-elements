@@ -132,7 +132,7 @@ Feature('EventBasedGateway', () => {
 
     And('user task is signaled', () => {
       definition.signal({
-        id: 'userTask'
+        id: 'userTask',
       });
     });
 

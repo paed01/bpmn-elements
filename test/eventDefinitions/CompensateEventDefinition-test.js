@@ -15,7 +15,7 @@ describe('CompensateEventDefinition', () => {
       getActivityById(id) {
         if (id !== 'Signal_0') return;
         return Signal({id}, testHelpers.emptyContext());
-      }
+      },
     };
     context = {
       getOutboundAssociations() {},
@@ -45,8 +45,8 @@ describe('CompensateEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -78,8 +78,8 @@ describe('CompensateEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -113,8 +113,8 @@ describe('CompensateEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -150,8 +150,8 @@ describe('CompensateEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -184,8 +184,8 @@ describe('CompensateEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -214,8 +214,8 @@ describe('CompensateEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -247,8 +247,8 @@ describe('CompensateEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -282,8 +282,8 @@ describe('CompensateEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -322,8 +322,8 @@ describe('CompensateEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });

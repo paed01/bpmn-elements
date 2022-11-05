@@ -207,7 +207,7 @@ describe('InputOutputSpecification', () => {
             association: {
               target: {
                 dataObject: {
-                  id: 'missing'
+                  id: 'missing',
                 },
               },
             },

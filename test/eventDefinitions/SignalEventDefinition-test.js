@@ -15,7 +15,7 @@ describe('SignalEventDefinition', () => {
       getActivityById(id) {
         if (id !== 'Signal_0') return;
         return Signal({id}, testHelpers.emptyContext());
-      }
+      },
     };
   });
 
@@ -40,8 +40,8 @@ describe('SignalEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -73,8 +73,8 @@ describe('SignalEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -109,8 +109,8 @@ describe('SignalEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -142,8 +142,8 @@ describe('SignalEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -172,8 +172,8 @@ describe('SignalEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -205,8 +205,8 @@ describe('SignalEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -244,8 +244,8 @@ describe('SignalEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -265,8 +265,8 @@ describe('SignalEventDefinition', () => {
         behaviour: {
           signalRef: {
             id: 'Signal_0',
-          }
-        }
+          },
+        },
       });
 
       const messages = [];
@@ -287,8 +287,8 @@ describe('SignalEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -324,8 +324,8 @@ describe('SignalEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -348,7 +348,7 @@ describe('SignalEventDefinition', () => {
         behaviour: {
           signalRef: {
             id: 'Unknown_Signal',
-          }
+          },
         },
       });
 
@@ -371,8 +371,8 @@ describe('SignalEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });

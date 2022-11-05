@@ -70,7 +70,7 @@ function Camunda(activity) {
   function formFormatting(formData) {
     broker.subscribeTmp('event', 'activity.enter', (_, message) => {
       const form = {
-        fields: {}
+        fields: {},
       };
       formData.fields.forEach((field) => {
         form.fields[field.id] = {...field};

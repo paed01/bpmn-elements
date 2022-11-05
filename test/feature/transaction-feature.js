@@ -15,7 +15,7 @@ Feature('Transaction', () => {
         },
         compensate(...args) {
           undoService.push(args);
-        }
+        },
       },
       extensions: {
         me({broker, environment}) {
@@ -27,8 +27,8 @@ Feature('Transaction', () => {
               }
             }
           }, {noAck: true, consumerTag: 'save-output-tag'});
-        }
-      }
+        },
+      },
     };
 
     Given('a transaction a user task monitored by cancel- and error-listener', async () => {
@@ -247,7 +247,7 @@ Feature('Transaction', () => {
         },
         compensate(...args) {
           undoService.push(args);
-        }
+        },
       },
       extensions: {
         me({broker}, {environment}) {
@@ -259,8 +259,8 @@ Feature('Transaction', () => {
               }
             }
           }, {noAck: true, consumerTag: 'save-output-tag'});
-        }
-      }
+        },
+      },
     };
 
     Given('a transaction a user task monitored by cancel- and error-listener', async () => {

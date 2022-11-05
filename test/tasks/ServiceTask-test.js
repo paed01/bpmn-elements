@@ -91,8 +91,8 @@ describe('ServiceTask', () => {
                 discarded = msg;
               },
             };
-          }
-        }
+          },
+        },
       }, testHelpers.emptyContext());
 
       task.run();
@@ -118,8 +118,8 @@ describe('ServiceTask', () => {
                 stopped = msg;
               },
             };
-          }
-        }
+          },
+        },
       }, testHelpers.emptyContext());
 
       task.run();
@@ -141,8 +141,8 @@ describe('ServiceTask', () => {
                 stopped = msg;
               },
             };
-          }
-        }
+          },
+        },
       }, testHelpers.emptyContext());
 
       task.run();
@@ -159,10 +159,10 @@ describe('ServiceTask', () => {
         behaviour: {
           Service: function Service() {
             return {
-              execute() {}
+              execute() {},
             };
-          }
-        }
+          },
+        },
       }, testHelpers.emptyContext());
 
       task.run();
@@ -176,10 +176,10 @@ describe('ServiceTask', () => {
         behaviour: {
           Service: function Service() {
             return {
-              execute() {}
+              execute() {},
             };
-          }
-        }
+          },
+        },
       }, testHelpers.emptyContext());
 
       task.run();
@@ -193,10 +193,10 @@ describe('ServiceTask', () => {
             return {
               execute(...args) {
                 args.pop()();
-              }
+              },
             };
-          }
-        }
+          },
+        },
       }, testHelpers.emptyContext()).recover(JSON.parse(JSON.stringify(state)));
 
       recovered.resume();
@@ -213,10 +213,10 @@ describe('ServiceTask', () => {
               execute() {
                 activity.stop();
                 state = activity.getState();
-              }
+              },
             };
-          }
-        }
+          },
+        },
       }, testHelpers.emptyContext());
 
       task.run();
@@ -228,10 +228,10 @@ describe('ServiceTask', () => {
             return {
               execute(...args) {
                 args.pop()();
-              }
+              },
             };
-          }
-        }
+          },
+        },
       }, testHelpers.emptyContext()).recover(state);
 
       recovered.resume();

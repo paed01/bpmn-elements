@@ -555,7 +555,7 @@ Feature('Messaging', () => {
 
     When('message is sent', () => {
       definition.sendMessage({
-        id: 'Message1'
+        id: 'Message1',
       });
     });
 
@@ -653,7 +653,7 @@ Feature('Messaging', () => {
 
     When('message is sent', () => {
       definition.sendMessage({
-        id: 'Message1'
+        id: 'Message1',
       });
     });
 

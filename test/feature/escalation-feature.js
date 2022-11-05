@@ -30,8 +30,8 @@ Feature('Escalate', () => {
         name: 'Escalate amount too big',
         parent: {
           id: 'Definition_0',
-          type: 'bpmn:Definitions'
-        }
+          type: 'bpmn:Definitions',
+        },
       });
     });
 
@@ -41,8 +41,8 @@ Feature('Escalate', () => {
       expect(orderTask.content.form).to.have.property('fields');
       orderTask.signal({
         form: {
-          amount: 11
-        }
+          amount: 11,
+        },
       });
     });
 
@@ -62,7 +62,7 @@ Feature('Escalate', () => {
         parent: {
           id: 'Definition_0',
           type: 'bpmn:Definitions',
-        }
+        },
       });
     });
 
@@ -101,8 +101,8 @@ Feature('Escalate', () => {
         name: 'Escalate amount too big',
         parent: {
           id: 'Definition_0',
-          type: 'bpmn:Definitions'
-        }
+          type: 'bpmn:Definitions',
+        },
       });
     });
 
@@ -112,8 +112,8 @@ Feature('Escalate', () => {
       expect(orderTask.content.form).to.have.property('fields');
       orderTask.signal({
         form: {
-          amount: 11
-        }
+          amount: 11,
+        },
       });
     });
 
@@ -133,7 +133,7 @@ Feature('Escalate', () => {
         parent: {
           id: 'Definition_0',
           type: 'bpmn:Definitions',
-        }
+        },
       });
     });
 
@@ -527,14 +527,14 @@ Feature('Escalate', () => {
 async function prepareSource() {
   const context = await testHelpers.context(escalationSource, {
     extensions: {
-      camunda: CamundaExtension
-    }
+      camunda: CamundaExtension,
+    },
   });
   return Definition(context, {
     services: {
       isAbove(treshold, value) {
         return parseInt(treshold) < parseInt(value);
       },
-    }
+    },
   });
 }

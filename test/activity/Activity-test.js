@@ -1778,7 +1778,7 @@ describe('Activity', () => {
             activate(msg) {
               activateMessage = msg;
             },
-            deactivate() {}
+            deactivate() {},
           };
         },
       });
@@ -1809,7 +1809,7 @@ describe('Activity', () => {
             activate(msg) {
               activateMessage = msg;
             },
-            deactivate() {}
+            deactivate() {},
           };
         },
       });
@@ -2146,7 +2146,7 @@ describe('Activity', () => {
           execute() {},
           getState() {
             return {
-              behaviourState: true
+              behaviourState: true,
             };
           },
         };
@@ -2250,12 +2250,12 @@ describe('Activity', () => {
           execute() {},
           getState() {
             return {
-              behaviourState: true
+              behaviourState: true,
             };
           },
           recover(executionState) {
             activityState = executionState;
-          }
+          },
         };
       }
       const activity = getActivity(undefined, SpecialBehaviour);
@@ -2285,7 +2285,7 @@ describe('Activity', () => {
           execute() {},
           getState() {
             return {
-              behaviourState: true
+              behaviourState: true,
             };
           },
         };
@@ -2301,7 +2301,7 @@ describe('Activity', () => {
           execute() {},
           recover(executionState) {
             activityState = executionState;
-          }
+          },
         };
       }
 
@@ -2544,7 +2544,7 @@ describe('Activity', () => {
         },
         behaviour: {
           isForCompensation: true,
-        }
+        },
       }, context);
 
       activity.activate();
@@ -2578,7 +2578,7 @@ describe('Activity', () => {
         },
         behaviour: {
           isForCompensation: true,
-        }
+        },
       }, context);
 
       activity.activate();

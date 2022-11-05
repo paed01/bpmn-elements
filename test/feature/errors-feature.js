@@ -21,8 +21,8 @@ Feature('Errors', () => {
       services: {
         volatile(_, next) {
           serviceCallback = next;
-        }
-      }
+        },
+      },
     };
 
     Given('a source with a volatile service task and a catch boundary event expecting an error code', async () => {
@@ -397,7 +397,7 @@ Feature('Errors', () => {
 
     And('service encounters error with error code that match known error', () => {
       serviceCallback(new BpmnError('Not found', {
-        errorCode: 404
+        errorCode: 404,
       }));
     });
 
@@ -425,7 +425,7 @@ Feature('Errors', () => {
 
     And('service encounters error with unknown error code', () => {
       serviceCallback(new BpmnError('Unauthorized', {
-        errorCode: 401
+        errorCode: 401,
       }));
     });
 
@@ -459,7 +459,7 @@ Feature('Errors', () => {
 
     And('service encounters error with error code that match known error', () => {
       serviceCallback(new BpmnError('Not found', {
-        errorCode: 404
+        errorCode: 404,
       }));
     });
 
@@ -502,7 +502,7 @@ Feature('Errors', () => {
 
     And('recovered service encounters error with error code that match known error', () => {
       serviceCallback(new BpmnError('Not found', {
-        errorCode: 404
+        errorCode: 404,
       }));
     });
 
@@ -531,7 +531,7 @@ Feature('Errors', () => {
 
     When('service call fails again uncaught error code', () => {
       serviceCallback(new BpmnError('Unauthorized', {
-        errorCode: 401
+        errorCode: 401,
       }));
     });
 
@@ -596,8 +596,8 @@ Feature('Errors', () => {
       expect(orderTask.content.form).to.have.property('fields');
       orderTask.signal({
         form: {
-          amount: 11
-        }
+          amount: 11,
+        },
       });
     });
 
@@ -637,7 +637,7 @@ Feature('Errors', () => {
         parent: {
           id: 'Definition_0',
           type: 'bpmn:Definitions',
-        }
+        },
       });
     });
 
@@ -803,7 +803,7 @@ Feature('Errors', () => {
       definition = new Definition(context, {
         settings: {
           strict: true,
-        }
+        },
       });
     });
 
@@ -860,14 +860,14 @@ Feature('Errors', () => {
 async function prepareSource() {
   const context = await testHelpers.context(bpmnErrorSource, {
     extensions: {
-      camunda: CamundaExtension
-    }
+      camunda: CamundaExtension,
+    },
   });
   return Definition(context, {
     services: {
       isAbove(treshold, value) {
         return parseInt(treshold) < parseInt(value);
       },
-    }
+    },
   });
 }

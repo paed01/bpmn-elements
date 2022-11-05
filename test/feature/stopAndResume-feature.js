@@ -49,7 +49,7 @@ Feature('Stop and resume', () => {
       const context = await testHelpers.context(source, {
         extensions: {
           js: JsExtension,
-        }
+        },
       });
       definition = new Definition(context);
     });
@@ -593,7 +593,7 @@ Feature('Stop and resume', () => {
         'activity.execution.completed',
         'activity.stop',
         'activity.end',
-        'activity.leave'
+        'activity.leave',
       ]);
     });
   });

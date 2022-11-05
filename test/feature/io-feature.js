@@ -20,7 +20,7 @@ Feature('IO', () => {
         services: {
           getSpotPrice(msg, callback) {
             return callback(null, this.environment.settings.dataStores.getDataStore(msg.content.db).price);
-          }
+          },
         },
         extensions: {
           camunda: camunda.extension,
@@ -39,8 +39,8 @@ Feature('IO', () => {
                 activity.environment.settings.dataStores.setDataStore(db, {...api.content.output});
               });
             }
-          }
-        }
+          },
+        },
       });
     });
 
@@ -67,8 +67,8 @@ Feature('IO', () => {
       wait = definition.waitFor('wait');
       approvePriceTask.signal({
         form: {
-          newPrice: 99
-        }
+          newPrice: 99,
+        },
       });
     });
 

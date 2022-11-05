@@ -37,8 +37,8 @@ describe('CancelEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'transaction',
-              executionId: 'transaction_0'
-            }]
+              executionId: 'transaction_0',
+            }],
           },
         },
       });
@@ -69,8 +69,8 @@ describe('CancelEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'transaction',
-              executionId: 'transaction_0'
-            }]
+              executionId: 'transaction_0',
+            }],
           },
         },
       });
@@ -107,8 +107,8 @@ describe('CancelEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'transaction',
-              executionId: 'transaction_0'
-            }]
+              executionId: 'transaction_0',
+            }],
           },
         },
       });
@@ -141,8 +141,8 @@ describe('CancelEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'transaction',
-              executionId: 'transaction_0'
-            }]
+              executionId: 'transaction_0',
+            }],
           },
         },
       });
@@ -179,8 +179,8 @@ describe('CancelEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'transaction',
-              executionId: 'transaction_0'
-            }]
+              executionId: 'transaction_0',
+            }],
           },
         },
       });
@@ -214,8 +214,8 @@ describe('CancelEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'transaction',
-              executionId: 'transaction_0'
-            }]
+              executionId: 'transaction_0',
+            }],
           },
         },
       });
@@ -250,8 +250,8 @@ describe('CancelEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'transaction',
-              executionId: 'transaction_0'
-            }]
+              executionId: 'transaction_0',
+            }],
           },
         },
       });
@@ -285,8 +285,8 @@ describe('CancelEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'transaction',
-              executionId: 'transaction_0'
-            }]
+              executionId: 'transaction_0',
+            }],
           },
         },
       });
@@ -319,8 +319,8 @@ describe('CancelEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -350,8 +350,8 @@ describe('CancelEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -379,8 +379,8 @@ describe('CancelEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -427,8 +427,8 @@ describe('CancelEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });

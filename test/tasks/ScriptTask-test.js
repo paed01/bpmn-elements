@@ -93,10 +93,10 @@ describe('ScriptTask', () => {
             return {
               execute(executionContext, callback) {
                 return callback(null, {input: 3});
-              }
+              },
             };
           },
-        }
+        },
       });
       const task = context.getActivityById('scriptTask');
       task.activate();
@@ -340,8 +340,8 @@ describe('ScriptTask', () => {
         timers: Timers({
           setTimeout(next) {
             callback = next;
-          }
-        })
+          },
+        }),
       });
       context.environment.assignVariables({data: 1});
 

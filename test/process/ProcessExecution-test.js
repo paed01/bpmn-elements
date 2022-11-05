@@ -358,7 +358,7 @@ describe('Process execution', () => {
               id: 'process1',
             },
           }];
-        }
+        },
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -413,7 +413,7 @@ describe('Process execution', () => {
             {id: 'task1', type: 'bpmn:Task', parent: {id: 'process1'}, Behaviour: SignalTask},
             {id: 'task2', type: 'bpmn:Task', parent: {id: 'process1'}, Behaviour: SignalTask},
           ];
-        }
+        },
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -470,7 +470,7 @@ describe('Process execution', () => {
             {id: 'task1', type: 'bpmn:Task', parent: {id: 'process1'}, Behaviour: SignalTask},
             {id: 'task2', type: 'bpmn:Task', parent: {id: 'process1'}, Behaviour: SignalTask},
           ];
-        }
+        },
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -512,9 +512,9 @@ describe('Process execution', () => {
                 eventDefinitions: [{Behaviour: TerminateEventDefinition}],
               },
               Behaviour: EndEvent,
-            }
+            },
           ];
-        }
+        },
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -537,7 +537,7 @@ describe('Process execution', () => {
       const bp = createProcess({
         getActivities() {
           return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
-        }
+        },
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -564,7 +564,7 @@ describe('Process execution', () => {
       const bp = createProcess({
         getActivities() {
           return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
-        }
+        },
       });
 
       const stop = new Promise((resolve) => {
@@ -599,7 +599,7 @@ describe('Process execution', () => {
       const bp = createProcess({
         getActivities() {
           return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
-        }
+        },
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -635,13 +635,13 @@ describe('Process execution', () => {
               }, {
                 Behaviour: TimerEventDefinition,
                 behaviour: {
-                  timeDuration: 'PT1M'
-                }
-              }]
+                  timeDuration: 'PT1M',
+                },
+              }],
             },
-            Behaviour: StartEvent
+            Behaviour: StartEvent,
           }];
-        }
+        },
       });
 
       const stop = new Promise((resolve) => {
@@ -685,9 +685,9 @@ describe('Process execution', () => {
           }, {
             Behaviour: TimerEventDefinition,
             behaviour: {
-              timeDuration: 'PT1M'
-            }
-          }]
+              timeDuration: 'PT1M',
+            },
+          }],
         },
       }, {
         id: 'activity',
@@ -707,7 +707,7 @@ describe('Process execution', () => {
 
           return activities;
         },
-        getSequenceFlows() {}
+        getSequenceFlows() {},
       });
 
       const stop = new Promise((resolve) => {
@@ -757,7 +757,7 @@ describe('Process execution', () => {
       const bp = createProcess({
         getActivities() {
           return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
-        }
+        },
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -786,7 +786,7 @@ describe('Process execution', () => {
       const bp = createProcess({
         getActivities() {
           return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
-        }
+        },
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -824,9 +824,9 @@ describe('Process execution', () => {
           }, {
             Behaviour: TimerEventDefinition,
             behaviour: {
-              timeDuration: 'PT1M'
-            }
-          }]
+              timeDuration: 'PT1M',
+            },
+          }],
         },
       }, {
         id: 'activity',
@@ -846,7 +846,7 @@ describe('Process execution', () => {
 
           return activities;
         },
-        getSequenceFlows() {}
+        getSequenceFlows() {},
       });
 
       const discard = new Promise((resolve) => {
@@ -883,7 +883,7 @@ describe('Process execution', () => {
       const bp = createProcess({
         getActivities() {
           return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
-        }
+        },
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -897,7 +897,7 @@ describe('Process execution', () => {
       const bp = createProcess({
         getActivities() {
           return [{id: 'start', type: 'bpmn:ManualTask', isStart: true, parent: {id: 'process1'}, Behaviour: SignalTask}];
-        }
+        },
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -910,7 +910,7 @@ describe('Process execution', () => {
       const bp = createProcess({
         getActivities() {
           return [{id: 'start1', type: 'bpmn:StartEvent', isStart: true, parent: {id: 'process1'}, Behaviour: StartEvent}];
-        }
+        },
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -1034,7 +1034,7 @@ describe('Process execution', () => {
       const bp = createProcess({
         getActivities() {
           return [{id: 'start1', type: 'bpmn:StartEvent', isStart: true, parent: {id: 'process1'}, Behaviour: StartEvent}];
-        }
+        },
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -1073,7 +1073,7 @@ describe('Process execution', () => {
       const bp = createProcess({
         getActivities() {
           return [{id: 'start1', type: 'bpmn:StartEvent', isStart: true, parent: {id: 'process1'}, Behaviour: StartEvent}];
-        }
+        },
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -1116,7 +1116,7 @@ describe('Process execution', () => {
       const bp = createProcess({
         getActivities() {
           return [{id: 'start1', type: 'bpmn:StartEvent', isStart: true, parent: {id: 'process1'}, Behaviour: StartEvent}];
-        }
+        },
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -1307,7 +1307,7 @@ describe('Process execution', () => {
 
           return activities;
         },
-        getSequenceFlows() {}
+        getSequenceFlows() {},
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -1371,7 +1371,7 @@ describe('Process execution', () => {
 
           return activities;
         },
-        getSequenceFlows() {}
+        getSequenceFlows() {},
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -1422,7 +1422,7 @@ describe('Process execution', () => {
 
           return activities;
         },
-        getSequenceFlows() {}
+        getSequenceFlows() {},
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -1473,7 +1473,7 @@ describe('Process execution', () => {
           if (scopeId) return activities.filter((a) => a.parent.id === scopeId);
           return activities;
         },
-        getSequenceFlows() {}
+        getSequenceFlows() {},
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -1528,7 +1528,7 @@ describe('Process execution', () => {
           if (scopeId) return activities.filter((a) => a.parent.id === scopeId);
           return activities;
         },
-        getSequenceFlows() {}
+        getSequenceFlows() {},
       });
 
       const execution = new ProcessExecution(bp, bp.context);
@@ -1579,7 +1579,7 @@ describe('Process execution', () => {
         fields: {},
         content: {
           executionId: 'process1_1',
-        }
+        },
       });
 
       expect(completed, 'completed before second activity is complete').to.not.be.ok;
@@ -1591,7 +1591,7 @@ describe('Process execution', () => {
         executionId: activity2.executionId,
         parent: {
           id: 'process1',
-        }
+        },
       });
 
       expect(completed).to.be.true;
@@ -1627,7 +1627,7 @@ function createProcess(override, step) {
     getActivityById(id) {
       return (this.getActivities() || []).find((a) => a.id === id);
     },
-    ...override
+    ...override,
   }, {step});
 
   return new Process({

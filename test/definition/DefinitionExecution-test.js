@@ -43,7 +43,7 @@ describe('Definition execution', () => {
         },
         getExecutableProcesses() {
           return [];
-        }
+        },
       };
       const execution = new DefinitionExecution(definition, testHelpers.emptyContext());
       expect(execution.execute).to.throw(/requires message/);
@@ -60,7 +60,7 @@ describe('Definition execution', () => {
         },
         getExecutableProcesses() {
           return [];
-        }
+        },
       };
       const execution = new DefinitionExecution(definition, testHelpers.emptyContext());
       expect(() => execution.execute({content: {}})).to.throw(/requires execution id/);
@@ -97,7 +97,7 @@ describe('Definition execution', () => {
                 parent: this.parent,
               });
             }
-          }
+          },
         };
       }
 
@@ -139,7 +139,7 @@ describe('Definition execution', () => {
         fields: {},
         content: {
           executionId: 'Def_1_1',
-        }
+        },
       });
 
       expect(completed, 'completed before second process is complete').to.not.be.ok;
@@ -149,7 +149,7 @@ describe('Definition execution', () => {
         executionId: 'process_2_1',
         parent: {
           id: 'Def_1',
-        }
+        },
       });
 
       expect(completed).to.be.true;
@@ -176,7 +176,7 @@ describe('Definition execution', () => {
         },
         stop() {
           this.stopped = true;
-        }
+        },
       }, {
         id: 'process_2',
         isExecutable: true,
@@ -196,7 +196,7 @@ describe('Definition execution', () => {
         },
         stop() {
           this.stopped = true;
-        }
+        },
       }];
 
       const definition = {
@@ -241,7 +241,7 @@ describe('Definition execution', () => {
         fields: {},
         content: {
           executionId: 'Def_1_1',
-        }
+        },
       });
 
       const bps = execution.getProcesses();
@@ -249,7 +249,7 @@ describe('Definition execution', () => {
         id: 'process_1',
         parent: {
           id: 'Def_1',
-        }
+        },
       });
 
       expect(completed).to.be.true;

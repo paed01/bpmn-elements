@@ -36,8 +36,8 @@ Feature('extensions', () => {
       const context = await testHelpers.context(source, {extensions});
       definition = new Definition(context, {
         extensions: {
-          executionListener
-        }
+          executionListener,
+        },
       });
 
       function executionListener(elm) {

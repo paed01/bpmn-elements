@@ -709,7 +709,7 @@ describe('Definition', () => {
                 return {
                   id: 'message_0',
                 };
-              }
+              },
             };
           },
         },
@@ -744,8 +744,8 @@ describe('Definition', () => {
 
       definition.recover({
         counters: {
-          completed: 1
-        }
+          completed: 1,
+        },
       });
 
       expect(definition.counters).to.have.property('completed', 1);
@@ -1603,7 +1603,7 @@ describe('Definition', () => {
         'bpmn:definitions',
         'bpmn:process',
         'bpmn:task',
-        'bpmn:multiinstanceloopcharacteristics'
+        'bpmn:multiinstanceloopcharacteristics',
       ]);
 
       function Logger(scope) {

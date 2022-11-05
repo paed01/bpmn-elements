@@ -49,8 +49,8 @@ Feature('Signals', () => {
 
       approveNewPriceTask.signal({
         form: {
-          newPrice: 99
-        }
+          newPrice: 99,
+        },
       });
 
       return wait;
@@ -119,8 +119,8 @@ Feature('Signals', () => {
 
       approveNewPriceTask.signal({
         form: {
-          newPrice: 101
-        }
+          newPrice: 101,
+        },
       });
 
       return wait;
@@ -212,8 +212,8 @@ Feature('Signals', () => {
       definition.signal({
         id: 'approveSpotPrice',
         form: {
-          newPrice: 101
-        }
+          newPrice: 101,
+        },
       });
 
       return wait;
@@ -490,8 +490,8 @@ Feature('Signals', () => {
         services: {
           log(...args) {
             logBook.push(...args);
-          }
-        }
+          },
+        },
       });
     });
 
@@ -571,7 +571,7 @@ Feature('Signals', () => {
       const context = await testHelpers.context(source, {
         extensions: {
           js: JsExtension,
-        }
+        },
       });
       definition = new Definition(context);
     });
@@ -595,7 +595,7 @@ Feature('Signals', () => {
 
     When('definition signals form start event', () => {
       definition.signal({
-        id: 'start'
+        id: 'start',
       });
     });
 
@@ -1218,7 +1218,7 @@ async function prepareSource() {
     services: {
       getSpotPrice(msg, callback) {
         return callback(null, this.environment.settings.dataStores.getDataStore(msg.content.db).price);
-      }
+      },
     },
     extensions: {
       camunda: camunda.extension,
@@ -1237,8 +1237,8 @@ async function prepareSource() {
             activity.environment.settings.dataStores.setDataStore(db, {...api.content.output});
           });
         }
-      }
-    }
+      },
+    },
   });
 
   return definition;

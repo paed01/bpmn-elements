@@ -4,12 +4,12 @@ import path from 'path';
 const eventActivities = [
   'bpmn:IntermediateCatchEvent',
   'bpmn:StartEvent',
-  'bpmn:EndEvent'
+  'bpmn:EndEvent',
 ];
 
 const gateways = [
   'bpmn:ExclusiveGateway',
-  'bpmn:InclusiveGateway'
+  'bpmn:InclusiveGateway',
 ];
 
 const activities = [
@@ -18,7 +18,7 @@ const activities = [
   'bpmn:ServiceTask',
   'bpmn:UserTask',
   'bpmn:SubProcess',
-  'bpmn:ParallelGateway'
+  'bpmn:ParallelGateway',
 ];
 
 const cache = {};

@@ -77,7 +77,7 @@ describe('Process', () => {
 
       const context = await testHelpers.context(source, {
         extensions: {
-          js: JsExtension
+          js: JsExtension,
         },
       });
       const bp = context.getProcessById('theProcess');
@@ -1320,7 +1320,7 @@ describe('Process', () => {
           id: 'messageFlow',
           target: {id: 'start'},
         },
-        properties: {}
+        properties: {},
       });
 
       expect(bp.isRunning).to.be.true;
@@ -1335,7 +1335,7 @@ describe('Process', () => {
             messageType: 'message',
           },
         },
-        properties: {}
+        properties: {},
       });
 
       expect(bp.isRunning).to.be.true;
@@ -1348,7 +1348,7 @@ describe('Process', () => {
           id: 'messageFlow',
           target: {id: 'start2'},
         },
-        properties: {}
+        properties: {},
       });
 
       expect(bp.isRunning).to.be.false;
@@ -1384,7 +1384,7 @@ describe('Process', () => {
       });
 
       expect(bp.environment.variables).to.have.property('_data').that.eql({
-        inputFromUser: 'von Rosen'
+        inputFromUser: 'von Rosen',
       });
     });
   });
@@ -1494,8 +1494,8 @@ describe('Process', () => {
           register() {},
           getScript(scriptFormat, activity) {
             if (scriptFormat !== 'javascript') return activity.emitFatal(new ActivityError('unsupported'));
-          }
-        }
+          },
+        },
       });
       const bp = context.getProcessById('theProcess');
 

@@ -14,14 +14,14 @@ describe('message helper', () => {
         executionId: 'parent_0',
         type: 'ancestor',
       }, {
-        id: 'child'
+        id: 'child',
       }))).to.eql({
         id: 'child',
         path: [{
           id: 'parent',
           executionId: 'parent_0',
           type: 'ancestor',
-        }]
+        }],
       });
 
       expect(filterUndefined(unshiftParent({
@@ -29,14 +29,14 @@ describe('message helper', () => {
         executionId: 'child_0',
         type: 'sister',
         path: [{
-          id: 'parent'
+          id: 'parent',
         }, {
-          id: 'grandma'
-        }]
+          id: 'grandma',
+        }],
       }, {
         id: 'nephew',
         executionId: 'me_0',
-        type: 'task'
+        type: 'task',
       }))).to.deep.include({
         id: 'nephew',
         executionId: 'me_0',
@@ -46,10 +46,10 @@ describe('message helper', () => {
           executionId: 'child_0',
           type: 'sister',
         }, {
-          id: 'parent'
+          id: 'parent',
         }, {
-          id: 'grandma'
-        }]
+          id: 'grandma',
+        }],
       });
     });
 
@@ -75,7 +75,7 @@ describe('message helper', () => {
           executionId: '1_0',
           type: 'task',
         }, {
-          id: 3
+          id: 3,
         }],
       });
     });
@@ -98,17 +98,17 @@ describe('message helper', () => {
     it('replaces parent with first from path', () => {
       expect(filterUndefined(shiftParent({
         id: 'child',
-        path: [{id: 'parent'}]
+        path: [{id: 'parent'}],
       }))).to.eql({
         id: 'parent',
       });
 
       expect(filterUndefined(shiftParent({
         id: 'child',
-        path: [{id: 'parent'}, {id: 'grandpa'}]
+        path: [{id: 'parent'}, {id: 'grandpa'}],
       }))).to.deep.include({
         id: 'parent',
-        path: [{id: 'grandpa'}]
+        path: [{id: 'grandpa'}],
       });
     });
 
@@ -143,7 +143,7 @@ describe('message helper', () => {
           id: 'process1',
           type: 'process',
           executionId: 'process1_0',
-        }]
+        }],
       });
 
       expect(filterUndefined(pushParent({
@@ -151,8 +151,8 @@ describe('message helper', () => {
         executionId: 'child_0',
         type: 'task',
         path: [{
-          id: 'parent'
-        }]
+          id: 'parent',
+        }],
       }, {
         id: 'process1',
         type: 'process',
@@ -162,12 +162,12 @@ describe('message helper', () => {
         executionId: 'child_0',
         type: 'task',
         path: [{
-          id: 'parent'
+          id: 'parent',
         }, {
           id: 'process1',
           type: 'process',
           executionId: 'process1_0',
-        }]
+        }],
       });
 
       expect(filterUndefined(pushParent({
@@ -186,7 +186,7 @@ describe('message helper', () => {
           id: 'process1',
           type: 'process',
           executionId: 'process1_0',
-        }]
+        }],
       });
     });
 
@@ -195,7 +195,7 @@ describe('message helper', () => {
         id: 'parent',
         executionId: 'parent_0',
         type: 'ancestor',
-        path: [{id: 'process1'}]
+        path: [{id: 'process1'}],
       }, {
         id: 'process1',
         type: 'process',
@@ -207,7 +207,7 @@ describe('message helper', () => {
         path: [{
           id: 'process1',
           executionId: 'process1_0',
-        }]
+        }],
       });
     });
 

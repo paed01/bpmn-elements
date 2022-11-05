@@ -43,7 +43,7 @@ Feature('Format', () => {
               });
             });
           },
-        }
+        },
       });
     });
 
@@ -97,7 +97,7 @@ Feature('Format', () => {
               });
             });
           },
-        }
+        },
       });
     });
 
@@ -146,7 +146,7 @@ Feature('Format', () => {
               broker.publish('format', 'run.end.format', {leftAt: new Date()});
             });
           },
-        }
+        },
       });
     });
 
@@ -207,7 +207,7 @@ Feature('Format', () => {
               broker.publish('format', 'run.end.format', {leftAt: new Date()});
             });
           },
-        }
+        },
       });
     });
 
@@ -257,7 +257,7 @@ Feature('Format', () => {
               });
             });
           },
-        }
+        },
       });
     });
 
@@ -314,7 +314,7 @@ Feature('Format', () => {
 
             }, {priority: 10000});
           },
-        }
+        },
       });
     });
 
@@ -378,7 +378,7 @@ Feature('Format', () => {
               });
             });
           },
-        }
+        },
       });
     });
 
@@ -436,7 +436,7 @@ Feature('Format', () => {
               }
             });
           },
-        }
+        },
       });
     });
 
@@ -480,7 +480,7 @@ Feature('Format', () => {
               }
             });
           },
-        }
+        },
       });
     });
 
@@ -527,7 +527,7 @@ Feature('Format', () => {
               }
             });
           },
-        }
+        },
       });
     });
 
@@ -568,7 +568,7 @@ Feature('Format', () => {
               });
             });
           },
-        }
+        },
       });
     });
 
@@ -625,7 +625,7 @@ Feature('Format', () => {
           return {
             execute(...args) {
               serviceCalls.push(args);
-            }
+            },
           };
         };
       }
@@ -651,7 +651,7 @@ Feature('Format', () => {
         deactivate() {
           activity.broker.cancel('_extension-on-enter');
           activity.broker.cancel('_extension-on-end');
-        }
+        },
       };
     }
 
@@ -843,7 +843,7 @@ Feature('Format', () => {
           return {
             execute(msg, callback) {
               callback(null, {result: msg.content.entered});
-            }
+            },
           };
         };
       }
@@ -875,7 +875,7 @@ Feature('Format', () => {
         deactivate() {
           activity.broker.cancel('_extension-on-enter');
           activity.broker.cancel('_extension-on-end');
-        }
+        },
       };
     }
 

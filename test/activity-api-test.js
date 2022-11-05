@@ -15,7 +15,7 @@ describe('activity api', () => {
 
       function Behaviour() {
         return {
-          execute() {}
+          execute() {},
         };
       }
     });
@@ -32,7 +32,7 @@ describe('activity api', () => {
 
       function Behaviour() {
         return {
-          execute() {}
+          execute() {},
         };
       }
     });
@@ -59,7 +59,7 @@ describe('activity api', () => {
           execute(msg) {
             if (!msg.content.isRootScope) return;
             broker.publish('execution', 'execute.start', {...cloneContent(msg.content), isRootScope: false, executionId: `${msg.content.executionId}_0`});
-          }
+          },
         };
       }
     });
@@ -95,7 +95,7 @@ describe('activity api', () => {
             }, {noAck: true, priority: 400});
 
             broker.publish('execution', 'execute.start', {...content});
-          }
+          },
         };
       }
     });
@@ -114,7 +114,7 @@ describe('activity api', () => {
 
       function Behaviour() {
         return {
-          execute() {}
+          execute() {},
         };
       }
     });
@@ -129,7 +129,7 @@ describe('activity api', () => {
 
       function Behaviour() {
         return {
-          execute() {}
+          execute() {},
         };
       }
     });

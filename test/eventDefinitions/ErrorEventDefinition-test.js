@@ -50,8 +50,8 @@ describe('ErrorEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -83,8 +83,8 @@ describe('ErrorEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -121,8 +121,8 @@ describe('ErrorEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -154,8 +154,8 @@ describe('ErrorEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -189,8 +189,8 @@ describe('ErrorEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -311,14 +311,14 @@ describe('ErrorEventDefinition', () => {
               id: 'bound',
               executionId: 'bound_1',
               path: [{
-                id: 'process_1'
-              }]
+                id: 'process_1',
+              }],
             },
           },
         });
 
         event.broker.publish('execution', 'execute.throw.bound_1_0', {id: 'errorProne', executionId: 'errorProne_1', error: {
-          name: 'Always'
+          name: 'Always',
         }});
 
         expect(message).to.be.ok;
@@ -652,14 +652,14 @@ describe('ErrorEventDefinition', () => {
               id: 'bound',
               executionId: 'bound_1',
               path: [{
-                id: 'process_1'
-              }]
+                id: 'process_1',
+              }],
             },
           },
         });
 
         event.broker.publish('api', 'activity.throw.errorProne_1', {id: 'errorProne', executionId: 'errorProne_1', message: {
-          name: 'Always'
+          name: 'Always',
         }});
 
         expect(message).to.be.ok;
@@ -697,8 +697,8 @@ describe('ErrorEventDefinition', () => {
               id: 'bound',
               executionId: 'bound_1',
               path: [{
-                id: 'process_1'
-              }]
+                id: 'process_1',
+              }],
             },
           },
         });
@@ -742,8 +742,8 @@ describe('ErrorEventDefinition', () => {
               id: 'bound',
               executionId: 'bound_1',
               path: [{
-                id: 'process_1'
-              }]
+                id: 'process_1',
+              }],
             },
           },
         });
@@ -780,8 +780,8 @@ describe('ErrorEventDefinition', () => {
               id: 'bound',
               executionId: 'bound_1',
               path: [{
-                id: 'process_1'
-              }]
+                id: 'process_1',
+              }],
             },
           },
         });

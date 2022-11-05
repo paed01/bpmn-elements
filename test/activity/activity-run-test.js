@@ -313,7 +313,7 @@ describe('activity run', () => {
             },
             deactivate() {
               active = false;
-            }
+            },
           };
         },
       }));
@@ -345,7 +345,7 @@ describe('activity run', () => {
             },
             deactivate() {
               active = false;
-            }
+            },
           };
         },
       }));
@@ -377,7 +377,7 @@ describe('activity run', () => {
             },
             deactivate() {
               active = false;
-            }
+            },
           };
         },
       }));
@@ -412,7 +412,7 @@ describe('activity run', () => {
             },
             deactivate() {
               active = false;
-            }
+            },
           };
         },
       }));
@@ -449,7 +449,7 @@ describe('activity run', () => {
             },
             deactivate() {
               active = false;
-            }
+            },
           };
         },
       }));

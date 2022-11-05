@@ -15,8 +15,8 @@ Feature('Linking', () => {
         services: {
           log(...args) {
             logBook.push(...args);
-          }
-        }
+          },
+        },
       });
     });
 
@@ -79,8 +79,8 @@ Feature('Linking', () => {
         services: {
           log(...args) {
             logBook.push(...args);
-          }
-        }
+          },
+        },
       });
     });
 
@@ -160,13 +160,13 @@ Feature('Linking', () => {
       `;
 
       context = await testHelpers.context(source, {
-        extensions: {js: JsExtension}
+        extensions: {js: JsExtension},
       });
 
       definition = new Definition(context, {
         extensions: {
-          js: JsExtension.extension
-        }
+          js: JsExtension.extension,
+        },
       });
     });
 
@@ -240,8 +240,8 @@ Feature('Linking', () => {
     When('definition is recovered and resumed', () => {
       definition = new Definition(context, {
         extensions: {
-          js: JsExtension.extension
-        }
+          js: JsExtension.extension,
+        },
       }).recover(JSON.parse(JSON.stringify(state)));
 
       wait = definition.waitFor('wait');

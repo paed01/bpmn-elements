@@ -24,8 +24,8 @@ Feature('Task loop', () => {
           stopLoop(completeMessage) {
             iterations.push(completeMessage);
             if (completeMessage.content.index === 3) return true;
-          }
-        }
+          },
+        },
       });
     });
 
@@ -66,8 +66,8 @@ Feature('Task loop', () => {
           stopLoop(startMessage) {
             iterations.push(startMessage);
             if (startMessage.content.index === 3) return true;
-          }
-        }
+          },
+        },
       });
     });
 
@@ -107,8 +107,8 @@ Feature('Task loop', () => {
           stopLoop(startMessage) {
             iterations.push(startMessage);
             if (startMessage.content.index === 5) return true;
-          }
-        }
+          },
+        },
       });
     });
 
@@ -153,7 +153,7 @@ Feature('Task loop', () => {
           batchSize: 100,
         },
         variables: {
-          list: new Array(500).fill().map((_, idx) => ({idx}))
+          list: new Array(500).fill().map((_, idx) => ({idx})),
         },
       });
 
@@ -225,7 +225,7 @@ Feature('Task loop', () => {
           batchSize: 50,
         },
         variables: {
-          list: new Array(101).fill().map((_, idx) => ({idx}))
+          list: new Array(101).fill().map((_, idx) => ({idx})),
         },
       });
 
@@ -294,7 +294,7 @@ Feature('Task loop', () => {
     When('definition is run with 101 items', () => {
       definition = new Definition(context, {
         variables: {
-          list: new Array(101).fill().map((_, idx) => ({idx}))
+          list: new Array(101).fill().map((_, idx) => ({idx})),
         },
       });
 
@@ -363,7 +363,7 @@ Feature('Task loop', () => {
         },
         variables: {
           cardinality,
-          list: new Array(50).fill().map((_, idx) => ({idx}))
+          list: new Array(50).fill().map((_, idx) => ({idx})),
         },
       });
 
@@ -409,7 +409,7 @@ Feature('Task loop', () => {
         },
         variables: {
           cardinality: 'apapap',
-        }
+        },
       });
 
       execError = definition.waitFor('error');
@@ -451,7 +451,7 @@ Feature('Task loop', () => {
         },
         variables: {
           cardinality: 'apapap',
-        }
+        },
       });
 
       end = definition.waitFor('end');
@@ -489,7 +489,7 @@ Feature('Task loop', () => {
       definition = new Definition(context, {
         variables: {
           cardinality: 'apapap',
-        }
+        },
       });
 
       execError = definition.waitFor('error');
@@ -505,7 +505,7 @@ Feature('Task loop', () => {
       definition = new Definition(context, {
         variables: {
           cardinality: -1,
-        }
+        },
       });
 
       execError = definition.waitFor('error');
@@ -521,7 +521,7 @@ Feature('Task loop', () => {
       definition = new Definition(context, {
         variables: {
           cardinality: undefined,
-        }
+        },
       });
 
       execError = definition.waitFor('error');
@@ -538,7 +538,7 @@ Feature('Task loop', () => {
       definition = new Definition(context, {
         variables: {
           cardinality: false,
-        }
+        },
       });
 
       runEnd = definition.waitFor('end');
@@ -553,7 +553,7 @@ Feature('Task loop', () => {
       definition = new Definition(context, {
         variables: {
           cardinality: false,
-        }
+        },
       });
 
       runEnd = definition.waitFor('end');
@@ -588,7 +588,7 @@ Feature('Task loop', () => {
       definition = new Definition(context, {
         variables: {
           cardinality: 'apapap',
-        }
+        },
       });
 
       execError = definition.waitFor('error');
@@ -623,7 +623,7 @@ Feature('Task loop', () => {
       definition = new Definition(context, {
         variables: {
           cardinality: 'apapap',
-        }
+        },
       });
 
       execError = definition.waitFor('error');
@@ -660,9 +660,9 @@ Feature('Task loop', () => {
           list: {
             get length() {
               throw new Error('cannot');
-            }
+            },
           },
-        }
+        },
       });
 
       execError = definition.waitFor('error');

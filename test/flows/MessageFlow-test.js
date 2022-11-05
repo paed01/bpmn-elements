@@ -73,7 +73,7 @@ describe('MessageFlow', () => {
     expect(messages.length).to.equal(1);
     const content = messages[0].content;
     expect(messages[0].content).to.have.property('message').that.eql({
-      id: 'message_1'
+      id: 'message_1',
     });
     expect(content).to.have.property('source').that.eql({
       processId: 'mainProcess',

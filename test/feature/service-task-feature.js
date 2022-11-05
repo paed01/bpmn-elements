@@ -22,8 +22,8 @@ Feature('Service task', () => {
         services: {
           foo() {
             ++called;
-          }
-        }
+          },
+        },
       });
       definition.run();
     });
@@ -43,8 +43,8 @@ Feature('Service task', () => {
         services: {
           foo(...args) {
             args.pop()();
-          }
-        }
+          },
+        },
       });
 
       end = definition.waitFor('leave');

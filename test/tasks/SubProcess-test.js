@@ -202,7 +202,7 @@ describe('SubProcess', () => {
       const subProcess = SubProcess({id: 'sub-process', parent: {id: 'process1'}}, testHelpers.emptyContext({
         getActivities() {
           return [{id: 'subTask', Behaviour: SignalTask}];
-        }
+        },
       }));
 
       subProcess.run();

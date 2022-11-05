@@ -27,7 +27,7 @@ Feature('Timers', () => {
       definition = new Definition(context, {
         variables: {
           catchDate: '1993-06-26',
-          dueDate: '1993-06-27'
+          dueDate: '1993-06-27',
         },
       });
     });
@@ -242,7 +242,7 @@ Feature('Timers', () => {
       definition = new Definition(context, {
         variables: {
           catchDate: '1993-06-26',
-          dueDate: '1993-06-27'
+          dueDate: '1993-06-27',
         },
       });
     });

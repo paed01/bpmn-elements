@@ -17,7 +17,7 @@ describe('LinkEventDefinition', () => {
     it('publishes wait event on parent broker', () => {
       const catchSignal = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
-        behaviour: { name: 'LINKA' }
+        behaviour: { name: 'LINKA' },
       });
 
       const messages = [];
@@ -35,8 +35,8 @@ describe('LinkEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -51,7 +51,7 @@ describe('LinkEventDefinition', () => {
     it('completes and clears listeners when signal is caught', () => {
       const catchSignal = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
-        behaviour: { name: 'LINKA' }
+        behaviour: { name: 'LINKA' },
       });
 
       const messages = [];
@@ -69,8 +69,8 @@ describe('LinkEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -86,7 +86,7 @@ describe('LinkEventDefinition', () => {
     it('completes and clears listeners if signaled before execution', () => {
       const catchSignal = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
-        behaviour: { name: 'LINKA' }
+        behaviour: { name: 'LINKA' },
       });
 
       event.broker.publish('api', 'activity.link.event_1', {message: {linkName: 'LINKA'}});
@@ -106,8 +106,8 @@ describe('LinkEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -122,7 +122,7 @@ describe('LinkEventDefinition', () => {
     it('completes and clears listeners if discarded', () => {
       const catchSignal = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
-        behaviour: { name: 'LINKA' }
+        behaviour: { name: 'LINKA' },
       });
 
       const messages = [];
@@ -140,8 +140,8 @@ describe('LinkEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -158,7 +158,7 @@ describe('LinkEventDefinition', () => {
     it('stops and clears listeners if stopped', () => {
       const catchSignal = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
-        behaviour: { name: 'LINKA' }
+        behaviour: { name: 'LINKA' },
       });
 
       const messages = [];
@@ -176,8 +176,8 @@ describe('LinkEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -193,7 +193,7 @@ describe('LinkEventDefinition', () => {
 
     it('ignores link message on link name mismatch', () => {
       const catchSignal = new LinkEventDefinition(event, {
-        behaviour: { name: 'LINKA' }
+        behaviour: { name: 'LINKA' },
       });
 
       const messages = [];
@@ -211,8 +211,8 @@ describe('LinkEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -233,7 +233,7 @@ describe('LinkEventDefinition', () => {
 
       const definition = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
-        behaviour: { name: 'LINKA' }
+        behaviour: { name: 'LINKA' },
       });
 
       const messages = [];
@@ -251,8 +251,8 @@ describe('LinkEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -269,7 +269,7 @@ describe('LinkEventDefinition', () => {
 
       new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
-        behaviour: { name: 'LINKA' }
+        behaviour: { name: 'LINKA' },
       });
 
       const messages = [];
@@ -282,7 +282,7 @@ describe('LinkEventDefinition', () => {
         parent: {
           id: 'theProcess',
           executionId: 'theProcess_0',
-        }
+        },
       });
 
       expect(messages).to.have.length(1);

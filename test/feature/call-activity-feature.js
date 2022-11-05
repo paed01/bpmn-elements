@@ -344,12 +344,12 @@ Feature('Call activity', () => {
       expect(definition.getActivityById('call-activity').counters).to.have.property('taken', 1);
       expect(definition.getProcessById('main-process').environment.output).to.deep.equal({
         'call-activity': [{
-          task: 1
+          task: 1,
         }, {
-          task: 2
+          task: 2,
         }, {
-          task: 3
-        }]
+          task: 3,
+        }],
       });
     });
 
@@ -395,12 +395,12 @@ Feature('Call activity', () => {
       expect(definition.getActivityById('call-activity').counters).to.have.property('taken', 2);
       expect(definition.getProcessById('main-process').environment.output).to.deep.equal({
         'call-activity': [{
-          task: 10
+          task: 10,
         }, {
-          task: 11
+          task: 11,
         }, {
-          task: 12
-        }]
+          task: 12,
+        }],
       });
     });
 
@@ -433,12 +433,12 @@ Feature('Call activity', () => {
     And('call activity has output from called process', () => {
       expect(definition.getProcessById('main-process').environment.output).to.deep.equal({
         'call-activity': [{
-          task: 20
+          task: 20,
         }, {
-          task: 21
+          task: 21,
         }, {
-          task: 22
-        }]
+          task: 22,
+        }],
       });
     });
   });
@@ -530,7 +530,7 @@ Feature('Call activity', () => {
         }, {
           task1: 'first',
           task2: 'second',
-        }]
+        }],
       });
     });
 
@@ -625,7 +625,7 @@ Feature('Call activity', () => {
         }, {
           task1: 'all first',
           task2: 'all second',
-        }]
+        }],
       });
     });
 
@@ -670,7 +670,7 @@ Feature('Call activity', () => {
         }, {
           task1: 'all first',
           task2: 'all second',
-        }]
+        }],
       });
     });
   });

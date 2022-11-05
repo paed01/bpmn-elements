@@ -234,10 +234,10 @@ describe('SequenceFlow', () => {
               execute(executionContext, callback) {
                 count++;
                 return callback(null, executionContext.environment.variables.input > 3);
-              }
+              },
             };
           },
-        }
+        },
       });
 
       ctx.environment.variables.input = 2;
@@ -304,10 +304,10 @@ describe('SequenceFlow', () => {
             return {
               execute() {
                 throw new Error('scripterror');
-              }
+              },
             };
           },
-        }
+        },
       });
       const flow = context.getSequenceFlowById('flowWithScript');
 

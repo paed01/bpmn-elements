@@ -39,11 +39,11 @@ Feature('Compensation', () => {
           },
           compensate(...args) {
             undoService.push(args);
-          }
+          },
         },
         extensions: {
-          saveServiceOutput
-        }
+          saveServiceOutput,
+        },
       });
 
       function saveServiceOutput(activity, execContext) {
@@ -245,8 +245,8 @@ Feature('Compensation', () => {
           },
           compensate(...args) {
             undoService.push(args);
-          }
-        }
+          },
+        },
       });
     });
 
@@ -405,8 +405,8 @@ Feature('Compensation', () => {
           },
           compensate(...args) {
             undoService.push(args);
-          }
-        }
+          },
+        },
       });
     });
 
@@ -589,8 +589,8 @@ Feature('Compensation', () => {
         services: {
           compensate(...args) {
             resumedUndoService.push(args);
-          }
-        }
+          },
+        },
       }).recover(JSON.parse(JSON.stringify(state)));
       end = recovered.waitFor('end');
 

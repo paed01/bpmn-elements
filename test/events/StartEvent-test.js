@@ -139,7 +139,7 @@ describe('StartEvent', () => {
 
       event.broker.publish('api', 'definition.signal.some-id', {
         message: {
-          id: 'start'
+          id: 'start',
         },
       }, {delegate: false});
 
@@ -169,7 +169,7 @@ describe('StartEvent', () => {
 
       event.broker.publish('api', 'definition.signal.some-id', {
         message: {
-          id: 'end'
+          id: 'end',
         },
       }, {delegate: true});
 
@@ -407,7 +407,7 @@ describe('StartEvent', () => {
         type: 'startevent',
         behaviour: {
           eventDefinitions: [{Behaviour: MessageEventDefinition}],
-        }
+        },
       }, testHelpers.emptyContext());
 
       event.once('wait', (api) => api.stop());
@@ -449,7 +449,7 @@ describe('StartEvent', () => {
         type: 'startevent',
         behaviour: {
           eventDefinitions: [{Behaviour: MessageEventDefinition}],
-        }
+        },
       }, testHelpers.emptyContext());
 
       event.once('wait', (api) => {
@@ -467,7 +467,7 @@ describe('StartEvent', () => {
       const event = StartEvent({
         id: 'start',
         type: 'startevent',
-        behaviour: {}
+        behaviour: {},
       }, testHelpers.emptyContext());
 
       event.once('enter', () => event.broker.publish('format', 'run.enter', {form: {key: 1}}));

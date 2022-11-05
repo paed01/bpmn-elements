@@ -4,7 +4,6 @@
     "node": true
   },
   "rules": {
-    "comma-dangle": 0,
     "no-unused-expressions": 0,
     "no-var": 1,
     "prefer-arrow-callback": 0

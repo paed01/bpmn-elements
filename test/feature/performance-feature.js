@@ -66,10 +66,10 @@ Feature('Performance', () => {
             return {
               execute(...args) {
                 return args.pop()();
-              }
+              },
             };
-          }
-        }
+          },
+        },
       });
       ended = definition.waitFor('end');
       definition.run();
@@ -81,7 +81,7 @@ Feature('Performance', () => {
 
     When('run without logger', () => {
       definition = new Definition(context.clone(), {
-        Logger: null
+        Logger: null,
       });
       ended = definition.waitFor('end');
       definition.run();
@@ -100,10 +100,10 @@ Feature('Performance', () => {
             return {
               execute(...args) {
                 return args.pop()();
-              }
+              },
             };
-          }
-        }
+          },
+        },
       });
       ended = definition.waitFor('end');
       definition.run();

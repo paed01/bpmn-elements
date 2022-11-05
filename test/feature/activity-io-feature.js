@@ -12,8 +12,8 @@ Feature('Activity IO', () => {
         variables: {
           _data: {
             DataObject_14zge3i: 1,
-          }
-        }
+          },
+        },
       });
     });
 
@@ -82,8 +82,8 @@ Feature('Activity IO', () => {
           _data: {
             DataObject_1: 1,
             DataObject_2: 0,
-          }
-        }
+          },
+        },
       });
     });
 
@@ -156,8 +156,8 @@ Feature('Activity IO', () => {
           _data: {
             DataObject_1: 1,
             DataObject_2: 0,
-          }
-        }
+          },
+        },
       });
     });
 
@@ -233,8 +233,8 @@ Feature('Activity IO', () => {
           _data: {
             DataObject_1: 1,
             DataObject_2: 2,
-          }
-        }
+          },
+        },
       });
     });
 
@@ -338,10 +338,10 @@ Feature('Activity IO', () => {
         variables: {
           _data: {
             DataStoreReference_1: {
-              value: 1
+              value: 1,
             },
-          }
-        }
+          },
+        },
       });
     });
 
@@ -483,10 +483,10 @@ Feature('Activity IO', () => {
         variables: {
           _data: {
             datastore: {
-              value: 1
+              value: 1,
             },
-          }
-        }
+          },
+        },
       });
     });
 

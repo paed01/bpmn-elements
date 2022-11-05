@@ -6,12 +6,12 @@ const moddle = new BpmnModdle();
 const eventActivities = [
   'bpmn:StartEvent',
   'bpmn:EndEvent',
-  'bpmn:IntermediateCatchEvent'
+  'bpmn:IntermediateCatchEvent',
 ];
 
 const decisionGateways = [
   'bpmn:ExclusiveGateway',
-  'bpmn:InclusiveGateway'
+  'bpmn:InclusiveGateway',
 ];
 
 const gateways = ['bpmn:ParallelGateway'].concat(decisionGateways);
@@ -24,7 +24,7 @@ const taskActivities = [
   'bpmn:ManualTask',
   'bpmn:UserTask',
   'bpmn:ReceiveTask',
-  'bpmn:SubProcess'
+  'bpmn:SubProcess',
 ];
 
 describe('activity', () => {
@@ -1339,7 +1339,7 @@ async function SingleFlowDefinition(activityType) {
     moddle.create('bpmn:StartEvent', {id: 'start'}),
     moddle.create(activityType, { id: 'activity' }),
     moddle.create('bpmn:EndEvent', {id: 'end1'}),
-    moddle.create('bpmn:EndEvent', {id: 'end2'})
+    moddle.create('bpmn:EndEvent', {id: 'end2'}),
   ];
 
   const [start, activity, end1, end2] = flowElements;
@@ -1347,7 +1347,7 @@ async function SingleFlowDefinition(activityType) {
   const flows = [
     moddle.create('bpmn:SequenceFlow', {id: 'flow1', sourceRef: start, targetRef: activity}),
     moddle.create('bpmn:SequenceFlow', {id: 'flow2', sourceRef: activity, targetRef: end1}),
-    moddle.create('bpmn:SequenceFlow', {id: 'flow3', sourceRef: activity, targetRef: end2})
+    moddle.create('bpmn:SequenceFlow', {id: 'flow3', sourceRef: activity, targetRef: end2}),
   ];
   const [, flow2, flow3] = flows;
 
@@ -1383,7 +1383,7 @@ async function MultipleFlowDefinition(activityType) {
     moddle.create('bpmn:ExclusiveGateway', {id: 'decision'}),
     moddle.create(activityType, { id: 'activity' }),
     moddle.create('bpmn:EndEvent', {id: 'end1'}),
-    moddle.create('bpmn:EndEvent', {id: 'end2'})
+    moddle.create('bpmn:EndEvent', {id: 'end2'}),
   ];
 
   const [start, decision, activity, end1, end2] = flowElements;
@@ -1393,7 +1393,7 @@ async function MultipleFlowDefinition(activityType) {
     moddle.create('bpmn:SequenceFlow', {id: 'flow2', sourceRef: decision, targetRef: activity}),
     moddle.create('bpmn:SequenceFlow', {id: 'flow3', sourceRef: decision, targetRef: activity}),
     moddle.create('bpmn:SequenceFlow', {id: 'flow4', sourceRef: activity, targetRef: end1}),
-    moddle.create('bpmn:SequenceFlow', {id: 'flow5', sourceRef: activity, targetRef: end2})
+    moddle.create('bpmn:SequenceFlow', {id: 'flow5', sourceRef: activity, targetRef: end2}),
   ];
   const [, flow2, flow3, flow4, flow5] = flows;
 
@@ -1441,14 +1441,14 @@ async function LoopDefinition(activityType, isSequential) {
       id: 'activity',
       loopCharacteristics,
     }),
-    moddle.create('bpmn:EndEvent', {id: 'end'})
+    moddle.create('bpmn:EndEvent', {id: 'end'}),
   ];
 
   const [start, activity, end] = flowElements;
 
   const flows = [
     moddle.create('bpmn:SequenceFlow', {id: 'flow1', sourceRef: start, targetRef: activity}),
-    moddle.create('bpmn:SequenceFlow', {id: 'flow2', sourceRef: activity, targetRef: end})
+    moddle.create('bpmn:SequenceFlow', {id: 'flow2', sourceRef: activity, targetRef: end}),
   ];
 
   const bpmnProcess = moddle.create('bpmn:Process', {

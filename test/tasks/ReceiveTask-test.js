@@ -8,8 +8,8 @@ describe('ReceiveTask', () => {
     task = ReceiveTask({
       id: 'task',
       parent: {
-        id: 'theProcess'
-      }
+        id: 'theProcess',
+      },
     }, testHelpers.emptyContext({
       getActivityById(id) {
         if (id !== 'message_1') return;
@@ -56,8 +56,8 @@ describe('ReceiveTask', () => {
 
     task.broker.publish('api', 'activity.message.task_1', {
       message: {
-        id: 'message_2'
-      }
+        id: 'message_2',
+      },
     });
 
     expect(messages).to.have.length(0);
@@ -83,7 +83,7 @@ describe('ReceiveTask', () => {
       message: {
         id: 'message_1',
         msg: 'ping',
-      }
+      },
     });
 
     task.broker.cancel('_test-tag-1');
@@ -93,13 +93,13 @@ describe('ReceiveTask', () => {
     expect(messages[0]).to.have.property('fields').with.property('routingKey', 'activity.catch');
     expect(messages[0].content).to.have.property('message').that.eql({
       id: 'message_1',
-      msg: 'ping'
+      msg: 'ping',
     });
 
     expect(messages[1]).to.have.property('fields').with.property('routingKey', 'execute.completed');
     expect(messages[1].content).to.have.property('output').that.eql({
       id: 'message_1',
-      msg: 'ping'
+      msg: 'ping',
     });
 
     task.run();
@@ -125,7 +125,7 @@ describe('ReceiveTask', () => {
     task.behaviour.messageRef = {id: 'message_1'};
 
     task.broker.publish('api', 'definition.message.def_1', {
-      message: task.getActivityById('message_1').resolve()
+      message: task.getActivityById('message_1').resolve(),
     });
 
     const messages = [];

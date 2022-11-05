@@ -33,9 +33,9 @@ describe('TerminateEventDefinition', () => {
           path: [{
             id: 'theProcess',
             executionId: 'theProcess_0',
-          }]
-        }
-      }
+          }],
+        },
+      },
     });
 
     expect(messages).to.have.length(2);

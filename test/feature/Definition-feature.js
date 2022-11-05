@@ -314,8 +314,8 @@ Feature('Definition', () => {
       definition = new Definition(context, {
         Logger: testHelpers.Logger,
         extensions: {
-          saveAllOutputToEnvironmentExtension
-        }
+          saveAllOutputToEnvironmentExtension,
+        },
       });
     });
 
@@ -444,8 +444,8 @@ Feature('Definition', () => {
       recoveredDefinition = new Definition(newContext, {
         myOption: true,
         extensions: {
-          saveAllOutputToEnvironmentExtension
-        }
+          saveAllOutputToEnvironmentExtension,
+        },
       }).recover(state);
     });
 

@@ -95,8 +95,8 @@ describe('IntermediateThrowEvent', () => {
         name: 'Signaled by event',
         parent: {
           id: 'Def_1',
-          type: 'bpmn:Definitions'
-        }
+          type: 'bpmn:Definitions',
+        },
       });
 
       await leave;

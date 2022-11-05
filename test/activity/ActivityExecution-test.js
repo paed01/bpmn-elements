@@ -1002,7 +1002,7 @@ describe('ActivityExecution', () => {
 
       execution.execute({
         fields: {
-          routingKey: 'run.execute'
+          routingKey: 'run.execute',
         },
         content: {
           id: 'activity',
@@ -1017,7 +1017,7 @@ describe('ActivityExecution', () => {
       execution.execute({
         fields: {
           routingKey: 'run.execute',
-          redelivered: true
+          redelivered: true,
         },
         content: {
           id: 'activity',
@@ -1050,7 +1050,7 @@ describe('ActivityExecution', () => {
       const executeMessages = [];
       execution.execute({
         fields: {
-          routingKey: 'run.execute'
+          routingKey: 'run.execute',
         },
         content: {
           id: 'activity',
@@ -1103,7 +1103,7 @@ describe('ActivityExecution', () => {
       const executeMessages = [];
       execution.execute({
         fields: {
-          routingKey: 'run.execute'
+          routingKey: 'run.execute',
         },
         content: {
           id: 'activity',
@@ -1944,8 +1944,8 @@ function createActivity(Behaviour) {
     type: 'task',
     parent: {
       id: 'process1',
-      type: 'process'
-    }
+      type: 'process',
+    },
   }, {
     environment,
     getInboundSequenceFlows() {

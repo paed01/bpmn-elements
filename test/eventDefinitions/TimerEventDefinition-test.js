@@ -961,7 +961,7 @@ describe('TimerEventDefinition', () => {
         timeDuration: 'PT1M',
         timeDate: '1993-06-27',
         timeCycle: 'R3/PT10H',
-        expireAt: new Date('1993-06-26T10:01Z')
+        expireAt: new Date('1993-06-26T10:01Z'),
       });
 
       definition.stop();
@@ -1000,7 +1000,7 @@ describe('TimerEventDefinition', () => {
         timeDuration: 'PT1M',
         timeDate: '1993-06-27',
         timeCycle: 'R3/PT10H',
-        expireAt: new Date('1993-06-27T00:00Z')
+        expireAt: new Date('1993-06-27T00:00Z'),
       });
 
       definition.stop();

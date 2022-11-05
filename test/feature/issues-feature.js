@@ -237,12 +237,12 @@ Feature('Issues', () => {
                 states.push(JSON.stringify(await definition.getState()));
               });
             },
-          }
+          },
         };
 
         definition = new Definition(context, {
           variables: {
-            passTask2: 1
+            passTask2: 1,
           },
           ...options,
         });
@@ -405,12 +405,12 @@ Feature('Issues', () => {
                 state = JSON.stringify(await definition.getState());
               });
             },
-          }
+          },
         };
 
         definition = new Definition(context, {
           variables: {
-            passTask2: 1
+            passTask2: 1,
           },
           ...options,
         });
@@ -515,12 +515,12 @@ Feature('Issues', () => {
                 states.push(JSON.stringify(await definition.getState()));
               });
             },
-          }
+          },
         };
 
         definition = new Definition(context, {
           variables: {
-            passTask2: 1
+            passTask2: 1,
           },
           ...options,
         });
@@ -1194,6 +1194,6 @@ function AsyncFormatting(element) {
     deactivate() {
       broker.cancel('_async-extension-on-enter');
       broker.cancel('_async-extension-on-executed');
-    }
+    },
   };
 }

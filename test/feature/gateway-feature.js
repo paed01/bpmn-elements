@@ -215,7 +215,7 @@ Feature('Gateway', () => {
         .reply(200, {
           value: 100,
         }, {
-          'content-type': 'application/json'
+          'content-type': 'application/json',
         })
         .persist();
     });
@@ -241,7 +241,7 @@ Feature('Gateway', () => {
         extensions: {
           rulesExtension,
           userInput,
-        }
+        },
       });
 
       function rulesExtension(activity) {

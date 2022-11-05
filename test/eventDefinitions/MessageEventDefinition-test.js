@@ -29,9 +29,9 @@ describe('MessageEventDefinition', () => {
         type: 'bpmn:MessageEventDefinition',
         behaviour: {
           messageRef: {
-            id: 'message_1'
-          }
-        }
+            id: 'message_1',
+          },
+        },
       });
       expect(catchMessage.executionId, 'executionId').to.be.undefined;
 
@@ -51,8 +51,8 @@ describe('MessageEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -72,9 +72,9 @@ describe('MessageEventDefinition', () => {
         type: 'bpmn:MessageEventDefinition',
         behaviour: {
           messageRef: {
-            id: 'message_1'
-          }
-        }
+            id: 'message_1',
+          },
+        },
       });
 
       const messages = [];
@@ -93,8 +93,8 @@ describe('MessageEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -104,8 +104,8 @@ describe('MessageEventDefinition', () => {
 
       event.broker.publish('api', 'activity.message.event_1', {
         message: {
-          id: 'message_2'
-        }
+          id: 'message_2',
+        },
       });
 
       expect(messages).to.have.length(0);
@@ -118,9 +118,9 @@ describe('MessageEventDefinition', () => {
         type: 'bpmn:MessageEventDefinition',
         behaviour: {
           messageRef: {
-            id: 'message_1'
-          }
-        }
+            id: 'message_1',
+          },
+        },
       });
 
       const messages = [];
@@ -143,8 +143,8 @@ describe('MessageEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -153,7 +153,7 @@ describe('MessageEventDefinition', () => {
         message: {
           id: 'message_1',
           msg: 'ping',
-        }
+        },
       });
       event.broker.cancel('_test-tag-1');
       event.broker.cancel('_test-tag-2');
@@ -162,13 +162,13 @@ describe('MessageEventDefinition', () => {
       expect(messages[0]).to.have.property('fields').with.property('routingKey', 'activity.catch');
       expect(messages[0].content).to.have.property('message').that.eql({
         id: 'message_1',
-        msg: 'ping'
+        msg: 'ping',
       });
 
       expect(messages[1]).to.have.property('fields').with.property('routingKey', 'execute.completed');
       expect(messages[1].content).to.have.property('output').that.eql({
         id: 'message_1',
-        msg: 'ping'
+        msg: 'ping',
       });
 
       expect(event.broker).to.have.property('consumerCount', 0);
@@ -195,8 +195,8 @@ describe('MessageEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -214,13 +214,13 @@ describe('MessageEventDefinition', () => {
         type: 'bpmn:MessageEventDefinition',
         behaviour: {
           messageRef: {
-            id: 'message_1'
-          }
-        }
+            id: 'message_1',
+          },
+        },
       });
 
       event.broker.publish('api', 'definition.message.def_1', {
-        message: event.getActivityById('message_1').resolve()
+        message: event.getActivityById('message_1').resolve(),
       });
 
       const messages = [];
@@ -238,8 +238,8 @@ describe('MessageEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -271,8 +271,8 @@ describe('MessageEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -306,8 +306,8 @@ describe('MessageEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -336,8 +336,8 @@ describe('MessageEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -367,8 +367,8 @@ describe('MessageEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -400,8 +400,8 @@ describe('MessageEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -424,9 +424,9 @@ describe('MessageEventDefinition', () => {
         type: 'bpmn:MessageEventDefinition',
         behaviour: {
           messageRef: {
-            id: 'message_1'
-          }
-        }
+            id: 'message_1',
+          },
+        },
       });
 
       const messages = [];
@@ -445,8 +445,8 @@ describe('MessageEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -469,8 +469,8 @@ describe('MessageEventDefinition', () => {
         behaviour: {
           messageRef: {
             id: 'message_1',
-          }
-        }
+          },
+        },
       });
 
       const messages = [];
@@ -491,8 +491,8 @@ describe('MessageEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
@@ -529,8 +529,8 @@ describe('MessageEventDefinition', () => {
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
-              executionId: 'theProcess_0'
-            }]
+              executionId: 'theProcess_0',
+            }],
           },
         },
       });
