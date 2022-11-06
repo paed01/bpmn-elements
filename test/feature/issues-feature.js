@@ -2,6 +2,7 @@ import Definition from '../../src/definition/Definition';
 import factory from '../helpers/factory';
 import testHelpers from '../helpers/testHelpers';
 import js from '../resources/extensions/JsExtension';
+import camundaBpmnModdle from 'camunda-bpmn-moddle/resources/camunda';
 
 Feature('Issues', () => {
   Scenario('Multiple discard loop back', () => {
@@ -1155,13 +1156,66 @@ Feature('Issues', () => {
       return end;
     });
   });
+
+  Scenario('FormKey on StartEvent #30', () => {
+    let definition;
+    Given('a process with form start event that should wait', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:camunda="http://camunda.org/schema/1.0/bpmn">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" camunda:formKey='startFormKey'/>
+          <userTask id="task" camunda:formKey='taskFormKey'/>
+          <endEvent id="end" />
+          <sequenceFlow id="flow1" sourceRef="start" targetRef="task" />
+          <sequenceFlow id="flow2" sourceRef="task" targetRef="end" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source, {
+        extensions: {
+          camunda: {
+            extension(activity) {
+              if (!activity.behaviour.formKey) return;
+              return {
+                activate() {
+                  activity.on('activity.start', () => {
+                    activity.broker.publish('format', 'run.enter.format', {
+                      form: { key: activity.behaviour.formKey },
+                    }, {persistant: false});
+                  }, {consumerTag: 'format_form_key'});
+                },
+                deactivate() {
+                  activity.broker.cancel('format_form_key');
+                },
+              };
+            },
+            moddleOptions: camundaBpmnModdle,
+          },
+        },
+      });
+      definition = new Definition(context);
+    });
+
+    let waitActivity;
+    When('ran', () => {
+      waitActivity = definition.waitFor('wait', (_, api) => {
+        return api.content.id;
+      });
+      definition.run();
+    });
+
+    Then('stops at StartEvent', async () => {
+      const api = await waitActivity;
+      expect(api.id).to.equal('start');
+    });
+  });
 });
 
 function AsyncFormatting(element) {
   if (element.type === 'bpmn:Process') return;
   const broker = element.broker;
   const formatQ = broker.getQueue('format-run-q');
-
 
   return {
     type: 'async:extension',
