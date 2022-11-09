@@ -872,7 +872,7 @@ proto._onStop = function onStop(message) {
   broker.cancel('_format-consumer');
 
   if (running) {
-    if (this.extensions) this.extensions.deactivate(message ? cloneMessage(message) : this._createMessage());
+    if (this.extensions) this.extensions.deactivate(cloneMessage(message));
     this._publishEvent('stop', this._createMessage());
   }
 };
