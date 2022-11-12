@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = Signal;
-
 function Signal(signalDef, context) {
   const {
     id,
@@ -15,7 +14,8 @@ function Signal(signalDef, context) {
   const {
     environment
   } = context;
-  const parent = { ...originalParent
+  const parent = {
+    ...originalParent
   };
   return {
     id,
@@ -24,7 +24,6 @@ function Signal(signalDef, context) {
     parent,
     resolve
   };
-
   function resolve(executionMessage) {
     return {
       id,
@@ -33,7 +32,8 @@ function Signal(signalDef, context) {
       ...(name && {
         name: environment.resolveExpression(name, executionMessage)
       }),
-      parent: { ...parent
+      parent: {
+        ...parent
       }
     };
   }

@@ -4,17 +4,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = ServiceImplementation;
-
 var _ExecutionScope = _interopRequireDefault(require("../activity/ExecutionScope"));
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 function ServiceImplementation(activity) {
   this.type = `${activity.type}:implementation`;
   this.implementation = activity.behaviour.implementation;
   this.activity = activity;
 }
-
 ServiceImplementation.prototype.execute = function execute(executionMessage, callback) {
   const activity = this.activity;
   const implementation = this.implementation;

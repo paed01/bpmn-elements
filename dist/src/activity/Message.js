@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = Message;
-
 function Message(messageDef, context) {
   const {
     id,
@@ -15,7 +14,8 @@ function Message(messageDef, context) {
   const {
     environment
   } = context;
-  const parent = { ...originalParent
+  const parent = {
+    ...originalParent
   };
   return {
     id,
@@ -24,7 +24,6 @@ function Message(messageDef, context) {
     parent,
     resolve
   };
-
   function resolve(executionMessage) {
     return {
       id,
@@ -33,7 +32,8 @@ function Message(messageDef, context) {
       ...(name && {
         name: environment.resolveExpression(name, executionMessage)
       }),
-      parent: { ...parent
+      parent: {
+        ...parent
       }
     };
   }

@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = Escalation;
-
 function Escalation(signalDef, context) {
   const {
     id,
@@ -15,7 +14,8 @@ function Escalation(signalDef, context) {
   const {
     environment
   } = context;
-  const parent = { ...originalParent
+  const parent = {
+    ...originalParent
   };
   return {
     id,
@@ -24,14 +24,14 @@ function Escalation(signalDef, context) {
     parent,
     resolve
   };
-
   function resolve(executionMessage) {
     return {
       id,
       type,
       messageType: 'escalation',
       name: name && environment.resolveExpression(name, executionMessage),
-      parent: { ...parent
+      parent: {
+        ...parent
       }
     };
   }

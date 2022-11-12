@@ -4,15 +4,10 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = IoSpecification;
-
 var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue"));
-
 var _shared = require("../shared");
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 const kConsuming = Symbol.for('consuming');
-
 function IoSpecification(activity, ioSpecificationDef, context) {
   const {
     id,
@@ -26,44 +21,34 @@ function IoSpecification(activity, ioSpecificationDef, context) {
   this.broker = activity.broker;
   this.context = context;
 }
-
 const proto = IoSpecification.prototype;
-
 proto.activate = function activate(message) {
   if (this[kConsuming]) return;
-
   if (message && message.fields.redelivered && message.fields.routingKey === 'run.start') {
     this._onFormatEnter();
   }
-
   if (message && message.fields.redelivered && message.fields.routingKey === 'run.end') {
     this._onFormatComplete(message);
   }
-
   this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {
     noAck: true
   });
 };
-
 proto.deactivate = function deactivate() {
   if (this[kConsuming]) this[kConsuming] = this[kConsuming].cancel();
 };
-
 proto._onActivityEvent = function onActivityEvent(routingKey, message) {
   const {
     dataInputs,
     dataOutputs
   } = this.behaviour;
-
   if ((dataInputs || dataOutputs) && routingKey === 'activity.enter') {
     return this._onFormatEnter();
   }
-
   if (dataOutputs && routingKey === 'activity.execution.completed') {
     this._onFormatComplete(message);
   }
 };
-
 proto._onFormatEnter = function onFormatOnEnter() {
   const safeType = (0, _shared.brokerSafeId)(this.type).toLowerCase();
   const startRoutingKey = `run.onstart.${safeType}`;
@@ -72,7 +57,6 @@ proto._onFormatEnter = function onFormatOnEnter() {
     dataOutputs
   } = this.behaviour;
   const broker = this.broker;
-
   if (!dataInputs) {
     return broker.publish('format', startRoutingKey, {
       ioSpecification: {
@@ -80,7 +64,6 @@ proto._onFormatEnter = function onFormatOnEnter() {
       }
     });
   }
-
   const {
     dataObjects,
     sources
@@ -104,7 +87,6 @@ proto._onFormatEnter = function onFormatOnEnter() {
     dataObjects: [],
     sources: []
   });
-
   if (!dataObjects.length) {
     return broker.publish('format', startRoutingKey, {
       ioSpecification: {
@@ -113,13 +95,13 @@ proto._onFormatEnter = function onFormatOnEnter() {
       }
     });
   }
-
   const endRoutingKey = `run.onstart.${safeType}.end`;
   broker.publish('format', `${startRoutingKey}.begin`, {
     endRoutingKey,
     ioSpecification: {
       dataInputs: sources.map(source => {
-        return { ...source
+        return {
+          ...source
         };
       }),
       dataOutputs: this._getDataOutputs(dataOutputs)
@@ -127,7 +109,6 @@ proto._onFormatEnter = function onFormatOnEnter() {
   });
   return read(broker, dataObjects, (_, responses) => {
     for (const response of responses) sources[response.index].value = response.value;
-
     broker.publish('format', endRoutingKey, {
       ioSpecification: {
         dataInputs: sources,
@@ -136,7 +117,6 @@ proto._onFormatEnter = function onFormatOnEnter() {
     });
   });
 };
-
 proto._onFormatComplete = function formatOnComplete(message) {
   const safeType = (0, _shared.brokerSafeId)(this.type).toLowerCase();
   const messageInputs = (0, _getPropertyValue.default)(message, 'content.ioSpecification.dataInputs');
@@ -173,7 +153,6 @@ proto._onFormatComplete = function formatOnComplete(message) {
     sources: []
   });
   const startRoutingKey = `run.onend.${safeType}`;
-
   if (!dataObjects.length) {
     return broker.publish('format', startRoutingKey, {
       ioSpecification: {
@@ -182,13 +161,14 @@ proto._onFormatComplete = function formatOnComplete(message) {
       }
     });
   }
-
   const endRoutingKey = `run.onend.${safeType}.end`;
   broker.publish('format', `${startRoutingKey}.begin`, {
     endRoutingKey,
-    ioSpecification: { ...(messageInputs && {
+    ioSpecification: {
+      ...(messageInputs && {
         dataInputs: messageInputs.map(input => {
-          return { ...input
+          return {
+            ...input
           };
         })
       }),
@@ -197,11 +177,12 @@ proto._onFormatComplete = function formatOnComplete(message) {
   });
   return write(broker, dataObjects, (_, responses) => {
     for (const response of responses) sources[response.index].value = response.value;
-
     broker.publish('format', endRoutingKey, {
-      ioSpecification: { ...(messageInputs && {
+      ioSpecification: {
+        ...(messageInputs && {
           dataInputs: messageInputs.map(input => {
-            return { ...input
+            return {
+              ...input
             };
           })
         }),
@@ -210,7 +191,6 @@ proto._onFormatComplete = function formatOnComplete(message) {
     });
   });
 };
-
 proto._getDataOutputs = function getDataOutputs(dataOutputs) {
   if (!dataOutputs) return;
   return dataOutputs.map(dataOutput => {
@@ -221,27 +201,25 @@ proto._getDataOutputs = function getDataOutputs(dataOutputs) {
     };
   });
 };
-
 function read(broker, dataObjectRefs, callback) {
   const responses = [];
   let count = 0;
   const dataReadConsumer = broker.subscribeTmp('data', 'data.read.#', onDataObjectResponse, {
     noAck: true
   });
-
   for (const {
     dataObject
   } of dataObjectRefs) {
     dataObject.read(broker, 'data', 'data.read.');
   }
-
   function onDataObjectResponse(routingKey, message) {
     const {
       index
     } = dataObjectRefs.find(({
       dataObject
     }) => dataObject.id === message.content.id);
-    responses.push({ ...message.content,
+    responses.push({
+      ...message.content,
       index
     });
     ++count;
@@ -250,21 +228,18 @@ function read(broker, dataObjectRefs, callback) {
     return callback(null, responses);
   }
 }
-
 function write(broker, dataObjectRefs, callback) {
   const responses = [];
   let count = 0;
   broker.subscribeTmp('data', 'data.write.#', onDataObjectResponse, {
     noAck: true
   });
-
   for (const {
     dataObject,
     value
   } of dataObjectRefs) {
     dataObject.write(broker, 'data', 'data.write.', value);
   }
-
   function onDataObjectResponse(routingKey, message) {
     const idx = dataObjectRefs.findIndex(({
       dataObject

@@ -4,9 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = TerminateEventDefinition;
-
 var _messageHelper = require("../messageHelper");
-
 function TerminateEventDefinition(activity, eventDefinition) {
   const {
     id,
@@ -22,7 +20,6 @@ function TerminateEventDefinition(activity, eventDefinition) {
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
 }
-
 TerminateEventDefinition.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const throwContent = (0, _messageHelper.cloneContent)(executeContent, {

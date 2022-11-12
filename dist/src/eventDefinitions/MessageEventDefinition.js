@@ -4,21 +4,15 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = MessageEventDefinition;
-
 var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue"));
-
 var _shared = require("../shared");
-
 var _messageHelper = require("../messageHelper");
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 const kCompleted = Symbol.for('completed');
 const kMessageQ = Symbol.for('messageQ');
 const kExecuteMessage = Symbol.for('executeMessage');
 const kReferenceElement = Symbol.for('referenceElement');
 const kReferenceInfo = Symbol.for('referenceInfo');
-
 function MessageEventDefinition(activity, eventDefinition) {
   const {
     id,
@@ -42,7 +36,6 @@ function MessageEventDefinition(activity, eventDefinition) {
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
   const referenceElement = this[kReferenceElement] = reference.id && activity.getActivityById(reference.id);
-
   if (!isThrowing) {
     this[kCompleted] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
@@ -56,20 +49,16 @@ function MessageEventDefinition(activity, eventDefinition) {
     });
   }
 }
-
 const proto = MessageEventDefinition.prototype;
 Object.defineProperty(proto, 'executionId', {
   get() {
     const message = this[kExecuteMessage];
     return message && message.content.executionId;
   }
-
 });
-
 proto.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
-
 proto.executeCatch = function executeCatch(executeMessage) {
   this[kExecuteMessage] = executeMessage;
   this[kCompleted] = false;
@@ -79,23 +68,16 @@ proto.executeCatch = function executeCatch(executeMessage) {
     parent
   } = executeContent;
   const parentExecutionId = parent && parent.executionId;
-
   const info = this[kReferenceInfo] = this._getReferenceInfo(executeMessage);
-
   this._debug(`expect ${info.description}`);
-
   const broker = this.broker;
-
   const onCatchMessage = this._onCatchMessage.bind(this);
-
   this[kMessageQ].consume(onCatchMessage, {
     noAck: true,
     consumerTag: `_api-message-${executionId}`
   });
   if (this[kCompleted]) return;
-
   const onApiMessage = this._onApiMessage.bind(this);
-
   broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
     noAck: true,
     consumerTag: `_api-${executionId}`,
@@ -112,27 +94,26 @@ proto.executeCatch = function executeCatch(executeMessage) {
   });
   const waitContent = (0, _messageHelper.cloneContent)(executeContent, {
     executionId: parentExecutionId,
-    message: { ...info.message
+    message: {
+      ...info.message
     }
   });
   waitContent.parent = (0, _messageHelper.shiftParent)(parent);
   broker.publish('event', 'activity.wait', waitContent);
 };
-
 proto.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const {
     executionId,
     parent
   } = executeContent;
-
   const info = this._getReferenceInfo(executeMessage);
-
   this.logger.debug(`<${executionId} (${this.activity.id})> message ${info.description}`);
   const broker = this.broker;
   const throwContent = (0, _messageHelper.cloneContent)(executeContent, {
     executionId: parent.executionId,
-    message: { ...executeContent.input,
+    message: {
+      ...executeContent.input,
       ...info.message
     },
     state: 'throw'
@@ -144,7 +125,6 @@ proto.executeThrow = function executeThrow(executeMessage) {
   });
   return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
-
 proto._onCatchMessage = function onCatchMessage(routingKey, message) {
   if ((0, _getPropertyValue.default)(message, 'content.message.id') !== this[kReferenceInfo].message.id) return;
   const {
@@ -152,24 +132,22 @@ proto._onCatchMessage = function onCatchMessage(routingKey, message) {
     correlationId
   } = message.properties;
   this.broker.publish('event', 'activity.consumed', (0, _messageHelper.cloneContent)(this[kExecuteMessage].content, {
-    message: { ...message.content.message
+    message: {
+      ...message.content.message
     }
   }), {
     correlationId,
     type
   });
-
   this._complete('caught', message.content.message, {
     correlationId
   });
 };
-
 proto._onApiMessage = function onApiMessage(routingKey, message) {
   const {
     type,
     correlationId
   } = message.properties;
-
   switch (type) {
     case 'message':
     case 'signal':
@@ -178,36 +156,29 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
           correlationId
         });
       }
-
     case 'discard':
       {
         this[kCompleted] = true;
-
         this._stop();
-
         return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[kExecuteMessage].content), {
           correlationId
         });
       }
-
     case 'stop':
       {
         return this._stop();
       }
   }
 };
-
 proto._complete = function complete(verb, output, options) {
   this[kCompleted] = true;
-
   this._stop();
-
   this._debug(`${verb} ${this[kReferenceInfo].description}`);
-
   const broker = this.broker;
   const executeContent = this[kExecuteMessage].content;
   const catchContent = (0, _messageHelper.cloneContent)(executeContent, {
-    message: { ...output
+    message: {
+      ...output
     },
     executionId: executeContent.parent.executionId
   });
@@ -220,35 +191,31 @@ proto._complete = function complete(verb, output, options) {
     state: 'catch'
   }), options);
 };
-
 proto._stop = function stop() {
   const broker = this.broker,
-        executionId = this.executionId;
+    executionId = this.executionId;
   broker.cancel(`_api-message-${executionId}`);
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_api-parent-${executionId}`);
   broker.cancel(`_api-delegated-${executionId}`);
   this[kMessageQ].purge();
 };
-
 proto._getReferenceInfo = function getReferenceInfo(message) {
   const referenceElement = this[kReferenceElement];
-
   if (!referenceElement) {
     return {
-      message: { ...this.reference
+      message: {
+        ...this.reference
       },
       description: 'anonymous message'
     };
   }
-
   const result = {
     message: referenceElement.resolve(message)
   };
   result.description = `${result.message.name} <${result.message.id}>`;
   return result;
 };
-
 proto._debug = function debug(msg) {
   this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
 };

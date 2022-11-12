@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = BpmnErrorActivity;
-
 function BpmnErrorActivity(errorDef, context) {
   const {
     id,
@@ -22,9 +21,9 @@ function BpmnErrorActivity(errorDef, context) {
     errorCode: behaviour.errorCode,
     resolve
   };
-
   function resolve(executionMessage, error) {
-    const resolveCtx = { ...executionMessage,
+    const resolveCtx = {
+      ...executionMessage,
       error
     };
     const result = {

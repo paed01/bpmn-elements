@@ -5,22 +5,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.StartEventBehaviour = StartEventBehaviour;
 exports.default = StartEvent;
-
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
-
 var _EventDefinitionExecution = _interopRequireDefault(require("../eventDefinitions/EventDefinitionExecution"));
-
 var _messageHelper = require("../messageHelper");
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 const kExecuteMessage = Symbol.for('executeMessage');
 const kExecution = Symbol.for('execution');
-
 function StartEvent(activityDef, context) {
   return new _Activity.default(StartEventBehaviour, activityDef, context);
 }
-
 function StartEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
@@ -28,30 +21,23 @@ function StartEventBehaviour(activity) {
   this.broker = activity.broker;
   this[kExecution] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions);
 }
-
 const proto = StartEventBehaviour.prototype;
 Object.defineProperty(proto, 'executionId', {
   get() {
     const message = this[kExecuteMessage];
     return message && message.content.executionId;
   }
-
 });
-
 proto.execute = function execute(executeMessage) {
   const execution = this[kExecution];
-
   if (execution) {
     return execution.execute(executeMessage);
   }
-
   const content = (0, _messageHelper.cloneContent)(executeMessage.content);
   const broker = this.broker;
-
   if (!content.form) {
     return broker.publish('execution', 'execute.completed', content);
   }
-
   const executionId = content.executionId;
   this[kExecuteMessage] = executeMessage;
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(...args), {
@@ -63,26 +49,23 @@ proto.execute = function execute(executeMessage) {
     noAck: true,
     consumerTag: `_api-delegated-${executionId}`
   });
-  broker.publish('event', 'activity.wait', { ...content,
+  broker.publish('event', 'activity.wait', {
+    ...content,
     executionId,
     state: 'wait'
   });
 };
-
 proto._onApiMessage = function onApiMessage(routingKey, message) {
   const {
     type: messageType,
     correlationId
   } = message.properties;
-
   switch (messageType) {
     case 'stop':
       return this._stop();
-
     case 'signal':
       {
         this._stop();
-
         const content = this[kExecuteMessage].content;
         return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
           output: message.content.message,
@@ -91,11 +74,9 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
           correlationId
         });
       }
-
     case 'discard':
       {
         this._stop();
-
         const content = this[kExecuteMessage].content;
         return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(content), {
           correlationId
@@ -103,7 +84,6 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
       }
   }
 };
-
 proto._onDelegatedApiMessage = function onDelegatedApiMessage(routingKey, message) {
   if (!message.properties.delegate) return;
   const content = message.content;
@@ -119,7 +99,8 @@ proto._onDelegatedApiMessage = function onDelegatedApiMessage(routingKey, messag
   } = message.properties;
   const executeContent = this[kExecuteMessage].content;
   this.broker.publish('event', 'activity.consumed', (0, _messageHelper.cloneContent)(executeContent, {
-    message: { ...content.message
+    message: {
+      ...content.message
     }
   }), {
     correlationId,
@@ -127,10 +108,9 @@ proto._onDelegatedApiMessage = function onDelegatedApiMessage(routingKey, messag
   });
   return this._onApiMessage(routingKey, message);
 };
-
 proto._stop = function stop() {
   const broker = this.broker,
-        executionId = this.executionId;
+    executionId = this.executionId;
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_api-delegated-${executionId}`);
 };

@@ -4,14 +4,10 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = Properties;
-
 var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue"));
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 const kProperties = Symbol.for('properties');
 const kConsuming = Symbol.for('consuming');
-
 function Properties(activity, propertiesDef, context) {
   this.activity = activity;
   this.broker = activity.broker;
@@ -20,7 +16,6 @@ function Properties(activity, propertiesDef, context) {
     dataInputObjects: [],
     dataOutputObjects: []
   };
-
   for (const {
     id,
     ...def
@@ -35,7 +30,6 @@ function Properties(activity, propertiesDef, context) {
     const outputDataObjectId = (0, _getPropertyValue.default)(def, 'behaviour.dataOutput.association.target.dataObject.id');
     const inputDataStoreId = (0, _getPropertyValue.default)(def, 'behaviour.dataInput.association.source.dataStore.id');
     const outputDataStoreId = (0, _getPropertyValue.default)(def, 'behaviour.dataOutput.association.target.dataStore.id');
-
     if (inputDataObjectId) {
       const reference = context.getDataObjectById(inputDataObjectId);
       props.dataInputObjects.push({
@@ -46,7 +40,6 @@ function Properties(activity, propertiesDef, context) {
         reference
       };
     }
-
     if (outputDataObjectId) {
       const reference = context.getDataObjectById(outputDataObjectId);
       props.dataOutputObjects.push({
@@ -57,7 +50,6 @@ function Properties(activity, propertiesDef, context) {
         reference
       };
     }
-
     if (inputDataStoreId) {
       const reference = context.getDataStoreById(inputDataStoreId);
       props.dataInputObjects.push({
@@ -68,7 +60,6 @@ function Properties(activity, propertiesDef, context) {
         reference
       };
     }
-
     if (outputDataStoreId) {
       const reference = context.getDataStoreById(outputDataStoreId);
       props.dataOutputObjects.push({
@@ -81,45 +72,35 @@ function Properties(activity, propertiesDef, context) {
     }
   }
 }
-
 const proto = Properties.prototype;
-
 proto.activate = function activate(message) {
   if (this[kConsuming]) return;
-
   if (message.fields.redelivered && message.fields.routingKey === 'run.start') {
     this._onActivityEvent('activity.enter', message);
   }
-
   if (message.fields.redelivered && message.content.properties) {
     this._onActivityEvent('activity.extension.resume', message);
   }
-
   this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {
     noAck: true
   });
 };
-
 proto.deactivate = function deactivate() {
   if (this[kConsuming]) this[kConsuming] = this[kConsuming].cancel();
 };
-
 proto._onActivityEvent = function onActivityEvent(routingKey, message) {
   switch (routingKey) {
     case 'activity.enter':
     case 'activity.extension.resume':
       return this._formatOnEnter(message);
-
     case 'activity.execution.completed':
       return this._formatOnComplete(message);
   }
 };
-
 proto._formatOnEnter = function formatOnEnter(message) {
   const startRoutingKey = 'run.enter.bpmn-properties';
   const dataInputObjects = this[kProperties].dataInputObjects;
   const broker = this.broker;
-
   if (!dataInputObjects.length) {
     return broker.getQueue('format-run-q').queueMessage({
       routingKey: startRoutingKey
@@ -127,7 +108,6 @@ proto._formatOnEnter = function formatOnEnter(message) {
       properties: this._getProperties(message)
     });
   }
-
   const endRoutingKey = 'run.enter.bpmn-properties.end';
   broker.getQueue('format-run-q').queueMessage({
     routingKey: startRoutingKey
@@ -141,16 +121,12 @@ proto._formatOnEnter = function formatOnEnter(message) {
     });
   });
 };
-
 proto._formatOnComplete = function formatOnComplete(message) {
   const startRoutingKey = 'run.end.bpmn-properties';
   const messageOutput = (0, _getPropertyValue.default)(message, 'content.output.properties') || {};
-
   const outputProperties = this._getProperties(message, messageOutput);
-
   const dataOutputObjects = this[kProperties].dataOutputObjects;
   const broker = this.broker;
-
   if (!dataOutputObjects.length) {
     return broker.getQueue('format-run-q').queueMessage({
       routingKey: startRoutingKey
@@ -158,7 +134,6 @@ proto._formatOnComplete = function formatOnComplete(message) {
       properties: outputProperties
     });
   }
-
   const endRoutingKey = 'run.end.bpmn-properties.end';
   broker.getQueue('format-run-q').queueMessage({
     routingKey: startRoutingKey
@@ -172,15 +147,13 @@ proto._formatOnComplete = function formatOnComplete(message) {
     });
   });
 };
-
 proto._getProperties = function getProperties(message, values) {
   let response = {};
-
   if (message.content.properties) {
-    response = { ...message.content.properties
+    response = {
+      ...message.content.properties
     };
   }
-
   for (const {
     id,
     type,
@@ -193,21 +166,17 @@ proto._getProperties = function getProperties(message, values) {
         name
       };
     }
-
     if (!values || !(id in values)) continue;
     response[id].value = values[id].value;
   }
-
   return response;
 };
-
 function read(broker, dataReferences, callback) {
   const responses = {};
   let count = 0;
   const dataReadConsumer = broker.subscribeTmp('data', 'data.read.#', onDataReadResponse, {
     noAck: true
   });
-
   for (const {
     id: propertyId,
     reference
@@ -216,23 +185,21 @@ function read(broker, dataReferences, callback) {
       correlationId: propertyId
     });
   }
-
   function onDataReadResponse(routingKey, message) {
-    responses[message.properties.correlationId] = { ...message.content
+    responses[message.properties.correlationId] = {
+      ...message.content
     };
     if (++count < dataReferences.length) return;
     dataReadConsumer.cancel();
     return callback(null, responses);
   }
 }
-
 function write(broker, dataReferences, properties, callback) {
   const responses = [];
   let count = 0;
   const dataWriteConsumer = broker.subscribeTmp('data', 'data.write.#', onDataWriteResponse, {
     noAck: true
   });
-
   for (const {
     id: propertyId,
     reference
@@ -242,9 +209,9 @@ function write(broker, dataReferences, properties, callback) {
       correlationId: propertyId
     });
   }
-
   function onDataWriteResponse(routingKey, message) {
-    responses[message.properties.correlationId] = { ...message.content
+    responses[message.properties.correlationId] = {
+      ...message.content
     };
     if (++count < dataReferences.length) return;
     dataWriteConsumer.cancel();

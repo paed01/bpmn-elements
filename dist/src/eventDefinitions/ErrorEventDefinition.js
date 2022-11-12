@@ -4,17 +4,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = ErrorEventDefinition;
-
 var _shared = require("../shared");
-
 var _messageHelper = require("../messageHelper");
-
 const kCompleted = Symbol.for('completed');
 const kMessageQ = Symbol.for('messageQ');
 const kExecuteMessage = Symbol.for('executeMessage');
 const kReferenceElement = Symbol.for('referenceElement');
 const kReferenceInfo = Symbol.for('referenceInfo');
-
 function ErrorEventDefinition(activity, eventDefinition) {
   const {
     id,
@@ -39,7 +35,6 @@ function ErrorEventDefinition(activity, eventDefinition) {
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
   const referenceElement = this[kReferenceElement] = reference.id && activity.getActivityById(reference.id);
-
   if (!isThrowing) {
     this[kCompleted] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
@@ -54,20 +49,16 @@ function ErrorEventDefinition(activity, eventDefinition) {
     });
   }
 }
-
 const proto = ErrorEventDefinition.prototype;
 Object.defineProperty(proto, 'executionId', {
   get() {
     const message = this[kExecuteMessage];
     return message && message.content.executionId;
   }
-
 });
-
 proto.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
-
 proto.executeCatch = function executeCatch(executeMessage) {
   this[kExecuteMessage] = executeMessage;
   this[kCompleted] = false;
@@ -77,23 +68,18 @@ proto.executeCatch = function executeCatch(executeMessage) {
     parent
   } = executeContent;
   const parentExecutionId = parent && parent.executionId;
-
   const info = this[kReferenceInfo] = this._getReferenceInfo(executeMessage);
-
   this[kMessageQ].consume(this._onThrowApiMessage.bind(this), {
     noAck: true,
     consumerTag: `_onthrow-${executionId}`
   });
   if (this[kCompleted]) return;
-
   this._debug(`expect ${info.description}`);
-
   const broker = this.broker;
   broker.subscribeTmp('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {
     noAck: true,
     consumerTag: `_api-${executionId}`
   });
-
   if (!this.environment.settings.strict) {
     const expectRoutingKey = `execute.throw.${executionId}`;
     broker.subscribeTmp('execution', expectRoutingKey, this._onErrorMessage.bind(this), {
@@ -102,35 +88,34 @@ proto.executeCatch = function executeCatch(executeMessage) {
     });
     broker.publish('execution', 'execute.expect', (0, _messageHelper.cloneContent)(executeContent, {
       expectRoutingKey,
-      expect: { ...info.message
+      expect: {
+        ...info.message
       }
     }));
     if (this[kCompleted]) return this._stop();
   }
-
   const waitContent = (0, _messageHelper.cloneContent)(executeContent, {
     executionId: parentExecutionId,
-    expect: { ...info.message
+    expect: {
+      ...info.message
     }
   });
   waitContent.parent = (0, _messageHelper.shiftParent)(parent);
   broker.publish('event', 'activity.wait', waitContent);
 };
-
 proto.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const {
     executionId,
     parent
   } = executeContent;
-
   const info = this._getReferenceInfo(executeMessage);
-
   this.logger.debug(`<${executionId} (${this.activity.id})> throw ${info.description}`);
   const broker = this.broker;
   const throwContent = (0, _messageHelper.cloneContent)(executeContent, {
     executionId: parent.executionId,
-    message: { ...info.message
+    message: {
+      ...info.message
     },
     state: 'throw'
   });
@@ -140,11 +125,11 @@ proto.executeThrow = function executeThrow(executeMessage) {
     delegate: true
   });
   return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent, {
-    message: { ...info.message
+    message: {
+      ...info.message
     }
   }));
 };
-
 proto._onErrorMessage = function onErrorMessage(routingKey, message) {
   const error = message.content.error;
   if (!this[kReferenceElement]) return this._catchError(routingKey, message, error);
@@ -153,7 +138,6 @@ proto._onErrorMessage = function onErrorMessage(routingKey, message) {
   if ('' + error.code !== '' + info.message.code) return;
   return this._catchError(routingKey, message, error);
 };
-
 proto._onThrowApiMessage = function onThrowApiMessage(routingKey, message) {
   const error = message.content.message;
   if (!this[kReferenceElement]) return this._catchError(routingKey, message, error);
@@ -161,14 +145,10 @@ proto._onThrowApiMessage = function onThrowApiMessage(routingKey, message) {
   if (info.message.id !== (error && error.id)) return;
   return this._catchError(routingKey, message, error);
 };
-
 proto._catchError = function catchError(routingKey, message, error) {
   this[kCompleted] = true;
-
   this._stop();
-
   this._debug(`caught ${this[kReferenceInfo].description}`);
-
   const executeContent = this[kExecuteMessage].content;
   const parent = executeContent.parent;
   const catchContent = (0, _messageHelper.cloneContent)(executeContent, {
@@ -191,49 +171,40 @@ proto._catchError = function catchError(routingKey, message, error) {
     state: 'catch'
   }));
 };
-
 proto._onApiMessage = function onApiMessage(routingKey, message) {
   const messageType = message.properties.type;
-
   switch (messageType) {
     case 'discard':
       {
         this[kCompleted] = true;
-
         this._stop();
-
         return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[kExecuteMessage].content));
       }
-
     case 'stop':
       {
         this._stop();
-
         break;
       }
   }
 };
-
 proto._stop = function stop() {
   const broker = this.broker,
-        executionId = this.executionId;
+    executionId = this.executionId;
   broker.cancel(`_onthrow-${executionId}`);
   broker.cancel(`_onerror-${executionId}`);
   broker.cancel(`_api-${executionId}`);
   this[kMessageQ].purge();
 };
-
 proto._getReferenceInfo = function getReferenceInfo(message) {
   const referenceElement = this[kReferenceElement];
-
   if (!referenceElement) {
     return {
-      message: { ...this.reference
+      message: {
+        ...this.reference
       },
       description: 'anonymous error'
     };
   }
-
   const result = {
     message: referenceElement.resolve(message)
   };
@@ -241,7 +212,6 @@ proto._getReferenceInfo = function getReferenceInfo(message) {
   if (result.message.code) result.description += ` code ${result.message.code}`;
   return result;
 };
-
 proto._debug = function debug(msg) {
   this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
 };

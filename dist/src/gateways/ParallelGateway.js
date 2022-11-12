@@ -5,19 +5,15 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.ParallelGatewayBehaviour = ParallelGatewayBehaviour;
 exports.default = ParallelGateway;
-
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
-
 var _messageHelper = require("../messageHelper");
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 function ParallelGateway(activityDef, context) {
-  return new _Activity.default(ParallelGatewayBehaviour, { ...activityDef,
+  return new _Activity.default(ParallelGatewayBehaviour, {
+    ...activityDef,
     isParallelGateway: true
   }, context);
 }
-
 function ParallelGatewayBehaviour(activity) {
   const {
     id,
@@ -28,7 +24,6 @@ function ParallelGatewayBehaviour(activity) {
   this.type = type;
   this.broker = broker;
 }
-
 ParallelGatewayBehaviour.prototype.execute = function execute({
   content
 }) {

@@ -4,9 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = DummyActivity;
-
 var _messageHelper = require("../messageHelper");
-
 function DummyActivity(activityDef) {
   const {
     id,
@@ -19,7 +17,8 @@ function DummyActivity(activityDef) {
     id,
     type,
     name,
-    behaviour: { ...behaviour
+    behaviour: {
+      ...behaviour
     },
     parent: (0, _messageHelper.cloneParent)(parent),
     placeholder: true

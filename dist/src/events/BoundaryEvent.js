@@ -5,27 +5,19 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.BoundaryEventBehaviour = BoundaryEventBehaviour;
 exports.default = BoundaryEvent;
-
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
-
 var _EventDefinitionExecution = _interopRequireDefault(require("../eventDefinitions/EventDefinitionExecution"));
-
 var _messageHelper = require("../messageHelper");
-
 var _shared = require("../shared");
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 const kAttachedTags = Symbol.for('attachedConsumers');
 const kCompleteContent = Symbol.for('completeContent');
 const kExecuteMessage = Symbol.for('executeMessage');
 const kExecution = Symbol.for('execution');
 const kShovels = Symbol.for('shovels');
-
 function BoundaryEvent(activityDef, context) {
   return new _Activity.default(BoundaryEventBehaviour, activityDef, context);
 }
-
 function BoundaryEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
@@ -37,32 +29,26 @@ function BoundaryEventBehaviour(activity) {
   this[kShovels] = [];
   this[kAttachedTags] = [];
 }
-
 const proto = BoundaryEventBehaviour.prototype;
 Object.defineProperty(proto, 'executionId', {
   get() {
     const message = this[kExecuteMessage];
     return message && message.content.executionId;
   }
-
 });
 Object.defineProperty(proto, 'cancelActivity', {
   enumerable: true,
-
   get() {
     const behaviour = this.activity.behaviour || {};
     return 'cancelActivity' in behaviour ? behaviour.cancelActivity : true;
   }
-
 });
-
 proto.execute = function execute(executeMessage) {
   const {
     isRootScope,
     executionId
   } = executeMessage.content;
   const eventDefinitionExecution = this[kExecution];
-
   if (isRootScope) {
     this[kExecuteMessage] = executeMessage;
     const broker = this.broker;
@@ -83,50 +69,39 @@ proto.execute = function execute(executeMessage) {
     broker.bindQueue(execQ.name, 'execution', 'execute.detach');
     broker.bindQueue(execQ.name, 'execution', 'execute.bound.completed');
     broker.bindQueue(execQ.name, 'execution', 'execute.repeat');
-
     if (eventDefinitionExecution && !this.environment.settings.strict) {
       broker.bindQueue(execQ.name, 'execution', 'execute.expect');
     }
-
     execQ.consume(this._onExecutionMessage.bind(this), {
       consumerTag: '_execution-tag'
     });
   }
-
   if (eventDefinitionExecution) {
     return eventDefinitionExecution.execute(executeMessage);
   }
 };
-
 proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
   message.ack();
-
   switch (routingKey) {
     case 'execute.detach':
       return this._onDetachMessage(routingKey, message);
-
     case 'execute.bound.completed':
       return this._onCompleted(routingKey, message);
-
     case 'execute.repeat':
       return this._onRepeatMessage(routingKey, message);
-
     case 'execute.expect':
       return this._onExpectMessage(routingKey, message);
   }
 };
-
 proto._onCompleted = function onCompleted(_, {
   content
 }) {
   if (!this.cancelActivity && !content.cancelActivity) {
     this._stop();
-
     return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
       cancelActivity: false
     }));
   }
-
   this[kCompleteContent] = content;
   const inbound = this[kExecuteMessage].content.inbound;
   const attachedToContent = inbound && inbound[0];
@@ -136,19 +111,15 @@ proto._onCompleted = function onCompleted(_, {
     content: attachedToContent
   }).discard();
 };
-
 proto._onAttachedLeave = function onAttachedLeave(_, {
   content
 }) {
   if (content.id !== this.attachedTo.id) return;
-
   this._stop();
-
   const completeContent = this[kCompleteContent];
   if (!completeContent) return this.broker.publish('execution', 'execute.discard', this[kExecuteMessage].content);
   return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(completeContent));
 };
-
 proto._onExpectMessage = function onExpectMessage(_, {
   content
 }) {
@@ -168,17 +139,14 @@ proto._onExpectMessage = function onExpectMessage(_, {
     priority: 300
   });
 };
-
 proto._onDetachMessage = function onDetachMessage(_, {
   content
 }) {
   const id = this.id,
-        executionId = this.executionId,
-        attachedTo = this.attachedTo;
+    executionId = this.executionId,
+    attachedTo = this.attachedTo;
   this.activity.logger.debug(`<${executionId} (${id})> detach from activity <${attachedTo.id}>`);
-
   this._stop(true);
-
   const {
     executionId: detachId,
     bindExchange,
@@ -201,23 +169,19 @@ proto._onDetachMessage = function onDetachMessage(_, {
     content: completeContent
   }) => {
     this._stop();
-
     this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(completeContent));
   }, {
     consumerTag: `_execution-completed-${executionId}`
   });
 };
-
 proto._onApiMessage = function onApiMessage(_, message) {
   switch (message.properties.type) {
     case 'discard':
     case 'stop':
       this._stop();
-
       break;
   }
 };
-
 proto._onRepeatMessage = function onRepeatMessage(_, message) {
   if (this.cancelActivity) return;
   const executeMessage = this[kExecuteMessage];
@@ -228,16 +192,12 @@ proto._onRepeatMessage = function onRepeatMessage(_, message) {
     repeat
   }));
 };
-
 proto._stop = function stop(detach) {
   const attachedTo = this.attachedTo,
-        broker = this.broker,
-        executionId = this.executionId;
-
+    broker = this.broker,
+    executionId = this.executionId;
   for (const tag of this[kAttachedTags].splice(0)) attachedTo.broker.cancel(tag);
-
   for (const shovelName of this[kShovels].splice(0)) attachedTo.broker.closeShovel(shovelName);
-
   broker.cancel('_execution-tag');
   broker.cancel(`_execution-completed-${executionId}`);
   if (detach) return;

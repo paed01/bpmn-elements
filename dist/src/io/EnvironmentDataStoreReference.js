@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = EnvironmentDataStoreReference;
-
 function EnvironmentDataStoreReference(dataObjectDef, {
   environment
 }) {
@@ -22,26 +21,19 @@ function EnvironmentDataStoreReference(dataObjectDef, {
   this.parent = parent;
   this.environment = environment;
 }
-
 EnvironmentDataStoreReference.prototype.read = function read(broker, exchange, routingKeyPrefix, messageProperties) {
   const environment = this.environment;
   const value = environment.variables._data && environment.variables._data[this.id];
-
   const content = this._createContent(value);
-
   return broker.publish(exchange, `${routingKeyPrefix}response`, content, messageProperties);
 };
-
 EnvironmentDataStoreReference.prototype.write = function write(broker, exchange, routingKeyPrefix, value, messageProperties) {
   const environment = this.environment;
   environment.variables._data = environment.variables._data || {};
   environment.variables._data[this.id] = value;
-
   const content = this._createContent(value);
-
   return broker.publish(exchange, `${routingKeyPrefix}response`, content, messageProperties);
 };
-
 EnvironmentDataStoreReference.prototype._createContent = function createContent(value) {
   return {
     id: this.id,

@@ -5,19 +5,13 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.CallActivityBehaviour = CallActivityBehaviour;
 exports.default = CallActivity;
-
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
-
 var _Errors = require("../error/Errors");
-
 var _messageHelper = require("../messageHelper");
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 function CallActivity(activityDef, context) {
   return new _Activity.default(CallActivityBehaviour, activityDef, context);
 }
-
 function CallActivityBehaviour(activity) {
   const {
     id,
@@ -32,19 +26,14 @@ function CallActivityBehaviour(activity) {
   this.broker = activity.broker;
   this.environment = activity.environment;
 }
-
 const proto = CallActivityBehaviour.prototype;
-
 proto.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;
-
   if (loopCharacteristics && executeContent.isRootScope) {
     return loopCharacteristics.execute(executeMessage);
   }
-
   const broker = this.broker;
-
   try {
     var calledElement = this.environment.resolveExpression(this.calledElement); // eslint-disable-line no-var
   } catch (err) {
@@ -54,7 +43,6 @@ proto.execute = function execute(executeMessage) {
       mandatory: true
     }));
   }
-
   const executionId = executeContent.executionId;
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => {
     this._onApiMessage(calledElement, executeMessage, ...args);
@@ -74,7 +62,6 @@ proto.execute = function execute(executeMessage) {
     type: 'call'
   });
 };
-
 proto._onDelegatedApiMessage = function onDelegatedApiMessage(calledElement, executeMessage, routingKey, message) {
   if (!message.properties.delegate) return;
   const {
@@ -93,7 +80,8 @@ proto._onDelegatedApiMessage = function onDelegatedApiMessage(calledElement, exe
     correlationId
   } = message.properties;
   this.broker.publish('event', 'activity.consumed', (0, _messageHelper.cloneContent)(executeContent, {
-    message: { ...delegateContent.message
+    message: {
+      ...delegateContent.message
     }
   }), {
     correlationId,
@@ -101,18 +89,15 @@ proto._onDelegatedApiMessage = function onDelegatedApiMessage(calledElement, exe
   });
   return this._onApiMessage(calledElement, executeMessage, routingKey, message);
 };
-
 proto._onApiMessage = function onApiMessage(calledElement, executeMessage, routingKey, message) {
   const {
     type: messageType,
     correlationId
   } = message.properties;
   const executeContent = executeMessage.content;
-
   switch (messageType) {
     case 'stop':
       return this._stop(executeContent.executionId);
-
     case 'cancel':
       {
         this.broker.publish('event', 'activity.call.cancel', (0, _messageHelper.cloneContent)(executeContent, {
@@ -122,27 +107,22 @@ proto._onApiMessage = function onApiMessage(calledElement, executeMessage, routi
           type: 'cancel'
         });
       }
-
     case 'signal':
       this._stop(executeContent.executionId);
-
       return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent, {
         output: message.content.message,
         state: messageType
       }), {
         correlationId
       });
-
     case 'error':
       this._stop(executeContent.executionId);
-
       return this.broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(executeContent, {
         error: new _Errors.ActivityError(message.content.message, executeMessage, message.content)
       }, {
         mandatory: true,
         correlationId
       }));
-
     case 'discard':
       return this.broker.publish('event', 'activity.call.cancel', (0, _messageHelper.cloneContent)(executeContent, {
         state: 'discard',
@@ -152,7 +132,6 @@ proto._onApiMessage = function onApiMessage(calledElement, executeMessage, routi
       });
   }
 };
-
 proto._stop = function stop(executionId) {
   const broker = this.broker;
   broker.cancel(`_api-${executionId}`);

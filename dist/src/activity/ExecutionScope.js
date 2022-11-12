@@ -4,11 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = ExecutionScope;
-
 var _messageHelper = require("../messageHelper");
-
 var _Errors = require("../error/Errors");
-
 function ExecutionScope(activity, initMessage) {
   const {
     id,
@@ -34,7 +31,6 @@ function ExecutionScope(activity, initMessage) {
     BpmnError: _Errors.BpmnError
   };
   return scope;
-
   function resolveExpression(expression) {
     return environment.resolveExpression(expression, scope);
   }

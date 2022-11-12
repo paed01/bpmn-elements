@@ -5,49 +5,41 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.SubProcessBehaviour = SubProcessBehaviour;
 exports.default = SubProcess;
-
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
-
 var _ProcessExecution = _interopRequireDefault(require("../process/ProcessExecution"));
-
 var _messageHelper = require("../messageHelper");
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 const kExecutions = Symbol.for('executions');
 const kMessageHandlers = Symbol.for('messageHandlers');
-
 function SubProcess(activityDef, context) {
   const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
-  const subProcess = new _Activity.default(SubProcessBehaviour, { ...activityDef,
+  const subProcess = new _Activity.default(SubProcessBehaviour, {
+    ...activityDef,
     isSubProcess: true,
     triggeredByEvent
   }, context);
-
   subProcess.getStartActivities = function getStartActivities(filterOptions) {
     return context.getStartActivities(filterOptions, activityDef.id);
   };
-
   subProcess.broker.cancel('_api-shake');
   subProcess.broker.subscribeTmp('api', 'activity.shake.*', onShake, {
     noAck: true,
     consumerTag: '_api-shake'
   });
   return subProcess;
-
   function onShake(_, message) {
     const {
       startId
     } = message.content;
     const last = message.content.sequence.pop();
     const sequence = new _ProcessExecution.default(subProcess, context).shake(startId);
-    message.content.sequence.push({ ...last,
+    message.content.sequence.push({
+      ...last,
       isSubProcess: true,
       sequence
     });
   }
 }
-
 function SubProcessBehaviour(activity, context) {
   const {
     id,
@@ -68,31 +60,24 @@ function SubProcessBehaviour(activity, context) {
     onExecutionCompleted: this._onExecutionCompleted.bind(this)
   };
 }
-
 const proto = SubProcessBehaviour.prototype;
 Object.defineProperty(proto, 'execution', {
   get() {
     return this[kExecutions][0];
   }
-
 });
 Object.defineProperty(proto, 'executions', {
   get() {
     return this[kExecutions].slice();
   }
-
 });
-
 proto.execute = function execute(executeMessage) {
   const content = executeMessage.content;
   let executionId = this.executionId;
-
   if (content.isRootScope) {
     executionId = this.executionId = content.executionId;
   }
-
   const loopCharacteristics = this.loopCharacteristics;
-
   if (loopCharacteristics && content.isRootScope) {
     this.broker.subscribeTmp('api', `activity.#.${executionId}`, this[kMessageHandlers].onApiRootMessage, {
       noAck: true,
@@ -101,13 +86,10 @@ proto.execute = function execute(executeMessage) {
     });
     return loopCharacteristics.execute(executeMessage);
   }
-
   const processExecution = this._upsertExecution(executeMessage);
-
   if (!processExecution) return;
   return processExecution.execute(executeMessage);
 };
-
 proto.stop = function stop() {
   for (const execution of this[kExecutions]) {
     this.broker.cancel(`_sub-process-execution-${execution.executionId}`);
@@ -115,7 +97,6 @@ proto.stop = function stop() {
     execution.stop();
   }
 };
-
 proto.discard = function discard() {
   for (const execution of this[kExecutions]) {
     this.broker.cancel(`_sub-process-execution-${execution.executionId}`);
@@ -123,7 +104,6 @@ proto.discard = function discard() {
     execution.discard();
   }
 };
-
 proto.getState = function getState() {
   if (this.loopCharacteristics) {
     return {
@@ -134,120 +114,96 @@ proto.getState = function getState() {
       })
     };
   }
-
   const execution = this.execution;
-
   if (execution) {
     const state = execution.getState();
     state.environment = execution.environment.getState();
     return state;
   }
 };
-
 proto.recover = function recover(state) {
   if (!state) return;
   const executions = this[kExecutions];
   const loopCharacteristics = this.loopCharacteristics;
-
   if (loopCharacteristics && state.executions) {
     executions.splice(0);
-
     for (const se of state.executions) {
       this.recover(se);
     }
-
     return;
   }
-
   if (!loopCharacteristics) {
     executions.splice(0);
   }
-
   const subEnvironment = this.environment.clone().recover(state.environment);
   const subContext = this.context.clone(subEnvironment);
   const execution = new _ProcessExecution.default(this.activity, subContext).recover(state);
   executions.push(execution);
   return execution;
 };
-
 proto.getPostponed = function getPostponed() {
   return this[kExecutions].reduce((result, pe) => {
     result = result.concat(pe.getPostponed());
     return result;
   }, []);
 };
-
 proto._onApiRootMessage = function onApiRootMessage(_, message) {
   const messageType = message.properties.type;
-
   switch (messageType) {
     case 'stop':
       this.broker.cancel(message.fields.consumerTag);
       this.stop();
       break;
-
     case 'discard':
       this.broker.cancel(message.fields.consumerTag);
       this.discard();
       break;
   }
 };
-
 proto._upsertExecution = function upsertExecution(executeMessage) {
   const content = executeMessage.content;
   const executionId = content.executionId;
-
   let execution = this._getExecutionById(executionId);
-
   if (execution) {
     if (executeMessage.fields.redelivered) this._addListeners(execution, executionId);
     return execution;
   }
-
   const subEnvironment = this.environment.clone();
   const subContext = this.context.clone(subEnvironment);
   execution = new _ProcessExecution.default(this.activity, subContext);
   this[kExecutions].push(execution);
-
   this._addListeners(execution, executionId);
-
   return execution;
 };
-
 proto._addListeners = function addListeners(processExecution, executionId) {
   this.broker.subscribeTmp('subprocess-execution', `execution.#.${executionId}`, this[kMessageHandlers].onExecutionCompleted, {
     noAck: true,
     consumerTag: `_sub-process-execution-${executionId}`
   });
 };
-
 proto._onExecutionCompleted = function onExecutionCompleted(_, message) {
   if (message.fields.redelivered && message.properties.persistent === false) return;
   const content = message.content;
   const messageType = message.properties.type;
   const broker = this.broker;
-
   switch (messageType) {
     case 'stopped':
       {
         broker.cancel(message.fields.consumerTag);
         break;
       }
-
     case 'discard':
       {
         broker.cancel(message.fields.consumerTag);
         broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(content));
         break;
       }
-
     case 'completed':
       {
         broker.cancel(message.fields.consumerTag);
         broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content));
         break;
       }
-
     case 'error':
       {
         broker.cancel(message.fields.consumerTag);
@@ -260,21 +216,17 @@ proto._onExecutionCompleted = function onExecutionCompleted(_, message) {
       }
   }
 };
-
 proto.getApi = function getApi(apiMessage) {
   const content = apiMessage.content;
   if (content.id === this.id) return;
   let execution;
-
   if (execution = this._getExecutionById(content.parent.executionId)) {
     return execution.getApi(apiMessage);
   }
-
   for (const pp of content.parent.path) {
     if (execution = this._getExecutionById(pp.executionId)) return execution.getApi(apiMessage);
   }
 };
-
 proto._getExecutionById = function getExecutionById(executionId) {
   return this[kExecutions].find(pe => pe.executionId === executionId);
 };

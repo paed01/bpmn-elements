@@ -333,101 +333,52 @@ Object.defineProperty(exports, "UserTask", {
     return _SignalTask.default;
   }
 });
-
 var _Activity = _interopRequireDefault(require("./src/activity/Activity"));
-
 var _Association = _interopRequireDefault(require("./src/flows/Association"));
-
 var _BoundaryEvent = _interopRequireDefault(require("./src/events/BoundaryEvent"));
-
 var _BpmnError = _interopRequireDefault(require("./src/error/BpmnError"));
-
 var _CallActivity = _interopRequireDefault(require("./src/tasks/CallActivity"));
-
 var _CancelEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/CancelEventDefinition"));
-
 var _CompensateEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/CompensateEventDefinition"));
-
 var _ConditionalEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/ConditionalEventDefinition"));
-
 var _Context = _interopRequireDefault(require("./src/Context"));
-
 var _EnvironmentDataObject = _interopRequireDefault(require("./src/io/EnvironmentDataObject"));
-
 var _EnvironmentDataStore = _interopRequireDefault(require("./src/io/EnvironmentDataStore"));
-
 var _EnvironmentDataStoreReference = _interopRequireDefault(require("./src/io/EnvironmentDataStoreReference"));
-
 var _Definition = _interopRequireDefault(require("./src/definition/Definition"));
-
 var _Dummy = _interopRequireDefault(require("./src/activity/Dummy"));
-
 var _EndEvent = _interopRequireDefault(require("./src/events/EndEvent"));
-
 var _Environment = _interopRequireDefault(require("./src/Environment"));
-
 var _ErrorEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/ErrorEventDefinition"));
-
 var _Escalation = _interopRequireDefault(require("./src/activity/Escalation"));
-
 var _EscalationEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/EscalationEventDefinition"));
-
 var _EventBasedGateway = _interopRequireDefault(require("./src/gateways/EventBasedGateway"));
-
 var _ExclusiveGateway = _interopRequireDefault(require("./src/gateways/ExclusiveGateway"));
-
 var _InclusiveGateway = _interopRequireDefault(require("./src/gateways/InclusiveGateway"));
-
 var _InputOutputSpecification = _interopRequireDefault(require("./src/io/InputOutputSpecification"));
-
 var _IntermediateCatchEvent = _interopRequireDefault(require("./src/events/IntermediateCatchEvent"));
-
 var _IntermediateThrowEvent = _interopRequireDefault(require("./src/events/IntermediateThrowEvent"));
-
 var _LinkEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/LinkEventDefinition"));
-
 var _LoopCharacteristics = _interopRequireDefault(require("./src/tasks/LoopCharacteristics"));
-
 var _Message = _interopRequireDefault(require("./src/activity/Message"));
-
 var _MessageEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/MessageEventDefinition"));
-
 var _MessageFlow = _interopRequireDefault(require("./src/flows/MessageFlow"));
-
 var _ParallelGateway = _interopRequireDefault(require("./src/gateways/ParallelGateway"));
-
 var _Process = _interopRequireDefault(require("./src/process/Process"));
-
 var _Properties = _interopRequireDefault(require("./src/io/Properties"));
-
 var _ReceiveTask = _interopRequireDefault(require("./src/tasks/ReceiveTask"));
-
 var _ScriptTask = _interopRequireDefault(require("./src/tasks/ScriptTask"));
-
 var _SequenceFlow = _interopRequireDefault(require("./src/flows/SequenceFlow"));
-
 var _ServiceImplementation = _interopRequireDefault(require("./src/tasks/ServiceImplementation"));
-
 var _ServiceTask = _interopRequireDefault(require("./src/tasks/ServiceTask"));
-
 var _Signal = _interopRequireDefault(require("./src/activity/Signal"));
-
 var _SignalEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/SignalEventDefinition"));
-
 var _SignalTask = _interopRequireDefault(require("./src/tasks/SignalTask"));
-
 var _StandardLoopCharacteristics = _interopRequireDefault(require("./src/tasks/StandardLoopCharacteristics"));
-
 var _StartEvent = _interopRequireDefault(require("./src/events/StartEvent"));
-
 var _SubProcess = _interopRequireDefault(require("./src/tasks/SubProcess"));
-
 var _Task = _interopRequireDefault(require("./src/tasks/Task"));
-
 var _TerminateEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/TerminateEventDefinition"));
-
 var _TimerEventDefinition = _interopRequireDefault(require("./src/eventDefinitions/TimerEventDefinition"));
-
 var _Transaction = _interopRequireDefault(require("./src/tasks/Transaction"));
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }

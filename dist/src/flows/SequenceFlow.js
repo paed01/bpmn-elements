@@ -4,23 +4,15 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-
 var _ExecutionScope = _interopRequireDefault(require("../activity/ExecutionScope"));
-
 var _messageHelper = require("../messageHelper");
-
 var _shared = require("../shared");
-
 var _EventBroker = require("../EventBroker");
-
 var _Api = require("../Api");
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 const kCounters = Symbol.for('counters');
 var _default = SequenceFlow;
 exports.default = _default;
-
 function SequenceFlow(flowDef, {
   environment
 }) {
@@ -69,18 +61,15 @@ function SequenceFlow(flowDef, {
   this.emitFatal = emitFatal;
   logger.debug(`<${id}> init, <${sourceId}> -> <${targetId}>`);
 }
-
 const proto = SequenceFlow.prototype;
 Object.defineProperty(proto, 'counters', {
   enumerable: true,
-
   get() {
-    return { ...this[kCounters]
+    return {
+      ...this[kCounters]
     };
   }
-
 });
-
 proto.take = function take(content = {}) {
   this.looped = undefined;
   const {
@@ -88,53 +77,42 @@ proto.take = function take(content = {}) {
   } = content;
   this.logger.debug(`<${sequenceId} (${this.id})> take, target <${this.targetId}>`);
   ++this[kCounters].take;
-
   this._publishEvent('take', content);
-
   return true;
 };
-
 proto.discard = function discard(content = {}) {
   const {
     sequenceId = (0, _shared.getUniqueId)(this.id)
   } = content;
   const discardSequence = content.discardSequence = (content.discardSequence || []).slice();
-
   if (discardSequence.indexOf(this.targetId) > -1) {
     ++this[kCounters].looped;
     this.logger.debug(`<${this.id}> discard loop detected <${this.sourceId}> -> <${this.targetId}>. Stop.`);
     return this._publishEvent('looped', content);
   }
-
   discardSequence.push(this.sourceId);
   this.logger.debug(`<${sequenceId} (${this.id})> discard, target <${this.targetId}>`);
   ++this[kCounters].discard;
-
   this._publishEvent('discard', content);
 };
-
 proto.getState = function getState() {
   return this.createMessage({
     counters: this.counters,
     broker: this.broker.getState(true)
   });
 };
-
 proto.recover = function recover(state) {
   Object.assign(this[kCounters], state.counters);
   this.broker.recover(state.broker);
 };
-
 proto.getApi = function getApi(message) {
   return (0, _Api.FlowApi)(this.broker, message || {
     content: this.createMessage()
   });
 };
-
 proto.stop = function stop() {
   this.broker.stop();
 };
-
 proto.shake = function shake(message) {
   const content = (0, _messageHelper.cloneContent)(message.content);
   content.sequence = content.sequence || [];
@@ -148,20 +126,17 @@ proto.shake = function shake(message) {
     persistent: false,
     type: 'shake'
   });
-
   for (const s of message.content.sequence) {
     if (s.id === this.id) return this.broker.publish('event', 'flow.shake.loop', content, {
       persistent: false,
       type: 'shake'
     });
   }
-
   this.broker.publish('event', 'flow.shake', content, {
     persistent: false,
     type: 'shake'
   });
 };
-
 proto.getCondition = function getCondition() {
   const conditionExpression = this.behaviour.conditionExpression;
   if (!conditionExpression) return null;
@@ -169,21 +144,18 @@ proto.getCondition = function getCondition() {
     language
   } = conditionExpression;
   const script = this.environment.getScript(language, this);
-
   if (script) {
     return new ScriptCondition(this, script, language);
   }
-
   if (!conditionExpression.body) {
     const msg = language ? `Condition expression script ${language} is unsupported or was not registered` : 'Condition expression without body is unsupported';
     return this.emitFatal(new Error(msg), this.createMessage());
   }
-
   return new ExpressionCondition(this, conditionExpression.body);
 };
-
 proto.createMessage = function createMessage(override) {
-  return { ...override,
+  return {
+    ...override,
     id: this.id,
     type: this.type,
     name: this.name,
@@ -194,7 +166,6 @@ proto.createMessage = function createMessage(override) {
     parent: (0, _messageHelper.cloneParent)(this.parent)
   };
 };
-
 proto._publishEvent = function publishEvent(action, content) {
   const eventContent = this.createMessage({
     action,
@@ -204,17 +175,14 @@ proto._publishEvent = function publishEvent(action, content) {
     type: action
   });
 };
-
 function ScriptCondition(owner, script, language) {
   this.type = 'script';
   this.language = language;
   this._owner = owner;
   this._script = script;
 }
-
 ScriptCondition.prototype.execute = function execute(message, callback) {
   const owner = this._owner;
-
   try {
     return this._script.execute((0, _ExecutionScope.default)(owner, message), callback);
   } catch (err) {
@@ -223,16 +191,13 @@ ScriptCondition.prototype.execute = function execute(message, callback) {
     callback(err);
   }
 };
-
 function ExpressionCondition(owner, expression) {
   this.type = 'expression';
   this.expression = expression;
   this._owner = owner;
 }
-
 ExpressionCondition.prototype.execute = function execute(message, callback) {
   const owner = this._owner;
-
   try {
     const result = owner.environment.resolveExpression(this.expression, owner.createMessage(message));
     if (callback) return callback(null, result);

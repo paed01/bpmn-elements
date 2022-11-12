@@ -5,17 +5,12 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.InclusiveGatewayBehaviour = InclusiveGatewayBehaviour;
 exports.default = InclusiveGateway;
-
 var _Activity = _interopRequireDefault(require("../activity/Activity"));
-
 var _messageHelper = require("../messageHelper");
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 function InclusiveGateway(activityDef, context) {
   return new _Activity.default(InclusiveGatewayBehaviour, activityDef, context);
 }
-
 function InclusiveGatewayBehaviour(activity) {
   const {
     id,
@@ -26,7 +21,6 @@ function InclusiveGatewayBehaviour(activity) {
   this.type = type;
   this.broker = broker;
 }
-
 InclusiveGatewayBehaviour.prototype.execute = function execute({
   content
 }) {

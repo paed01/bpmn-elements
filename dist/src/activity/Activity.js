@@ -4,23 +4,14 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-
 var _ActivityExecution = _interopRequireDefault(require("./ActivityExecution"));
-
 var _shared = require("../shared");
-
 var _Api = require("../Api");
-
 var _EventBroker = require("../EventBroker");
-
 var _MessageFormatter = require("../MessageFormatter");
-
 var _messageHelper = require("../messageHelper");
-
 var _Errors = require("../error/Errors");
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 const kActivityDef = Symbol.for('activityDefinition');
 const kConsuming = Symbol.for('consuming');
 const kCounters = Symbol.for('counters');
@@ -35,7 +26,6 @@ const kMessageHandlers = Symbol.for('messageHandlers');
 const kStateMessage = Symbol.for('stateMessage');
 var _default = Activity;
 exports.default = _default;
-
 function Activity(Behaviour, activityDef, context) {
   const {
     id,
@@ -51,7 +41,8 @@ function Activity(Behaviour, activityDef, context) {
   this.id = id;
   this.type = type;
   this.name = name;
-  this.behaviour = { ...behaviour,
+  this.behaviour = {
+    ...behaviour,
     eventDefinitions
   };
   this.Behaviour = Behaviour;
@@ -64,12 +55,10 @@ function Activity(Behaviour, activityDef, context) {
     discarded: 0
   };
   let attachedToActivity, attachedTo;
-
   if (attachedToRef) {
     attachedTo = attachedToRef.id;
     attachedToActivity = context.getActivityById(attachedToRef.id);
   }
-
   const {
     broker,
     on,
@@ -114,14 +103,11 @@ function Activity(Behaviour, activityDef, context) {
     onApiMessage: this._onApiMessage.bind(this),
     onExecutionMessage: this._onExecutionMessage.bind(this)
   };
-
   const onInboundEvent = this._onInboundEvent.bind(this);
-
   broker.assertQueue('inbound-q', {
     durable: true,
     autoDelete: false
   });
-
   if (isForCompensation) {
     for (const trigger of inboundAssociations) {
       trigger.broker.subscribeTmp('event', '#', onInboundEvent, {
@@ -140,57 +126,45 @@ function Activity(Behaviour, activityDef, context) {
       });
     }
   }
-
   this[kEventDefinitions] = eventDefinitions && eventDefinitions.map(ed => new ed.Behaviour(this, ed, this.context));
   this[kExtensions] = context.loadExtensions(this);
 }
-
 const proto = Activity.prototype;
 Object.defineProperty(proto, 'counters', {
   enumerable: true,
-
   get() {
-    return { ...this[kCounters]
+    return {
+      ...this[kCounters]
     };
   }
-
 });
 Object.defineProperty(proto, 'execution', {
   enumerable: true,
-
   get() {
     return this[kExec].execution;
   }
-
 });
 Object.defineProperty(proto, 'executionId', {
   enumerable: true,
-
   get() {
     return this[kExec].executionId;
   }
-
 });
 Object.defineProperty(proto, 'extensions', {
   enumerable: true,
-
   get() {
     return this[kExtensions];
   }
-
 });
 Object.defineProperty(proto, 'bpmnIo', {
   enumerable: true,
-
   get() {
     const extensions = this[kExtensions];
     return extensions && extensions.extensions.find(e => e.type === 'bpmnio');
   }
-
 });
 Object.defineProperty(proto, 'formatter', {
   enumerable: true,
-
   get() {
     let formatter = this[kFormatter];
     if (formatter) return formatter;
@@ -202,150 +176,117 @@ Object.defineProperty(proto, 'formatter', {
     }, broker.getQueue('format-run-q'));
     return formatter;
   }
-
 });
 Object.defineProperty(proto, 'isRunning', {
   enumerable: true,
-
   get() {
     if (!this[kConsuming]) return false;
     return !!this.status;
   }
-
 });
 Object.defineProperty(proto, 'outbound', {
   enumerable: true,
-
   get() {
     return this[kFlows].outboundSequenceFlows;
   }
-
 });
 Object.defineProperty(proto, 'inbound', {
   enumerable: true,
-
   get() {
     return this[kFlows].inboundSequenceFlows;
   }
-
 });
 Object.defineProperty(proto, 'isEnd', {
   enumerable: true,
-
   get() {
     return this[kFlags].isEnd;
   }
-
 });
 Object.defineProperty(proto, 'isStart', {
   enumerable: true,
-
   get() {
     return this[kFlags].isStart;
   }
-
 });
 Object.defineProperty(proto, 'isSubProcess', {
   enumerable: true,
-
   get() {
     return this[kFlags].isSubProcess;
   }
-
 });
 Object.defineProperty(proto, 'isMultiInstance', {
   enumerable: true,
-
   get() {
     return this[kFlags].isMultiInstance;
   }
-
 });
 Object.defineProperty(proto, 'isThrowing', {
   enumerable: true,
-
   get() {
     return this[kFlags].isThrowing;
   }
-
 });
 Object.defineProperty(proto, 'isForCompensation', {
   enumerable: true,
-
   get() {
     return this[kFlags].isForCompensation;
   }
-
 });
 Object.defineProperty(proto, 'triggeredByEvent', {
   enumerable: true,
-
   get() {
     return this[kActivityDef].triggeredByEvent;
   }
-
 });
 Object.defineProperty(proto, 'attachedTo', {
   enumerable: true,
-
   get() {
     const attachedToId = this[kFlags].attachedTo;
     if (!attachedToId) return null;
     return this.getActivityById(attachedToId);
   }
-
 });
 Object.defineProperty(proto, 'eventDefinitions', {
   enumerable: true,
-
   get() {
     return this[kEventDefinitions];
   }
-
 });
-
 proto.activate = function activate() {
   if (this[kFlags].isForCompensation) return;
   return this._consumeInbound();
 };
-
 proto.deactivate = function deactivate() {
   const broker = this.broker;
   broker.cancel('_run-on-inbound');
   broker.cancel('_format-consumer');
 };
-
 proto.init = function init(initContent) {
   const id = this.id;
   const exec = this[kExec];
   const executionId = exec.initExecutionId = exec.initExecutionId || (0, _shared.getUniqueId)(id);
   this.logger.debug(`<${id}> initialized with executionId <${executionId}>`);
-
-  this._publishEvent('init', this._createMessage({ ...initContent,
+  this._publishEvent('init', this._createMessage({
+    ...initContent,
     executionId
   }));
 };
-
 proto.run = function run(runContent) {
   const id = this.id;
   if (this.isRunning) throw new Error(`activity <${id}> is already running`);
   const exec = this[kExec];
   const executionId = exec.executionId = exec.initExecutionId || (0, _shared.getUniqueId)(id);
   exec.initExecutionId = null;
-
   this._consumeApi();
-
-  const content = this._createMessage({ ...runContent,
+  const content = this._createMessage({
+    ...runContent,
     executionId
   });
-
   const broker = this.broker;
   broker.publish('run', 'run.enter', content);
   broker.publish('run', 'run.start', (0, _messageHelper.cloneContent)(content));
-
   this._consumeRunQ();
 };
-
 proto.recover = function recover(state) {
   if (this.isRunning) throw new Error(`cannot recover running activity <${this.id}>`);
   if (!state) return;
@@ -353,56 +294,43 @@ proto.recover = function recover(state) {
   this.status = state.status;
   const exec = this[kExec];
   exec.executionId = state.executionId;
-  this[kCounters] = { ...this[kCounters],
+  this[kCounters] = {
+    ...this[kCounters],
     ...state.counters
   };
-
   if (state.execution) {
     exec.execution = new _ActivityExecution.default(this, this.context).recover(state.execution);
   }
-
   this.broker.recover(state.broker);
   return this;
 };
-
 proto.resume = function resume() {
   if (this[kConsuming]) {
     throw new Error(`cannot resume running activity <${this.id}>`);
   }
-
   if (!this.status) return this.activate();
   this.stopped = false;
-
   this._consumeApi();
-
   const content = this._createMessage();
-
   this.broker.publish('run', 'run.resume', content, {
     persistent: false
   });
-
   this._consumeRunQ();
 };
-
 proto.discard = function discard(discardContent) {
   if (!this.status) return this._runDiscard(discardContent);
   const execution = this[kExec].execution;
   if (execution && !execution.completed) return execution.discard();
-
   this._deactivateRunConsumers();
-
   const broker = this.broker;
   broker.getQueue('run-q').purge();
   broker.publish('run', 'run.discard', (0, _messageHelper.cloneContent)(this[kStateMessage].content));
-
   this._consumeRunQ();
 };
-
 proto.stop = function stop() {
   if (!this[kConsuming]) return;
   return this.getApi().stop();
 };
-
 proto.next = function next() {
   if (!this.environment.settings.step) return;
   const stateMessage = this[kStateMessage];
@@ -413,82 +341,68 @@ proto.next = function next() {
   stateMessage.ack();
   return current;
 };
-
 proto.shake = function shake() {
   this._shakeOutbound({
     content: this._createMessage()
   });
 };
-
 proto.evaluateOutbound = function evaluateOutbound(fromMessage, discardRestAtTake, callback) {
   return this[kFlows].outboundEvaluator.evaluate(fromMessage, discardRestAtTake, callback);
 };
-
 proto.getState = function getState() {
   const msg = this._createMessage();
-
   const exec = this[kExec];
-  return { ...msg,
+  return {
+    ...msg,
     executionId: exec.executionId,
     stopped: this.stopped,
-    behaviour: { ...this.behaviour
+    behaviour: {
+      ...this.behaviour
     },
     counters: this.counters,
     broker: this.broker.getState(true),
     execution: exec.execution && exec.execution.getState()
   };
 };
-
 proto.getApi = function getApi(message) {
   const execution = this[kExec].execution;
   if (execution && !execution.completed) return execution.getApi(message);
   return (0, _Api.ActivityApi)(this.broker, message || this[kStateMessage]);
 };
-
 proto.getActivityById = function getActivityById(elementId) {
   return this.context.getActivityById(elementId);
 };
-
 proto._runDiscard = function runDiscard(discardContent) {
   const exec = this[kExec];
   const executionId = exec.executionId = exec.initExecutionId || (0, _shared.getUniqueId)(this.id);
   exec.initExecutionId = null;
-
   this._consumeApi();
-
-  const content = this._createMessage({ ...discardContent,
+  const content = this._createMessage({
+    ...discardContent,
     executionId
   });
-
   this.broker.publish('run', 'run.discard', content);
-
   this._consumeRunQ();
 };
-
 proto._discardRun = function discardRun() {
   const status = this.status;
   if (!status) return;
   const execution = this[kExec].execution;
   if (execution && !execution.completed) return;
-
   switch (status) {
     case 'executing':
     case 'error':
     case 'discarded':
       return;
   }
-
   this._deactivateRunConsumers();
-
   const message = this[kStateMessage];
   if (this.extensions) this.extensions.deactivate((0, _messageHelper.cloneMessage)(message));
   const broker = this.broker;
   broker.getQueue('run-q').purge();
   broker.publish('run', 'run.discard', (0, _messageHelper.cloneContent)(message.content));
-
   this._consumeRunQ();
 };
-
 proto._shakeOutbound = function shakeOutbound(sourceMessage) {
   const message = (0, _messageHelper.cloneMessage)(sourceMessage);
   message.content.sequence = message.content.sequence || [];
@@ -501,33 +415,27 @@ proto._shakeOutbound = function shakeOutbound(sourceMessage) {
     persistent: false,
     type: 'shake'
   });
-
   if (this[kFlags].isEnd) {
     return broker.publish('event', 'activity.shake.end', message.content, {
       persistent: false,
       type: 'shake'
     });
   }
-
   for (const flow of this[kFlows].outboundSequenceFlows) flow.shake(message);
 };
-
 proto._consumeInbound = function consumeInbound() {
   if (this.status) return;
   const inboundQ = this.broker.getQueue('inbound-q');
-
   if (this[kFlags].isParallelJoin) {
     return inboundQ.consume(this[kMessageHandlers].onInbound, {
       consumerTag: '_run-on-inbound',
       prefetch: 1000
     });
   }
-
   return inboundQ.consume(this[kMessageHandlers].onInbound, {
     consumerTag: '_run-on-inbound'
   });
 };
-
 proto._onInbound = function onInbound(routingKey, message) {
   message.ack();
   const id = this.id;
@@ -535,7 +443,6 @@ proto._onInbound = function onInbound(routingKey, message) {
   broker.cancel('_run-on-inbound');
   const content = message.content;
   const inbound = [(0, _messageHelper.cloneContent)(content)];
-
   switch (routingKey) {
     case 'association.take':
     case 'flow.take':
@@ -545,7 +452,6 @@ proto._onInbound = function onInbound(routingKey, message) {
         message: content.message,
         inbound
       });
-
     case 'flow.discard':
     case 'activity.discard':
       {
@@ -556,7 +462,6 @@ proto._onInbound = function onInbound(routingKey, message) {
           discardSequence
         });
       }
-
     case 'association.complete':
       {
         broker.cancel('_run-on-inbound');
@@ -568,7 +473,6 @@ proto._onInbound = function onInbound(routingKey, message) {
       }
   }
 };
-
 proto._onJoinInbound = function onJoinInbound(routingKey, message) {
   const {
     content
@@ -582,12 +486,10 @@ proto._onJoinInbound = function onJoinInbound(routingKey, message) {
   inboundJoinFlows.push(message);
   if (idx > -1) return;
   const allTouched = inboundJoinFlows.length >= inboundTriggers.length;
-
   if (!allTouched) {
     const remaining = inboundSequenceFlows.filter((inb, i, list) => list.indexOf(inb) === i).length - inboundJoinFlows.length;
     return this.logger.debug(`<${this.id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
   }
-
   const evaluatedInbound = inboundJoinFlows.splice(0);
   let taken;
   const inbound = evaluatedInbound.map(im => {
@@ -597,11 +499,9 @@ proto._onJoinInbound = function onJoinInbound(routingKey, message) {
   });
   const discardSequence = !taken && evaluatedInbound.reduce((result, im) => {
     if (!im.content.discardSequence) return result;
-
     for (const sourceId of im.content.discardSequence) {
       if (result.indexOf(sourceId) === -1) result.push(sourceId);
     }
-
     return result;
   }, []);
   this.broker.cancel('_run-on-inbound');
@@ -613,7 +513,6 @@ proto._onJoinInbound = function onJoinInbound(routingKey, message) {
     inbound
   });
 };
-
 proto._onInboundEvent = function onInboundEvent(routingKey, message) {
   const {
     fields,
@@ -622,7 +521,6 @@ proto._onInboundEvent = function onInboundEvent(routingKey, message) {
   } = message;
   const id = this.id;
   const inboundQ = this.broker.getQueue('inbound-q');
-
   switch (routingKey) {
     case 'activity.enter':
     case 'activity.discard':
@@ -630,43 +528,35 @@ proto._onInboundEvent = function onInboundEvent(routingKey, message) {
         if (content.id === this[kFlags].attachedTo) {
           inboundQ.queueMessage(fields, (0, _messageHelper.cloneContent)(content), properties);
         }
-
         break;
       }
-
     case 'flow.shake':
       {
         return this._shakeOutbound(message);
       }
-
     case 'association.take':
     case 'flow.take':
     case 'flow.discard':
       return inboundQ.queueMessage(fields, (0, _messageHelper.cloneContent)(content), properties);
-
     case 'association.discard':
       {
         this.logger.debug(`<${id}> compensation discarded`);
         return inboundQ.purge();
       }
-
     case 'association.complete':
       {
         if (!this[kFlags].isForCompensation) break;
         inboundQ.queueMessage(fields, (0, _messageHelper.cloneContent)(content), properties);
         const compensationId = `${(0, _shared.brokerSafeId)(id)}_${(0, _shared.brokerSafeId)(content.sequenceId)}`;
-
         this._publishEvent('compensation.start', this._createMessage({
           executionId: compensationId,
           placeholder: true
         }));
-
         this.logger.debug(`<${id}> start compensation with id <${compensationId}>`);
         return this._consumeInbound();
       }
   }
 };
-
 proto._consumeRunQ = function consumeRunQ() {
   if (this[kConsuming]) return;
   this[kConsuming] = true;
@@ -675,31 +565,26 @@ proto._consumeRunQ = function consumeRunQ() {
     consumerTag: '_activity-run'
   });
 };
-
 proto._onRunMessage = function onRunMessage(routingKey, message, messageProperties) {
   switch (routingKey) {
     case 'run.outbound.discard':
     case 'run.outbound.take':
     case 'run.next':
       return this._continueRunMessage(routingKey, message, messageProperties);
-
     case 'run.resume':
       {
         return this._onResumeMessage(message);
       }
   }
-
   const preStatus = this.status;
   this.status = 'formatting';
   return this.formatter.format(message, (err, formattedContent, formatted) => {
     if (err) return this.emitFatal(err, message.content);
     if (formatted) message.content = formattedContent;
     this.status = preStatus;
-
     this._continueRunMessage(routingKey, message, messageProperties);
   });
 };
-
 proto._continueRunMessage = function continueRunMessage(routingKey, message) {
   const isRedelivered = message.fields.redelivered;
   const content = (0, _messageHelper.cloneContent)(message.content);
@@ -707,71 +592,56 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
   const id = this.id;
   const step = this.environment.settings.step;
   this[kStateMessage] = message;
-
   switch (routingKey) {
     case 'run.enter':
       {
         this.logger.debug(`<${id}> enter`, isRedelivered ? 'redelivered' : '');
         this.status = 'entered';
-
         if (!isRedelivered) {
           this[kExec].execution = null;
           if (this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(message));
-
           this._publishEvent('enter', content, {
             correlationId
           });
         }
-
         break;
       }
-
     case 'run.discard':
       {
         this.logger.debug(`<${id}> discard`, isRedelivered ? 'redelivered' : '');
         this.status = 'discard';
         this[kExec].execution = null;
         if (this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(message));
-
         if (!isRedelivered) {
           this.broker.publish('run', 'run.discarded', content, {
             correlationId
           });
-
           this._publishEvent('discard', content);
         }
-
         break;
       }
-
     case 'run.start':
       {
         this.logger.debug(`<${id}> start`, isRedelivered ? 'redelivered' : '');
         this.status = 'started';
-
         if (!isRedelivered) {
           this.broker.publish('run', 'run.execute', content, {
             correlationId
           });
-
           this._publishEvent('start', content, {
             correlationId
           });
         }
-
         break;
       }
-
     case 'run.execute.passthrough':
       {
         const execution = this.execution;
-
         if (!isRedelivered && execution) {
           this[kExecuteMessage] = message;
           return execution.passthrough(message);
         }
       }
-
     case 'run.execute':
       {
         this.status = 'executing';
@@ -785,7 +655,6 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
         });
         return exec.execution.execute(message);
       }
-
     case 'run.end':
       {
         this.logger.debug(`<${id}> end`, isRedelivered ? 'redelivered' : '');
@@ -796,97 +665,79 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
           this._publishEvent('end', content, {
             correlationId
           });
-
           if (!step) message.ack();
         });
       }
-
     case 'run.error':
       {
-        this._publishEvent('error', { ...content,
+        this._publishEvent('error', {
+          ...content,
           error: isRedelivered ? (0, _Errors.makeErrorFromMessage)(message) : content.error
         }, {
           correlationId
         });
-
         break;
       }
-
     case 'run.discarded':
       {
         this.logger.debug(`<${content.executionId} (${id})> discarded`);
         this[kCounters].discarded++;
         this.status = 'discarded';
         content.outbound = undefined;
-
         if (!isRedelivered) {
           return this._doRunLeave(message, true, () => {
             if (!step) message.ack();
           });
         }
-
         break;
       }
-
     case 'run.outbound.take':
       {
         const flow = this._getOutboundSequenceFlowById(content.flow.id);
-
         message.ack();
         return flow.take(content.flow);
       }
-
     case 'run.outbound.discard':
       {
         const flow = this._getOutboundSequenceFlowById(content.flow.id);
-
         message.ack();
         return flow.discard(content.flow);
       }
-
     case 'run.leave':
       {
         this.status = undefined;
         if (this.extensions) this.extensions.deactivate((0, _messageHelper.cloneMessage)(message));
-
         if (!isRedelivered) {
           this.broker.publish('run', 'run.next', content, {
             persistent: false
           });
-
           this._publishEvent('leave', content, {
             correlationId
           });
         }
-
         break;
       }
-
     case 'run.next':
       this._consumeInbound();
-
       break;
   }
-
   if (!step) message.ack();
 };
-
 proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
   const executeMessage = this[kExecuteMessage];
-  const content = (0, _messageHelper.cloneContent)({ ...executeMessage.content,
+  const content = (0, _messageHelper.cloneContent)({
+    ...executeMessage.content,
     ...message.content,
     executionId: executeMessage.content.executionId,
-    parent: { ...this.parent
+    parent: {
+      ...this.parent
     }
   });
   const {
     correlationId
   } = message.properties;
-
   this._publishEvent(routingKey, content, message.properties);
-
   const broker = this.broker;
-
   switch (routingKey) {
     case 'execution.outbound.take':
       {
@@ -899,7 +750,6 @@ proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
           return this._ackRunExecuteMessage();
         });
       }
-
     case 'execution.error':
       {
         this.status = 'error';
@@ -911,14 +761,12 @@ proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
         });
         break;
       }
-
     case 'execution.discard':
       this.status = 'discarded';
       broker.publish('run', 'run.discarded', content, {
         correlationId
       });
       break;
-
     default:
       {
         this.status = 'executed';
@@ -927,43 +775,38 @@ proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
         });
       }
   }
-
   message.ack();
-
   this._ackRunExecuteMessage();
 };
-
 proto._ackRunExecuteMessage = function ackRunExecuteMessage() {
   if (this.environment.settings.step) return;
   const executeMessage = this[kExecuteMessage];
   this[kExecuteMessage] = null;
   executeMessage.ack();
 };
-
 proto._doRunLeave = function doRunLeave(message, isDiscarded, onOutbound) {
   const {
     content,
     properties
   } = message;
   const correlationId = properties.correlationId;
-
   if (content.ignoreOutbound) {
     this.broker.publish('run', 'run.leave', (0, _messageHelper.cloneContent)(content), {
       correlationId
     });
     return onOutbound();
   }
-
   return this._doOutbound((0, _messageHelper.cloneMessage)(message), isDiscarded, (err, outbound) => {
     if (err) {
-      return this._publishEvent('error', { ...content,
+      return this._publishEvent('error', {
+        ...content,
         error: err
       }, {
         correlationId
       });
     }
-
-    this.broker.publish('run', 'run.leave', (0, _messageHelper.cloneContent)(content, { ...(outbound.length && {
+    this.broker.publish('run', 'run.leave', (0, _messageHelper.cloneContent)(content, {
+      ...(outbound.length && {
         outbound
       })
     }), {
@@ -972,19 +815,15 @@ proto._doRunLeave = function doRunLeave(message, isDiscarded, onOutbound) {
     onOutbound();
   });
 };
-
 proto._doOutbound = function doOutbound(fromMessage, isDiscarded, callback) {
   const outboundSequenceFlows = this[kFlows].outboundSequenceFlows;
   if (!outboundSequenceFlows.length) return callback(null, []);
   const fromContent = fromMessage.content;
   let discardSequence = fromContent.discardSequence;
-
   if (isDiscarded && !discardSequence && this[kFlags].attachedTo && fromContent.inbound && fromContent.inbound[0]) {
     discardSequence = [fromContent.inbound[0].id];
   }
-
   let outboundFlows;
-
   if (isDiscarded) {
     outboundFlows = outboundSequenceFlows.map(flow => formatFlowAction(flow, {
       action: 'discard'
@@ -992,22 +831,16 @@ proto._doOutbound = function doOutbound(fromMessage, isDiscarded, callback) {
   } else if (fromContent.outbound && fromContent.outbound.length) {
     outboundFlows = outboundSequenceFlows.map(flow => formatFlowAction(flow, fromContent.outbound.filter(f => f.id === flow.id).pop()));
   }
-
   if (outboundFlows) {
     this._doRunOutbound(outboundFlows, fromContent, discardSequence);
-
     return callback(null, outboundFlows);
   }
-
   return this.evaluateOutbound(fromMessage, fromContent.outboundTakeOne, (err, evaluatedOutbound) => {
     if (err) return callback(new _Errors.ActivityError(err.message, fromMessage, err));
-
     const outbound = this._doRunOutbound(evaluatedOutbound, fromContent, discardSequence);
-
     return callback(null, outbound);
   });
 };
-
 proto._doRunOutbound = function doRunOutbound(outboundList, content, discardSequence) {
   for (const outboundFlow of outboundList) {
     const {
@@ -1015,7 +848,8 @@ proto._doRunOutbound = function doRunOutbound(outboundList, content, discardSequ
       action
     } = outboundFlow;
     this.broker.publish('run', 'run.outbound.' + action, (0, _messageHelper.cloneContent)(content, {
-      flow: { ...outboundFlow,
+      flow: {
+        ...outboundFlow,
         sequenceId: (0, _shared.getUniqueId)(`${flowId}_${action}`),
         ...(discardSequence && {
           discardSequence: discardSequence.slice()
@@ -1023,16 +857,13 @@ proto._doRunOutbound = function doRunOutbound(outboundList, content, discardSequ
       }
     }));
   }
-
   return outboundList;
 };
-
 proto._onResumeMessage = function onResumeMessage(message) {
   message.ack();
   const stateMessage = this[kStateMessage];
   const fields = stateMessage.fields;
   if (!fields.redelivered) return;
-
   switch (fields.routingKey) {
     case 'run.enter':
     case 'run.start':
@@ -1040,26 +871,23 @@ proto._onResumeMessage = function onResumeMessage(message) {
     case 'run.end':
     case 'run.leave':
       break;
-
     default:
       return;
   }
-
   if (this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(stateMessage));
   this.logger.debug(`<${this.id}> resume from ${message.content.status}`);
   return this.broker.publish('run', fields.routingKey, (0, _messageHelper.cloneContent)(stateMessage.content), stateMessage.properties);
 };
-
 proto._publishEvent = function publishEvent(state, content, properties = {}) {
   this.broker.publish('event', `activity.${state}`, (0, _messageHelper.cloneContent)(content, {
     state
-  }), { ...properties,
+  }), {
+    ...properties,
     type: state,
     mandatory: state === 'error',
     persistent: 'persistent' in properties ? properties.persistent : state !== 'stop'
   });
 };
-
 proto._onStop = function onStop(message) {
   const running = this[kConsuming];
   this.stopped = true;
@@ -1070,14 +898,11 @@ proto._onStop = function onStop(message) {
   broker.cancel('_activity-execution');
   broker.cancel('_run-on-inbound');
   broker.cancel('_format-consumer');
-
   if (running) {
-    if (this.extensions) this.extensions.deactivate(message ? (0, _messageHelper.cloneMessage)(message) : this._createMessage());
-
+    if (this.extensions) this.extensions.deactivate((0, _messageHelper.cloneMessage)(message));
     this._publishEvent('stop', this._createMessage());
   }
 };
-
 proto._consumeApi = function consumeApi() {
   const executionId = this[kExec].executionId;
   if (!executionId) return;
@@ -1089,31 +914,28 @@ proto._consumeApi = function consumeApi() {
     priority: 100
   });
 };
-
 proto._onApiMessage = function onApiMessage(routingKey, message) {
   switch (message.properties.type) {
     case 'discard':
       {
         return this._discardRun(message);
       }
-
     case 'stop':
       {
         return this._onStop(message);
       }
-
     case 'shake':
       {
         return this._shakeOutbound(message);
       }
   }
 };
-
 proto._createMessage = function createMessage(override) {
   const name = this.name,
-        status = this.status,
-        parent = this.parent;
-  const result = { ...override,
+    status = this.status,
+    parent = this.parent;
+  const result = {
+    ...override,
     id: this.id,
     type: this.type,
     ...(name && {
@@ -1126,18 +948,14 @@ proto._createMessage = function createMessage(override) {
       parent: (0, _messageHelper.cloneParent)(parent)
     })
   };
-
   for (const [flag, value] of Object.entries(this[kFlags])) {
     if (value) result[flag] = value;
   }
-
   return result;
 };
-
 proto._getOutboundSequenceFlowById = function getOutboundSequenceFlowById(flowId) {
   return this[kFlows].outboundSequenceFlows.find(flow => flow.id === flowId);
 };
-
 proto._deactivateRunConsumers = function _deactivateRunConsumers() {
   const broker = this.broker;
   broker.cancel('_activity-api');
@@ -1145,7 +963,6 @@ proto._deactivateRunConsumers = function _deactivateRunConsumers() {
   broker.cancel('_activity-execution');
   this[kConsuming] = false;
 };
-
 function OutboundEvaluator(activity, outboundFlows) {
   this.activity = activity;
   this.broker = activity.broker;
@@ -1153,19 +970,16 @@ function OutboundEvaluator(activity, outboundFlows) {
   const defaultFlowIdx = flows.findIndex(({
     isDefault
   }) => isDefault);
-
   if (defaultFlowIdx > -1) {
     const [defaultFlow] = flows.splice(defaultFlowIdx, 1);
     flows.push(defaultFlow);
   }
-
   this.defaultFlowIdx = outboundFlows.findIndex(({
     isDefault
   }) => isDefault);
   this._onEvaluated = this.onEvaluated.bind(this);
   this.evaluateArgs = {};
 }
-
 OutboundEvaluator.prototype.evaluate = function evaluate(fromMessage, discardRestAtTake, callback) {
   const outboundFlows = this.outboundFlows;
   const args = this.evaluateArgs = {
@@ -1184,7 +998,6 @@ OutboundEvaluator.prototype.evaluate = function evaluate(fromMessage, discardRes
   });
   return this.evaluateFlow(flows.shift());
 };
-
 OutboundEvaluator.prototype.onEvaluated = function onEvaluated(routingKey, message) {
   const content = message.content;
   const {
@@ -1193,45 +1006,35 @@ OutboundEvaluator.prototype.onEvaluated = function onEvaluated(routingKey, messa
     evaluationId
   } = message.content;
   const args = this.evaluateArgs;
-
   if (action === 'take') {
     args.takenCount++;
     args.conditionMet = true;
   }
-
   args.result[flowId] = content;
-
   if ('result' in content) {
     this.activity.logger.debug(`<${evaluationId} (${this.activity.id})> flow <${flowId}> evaluated to: ${!!content.result}`);
   }
-
   let nextFlow = args.flows.shift();
   if (!nextFlow) return this.completed();
-
   if (args.discardRestAtTake && args.conditionMet) {
     do {
       args.result[nextFlow.id] = formatFlowAction(nextFlow, {
         action: 'discard'
       });
     } while (nextFlow = args.flows.shift());
-
     return this.completed();
   }
-
   if (args.conditionMet && nextFlow.isDefault) {
     args.result[nextFlow.id] = formatFlowAction(nextFlow, {
       action: 'discard'
     });
     return this.completed();
   }
-
   message.ack();
   this.evaluateFlow(nextFlow);
 };
-
 OutboundEvaluator.prototype.evaluateFlow = function evaluateFlow(flow) {
   const broker = this.broker;
-
   if (flow.isDefault) {
     return broker.publish('execution', 'evaluate.flow.take', formatFlowAction(flow, {
       action: 'take'
@@ -1239,9 +1042,7 @@ OutboundEvaluator.prototype.evaluateFlow = function evaluateFlow(flow) {
       persistent: false
     });
   }
-
   const flowCondition = flow.getCondition();
-
   if (!flowCondition) {
     return broker.publish('execution', 'evaluate.flow.take', formatFlowAction(flow, {
       action: 'take'
@@ -1249,7 +1050,6 @@ OutboundEvaluator.prototype.evaluateFlow = function evaluateFlow(flow) {
       persistent: false
     });
   }
-
   const {
     fromMessage,
     evaluationId
@@ -1266,7 +1066,6 @@ OutboundEvaluator.prototype.evaluateFlow = function evaluateFlow(flow) {
     });
   });
 };
-
 OutboundEvaluator.prototype.completed = function completed(err) {
   const {
     callback,
@@ -1277,28 +1076,25 @@ OutboundEvaluator.prototype.completed = function completed(err) {
   } = this.evaluateArgs;
   this.broker.cancel(`_flow-evaluation-${evaluationId}`);
   if (err) return callback(err);
-
   if (!takenCount && this.outboundFlows.length) {
     const nonTakenError = new _Errors.ActivityError(`<${this.activity.id}> no conditional flow taken`, fromMessage);
     return callback(nonTakenError);
   }
-
   const message = fromMessage.content.message;
   const evaluationResult = [];
-
   for (const flow of Object.values(result)) {
-    evaluationResult.push({ ...flow,
+    evaluationResult.push({
+      ...flow,
       ...(message !== undefined && {
         message
       })
     });
   }
-
   return callback(null, evaluationResult);
 };
-
 function formatFlowAction(flow, options) {
-  return { ...options,
+  return {
+    ...options,
     id: flow.id,
     action: options.action,
     ...(flow.isDefault && {
