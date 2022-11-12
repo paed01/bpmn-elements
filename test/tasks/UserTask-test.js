@@ -56,7 +56,6 @@ describe('UserTask', () => {
       expect(api.content.output).to.eql({data: 1});
     });
 
-
     it('can be errored out via an error message', async () => {
       const task = context.getActivityById('task');
 

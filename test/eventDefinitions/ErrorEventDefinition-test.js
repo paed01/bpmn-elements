@@ -98,7 +98,6 @@ describe('ErrorEventDefinition', () => {
       expect(event.broker).to.have.property('consumerCount', 0);
     });
 
-
     it('completes and clears listeners if caught before execution', () => {
       const catchError = new ErrorEventDefinition(event, {
         type: 'bpmn:ErrorEventDefinition',

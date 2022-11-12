@@ -113,7 +113,6 @@ proto._onFormatComplete = function formatOnComplete(message) {
   const broker = this.broker;
   const context = this.context;
 
-
   const {dataObjects, sources} = dataOutputs.reduce((result, ioSource, index) => {
     const {value} = messageOutputs.find((output) => output.id === ioSource.id) || {};
     const source = {

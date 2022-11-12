@@ -74,4 +74,3 @@ DummyScript.prototype.execute = function execute(executionContext, callback) {
   this.logger.debug(`<${executionId} (${id})> passthrough dummy script ${this.language || 'esperanto'}`);
   callback();
 };
-

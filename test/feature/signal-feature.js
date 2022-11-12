@@ -856,7 +856,6 @@ Feature('Signals', () => {
       expect(activity).to.have.property('id', 'namedMessageEvent');
     });
 
-
     When('definition send anonymous signal', () => {
       definition.signal();
     });

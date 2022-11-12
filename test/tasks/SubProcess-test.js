@@ -742,7 +742,6 @@ describe('SubProcess', () => {
         const recoveredTask = recoverContext.getActivityById('sub-process-task');
         recoveredTask.recover(state);
 
-
         const leave = task.waitFor('leave', (_, msg) => {
           if (msg.content.id === task.id) return true;
         });

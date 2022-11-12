@@ -580,7 +580,6 @@ describe('EventDefinitionExecution', () => {
       execute() {},
     }]);
 
-
     const executionExchange = event.broker.getExchange('execution');
     expect(executionExchange).to.have.property('bindingCount', 1);
 

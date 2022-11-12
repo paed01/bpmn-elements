@@ -203,4 +203,3 @@ proto.loadExtensions = function loadExtensions(activity) {
   if (!extensions.extensions.length) return;
   return extensions;
 };
-

@@ -192,7 +192,6 @@ describe('EscalationEventDefinition', () => {
         messages.push(msg);
       }, {noAck: true, consumerTag: '_test-tag'});
 
-
       event.broker.publish('api', 'activity.escalate.event_1', {
         message: {
           id: 'Escalate_1',

@@ -5,4 +5,3 @@ export default function StandardLoopCharacteristics(activity, loopCharacteristic
   behaviour = {...behaviour, isSequential: true};
   return new LoopCharacteristics(activity, {...loopCharacteristics, behaviour});
 }
-

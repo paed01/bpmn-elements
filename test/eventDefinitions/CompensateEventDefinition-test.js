@@ -29,7 +29,6 @@ describe('CompensateEventDefinition', () => {
       }, context);
       expect(catchSignal.executionId, 'executionId').to.be.undefined;
 
-
       const messages = [];
       event.broker.subscribeTmp('execution', 'execute.*', (_, msg) => {
         messages.push(msg);

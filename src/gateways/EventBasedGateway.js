@@ -81,4 +81,3 @@ EventBasedGatewayBehaviour.prototype._stop = function stop() {
   for (const target of this[kTargets]) target.broker.cancel(targetConsumerTag);
   this.broker.cancel('_api-stop-execution');
 };
-
