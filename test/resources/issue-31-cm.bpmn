@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1iu7o4h" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.5.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.18.0">
+  <bpmn:process id="issue-31" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1" name="Start">
+      <bpmn:outgoing>AfterStartSequenceFlow</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="AfterStartSequenceFlow" sourceRef="StartEvent_1" targetRef="makeRequestService" />
+    <bpmn:serviceTask id="makeRequestService" name="Make request" implementation="${environment.services.makeRequestService}">
+      <bpmn:incoming>AfterStartSequenceFlow</bpmn:incoming>
+      <bpmn:incoming>APIreadySequenceFlow</bpmn:incoming>
+      <bpmn:outgoing>gotResponse</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="requestErrorEvent" name="Errored" attachedToRef="makeRequestService">
+      <bpmn:outgoing>errorFlow</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_16nj3bl" />
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="gotResponse" sourceRef="makeRequestService" targetRef="joinGateway" />
+    <bpmn:sequenceFlow id="errorFlow" sourceRef="requestErrorEvent" targetRef="joinGateway" />
+    <bpmn:exclusiveGateway id="statusGateway" name="Success?" default="toRetryGW-flow">
+      <bpmn:incoming>checkErrorOrResponseFlow</bpmn:incoming>
+      <bpmn:outgoing>toEnd-flow</bpmn:outgoing>
+      <bpmn:outgoing>toRetryGW-flow</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="checkErrorOrResponseFlow" sourceRef="joinGateway" targetRef="statusGateway" />
+    <bpmn:endEvent id="end" name="End">
+      <bpmn:incoming>toEnd-flow</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="toEnd-flow" name="Yay!" sourceRef="statusGateway" targetRef="end">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${environment.services.statusCodeOk(environment.variables)}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="retryGateway" name="Retried?" default="toManualDefaultFlow">
+      <bpmn:incoming>toRetryGW-flow</bpmn:incoming>
+      <bpmn:outgoing>toTerminateFlow</bpmn:outgoing>
+      <bpmn:outgoing>toManualDefaultFlow</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="toRetryGW-flow" name="No..." sourceRef="statusGateway" targetRef="retryGateway" />
+    <bpmn:sequenceFlow id="toTerminateFlow" name="Yep!" sourceRef="retryGateway" targetRef="terminateEvent">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${environment.variables.retry}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="terminateEvent" name="Terminate">
+      <bpmn:incoming>toTerminateFlow</bpmn:incoming>
+      <bpmn:terminateEventDefinition id="TerminateEventDefinition_1coj176" />
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="toManualDefaultFlow" name="Try again" sourceRef="retryGateway" targetRef="waitForSignalTask" />
+    <bpmn:userTask id="waitForSignalTask" name="Signal when API ready">
+      <bpmn:incoming>toManualDefaultFlow</bpmn:incoming>
+      <bpmn:outgoing>APIreadySequenceFlow</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="APIreadySequenceFlow" sourceRef="waitForSignalTask" targetRef="makeRequestService" />
+    <bpmn:boundaryEvent id="signalTimeoutEvent" name="You have got 10 minutes" attachedToRef="waitForSignalTask">
+      <bpmn:outgoing>ApiNotReadyTimeoutFlow</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_0lmkvcd">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">${environment.variables.timeout}</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="ApiNotReadyTimeoutFlow" sourceRef="signalTimeoutEvent" targetRef="NotReadyTerminateEvent" />
+    <bpmn:endEvent id="NotReadyTerminateEvent">
+      <bpmn:incoming>ApiNotReadyTimeoutFlow</bpmn:incoming>
+      <bpmn:terminateEventDefinition id="TerminateEventDefinition_13aag4k" />
+    </bpmn:endEvent>
+    <bpmn:parallelGateway id="joinGateway">
+      <bpmn:incoming>gotResponse</bpmn:incoming>
+      <bpmn:incoming>errorFlow</bpmn:incoming>
+      <bpmn:outgoing>checkErrorOrResponseFlow</bpmn:outgoing>
+    </bpmn:parallelGateway>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="issue-31">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="109" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="186" y="152" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_15e1ks3_di" bpmnElement="makeRequestService">
+        <dc:Bounds x="270" y="87" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0lv5kca_di" bpmnElement="statusGateway" isMarkerVisible="true">
+        <dc:Bounds x="635" y="102" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="636" y="78" width="48" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_09307kt_di" bpmnElement="end">
+        <dc:Bounds x="802" y="109" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="810" y="152" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1rvdkks_di" bpmnElement="retryGateway" isMarkerVisible="true">
+        <dc:Bounds x="635" y="215" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="583" y="233" width="42" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1uun8pv_di" bpmnElement="terminateEvent">
+        <dc:Bounds x="802" y="222" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="796" y="265" width="49" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_18jfgq4_di" bpmnElement="waitForSignalTask">
+        <dc:Bounds x="410" y="300" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1k1u4f1_di" bpmnElement="NotReadyTerminateEvent">
+        <dc:Bounds x="532" y="442" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0km05lb_di" bpmnElement="joinGateway" bioc:stroke="#e53935" bioc:fill="#ffcdd2" color:background-color="#ffcdd2" color:border-color="#e53935">
+        <dc:Bounds x="475" y="102" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1nux8tx_di" bpmnElement="signalTimeoutEvent">
+        <dc:Bounds x="442" y="362" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="420" y="405" width="80" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_134fxil_di" bpmnElement="requestErrorEvent">
+        <dc:Bounds x="312" y="149" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="312" y="192" width="37" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_074km51_di" bpmnElement="AfterStartSequenceFlow">
+        <di:waypoint x="215" y="127" />
+        <di:waypoint x="270" y="127" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1gbcwwb_di" bpmnElement="gotResponse">
+        <di:waypoint x="370" y="127" />
+        <di:waypoint x="475" y="127" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1du3f0p_di" bpmnElement="errorFlow">
+        <di:waypoint x="330" y="185" />
+        <di:waypoint x="330" y="220" />
+        <di:waypoint x="500" y="220" />
+        <di:waypoint x="500" y="152" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05qt3wd_di" bpmnElement="checkErrorOrResponseFlow">
+        <di:waypoint x="525" y="127" />
+        <di:waypoint x="635" y="127" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0db34v2_di" bpmnElement="toEnd-flow">
+        <di:waypoint x="685" y="127" />
+        <di:waypoint x="802" y="127" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="733" y="109" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1j93jwk_di" bpmnElement="toRetryGW-flow">
+        <di:waypoint x="660" y="152" />
+        <di:waypoint x="660" y="215" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="663" y="181" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0q5692i_di" bpmnElement="toTerminateFlow">
+        <di:waypoint x="685" y="240" />
+        <di:waypoint x="802" y="240" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="733" y="222" width="22" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_12ipywl_di" bpmnElement="toManualDefaultFlow">
+        <di:waypoint x="660" y="265" />
+        <di:waypoint x="660" y="340" />
+        <di:waypoint x="510" y="340" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="652" y="300" width="46" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_112xf08_di" bpmnElement="APIreadySequenceFlow">
+        <di:waypoint x="410" y="340" />
+        <di:waypoint x="280" y="340" />
+        <di:waypoint x="280" y="167" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05w7huz_di" bpmnElement="ApiNotReadyTimeoutFlow">
+        <di:waypoint x="460" y="398" />
+        <di:waypoint x="460" y="460" />
+        <di:waypoint x="532" y="460" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

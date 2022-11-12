@@ -1,7 +1,7 @@
-import Definition from '../../src/definition/Definition';
-import factory from '../helpers/factory';
-import testHelpers from '../helpers/testHelpers';
-import js from '../resources/extensions/JsExtension';
+import Definition from '../../../src/definition/Definition.js';
+import factory from '../../helpers/factory.js';
+import testHelpers from '../../helpers/testHelpers.js';
+import js from '../../resources/extensions/JsExtension.js';
 import camundaBpmnModdle from 'camunda-bpmn-moddle/resources/camunda';
 
 Feature('Issues', () => {

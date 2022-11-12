@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+    xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <process id="issue-31" isExecutable="true">
+        <startEvent id="StartEvent_1" name="Start">
+            <outgoing>AfterStartSequenceFlow</outgoing>
+        </startEvent>
+        <sequenceFlow id="AfterStartSequenceFlow" sourceRef="StartEvent_1" targetRef="makeRequestService" />
+        <serviceTask id="makeRequestService" name="Make request" implementation="${environment.services.makeRequestService}">
+            <incoming>AfterStartSequenceFlow</incoming>
+            <incoming>APIreadySequenceFlow</incoming>
+            <outgoing>gotResponse</outgoing>
+        </serviceTask>
+        <endEvent id="end" name="End">
+            <incoming>toEnd-flow</incoming>
+        </endEvent>
+        <sequenceFlow id="gotResponse" sourceRef="makeRequestService" targetRef="joinGateway" />
+        <sequenceFlow id="checkErrorOrResponseFlow" name="" sourceRef="joinGateway" targetRef="statusGateway" />
+        <boundaryEvent id="requestErrorEvent" name="Errored" attachedToRef="makeRequestService">
+            <outgoing>errorFlow</outgoing>
+            <errorEventDefinition errorRef="ErrorOnRequest" />
+        </boundaryEvent>
+        <sequenceFlow id="errorFlow" sourceRef="requestErrorEvent" targetRef="joinGateway" />
+        <sequenceFlow id="APIreadySequenceFlow" sourceRef="waitForSignalTask" targetRef="makeRequestService" />
+        <sequenceFlow id="toTerminateFlow" name="Yep!" sourceRef="retryGateway" targetRef="terminateEvent">
+            <conditionExpression xsi:type="tFormalExpression">${environment.variables.retry}</conditionExpression>
+        </sequenceFlow>
+        <endEvent id="terminateEvent" name="Terminate">
+            <incoming>toTerminateFlow</incoming>
+            <terminateEventDefinition />
+        </endEvent>
+        <exclusiveGateway id="statusGateway" name="Success?" default="toRetryGW-flow">
+            <incoming>checkErrorOrResponseFlow</incoming>
+            <outgoing>toEnd-flow</outgoing>
+            <outgoing>toRetryGW-flow</outgoing>
+        </exclusiveGateway>
+        <sequenceFlow id="toEnd-flow" name="Yay!" sourceRef="statusGateway" targetRef="end">
+            <conditionExpression xsi:type="tFormalExpression">${environment.services.statusCodeOk(environment.variables)}</conditionExpression>
+        </sequenceFlow>
+        <sequenceFlow id="toManualDefaultFlow" name="Try again" sourceRef="retryGateway" targetRef="waitForSignalTask" />
+        <exclusiveGateway id="retryGateway" name="Retried?" default="toManualDefaultFlow">
+            <incoming>toRetryGW-flow</incoming>
+            <outgoing>toTerminateFlow</outgoing>
+            <outgoing>toManualDefaultFlow</outgoing>
+        </exclusiveGateway>
+        <sequenceFlow id="toRetryGW-flow" name="No..." sourceRef="statusGateway" targetRef="retryGateway" />
+        <exclusiveGateway id="joinGateway" name="" default="checkErrorOrResponseFlow">
+            <incoming>gotResponse</incoming>
+            <incoming>errorFlow</incoming>
+            <outgoing>checkErrorOrResponseFlow</outgoing>
+        </exclusiveGateway>
+        <boundaryEvent id="signalTimeoutEvent" name="You have got 10 minutes" attachedToRef="waitForSignalTask">
+            <timerEventDefinition id="TimerEventDefinition_0849v2v">
+                <timeDuration xsi:type="tFormalExpression">${environment.variables.timeout}</timeDuration>
+            </timerEventDefinition>
+        </boundaryEvent>
+        <userTask id="waitForSignalTask" name="Signal when API ready">
+            <incoming>toManualDefaultFlow</incoming>
+            <outgoing>APIreadySequenceFlow</outgoing>
+        </userTask>
+        <sequenceFlow id="ApiNotReadyTimeoutFlow" sourceRef="signalTimeoutEvent" targetRef="NotReadyTerminateEvent" />
+        <endEvent id="NotReadyTerminateEvent">
+            <incoming>ApiNotReadyTimeoutFlow</incoming>
+            <terminateEventDefinition id="TerminateEventDefinition_1dj4zf7" />
+        </endEvent>
+    </process>
+    <error id="ErrorOnRequest" name="requestError" errorCode="code000" />
+</definitions>

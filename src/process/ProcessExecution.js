@@ -260,7 +260,6 @@ proto.discard = function discard() {
   }, {type: 'discard'});
 };
 
-
 proto.getState = function getState() {
   const {children, flows, outboundMessageFlows, associations} = this[kElements];
   return {
@@ -533,6 +532,8 @@ proto._onChildMessage = function onChildMessage(routingKey, message) {
         return msg.content.source && msg.content.source.executionId === content.executionId;
       });
       if (eventCaughtBy) {
+        this[kActivityQ].queueMessage({routingKey: 'activity.caught'}, cloneContent(content), message.properties);
+        message.ack();
         return this._debug('error was caught');
       }
       return this._complete('error', {error: content.error});

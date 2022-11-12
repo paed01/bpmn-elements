@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 8.2.1
+
+- fix resume on caught activity error throws #31
+
 # 8.2.0
 
 - fix resume when activity has formatting status, extensions were not re-activated
