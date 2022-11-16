@@ -98,5 +98,39 @@ Feature('Issue 31 - Error handling on save and resume', () => {
         });
       });
     });
+
+    Scenario('handles caught activity when ran through', () => {
+      let services;
+      Given('there are some services', () => {
+        services = {
+          statusCodeOk() {
+            return false;
+          },
+          makeRequestService: test.service,
+        };
+      });
+
+      let context, definition, end;
+      When('definition is ran', async () => {
+        context = await testHelpers.context(test.source);
+        definition = new Definition(context, {
+          services,
+          variables: {
+            timeout: 'PT0.01S',
+          },
+        });
+
+        end = definition.waitFor('end');
+        definition.run();
+      });
+
+      And('retry times out', () => {
+        // no-op
+      });
+
+      Then('run completes', () => {
+        return end;
+      });
+    });
   });
 });

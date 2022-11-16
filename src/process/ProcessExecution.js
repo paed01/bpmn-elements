@@ -499,6 +499,13 @@ proto._onChildMessage = function onChildMessage(routingKey, message) {
     case 'execution.discard':
       message.ack();
       return this._onDiscard(message);
+    case 'activity.error.caught': {
+      const prevMsg = this[kElements].postponed.find((msg) => {
+        return msg.content.executionId === content.executionId;
+      });
+      if (!prevMsg) return message.ack();
+      break;
+    }
     case 'activity.compensation.end':
     case 'flow.looped':
     case 'activity.leave':
@@ -532,8 +539,7 @@ proto._onChildMessage = function onChildMessage(routingKey, message) {
         return msg.content.source && msg.content.source.executionId === content.executionId;
       });
       if (eventCaughtBy) {
-        this[kActivityQ].queueMessage({routingKey: 'activity.caught'}, cloneContent(content), message.properties);
-        message.ack();
+        this[kActivityQ].queueMessage({routingKey: 'activity.error.caught'}, cloneContent(content), {persistent: true, ...message.properties});
         return this._debug('error was caught');
       }
       return this._complete('error', {error: content.error});

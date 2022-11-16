@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 8.2.2
+
+- mitigate possible stack overflow error by not acking message before publishing a new one. Fix after fix #31
+
 # 8.2.1
 
 - fix resume on caught activity error throws #31

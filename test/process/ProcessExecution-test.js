@@ -233,7 +233,7 @@ describe('Process execution', () => {
           id: 'process1',
         },
         behaviour: {
-          Service: () => {
+          Service: function Service() {
             return {
               execute(_, next) {
                 return next(new Error('Shaky'));
@@ -287,7 +287,7 @@ describe('Process execution', () => {
         },
         Behaviour: ServiceTask,
         behaviour: {
-          Service() {
+          Service: function Service() {
             return {
               execute(_, next) {
                 return next(new Error('Shaky'));
@@ -300,6 +300,7 @@ describe('Process execution', () => {
 
       const boundEvent = {
         id: 'boundEvent',
+        type: 'bpmn:BoundaryEvent',
         parent: {
           id: 'process1',
         },
@@ -328,6 +329,76 @@ describe('Process execution', () => {
 
       expect(errorMessage).to.not.be.ok;
       expect(execution).to.have.property('completed', true);
+      expect(execution.getActivityById('service').counters).to.deep.equal({discarded: 1, taken: 0});
+    });
+
+    it('caught activity error from async service is swallowed', async () => {
+      const activities = [];
+      const bp = createProcess({
+        getActivities() {
+          return activities;
+        },
+        getActivityById(id) {
+          return activities.find((a) => a.id === id);
+        },
+      });
+
+      const activity = {
+        id: 'service',
+        type: 'bpmn:ServiceTask',
+        parent: {
+          id: 'process1',
+        },
+        Behaviour: ServiceTask,
+        behaviour: {
+          Service: function Service() {
+            return {
+              execute(_, next) {
+                return process.nextTick(() => next(new Error('Shaky')));
+              },
+            };
+          },
+        },
+      };
+      activities.push(activity);
+
+      const boundEvent = {
+        id: 'boundEvent',
+        type: 'bpmn:BoundaryEvent',
+        parent: {
+          id: 'process1',
+        },
+        Behaviour: BoundaryEvent,
+        behaviour: {
+          attachedTo: {id: 'service'},
+          eventDefinitions: [{Behaviour: ErrorEventDefinition}],
+        },
+      };
+      activities.push(boundEvent);
+
+      const execution = new ProcessExecution(bp, bp.context);
+
+      let errorMessage;
+      execution.broker.subscribeOnce('execution', 'execution.error.*', (_, msg) => {
+        errorMessage = msg;
+      });
+
+      const end = new Promise((resolve) => execution.broker.subscribeOnce('execution', 'execution.completed.*', resolve));
+
+      execution.execute({
+        fields: {},
+        content: {
+          id: 'process1',
+          executionId: 'process1_1',
+        },
+      });
+
+      await end;
+
+      expect(errorMessage).to.not.be.ok;
+      expect(execution).to.have.property('completed', true);
+      expect(execution.getActivityById('service').counters).to.deep.equal({discarded: 1, taken: 0});
+      expect(execution.getActivityById('boundEvent').counters).to.deep.equal({discarded: 0, taken: 1});
     });
   });
 
