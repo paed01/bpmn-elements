@@ -819,6 +819,52 @@ describe('Definition', () => {
 
       expect(recoverable.getRunningProcesses().length).to.equal(0);
     });
+
+    it('recovers found process', async () => {
+      const source1 = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testError" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <userTask id="task" />
+        </process>
+        <process id="theProcess2" isExecutable="true">
+          <userTask id="task" />
+        </process>
+        <process id="theProcess3" isExecutable="true">
+          <userTask id="task" />
+        </process>
+      </definitions>`;
+
+      const context1 = await testHelpers.context(source1);
+
+      const definition = new Definition(context1);
+
+      definition.run();
+
+      expect(definition.getRunningProcesses().length).to.equal(3);
+
+      definition.stop();
+      const state = definition.getState();
+
+      const source2 = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testError" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <userTask id="task" />
+        </process>
+        <process id="theProcess2" isExecutable="true">
+          <userTask id="task" />
+        </process>
+        <process id="theProcess3" isExecutable="true">
+          <userTask id="task" />
+        </process>
+      </definitions>`;
+
+      const context2 = await testHelpers.context(source2);
+      const recovered = new Definition(context2).recover(state);
+
+      expect(recovered.getRunningProcesses().length).to.equal(2);
+    });
   });
 
   describe('resume()', () => {

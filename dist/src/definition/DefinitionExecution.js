@@ -165,7 +165,7 @@ proto.recover = function recover(state) {
     } else {
       bp = this.getProcessById(bpid);
     }
-    if (!bp) return;
+    if (!bp) continue;
     ids.push(bpid);
     bp.recover(bpState);
     running.push(bp);
