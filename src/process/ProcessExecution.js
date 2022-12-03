@@ -252,14 +252,6 @@ proto.getPostponed = function getPostponed(filterFn) {
     result.push(api);
   }
   return result;
-  // return this[kElements].postponed.slice().reduce((result, msg) => {
-  //   const api = this._getChildApi(msg);
-  //   if (api) {
-  //     if (filterFn && !filterFn(api)) return result;
-  //     result.push(api);
-  //   }
-  //   return result;
-  // }, []);
 };
 
 proto.discard = function discard() {
