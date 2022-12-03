@@ -17,7 +17,7 @@ const source = `
       <sequenceFlow id="to-save" sourceRef="peritem" targetRef="save" />
       <scriptTask id="save" scriptFormat="js">
         <script>
-          environment.variables.url = environment.output.items?.[0].next;
+          environment.variables.url = environment.output.items && environment.output.items[0].next;
           environment.output.result = (environment.output.result || []).concat(environment.output.multi);
           next();
         </script>
@@ -50,7 +50,7 @@ const source2 = `
       <sequenceFlow id="from-catch" sourceRef="catch" targetRef="save" />
       <scriptTask id="save" scriptFormat="js">
         <script>
-          environment.variables.url = environment.output.items?.[0].next;
+          environment.variables.url = environment.output.items && environment.output.items[0].next;
           environment.output.result = (environment.output.result || []).concat(environment.output.multi || []);
           next();
         </script>
