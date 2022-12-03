@@ -120,6 +120,7 @@ proto._complete = function complete(message) {
   const completeContent = cloneContent(message.content, {
     executionId: this[kExecuteMessage].content.executionId,
     isRootScope: true,
+    isDefinitionScope: undefined,
   });
   completeContent.parent = shiftParent(parent);
 

@@ -114,7 +114,8 @@ proto._complete = function complete(message) {
   this._debug(executionId, `event definition ${type} completed, index ${index}`);
   const completeContent = (0, _messageHelper.cloneContent)(message.content, {
     executionId: this[kExecuteMessage].content.executionId,
-    isRootScope: true
+    isRootScope: true,
+    isDefinitionScope: undefined
   });
   completeContent.parent = (0, _messageHelper.shiftParent)(parent);
   this.broker.publish('execution', this.completedRoutingKey, completeContent, {

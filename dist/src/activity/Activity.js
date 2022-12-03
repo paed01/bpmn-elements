@@ -497,13 +497,16 @@ proto._onJoinInbound = function onJoinInbound(routingKey, message) {
     im.ack();
     return (0, _messageHelper.cloneContent)(im.content);
   });
-  const discardSequence = !taken && evaluatedInbound.reduce((result, im) => {
-    if (!im.content.discardSequence) return result;
-    for (const sourceId of im.content.discardSequence) {
-      if (result.indexOf(sourceId) === -1) result.push(sourceId);
+  let discardSequence;
+  if (!taken) {
+    discardSequence = [];
+    for (const im of evaluatedInbound) {
+      if (!im.content.discardSequence) continue;
+      for (const sourceId of im.content.discardSequence) {
+        if (discardSequence.indexOf(sourceId) === -1) discardSequence.push(sourceId);
+      }
     }
-    return result;
-  }, []);
+  }
   this.broker.cancel('_run-on-inbound');
   if (!taken) return this._runDiscard({
     inbound,

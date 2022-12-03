@@ -634,6 +634,89 @@ describe('Process', () => {
       });
       expect(bp.resume()).to.equal(bp);
     });
+
+    it('resumes running activities and ignores lingering completed activities', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testError" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <manualTask id="task1" />
+          <manualTask id="task2" />
+          <manualTask id="task3" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const [bp] = context.getProcesses();
+
+      bp.run();
+
+      expect(bp.getPostponed()).to.have.length(3);
+
+      const state = bp.getState();
+      bp.stop();
+
+      expect(state.execution).to.have.property('children').with.length(3);
+
+      delete state.execution.children[0].status;
+      delete state.execution.children[0].broker;
+      delete state.execution.children[0].execution;
+
+      delete state.execution.children[2].status;
+      delete state.execution.children[2].broker;
+      delete state.execution.children[2].execution;
+
+      const [recovered] = context.clone().getProcesses();
+      recovered.recover(state);
+      recovered.resume();
+
+      const postponed = recovered.getPostponed();
+      expect(postponed).to.have.length(1);
+      expect(postponed[0].content).to.have.property('id', 'task2');
+    });
+
+    it('completes if only lingering completed activities', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testError" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <manualTask id="task1" />
+          <manualTask id="task2" />
+          <manualTask id="task3" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      const [bp] = context.getProcesses();
+
+      bp.run();
+
+      expect(bp.getPostponed()).to.have.length(3);
+
+      const state = bp.getState();
+      bp.stop();
+
+      expect(state.execution).to.have.property('children').with.length(3);
+
+      delete state.execution.children[0].status;
+      delete state.execution.children[0].broker;
+      delete state.execution.children[0].execution;
+
+      delete state.execution.children[1].status;
+      delete state.execution.children[1].broker;
+      delete state.execution.children[1].execution;
+
+      delete state.execution.children[2].status;
+      delete state.execution.children[2].broker;
+      delete state.execution.children[2].execution;
+
+      const [recovered] = context.clone().getProcesses();
+      recovered.recover(state);
+      const end = recovered.waitFor('end');
+      recovered.resume();
+
+      return end;
+    });
   });
 
   describe('getPostponed()', () => {

@@ -49,9 +49,13 @@ proto.execute = function execute(executeMessage) {
     executionId
   } = executeMessage.content;
   const eventDefinitionExecution = this[kExecution];
-  if (isRootScope) {
+  if (isRootScope && executeMessage.content.id === this.id) {
     this[kExecuteMessage] = executeMessage;
     const broker = this.broker;
+    if (executeMessage.fields.routingKey === 'execute.bound.completed') {
+      this._stop();
+      return broker.publish('execution', 'execute.completed', executeMessage.content, executeMessage.properties);
+    }
     const consumerTag = `_bound-listener-${executionId}`;
     this.attachedTo.broker.subscribeTmp('event', 'activity.leave', this._onAttachedLeave.bind(this), {
       noAck: true,
@@ -99,6 +103,7 @@ proto._onCompleted = function onCompleted(_, {
   if (!this.cancelActivity && !content.cancelActivity) {
     this._stop();
     return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
+      isDefinitionScope: false,
       cancelActivity: false
     }));
   }

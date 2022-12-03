@@ -138,21 +138,24 @@ proto.resume = function resume() {
 
   if (this[kCompleted]) return;
 
-  switch (this.status) {
-    case 'init':
-      return this._start();
-    case 'executing': {
-      if (!postponed.length) return this._complete('completed');
-      break;
-    }
-  }
+  const status = this.status;
+  if (status === 'init') return this._start();
 
-  for (const {content} of postponed.slice()) {
-    const activity = this.getActivityById(content.id);
+  for (const msg of postponed.slice()) {
+    const activity = this.getActivityById(msg.content.id);
     if (!activity) continue;
-    if (content.placeholder) continue;
+    if (msg.content.placeholder) continue;
+    if (!activity.status) {
+      this._popPostponed(msg.content);
+      msg.ack();
+      continue;
+    }
     activity.resume();
   }
+
+  if (this[kCompleted]) return;
+
+  if (!postponed.length && status === 'executing') return this._complete('completed');
 };
 
 proto.recover = function recover(state) {
@@ -241,14 +244,22 @@ proto.stop = function stop() {
 };
 
 proto.getPostponed = function getPostponed(filterFn) {
-  return this[kElements].postponed.slice().reduce((result, msg) => {
+  const result = [];
+  for (const msg of this[kElements].postponed.slice()) {
     const api = this._getChildApi(msg);
-    if (api) {
-      if (filterFn && !filterFn(api)) return result;
-      result.push(api);
-    }
-    return result;
-  }, []);
+    if (!api) continue;
+    if (filterFn && !filterFn(api)) continue;
+    result.push(api);
+  }
+  return result;
+  // return this[kElements].postponed.slice().reduce((result, msg) => {
+  //   const api = this._getChildApi(msg);
+  //   if (api) {
+  //     if (filterFn && !filterFn(api)) return result;
+  //     result.push(api);
+  //   }
+  //   return result;
+  // }, []);
 };
 
 proto.discard = function discard() {

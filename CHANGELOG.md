@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 8.2.3
+
+- fix resumed boundary event initialized twice even if it's completed
+- fix process lingering completed activities after resume
+
 # 8.2.2
 
 - mitigate possible stack overflow error by not acking message before publishing a new one. Fix after fix #31

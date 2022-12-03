@@ -55,8 +55,8 @@ describe('BoundaryEvent', () => {
         behaviour.execute({
           fields: {},
           content: {
-            id: 'bound',
-            executionId: 'bound_1',
+            id: 'event',
+            executionId: 'event_1',
             isRootScope: true,
           },
         });
@@ -83,8 +83,8 @@ describe('BoundaryEvent', () => {
         behaviour.execute({
           fields: {},
           content: {
-            id: 'bound',
-            executionId: 'bound_1',
+            id: 'event',
+            executionId: 'event_1',
             isRootScope: true,
           },
         });
@@ -109,8 +109,8 @@ describe('BoundaryEvent', () => {
         behaviour.execute({
           fields: {},
           content: {
-            id: 'bound',
-            executionId: 'bound_1',
+            id: 'event',
+            executionId: 'event_1',
             isRootScope: true,
           },
         });
@@ -123,7 +123,7 @@ describe('BoundaryEvent', () => {
 
         expect(message).to.be.ok;
         expect(message).to.have.property('fields').with.property('routingKey', 'execute.discard');
-        expect(message).to.have.property('content').with.property('executionId', 'bound_1');
+        expect(message).to.have.property('content').with.property('executionId', 'event_1');
         expect(message).to.have.property('content').with.property('isRootScope', true);
 
         expect(attachedTo.broker.getExchange('event')).to.have.property('bindingCount', 0);
@@ -147,8 +147,8 @@ describe('BoundaryEvent', () => {
         behaviour.execute({
           fields: {},
           content: {
-            id: 'bound',
-            executionId: 'bound_1',
+            id: 'event',
+            executionId: 'event_1',
             isRootScope: true,
           },
         });
@@ -184,13 +184,13 @@ describe('BoundaryEvent', () => {
         behaviour.execute({
           fields: {},
           content: {
-            id: 'bound',
-            executionId: 'bound_1',
+            id: 'event',
+            executionId: 'event_1',
             isRootScope: true,
           },
         });
 
-        broker.publish('api', 'activity.stop.bound_1', {}, {type: 'stop'});
+        broker.publish('api', 'activity.stop.event_1', {}, {type: 'stop'});
 
         expect(attachedTo.broker.getExchange('execution')).to.have.property('bindingCount', 1);
         expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
@@ -230,8 +230,8 @@ describe('BoundaryEvent', () => {
         behaviour.execute({
           fields: {},
           content: {
-            id: 'bound',
-            executionId: 'bound_1',
+            id: 'event',
+            executionId: 'event_1',
             isRootScope: true,
             inbound: [{
               executionId: 'activity_1',
@@ -281,8 +281,8 @@ describe('BoundaryEvent', () => {
         behaviour.execute({
           fields: {},
           content: {
-            id: 'bound',
-            executionId: 'bound_1',
+            id: 'event',
+            executionId: 'event_1',
             isRootScope: true,
             parent: {
               id: 'theProcess',
@@ -318,8 +318,8 @@ describe('BoundaryEvent', () => {
         behaviour.execute({
           fields: {},
           content: {
-            id: 'bound',
-            executionId: 'bound_1',
+            id: 'event',
+            executionId: 'event_1',
             isRootScope: true,
             parent: {
               id: 'theProcess',
@@ -365,8 +365,8 @@ describe('BoundaryEvent', () => {
         behaviour.execute({
           fields: {},
           content: {
-            id: 'bound',
-            executionId: 'bound_1',
+            id: 'event',
+            executionId: 'event_1',
             isRootScope: true,
             parent: {
               id: 'theProcess',
@@ -412,8 +412,8 @@ describe('BoundaryEvent', () => {
         behaviour.execute({
           fields: {},
           content: {
-            id: 'bound',
-            executionId: 'bound_1',
+            id: 'event',
+            executionId: 'event_1',
             isRootScope: true,
             parent: {
               id: 'theProcess',
@@ -421,7 +421,7 @@ describe('BoundaryEvent', () => {
           },
         });
 
-        broker.publish('api', 'activity.stop.bound_1', {}, {type: 'stop'});
+        broker.publish('api', 'activity.stop.event_1', {}, {type: 'stop'});
 
         expect(attachedTo.broker.getExchange('execution')).to.have.property('bindingCount', 1);
         expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
@@ -457,8 +457,8 @@ describe('BoundaryEvent', () => {
         behaviour.execute({
           fields: {},
           content: {
-            id: 'bound',
-            executionId: 'bound_1',
+            id: 'event',
+            executionId: 'event_1',
             isRootScope: true,
             parent: {
               id: 'theProcess',
@@ -472,7 +472,7 @@ describe('BoundaryEvent', () => {
           sourcePattern: '#',
           executionId: 'event_0_1',
         });
-        broker.publish('api', 'activity.stop.bound_1', {}, {
+        broker.publish('api', 'activity.stop.event_1', {}, {
           type: 'stop',
         });
 
@@ -484,8 +484,8 @@ describe('BoundaryEvent', () => {
         behaviour.execute({
           fields: {},
           content: {
-            id: 'bound',
-            executionId: 'bound_1',
+            id: 'event',
+            executionId: 'event_1',
             isRootScope: true,
             parent: {
               id: 'theProcess',
@@ -498,7 +498,7 @@ describe('BoundaryEvent', () => {
           bindExchange: 'execution',
           sourcePattern: '#',
         });
-        broker.publish('api', 'activity.discard.bound_1', {}, {type: 'discard'});
+        broker.publish('api', 'activity.discard.event_1', {}, {type: 'discard'});
 
         expect(behaviour.attachedTo.broker).to.have.property('consumerCount', 0);
         expect(broker).to.have.property('consumerCount', 0);

@@ -10,6 +10,7 @@
   },
   "globals": {
     "expect": false,
+    "beforeEachScenario": false,
     "Buffer": false,
     "Feature": false,
     "Scenario": false,
