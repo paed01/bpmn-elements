@@ -15,7 +15,13 @@ function ActivityBroker(activity) {
   return executionBroker;
 }
 function ProcessBroker(owner) {
-  return ExecutionBroker(owner, 'process');
+  const executionBroker = ExecutionBroker(owner, 'process');
+  executionBroker.broker.assertQueue('api-q', {
+    durable: false,
+    autoDelete: false
+  });
+  executionBroker.broker.bindQueue('api-q', 'api', '#');
+  return executionBroker;
 }
 function DefinitionBroker(owner, onBrokerReturn) {
   return ExecutionBroker(owner, 'definition', onBrokerReturn);

@@ -108,7 +108,7 @@ describe('Process', () => {
       expect(bp.broker.getQueue('run-q')).to.have.property('consumerCount', 0);
       expect(bp.broker.getQueue('execution-q')).to.have.property('consumerCount', 0);
       expect(bp.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
-      expect(bp.broker.getExchange('api'), 'api exchange').to.have.property('bindingCount', 0);
+      expect(bp.broker.getExchange('api'), 'api exchange').to.have.property('bindingCount', 1);
       expect(bp.broker.getExchange('event'), 'event exchange').to.have.property('bindingCount', 0);
       expect(bp.broker, 'broker').to.have.property('consumerCount', 0);
     });
@@ -150,7 +150,7 @@ describe('Process', () => {
         expect(bp.broker.getQueue('run-q')).to.have.property('consumerCount', 0);
         expect(bp.broker.getQueue('execution-q')).to.have.property('consumerCount', 0);
         expect(bp.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
-        expect(bp.broker.getExchange('api'), 'api exchange').to.have.property('bindingCount', 0);
+        expect(bp.broker.getExchange('api'), 'api exchange').to.have.property('bindingCount', 1);
         expect(bp.broker.getExchange('event'), 'event exchange').to.have.property('bindingCount', 0);
         expect(bp.broker, 'broker').to.have.property('consumerCount', 0);
         done();

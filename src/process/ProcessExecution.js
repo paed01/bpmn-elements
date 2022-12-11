@@ -347,11 +347,19 @@ proto._start = function start() {
 proto._activate = function activate() {
   const {onApiMessage, onMessageFlowEvent, onActivityEvent} = this[kMessageHandlers];
 
-  this.broker.subscribeTmp('api', '#', onApiMessage, {
-    noAck: true,
-    consumerTag: `_process-api-consumer-${this.executionId}`,
-    priority: 200,
-  });
+  if (!this.isSubProcess) {
+    this.broker.consume('api-q', onApiMessage, {
+      noAck: true,
+      consumerTag: `_process-api-consumer-${this.executionId}`,
+      priority: 200,
+    });
+  } else {
+    this.broker.subscribeTmp('api', '#', onApiMessage, {
+      noAck: true,
+      consumerTag: `_process-api-consumer-${this.executionId}`,
+      priority: 200,
+    });
+  }
 
   const {outboundMessageFlows, flows, associations, startActivities, triggeredByEvent, children} = this[kElements];
 
