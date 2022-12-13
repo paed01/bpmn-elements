@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 8.2.4
+
+- allow process to start before receiving api messages, should fix issue #32
+
 # 8.2.3
 
 - fix resumed boundary event initialized twice even if it's completed
