@@ -40,7 +40,6 @@ EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) 
 
   const broker = this.activity.broker;
   broker.subscribeOnce('api', `activity.stop.${executionId}`, () => this._stop(), {
-    noAck: true,
     consumerTag: '_api-stop-execution',
   });
 
@@ -49,7 +48,7 @@ EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) 
 };
 
 EventBasedGatewayBehaviour.prototype._onTargetCompleted = function onTargetCompleted(executeMessage, _, message, owner) {
-  const {id: targetId, exexutionId: targetExecutionId} = message.content;
+  const {id: targetId, executionId: targetExecutionId} = message.content;
   const executeContent = executeMessage.content;
   const executionId = executeContent.executionId;
   this.activity.logger.debug(`<${executionId} (${this.id})> <${targetExecutionId}> completed run, discarding the rest`);

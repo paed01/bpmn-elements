@@ -4,6 +4,7 @@ import testHelpers from '../helpers/testHelpers.js';
 Feature('Format', () => {
   Scenario('Activities with save state', () => {
     let definition;
+    const states = [];
     Given('a process with form start event, user tasks, and a service task', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -48,7 +49,6 @@ Feature('Format', () => {
     });
 
     let end;
-    const states = [];
     When('ran', () => {
       end = definition.waitFor('end');
       definition.run();

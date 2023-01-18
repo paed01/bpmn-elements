@@ -640,6 +640,7 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
       {
         const execution = this.execution;
         if (!isRedelivered && execution) {
+          if (execution.completed) return message.ack();
           this[kExecuteMessage] = message;
           return execution.passthrough(message);
         }
@@ -783,7 +784,6 @@ Activity.prototype._onExecutionMessage = function onExecutionMessage(routingKey,
 Activity.prototype._ackRunExecuteMessage = function ackRunExecuteMessage() {
   if (this.environment.settings.step) return;
   const executeMessage = this[kExecuteMessage];
-  this[kExecuteMessage] = null;
   executeMessage.ack();
 };
 Activity.prototype._doRunLeave = function doRunLeave(message, isDiscarded, onOutbound) {

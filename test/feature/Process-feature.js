@@ -14,13 +14,13 @@ Feature('Process', () => {
     </definitions>`;
 
     let processInstance, assertMessage;
+    const messages = [];
     Given('a process', async () => {
       const context = await testHelpers.context(source);
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, true);
     });
 
-    const messages = [];
     And('the process is subscribed to', () => {
       processInstance.broker.subscribeTmp('event', 'process.#', (routingKey, message) => {
         messages.push(message);
@@ -72,13 +72,13 @@ Feature('Process', () => {
     </definitions>`;
 
     let processInstance, assertMessage;
+    const messages = [];
     Given('a process', async () => {
       const context = await testHelpers.context(source);
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, true);
     });
 
-    const messages = [];
     And('the process is subscribed to', () => {
       processInstance.broker.subscribeTmp('event', 'process.#', (routingKey, message) => {
         messages.push(message);
@@ -1590,13 +1590,13 @@ Feature('Process', () => {
       expect(JSON.parse(JSON.stringify(processInstance.getState()))).to.eql(state);
     });
 
+    let completed;
     When('resuming execution', () => {
       waiting = processInstance.getActivityById('activity').waitFor('wait');
       completed = processInstance.waitFor('leave');
       processInstance.resume();
     });
 
-    let completed;
     And('signaling user task', async () => {
       const task = await waiting;
       task.signal();
@@ -1945,13 +1945,13 @@ Feature('Process', () => {
       expect(JSON.parse(JSON.stringify(bp.getState()))).to.eql(state);
     });
 
+    let completed;
     When('resuming execution', () => {
       waiting = bp.waitFor('wait');
       completed = bp.waitFor('leave');
       bp.resume();
     });
 
-    let completed;
     And('signaling sub user task', async () => {
       task = await waiting;
       expect(task).to.have.property('id', 'subActivity');

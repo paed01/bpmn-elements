@@ -219,4 +219,38 @@ Feature('EventBasedGateway', () => {
       return end;
     });
   });
+
+  Scenario('gateway with event that completes immediately', () => {
+    let definition, context;
+    Given('a definition with event based gateway, timeout and intermediate catch message event', async () => {
+      const source = `
+      <definitions id="EventBasedGateway" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <message id="Message_1" name="Continue Message" />
+        <process id="Process_0" isExecutable="true">
+          <eventBasedGateway id="gateway" />
+          <sequenceFlow id="to-messageEvent" sourceRef="gateway" targetRef="messageEvent" />
+          <sequenceFlow id="to-timerEvent" sourceRef="gateway" targetRef="timerEvent" />
+          <intermediateCatchEvent id="messageEvent">
+            <messageEventDefinition messageRef="Message_1" />
+          </intermediateCatchEvent>
+          <intermediateCatchEvent id="timerEvent">
+            <timerEventDefinition></timerEventDefinition>
+          </intermediateCatchEvent>
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let end;
+    When('definition is ran with state saving at wait and timer', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('definition completes run', () => {
+      return end;
+    });
+  });
 });
