@@ -15,6 +15,39 @@ describe('CancelEventDefinition', () => {
       };
     });
 
+    it('publishes wait event on parent broker', () => {
+      const catchEvent = new CancelEventDefinition(event, {
+        type: 'bpmn:CancelEventDefinition',
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      catchEvent.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0',
+            }],
+          },
+        },
+      });
+
+      expect(messages).to.have.length(1);
+      expect(messages[0].fields).to.have.property('routingKey', 'activity.wait');
+      expect(messages[0].content).to.have.property('executionId', 'event_1');
+      expect(messages[0].content.parent).to.have.property('id', 'theProcess');
+      expect(messages[0].content.parent).to.have.property('executionId', 'theProcess_0');
+    });
+
     it('expects cancel with canceled routing key', () => {
       const catchEvent = new CancelEventDefinition(event, {
         type: 'bpmn:CancelEventDefinition',

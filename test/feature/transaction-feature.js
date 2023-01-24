@@ -597,4 +597,295 @@ Feature('Transaction', () => {
       });
     });
   });
+
+  Scenario('Compensation ignored bug not caught by this scenario', () => {
+    let context;
+    Given('a transaction with a monitored task ending succeeded by volative service task', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="theProcess" isExecutable="true">
+          <boundaryEvent id="canceled" attachedToRef="atomic">
+            <cancelEventDefinition />
+          </boundaryEvent>
+          <transaction id="atomic">
+            <startEvent id="start" />
+            <sequenceFlow id="flow1" sourceRef="start" targetRef="task" />
+            <task id="task" />
+            <boundaryEvent id="listen" attachedToRef="task">
+              <compensateEventDefinition />
+            </boundaryEvent>
+            <serviceTask id="compensate" isForCompensation="true" implementation="\${environment.services.compensate}" />
+            <sequenceFlow id="to-wait" sourceRef="task" targetRef="wait" />
+            <userTask id="wait" />
+            <sequenceFlow id="to-volatile" sourceRef="wait" targetRef="volatile" />
+            <serviceTask id="volatile" implementation="\${environment.services.volatile}" />
+            <sequenceFlow id="flow3" sourceRef="volatile" targetRef="endcancel" />
+            <endEvent id="endcancel">
+              <cancelEventDefinition />
+            </endEvent>
+            <association id="i-hear-you" sourceRef="listen" targetRef="compensate" />
+          </transaction>
+          <boundaryEvent id="errored" attachedToRef="atomic">
+            <errorEventDefinition />
+          </boundaryEvent>
+        </process>
+      </definitions>`;
+      context = await testHelpers.context(source);
+    });
+
+    let options, definition, end;
+    const compensations = [];
+    const volatile = [];
+    When('definition is ran', () => {
+      options = {
+        services: {
+          compensate(...args) {
+            compensations.push(args);
+          },
+          volatile(...args) {
+            volatile.push(args);
+          },
+        },
+      };
+      definition = new Definition(context, options);
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    When('user task is signaled via definition', () => {
+      definition.signal({id: 'wait'});
+    });
+
+    And('succeeding service task completes', () => {
+      expect(volatile.length).to.equal(1);
+      volatile.pop().pop()();
+    });
+
+    Then('compensation is triggered', () => {
+      expect(compensations.length).to.equal(1);
+      expect(compensations[0][0].content.message.content.id).to.equal('task');
+    });
+
+    When('compensated', () => {
+      compensations.pop().pop()();
+    });
+
+    Then('transaction completes', async () => {
+      await end;
+      const atomic = definition.getActivityById('atomic');
+      expect(atomic.counters).to.deep.equal({
+        discarded: 0,
+        taken: 1,
+      });
+    });
+
+    And('monitoring cancel was taken', () => {
+      const atomic = definition.getActivityById('canceled');
+      expect(atomic.counters).to.deep.equal({
+        discarded: 0,
+        taken: 1,
+      });
+    });
+
+    And('catch error event was discarded', () => {
+      const atomic = definition.getActivityById('errored');
+      expect(atomic.counters).to.deep.equal({
+        discarded: 1,
+        taken: 0,
+      });
+    });
+
+    Given('definition is ran again', () => {
+      definition.run();
+    });
+
+    When('user task is signaled', () => {
+      definition.signal({id: 'wait'});
+    });
+
+    And('succeeding service task fails with error', () => {
+      expect(volatile.length).to.equal(1);
+      volatile.pop().pop()(new Error('Unexpected'));
+    });
+
+    Then('compensation is NOT triggered', () => {
+      expect(compensations.length).to.equal(0);
+    });
+
+    And('run completes', () => {
+      return end;
+    });
+
+    And('catch error event was taken', () => {
+      const atomic = definition.getActivityById('errored');
+      expect(atomic.counters).to.deep.equal({
+        discarded: 1,
+        taken: 1,
+      });
+    });
+  });
+
+  Scenario('Compensation ignored bug', () => {
+    let context;
+    Given('a transaction with a monitored task ending in cancel', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="theProcess" isExecutable="true">
+          <boundaryEvent id="canceled" attachedToRef="atomic">
+            <cancelEventDefinition />
+          </boundaryEvent>
+          <transaction id="atomic">
+            <startEvent id="start" />
+            <sequenceFlow id="flow1" sourceRef="start" targetRef="task" />
+            <task id="task" />
+            <boundaryEvent id="listen" attachedToRef="task">
+              <compensateEventDefinition />
+            </boundaryEvent>
+            <serviceTask id="compensate" isForCompensation="true" implementation="\${environment.services.compensate}" />
+            <sequenceFlow id="to-endcancel" sourceRef="task" targetRef="endcancel" />
+            <endEvent id="endcancel">
+              <cancelEventDefinition />
+            </endEvent>
+            <association id="i-hear-you" sourceRef="listen" targetRef="compensate" />
+          </transaction>
+          <boundaryEvent id="errored" attachedToRef="atomic">
+            <errorEventDefinition />
+          </boundaryEvent>
+        </process>
+      </definitions>`;
+      context = await testHelpers.context(source);
+    });
+
+    let options, definition, end;
+    const compensations = [];
+    When('definition is ran', () => {
+      options = {
+        services: {
+          compensate(...args) {
+            compensations.push(args);
+          },
+        },
+      };
+      definition = new Definition(context, options);
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('compensation is triggered', () => {
+      expect(compensations.length).to.equal(1);
+      expect(compensations[0][0].content.message.content.id).to.equal('task');
+    });
+
+    When('compensated', () => {
+      compensations.pop().pop()();
+    });
+
+    Then('transaction completes', async () => {
+      await end;
+      const atomic = definition.getActivityById('atomic');
+      expect(atomic.counters).to.deep.equal({
+        discarded: 0,
+        taken: 1,
+      });
+    });
+
+    Given('a transaction with a monitored task ending gateway that has cancel', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="Process_0" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="toAtomic" sourceRef="start" targetRef="atomic" />
+          <boundaryEvent id="canceled" attachedToRef="atomic">
+            <cancelEventDefinition />
+          </boundaryEvent>
+          <transaction id="atomic">
+            <startEvent id="startSubProcess" />
+            <sequenceFlow id="toMain" sourceRef="startSubProcess" targetRef="mainTask" />
+            <task id="mainTask" name="Main" />
+            <sequenceFlow id="toAreUSure" sourceRef="mainTask" targetRef="areUSure" />
+            <boundaryEvent id="compensateBound" attachedToRef="mainTask">
+              <compensateEventDefinition />
+            </boundaryEvent>
+            <serviceTask id="compensateTask" name="Compensate main" isForCompensation="true" implementation="\${environment.services.compensate}" />
+            <userTask id="areUSure" name="Are you sure?" />
+            <endEvent id="endComplete" />
+            <sequenceFlow id="toGateway" sourceRef="areUSure" targetRef="isSure" />
+            <endEvent id="endCancel">
+              <cancelEventDefinition />
+            </endEvent>
+            <exclusiveGateway id="isSure" default="noFlow" />
+            <sequenceFlow id="yesFlow" name="Yes" sourceRef="isSure" targetRef="endComplete">
+              <conditionExpression xsi:type="tFormalExpression">\${false}</conditionExpression>
+            </sequenceFlow>
+            <sequenceFlow id="noFlow" name="No" sourceRef="isSure" targetRef="endCancel" />
+            <sequenceFlow id="errorFlow" name="Abort" sourceRef="isSure" targetRef="endInError">
+              <conditionExpression xsi:type="tFormalExpression">\${false}</conditionExpression>
+            </sequenceFlow>
+            <endEvent id="endInError">
+              <errorEventDefinition />
+            </endEvent>
+            <association id="fwdMainEvents" sourceRef="compensateBound" targetRef="compensateTask" />
+          </transaction>
+          <endEvent id="end" />
+          <sequenceFlow id="toEnd" sourceRef="atomic" targetRef="end" />
+          <endEvent id="endCanceled" />
+          <sequenceFlow id="toEndCanceled" sourceRef="canceled" targetRef="endCanceled" />
+          <endEvent id="endErrored" />
+          <sequenceFlow id="toEndErrored" sourceRef="errored" targetRef="endErrored" />
+          <boundaryEvent id="errored" attachedToRef="atomic">
+            <errorEventDefinition />
+          </boundaryEvent>
+        </process>
+      </definitions>`;
+      context = await testHelpers.context(source);
+    });
+
+    When('definition is ran', () => {
+      definition = new Definition(context, options);
+      definition.run();
+    });
+
+    And('user task is signaled via definition', () => {
+      end = definition.waitFor('leave');
+      definition.signal({id: 'areUSure'});
+    });
+
+    Then('compensation is NOT triggered for some reason', () => {
+      expect(compensations.length).to.equal(0);
+      // expect(compensations[0][0].content.message.content.id).to.equal('task');
+    });
+
+    And('it completed', () => {
+      return end;
+    });
+
+    When('ran again', () => {
+      definition.run();
+    });
+
+    And('user task is signaled directly', () => {
+      end = definition.waitFor('leave');
+      const transaction = definition.getPostponed((e) => e.id === 'atomic')[0];
+      const userTask = transaction.getPostponed().pop();
+      userTask.signal();
+    });
+
+    Then('compensation is triggered', () => {
+      expect(compensations.length).to.equal(1);
+      expect(compensations[0][0].content.message.content.id).to.equal('mainTask');
+    });
+
+    When('compensated', () => {
+      compensations.pop().pop()();
+    });
+
+    Then('transaction completes', async () => {
+      await end;
+      // const atomic = definition.getActivityById('atomic');
+      // expect(atomic.counters).to.deep.equal({
+      //   discarded: 0,
+      //   taken: 1,
+      // });
+    });
+  });
 });

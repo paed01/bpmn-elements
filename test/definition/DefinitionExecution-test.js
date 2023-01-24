@@ -271,4 +271,17 @@ describe('Definition execution', () => {
       expect(execution === execution.recover()).to.be.true;
     });
   });
+
+  describe('activityStatus', () => {
+    it('is idle before execute', () => {
+      const context = testHelpers.emptyContext();
+      const execution = new DefinitionExecution({
+        id: 'Def_1',
+        environment: context.environment,
+        broker: new DefinitionBroker(this).broker,
+      }, context);
+
+      expect(execution.activityStatus).to.equal('idle');
+    });
+  });
 });

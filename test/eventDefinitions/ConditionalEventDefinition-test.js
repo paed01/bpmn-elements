@@ -23,6 +23,44 @@ describe('ConditionalEventDefinition', () => {
   });
 
   describe('bound', () => {
+    it('publishes wait event on parent broker', () => {
+      event.attachedTo = task;
+
+      const condition = new ConditionalEventDefinition(event, {
+        type: 'bpmn:ConditionalEventDefinition',
+        behaviour: {
+          expression: '${content.output.value}',
+        },
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      condition.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [{
+              id: 'theProcess',
+              executionId: 'theProcess_0',
+            }],
+          },
+        },
+      });
+
+      expect(messages).to.have.length(1);
+      expect(messages[0].fields).to.have.property('routingKey', 'activity.wait');
+      expect(messages[0].content).to.have.property('executionId', 'event_1');
+      expect(messages[0].content.parent).to.have.property('id', 'theProcess');
+      expect(messages[0].content.parent).to.have.property('executionId', 'theProcess_0');
+    });
+
     it('publishes condition message with undefined result if expression is empty', () => {
       event.attachedTo = task;
 
@@ -36,7 +74,7 @@ describe('ConditionalEventDefinition', () => {
       });
 
       event.broker.subscribeOnce('execution', '#', () => {
-        throw new Error('Shouldn´t publish on execution exchange');
+        throw new Error('Shouldn\'t publish on execution exchange');
       });
 
       condition.execute({

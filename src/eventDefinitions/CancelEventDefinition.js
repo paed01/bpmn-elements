@@ -66,16 +66,24 @@ CancelEventDefinition.prototype.executeCatch = function executeCatch(executeMess
 
   this._debug('expect cancel');
 
-  const exchangeKey = `execute.canceled.${executionId}`;
-  broker.subscribeOnce('execution', exchangeKey, onCatchMessage, {
+  const expectRoutingKey = `execute.canceled.${executionId}`;
+  broker.subscribeOnce('execution', expectRoutingKey, onCatchMessage, {
     consumerTag: `_onattached-cancel-${executionId}`,
   });
 
   broker.publish('execution', 'execute.expect', cloneContent(executeContent, {
     pattern: '#.cancel',
     exchange: 'execution',
-    exchangeKey,
+    expectRoutingKey,
   }));
+
+  const waitContent = cloneContent(executeContent, {
+    executionId: parentExecutionId,
+    condition: this.condition,
+  });
+  waitContent.parent = shiftParent(parent);
+
+  broker.publish('event', 'activity.wait', waitContent);
 };
 
 CancelEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {

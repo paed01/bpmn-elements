@@ -66,9 +66,12 @@ ConditionalEventDefinition.prototype.executeCatch = function executeCatch(execut
   const executeContent = executeMessage.content;
   const {
     executionId,
-    index
+    index,
+    parent
   } = executeContent;
-  this.broker.subscribeTmp('api', `activity.#.${executionId}`, this._onCatchApiMessage.bind(this), {
+  const parentExecutionId = parent.executionId;
+  const broker = this.broker;
+  broker.subscribeTmp('api', `activity.#.${executionId}`, this._onCatchApiMessage.bind(this), {
     noAck: true,
     consumerTag: `_api-${executionId}_${index}`
   });
@@ -81,6 +84,12 @@ ConditionalEventDefinition.prototype.executeCatch = function executeCatch(execut
     priority: 300,
     consumerTag: `_onend-${executionId}_${index}`
   });
+  const waitContent = (0, _messageHelper.cloneContent)(executeContent, {
+    executionId: parentExecutionId,
+    condition: this.condition
+  });
+  waitContent.parent = (0, _messageHelper.shiftParent)(parent);
+  broker.publish('event', 'activity.wait', waitContent);
 };
 ConditionalEventDefinition.prototype._onWaitApiMessage = function onWaitApiMessage(routingKey, message) {
   const messageType = message.properties.type;

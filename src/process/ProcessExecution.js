@@ -1,6 +1,7 @@
-import {ProcessApi} from '../Api.js';
-import {cloneContent, cloneMessage, pushParent} from '../messageHelper.js';
-import {getUniqueId} from '../shared.js';
+import {ProcessApi} from '../Api';
+import {cloneContent, cloneMessage, pushParent} from '../messageHelper';
+import {getUniqueId} from '../shared';
+import {ActivityTracker} from '../Tracker.js';
 
 export default ProcessExecution;
 
@@ -13,6 +14,7 @@ const kMessageHandlers = Symbol.for('messageHandlers');
 const kParent = Symbol.for('parent');
 const kStatus = Symbol.for('status');
 const kStopped = Symbol.for('stopped');
+const kTracker = Symbol.for('activity tracker');
 
 function ProcessExecution(parentActivity, context) {
   const {id, type, broker, isSubProcess} = parentActivity;
@@ -44,6 +46,7 @@ function ProcessExecution(parentActivity, context) {
   this[kStopped] = false;
   this[kActivated] = false;
   this[kStatus] = 'init';
+  this[kTracker] = new ActivityTracker(id);
   this.executionId = undefined;
 
   this[kMessageHandlers] = {
@@ -84,6 +87,12 @@ Object.defineProperty(ProcessExecution.prototype, 'postponedCount', {
 Object.defineProperty(ProcessExecution.prototype, 'isRunning', {
   get() {
     return this[kActivated];
+  },
+});
+
+Object.defineProperty(ProcessExecution.prototype, 'activityStatus', {
+  get() {
+    return this[kTracker].activityStatus;
   },
 });
 
@@ -139,6 +148,7 @@ ProcessExecution.prototype.resume = function resume() {
   const status = this.status;
   if (status === 'init') return this._start();
 
+  const tracker = this[kTracker];
   for (const msg of postponed.slice()) {
     const activity = this.getActivityById(msg.content.id);
     if (!activity) continue;
@@ -148,6 +158,8 @@ ProcessExecution.prototype.resume = function resume() {
       msg.ack();
       continue;
     }
+
+    tracker.track(msg.fields.routingKey, msg);
     activity.resume();
   }
 
@@ -478,6 +490,7 @@ ProcessExecution.prototype._onActivityEvent = function onActivityEvent(routingKe
 
   if (delegate) delegate = this._onDelegateEvent(message);
 
+  this[kTracker].track(routingKey, message);
   this.broker.publish('event', routingKey, content, {...message.properties, delegate, mandatory: false});
   if (shaking) return this._onShookEnd(message);
   if (!isDirectChild) return;

@@ -18,6 +18,7 @@ const kMessageHandlers = Symbol.for('messageHandlers');
 const kParent = Symbol.for('parent');
 const kStatus = Symbol.for('status');
 const kStopped = Symbol.for('stopped');
+const kTracker = Symbol.for('activity tracker');
 function ProcessExecution(parentActivity, context) {
   const {
     id,
@@ -52,6 +53,7 @@ function ProcessExecution(parentActivity, context) {
   this[kStopped] = false;
   this[kActivated] = false;
   this[kStatus] = 'init';
+  this[kTracker] = new _Tracker.ActivityTracker(id);
   this.executionId = undefined;
   this[kMessageHandlers] = {
     onActivityEvent: this._onActivityEvent.bind(this),
@@ -88,7 +90,16 @@ Object.defineProperty(ProcessExecution.prototype, 'isRunning', {
     return this[kActivated];
   }
 });
+<<<<<<< HEAD:dist/process/ProcessExecution.js
 ProcessExecution.prototype.execute = function execute(executeMessage) {
+=======
+Object.defineProperty(proto, 'activityStatus', {
+  get() {
+    return this[kTracker].activityStatus;
+  }
+});
+proto.execute = function execute(executeMessage) {
+>>>>>>> 4763e35 (wip: activity status):dist/src/process/ProcessExecution.js
   if (!executeMessage) throw new Error('Process execution requires message');
   if (!executeMessage.content || !executeMessage.content.executionId) throw new Error('Process execution requires execution id');
   const executionId = this.executionId = executeMessage.content.executionId;
@@ -131,6 +142,7 @@ ProcessExecution.prototype.resume = function resume() {
   if (this[kCompleted]) return;
   const status = this.status;
   if (status === 'init') return this._start();
+  const tracker = this[kTracker];
   for (const msg of postponed.slice()) {
     const activity = this.getActivityById(msg.content.id);
     if (!activity) continue;
@@ -140,6 +152,7 @@ ProcessExecution.prototype.resume = function resume() {
       msg.ack();
       continue;
     }
+    tracker.track(msg.fields.routingKey, msg);
     activity.resume();
   }
   if (this[kCompleted]) return;
@@ -465,6 +478,7 @@ ProcessExecution.prototype._onActivityEvent = function onActivityEvent(routingKe
     });
   }
   if (delegate) delegate = this._onDelegateEvent(message);
+  this[kTracker].track(routingKey, message);
   this.broker.publish('event', routingKey, content, {
     ...message.properties,
     delegate,
