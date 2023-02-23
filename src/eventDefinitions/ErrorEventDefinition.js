@@ -79,6 +79,8 @@ ErrorEventDefinition.prototype.executeCatch = function executeCatch(executeMessa
       consumerTag: `_onerror-${executionId}`,
     });
     broker.publish('execution', 'execute.expect', cloneContent(executeContent, {
+      pattern: 'activity.error',
+      exchange: 'execution',
       expectRoutingKey,
       expect: {...info.message},
     }));

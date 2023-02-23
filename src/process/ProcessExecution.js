@@ -17,12 +17,13 @@ const kStopped = Symbol.for('stopped');
 const kTracker = Symbol.for('activity tracker');
 
 function ProcessExecution(parentActivity, context) {
-  const {id, type, broker, isSubProcess} = parentActivity;
+  const {id, type, broker, isSubProcess, isTransaction} = parentActivity;
 
   this[kParent] = parentActivity;
   this.id = id;
   this.type = type;
   this.isSubProcess = isSubProcess;
+  this.isTransaction = isSubProcess && isTransaction;
   this.broker = broker;
   this.environment = context.environment;
   this.context = context;
@@ -273,6 +274,14 @@ ProcessExecution.prototype.discard = function discard() {
   }, {type: 'discard'});
 };
 
+ProcessExecution.prototype.cancel = function discard() {
+  return this[kActivityQ].queueMessage({ routingKey: 'execution.cancel' }, {
+    id: this.id,
+    type: this.type,
+    executionId: this.executionId,
+  }, { type: 'cancel' });
+};
+
 ProcessExecution.prototype.getState = function getState() {
   const {children, flows, outboundMessageFlows, associations} = this[kElements];
   return {
@@ -301,6 +310,10 @@ ProcessExecution.prototype.getActivityById = function getActivityById(activityId
 
 ProcessExecution.prototype.getSequenceFlows = function getSequenceFlows() {
   return this[kElements].flows.slice();
+};
+
+ProcessExecution.prototype.getAssociations = function getAssociations() {
+  return this[kElements].associations.slice();
 };
 
 ProcessExecution.prototype.getApi = function getApi(message) {
@@ -344,6 +357,7 @@ ProcessExecution.prototype._start = function start() {
   }
 
   for (const a of startActivities) a.init();
+  this[kStatus] = 'executing';
   for (const a of startActivities) a.run();
 
   postponed.splice(0);
@@ -494,7 +508,6 @@ ProcessExecution.prototype._onActivityEvent = function onActivityEvent(routingKe
   this.broker.publish('event', routingKey, content, {...message.properties, delegate, mandatory: false});
   if (shaking) return this._onShookEnd(message);
   if (!isDirectChild) return;
-  if (content.isAssociation) return;
 
   switch (routingKey) {
     case 'process.terminate':
@@ -511,6 +524,9 @@ ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey,
 
   const content = message.content;
 
+  // if (this.isTransaction) console.log({id: content.id, routingKey, l: this[kElements].postponed.map(p => p.content.executionId || p.content.sequenceId)})
+  console.log({id: content.id, routingKey, l: this[kElements].postponed.length, d: this[kElements].detachedActivities.length});
+
   switch (routingKey) {
     case 'execution.stop':
       message.ack();
@@ -521,6 +537,16 @@ ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey,
     case 'execution.discard':
       message.ack();
       return this._onDiscard(message);
+    case 'execution.discard.detached': {
+      message.ack();
+      for (const detached of this[kElements].detachedActivities) {
+        this._getChildApi(detached).discard();
+      }
+      return;
+    }
+    case 'execution.cancel':
+      message.ack();
+      return this._onCancel(message);
     case 'activity.error.caught': {
       const prevMsg = this[kElements].postponed.find((msg) => {
         return msg.content.executionId === content.executionId;
@@ -528,7 +554,7 @@ ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey,
       if (!prevMsg) return message.ack();
       break;
     }
-    case 'activity.compensation.end':
+    // case 'activity.compensation.end':
     case 'flow.looped':
     case 'activity.leave':
       return this._onChildCompleted(message);
@@ -541,14 +567,18 @@ ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey,
       this[kElements].detachedActivities.push(cloneMessage(message));
       break;
     }
+    case 'activity.cancel': {
+      if (this.isTransaction) this._onCancel(message);
+      break;
+    }
     case 'activity.discard':
-    case 'activity.compensation.start':
+    // case 'activity.compensation.start':
     case 'activity.enter': {
-      this[kStatus] = 'executing';
+      // this[kStatus] = 'executing';
       if (!content.inbound) break;
 
       for (const inbound of content.inbound) {
-        if (!inbound.isSequenceFlow) continue;
+        if (!inbound.isSequenceFlow && !inbound.isAssociation) continue;
         const inboundMessage = this._popPostponed(inbound);
         if (inboundMessage) inboundMessage.ack();
       }
@@ -579,7 +609,7 @@ ProcessExecution.prototype._popPostponed = function popPostponed(byContent) {
   const {postponed, detachedActivities} = this[kElements];
 
   const postponedIdx = postponed.findIndex((msg) => {
-    if (msg.content.isSequenceFlow) return msg.content.sequenceId === byContent.sequenceId;
+    if (msg.content.isSequenceFlow || msg.content.isAssociation) return msg.content.sequenceId === byContent.sequenceId;
     return msg.content.executionId === byContent.executionId;
   });
 
@@ -611,9 +641,12 @@ ProcessExecution.prototype._onChildCompleted = function onChildCompleted(message
 
   this._debug(`left <${id}> (${type}), pending runs ${postponedCount}, ${postponed.map((a) => a.content.id).join(',')}`);
 
-  if (postponedCount === detachedActivities.length) {
-    for (const api of this.getPostponed()) api.discard();
-    return;
+  if (postponedCount && postponedCount === detachedActivities.length) {
+    return this[kActivityQ].queueMessage({ routingKey: 'execution.discard.detached' }, {
+      id: this.id,
+      type: this.type,
+      executionId: this.executionId,
+    }, { type: 'cancel' });
   }
 
   if (isEnd && startActivities.length) {
@@ -649,35 +682,50 @@ ProcessExecution.prototype._onDiscard = function onDiscard() {
   const running = this[kElements].postponed.splice(0);
   this._debug(`discard process execution (discard child executions ${running.length})`);
 
-  for (const flow of this.getSequenceFlows()) flow.stop();
-  for (const msg of running) this._getChildApi(msg).discard();
+  // this.stop(); ?????
+
+  if (this.isSubProcess) {
+    this.stop();
+  } else {
+    for (const flow of this.getSequenceFlows()) flow.stop();
+    for (const flow of this.getAssociations()) flow.stop();
+    for (const msg of running) this._getChildApi(msg).discard();
+  }
 
   this[kActivityQ].purge();
   return this._complete('discard');
 };
 
-ProcessExecution.prototype._onApiMessage = function onApiMessage(routingKey, message) {
-  const executionId = this.executionId;
-  const broker = this.broker;
-  if (message.properties.delegate) {
-    const correlationId = message.properties.correlationId || getUniqueId(executionId);
-    this._debug(`delegate api ${routingKey} message to children, with correlationId <${correlationId}>`);
+ProcessExecution.prototype._onCancel = function onCancel(message) {
+  const running = this[kElements].postponed.slice(0);
+  const isTransaction = this.isTransaction;
 
-    let consumed = false;
-    broker.subscribeTmp('event', 'activity.consumed', (_, msg) => {
-      if (msg.properties.correlationId === correlationId) {
-        consumed = true;
-        this._debug(`delegated api message was consumed by ${msg.content ? msg.content.executionId : 'unknown'}`);
+  if (isTransaction) {
+    this._debug(`cancel transaction execution (cancel child executions ${running.length})`);
+    this[kStatus] = 'cancel';
+    this.broker.publish('event', 'transaction.cancel', cloneMessage(this[kExecuteMessage], {
+      state: 'cancel',
+    }));
+
+    for (const msg of running) {
+      // console.log('-----', msg.content.id, msg.content)
+      if (msg.content.expect === 'compensate') {
+        this._getChildApi(msg).sendApiMessage('compensate');
+      } else if (!msg.content.isForCompensation) {
+        this._getChildApi(msg).discard();
       }
-    }, {consumerTag: `_ct-delegate-${correlationId}`, noAck: true});
-
-    for (const child of this[kElements].children) {
-      if (child.placeholder) continue;
-      child.broker.publish('api', routingKey, cloneContent(message.content), message.properties);
-      if (consumed) break;
     }
+  } else {
+    this._debug(`cancel process execution (cancel child executions ${running.length})`);
+    for (const msg of running) {
+      this._getChildApi(msg).discard();
+    }
+  }
+};
 
-    return broker.cancel(`_ct-delegate-${correlationId}`);
+ProcessExecution.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+  if (message.properties.delegate) {
+    return this._delegateApiMessage(routingKey, message);
   }
 
   if (this.id !== message.content.id) {
@@ -689,19 +737,56 @@ ProcessExecution.prototype._onApiMessage = function onApiMessage(routingKey, mes
   if (this.executionId !== message.content.executionId) return;
 
   switch (message.properties.type) {
+    case 'cancel':
+      return this.cancel(message);
     case 'discard':
       return this.discard(message);
     case 'stop':
-      this[kActivityQ].queueMessage({routingKey: 'execution.stop'}, cloneContent(message.content), {persistent: false});
+      this[kActivityQ].queueMessage({ routingKey: 'execution.stop' }, cloneContent(message.content), { persistent: false });
       break;
   }
 };
 
+ProcessExecution.prototype._delegateApiMessage = function delegateApiMessage(routingKey, message, continueOnConsumed) {
+  const correlationId = message.properties.correlationId || getUniqueId(this.executionId);
+  this._debug(`delegate api ${routingKey} message to children, with correlationId <${correlationId}>`);
+
+  const broker = this.broker;
+  let consumed = false;
+  broker.subscribeTmp('event', 'activity.consumed', (_, msg) => {
+    if (msg.properties.correlationId === correlationId) {
+      consumed = true;
+      this._debug(`delegated api message was consumed by ${msg.content ? msg.content.executionId : 'unknown'}`);
+    }
+  }, { consumerTag: `_ct-delegate-${correlationId}`, noAck: true });
+
+  for (const child of this[kElements].children) {
+    if (child.placeholder) continue;
+    child.broker.publish('api', routingKey, cloneContent(message.content), message.properties);
+    if (consumed && !continueOnConsumed) break;
+  }
+
+  return broker.cancel(`_ct-delegate-${correlationId}`);
+};
+
 ProcessExecution.prototype._complete = function complete(completionType, content) {
   this._deactivate();
-  this._debug(`process execution ${completionType}`);
   this[kCompleted] = true;
-  if (this.status !== 'terminated') this[kStatus] = completionType;
+
+  const status = this.status;
+  switch (this.status) {
+    case 'cancel':
+      this._debug('process execution cancelled');
+    case 'discard':
+      completionType = status;
+      break;
+    case 'terminated':
+      break;
+    default:
+      this._debug(`process execution ${completionType}`);
+      this[kStatus] = completionType;
+  }
+
   const broker = this.broker;
   this[kActivityQ].delete();
 
@@ -718,16 +803,21 @@ ProcessExecution.prototype._terminate = function terminate(message) {
 
   const running = this[kElements].postponed.splice(0);
   for (const flow of this.getSequenceFlows()) flow.stop();
+  for (const flow of this.getAssociations()) flow.stop();
 
   for (const msg of running) {
-    const {id: postponedId, isSequenceFlow} = msg.content;
+    const {id: postponedId, isSequenceFlow, isAssociation} = msg.content;
     if (postponedId === message.content.id) continue;
-    if (isSequenceFlow) continue;
+    if (isSequenceFlow || isAssociation) continue;
     this._getChildApi(msg).stop();
     msg.ack();
   }
 
   this[kActivityQ].purge();
+};
+
+ProcessExecution.prototype._queueMessage = function queueMessage(routingKey, content, properties) {
+  this[kActivityQ].queueMessage({ routingKey }, content, properties);
 };
 
 ProcessExecution.prototype._getFlowById = function getFlowById(flowId) {

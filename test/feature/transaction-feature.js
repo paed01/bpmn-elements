@@ -75,8 +75,8 @@ Feature('Transaction', () => {
     });
 
     And('the cancel event waits for transaction to complete', () => {
-      const canceled = definition.getActivityById('canceled');
-      expect(canceled.counters).to.deep.equal({
+      const cancelled = definition.getActivityById('cancelled');
+      expect(cancelled.counters).to.deep.equal({
         taken: 0,
         discarded: 0,
       });
@@ -95,18 +95,18 @@ Feature('Transaction', () => {
       return end;
     });
 
-    And('transaction completed', () => {
+    And('transaction was discarded', () => {
       const transaction = definition.getActivityById('atomic');
       expect(transaction.counters).to.deep.equal({
-        taken: 1,
-        discarded: 0,
+        taken: 0,
+        discarded: 1,
       });
     });
 
     And('cancel was triggered', () => {
-      const canceled = definition.getActivityById('canceled');
-      expect(canceled.counters).to.have.property('taken', 1);
-      expect(canceled.counters).to.have.property('discarded', 0);
+      const cancelled = definition.getActivityById('cancelled');
+      expect(cancelled.counters).to.have.property('taken', 1);
+      expect(cancelled.counters).to.have.property('discarded', 0);
     });
 
     When('definition is ran again', () => {
@@ -138,9 +138,9 @@ Feature('Transaction', () => {
     });
 
     And('cancel was not triggered', () => {
-      const canceled = definition.getActivityById('canceled');
-      expect(canceled.counters).to.have.property('taken', 1);
-      expect(canceled.counters).to.have.property('discarded', 1);
+      const cancelled = definition.getActivityById('cancelled');
+      expect(cancelled.counters).to.have.property('taken', 1);
+      expect(cancelled.counters).to.have.property('discarded', 1);
     });
 
     Given('definition is ran again', () => {
@@ -180,8 +180,8 @@ Feature('Transaction', () => {
     });
 
     And('resumed cancel was triggered', () => {
-      const canceled = definition.getActivityById('canceled');
-      expect(canceled.counters).to.deep.equal({
+      const cancelled = definition.getActivityById('cancelled');
+      expect(cancelled.counters).to.deep.equal({
         taken: 2,
         discarded: 1,
       });
@@ -229,8 +229,8 @@ Feature('Transaction', () => {
     });
 
     And('cancel was triggered', () => {
-      const canceled = recovered.getActivityById('canceled');
-      expect(canceled.counters).to.deep.equal({
+      const cancelled = recovered.getActivityById('cancelled');
+      expect(cancelled.counters).to.deep.equal({
         taken: 3,
         discarded: 1,
       });
@@ -311,8 +311,8 @@ Feature('Transaction', () => {
     });
 
     And('the cancel event was discarded', () => {
-      const canceled = definition.getActivityById('canceled');
-      expect(canceled.counters).to.deep.equal({
+      const cancelled = definition.getActivityById('cancelled');
+      expect(cancelled.counters).to.deep.equal({
         taken: 0,
         discarded: 1,
       });
@@ -363,8 +363,8 @@ Feature('Transaction', () => {
     });
 
     And('cancel was not triggered', () => {
-      const canceled = definition.getActivityById('canceled');
-      expect(canceled.counters).to.deep.equal({
+      const cancelled = definition.getActivityById('cancelled');
+      expect(cancelled.counters).to.deep.equal({
         taken: 0,
         discarded: 2,
       });
@@ -411,8 +411,8 @@ Feature('Transaction', () => {
     });
 
     And('cancel was not triggered', () => {
-      const canceled = definition.getActivityById('canceled');
-      expect(canceled.counters).to.deep.equal({
+      const cancelled = definition.getActivityById('cancelled');
+      expect(cancelled.counters).to.deep.equal({
         taken: 0,
         discarded: 3,
       });
@@ -464,8 +464,8 @@ Feature('Transaction', () => {
     });
 
     And('cancel was not triggered', () => {
-      const canceled = recovered.getActivityById('canceled');
-      expect(canceled.counters).to.deep.equal({
+      const cancelled = recovered.getActivityById('cancelled');
+      expect(cancelled.counters).to.deep.equal({
         taken: 0,
         discarded: 4,
       });
@@ -562,14 +562,14 @@ Feature('Transaction', () => {
       expect(cancelTask).to.have.property('id', 'cancelTask');
     });
 
-    When('transaction is canceled', () => {
+    When('transaction is cancelled', () => {
       userTask.signal({me: true});
       cancelTask.signal();
     });
 
     let compensate;
     Then('compensate is waiting', () => {
-      [,, compensate] = transaction.getPostponed();
+      [, compensate] = transaction.getPostponed();
       expect(compensate).to.have.property('id', 'compensate');
     });
 
@@ -581,11 +581,11 @@ Feature('Transaction', () => {
       return end;
     });
 
-    And('transaction completed', () => {
+    And('transaction is discarded', () => {
       const atomic = definition.getActivityById('atomic');
       expect(atomic.counters).to.deep.equal({
-        discarded: 0,
-        taken: 2,
+        discarded: 1,
+        taken: 1,
       });
     });
 
@@ -598,13 +598,13 @@ Feature('Transaction', () => {
     });
   });
 
-  Scenario('Compensation ignored bug not caught by this scenario', () => {
+  Scenario('Ignored bug not caught by this scenario', () => {
     let context;
     Given('a transaction with a monitored task ending succeeded by volative service task', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
         <process id="theProcess" isExecutable="true">
-          <boundaryEvent id="canceled" attachedToRef="atomic">
+          <boundaryEvent id="cancelled" attachedToRef="atomic">
             <cancelEventDefinition />
           </boundaryEvent>
           <transaction id="atomic">
@@ -670,17 +670,17 @@ Feature('Transaction', () => {
       compensations.pop().pop()();
     });
 
-    Then('transaction completes', async () => {
+    Then('transaction is discarded', async () => {
       await end;
       const atomic = definition.getActivityById('atomic');
       expect(atomic.counters).to.deep.equal({
-        discarded: 0,
-        taken: 1,
+        discarded: 1,
+        taken: 0,
       });
     });
 
     And('monitoring cancel was taken', () => {
-      const atomic = definition.getActivityById('canceled');
+      const atomic = definition.getActivityById('cancelled');
       expect(atomic.counters).to.deep.equal({
         discarded: 0,
         taken: 1,
@@ -727,11 +727,11 @@ Feature('Transaction', () => {
 
   Scenario('Compensation ignored bug', () => {
     let context;
-    Given('a transaction with a monitored task ending in cancel', async () => {
+    Given('a transaction with cancel listener', async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
         <process id="theProcess" isExecutable="true">
-          <boundaryEvent id="canceled" attachedToRef="atomic">
+          <boundaryEvent id="cancelled" attachedToRef="atomic">
             <cancelEventDefinition />
           </boundaryEvent>
           <transaction id="atomic">
@@ -780,12 +780,89 @@ Feature('Transaction', () => {
       compensations.pop().pop()();
     });
 
-    Then('transaction completes', async () => {
+    Then('transaction is discarded', async () => {
       await end;
       const atomic = definition.getActivityById('atomic');
       expect(atomic.counters).to.deep.equal({
-        discarded: 0,
-        taken: 1,
+        discarded: 1,
+        taken: 0,
+      });
+    });
+
+    When('definition is ran again', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('compensation is triggered', () => {
+      expect(compensations.length).to.equal(1);
+      expect(compensations[0][0].content.message.content.id).to.equal('task');
+    });
+
+    When('compensated', () => {
+      compensations.pop().pop()();
+    });
+
+    Then('transaction is discarded', async () => {
+      await end;
+      const atomic = definition.getActivityById('atomic');
+      expect(atomic.counters).to.deep.equal({
+        discarded: 2,
+        taken: 0,
+      });
+    });
+
+    Given('a transaction without cancel listener', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="theProcess" isExecutable="true">
+          <transaction id="atomic">
+            <startEvent id="start" />
+            <sequenceFlow id="flow1" sourceRef="start" targetRef="task" />
+            <task id="task" />
+            <boundaryEvent id="listen" attachedToRef="task">
+              <compensateEventDefinition />
+            </boundaryEvent>
+            <serviceTask id="compensate" isForCompensation="true" implementation="\${environment.services.compensate}" />
+            <sequenceFlow id="to-endcancel" sourceRef="task" targetRef="endcancel" />
+            <endEvent id="endcancel">
+              <cancelEventDefinition />
+            </endEvent>
+            <association id="i-hear-you" sourceRef="listen" targetRef="compensate" />
+          </transaction>
+        </process>
+      </definitions>`;
+      context = await testHelpers.context(source);
+    });
+
+    When('definition is ran', () => {
+      options = {
+        services: {
+          compensate(...args) {
+            compensations.push(args);
+          },
+        },
+      };
+      definition = new Definition(context, options);
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('compensation is triggered', () => {
+      expect(compensations.length).to.equal(1);
+      expect(compensations[0][0].content.message.content.id).to.equal('task');
+    });
+
+    When('compensated', () => {
+      compensations.pop().pop()();
+    });
+
+    Then('transaction is discarded', async () => {
+      await end;
+      const atomic = definition.getActivityById('atomic');
+      expect(atomic.counters).to.deep.equal({
+        discarded: 1,
+        taken: 0,
       });
     });
 
@@ -793,48 +870,20 @@ Feature('Transaction', () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
         <process id="Process_0" isExecutable="true">
-          <startEvent id="start" />
-          <sequenceFlow id="toAtomic" sourceRef="start" targetRef="atomic" />
-          <boundaryEvent id="canceled" attachedToRef="atomic">
-            <cancelEventDefinition />
-          </boundaryEvent>
           <transaction id="atomic">
-            <startEvent id="startSubProcess" />
-            <sequenceFlow id="toMain" sourceRef="startSubProcess" targetRef="mainTask" />
             <task id="mainTask" name="Main" />
-            <sequenceFlow id="toAreUSure" sourceRef="mainTask" targetRef="areUSure" />
+            <association id="fwdMainEvents" sourceRef="compensateBound" targetRef="compensateTask" />
             <boundaryEvent id="compensateBound" attachedToRef="mainTask">
               <compensateEventDefinition />
             </boundaryEvent>
-            <serviceTask id="compensateTask" name="Compensate main" isForCompensation="true" implementation="\${environment.services.compensate}" />
+            <sequenceFlow id="toAreUSure" sourceRef="mainTask" targetRef="areUSure" />
             <userTask id="areUSure" name="Are you sure?" />
-            <endEvent id="endComplete" />
-            <sequenceFlow id="toGateway" sourceRef="areUSure" targetRef="isSure" />
+            <serviceTask id="compensateTask" name="Compensate main" isForCompensation="true" implementation="\${environment.services.compensate}" />
+            <sequenceFlow id="noFlow" name="No" sourceRef="areUSure" targetRef="endCancel" />
             <endEvent id="endCancel">
               <cancelEventDefinition />
             </endEvent>
-            <exclusiveGateway id="isSure" default="noFlow" />
-            <sequenceFlow id="yesFlow" name="Yes" sourceRef="isSure" targetRef="endComplete">
-              <conditionExpression xsi:type="tFormalExpression">\${false}</conditionExpression>
-            </sequenceFlow>
-            <sequenceFlow id="noFlow" name="No" sourceRef="isSure" targetRef="endCancel" />
-            <sequenceFlow id="errorFlow" name="Abort" sourceRef="isSure" targetRef="endInError">
-              <conditionExpression xsi:type="tFormalExpression">\${false}</conditionExpression>
-            </sequenceFlow>
-            <endEvent id="endInError">
-              <errorEventDefinition />
-            </endEvent>
-            <association id="fwdMainEvents" sourceRef="compensateBound" targetRef="compensateTask" />
           </transaction>
-          <endEvent id="end" />
-          <sequenceFlow id="toEnd" sourceRef="atomic" targetRef="end" />
-          <endEvent id="endCanceled" />
-          <sequenceFlow id="toEndCanceled" sourceRef="canceled" targetRef="endCanceled" />
-          <endEvent id="endErrored" />
-          <sequenceFlow id="toEndErrored" sourceRef="errored" targetRef="endErrored" />
-          <boundaryEvent id="errored" attachedToRef="atomic">
-            <errorEventDefinition />
-          </boundaryEvent>
         </process>
       </definitions>`;
       context = await testHelpers.context(source);
@@ -842,20 +891,24 @@ Feature('Transaction', () => {
 
     When('definition is ran', () => {
       definition = new Definition(context, options);
+      end = definition.waitFor('leave');
       definition.run();
     });
 
     And('user task is signaled via definition', () => {
-      end = definition.waitFor('leave');
       definition.signal({id: 'areUSure'});
     });
 
-    Then('compensation is NOT triggered for some reason', () => {
-      expect(compensations.length).to.equal(0);
-      // expect(compensations[0][0].content.message.content.id).to.equal('task');
+    Then('compensation is triggered', () => {
+      expect(compensations.length).to.equal(1);
+      expect(compensations[0][0].content.message.content.id).to.equal('mainTask');
     });
 
-    And('it completed', () => {
+    When('compensation completes', () => {
+      compensations.pop().pop()();
+    });
+
+    And('transaction is discarded', () => {
       return end;
     });
 

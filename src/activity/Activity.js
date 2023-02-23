@@ -198,6 +198,12 @@ Object.defineProperty(Activity.prototype, 'isSubProcess', {
     return this[kFlags].isSubProcess;
   },
 });
+Object.defineProperty(Activity.prototype, 'isTransaction', {
+  enumerable: true,
+  get() {
+    return this[kFlags].isTransaction;
+  },
+});
 
 Object.defineProperty(Activity.prototype, 'isMultiInstance', {
   enumerable: true,
@@ -241,8 +247,8 @@ Object.defineProperty(Activity.prototype, 'eventDefinitions', {
   },
 });
 
-Activity.prototype.activate = function activate() {
-  if (this[kFlags].isForCompensation) return;
+Activity.prototype.activate.activate = function activate() {
+  // if (this[kFlags].isForCompensation) return;
   return this._consumeInbound();
 };
 
@@ -326,9 +332,9 @@ Activity.prototype.discard = function discard(discardContent) {
   this._consumeRunQ();
 };
 
-Activity.prototype.stop = function stop() {
-  if (!this[kConsuming]) return;
-  return this.getApi().stop();
+Activity.prototype.stop.stop = function stop() {
+  if (!this[kConsuming]) return this.broker.cancel('_run-on-inbound');
+  return this.getApi(this[kStateMessage]).stop();
 };
 
 Activity.prototype.next = function next() {
@@ -394,6 +400,7 @@ Activity.prototype._discardRun = function discardRun() {
 
   const execution = this[kExec].execution;
   if (execution && !execution.completed) return;
+
   switch (status) {
     case 'executing':
     case 'error':
@@ -516,7 +523,7 @@ Activity.prototype._onJoinInbound = function onJoinInbound(routingKey, message) 
 
 Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message) {
   const {fields, content, properties} = message;
-  const id = this.id;
+  // const id = this.id;
   const inboundQ = this.broker.getQueue('inbound-q');
 
   switch (routingKey) {
@@ -534,25 +541,25 @@ Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message
     case 'flow.take':
     case 'flow.discard':
       return inboundQ.queueMessage(fields, cloneContent(content), properties);
-    case 'association.discard': {
-      this.logger.debug(`<${id}> compensation discarded`);
-      return inboundQ.purge();
-    }
-    case 'association.complete': {
-      if (!this[kFlags].isForCompensation) break;
+    // case 'association.discard': {
+    //   this.logger.debug(`<${id}> association discarded`);
+    //   return inboundQ.purge();
+    // }
+    // case 'association.complete': {
+    //   if (!this.isForCompensation) break;
 
-      inboundQ.queueMessage(fields, cloneContent(content), properties);
+    //   inboundQ.queueMessage(fields, cloneContent(content), properties);
 
-      const compensationId = `${brokerSafeId(id)}_${brokerSafeId(content.sequenceId)}`;
-      this._publishEvent('compensation.start', this._createMessage({
-        executionId: compensationId,
-        placeholder: true,
-      }));
+    //   const compensationId = `${brokerSafeId(id)}_${brokerSafeId(content.sequenceId)}`;
+    //   this._publishEvent('compensation.start', this._createMessage({
+    //     executionId: compensationId,
+    //     placeholder: true,
+    //   }));
 
-      this.logger.debug(`<${id}> start compensation with id <${compensationId}>`);
+    //   this.logger.debug(`<${id}> start compensation with id <${compensationId}>`);
 
-      return this._consumeInbound();
-    }
+    //   return this._consumeInbound();
+    // }
   }
 };
 
@@ -740,6 +747,7 @@ Activity.prototype._onExecutionMessage = function onExecutionMessage(routingKey,
       broker.publish('run', 'run.discarded', content, {correlationId});
       break;
     }
+    case 'execution.cancel':
     case 'execution.discard':
       this.status = 'discarded';
       broker.publish('run', 'run.discarded', content, {correlationId});

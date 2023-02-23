@@ -113,6 +113,7 @@ BoundaryEventBehaviour.prototype._onCompleted = function onCompleted(_, {content
 
 BoundaryEventBehaviour.prototype._onAttachedLeave = function onAttachedLeave(_, {content}) {
   if (content.id !== this.attachedTo.id) return;
+
   this._stop();
   const completeContent = this[kCompleteContent];
   if (!completeContent) return this.broker.publish('execution', 'execute.discard', this[kExecuteMessage].content);
@@ -120,19 +121,19 @@ BoundaryEventBehaviour.prototype._onAttachedLeave = function onAttachedLeave(_, 
 };
 
 BoundaryEventBehaviour.prototype._onExpectMessage = function onExpectMessage(_, {content}) {
-  const {executionId, expectRoutingKey} = content;
+  const {executionId, expectRoutingKey, pattern, exchange} = content;
   const attachedTo = this.attachedTo;
 
   const errorConsumerTag = `_bound-error-listener-${executionId}`;
   this[kAttachedTags].push(errorConsumerTag);
 
-  attachedTo.broker.subscribeTmp('event', 'activity.error', (__, errorMessage) => {
-    if (errorMessage.content.id !== attachedTo.id) return;
-    this.broker.publish('execution', expectRoutingKey, cloneContent(errorMessage.content));
+  attachedTo.broker.subscribeTmp('event', pattern, (__, message) => {
+    if (message.content.id !== attachedTo.id) return;
+    this.broker.publish(exchange, expectRoutingKey, cloneContent(message.content, {attachedTo: attachedTo.id}), {...message.properties, mandatory: false});
   }, {
     noAck: true,
     consumerTag: errorConsumerTag,
-    priority: 300,
+    priority: 400,
   });
 };
 

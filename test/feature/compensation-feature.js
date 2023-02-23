@@ -11,16 +11,16 @@ Feature('Compensation', () => {
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
         <process id="theProcess" isExecutable="true">
           <startEvent id="start" />
-          <sequenceFlow id="flow1" sourceRef="start" targetRef="service" />
+          <sequenceFlow id="to-service" sourceRef="start" targetRef="service" />
           <serviceTask id="service" implementation="\${environment.services.exec}" />
           <boundaryEvent id="compensation" attachedToRef="service">
             <compensateEventDefinition />
           </boundaryEvent>
           <serviceTask id="undoService" isForCompensation="true" implementation="\${environment.services.compensate}" />
-          <sequenceFlow id="flow2" sourceRef="service" targetRef="decision" />
-          <exclusiveGateway id="decision" default="flow3" />
-          <sequenceFlow id="flow3" sourceRef="decision" targetRef="end1" />
-          <sequenceFlow id="flow4" sourceRef="decision" targetRef="end2">
+          <sequenceFlow id="to-decision" sourceRef="service" targetRef="decision" />
+          <exclusiveGateway id="decision" default="to-end1" />
+          <sequenceFlow id="to-end1" sourceRef="decision" targetRef="end1" />
+          <sequenceFlow id="to-end2" sourceRef="decision" targetRef="end2">
             <conditionExpression xsi:type="tFormalExpression">\${environment.output.condition}</conditionExpression>
           </sequenceFlow>
           <endEvent id="end1" />
@@ -107,7 +107,6 @@ Feature('Compensation', () => {
       const [bp] = definition.getProcesses();
       const [association] = bp.context.getAssociations();
       expect(association.counters).to.deep.equal({
-        complete: 1,
         take: 1,
         discard: 0,
       });
@@ -191,7 +190,7 @@ Feature('Compensation', () => {
     });
 
     When('compansated', () => {
-      undoService.pop()[1]();
+      undoService.pop().pop()();
     });
 
     And('definition completes', () => {

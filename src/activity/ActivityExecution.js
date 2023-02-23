@@ -178,10 +178,12 @@ ActivityExecution.prototype._onExecuteMessage = function onExecuteMessage(routin
       if (!this[kPostponed].length) return this.broker.publish('execution', 'execute.start', cloneContent(this[kExecuteMessage].content));
       break;
     }
-    case 'execute.error':
-    case 'execute.discard':
-      return this._onExecutionDiscarded(message);
     case 'execute.cancel':
+      return this._onExecutionDiscarded('cancel', message);
+    case 'execute.error':
+      return this._onExecutionDiscarded('error', message);
+    case 'execute.discard':
+      return this._onExecutionDiscarded('discard', message);
     case 'execute.completed': {
       if (isRedelivered) {
         message.ack();
@@ -261,7 +263,7 @@ ActivityExecution.prototype._onExecutionCompleted = function onExecutionComplete
   this._publishExecutionCompleted('completed', {...postponedMsg.content, ...message.content}, message.properties.correlationId);
 };
 
-ActivityExecution.prototype._onExecutionDiscarded = function onExecutionDiscarded(message) {
+ActivityExecution.prototype._onExecutionDiscarded = function onExecutionDiscarded(discardType, message) {
   const postponedMsg = this._ackPostponed(message);
   const {isRootScope, error} = message.content;
   if (!isRootScope && !postponedMsg) return;
@@ -284,11 +286,13 @@ ActivityExecution.prototype._onExecutionDiscarded = function onExecutionDiscarde
   postponed.splice(0);
   for (const api of subApis) api.discard();
 
-  if (error) {
-    return this._publishExecutionCompleted('error', cloneContent(message.content, {error}), correlationId);
-  }
+  // if (error) {
+  //   return this._publishExecutionCompleted('error', cloneContent(message.content, {error}), correlationId);
+  // }
 
-  this._publishExecutionCompleted('discard', message.content, correlationId);
+  // if (message.fields.routingKey === 'execute.cancel') console.log('AE._onExecutionDiscarded', message)
+
+  this._publishExecutionCompleted(discardType, cloneContent(message.content), correlationId);
 };
 
 ActivityExecution.prototype._publishExecutionCompleted = function publishExecutionCompleted(completionType, completeContent, correlationId) {

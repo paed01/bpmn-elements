@@ -153,6 +153,8 @@ SubProcessBehaviour.prototype.getPostponed = function getPostponed() {
 SubProcessBehaviour.prototype._onApiRootMessage = function onApiRootMessage(_, message) {
   const messageType = message.properties.type;
 
+  console.log('SUBP API MESS', messageType)
+
   switch (messageType) {
     case 'stop':
       this.broker.cancel(message.fields.consumerTag);
@@ -205,9 +207,10 @@ SubProcessBehaviour.prototype._onExecutionCompleted = function onExecutionComple
       broker.cancel(message.fields.consumerTag);
       break;
     }
+    case 'cancel':
     case 'discard': {
       broker.cancel(message.fields.consumerTag);
-      broker.publish('execution', 'execute.discard', cloneContent(content));
+      broker.publish('execution', 'execute.' + messageType, cloneContent(content));
       break;
     }
     case 'completed': {
