@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 9.0.0
+
+- Turn into module with exports for node
+
 # 8.2.4
 
 - allow process to start before receiving api messages, should fix issue #32
