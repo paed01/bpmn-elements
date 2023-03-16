@@ -90,7 +90,7 @@ Feature('Attempt to provoke a stack overflow', () => {
 
       async function makeRequest(path, _, next) {
         try {
-          const {body} = await got(new URL(path, 'http://example.local'), {responseType: 'json', retry: 0});
+          const {body} = await got(new URL(path, 'http://example.local'), {responseType: 'json', retry: { limit: 0 }});
           return next(null, body);
         } catch (err) {
           next(err);
@@ -200,7 +200,7 @@ Feature('Attempt to provoke a stack overflow', () => {
 
       async function makeRequest(path, _, next) {
         try {
-          const {body} = await got(new URL(path, 'http://example.local'), {responseType: 'json', retry: 0});
+          const {body} = await got(new URL(path, 'http://example.local'), {responseType: 'json', retry: { limit: 0 }});
           return next(null, body);
         } catch (err) {
           next(err);

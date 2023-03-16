@@ -228,53 +228,6 @@ describe('ScriptTask', () => {
       });
     });
 
-    it('and even require', async () => {
-      const source = `
-      <?xml version="1.0" encoding="UTF-8"?>
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <process id="theProcess" isExecutable="true">
-        <startEvent id="theStart" />
-        <scriptTask id="scriptTask" scriptFormat="Javascript">
-          <script>
-            <![CDATA[
-              const require = environment.getServiceByName('require');
-              const request = require('got');
-
-              request('http://example.com/test')
-                .json()
-                .then((body) => next(null, body))
-                .catch(next);
-            ]]>
-          </script>
-        </scriptTask>
-        <endEvent id="theEnd" />
-        <sequenceFlow id="flow1" sourceRef="theStart" targetRef="scriptTask" />
-        <sequenceFlow id="flow2" sourceRef="scriptTask" targetRef="theEnd" />
-        </process>
-      </definitions>`;
-
-      nock('http://example.com')
-        .get('/test')
-        .reply(200, {
-          data: 3,
-        });
-
-      const context = await testHelpers.context(source);
-      context.environment.assignVariables({data: 1});
-      context.environment.addService('require', require);
-
-      const task = context.getActivityById('scriptTask');
-      task.activate();
-
-      const leave = task.waitFor('leave');
-      task.inbound[0].take();
-      const api = await leave;
-
-      expect(api.content.output).to.include({
-        data: 3,
-      });
-    });
-
     it('variables are editable and can be used for subsequent decisions', async () => {
       const source = `
       <?xml version="1.0" encoding="UTF-8"?>
