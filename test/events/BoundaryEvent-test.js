@@ -1,9 +1,9 @@
-import testHelpers from '../helpers/testHelpers';
-import Environment from '../../src/Environment';
-import ErrorEventDefinition from '../../src/eventDefinitions/ErrorEventDefinition';
-import MessageEventDefinition from '../../src/eventDefinitions/MessageEventDefinition';
-import {ActivityBroker} from '../../src/EventBroker';
-import {BoundaryEventBehaviour} from '../../src/events/BoundaryEvent';
+import testHelpers from '../helpers/testHelpers.js';
+import Environment from '../../src/Environment.js';
+import ErrorEventDefinition from '../../src/eventDefinitions/ErrorEventDefinition.js';
+import MessageEventDefinition from '../../src/eventDefinitions/MessageEventDefinition.js';
+import {ActivityBroker} from '../../src/EventBroker.js';
+import {BoundaryEventBehaviour} from '../../src/events/BoundaryEvent.js';
 
 describe('BoundaryEvent', () => {
   describe('behaviour', () => {

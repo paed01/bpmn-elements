@@ -1,4 +1,4 @@
-import {Definition} from '../../../index.js';
+import {Definition} from '../../../src/index.js';
 import testHelpers from '../../helpers/testHelpers.js';
 import factory from '../../helpers/factory.js';
 

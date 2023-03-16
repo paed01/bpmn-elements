@@ -1,7 +1,7 @@
-import Definition from '../../src/definition/Definition';
-import factory from '../helpers/factory';
-import testHelpers from '../helpers/testHelpers';
-import JsExtension from '../resources/extensions/JsExtension';
+import Definition from '../../src/definition/Definition.js';
+import factory from '../helpers/factory.js';
+import testHelpers from '../helpers/testHelpers.js';
+import JsExtension from '../resources/extensions/JsExtension.js';
 
 Feature('Linking', () => {
   Scenario('Link intermediate throw event & link intermediate catch event', () => {

@@ -1,8 +1,8 @@
-import Environment from '../../src/Environment';
-import factory from '../helpers/factory';
-import MessageFlow from '../../src/flows/MessageFlow';
-import testHelpers from '../helpers/testHelpers';
-import {ActivityBroker} from '../../src/EventBroker';
+import Environment from '../../src/Environment.js';
+import factory from '../helpers/factory.js';
+import MessageFlow from '../../src/flows/MessageFlow.js';
+import testHelpers from '../helpers/testHelpers.js';
+import {ActivityBroker} from '../../src/EventBroker.js';
 
 describe('MessageFlow', () => {
   it('requires target, source, and context with environment and getActivityById', () => {

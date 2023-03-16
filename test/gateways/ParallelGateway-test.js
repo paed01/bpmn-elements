@@ -1,5 +1,5 @@
-import factory from '../helpers/factory';
-import testHelpers from '../helpers/testHelpers';
+import factory from '../helpers/factory.js';
+import testHelpers from '../helpers/testHelpers.js';
 
 describe('ParallelGateway', () => {
   describe('fork', () => {

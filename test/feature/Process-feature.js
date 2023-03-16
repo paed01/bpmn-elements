@@ -1,5 +1,5 @@
-import testHelpers from '../helpers/testHelpers';
-import factory from '../helpers/factory';
+import testHelpers from '../helpers/testHelpers.js';
+import factory from '../helpers/factory.js';
 
 const AssertMessage = testHelpers.AssertMessage;
 

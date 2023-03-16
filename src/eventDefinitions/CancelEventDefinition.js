@@ -1,5 +1,5 @@
-import {brokerSafeId} from '../shared';
-import {cloneContent, shiftParent} from '../messageHelper';
+import {brokerSafeId} from '../shared.js';
+import {cloneContent, shiftParent} from '../messageHelper.js';
 
 const kMessageQ = Symbol.for('cancelQ');
 const kCompleted = Symbol.for('completed');

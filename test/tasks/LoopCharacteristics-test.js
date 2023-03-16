@@ -1,8 +1,8 @@
-import Environment from '../../src/Environment';
-import LoopCharacteristics from '../../src/tasks/LoopCharacteristics';
-import {ActivityBroker} from '../../src/EventBroker';
-import {Logger} from '../helpers/testHelpers';
-import {ActivityError} from '../../src/error/Errors';
+import Environment from '../../src/Environment.js';
+import LoopCharacteristics from '../../src/tasks/LoopCharacteristics.js';
+import {ActivityBroker} from '../../src/EventBroker.js';
+import {Logger} from '../helpers/testHelpers.js';
+import {ActivityError} from '../../src/error/Errors.js';
 
 describe('LoopCharacteristics', () => {
   let task;

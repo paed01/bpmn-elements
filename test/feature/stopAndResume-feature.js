@@ -1,7 +1,7 @@
 import ck from 'chronokinesis';
-import Definition from '../../src/definition/Definition';
-import JsExtension from '../resources/extensions/JsExtension';
-import testHelpers from '../helpers/testHelpers';
+import Definition from '../../src/definition/Definition.js';
+import JsExtension from '../resources/extensions/JsExtension.js';
+import testHelpers from '../helpers/testHelpers.js';
 
 Feature('Stop and resume', () => {
   after(ck.reset);

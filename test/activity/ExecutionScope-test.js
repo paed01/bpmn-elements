@@ -1,6 +1,6 @@
-import Environment from '../../src/Environment';
-import ExecutionScope from '../../src/activity/ExecutionScope';
-import {ActivityError, BpmnError} from '../../src/error/Errors';
+import Environment from '../../src/Environment.js';
+import ExecutionScope from '../../src/activity/ExecutionScope.js';
+import {ActivityError, BpmnError} from '../../src/error/Errors.js';
 
 describe('ExecutionScope', () => {
   it('exposes environment, error classes, and passed message', () => {

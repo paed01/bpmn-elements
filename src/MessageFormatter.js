@@ -1,6 +1,6 @@
-import {cloneMessage} from './messageHelper';
-import {getUniqueId} from './shared';
-import {ActivityError} from './error/Errors';
+import {cloneMessage} from './messageHelper.js';
+import {getUniqueId} from './shared.js';
+import {ActivityError} from './error/Errors.js';
 import {getRoutingKeyPattern} from 'smqp';
 
 const kOnMessage = Symbol.for('onMessage');

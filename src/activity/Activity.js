@@ -1,10 +1,10 @@
-import ActivityExecution from './ActivityExecution';
-import {brokerSafeId, getUniqueId} from '../shared';
-import {ActivityApi} from '../Api';
-import {ActivityBroker} from '../EventBroker';
-import {Formatter} from '../MessageFormatter';
-import {cloneContent, cloneParent, cloneMessage} from '../messageHelper';
-import {makeErrorFromMessage, ActivityError} from '../error/Errors';
+import ActivityExecution from './ActivityExecution.js';
+import {brokerSafeId, getUniqueId} from '../shared.js';
+import {ActivityApi} from '../Api.js';
+import {ActivityBroker} from '../EventBroker.js';
+import {Formatter} from '../MessageFormatter.js';
+import {cloneContent, cloneParent, cloneMessage} from '../messageHelper.js';
+import {makeErrorFromMessage, ActivityError} from '../error/Errors.js';
 
 const kActivityDef = Symbol.for('activityDefinition');
 const kConsuming = Symbol.for('consuming');

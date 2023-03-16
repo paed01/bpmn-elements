@@ -1,11 +1,11 @@
-import Activity from '../../src/activity/Activity';
-import Association from '../../src/flows/Association';
-import Environment from '../../src/Environment';
-import SequenceFlow from '../../src/flows/SequenceFlow';
-import testHelpers from '../helpers/testHelpers';
-import {ActivityBroker} from '../../src/EventBroker';
-import {TaskBehaviour} from '../../src/tasks/Task';
-import {SignalTaskBehaviour} from '../../src/tasks/SignalTask';
+import Activity from '../../src/activity/Activity.js';
+import Association from '../../src/flows/Association.js';
+import Environment from '../../src/Environment.js';
+import SequenceFlow from '../../src/flows/SequenceFlow.js';
+import testHelpers from '../helpers/testHelpers.js';
+import {ActivityBroker} from '../../src/EventBroker.js';
+import {TaskBehaviour} from '../../src/tasks/Task.js';
+import {SignalTaskBehaviour} from '../../src/tasks/SignalTask.js';
 
 function Behaviour() {
   return {

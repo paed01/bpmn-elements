@@ -1,5 +1,5 @@
-import {cloneContent, shiftParent} from '../messageHelper';
-import {ActivityError} from '../error/Errors';
+import {cloneContent, shiftParent} from '../messageHelper.js';
+import {ActivityError} from '../error/Errors.js';
 
 const kExecuteMessage = Symbol.for('executeMessage');
 

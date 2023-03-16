@@ -1,9 +1,9 @@
-import factory from '../helpers/factory';
-import JsExtension from '../resources/extensions/JsExtension';
-import SignalTask from '../../src/tasks/SignalTask';
-import testHelpers from '../helpers/testHelpers';
-import { ActivityError } from '../../src/error/Errors';
-import { Process } from '../../src/process/Process';
+import factory from '../helpers/factory.js';
+import JsExtension from '../resources/extensions/JsExtension.js';
+import SignalTask from '../../src/tasks/SignalTask.js';
+import testHelpers from '../helpers/testHelpers.js';
+import { ActivityError } from '../../src/error/Errors.js';
+import { Process } from '../../src/process/Process.js';
 
 describe('Process', () => {
   describe('requirements', () => {

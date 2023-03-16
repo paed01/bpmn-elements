@@ -1,6 +1,6 @@
-import Expressions from './Expressions';
-import {Scripts as IScripts} from './Scripts';
-import {Timers} from './Timers';
+import Expressions from './Expressions.js';
+import {Scripts as IScripts} from './Scripts.js';
+import {Timers} from './Timers.js';
 
 const kServices = Symbol.for('services');
 const kVariables = Symbol.for('variables');

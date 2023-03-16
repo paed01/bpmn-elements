@@ -115,9 +115,9 @@ Then extend the serializer.
 
 Example with bpmn-moddle:
 ```js
-import EscalationEventDefinition from './extend/EscalationEventDefinition';
+import EscalationEventDefinition from './extend/EscalationEventDefinition.js';
 
-import Escalation from './extend/Escalation';
+import Escalation from './extend/Escalation.js';
 import IntermediateThrowEvent from './extend/IntermediateThrowEvent';
 
 import * as elements from 'bpmn-elements';

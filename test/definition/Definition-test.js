@@ -1,10 +1,10 @@
-import Environment from '../../src/Environment';
-import factory from '../helpers/factory';
-import testHelpers from '../helpers/testHelpers';
-import {ActivityError} from '../../src/error/Errors';
-import {Definition} from '../../src/definition/Definition';
+import Environment from '../../src/Environment.js';
+import factory from '../helpers/factory.js';
+import testHelpers from '../helpers/testHelpers.js';
+import {ActivityError} from '../../src/error/Errors.js';
+import {Definition} from '../../src/definition/Definition.js';
 import {format} from 'util';
-import {Scripts as JavaScripts} from '../helpers/JavaScripts';
+import {Scripts as JavaScripts} from '../helpers/JavaScripts.js';
 
 const lanesSource = factory.resource('lanes.bpmn');
 

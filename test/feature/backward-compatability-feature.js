@@ -1,7 +1,7 @@
 import {promises as fs} from 'fs';
-import Definition from '../../src/definition/Definition';
-import factory from '../helpers/factory';
-import testHelpers from '../helpers/testHelpers';
+import Definition from '../../src/definition/Definition.js';
+import factory from '../helpers/factory.js';
+import testHelpers from '../helpers/testHelpers.js';
 
 const motherOfAllSource = factory.resource('mother-of-all.bpmn');
 

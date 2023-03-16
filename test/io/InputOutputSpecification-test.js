@@ -1,6 +1,6 @@
-import InputOutputSpecification from '../../src/io/InputOutputSpecification';
-import testHelpers from '../helpers/testHelpers';
-import {ActivityBroker} from '../../src/EventBroker';
+import InputOutputSpecification from '../../src/io/InputOutputSpecification.js';
+import testHelpers from '../helpers/testHelpers.js';
+import {ActivityBroker} from '../../src/EventBroker.js';
 
 describe('InputOutputSpecification', () => {
   it('listens on parent activity when activated', () => {

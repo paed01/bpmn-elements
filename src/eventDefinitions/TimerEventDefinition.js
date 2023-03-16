@@ -1,4 +1,4 @@
-import {cloneContent} from '../messageHelper';
+import {cloneContent} from '../messageHelper.js';
 import {toSeconds, parse} from 'iso8601-duration';
 
 const kStopped = Symbol.for('stopped');
@@ -7,7 +7,7 @@ const kTimer = Symbol.for('timer');
 const repeatPattern = /^\s*R(\d+)\//;
 
 export default function TimerEventDefinition(activity, eventDefinition) {
-  const type = this.type = eventDefinition.type || 'TimerEventDefinition';
+  const type = this.type = eventDefinition.type || 'TimerEventDefinition.js';
   this.activity = activity;
   const environment = this.environment = activity.environment;
   this.eventDefinition = eventDefinition;

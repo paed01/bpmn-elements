@@ -1,5 +1,5 @@
-import testHelpers from '../helpers/testHelpers';
-import { ActivityError } from '../../src/error/Errors';
+import testHelpers from '../helpers/testHelpers.js';
+import { ActivityError } from '../../src/error/Errors.js';
 
 describe('InclusiveGateway', () => {
   describe('behavior', () => {

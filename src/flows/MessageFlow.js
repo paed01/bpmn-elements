@@ -1,6 +1,6 @@
-import {brokerSafeId} from '../shared';
-import {cloneParent} from '../messageHelper';
-import {MessageFlowBroker} from '../EventBroker';
+import {brokerSafeId} from '../shared.js';
+import {cloneParent} from '../messageHelper.js';
+import {MessageFlowBroker} from '../EventBroker.js';
 
 const kCounters = Symbol.for('counters');
 const kSourceElement = Symbol.for('sourceElement');

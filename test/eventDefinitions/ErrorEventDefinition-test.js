@@ -1,8 +1,8 @@
-import BpmnError from '../../src/error/BpmnError';
-import Environment from '../../src/Environment';
-import ErrorEventDefinition from '../../src/eventDefinitions/ErrorEventDefinition';
-import testHelpers from '../helpers/testHelpers';
-import {ActivityBroker} from '../../src/EventBroker';
+import BpmnError from '../../src/error/BpmnError.js';
+import Environment from '../../src/Environment.js';
+import ErrorEventDefinition from '../../src/eventDefinitions/ErrorEventDefinition.js';
+import testHelpers from '../helpers/testHelpers.js';
+import {ActivityBroker} from '../../src/EventBroker.js';
 
 describe('ErrorEventDefinition', () => {
   describe('catching', () => {

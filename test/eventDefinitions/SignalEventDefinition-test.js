@@ -1,9 +1,9 @@
-import Environment from '../../src/Environment';
-import SignalEventDefinition from '../../src/eventDefinitions/SignalEventDefinition';
-import testHelpers from '../helpers/testHelpers';
-import Signal from '../../src/activity/Signal';
-import {ActivityBroker} from '../../src/EventBroker';
-import {Logger} from '../helpers/testHelpers';
+import Environment from '../../src/Environment.js';
+import SignalEventDefinition from '../../src/eventDefinitions/SignalEventDefinition.js';
+import testHelpers from '../helpers/testHelpers.js';
+import Signal from '../../src/activity/Signal.js';
+import {ActivityBroker} from '../../src/EventBroker.js';
+import {Logger} from '../helpers/testHelpers.js';
 
 describe('SignalEventDefinition', () => {
   let event;

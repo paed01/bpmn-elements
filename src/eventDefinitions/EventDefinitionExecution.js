@@ -1,4 +1,4 @@
-import {cloneContent, unshiftParent, shiftParent, cloneParent} from '../messageHelper';
+import {cloneContent, unshiftParent, shiftParent, cloneParent} from '../messageHelper.js';
 
 const kCompleted = Symbol.for('completed');
 const kExecuteMessage = Symbol.for('executeMessage');

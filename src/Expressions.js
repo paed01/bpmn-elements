@@ -1,4 +1,4 @@
-import getPropertyValue from './getPropertyValue';
+import getPropertyValue from './getPropertyValue.js';
 
 const isExpressionPattern = /^\${(.+?)}$/;
 const expressionPattern = /\${(.+?)}/;

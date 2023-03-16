@@ -1,8 +1,8 @@
-import ExecutionScope from '../activity/ExecutionScope';
-import {cloneParent, cloneContent} from '../messageHelper';
-import {getUniqueId} from '../shared';
-import {EventBroker} from '../EventBroker';
-import {FlowApi} from '../Api';
+import ExecutionScope from '../activity/ExecutionScope.js';
+import {cloneParent, cloneContent} from '../messageHelper.js';
+import {getUniqueId} from '../shared.js';
+import {EventBroker} from '../EventBroker.js';
+import {FlowApi} from '../Api.js';
 
 const kCounters = Symbol.for('counters');
 

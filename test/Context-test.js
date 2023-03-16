@@ -1,7 +1,7 @@
-import Activity from '../src/activity/Activity';
-import Context from '../src/Context';
-import factory from './helpers/factory';
-import testHelpers from './helpers/testHelpers';
+import Activity from '../src/activity/Activity.js';
+import Context from '../src/Context.js';
+import factory from './helpers/factory.js';
+import testHelpers from './helpers/testHelpers.js';
 
 const motherOfAllSource = factory.resource('mother-of-all.bpmn');
 

@@ -1,5 +1,5 @@
-import BpmnErrorActivity from '../../src/error/BpmnError';
-import Environment from '../../src/Environment';
+import BpmnErrorActivity from '../../src/error/BpmnError.js';
+import Environment from '../../src/Environment.js';
 
 describe('BpmnError', () => {
   it('returns BpmnError instanceof from error', () => {

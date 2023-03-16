@@ -1,7 +1,7 @@
-import BpmnIO from './io/BpmnIO';
-import Environment from './Environment';
-import ExtensionsMapper from './ExtensionsMapper';
-import {getUniqueId} from './shared';
+import BpmnIO from './io/BpmnIO.js';
+import Environment from './Environment.js';
+import ExtensionsMapper from './ExtensionsMapper.js';
+import {getUniqueId} from './shared.js';
 
 export default function Context(definitionContext, environment) {
   environment = environment ? environment.clone() : new Environment();

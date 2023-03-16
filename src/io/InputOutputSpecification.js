@@ -1,5 +1,5 @@
-import getPropertyValue from '../getPropertyValue';
-import {brokerSafeId} from '../shared';
+import getPropertyValue from '../getPropertyValue.js';
+import {brokerSafeId} from '../shared.js';
 
 const kConsuming = Symbol.for('consuming');
 

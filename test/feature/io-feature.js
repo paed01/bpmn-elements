@@ -1,7 +1,7 @@
-import camunda from '../resources/extensions/CamundaExtension';
-import Definition from '../../src/definition/Definition';
-import factory from '../helpers/factory';
-import testHelpers from '../helpers/testHelpers';
+import camunda from '../resources/extensions/CamundaExtension.js';
+import Definition from '../../src/definition/Definition.js';
+import factory from '../helpers/factory.js';
+import testHelpers from '../helpers/testHelpers.js';
 
 Feature('IO', () => {
   Scenario('DataStoreReference and DataInput- and DataOutputAssociation', () => {

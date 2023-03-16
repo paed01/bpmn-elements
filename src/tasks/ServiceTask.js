@@ -1,6 +1,6 @@
-import Activity from '../activity/Activity';
-import {ActivityError} from '../error/Errors';
-import {cloneMessage, cloneContent} from '../messageHelper';
+import Activity from '../activity/Activity.js';
+import {ActivityError} from '../error/Errors.js';
+import {cloneMessage, cloneContent} from '../messageHelper.js';
 
 export default function ServiceTask(activityDef, context) {
   return new Activity(ServiceTaskBehaviour, activityDef, context);

@@ -1,8 +1,8 @@
 import ck from 'chronokinesis';
-import Definition from '../../src/definition/Definition';
-import testHelpers from '../helpers/testHelpers';
-import factory from '../helpers/factory';
-import CamundaExtension from '../resources/extensions/CamundaExtension';
+import Definition from '../../src/definition/Definition.js';
+import testHelpers from '../helpers/testHelpers.js';
+import factory from '../helpers/factory.js';
+import CamundaExtension from '../resources/extensions/CamundaExtension.js';
 import {resolveExpression} from '@aircall/expression-parser';
 
 const extensions = {

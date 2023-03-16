@@ -1,5 +1,5 @@
-import Definition from '../../src/definition/Definition';
-import testHelpers from '../helpers/testHelpers';
+import Definition from '../../src/definition/Definition.js';
+import testHelpers from '../helpers/testHelpers.js';
 
 Feature('Service task', () => {
   Scenario('Recover and resume mid execution', () => {

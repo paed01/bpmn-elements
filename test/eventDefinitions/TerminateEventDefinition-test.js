@@ -1,6 +1,6 @@
-import Environment from '../../src/Environment';
-import TerminateEventDefinition from '../../src/eventDefinitions/TerminateEventDefinition';
-import {ActivityBroker} from '../../src/EventBroker';
+import Environment from '../../src/Environment.js';
+import TerminateEventDefinition from '../../src/eventDefinitions/TerminateEventDefinition.js';
+import {ActivityBroker} from '../../src/EventBroker.js';
 
 describe('TerminateEventDefinition', () => {
   let event;

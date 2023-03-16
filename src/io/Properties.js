@@ -1,4 +1,4 @@
-import getPropertyValue from '../getPropertyValue';
+import getPropertyValue from '../getPropertyValue.js';
 
 const kProperties = Symbol.for('properties');
 const kConsuming = Symbol.for('consuming');

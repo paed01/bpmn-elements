@@ -1,8 +1,10 @@
-import moddleOptions from 'camunda-bpmn-moddle/resources/camunda';
+import fs from 'fs';
+
+const camundaBpmnModdle = JSON.parse(fs.readFileSync('./node_modules/camunda-bpmn-moddle/resources/camunda.json'));
 
 export default {
   extension: Camunda,
-  moddleOptions,
+  moddleOptions: camundaBpmnModdle,
 };
 
 function Camunda(activity) {

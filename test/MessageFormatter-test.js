@@ -1,7 +1,7 @@
-const {ActivityBroker} = require('../src/EventBroker');
-const {ActivityError} = require('../src/error/Errors');
-const {Formatter} = require('../src/MessageFormatter');
-const {Logger} = require('./helpers/testHelpers');
+import {ActivityBroker} from '../src/EventBroker.js';
+import {ActivityError} from '../src/error/Errors.js';
+import {Formatter} from '../src/MessageFormatter.js';
+import {Logger} from './helpers/testHelpers.js';
 
 describe('MessageFormatter', () => {
   let formatter;

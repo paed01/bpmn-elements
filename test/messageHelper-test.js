@@ -1,10 +1,10 @@
-import {filterUndefined} from '../src/shared';
+import {filterUndefined} from '../src/shared.js';
 
 import {
   shiftParent,
   unshiftParent,
   pushParent,
-} from '../src/messageHelper';
+} from '../src/messageHelper.js';
 
 describe('message helper', () => {
   describe('unshiftParent()', () => {

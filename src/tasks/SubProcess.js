@@ -1,6 +1,6 @@
-import Activity from '../activity/Activity';
-import ProcessExecution from '../process/ProcessExecution';
-import {cloneContent} from '../messageHelper';
+import Activity from '../activity/Activity.js';
+import ProcessExecution from '../process/ProcessExecution.js';
+import {cloneContent} from '../messageHelper.js';
 
 const kExecutions = Symbol.for('executions');
 const kMessageHandlers = Symbol.for('messageHandlers');

@@ -2,8 +2,14 @@
   "name": "bpmn-elements",
   "version": "8.2.4",
   "description": "Executable workflow elements based on BPMN 2.0",
+  "type": "module",
   "main": "dist/index.js",
-  "module": "index.js",
+  "module": "src/index.js",
+  "types": "./types",
+  "exports": {
+    "import": "./src/index.js",
+    "require": "./dist/index.js"
+  },
   "sideEffects": false,
   "scripts": {
     "test": "mocha -R dot",
@@ -11,7 +17,7 @@
     "prepare": "npm run dist",
     "cov:html": "nyc mocha -R dot && nyc report --reporter=html",
     "test:lcov": "nyc mocha -R dot && nyc report --reporter lcov && npm run posttest",
-    "dist": "babel index.js -d dist && babel src -d dist/src",
+    "dist": "babel src/index.js -d dist",
     "predist": "node -e \"fs.rmdirSync('./dist/src', {recursive: true});\""
   },
   "repository": {
@@ -39,32 +45,32 @@
     ]
   },
   "files": [
-    "dist/src",
-    "dist/index.js",
-    "src",
-    "index.js"
+    "dist",
+    "types",
+    "src"
   ],
   "devDependencies": {
     "@aircall/expression-parser": "^1.0.4",
     "@babel/cli": "^7.19.3",
-    "@babel/core": "^7.20.5",
+    "@babel/core": "^7.21.3",
     "@babel/preset-env": "^7.20.2",
     "@babel/register": "^7.18.9",
-    "bpmn-moddle": "^7.1.2",
-    "camunda-bpmn-moddle": "^6.1.2",
+    "bpmn-moddle": "^8.0.1",
+    "camunda-bpmn-moddle": "^7.0.1",
     "chai": "^4.3.7",
     "chronokinesis": "^4.0.1",
     "debug": "^4.3.4",
     "eslint": "^8.29.0",
-    "got": "^11.8.6",
+    "eslint-plugin-import": "^2.27.5",
+    "got": "^12.6.0",
     "mocha": "^10.1.0",
     "mocha-cakes-2": "^3.3.0",
-    "moddle-context-serializer": "^2.1.0",
+    "moddle-context-serializer": "^3.0.0",
     "nock": "^13.2.8",
     "nyc": "^15.1.0"
   },
   "dependencies": {
     "iso8601-duration": "^2.1.1",
-    "smqp": "^6.0.0"
+    "smqp": "^7.1.0"
   }
 }

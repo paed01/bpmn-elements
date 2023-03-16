@@ -1,6 +1,6 @@
-import {Definition} from '../../../index.js';
+import {Definition} from '../../../src/index.js';
 import got from 'got';
-import JsExtension from '../../resources/extensions/JsExtension';
+import JsExtension from '../../resources/extensions/JsExtension.js';
 import nock from 'nock';
 import testHelpers from '../../helpers/testHelpers.js';
 

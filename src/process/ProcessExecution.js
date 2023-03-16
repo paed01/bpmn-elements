@@ -1,6 +1,6 @@
-import {ProcessApi} from '../Api';
-import {cloneContent, cloneMessage, pushParent} from '../messageHelper';
-import {getUniqueId} from '../shared';
+import {ProcessApi} from '../Api.js';
+import {cloneContent, cloneMessage, pushParent} from '../messageHelper.js';
+import {getUniqueId} from '../shared.js';
 
 export default ProcessExecution;
 

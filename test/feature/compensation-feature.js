@@ -1,5 +1,5 @@
-import Definition from '../../src/definition/Definition';
-import testHelpers from '../helpers/testHelpers';
+import Definition from '../../src/definition/Definition.js';
+import testHelpers from '../helpers/testHelpers.js';
 
 Feature('Compensation', () => {
   Scenario('A service task with a bound compensate event', () => {

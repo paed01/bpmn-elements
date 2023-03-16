@@ -1,10 +1,10 @@
-import Activity from '../../src/activity/Activity';
-import ActivityExecution from '../../src/activity/ActivityExecution';
-import Environment from '../../src/Environment';
-import EventDefinitionExecution from '../../src/eventDefinitions/EventDefinitionExecution';
-import LoopCharacteristics from '../../src/tasks/LoopCharacteristics';
-import SequenceFlow from '../../src/flows/SequenceFlow';
-import testHelpers from '../helpers/testHelpers';
+import Activity from '../../src/activity/Activity.js';
+import ActivityExecution from '../../src/activity/ActivityExecution.js';
+import Environment from '../../src/Environment.js';
+import EventDefinitionExecution from '../../src/eventDefinitions/EventDefinitionExecution.js';
+import LoopCharacteristics from '../../src/tasks/LoopCharacteristics.js';
+import SequenceFlow from '../../src/flows/SequenceFlow.js';
+import testHelpers from '../helpers/testHelpers.js';
 
 const Logger = testHelpers.Logger;
 

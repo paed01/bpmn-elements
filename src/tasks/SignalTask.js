@@ -1,6 +1,6 @@
-import Activity from '../activity/Activity';
-import {ActivityError} from '../error/Errors';
-import {cloneContent} from '../messageHelper';
+import Activity from '../activity/Activity.js';
+import {ActivityError} from '../error/Errors.js';
+import {cloneContent} from '../messageHelper.js';
 
 export default function SignalTask(activityDef, context) {
   return new Activity(SignalTaskBehaviour, activityDef, context);

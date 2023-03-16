@@ -1,10 +1,10 @@
-import js from '../resources/extensions/JsExtension';
+import js from '../resources/extensions/JsExtension.js';
 import nock from 'nock';
 import request from 'got';
-import testHelpers from '../helpers/testHelpers';
-import {ActivityError} from '../../src/error/Errors';
-import {Scripts} from '../helpers/JavaScripts';
-import {Timers} from '../../src/Timers';
+import testHelpers from '../helpers/testHelpers.js';
+import {ActivityError} from '../../src/error/Errors.js';
+import {Scripts} from '../helpers/JavaScripts.js';
+import {Timers} from '../../src/Timers.js';
 
 const extensions = {
   js,

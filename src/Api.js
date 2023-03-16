@@ -1,5 +1,5 @@
-import {cloneMessage} from './messageHelper';
-import {getUniqueId} from './shared';
+import {cloneMessage} from './messageHelper.js';
+import {getUniqueId} from './shared.js';
 
 export {
   ActivityApi,

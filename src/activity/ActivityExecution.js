@@ -1,5 +1,5 @@
-import {ActivityApi} from '../Api';
-import {cloneContent, cloneMessage} from '../messageHelper';
+import {ActivityApi} from '../Api.js';
+import {cloneContent, cloneMessage} from '../messageHelper.js';
 
 const kCompleted = Symbol.for('completed');
 const kExecuteQ = Symbol.for('executeQ');

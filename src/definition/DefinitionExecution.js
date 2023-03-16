@@ -1,7 +1,7 @@
-import getPropertyValue from '../getPropertyValue';
-import {DefinitionApi} from '../Api';
-import {brokerSafeId} from '../shared';
-import {cloneContent, cloneMessage, pushParent, cloneParent} from '../messageHelper';
+import getPropertyValue from '../getPropertyValue.js';
+import {DefinitionApi} from '../Api.js';
+import {brokerSafeId} from '../shared.js';
+import {cloneContent, cloneMessage, pushParent, cloneParent} from '../messageHelper.js';
 
 const kActivated = Symbol.for('activated');
 const kProcessesQ = Symbol.for('processesQ');

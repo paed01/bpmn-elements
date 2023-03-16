@@ -1,9 +1,9 @@
-import DefinitionExecution from './DefinitionExecution';
-import {DefinitionApi} from '../Api';
-import {DefinitionBroker} from '../EventBroker';
-import {getUniqueId, getOptionsAndCallback} from '../shared';
-import {makeErrorFromMessage} from '../error/Errors';
-import {cloneMessage, cloneContent} from '../messageHelper';
+import DefinitionExecution from './DefinitionExecution.js';
+import {DefinitionApi} from '../Api.js';
+import {DefinitionBroker} from '../EventBroker.js';
+import {getUniqueId, getOptionsAndCallback} from '../shared.js';
+import {makeErrorFromMessage} from '../error/Errors.js';
+import {cloneMessage, cloneContent} from '../messageHelper.js';
 
 const kConsuming = Symbol.for('consuming');
 const kCounters = Symbol.for('counters');

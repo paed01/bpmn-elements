@@ -1,9 +1,9 @@
-import ProcessExecution from './ProcessExecution';
-import {getUniqueId} from '../shared';
-import {ProcessApi} from '../Api';
-import {ProcessBroker} from '../EventBroker';
-import {cloneMessage, cloneContent, cloneParent} from '../messageHelper';
-import {makeErrorFromMessage} from '../error/Errors';
+import ProcessExecution from './ProcessExecution.js';
+import {getUniqueId} from '../shared.js';
+import {ProcessApi} from '../Api.js';
+import {ProcessBroker} from '../EventBroker.js';
+import {cloneMessage, cloneContent, cloneParent} from '../messageHelper.js';
+import {makeErrorFromMessage} from '../error/Errors.js';
 
 const kConsuming = Symbol.for('consuming');
 const kCounters = Symbol.for('counters');

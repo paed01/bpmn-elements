@@ -1,4 +1,4 @@
-import ExecutionScope from '../activity/ExecutionScope';
+import ExecutionScope from '../activity/ExecutionScope.js';
 
 export default function ServiceImplementation(activity) {
   this.type = `${activity.type}:implementation`;

@@ -1,7 +1,7 @@
-import Activity from '../activity/Activity';
-import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution';
-import {cloneContent, cloneMessage} from '../messageHelper';
-import {brokerSafeId} from '../shared';
+import Activity from '../activity/Activity.js';
+import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution.js';
+import {cloneContent, cloneMessage} from '../messageHelper.js';
+import {brokerSafeId} from '../shared.js';
 
 const kAttachedTags = Symbol.for('attachedConsumers');
 const kCompleteContent = Symbol.for('completeContent');

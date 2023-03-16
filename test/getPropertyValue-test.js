@@ -1,4 +1,4 @@
-import getPropertyValue from '../src/getPropertyValue';
+import getPropertyValue from '../src/getPropertyValue.js';
 
 describe('getPropertyValue', () => {
   describe('property path', () => {

@@ -1,7 +1,7 @@
-import {cloneParent} from '../messageHelper';
-import {EventBroker} from '../EventBroker';
-import {FlowApi} from '../Api';
-import {getUniqueId} from '../shared';
+import {cloneParent} from '../messageHelper.js';
+import {EventBroker} from '../EventBroker.js';
+import {FlowApi} from '../Api.js';
+import {getUniqueId} from '../shared.js';
 
 const kCounters = Symbol.for('counters');
 

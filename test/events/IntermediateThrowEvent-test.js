@@ -1,4 +1,4 @@
-import testHelpers from '../helpers/testHelpers';
+import testHelpers from '../helpers/testHelpers.js';
 
 describe('IntermediateThrowEvent', () => {
   it('without event definitions completes immediately', async () => {

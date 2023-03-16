@@ -1,5 +1,5 @@
 import { Broker } from 'smqp';
-import { makeErrorFromMessage } from './error/Errors';
+import { makeErrorFromMessage } from './error/Errors.js';
 
 export {
   ActivityBroker,

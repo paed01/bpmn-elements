@@ -1,6 +1,7 @@
-import testHelpers from '../helpers/testHelpers';
-import Definition from '../../src/definition/Definition';
-import camunda from 'camunda-bpmn-moddle/resources/camunda';
+import testHelpers from '../helpers/testHelpers.js';
+import Definition from '../../src/definition/Definition.js';
+
+const camunda = testHelpers.camundaBpmnModdle;
 
 const extensions = {
   camunda: {
