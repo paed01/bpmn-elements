@@ -44,21 +44,19 @@ export function SubProcessBehaviour(activity, context) {
   };
 }
 
-const proto = SubProcessBehaviour.prototype;
-
-Object.defineProperty(proto, 'execution', {
+Object.defineProperty(SubProcessBehaviour.prototype, 'execution', {
   get() {
     return this[kExecutions][0];
   },
 });
 
-Object.defineProperty(proto, 'executions', {
+Object.defineProperty(SubProcessBehaviour.prototype, 'executions', {
   get() {
     return this[kExecutions].slice();
   },
 });
 
-proto.execute = function execute(executeMessage) {
+SubProcessBehaviour.prototype.execute = function execute(executeMessage) {
   const content = executeMessage.content;
 
   let executionId = this.executionId;
@@ -83,7 +81,7 @@ proto.execute = function execute(executeMessage) {
   return processExecution.execute(executeMessage);
 };
 
-proto.stop = function stop() {
+SubProcessBehaviour.prototype.stop = function stop() {
   for (const execution of this[kExecutions]) {
     this.broker.cancel(`_sub-process-execution-${execution.executionId}`);
     this.broker.cancel(`_sub-process-api-${execution.executionId}`);
@@ -91,7 +89,7 @@ proto.stop = function stop() {
   }
 };
 
-proto.discard = function discard() {
+SubProcessBehaviour.prototype.discard = function discard() {
   for (const execution of this[kExecutions]) {
     this.broker.cancel(`_sub-process-execution-${execution.executionId}`);
     this.broker.cancel(`_sub-process-api-${execution.executionId}`);
@@ -99,7 +97,7 @@ proto.discard = function discard() {
   }
 };
 
-proto.getState = function getState() {
+SubProcessBehaviour.prototype.getState = function getState() {
   if (this.loopCharacteristics) {
     return {
       executions: this[kExecutions].map((pe) => {
@@ -118,7 +116,7 @@ proto.getState = function getState() {
   }
 };
 
-proto.recover = function recover(state) {
+SubProcessBehaviour.prototype.recover = function recover(state) {
   if (!state) return;
 
   const executions = this[kExecutions];
@@ -145,14 +143,14 @@ proto.recover = function recover(state) {
   return execution;
 };
 
-proto.getPostponed = function getPostponed() {
+SubProcessBehaviour.prototype.getPostponed = function getPostponed() {
   return this[kExecutions].reduce((result, pe) => {
     result = result.concat(pe.getPostponed());
     return result;
   }, []);
 };
 
-proto._onApiRootMessage = function onApiRootMessage(_, message) {
+SubProcessBehaviour.prototype._onApiRootMessage = function onApiRootMessage(_, message) {
   const messageType = message.properties.type;
 
   switch (messageType) {
@@ -167,7 +165,7 @@ proto._onApiRootMessage = function onApiRootMessage(_, message) {
   }
 };
 
-proto._upsertExecution = function upsertExecution(executeMessage) {
+SubProcessBehaviour.prototype._upsertExecution = function upsertExecution(executeMessage) {
   const content = executeMessage.content;
   const executionId = content.executionId;
 
@@ -188,14 +186,14 @@ proto._upsertExecution = function upsertExecution(executeMessage) {
   return execution;
 };
 
-proto._addListeners = function addListeners(processExecution, executionId) {
+SubProcessBehaviour.prototype._addListeners = function addListeners(processExecution, executionId) {
   this.broker.subscribeTmp('subprocess-execution', `execution.#.${executionId}`, this[kMessageHandlers].onExecutionCompleted, {
     noAck: true,
     consumerTag: `_sub-process-execution-${executionId}`,
   });
 };
 
-proto._onExecutionCompleted = function onExecutionCompleted(_, message) {
+SubProcessBehaviour.prototype._onExecutionCompleted = function onExecutionCompleted(_, message) {
   if (message.fields.redelivered && message.properties.persistent === false) return;
 
   const content = message.content;
@@ -228,7 +226,7 @@ proto._onExecutionCompleted = function onExecutionCompleted(_, message) {
   }
 };
 
-proto.getApi = function getApi(apiMessage) {
+SubProcessBehaviour.prototype.getApi = function getApi(apiMessage) {
   const content = apiMessage.content;
 
   if (content.id === this.id) return;
@@ -244,6 +242,6 @@ proto.getApi = function getApi(apiMessage) {
   }
 };
 
-proto._getExecutionById = function getExecutionById(executionId) {
+SubProcessBehaviour.prototype._getExecutionById = function getExecutionById(executionId) {
   return this[kExecutions].find((pe) => pe.executionId === executionId);
 };

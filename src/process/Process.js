@@ -56,30 +56,28 @@ export function Process(processDef, context) {
   this[kExtensions] = context.loadExtensions(this);
 }
 
-const proto = Process.prototype;
-
-Object.defineProperty(proto, 'counters', {
+Object.defineProperty(Process.prototype, 'counters', {
   enumerable: true,
   get() {
     return {...this[kCounters]};
   },
 });
 
-Object.defineProperty(proto, 'extensions', {
+Object.defineProperty(Process.prototype, 'extensions', {
   enumerable: true,
   get() {
     return this[kExtensions];
   },
 });
 
-Object.defineProperty(proto, 'stopped', {
+Object.defineProperty(Process.prototype, 'stopped', {
   enumerable: true,
   get() {
     return this[kStopped];
   },
 });
 
-Object.defineProperty(proto, 'isRunning', {
+Object.defineProperty(Process.prototype, 'isRunning', {
   enumerable: true,
   get() {
     if (!this[kConsuming]) return false;
@@ -87,7 +85,7 @@ Object.defineProperty(proto, 'isRunning', {
   },
 });
 
-Object.defineProperty(proto, 'executionId', {
+Object.defineProperty(Process.prototype, 'executionId', {
   enumerable: true,
   get() {
     const {executionId, initExecutionId} = this[kExec];
@@ -95,28 +93,28 @@ Object.defineProperty(proto, 'executionId', {
   },
 });
 
-Object.defineProperty(proto, 'execution', {
+Object.defineProperty(Process.prototype, 'execution', {
   enumerable: true,
   get() {
     return this[kExec].execution;
   },
 });
 
-Object.defineProperty(proto, 'status', {
+Object.defineProperty(Process.prototype, 'status', {
   enumerable: true,
   get() {
     return this[kStatus];
   },
 });
 
-proto.init = function init(useAsExecutionId) {
+Process.prototype.init = function init(useAsExecutionId) {
   const exec = this[kExec];
   const initExecutionId = exec.initExecutionId = useAsExecutionId || getUniqueId(this.id);
   this._debug(`initialized with executionId <${initExecutionId}>`);
   this._publishEvent('init', this._createMessage({executionId: initExecutionId}));
 };
 
-proto.run = function run(runContent) {
+Process.prototype.run = function run(runContent) {
   if (this.isRunning) throw new Error(`process <${this.id}> is already running`);
 
   const exec = this[kExec];
@@ -133,7 +131,7 @@ proto.run = function run(runContent) {
   this._activateRunConsumers();
 };
 
-proto.resume = function resume() {
+Process.prototype.resume = function resume() {
   if (this.isRunning) throw new Error(`cannot resume running process <${this.id}>`);
   if (!this.status) return this;
 
@@ -145,7 +143,7 @@ proto.resume = function resume() {
   return this;
 };
 
-proto.recover = function recover(state) {
+Process.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error(`cannot recover running process <${this.id}>`);
   if (!state) return this;
 
@@ -165,27 +163,27 @@ proto.recover = function recover(state) {
   return this;
 };
 
-proto.shake = function shake(startId) {
+Process.prototype.shake = function shake(startId) {
   if (this.isRunning) return this.execution.shake(startId);
   return new ProcessExecution(this, this.context).shake(startId);
 };
 
-proto.stop = function stop() {
+Process.prototype.stop = function stop() {
   if (!this.isRunning) return;
   this.getApi().stop();
 };
 
-proto.getApi = function getApi(message) {
+Process.prototype.getApi = function getApi(message) {
   const execution = this.execution;
   if (execution) return execution.getApi(message);
   return ProcessApi(this.broker, message || this[kStateMessage]);
 };
 
-proto.signal = function signal(message) {
+Process.prototype.signal = function signal(message) {
   return this.getApi().signal(message, {delegate: true});
 };
 
-proto.getState = function getState() {
+Process.prototype.getState = function getState() {
   return this._createMessage({
     environment: this.environment.getState(),
     status: this.status,
@@ -196,11 +194,11 @@ proto.getState = function getState() {
   });
 };
 
-proto.cancelActivity = function cancelActivity(message) {
+Process.prototype.cancelActivity = function cancelActivity(message) {
   return this.getApi().cancel(message, {delegate: true});
 };
 
-proto._activateRunConsumers = function activateRunConsumers() {
+Process.prototype._activateRunConsumers = function activateRunConsumers() {
   this[kConsuming] = true;
   const broker = this.broker;
   const {onApiMessage, onRunMessage} = this[kMessageHandlers];
@@ -208,7 +206,7 @@ proto._activateRunConsumers = function activateRunConsumers() {
   broker.getQueue('run-q').assertConsumer(onRunMessage, {exclusive: true, consumerTag: '_process-run'});
 };
 
-proto._deactivateRunConsumers = function deactivateRunConsumers() {
+Process.prototype._deactivateRunConsumers = function deactivateRunConsumers() {
   const broker = this.broker;
   broker.cancel('_process-api');
   broker.cancel('_process-run');
@@ -216,7 +214,7 @@ proto._deactivateRunConsumers = function deactivateRunConsumers() {
   this[kConsuming] = false;
 };
 
-proto._onRunMessage = function onRunMessage(routingKey, message) {
+Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
   const {content, fields} = message;
 
   if (routingKey === 'run.resume') {
@@ -303,7 +301,7 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
   message.ack();
 };
 
-proto._onResumeMessage = function onResumeMessage(message) {
+Process.prototype._onResumeMessage = function onResumeMessage(message) {
   message.ack();
 
   const stateMessage = this[kStateMessage];
@@ -325,7 +323,7 @@ proto._onResumeMessage = function onResumeMessage(message) {
   return this.broker.publish('run', stateMessage.fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
 };
 
-proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
+Process.prototype._onExecutionMessage = function onExecutionMessage(routingKey, message) {
   const content = message.content;
   const messageType = message.properties.type;
   message.ack();
@@ -352,12 +350,12 @@ proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
   executeMessage.ack();
 };
 
-proto._publishEvent = function publishEvent(state, content) {
+Process.prototype._publishEvent = function publishEvent(state, content) {
   const eventContent = this._createMessage({...content, state});
   this.broker.publish('event', `process.${state}`, eventContent, {type: state, mandatory: state === 'error'});
 };
 
-proto.sendMessage = function sendMessage(message) {
+Process.prototype.sendMessage = function sendMessage(message) {
   const messageContent = message && message.content;
   if (!messageContent) return;
 
@@ -373,35 +371,35 @@ proto.sendMessage = function sendMessage(message) {
   this.getApi().sendApiMessage(message.properties.type || 'message', cloneContent(messageContent), {delegate: true});
 };
 
-proto.getActivityById = function getActivityById(childId) {
+Process.prototype.getActivityById = function getActivityById(childId) {
   const execution = this.execution;
   if (execution) return execution.getActivityById(childId);
   return this.context.getActivityById(childId);
 };
 
-proto.getActivities = function getActivities() {
+Process.prototype.getActivities = function getActivities() {
   const execution = this.execution;
   if (execution) return execution.getActivities();
   return this.context.getActivities(this.id);
 };
 
-proto.getStartActivities = function getStartActivities(filterOptions) {
+Process.prototype.getStartActivities = function getStartActivities(filterOptions) {
   return this.context.getStartActivities(filterOptions, this.id);
 };
 
-proto.getSequenceFlows = function getSequenceFlows() {
+Process.prototype.getSequenceFlows = function getSequenceFlows() {
   const execution = this.execution;
   if (execution) return execution.getSequenceFlows();
   return this.context.getSequenceFlows();
 };
 
-proto.getPostponed = function getPostponed(...args) {
+Process.prototype.getPostponed = function getPostponed(...args) {
   const execution = this.execution;
   if (!execution) return [];
   return execution.getPostponed(...args);
 };
 
-proto._onApiMessage = function onApiMessage(routingKey, message) {
+Process.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   const messageType = message.properties.type;
 
   switch (messageType) {
@@ -413,13 +411,13 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-proto._onStop = function onStop() {
+Process.prototype._onStop = function onStop() {
   this[kStopped] = true;
   this._deactivateRunConsumers();
   return this._publishEvent('stop');
 };
 
-proto._createMessage = function createMessage(override) {
+Process.prototype._createMessage = function createMessage(override) {
   return {
     id: this.id,
     type: this.type,
@@ -430,6 +428,6 @@ proto._createMessage = function createMessage(override) {
   };
 };
 
-proto._debug = function debug(msg) {
+Process.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.id}> ${msg}`);
 };

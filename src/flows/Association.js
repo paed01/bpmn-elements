@@ -34,16 +34,14 @@ export default function Association(associationDef, {environment}) {
   logger.debug(`<${id}> init, <${sourceId}> -> <${targetId}>`);
 }
 
-const proto = Association.prototype;
-
-Object.defineProperty(proto, 'counters', {
+Object.defineProperty(Association.prototype, 'counters', {
   enumerable: true,
   get() {
     return {...this[kCounters]};
   },
 });
 
-proto.take = function take(content = {}) {
+Association.prototype.take = function take(content = {}) {
   this.logger.debug(`<${this.id}> take target <${this.targetId}>`);
   ++this[kCounters].take;
 
@@ -52,7 +50,7 @@ proto.take = function take(content = {}) {
   return true;
 };
 
-proto.discard = function discard(content = {}) {
+Association.prototype.discard = function discard(content = {}) {
   this.logger.debug(`<${this.id}> discard target <${this.targetId}>`);
   ++this[kCounters].discard;
 
@@ -61,7 +59,7 @@ proto.discard = function discard(content = {}) {
   return true;
 };
 
-proto.complete = function complete(content = {}) {
+Association.prototype.complete = function complete(content = {}) {
   this.logger.debug(`<${this.id}> completed target <${this.targetId}>`);
   ++this[kCounters].complete;
 
@@ -70,27 +68,27 @@ proto.complete = function complete(content = {}) {
   return true;
 };
 
-proto.getState = function getState() {
+Association.prototype.getState = function getState() {
   return this._createMessageContent({
     counters: this.counters,
     broker: this.broker.getState(true),
   });
 };
 
-proto.recover = function recover(state) {
+Association.prototype.recover = function recover(state) {
   Object.assign(this[kCounters], state.counters);
   this.broker.recover(state.broker);
 };
 
-proto.getApi = function getApi(message) {
+Association.prototype.getApi = function getApi(message) {
   return FlowApi(this.broker, message || {content: this._createMessageContent()});
 };
 
-proto.stop = function stop() {
+Association.prototype.stop = function stop() {
   this.broker.stop();
 };
 
-proto._publishEvent = function publishEvent(action, content) {
+Association.prototype._publishEvent = function publishEvent(action, content) {
   const eventContent = this._createMessageContent({
     action,
     message: content,
@@ -100,7 +98,7 @@ proto._publishEvent = function publishEvent(action, content) {
   this.broker.publish('event', `association.${action}`, eventContent, {type: action});
 };
 
-proto._createMessageContent = function createMessageContent(override) {
+Association.prototype._createMessageContent = function createMessageContent(override) {
   return {
     ...override,
     id: this.id,

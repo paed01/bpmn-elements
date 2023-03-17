@@ -54,42 +54,40 @@ function ProcessExecution(parentActivity, context) {
   };
 }
 
-const proto = ProcessExecution.prototype;
-
-Object.defineProperty(proto, 'stopped', {
+Object.defineProperty(ProcessExecution.prototype, 'stopped', {
   enumerable: true,
   get() {
     return this[kStopped];
   },
 });
 
-Object.defineProperty(proto, 'completed', {
+Object.defineProperty(ProcessExecution.prototype, 'completed', {
   enumerable: true,
   get() {
     return this[kCompleted];
   },
 });
 
-Object.defineProperty(proto, 'status', {
+Object.defineProperty(ProcessExecution.prototype, 'status', {
   enumerable: true,
   get() {
     return this[kStatus];
   },
 });
 
-Object.defineProperty(proto, 'postponedCount', {
+Object.defineProperty(ProcessExecution.prototype, 'postponedCount', {
   get() {
     return this[kElements].postponed.length;
   },
 });
 
-Object.defineProperty(proto, 'isRunning', {
+Object.defineProperty(ProcessExecution.prototype, 'isRunning', {
   get() {
     return this[kActivated];
   },
 });
 
-proto.execute = function execute(executeMessage) {
+ProcessExecution.prototype.execute = function execute(executeMessage) {
   if (!executeMessage) throw new Error('Process execution requires message');
   if (!executeMessage.content || !executeMessage.content.executionId) throw new Error('Process execution requires execution id');
 
@@ -115,7 +113,7 @@ proto.execute = function execute(executeMessage) {
   return true;
 };
 
-proto.resume = function resume() {
+ProcessExecution.prototype.resume = function resume() {
   this._debug(`resume process execution at ${this.status}`);
 
   if (this[kCompleted]) return this._complete('completed');
@@ -158,7 +156,7 @@ proto.resume = function resume() {
   if (!postponed.length && status === 'executing') return this._complete('completed');
 };
 
-proto.recover = function recover(state) {
+ProcessExecution.prototype.recover = function recover(state) {
   if (!state) return this;
   this.executionId = state.executionId;
 
@@ -204,7 +202,7 @@ proto.recover = function recover(state) {
   return this;
 };
 
-proto.shake = function shake(fromId) {
+ProcessExecution.prototype.shake = function shake(fromId) {
   let executing = true;
   const id = this.id;
   if (!this.isRunning) {
@@ -239,11 +237,11 @@ proto.shake = function shake(fromId) {
   return result;
 };
 
-proto.stop = function stop() {
+ProcessExecution.prototype.stop = function stop() {
   this.getApi().stop();
 };
 
-proto.getPostponed = function getPostponed(filterFn) {
+ProcessExecution.prototype.getPostponed = function getPostponed(filterFn) {
   const result = [];
   for (const msg of this[kElements].postponed.slice()) {
     const api = this._getChildApi(msg);
@@ -254,7 +252,7 @@ proto.getPostponed = function getPostponed(filterFn) {
   return result;
 };
 
-proto.discard = function discard() {
+ProcessExecution.prototype.discard = function discard() {
   this[kStatus] = 'discard';
   return this[kActivityQ].queueMessage({routingKey: 'execution.discard'}, {
     id: this.id,
@@ -263,7 +261,7 @@ proto.discard = function discard() {
   }, {type: 'discard'});
 };
 
-proto.getState = function getState() {
+ProcessExecution.prototype.getState = function getState() {
   const {children, flows, outboundMessageFlows, associations} = this[kElements];
   return {
     executionId: this.executionId,
@@ -281,19 +279,19 @@ proto.getState = function getState() {
   };
 };
 
-proto.getActivities = function getActivities() {
+ProcessExecution.prototype.getActivities = function getActivities() {
   return this[kElements].children.slice();
 };
 
-proto.getActivityById = function getActivityById(activityId) {
+ProcessExecution.prototype.getActivityById = function getActivityById(activityId) {
   return this[kElements].children.find((child) => child.id === activityId);
 };
 
-proto.getSequenceFlows = function getSequenceFlows() {
+ProcessExecution.prototype.getSequenceFlows = function getSequenceFlows() {
   return this[kElements].flows.slice();
 };
 
-proto.getApi = function getApi(message) {
+ProcessExecution.prototype.getApi = function getApi(message) {
   if (!message) return ProcessApi(this.broker, this[kExecuteMessage]);
 
   const content = message.content;
@@ -317,7 +315,7 @@ proto.getApi = function getApi(message) {
   return api;
 };
 
-proto._start = function start() {
+ProcessExecution.prototype._start = function start() {
   if (this[kElements].children.length === 0) {
     return this._complete('completed');
   }
@@ -344,7 +342,7 @@ proto._start = function start() {
   });
 };
 
-proto._activate = function activate() {
+ProcessExecution.prototype._activate = function activate() {
   const {onApiMessage, onMessageFlowEvent, onActivityEvent} = this[kMessageHandlers];
 
   if (!this.isSubProcess) {
@@ -406,7 +404,7 @@ proto._activate = function activate() {
   this[kActivated] = true;
 };
 
-proto._deactivate = function deactivate() {
+ProcessExecution.prototype._deactivate = function deactivate() {
   const broker = this.broker;
   const executionId = this.executionId;
   broker.cancel(`_process-api-consumer-${executionId}`);
@@ -436,7 +434,7 @@ proto._deactivate = function deactivate() {
   this[kActivated] = false;
 };
 
-proto._onDelegateEvent = function onDelegateEvent(message) {
+ProcessExecution.prototype._onDelegateEvent = function onDelegateEvent(message) {
   const eventType = message.properties.type;
   let delegate = true;
 
@@ -459,11 +457,11 @@ proto._onDelegateEvent = function onDelegateEvent(message) {
   return delegate;
 };
 
-proto._onMessageFlowEvent = function onMessageFlowEvent(routingKey, message) {
+ProcessExecution.prototype._onMessageFlowEvent = function onMessageFlowEvent(routingKey, message) {
   this.broker.publish('message', routingKey, cloneContent(message.content), message.properties);
 };
 
-proto._onActivityEvent = function onActivityEvent(routingKey, message) {
+ProcessExecution.prototype._onActivityEvent = function onActivityEvent(routingKey, message) {
   if (message.fields.redelivered && message.properties.persistent === false) return;
 
   const content = message.content;
@@ -495,7 +493,7 @@ proto._onActivityEvent = function onActivityEvent(routingKey, message) {
   this[kActivityQ].queueMessage(message.fields, cloneContent(content), {persistent: true, ...message.properties});
 };
 
-proto._onChildMessage = function onChildMessage(routingKey, message) {
+ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey, message) {
   if (message.fields.redelivered && message.properties.persistent === false) return message.ack();
 
   const content = message.content;
@@ -558,13 +556,13 @@ proto._onChildMessage = function onChildMessage(routingKey, message) {
   }
 };
 
-proto._stateChangeMessage = function stateChangeMessage(message, postponeMessage) {
+ProcessExecution.prototype._stateChangeMessage = function stateChangeMessage(message, postponeMessage) {
   const previousMsg = this._popPostponed(message.content);
   if (previousMsg) previousMsg.ack();
   if (postponeMessage) this[kElements].postponed.push(message);
 };
 
-proto._popPostponed = function popPostponed(byContent) {
+ProcessExecution.prototype._popPostponed = function popPostponed(byContent) {
   const {postponed, detachedActivities} = this[kElements];
 
   const postponedIdx = postponed.findIndex((msg) => {
@@ -583,7 +581,7 @@ proto._popPostponed = function popPostponed(byContent) {
   return postponedMsg;
 };
 
-proto._onChildCompleted = function onChildCompleted(message) {
+ProcessExecution.prototype._onChildCompleted = function onChildCompleted(message) {
   this._stateChangeMessage(message, false);
   if (message.fields.redelivered) return message.ack();
 
@@ -619,7 +617,7 @@ proto._onChildCompleted = function onChildCompleted(message) {
   }
 };
 
-proto._stopExecution = function stopExecution(message) {
+ProcessExecution.prototype._stopExecution = function stopExecution(message) {
   const postponedCount = this.postponedCount;
   this._debug(`stop process execution (stop child executions ${postponedCount})`);
   if (postponedCount) {
@@ -633,7 +631,7 @@ proto._stopExecution = function stopExecution(message) {
   }, {type: 'stopped', persistent: false});
 };
 
-proto._onDiscard = function onDiscard() {
+ProcessExecution.prototype._onDiscard = function onDiscard() {
   this._deactivate();
   const running = this[kElements].postponed.splice(0);
   this._debug(`discard process execution (discard child executions ${running.length})`);
@@ -645,7 +643,7 @@ proto._onDiscard = function onDiscard() {
   return this._complete('discard');
 };
 
-proto._onApiMessage = function onApiMessage(routingKey, message) {
+ProcessExecution.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   const executionId = this.executionId;
   const broker = this.broker;
   if (message.properties.delegate) {
@@ -686,7 +684,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-proto._complete = function complete(completionType, content) {
+ProcessExecution.prototype._complete = function complete(completionType, content) {
   this._deactivate();
   this._debug(`process execution ${completionType}`);
   this[kCompleted] = true;
@@ -701,7 +699,7 @@ proto._complete = function complete(completionType, content) {
   }), {type: completionType, mandatory: completionType === 'error'});
 };
 
-proto._terminate = function terminate(message) {
+ProcessExecution.prototype._terminate = function terminate(message) {
   this[kStatus] = 'terminated';
   this._debug('terminating process execution');
 
@@ -719,23 +717,23 @@ proto._terminate = function terminate(message) {
   this[kActivityQ].purge();
 };
 
-proto._getFlowById = function getFlowById(flowId) {
+ProcessExecution.prototype._getFlowById = function getFlowById(flowId) {
   return this[kElements].flows.find((f) => f.id === flowId);
 };
 
-proto._getAssociationById = function getAssociationById(associationId) {
+ProcessExecution.prototype._getAssociationById = function getAssociationById(associationId) {
   return this[kElements].associations.find((a) => a.id === associationId);
 };
 
-proto._getMessageFlowById = function getMessageFlowById(flowId) {
+ProcessExecution.prototype._getMessageFlowById = function getMessageFlowById(flowId) {
   return this[kElements].outboundMessageFlows.find((f) => f.id === flowId);
 };
 
-proto._getChildById = function getChildById(childId) {
+ProcessExecution.prototype._getChildById = function getChildById(childId) {
   return this.getActivityById(childId) || this._getFlowById(childId);
 };
 
-proto._getChildApi = function getChildApi(message) {
+ProcessExecution.prototype._getChildApi = function getChildApi(message) {
   const content = message.content;
 
   let child = this._getChildById(content.id);
@@ -754,12 +752,12 @@ proto._getChildApi = function getChildApi(message) {
   }
 };
 
-proto._onShookEnd = function onShookEnd(message) {
+ProcessExecution.prototype._onShookEnd = function onShookEnd(message) {
   const routingKey = message.fields.routingKey;
   if (routingKey !== 'activity.shake.end') return;
   this[kElements].startSequences[message.content.id] = cloneMessage(message);
 };
 
-proto._debug = function debugMessage(logMessage) {
+ProcessExecution.prototype._debug = function debugMessage(logMessage) {
   this[kParent].logger.debug(`<${this.executionId} (${this.id})> ${logMessage}`);
 };

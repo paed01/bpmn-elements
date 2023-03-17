@@ -16,9 +16,7 @@ export function SignalTaskBehaviour(activity) {
   this.broker = activity.broker;
 }
 
-const proto = SignalTaskBehaviour.prototype;
-
-proto.execute = function execute(executeMessage) {
+SignalTaskBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;
   if (loopCharacteristics && executeContent.isRootScope) {
@@ -39,7 +37,7 @@ proto.execute = function execute(executeMessage) {
   broker.publish('event', 'activity.wait', cloneContent(executeContent, {state: 'wait'}));
 };
 
-proto._onDelegatedApiMessage = function onDelegatedApiMessage(executeMessage, routingKey, message) {
+SignalTaskBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMessage(executeMessage, routingKey, message) {
   if (!message.properties.delegate) return;
 
   const {content: delegateContent} = message;
@@ -61,7 +59,7 @@ proto._onDelegatedApiMessage = function onDelegatedApiMessage(executeMessage, ro
   return this._onApiMessage(executeMessage, routingKey, message);
 };
 
-proto._onApiMessage = function onApiMessage(executeMessage, routingKey, message) {
+SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, routingKey, message) {
   const {type: messageType, correlationId} = message.properties;
   const executeContent = executeMessage.content;
   switch (messageType) {
@@ -89,7 +87,7 @@ proto._onApiMessage = function onApiMessage(executeMessage, routingKey, message)
   }
 };
 
-proto._stop = function stop(executionId) {
+SignalTaskBehaviour.prototype._stop = function stop(executionId) {
   const broker = this.broker;
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_api-delegated-${executionId}`);

@@ -51,9 +51,7 @@ function ReceiveTaskExecution(parent) {
   this[kCompleted] = false;
 }
 
-const proto = ReceiveTaskExecution.prototype;
-
-proto.execute = function execute(executeMessage) {
+ReceiveTaskExecution.prototype.execute = function execute(executeMessage) {
   this[kExecuteMessage] = executeMessage;
 
   const executeContent = executeMessage.content;
@@ -90,7 +88,7 @@ proto.execute = function execute(executeMessage) {
   broker.publish('event', 'activity.wait', cloneContent(executeContent, {message: {...info.message}}));
 };
 
-proto._onCatchMessage = function onCatchMessage(routingKey, message) {
+ReceiveTaskExecution.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
   const content = message.content;
 
   const {id: signalId, executionId: signalExecutionId} = content.message || {};
@@ -115,7 +113,7 @@ proto._onCatchMessage = function onCatchMessage(routingKey, message) {
   this._complete(message.content.message, {correlationId});
 };
 
-proto._onApiMessage = function onApiMessage(routingKey, message) {
+ReceiveTaskExecution.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   const {type: messageType, correlationId} = message.properties;
   switch (messageType) {
     case 'message':
@@ -133,19 +131,19 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-proto._complete = function complete(output, options) {
+ReceiveTaskExecution.prototype._complete = function complete(output, options) {
   this[kCompleted] = true;
   this._stop();
   return this.broker.publish('execution', 'execute.completed', cloneContent(this[kExecuteMessage].content, {output}), options);
 };
 
-proto._stop = function stop() {
+ReceiveTaskExecution.prototype._stop = function stop() {
   const broker = this.broker, executionId = this.executionId;
   broker.cancel(`_onmessage-${executionId}`);
   broker.cancel(`_api-${executionId}`);
 };
 
-proto._setupMessageHandling = function setupMessageHandling(executionId) {
+ReceiveTaskExecution.prototype._setupMessageHandling = function setupMessageHandling(executionId) {
   const broker = this.broker;
   broker.subscribeTmp('api', '#.signal.*', this._onDelegateMessage.bind(this), {
     noAck: true,
@@ -166,16 +164,16 @@ proto._setupMessageHandling = function setupMessageHandling(executionId) {
   });
 };
 
-proto._onDelegateMessage = function onDelegateMessage(_, message) {
+ReceiveTaskExecution.prototype._onDelegateMessage = function onDelegateMessage(_, message) {
   if (!message.properties.delegate) return;
   this.broker.sendToQueue('message', message.content, message.properties);
 };
 
-proto._onStopApiMessage = function onStopApiMessage() {
+ReceiveTaskExecution.prototype._onStopApiMessage = function onStopApiMessage() {
   this._stopMessageHandling(true);
 };
 
-proto._onExecutionComplete = function onExecutionComplete(routingKey, {content}) {
+ReceiveTaskExecution.prototype._onExecutionComplete = function onExecutionComplete(routingKey, {content}) {
   if (!content.isRootScope) return;
   switch (routingKey) {
     case 'execute.completed':
@@ -186,7 +184,7 @@ proto._onExecutionComplete = function onExecutionComplete(routingKey, {content})
   }
 };
 
-proto._stopMessageHandling = function stop(keepMessageQ) {
+ReceiveTaskExecution.prototype._stopMessageHandling = function stop(keepMessageQ) {
   const broker = this.broker, executionId = this.executionId;
   broker.cancel(`_api-delegated-${executionId}`);
   broker.cancel(`_api-stop-${executionId}`);
@@ -194,7 +192,7 @@ proto._stopMessageHandling = function stop(keepMessageQ) {
   if (!keepMessageQ) broker.purgeQueue('message');
 };
 
-proto._getReferenceInfo = function getReferenceInfo(message) {
+ReceiveTaskExecution.prototype._getReferenceInfo = function getReferenceInfo(message) {
   const referenceElement = this.referenceElement;
   if (!referenceElement) {
     return {
@@ -212,6 +210,6 @@ proto._getReferenceInfo = function getReferenceInfo(message) {
   return result;
 };
 
-proto._debug = function debug(msg) {
+ReceiveTaskExecution.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.executionId} (${this.id})> ${msg}`);
 };

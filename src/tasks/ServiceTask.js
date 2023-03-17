@@ -17,9 +17,7 @@ export function ServiceTaskBehaviour(activity) {
   this.broker = activity.broker;
 }
 
-const proto = ServiceTaskBehaviour.prototype;
-
-proto.execute = function execute(executeMessage) {
+ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;
   if (loopCharacteristics && executeContent.isRootScope) {
@@ -44,13 +42,13 @@ proto.execute = function execute(executeMessage) {
   });
 };
 
-proto.getService = function getService(message) {
+ServiceTaskBehaviour.prototype.getService = function getService(message) {
   let Service = this.activity.behaviour.Service;
   if (!Service && this.environment.settings.enableDummyService) Service = DummyService;
   return Service && new Service(this.activity, cloneMessage(message));
 };
 
-proto._onApiMessage = function onApiMessage(executeMessage, _, message) {
+ServiceTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, _, message) {
   const broker = this.broker;
   switch (message.properties.type) {
     case 'discard': {

@@ -106,37 +106,35 @@ function Activity(Behaviour, activityDef, context) {
   this[kExtensions] = context.loadExtensions(this);
 }
 
-const proto = Activity.prototype;
-
-Object.defineProperty(proto, 'counters', {
+Object.defineProperty(Activity.prototype, 'counters', {
   enumerable: true,
   get() {
     return {...this[kCounters]};
   },
 });
 
-Object.defineProperty(proto, 'execution', {
+Object.defineProperty(Activity.prototype, 'execution', {
   enumerable: true,
   get() {
     return this[kExec].execution;
   },
 });
 
-Object.defineProperty(proto, 'executionId', {
+Object.defineProperty(Activity.prototype, 'executionId', {
   enumerable: true,
   get() {
     return this[kExec].executionId;
   },
 });
 
-Object.defineProperty(proto, 'extensions', {
+Object.defineProperty(Activity.prototype, 'extensions', {
   enumerable: true,
   get() {
     return this[kExtensions];
   },
 });
 
-Object.defineProperty(proto, 'bpmnIo', {
+Object.defineProperty(Activity.prototype, 'bpmnIo', {
   enumerable: true,
   get() {
     const extensions = this[kExtensions];
@@ -144,7 +142,7 @@ Object.defineProperty(proto, 'bpmnIo', {
   },
 });
 
-Object.defineProperty(proto, 'formatter', {
+Object.defineProperty(Activity.prototype, 'formatter', {
   enumerable: true,
   get() {
     let formatter = this[kFormatter];
@@ -160,7 +158,7 @@ Object.defineProperty(proto, 'formatter', {
   },
 });
 
-Object.defineProperty(proto, 'isRunning', {
+Object.defineProperty(Activity.prototype, 'isRunning', {
   enumerable: true,
   get() {
     if (!this[kConsuming]) return false;
@@ -168,66 +166,66 @@ Object.defineProperty(proto, 'isRunning', {
   },
 });
 
-Object.defineProperty(proto, 'outbound', {
+Object.defineProperty(Activity.prototype, 'outbound', {
   enumerable: true,
   get() {
     return this[kFlows].outboundSequenceFlows;
   },
 });
 
-Object.defineProperty(proto, 'inbound', {
+Object.defineProperty(Activity.prototype, 'inbound', {
   enumerable: true,
   get() {
     return this[kFlows].inboundSequenceFlows;
   },
 });
 
-Object.defineProperty(proto, 'isEnd', {
+Object.defineProperty(Activity.prototype, 'isEnd', {
   enumerable: true,
   get() {
     return this[kFlags].isEnd;
   },
 });
-Object.defineProperty(proto, 'isStart', {
+Object.defineProperty(Activity.prototype, 'isStart', {
   enumerable: true,
   get() {
     return this[kFlags].isStart;
   },
 });
-Object.defineProperty(proto, 'isSubProcess', {
+Object.defineProperty(Activity.prototype, 'isSubProcess', {
   enumerable: true,
   get() {
     return this[kFlags].isSubProcess;
   },
 });
 
-Object.defineProperty(proto, 'isMultiInstance', {
+Object.defineProperty(Activity.prototype, 'isMultiInstance', {
   enumerable: true,
   get() {
     return this[kFlags].isMultiInstance;
   },
 });
 
-Object.defineProperty(proto, 'isThrowing', {
+Object.defineProperty(Activity.prototype, 'isThrowing', {
   enumerable: true,
   get() {
     return this[kFlags].isThrowing;
   },
 });
-Object.defineProperty(proto, 'isForCompensation', {
+Object.defineProperty(Activity.prototype, 'isForCompensation', {
   enumerable: true,
   get() {
     return this[kFlags].isForCompensation;
   },
 });
-Object.defineProperty(proto, 'triggeredByEvent', {
+Object.defineProperty(Activity.prototype, 'triggeredByEvent', {
   enumerable: true,
   get() {
     return this[kActivityDef].triggeredByEvent;
   },
 });
 
-Object.defineProperty(proto, 'attachedTo', {
+Object.defineProperty(Activity.prototype, 'attachedTo', {
   enumerable: true,
   get() {
     const attachedToId = this[kFlags].attachedTo;
@@ -236,25 +234,25 @@ Object.defineProperty(proto, 'attachedTo', {
   },
 });
 
-Object.defineProperty(proto, 'eventDefinitions', {
+Object.defineProperty(Activity.prototype, 'eventDefinitions', {
   enumerable: true,
   get() {
     return this[kEventDefinitions];
   },
 });
 
-proto.activate = function activate() {
+Activity.prototype.activate = function activate() {
   if (this[kFlags].isForCompensation) return;
   return this._consumeInbound();
 };
 
-proto.deactivate = function deactivate() {
+Activity.prototype.deactivate = function deactivate() {
   const broker = this.broker;
   broker.cancel('_run-on-inbound');
   broker.cancel('_format-consumer');
 };
 
-proto.init = function init(initContent) {
+Activity.prototype.init = function init(initContent) {
   const id = this.id;
   const exec = this[kExec];
   const executionId = exec.initExecutionId = exec.initExecutionId || getUniqueId(id);
@@ -262,7 +260,7 @@ proto.init = function init(initContent) {
   this._publishEvent('init', this._createMessage({...initContent, executionId}));
 };
 
-proto.run = function run(runContent) {
+Activity.prototype.run = function run(runContent) {
   const id = this.id;
   if (this.isRunning) throw new Error(`activity <${id}> is already running`);
 
@@ -281,7 +279,7 @@ proto.run = function run(runContent) {
   this._consumeRunQ();
 };
 
-proto.recover = function recover(state) {
+Activity.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error(`cannot recover running activity <${this.id}>`);
   if (!state) return;
 
@@ -301,7 +299,7 @@ proto.recover = function recover(state) {
   return this;
 };
 
-proto.resume = function resume() {
+Activity.prototype.resume = function resume() {
   if (this[kConsuming]) {
     throw new Error(`cannot resume running activity <${this.id}>`);
   }
@@ -316,7 +314,7 @@ proto.resume = function resume() {
   this._consumeRunQ();
 };
 
-proto.discard = function discard(discardContent) {
+Activity.prototype.discard = function discard(discardContent) {
   if (!this.status) return this._runDiscard(discardContent);
   const execution = this[kExec].execution;
   if (execution && !execution.completed) return execution.discard();
@@ -328,12 +326,12 @@ proto.discard = function discard(discardContent) {
   this._consumeRunQ();
 };
 
-proto.stop = function stop() {
+Activity.prototype.stop = function stop() {
   if (!this[kConsuming]) return;
   return this.getApi().stop();
 };
 
-proto.next = function next() {
+Activity.prototype.next = function next() {
   if (!this.environment.settings.step) return;
   const stateMessage = this[kStateMessage];
   if (!stateMessage) return;
@@ -344,15 +342,15 @@ proto.next = function next() {
   return current;
 };
 
-proto.shake = function shake() {
+Activity.prototype.shake = function shake() {
   this._shakeOutbound({content: this._createMessage()});
 };
 
-proto.evaluateOutbound = function evaluateOutbound(fromMessage, discardRestAtTake, callback) {
+Activity.prototype.evaluateOutbound = function evaluateOutbound(fromMessage, discardRestAtTake, callback) {
   return this[kFlows].outboundEvaluator.evaluate(fromMessage, discardRestAtTake, callback);
 };
 
-proto.getState = function getState() {
+Activity.prototype.getState = function getState() {
   const msg = this._createMessage();
 
   const exec = this[kExec];
@@ -367,17 +365,17 @@ proto.getState = function getState() {
   };
 };
 
-proto.getApi = function getApi(message) {
+Activity.prototype.getApi = function getApi(message) {
   const execution = this[kExec].execution;
   if (execution && !execution.completed) return execution.getApi(message);
   return ActivityApi(this.broker, message || this[kStateMessage]);
 };
 
-proto.getActivityById = function getActivityById(elementId) {
+Activity.prototype.getActivityById = function getActivityById(elementId) {
   return this.context.getActivityById(elementId);
 };
 
-proto._runDiscard = function runDiscard(discardContent) {
+Activity.prototype._runDiscard = function runDiscard(discardContent) {
   const exec = this[kExec];
   const executionId = exec.executionId = exec.initExecutionId || getUniqueId(this.id);
   exec.initExecutionId = null;
@@ -390,7 +388,7 @@ proto._runDiscard = function runDiscard(discardContent) {
   this._consumeRunQ();
 };
 
-proto._discardRun = function discardRun() {
+Activity.prototype._discardRun = function discardRun() {
   const status = this.status;
   if (!status) return;
 
@@ -413,7 +411,7 @@ proto._discardRun = function discardRun() {
   this._consumeRunQ();
 };
 
-proto._shakeOutbound = function shakeOutbound(sourceMessage) {
+Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
   const message = cloneMessage(sourceMessage);
   message.content.sequence = message.content.sequence || [];
   message.content.sequence.push({id: this.id, type: this.type});
@@ -428,7 +426,7 @@ proto._shakeOutbound = function shakeOutbound(sourceMessage) {
   for (const flow of this[kFlows].outboundSequenceFlows) flow.shake(message);
 };
 
-proto._consumeInbound = function consumeInbound() {
+Activity.prototype._consumeInbound = function consumeInbound() {
   if (this.status) return;
   const inboundQ = this.broker.getQueue('inbound-q');
   if (this[kFlags].isParallelJoin) {
@@ -438,7 +436,7 @@ proto._consumeInbound = function consumeInbound() {
   return inboundQ.consume(this[kMessageHandlers].onInbound, {consumerTag: '_run-on-inbound'});
 };
 
-proto._onInbound = function onInbound(routingKey, message) {
+Activity.prototype._onInbound = function onInbound(routingKey, message) {
   message.ack();
   const id = this.id;
   const broker = this.broker;
@@ -475,7 +473,7 @@ proto._onInbound = function onInbound(routingKey, message) {
   }
 };
 
-proto._onJoinInbound = function onJoinInbound(routingKey, message) {
+Activity.prototype._onJoinInbound = function onJoinInbound(routingKey, message) {
   const {content} = message;
   const {inboundSequenceFlows, inboundJoinFlows, inboundTriggers} = this[kFlows];
   const idx = inboundJoinFlows.findIndex((msg) => msg.content.id === content.id);
@@ -516,7 +514,7 @@ proto._onJoinInbound = function onJoinInbound(routingKey, message) {
   return this.run({inbound});
 };
 
-proto._onInboundEvent = function onInboundEvent(routingKey, message) {
+Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message) {
   const {fields, content, properties} = message;
   const id = this.id;
   const inboundQ = this.broker.getQueue('inbound-q');
@@ -558,14 +556,14 @@ proto._onInboundEvent = function onInboundEvent(routingKey, message) {
   }
 };
 
-proto._consumeRunQ = function consumeRunQ() {
+Activity.prototype._consumeRunQ = function consumeRunQ() {
   if (this[kConsuming]) return;
 
   this[kConsuming] = true;
   this.broker.getQueue('run-q').assertConsumer(this[kMessageHandlers].onRunMessage, {exclusive: true, consumerTag: '_activity-run'});
 };
 
-proto._onRunMessage = function onRunMessage(routingKey, message, messageProperties) {
+Activity.prototype._onRunMessage = function onRunMessage(routingKey, message, messageProperties) {
   switch (routingKey) {
     case 'run.outbound.discard':
     case 'run.outbound.take':
@@ -586,7 +584,7 @@ proto._onRunMessage = function onRunMessage(routingKey, message, messageProperti
   });
 };
 
-proto._continueRunMessage = function continueRunMessage(routingKey, message) {
+Activity.prototype._continueRunMessage = function continueRunMessage(routingKey, message) {
   const isRedelivered = message.fields.redelivered;
   const content = cloneContent(message.content);
   const correlationId = message.properties.correlationId;
@@ -712,7 +710,7 @@ proto._continueRunMessage = function continueRunMessage(routingKey, message) {
   if (!step) message.ack();
 };
 
-proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
+Activity.prototype._onExecutionMessage = function onExecutionMessage(routingKey, message) {
   const executeMessage = this[kExecuteMessage];
   const content = cloneContent({
     ...executeMessage.content,
@@ -755,14 +753,14 @@ proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
   this._ackRunExecuteMessage();
 };
 
-proto._ackRunExecuteMessage = function ackRunExecuteMessage() {
+Activity.prototype._ackRunExecuteMessage = function ackRunExecuteMessage() {
   if (this.environment.settings.step) return;
   const executeMessage = this[kExecuteMessage];
   this[kExecuteMessage] = null;
   executeMessage.ack();
 };
 
-proto._doRunLeave = function doRunLeave(message, isDiscarded, onOutbound) {
+Activity.prototype._doRunLeave = function doRunLeave(message, isDiscarded, onOutbound) {
   const {content, properties} = message;
   const correlationId = properties.correlationId;
   if (content.ignoreOutbound) {
@@ -783,7 +781,7 @@ proto._doRunLeave = function doRunLeave(message, isDiscarded, onOutbound) {
   });
 };
 
-proto._doOutbound = function doOutbound(fromMessage, isDiscarded, callback) {
+Activity.prototype._doOutbound = function doOutbound(fromMessage, isDiscarded, callback) {
   const outboundSequenceFlows = this[kFlows].outboundSequenceFlows;
   if (!outboundSequenceFlows.length) return callback(null, []);
 
@@ -813,7 +811,7 @@ proto._doOutbound = function doOutbound(fromMessage, isDiscarded, callback) {
   });
 };
 
-proto._doRunOutbound = function doRunOutbound(outboundList, content, discardSequence) {
+Activity.prototype._doRunOutbound = function doRunOutbound(outboundList, content, discardSequence) {
   for (const outboundFlow of outboundList) {
     const {id: flowId, action} = outboundFlow;
     this.broker.publish('run', 'run.outbound.' + action, cloneContent(content, {
@@ -827,7 +825,7 @@ proto._doRunOutbound = function doRunOutbound(outboundList, content, discardSequ
   return outboundList;
 };
 
-proto._onResumeMessage = function onResumeMessage(message) {
+Activity.prototype._onResumeMessage = function onResumeMessage(message) {
   message.ack();
 
   const stateMessage = this[kStateMessage];
@@ -852,7 +850,7 @@ proto._onResumeMessage = function onResumeMessage(message) {
   return this.broker.publish('run', fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
 };
 
-proto._publishEvent = function publishEvent(state, content, properties = {}) {
+Activity.prototype._publishEvent = function publishEvent(state, content, properties = {}) {
   this.broker.publish('event', `activity.${state}`, cloneContent(content, {state}), {
     ...properties,
     type: state,
@@ -861,7 +859,7 @@ proto._publishEvent = function publishEvent(state, content, properties = {}) {
   });
 };
 
-proto._onStop = function onStop(message) {
+Activity.prototype._onStop = function onStop(message) {
   const running = this[kConsuming];
 
   this.stopped = true;
@@ -880,7 +878,7 @@ proto._onStop = function onStop(message) {
   }
 };
 
-proto._consumeApi = function consumeApi() {
+Activity.prototype._consumeApi = function consumeApi() {
   const executionId = this[kExec].executionId;
   if (!executionId) return;
   const broker = this.broker;
@@ -888,7 +886,7 @@ proto._consumeApi = function consumeApi() {
   broker.subscribeTmp('api', `activity.*.${executionId}`, this[kMessageHandlers].onApiMessage, {noAck: true, consumerTag: '_activity-api', priority: 100});
 };
 
-proto._onApiMessage = function onApiMessage(routingKey, message) {
+Activity.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   switch (message.properties.type) {
     case 'discard': {
       return this._discardRun(message);
@@ -902,7 +900,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-proto._createMessage = function createMessage(override) {
+Activity.prototype._createMessage = function createMessage(override) {
   const name = this.name, status = this.status, parent = this.parent;
   const result = {
     ...override,
@@ -920,11 +918,11 @@ proto._createMessage = function createMessage(override) {
   return result;
 };
 
-proto._getOutboundSequenceFlowById = function getOutboundSequenceFlowById(flowId) {
+Activity.prototype._getOutboundSequenceFlowById = function getOutboundSequenceFlowById(flowId) {
   return this[kFlows].outboundSequenceFlows.find((flow) => flow.id === flowId);
 };
 
-proto._deactivateRunConsumers = function _deactivateRunConsumers() {
+Activity.prototype._deactivateRunConsumers = function _deactivateRunConsumers() {
   const broker = this.broker;
   broker.cancel('_activity-api');
   broker.cancel('_activity-run');
