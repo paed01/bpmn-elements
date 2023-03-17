@@ -1,6 +1,6 @@
-import {ProcessApi} from '../Api';
-import {cloneContent, cloneMessage, pushParent} from '../messageHelper';
-import {getUniqueId} from '../shared';
+import {ProcessApi} from '../Api.js';
+import {cloneContent, cloneMessage, pushParent} from '../messageHelper.js';
+import {getUniqueId} from '../shared.js';
 import {ActivityTracker} from '../Tracker.js';
 
 export default ProcessExecution;
@@ -524,9 +524,6 @@ ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey,
 
   const content = message.content;
 
-  // if (this.isTransaction) console.log({id: content.id, routingKey, l: this[kElements].postponed.map(p => p.content.executionId || p.content.sequenceId)})
-  console.log({id: content.id, routingKey, l: this[kElements].postponed.length, d: this[kElements].detachedActivities.length});
-
   switch (routingKey) {
     case 'execution.stop':
       message.ack();
@@ -554,7 +551,6 @@ ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey,
       if (!prevMsg) return message.ack();
       break;
     }
-    // case 'activity.compensation.end':
     case 'flow.looped':
     case 'activity.leave':
       return this._onChildCompleted(message);
@@ -572,9 +568,7 @@ ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey,
       break;
     }
     case 'activity.discard':
-    // case 'activity.compensation.start':
     case 'activity.enter': {
-      // this[kStatus] = 'executing';
       if (!content.inbound) break;
 
       for (const inbound of content.inbound) {
@@ -682,8 +676,6 @@ ProcessExecution.prototype._onDiscard = function onDiscard() {
   const running = this[kElements].postponed.splice(0);
   this._debug(`discard process execution (discard child executions ${running.length})`);
 
-  // this.stop(); ?????
-
   if (this.isSubProcess) {
     this.stop();
   } else {
@@ -696,7 +688,7 @@ ProcessExecution.prototype._onDiscard = function onDiscard() {
   return this._complete('discard');
 };
 
-ProcessExecution.prototype._onCancel = function onCancel(message) {
+ProcessExecution.prototype._onCancel = function onCancel() {
   const running = this[kElements].postponed.slice(0);
   const isTransaction = this.isTransaction;
 
@@ -708,7 +700,6 @@ ProcessExecution.prototype._onCancel = function onCancel(message) {
     }));
 
     for (const msg of running) {
-      // console.log('-----', msg.content.id, msg.content)
       if (msg.content.expect === 'compensate') {
         this._getChildApi(msg).sendApiMessage('compensate');
       } else if (!msg.content.isForCompensation) {
@@ -814,10 +805,6 @@ ProcessExecution.prototype._terminate = function terminate(message) {
   }
 
   this[kActivityQ].purge();
-};
-
-ProcessExecution.prototype._queueMessage = function queueMessage(routingKey, content, properties) {
-  this[kActivityQ].queueMessage({ routingKey }, content, properties);
 };
 
 ProcessExecution.prototype._getFlowById = function getFlowById(flowId) {

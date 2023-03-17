@@ -76,6 +76,10 @@ function ExecutionBroker(brokerOwner, prefix, onBrokerReturn) {
     durable: true,
     autoDelete: false
   });
+  broker.assertQueue('inbound-q', {
+    durable: true,
+    autoDelete: false
+  });
   broker.bindQueue(runQ.name, 'run', 'run.#');
   broker.bindQueue(formatRunQ.name, 'format', 'run.#');
   broker.bindQueue(executionQ.name, 'execution', 'execution.#');

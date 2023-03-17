@@ -431,6 +431,39 @@ describe('Activity', () => {
       expect(executeMessage).to.have.property('content').with.property('message', 1);
     });
 
+    it('removes run on inbound listener when deactivated on leave', () => {
+      const sequenceFlows = [];
+      const context = getContext({
+        getInboundSequenceFlows() {
+          return sequenceFlows;
+        },
+      });
+
+      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      sequenceFlows.push(sequenceFlow);
+
+      const activity = new Activity(behaviours.CompleteBehaviour, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+      }, context);
+
+      activity.activate();
+
+      activity.broker.subscribeOnce('event', 'activity.leave', () => {
+        activity.deactivate();
+      });
+
+      sequenceFlow.take();
+      sequenceFlow.take();
+
+      expect(activity.counters).to.have.property('taken', 1);
+
+      expect(activity.broker.cancel('_run-on-inbound'), 'run on inbound trigger active').to.be.false;
+    });
+
     describe('parallel gateway join', () => {
       it('publishes activity enter with taken flows', () => {
         const sequenceFlows = [];
@@ -2525,7 +2558,7 @@ describe('Activity', () => {
   });
 
   describe('inbound associations', () => {
-    it('starts compensation task run when inbound association complete', () => {
+    it('starts compensation task run when inbound association is taken', () => {
       const associations = [];
       const context = getContext({
         getInboundAssociations() {
@@ -2550,11 +2583,6 @@ describe('Activity', () => {
       activity.activate();
 
       association.take();
-      expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 1);
-
-      association.complete();
-
-      expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 0);
 
       expect(activity.counters).to.have.property('taken', 1);
     });
@@ -2586,13 +2614,43 @@ describe('Activity', () => {
       association.take();
       association.take();
 
-      expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 2);
-
-      association.complete();
-
-      expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 0);
-
       expect(activity.counters).to.have.property('taken', 2);
+    });
+
+    it('removes run on inbound listener when deactivated on leave', () => {
+      const associations = [];
+      const context = getContext({
+        getInboundAssociations() {
+          return associations;
+        },
+      });
+
+      const association = new Association({id: 'association', parent: {id: 'process1'}}, context);
+      associations.push(association);
+
+      const activity = new Activity(behaviours.CompleteBehaviour, {
+        id: 'activity',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'process1',
+        },
+        behaviour: {
+          isForCompensation: true,
+        },
+      }, context);
+
+      activity.activate();
+
+      activity.broker.subscribeOnce('event', 'activity.leave', () => {
+        activity.deactivate();
+      });
+
+      association.take();
+      association.take();
+
+      expect(activity.counters).to.have.property('taken', 1);
+
+      expect(activity.broker.cancel('_run-on-inbound'), 'run on inbound trigger active').to.be.false;
     });
   });
 

@@ -934,11 +934,6 @@ Feature('Transaction', () => {
 
     Then('transaction completes', async () => {
       await end;
-      // const atomic = definition.getActivityById('atomic');
-      // expect(atomic.counters).to.deep.equal({
-      //   discarded: 0,
-      //   taken: 1,
-      // });
     });
   });
 });

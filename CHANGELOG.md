@@ -1,18 +1,17 @@
 Changelog
 =========
 
-<<<<<<< HEAD
+# 9.1.0
+
+- refactor compensation and transaction functionality
+- fix event based gateway bug when/if a subsequent event completes immediately
+- add somewhat expirimental activityStatus property to process and definition, tracked by Tracker that tracks executing, wait, and timer activity
+
 # 9.0.0
 
 - Turn into module with exports for node
 - Add basic type declaration, still learning
 - return Api instance for Message- and Association flows, as stated by type declaration
-=======
-# 8.3.0
-
-- fix event based gateway bug when/if a subsequent event completes immediately
-- add somewhat expirimental activityStatus property to process and definition, tracked by Tracker that tracks executing, wait, and timer activity
->>>>>>> 4763e35 (wip: activity status)
 
 # 8.2.4
 

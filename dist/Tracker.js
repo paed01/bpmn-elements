@@ -48,10 +48,7 @@ ActivityTracker.prototype.track = function track(routingKey, message) {
       this._leave(executionId);
       break;
   }
-
-  // console.log({[routingKey]: executionId, status: this.status})
 };
-
 ActivityTracker.prototype._executing = function executing(id) {
   const {
     wait,

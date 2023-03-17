@@ -21,6 +21,11 @@ Returns api with properties:
 - `execution`: current execution
 - `environment`: definition environment instance, see [Environment](/docs/Environment.md)
 - `isRunning`: boolean indicating if the definition is running
+- `activityStatus`: activity executing status. Can be used to decide when to save state, `timer` and `wait` is recommended.
+  * `idle`: idle, not running anything
+  * `executing`: at least one activity is executing, e.g. a service task making a asynchronous request
+  * `timer`: at least one activity is waiting for a timer to complete, usually only TimerEventDefinition's
+  * `wait`: at least one activity is waiting for a signal of some sort, e.g. user tasks, intermediate catch events, etc
 - `broker`: definition message broker
 
 ### `run([options, callback])`
@@ -144,4 +149,3 @@ Arguments:
   - `owner`: broker owner, in this case probably the actual definition
 
 Returns Promise that will resolve with element [api](/docs/SharedApi.md) on event name or reject on error.
-

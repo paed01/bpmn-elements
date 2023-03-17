@@ -1,7 +1,7 @@
 import ck from 'chronokinesis';
-import Definition from '../../src/definition/Definition';
-import factory from '../helpers/factory';
-import testHelpers from '../helpers/testHelpers';
+import Definition from '../../src/definition/Definition.js';
+import factory from '../helpers/factory.js';
+import testHelpers from '../helpers/testHelpers.js';
 import camunda from '../resources/extensions/CamundaExtension.js';
 import {BpmnError} from '../../src/error/Errors.js';
 
@@ -684,7 +684,6 @@ Feature('Activity status', () => {
         settings: {enableDummyService: false},
         services: {
           compare(answer, str) {
-            console.log('----', {answer, str})
             return answer.message === str;
           },
           compensate(...args) {
@@ -703,31 +702,43 @@ Feature('Activity status', () => {
 
     let end;
     When('definition is ran', () => {
-      // end = definition.waitFor('end');
+      end = definition.waitFor('end');
       definition.run();
     });
 
     Then('activity status is wait', () => {
-      // expect(definition.activityStatus).to.equal('wait');
+      expect(definition.activityStatus).to.equal('wait');
     });
 
     When('user decides to cancel', async () => {
-      // const transaction = definition.getPostponed((e) => e.id === 'atomic')[0];
-      // expect(transaction).to.have.property('id', 'atomic');
+      const transaction = definition.getPostponed((e) => e.id === 'atomic')[0];
+      expect(transaction).to.have.property('id', 'atomic');
 
-      // const userTask = transaction.getPostponed().pop();
+      const userTask = transaction.getPostponed().pop();
 
-      // expect(transaction.content).to.have.property('isTransaction', true);
+      expect(transaction.content).to.have.property('isTransaction', true);
 
-      // expect(userTask).to.have.property('id', 'areUSure');
-      // userTask.signal({message: 'No'});
+      expect(userTask).to.have.property('id', 'areUSure');
+      userTask.signal({message: 'No'});
 
-      // await new Promise((resolve) => process.nextTick(resolve));
+      await new Promise((resolve) => process.nextTick(resolve));
       definition.signal({id: 'areUSure', message: 'No'});
     });
 
     Then('compensation service is waiting for callback', () => {
       expect(undoService).to.have.length(1);
+    });
+
+    And('activity status is executing', () => {
+      expect(definition.activityStatus).to.equal('executing');
+    });
+
+    When('compensation service completes', () => {
+      undoService.pop().pop()();
+    });
+
+    Then('run completes', () => {
+      return end;
     });
   });
 

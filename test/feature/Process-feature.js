@@ -2303,4 +2303,46 @@ Feature('Process', () => {
       expect(messages.length).to.equal(0);
     });
   });
+
+  Scenario('Cancel process', () => {
+    const source = `
+    <?xml version="1.0" encoding="UTF-8"?>
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <process id="theProcess" name="Process" isExecutable="true">
+        <userTask id="activity" />
+      </process>
+    </definitions>`;
+
+    let bp;
+    Given('a process', async () => {
+      const context = await testHelpers.context(source);
+      bp = context.getProcessById('theProcess');
+    });
+
+    let completed;
+    When('run', () => {
+      completed = bp.waitFor('leave');
+      bp.run();
+    });
+
+    Then('process is running', () => {
+      expect(bp.isRunning).to.be.true;
+    });
+
+    When('process is cancelled', () => {
+      bp.getApi().cancel();
+    });
+
+    Then('process run completes', () => {
+      return completed;
+    });
+
+    And('process was completed', () => {
+      expect(bp.counters).to.deep.equal({completed: 1, discarded: 0});
+    });
+
+    And('running activity was discarded', () => {
+      expect(bp.getActivityById('activity').counters).to.deep.equal({discarded: 1, taken: 0});
+    });
+  });
 });

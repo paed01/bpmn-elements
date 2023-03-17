@@ -32,7 +32,6 @@ function Association(associationDef, {
   this.environment = environment;
   const logger = this.logger = environment.Logger(type.toLowerCase());
   this[kCounters] = {
-    complete: 0,
     take: 0,
     discard: 0
   };
@@ -70,12 +69,6 @@ Association.prototype.discard = function discard(content = {}) {
   this.logger.debug(`<${this.id}> discard target <${this.targetId}>`);
   ++this[kCounters].discard;
   this._publishEvent('discard', content);
-  return true;
-};
-Association.prototype.complete = function complete(content = {}) {
-  this.logger.debug(`<${this.id}> completed target <${this.targetId}>`);
-  ++this[kCounters].complete;
-  this._publishEvent('complete', content);
   return true;
 };
 Association.prototype.getState = function getState() {

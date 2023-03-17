@@ -270,7 +270,6 @@ describe('ServiceTask', () => {
 
     it('executes service on taken inbound', async () => {
       const task = context.getActivityById('serviceTask');
-      task.activate();
 
       const leave = task.waitFor('leave');
       task.activate();

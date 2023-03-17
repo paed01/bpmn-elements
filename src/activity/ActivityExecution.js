@@ -286,12 +286,6 @@ ActivityExecution.prototype._onExecutionDiscarded = function onExecutionDiscarde
   postponed.splice(0);
   for (const api of subApis) api.discard();
 
-  // if (error) {
-  //   return this._publishExecutionCompleted('error', cloneContent(message.content, {error}), correlationId);
-  // }
-
-  // if (message.fields.routingKey === 'execute.cancel') console.log('AE._onExecutionDiscarded', message)
-
   this._publishExecutionCompleted(discardType, cloneContent(message.content), correlationId);
 };
 

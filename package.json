@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "9.0.0",
+  "version": "9.1.0",
   "description": "Executable workflow elements based on BPMN 2.0",
   "type": "module",
   "main": "dist/index.js",
@@ -46,8 +46,8 @@
   "devDependencies": {
     "@aircall/expression-parser": "^1.0.4",
     "@babel/cli": "^7.21.0",
-    "@babel/core": "^7.21.3",
-    "@babel/preset-env": "^7.20.2",
+    "@babel/core": "^7.21.4",
+    "@babel/preset-env": "^7.21.4",
     "@babel/register": "^7.21.0",
     "bpmn-moddle": "^8.0.1",
     "c8": "^7.13.0",
@@ -55,7 +55,7 @@
     "chai": "^4.3.7",
     "chronokinesis": "^4.0.1",
     "debug": "^4.3.4",
-    "eslint": "^8.36.0",
+    "eslint": "^8.37.0",
     "eslint-plugin-import": "^2.27.5",
     "got": "^12.6.0",
     "mocha": "^10.1.0",

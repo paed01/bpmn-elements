@@ -20,7 +20,7 @@ export default function CompensateEventDefinition(activity, eventDefinition, con
 
   if (!isThrowing) {
     this[kCompleted] = false;
-    this[kAssociations] = context.getOutboundAssociations(id) || [];
+    this[kAssociations] = context.getOutboundAssociations(id);
     const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-q`;
     this[kMessageQ] = broker.assertQueue(messageQueueName, {autoDelete: false, durable: true});
     this[kCompensateQ] = broker.assertQueue('compensate-q', {autoDelete: false, durable: true});
@@ -42,6 +42,11 @@ CompensateEventDefinition.prototype.execute = function execute(executeMessage) {
 CompensateEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[kExecuteMessage] = executeMessage;
   this[kCompleted] = false;
+  if (executeMessage.fields.routingKey === 'execute.compensating') {
+    this._debug('resumed at compensating');
+    this[kCompleted] = true;
+    return this._compensate();
+  }
 
   const executeContent = executeMessage.content;
   const {executionId, parent} = executeContent;
@@ -71,16 +76,8 @@ CompensateEventDefinition.prototype.executeCatch = function executeCatch(execute
   broker.publish('execution', 'execute.detach', cloneContent(executeContent, {
     sourceExchange: 'execution',
     bindExchange: 'compensate',
-  }));
-
-  const detachContent = cloneContent(executeContent, {
-    executionId: parent.executionId,
-    bindExchange: 'compensate',
     expect: 'compensate',
-  });
-  detachContent.parent = shiftParent(parent);
-
-  broker.publish('event', 'activity.detach', detachContent);
+  }));
 };
 
 CompensateEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
@@ -88,7 +85,7 @@ CompensateEventDefinition.prototype.executeThrow = function executeThrow(execute
   const {parent} = executeContent;
   const parentExecutionId = parent && parent.executionId;
 
-  this._debug('throw compensate');
+  this.logger.debug(`<${parentExecutionId} (${this.id})> throw compensate`);
 
   const broker = this.broker;
   const throwContent = cloneContent(executeContent, {
@@ -102,7 +99,6 @@ CompensateEventDefinition.prototype.executeThrow = function executeThrow(execute
 };
 
 CompensateEventDefinition.prototype._onCollect = function onCollect(routingKey, message) {
-
   switch (routingKey) {
     case 'execute.error':
     case 'execute.completed': {
@@ -120,16 +116,22 @@ CompensateEventDefinition.prototype._onCompensateApiMessage = function onCompens
   this._stopCollect();
 
   this._debug('caught compensate event');
+
   const catchContent = cloneContent(executeContent, {
     message: {...output},
     executionId: executeContent.parent.executionId,
   });
   catchContent.parent = shiftParent(catchContent.parent);
 
-  const compensateQ = this[kCompensateQ];
-  compensateQ.queueMessage({routingKey: 'execute.compensated'}, cloneContent(executeContent, {output, state: 'catch'}));
+  this[kCompensateQ].queueMessage({routingKey: 'execute.compensated'}, cloneContent(executeContent));
+
+  broker.publish('execution', 'execute.compensating', cloneContent(executeContent, {message: {...output}}));
   broker.publish('event', 'activity.catch', catchContent, {type: 'catch'});
 
+  return this._compensate();
+};
+
+CompensateEventDefinition.prototype._compensate = function compensate() {
   return this[kCompensateQ].consume(this._onCollected.bind(this), {noAck: true, consumerTag: '_convey-messages'});
 };
 
@@ -137,27 +139,30 @@ CompensateEventDefinition.prototype._onCollected = function onCollected(routingK
   if (routingKey === 'execute.compensated') {
     const broker = this.broker;
     broker.cancel('_convey-messages');
-    return this.broker.publish('execution', 'execute.completed', message.content);
+    return this.broker.publish('execution', 'execute.completed', cloneContent(message.content, {cancelActivity: false}));
   }
   for (const association of this[kAssociations]) association.take(cloneMessage(message));
 };
 
+CompensateEventDefinition.prototype._onDiscardApiMessage = function onDiscardApiMessage(routingKey, message) {
+  this[kCompleted] = true;
+  this._stop();
+  this[kCompensateQ].purge();
+  for (const association of this[kAssociations]) association.discard(cloneMessage(message));
+  return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content));
+};
+
 CompensateEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   const messageType = message.properties.type;
-
   switch (messageType) {
     case 'compensate': {
       return this._onCompensateApiMessage(routingKey, message);
     }
     case 'discard': {
-      this[kCompleted] = true;
-      this._stop();
-      for (const association of this[kAssociations]) association.discard(cloneMessage(message));
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content));
+      return this._onDiscardApiMessage(routingKey, message);
     }
     case 'stop': {
-      this._stop();
-      break;
+      return this._stop();
     }
   }
 };

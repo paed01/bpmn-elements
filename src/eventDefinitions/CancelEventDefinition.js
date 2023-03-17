@@ -1,7 +1,5 @@
-import {brokerSafeId} from '../shared.js';
 import {cloneContent, shiftParent} from '../messageHelper.js';
 
-const kMessageQ = Symbol.for('cancelQ');
 const kCompleted = Symbol.for('completed');
 const kExecuteMessage = Symbol.for('executeMessage');
 
@@ -11,7 +9,7 @@ export default function CancelEventDefinition(activity, eventDefinition) {
 
   this.id = id;
   this.type = type;
-  const reference = this.reference = {referenceType: 'cancel'};
+  this.reference = {referenceType: 'cancel'};
   this.isThrowing = isThrowing;
   this.activity = activity;
   this.environment = environment;
@@ -39,17 +37,10 @@ CancelEventDefinition.prototype.executeCatch = function executeCatch(executeMess
   const parentExecutionId = parent.executionId;
 
   const broker = this.broker;
-  const onCatchMessage = this._onCatchMessage.bind(this);
-  // this[kMessageQ].consume(onCatchMessage, {
-  //   noAck: true,
-  //   consumerTag: `_oncancel-${executionId}`,
-  // });
-
-  if (this[kCompleted]) return;
 
   this._debug('expect cancel');
 
-  broker.subscribeTmp('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {
+  broker.subscribeTmp('api', `activity.#.${parent.executionId}#`, this._onApiMessage.bind(this), {
     noAck: true,
     consumerTag: `_api-${executionId}`,
   });
@@ -64,12 +55,6 @@ CancelEventDefinition.prototype.executeCatch = function executeCatch(executeMess
     exchange: 'execution',
     expectRoutingKey,
   }));
-
-  // broker.publish('execution', 'execute.detach', cloneContent(executeContent, {
-  //   pattern: 'activity.execution.*',
-  //   exchange: 'event',
-  //   bindExchange: 'cancel',
-  // }));
 
   const waitContent = cloneContent(executeContent, {
     executionId: parentExecutionId,
@@ -105,37 +90,6 @@ CancelEventDefinition.prototype._onCatchMessage = function onCatchMessage(_, mes
   return this._complete(content.message);
 };
 
-// proto._onCancelTransaction = function onCancelTransaction(_, message) {
-//   const content = message.content;
-//   const broker = this.broker, executionId = this.executionId;
-//   const executeContent = this[kExecuteMessage].content;
-//   broker.cancel(`_oncancel-${executionId}`);
-
-//   this._debug(`cancel thrown by <${content.parent.id}.${content.id}>`);
-
-//   // broker.assertExchange('cancel', 'topic');
-
-//   // const detachContent = cloneContent(executeContent, {
-//   //   executionId: parent.executionId,
-//   //   bindExchange: 'cancel',
-//   //   expect: 'cancel',
-//   // });
-//   // detachContent.parent = shiftParent(parent);
-
-//   // broker.publish('execution', 'execute.detach', detachContent);
-
-//   // broker.publish('event', 'activity.compensate', cloneContent(message.content, {
-//   //   state: 'throw',
-//   // }), {type: 'compensate', delegate: true});
-
-//   broker.subscribeTmp('cancel', 'activity.leave', (__, {content: msg}) => {
-//     console.log('--------------------------')
-
-//     if (msg.id !== executeContent.attachedTo) return;
-//     return this._complete(message.content.message);
-//   }, {noAck: true, consumerTag: `_oncancelend-${executionId}`});
-// };
-
 CancelEventDefinition.prototype._complete = function complete(output) {
   this[kCompleted] = true;
   this._stop();
@@ -165,13 +119,7 @@ CancelEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey
 CancelEventDefinition.prototype._stop = function stop() {
   const broker = this.broker, executionId = this.executionId;
   broker.cancel(`_onattached-cancel-${executionId}`);
-
-  broker.cancel(`_api-parent-${executionId}`);
   broker.cancel(`_api-${executionId}`);
-  broker.cancel(`_oncancel-${executionId}`);
-  broker.cancel(`_oncancelend-${executionId}`);
-  broker.cancel(`_onattached-cancel-${executionId}`);
-  // this[kMessageQ].purge();
 };
 
 CancelEventDefinition.prototype._debug = function debug(msg) {

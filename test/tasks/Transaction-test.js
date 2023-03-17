@@ -1,11 +1,5 @@
-import factory from '../helpers/factory';
-import JsExtension from '../resources/extensions/JsExtension';
-import SignalTask from '../../src/tasks/SignalTask';
-import Transaction from '../../src/tasks/Transaction';
-import testHelpers from '../helpers/testHelpers';
-import {BpmnError} from '../../src/error/Errors';
-
-const transactionSource = factory.resource('transaction.bpmn');
+import Transaction from '../../src/tasks/Transaction.js';
+import testHelpers from '../helpers/testHelpers.js';
 
 describe('Transaction', () => {
   it('decorates activity with isTransaction', () => {

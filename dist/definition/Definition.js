@@ -194,7 +194,7 @@ Definition.prototype.shake = function shake(startId) {
   });
   return result;
 };
-proto._shakeProcess = function shakeProcess(shakeBp, startId) {
+Definition.prototype._shakeProcess = function shakeProcess(shakeBp, startId) {
   let shovel;
   if (!shakeBp.isRunning) {
     shovel = shakeBp.broker.createShovel('shaker', {

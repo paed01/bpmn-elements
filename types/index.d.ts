@@ -126,6 +126,30 @@ declare module 'bpmn-elements' {
 
   type filterPostponed = (elementApi: Api<ElementBase>) => boolean;
 
+  /**
+   * Activity status
+   * Can be used to decide when to save states, Timer and Wait is recommended.
+   */
+  const enum ActivityStatus {
+    /** Idle, not running anything */
+    Idle = 'idle',
+    /**
+     * At least one activity is executing,
+     * e.g. a service task making a asynchronous request
+     */
+    Executing = 'executing',
+    /**
+     * At least one activity is waiting for a timer to complete,
+     * usually only TimerEventDefinition's
+     */
+    Timer = 'timer',
+    /**
+     * At least one activity is waiting for a signal of some sort,
+     * e.g. user tasks, intermediate catch events, etc
+     */
+    Wait = 'wait',
+  }
+
   interface DefinitionExecution {
     get id(): string;
     get type(): string;
@@ -139,6 +163,8 @@ declare module 'bpmn-elements' {
     get processes(): Process[];
     get postponedCount(): number;
     get isRunning(): boolean;
+    get isRunning(): boolean;
+    get activityStatus(): ActivityStatus;
     execute(executeMessage: ElementBrokerMessage): void;
     getProcesses(): Process[];
     getProcessById(processId: string): Process;
@@ -267,6 +293,7 @@ declare module 'bpmn-elements' {
     get isRunning(): boolean;
     get status(): string;
     get stopped(): boolean;
+    get activityStatus(): ActivityStatus;
     run(): Definition;
     run(runContent: Record<string, any>): Definition;
     run(runContent: Record<string, any>, callback: runCallback): Definition;
@@ -296,6 +323,7 @@ declare module 'bpmn-elements' {
     get executionId(): string;
     get execution(): ProcessExecution;
     get status(): string;
+    get activityStatus(): ActivityStatus;
     init(useAsExecutionId?: string): void;
     run(runContent?: Record<string, any>): void;
     shake(startId?: string): void;
@@ -320,6 +348,7 @@ declare module 'bpmn-elements' {
     get status(): string;
     get postponedCount(): number;
     get isRunning(): boolean;
+    get activityStatus(): ActivityStatus;
     execute(executeMessage: ElementBrokerMessage): void;
     getPostponed(filterFn: filterPostponed): Api<ElementBase>[];
     getActivities(): Activity[];

@@ -119,7 +119,7 @@ Object.defineProperty(DefinitionExecution.prototype, 'activityStatus', {
     return status;
   }
 });
-DefinitionExecution.prototype.execute.execute = function execute(executeMessage) {
+DefinitionExecution.prototype.execute = function execute(executeMessage) {
   if (!executeMessage) throw new Error('Definition execution requires message');
   const content = executeMessage.content;
   const executionId = this.executionId = content.executionId;

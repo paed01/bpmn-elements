@@ -24,6 +24,7 @@ const kFlows = Symbol.for('flows');
 const kFormatter = Symbol.for('formatter');
 const kMessageHandlers = Symbol.for('messageHandlers');
 const kStateMessage = Symbol.for('stateMessage');
+const kActivated = Symbol.for('activated');
 var _default = Activity;
 exports.default = _default;
 function Activity(Behaviour, activityDef, context) {
@@ -54,6 +55,7 @@ function Activity(Behaviour, activityDef, context) {
     taken: 0,
     discarded: 0
   };
+  const isForCompensation = !!behaviour.isForCompensation;
   let attachedToActivity, attachedTo;
   if (attachedToRef) {
     attachedTo = attachedToRef.id;
@@ -73,7 +75,14 @@ function Activity(Behaviour, activityDef, context) {
   this.emitFatal = emitFatal;
   const inboundSequenceFlows = context.getInboundSequenceFlows(id);
   const inboundAssociations = context.getInboundAssociations(id);
-  const inboundTriggers = attachedToActivity ? [attachedToActivity] : inboundSequenceFlows.slice();
+  let inboundTriggers;
+  if (attachedToActivity) {
+    inboundTriggers = [attachedToActivity];
+  } else if (isForCompensation) {
+    inboundTriggers = inboundAssociations.slice();
+  } else {
+    inboundTriggers = inboundSequenceFlows.slice();
+  }
   const outboundSequenceFlows = context.getOutboundSequenceFlows(id);
   const flows = this[kFlows] = {
     inboundSequenceFlows,
@@ -83,7 +92,6 @@ function Activity(Behaviour, activityDef, context) {
     outboundSequenceFlows,
     outboundEvaluator: new OutboundEvaluator(this, outboundSequenceFlows)
   };
-  const isForCompensation = !!behaviour.isForCompensation;
   const isParallelJoin = activityDef.isParallelGateway && flows.inboundSequenceFlows.length > 1;
   this[kFlags] = {
     isEnd: flows.outboundSequenceFlows.length === 0,
@@ -103,29 +111,6 @@ function Activity(Behaviour, activityDef, context) {
     onApiMessage: this._onApiMessage.bind(this),
     onExecutionMessage: this._onExecutionMessage.bind(this)
   };
-  const onInboundEvent = this._onInboundEvent.bind(this);
-  broker.assertQueue('inbound-q', {
-    durable: true,
-    autoDelete: false
-  });
-  if (isForCompensation) {
-    for (const trigger of inboundAssociations) {
-      trigger.broker.subscribeTmp('event', '#', onInboundEvent, {
-        noAck: true,
-        consumerTag: `_inbound-${id}`
-      });
-    }
-  } else {
-    for (const trigger of inboundTriggers) {
-      if (trigger.isSequenceFlow) trigger.broker.subscribeTmp('event', 'flow.#', onInboundEvent, {
-        noAck: true,
-        consumerTag: `_inbound-${id}`
-      });else trigger.broker.subscribeTmp('event', 'activity.#', onInboundEvent, {
-        noAck: true,
-        consumerTag: `_inbound-${id}`
-      });
-    }
-  }
   this[kEventDefinitions] = eventDefinitions && eventDefinitions.map(ed => new ed.Behaviour(this, ed, this.context));
   this[kExtensions] = context.loadExtensions(this);
 }
@@ -213,6 +198,12 @@ Object.defineProperty(Activity.prototype, 'isSubProcess', {
     return this[kFlags].isSubProcess;
   }
 });
+Object.defineProperty(Activity.prototype, 'isTransaction', {
+  enumerable: true,
+  get() {
+    return this[kFlags].isTransaction;
+  }
+});
 Object.defineProperty(Activity.prototype, 'isMultiInstance', {
   enumerable: true,
   get() {
@@ -252,11 +243,14 @@ Object.defineProperty(Activity.prototype, 'eventDefinitions', {
   }
 });
 Activity.prototype.activate = function activate() {
-  if (this[kFlags].isForCompensation) return;
+  this[kActivated] = true;
+  this.addInboundListeners();
   return this._consumeInbound();
 };
 Activity.prototype.deactivate = function deactivate() {
+  this[kActivated] = false;
   const broker = this.broker;
+  this.removeInboundListeners();
   broker.cancel('_run-on-inbound');
   broker.cancel('_format-consumer');
 };
@@ -326,9 +320,31 @@ Activity.prototype.discard = function discard(discardContent) {
   broker.publish('run', 'run.discard', (0, _messageHelper.cloneContent)(this[kStateMessage].content));
   this._consumeRunQ();
 };
+Activity.prototype.addInboundListeners = function addInboundListeners() {
+  const onInboundEvent = this._onInboundEvent.bind(this);
+  const triggerConsumerTag = `_inbound-${this.id}`;
+  for (const trigger of this[kFlows].inboundTriggers) {
+    if (trigger.isSequenceFlow) trigger.broker.subscribeTmp('event', 'flow.#', onInboundEvent, {
+      noAck: true,
+      consumerTag: triggerConsumerTag
+    });else if (this.isForCompensation) trigger.broker.subscribeTmp('event', 'association.#', onInboundEvent, {
+      noAck: true,
+      consumerTag: triggerConsumerTag
+    });else trigger.broker.subscribeTmp('event', 'activity.#', onInboundEvent, {
+      noAck: true,
+      consumerTag: triggerConsumerTag
+    });
+  }
+};
+Activity.prototype.removeInboundListeners = function removeInboundListeners() {
+  const triggerConsumerTag = `_inbound-${this.id}`;
+  for (const trigger of this[kFlows].inboundTriggers) {
+    trigger.broker.cancel(triggerConsumerTag);
+  }
+};
 Activity.prototype.stop = function stop() {
-  if (!this[kConsuming]) return;
-  return this.getApi().stop();
+  if (!this[kConsuming]) return this.broker.cancel('_run-on-inbound');
+  return this.getApi(this[kStateMessage]).stop();
 };
 Activity.prototype.next = function next() {
   if (!this.environment.settings.step) return;
@@ -423,6 +439,7 @@ Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
   for (const flow of this[kFlows].outboundSequenceFlows) flow.shake(message);
 };
 Activity.prototype._consumeInbound = function consumeInbound() {
+  if (!this[kActivated]) return;
   if (this.status) return;
   const inboundQ = this.broker.getQueue('inbound-q');
   if (this[kFlags].isParallelJoin) {
@@ -437,7 +454,6 @@ Activity.prototype._consumeInbound = function consumeInbound() {
 };
 Activity.prototype._onInbound = function onInbound(routingKey, message) {
   message.ack();
-  const id = this.id;
   const broker = this.broker;
   broker.cancel('_run-on-inbound');
   const content = message.content;
@@ -460,15 +476,6 @@ Activity.prototype._onInbound = function onInbound(routingKey, message) {
           inbound,
           discardSequence
         });
-      }
-    case 'association.complete':
-      {
-        broker.cancel('_run-on-inbound');
-        const compensationId = `${(0, _shared.brokerSafeId)(id)}_${(0, _shared.brokerSafeId)(content.sequenceId)}`;
-        this.logger.debug(`<${id}> completed compensation with id <${compensationId}>`);
-        return this._publishEvent('compensation.end', this._createMessage({
-          executionId: compensationId
-        }));
       }
   }
 };
@@ -521,7 +528,6 @@ Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message
     content,
     properties
   } = message;
-  const id = this.id;
   const inboundQ = this.broker.getQueue('inbound-q');
   switch (routingKey) {
     case 'activity.enter':
@@ -540,23 +546,6 @@ Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message
     case 'flow.take':
     case 'flow.discard':
       return inboundQ.queueMessage(fields, (0, _messageHelper.cloneContent)(content), properties);
-    case 'association.discard':
-      {
-        this.logger.debug(`<${id}> compensation discarded`);
-        return inboundQ.purge();
-      }
-    case 'association.complete':
-      {
-        if (!this[kFlags].isForCompensation) break;
-        inboundQ.queueMessage(fields, (0, _messageHelper.cloneContent)(content), properties);
-        const compensationId = `${(0, _shared.brokerSafeId)(id)}_${(0, _shared.brokerSafeId)(content.sequenceId)}`;
-        this._publishEvent('compensation.start', this._createMessage({
-          executionId: compensationId,
-          placeholder: true
-        }));
-        this.logger.debug(`<${id}> start compensation with id <${compensationId}>`);
-        return this._consumeInbound();
-      }
   }
 };
 Activity.prototype._consumeRunQ = function consumeRunQ() {
@@ -764,6 +753,7 @@ Activity.prototype._onExecutionMessage = function onExecutionMessage(routingKey,
         });
         break;
       }
+    case 'execution.cancel':
     case 'execution.discard':
       this.status = 'discarded';
       broker.publish('run', 'run.discarded', content, {

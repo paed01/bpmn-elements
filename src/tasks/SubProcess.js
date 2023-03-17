@@ -153,8 +153,6 @@ SubProcessBehaviour.prototype.getPostponed = function getPostponed() {
 SubProcessBehaviour.prototype._onApiRootMessage = function onApiRootMessage(_, message) {
   const messageType = message.properties.type;
 
-  console.log('SUBP API MESS', messageType)
-
   switch (messageType) {
     case 'stop':
       this.broker.cancel(message.fields.consumerTag);
