@@ -29,21 +29,20 @@ function BoundaryEventBehaviour(activity) {
   this[kShovels] = [];
   this[kAttachedTags] = [];
 }
-const proto = BoundaryEventBehaviour.prototype;
-Object.defineProperty(proto, 'executionId', {
+Object.defineProperty(BoundaryEventBehaviour.prototype, 'executionId', {
   get() {
     const message = this[kExecuteMessage];
     return message && message.content.executionId;
   }
 });
-Object.defineProperty(proto, 'cancelActivity', {
+Object.defineProperty(BoundaryEventBehaviour.prototype, 'cancelActivity', {
   enumerable: true,
   get() {
     const behaviour = this.activity.behaviour || {};
     return 'cancelActivity' in behaviour ? behaviour.cancelActivity : true;
   }
 });
-proto.execute = function execute(executeMessage) {
+BoundaryEventBehaviour.prototype.execute = function execute(executeMessage) {
   const {
     isRootScope,
     executionId
@@ -84,7 +83,7 @@ proto.execute = function execute(executeMessage) {
     return eventDefinitionExecution.execute(executeMessage);
   }
 };
-proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
+BoundaryEventBehaviour.prototype._onExecutionMessage = function onExecutionMessage(routingKey, message) {
   message.ack();
   switch (routingKey) {
     case 'execute.detach':
@@ -97,7 +96,7 @@ proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
       return this._onExpectMessage(routingKey, message);
   }
 };
-proto._onCompleted = function onCompleted(_, {
+BoundaryEventBehaviour.prototype._onCompleted = function onCompleted(_, {
   content
 }) {
   if (!this.cancelActivity && !content.cancelActivity) {
@@ -116,7 +115,7 @@ proto._onCompleted = function onCompleted(_, {
     content: attachedToContent
   }).discard();
 };
-proto._onAttachedLeave = function onAttachedLeave(_, {
+BoundaryEventBehaviour.prototype._onAttachedLeave = function onAttachedLeave(_, {
   content
 }) {
   if (content.id !== this.attachedTo.id) return;
@@ -125,7 +124,7 @@ proto._onAttachedLeave = function onAttachedLeave(_, {
   if (!completeContent) return this.broker.publish('execution', 'execute.discard', this[kExecuteMessage].content);
   return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(completeContent));
 };
-proto._onExpectMessage = function onExpectMessage(_, {
+BoundaryEventBehaviour.prototype._onExpectMessage = function onExpectMessage(_, {
   content
 }) {
   const {
@@ -144,7 +143,7 @@ proto._onExpectMessage = function onExpectMessage(_, {
     priority: 300
   });
 };
-proto._onDetachMessage = function onDetachMessage(_, {
+BoundaryEventBehaviour.prototype._onDetachMessage = function onDetachMessage(_, {
   content
 }) {
   const id = this.id,
@@ -179,7 +178,7 @@ proto._onDetachMessage = function onDetachMessage(_, {
     consumerTag: `_execution-completed-${executionId}`
   });
 };
-proto._onApiMessage = function onApiMessage(_, message) {
+BoundaryEventBehaviour.prototype._onApiMessage = function onApiMessage(_, message) {
   switch (message.properties.type) {
     case 'discard':
     case 'stop':
@@ -187,7 +186,7 @@ proto._onApiMessage = function onApiMessage(_, message) {
       break;
   }
 };
-proto._onRepeatMessage = function onRepeatMessage(_, message) {
+BoundaryEventBehaviour.prototype._onRepeatMessage = function onRepeatMessage(_, message) {
   if (this.cancelActivity) return;
   const executeMessage = this[kExecuteMessage];
   const repeat = message.content.repeat;
@@ -197,7 +196,7 @@ proto._onRepeatMessage = function onRepeatMessage(_, message) {
     repeat
   }));
 };
-proto._stop = function stop(detach) {
+BoundaryEventBehaviour.prototype._stop = function stop(detach) {
   const attachedTo = this.attachedTo,
     broker = this.broker,
     executionId = this.executionId;

@@ -49,17 +49,16 @@ function ErrorEventDefinition(activity, eventDefinition) {
     });
   }
 }
-const proto = ErrorEventDefinition.prototype;
-Object.defineProperty(proto, 'executionId', {
+Object.defineProperty(ErrorEventDefinition.prototype, 'executionId', {
   get() {
     const message = this[kExecuteMessage];
     return message && message.content.executionId;
   }
 });
-proto.execute = function execute(executeMessage) {
+ErrorEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
-proto.executeCatch = function executeCatch(executeMessage) {
+ErrorEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[kExecuteMessage] = executeMessage;
   this[kCompleted] = false;
   const executeContent = executeMessage.content;
@@ -103,7 +102,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
   waitContent.parent = (0, _messageHelper.shiftParent)(parent);
   broker.publish('event', 'activity.wait', waitContent);
 };
-proto.executeThrow = function executeThrow(executeMessage) {
+ErrorEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const {
     executionId,
@@ -130,7 +129,7 @@ proto.executeThrow = function executeThrow(executeMessage) {
     }
   }));
 };
-proto._onErrorMessage = function onErrorMessage(routingKey, message) {
+ErrorEventDefinition.prototype._onErrorMessage = function onErrorMessage(routingKey, message) {
   const error = message.content.error;
   if (!this[kReferenceElement]) return this._catchError(routingKey, message, error);
   if (!error) return;
@@ -138,14 +137,14 @@ proto._onErrorMessage = function onErrorMessage(routingKey, message) {
   if ('' + error.code !== '' + info.message.code) return;
   return this._catchError(routingKey, message, error);
 };
-proto._onThrowApiMessage = function onThrowApiMessage(routingKey, message) {
+ErrorEventDefinition.prototype._onThrowApiMessage = function onThrowApiMessage(routingKey, message) {
   const error = message.content.message;
   if (!this[kReferenceElement]) return this._catchError(routingKey, message, error);
   const info = this[kReferenceInfo];
   if (info.message.id !== (error && error.id)) return;
   return this._catchError(routingKey, message, error);
 };
-proto._catchError = function catchError(routingKey, message, error) {
+ErrorEventDefinition.prototype._catchError = function catchError(routingKey, message, error) {
   this[kCompleted] = true;
   this._stop();
   this._debug(`caught ${this[kReferenceInfo].description}`);
@@ -171,7 +170,7 @@ proto._catchError = function catchError(routingKey, message, error) {
     state: 'catch'
   }));
 };
-proto._onApiMessage = function onApiMessage(routingKey, message) {
+ErrorEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   const messageType = message.properties.type;
   switch (messageType) {
     case 'discard':
@@ -187,7 +186,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
       }
   }
 };
-proto._stop = function stop() {
+ErrorEventDefinition.prototype._stop = function stop() {
   const broker = this.broker,
     executionId = this.executionId;
   broker.cancel(`_onthrow-${executionId}`);
@@ -195,7 +194,7 @@ proto._stop = function stop() {
   broker.cancel(`_api-${executionId}`);
   this[kMessageQ].purge();
 };
-proto._getReferenceInfo = function getReferenceInfo(message) {
+ErrorEventDefinition.prototype._getReferenceInfo = function getReferenceInfo(message) {
   const referenceElement = this[kReferenceElement];
   if (!referenceElement) {
     return {
@@ -212,6 +211,6 @@ proto._getReferenceInfo = function getReferenceInfo(message) {
   if (result.message.code) result.description += ` code ${result.message.code}`;
   return result;
 };
-proto._debug = function debug(msg) {
+ErrorEventDefinition.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
 };

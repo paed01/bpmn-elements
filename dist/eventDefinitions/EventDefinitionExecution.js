@@ -18,20 +18,19 @@ function EventDefinitionExecution(activity, eventDefinitions, completedRoutingKe
   this[kStopped] = false;
   this[kExecuteMessage] = null;
 }
-const proto = EventDefinitionExecution.prototype;
-Object.defineProperty(proto, 'completed', {
+Object.defineProperty(EventDefinitionExecution.prototype, 'completed', {
   enumerable: true,
   get() {
     return this[kCompleted];
   }
 });
-Object.defineProperty(proto, 'stopped', {
+Object.defineProperty(EventDefinitionExecution.prototype, 'stopped', {
   enumerable: true,
   get() {
     return this[kStopped];
   }
 });
-proto.execute = function execute(executeMessage) {
+EventDefinitionExecution.prototype.execute = function execute(executeMessage) {
   const content = executeMessage.content;
   if (content.isDefinitionScope) return this._executeDefinition(executeMessage);
   if (!content.isRootScope) return;
@@ -71,7 +70,7 @@ proto.execute = function execute(executeMessage) {
     broker.publish('execution', 'execute.start', edContent);
   }
 };
-proto._onApiMessage = function onApiMessage(_, message) {
+EventDefinitionExecution.prototype._onApiMessage = function onApiMessage(_, message) {
   const messageType = message.properties.type;
   switch (messageType) {
     case 'stop':
@@ -79,7 +78,7 @@ proto._onApiMessage = function onApiMessage(_, message) {
       return this._stop();
   }
 };
-proto._onExecuteMessage = function onExecuteMessage(routingKey, message) {
+EventDefinitionExecution.prototype._onExecuteMessage = function onExecuteMessage(routingKey, message) {
   switch (routingKey) {
     case 'execute.completed':
       {
@@ -103,7 +102,7 @@ proto._onExecuteMessage = function onExecuteMessage(routingKey, message) {
       }
   }
 };
-proto._complete = function complete(message) {
+EventDefinitionExecution.prototype._complete = function complete(message) {
   const {
     executionId,
     type,
@@ -122,7 +121,7 @@ proto._complete = function complete(message) {
     correlationId: message.properties.correlationId
   });
 };
-proto._executeDefinition = function executeDefinition(message) {
+EventDefinitionExecution.prototype._executeDefinition = function executeDefinition(message) {
   const {
     executionId,
     index
@@ -132,11 +131,11 @@ proto._executeDefinition = function executeDefinition(message) {
   this._debug(executionId, `execute event definition ${ed.type}, index ${index}`);
   ed.execute(message);
 };
-proto._stop = function stop() {
+EventDefinitionExecution.prototype._stop = function stop() {
   this[kStopped] = true;
   this.broker.cancel('_eventdefinition-execution-execute-tag');
   this.broker.cancel('_eventdefinition-execution-api-tag');
 };
-proto._debug = function debug(executionId, msg) {
+EventDefinitionExecution.prototype._debug = function debug(executionId, msg) {
   this.activity.logger.debug(`<${executionId} (${this.id})> ${msg}`);
 };

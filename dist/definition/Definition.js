@@ -70,8 +70,7 @@ function Definition(context, options) {
   this.emitFatal = emitFatal;
   this.logger = environment.Logger(type.toLowerCase());
 }
-const proto = Definition.prototype;
-Object.defineProperty(proto, 'counters', {
+Object.defineProperty(Definition.prototype, 'counters', {
   enumerable: true,
   get() {
     return {
@@ -79,38 +78,38 @@ Object.defineProperty(proto, 'counters', {
     };
   }
 });
-Object.defineProperty(proto, 'execution', {
+Object.defineProperty(Definition.prototype, 'execution', {
   enumerable: true,
   get() {
     return this[kExec].execution;
   }
 });
-Object.defineProperty(proto, 'executionId', {
+Object.defineProperty(Definition.prototype, 'executionId', {
   enumerable: true,
   get() {
     return this[kExec].executionId;
   }
 });
-Object.defineProperty(proto, 'isRunning', {
+Object.defineProperty(Definition.prototype, 'isRunning', {
   enumerable: true,
   get() {
     if (!this[kConsuming]) return false;
     return !!this.status;
   }
 });
-Object.defineProperty(proto, 'status', {
+Object.defineProperty(Definition.prototype, 'status', {
   enumerable: true,
   get() {
     return this[kStatus];
   }
 });
-Object.defineProperty(proto, 'stopped', {
+Object.defineProperty(Definition.prototype, 'stopped', {
   enumerable: true,
   get() {
     return this[kStopped];
   }
 });
-proto.run = function run(optionsOrCallback, optionalCallback) {
+Definition.prototype.run = function run(optionsOrCallback, optionalCallback) {
   const [runOptions, callback] = (0, _shared.getOptionsAndCallback)(optionsOrCallback, optionalCallback);
   if (this.isRunning) {
     const err = new Error('definition is already running');
@@ -133,7 +132,7 @@ proto.run = function run(optionsOrCallback, optionalCallback) {
   this._activateRunConsumers();
   return this;
 };
-proto.resume = function resume(callback) {
+Definition.prototype.resume = function resume(callback) {
   if (this.isRunning) {
     const err = new Error('cannot resume running definition');
     if (callback) return callback(err);
@@ -152,7 +151,7 @@ proto.resume = function resume(callback) {
   this._activateRunConsumers();
   return this;
 };
-proto.recover = function recover(state) {
+Definition.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error('cannot recover running definition');
   if (!state) return this;
   this[kStopped] = !!state.stopped;
@@ -172,7 +171,7 @@ proto.recover = function recover(state) {
   this.broker.recover(state.broker);
   return this;
 };
-proto.shake = function shake(startId) {
+Definition.prototype.shake = function shake(startId) {
   let result = {};
   const broker = this.broker;
   let bps;
@@ -204,7 +203,7 @@ proto.shake = function shake(startId) {
     };
   }
 };
-proto.getState = function getState() {
+Definition.prototype.getState = function getState() {
   return this._createMessage({
     status: this.status,
     stopped: this.stopped,
@@ -214,25 +213,25 @@ proto.getState = function getState() {
     broker: this.broker.getState(true)
   });
 };
-proto.getProcesses = function getProcesses() {
+Definition.prototype.getProcesses = function getProcesses() {
   const execution = this.execution;
   if (execution) return execution.getProcesses();
   return this.context.getProcesses();
 };
-proto.getExecutableProcesses = function getExecutableProcesses() {
+Definition.prototype.getExecutableProcesses = function getExecutableProcesses() {
   const execution = this.execution;
   if (execution) return execution.getExecutableProcesses();
   return this.context.getExecutableProcesses();
 };
-proto.getRunningProcesses = function getRunningProcesses() {
+Definition.prototype.getRunningProcesses = function getRunningProcesses() {
   const execution = this.execution;
   if (!execution) return [];
   return execution.getRunningProcesses();
 };
-proto.getProcessById = function getProcessById(processId) {
+Definition.prototype.getProcessById = function getProcessById(processId) {
   return this.getProcesses().find(p => p.id === processId);
 };
-proto.getActivityById = function getActivityById(childId) {
+Definition.prototype.getActivityById = function getActivityById(childId) {
   const bps = this.getProcesses();
   for (const bp of bps) {
     const child = bp.getActivityById(childId);
@@ -240,32 +239,32 @@ proto.getActivityById = function getActivityById(childId) {
   }
   return null;
 };
-proto.getElementById = function getElementById(elementId) {
+Definition.prototype.getElementById = function getElementById(elementId) {
   return this.context.getActivityById(elementId);
 };
-proto.getPostponed = function getPostponed(...args) {
+Definition.prototype.getPostponed = function getPostponed(...args) {
   const execution = this.execution;
   if (!execution) return [];
   return execution.getPostponed(...args);
 };
-proto.getApi = function getApi(message) {
+Definition.prototype.getApi = function getApi(message) {
   const execution = this.execution;
   if (execution) return execution.getApi(message);
   message = message || this[kStateMessage];
   if (!message) throw new Error('Definition is not running');
   return (0, _Api.DefinitionApi)(this.broker, message);
 };
-proto.signal = function signal(message) {
+Definition.prototype.signal = function signal(message) {
   return this.getApi().signal(message, {
     delegate: true
   });
 };
-proto.cancelActivity = function cancelActivity(message) {
+Definition.prototype.cancelActivity = function cancelActivity(message) {
   return this.getApi().cancel(message, {
     delegate: true
   });
 };
-proto.sendMessage = function sendMessage(message) {
+Definition.prototype.sendMessage = function sendMessage(message) {
   const messageContent = {
     message
   };
@@ -285,11 +284,11 @@ proto.sendMessage = function sendMessage(message) {
     delegate: true
   });
 };
-proto.stop = function stop() {
+Definition.prototype.stop = function stop() {
   if (!this.isRunning) return;
   this.getApi().stop();
 };
-proto._activateRunConsumers = function activateRunConsumers() {
+Definition.prototype._activateRunConsumers = function activateRunConsumers() {
   this[kConsuming] = true;
   const broker = this.broker;
   const {
@@ -305,14 +304,14 @@ proto._activateRunConsumers = function activateRunConsumers() {
     consumerTag: '_definition-run'
   });
 };
-proto._deactivateRunConsumers = function deactivateRunConsumers() {
+Definition.prototype._deactivateRunConsumers = function deactivateRunConsumers() {
   const broker = this.broker;
   broker.cancel('_definition-api');
   broker.cancel('_definition-run');
   broker.cancel('_definition-execution');
   this[kConsuming] = false;
 };
-proto._createMessage = function createMessage(override) {
+Definition.prototype._createMessage = function createMessage(override) {
   return {
     id: this.id,
     type: this.type,
@@ -321,7 +320,7 @@ proto._createMessage = function createMessage(override) {
     ...override
   };
 };
-proto._onRunMessage = function onRunMessage(routingKey, message) {
+Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) {
   const {
     content,
     fields
@@ -405,7 +404,7 @@ proto._onRunMessage = function onRunMessage(routingKey, message) {
   }
   message.ack();
 };
-proto._onResumeMessage = function onResumeMessage(message) {
+Definition.prototype._onResumeMessage = function onResumeMessage(message) {
   message.ack();
   const stateMessage = this[kStateMessage];
   switch (stateMessage.fields.routingKey) {
@@ -420,7 +419,7 @@ proto._onResumeMessage = function onResumeMessage(message) {
   this._debug(`resume from ${this.status}`);
   return this.broker.publish('run', stateMessage.fields.routingKey, (0, _messageHelper.cloneContent)(stateMessage.content), stateMessage.properties);
 };
-proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
+Definition.prototype._onExecutionMessage = function onExecutionMessage(routingKey, message) {
   const {
     content,
     properties
@@ -447,7 +446,7 @@ proto._onExecutionMessage = function onExecutionMessage(routingKey, message) {
   this[kExecuteMessage] = null;
   executeMessage.ack();
 };
-proto._onApiMessage = function onApiMessage(routingKey, message) {
+Definition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   if (message.properties.type === 'stop') {
     const execution = this.execution;
     if (!execution || execution.completed) {
@@ -455,32 +454,32 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
     }
   }
 };
-proto._publishEvent = function publishEvent(action, content, msgOpts) {
+Definition.prototype._publishEvent = function publishEvent(action, content, msgOpts) {
   const execution = this.execution;
   this.broker.publish('event', `definition.${action}`, execution ? execution._createMessage(content) : (0, _messageHelper.cloneContent)(content), {
     type: action,
     ...msgOpts
   });
 };
-proto._onStop = function onStop() {
+Definition.prototype._onStop = function onStop() {
   this[kStopped] = true;
   this._deactivateRunConsumers();
   return this._publishEvent('stop', this._createMessage());
 };
-proto._onBrokerReturnFn = function onBrokerReturn(message) {
+Definition.prototype._onBrokerReturnFn = function onBrokerReturn(message) {
   if (message.properties.type === 'error') {
     this._deactivateRunConsumers();
     const err = (0, _Errors.makeErrorFromMessage)(message);
     throw err;
   }
 };
-proto._reset = function reset() {
+Definition.prototype._reset = function reset() {
   this[kExec].executionId = undefined;
   this._deactivateRunConsumers();
   this.broker.purgeQueue('run-q');
   this.broker.purgeQueue('execution-q');
 };
-proto._debug = function debug(msg) {
+Definition.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.id}> ${msg}`);
 };
 function addConsumerCallbacks(definition, callback) {

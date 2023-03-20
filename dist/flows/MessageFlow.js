@@ -46,8 +46,7 @@ function MessageFlow(flowDef, context) {
   this[kSourceElement] = context.getActivityById(source.id) || context.getProcessById(source.processId);
   this.logger = context.environment.Logger(type.toLowerCase());
 }
-const proto = MessageFlow.prototype;
-Object.defineProperty(proto, 'counters', {
+Object.defineProperty(MessageFlow.prototype, 'counters', {
   enumerable: true,
   get() {
     return {
@@ -55,20 +54,20 @@ Object.defineProperty(proto, 'counters', {
     };
   }
 });
-proto.getState = function getState() {
+MessageFlow.prototype.getState = function getState() {
   return {
     id: this.id,
     type: this.type,
     counters: this.counters
   };
 };
-proto.recover = function recover(state) {
+MessageFlow.prototype.recover = function recover(state) {
   Object.assign(this[kCounters], state.counters);
 };
-proto.getApi = function getApi() {
+MessageFlow.prototype.getApi = function getApi() {
   return this;
 };
-proto.activate = function activate() {
+MessageFlow.prototype.activate = function activate() {
   const sourceElement = this[kSourceElement];
   const safeId = (0, _shared.brokerSafeId)(this.id);
   sourceElement.on('message', this.deactivate.bind(this), {
@@ -78,13 +77,13 @@ proto.activate = function activate() {
     consumerTag: `_message-on-end-${safeId}`
   });
 };
-proto.deactivate = function deactivate() {
+MessageFlow.prototype.deactivate = function deactivate() {
   const sourceElement = this[kSourceElement];
   const safeId = (0, _shared.brokerSafeId)(this.id);
   sourceElement.broker.cancel(`_message-on-end-${safeId}`);
   sourceElement.broker.cancel(`_message-on-message-${safeId}`);
 };
-proto._onSourceEnd = function onSourceEnd({
+MessageFlow.prototype._onSourceEnd = function onSourceEnd({
   content
 }) {
   ++this[kCounters].messages;
@@ -93,7 +92,7 @@ proto._onSourceEnd = function onSourceEnd({
   this.logger.debug(`<${this.id}> sending message from <${source.processId}.${source.id}> to <${target.id ? `${target.processId}.${target.id}` : target.processId}>`);
   this.broker.publish('event', 'message.outbound', this._createMessage(content.message));
 };
-proto._createMessage = function createMessage(message) {
+MessageFlow.prototype._createMessage = function createMessage(message) {
   return {
     id: this.id,
     type: this.type,

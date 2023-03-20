@@ -49,17 +49,16 @@ function MessageEventDefinition(activity, eventDefinition) {
     });
   }
 }
-const proto = MessageEventDefinition.prototype;
-Object.defineProperty(proto, 'executionId', {
+Object.defineProperty(MessageEventDefinition.prototype, 'executionId', {
   get() {
     const message = this[kExecuteMessage];
     return message && message.content.executionId;
   }
 });
-proto.execute = function execute(executeMessage) {
+MessageEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
-proto.executeCatch = function executeCatch(executeMessage) {
+MessageEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[kExecuteMessage] = executeMessage;
   this[kCompleted] = false;
   const executeContent = executeMessage.content;
@@ -101,7 +100,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
   waitContent.parent = (0, _messageHelper.shiftParent)(parent);
   broker.publish('event', 'activity.wait', waitContent);
 };
-proto.executeThrow = function executeThrow(executeMessage) {
+MessageEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const {
     executionId,
@@ -125,7 +124,7 @@ proto.executeThrow = function executeThrow(executeMessage) {
   });
   return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
-proto._onCatchMessage = function onCatchMessage(routingKey, message) {
+MessageEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
   if ((0, _getPropertyValue.default)(message, 'content.message.id') !== this[kReferenceInfo].message.id) return;
   const {
     type,
@@ -143,7 +142,7 @@ proto._onCatchMessage = function onCatchMessage(routingKey, message) {
     correlationId
   });
 };
-proto._onApiMessage = function onApiMessage(routingKey, message) {
+MessageEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   const {
     type,
     correlationId
@@ -170,7 +169,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
       }
   }
 };
-proto._complete = function complete(verb, output, options) {
+MessageEventDefinition.prototype._complete = function complete(verb, output, options) {
   this[kCompleted] = true;
   this._stop();
   this._debug(`${verb} ${this[kReferenceInfo].description}`);
@@ -191,7 +190,7 @@ proto._complete = function complete(verb, output, options) {
     state: 'catch'
   }), options);
 };
-proto._stop = function stop() {
+MessageEventDefinition.prototype._stop = function stop() {
   const broker = this.broker,
     executionId = this.executionId;
   broker.cancel(`_api-message-${executionId}`);
@@ -200,7 +199,7 @@ proto._stop = function stop() {
   broker.cancel(`_api-delegated-${executionId}`);
   this[kMessageQ].purge();
 };
-proto._getReferenceInfo = function getReferenceInfo(message) {
+MessageEventDefinition.prototype._getReferenceInfo = function getReferenceInfo(message) {
   const referenceElement = this[kReferenceElement];
   if (!referenceElement) {
     return {
@@ -216,6 +215,6 @@ proto._getReferenceInfo = function getReferenceInfo(message) {
   result.description = `${result.message.name} <${result.message.id}>`;
   return result;
 };
-proto._debug = function debug(msg) {
+MessageEventDefinition.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
 };

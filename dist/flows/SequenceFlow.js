@@ -61,8 +61,7 @@ function SequenceFlow(flowDef, {
   this.emitFatal = emitFatal;
   logger.debug(`<${id}> init, <${sourceId}> -> <${targetId}>`);
 }
-const proto = SequenceFlow.prototype;
-Object.defineProperty(proto, 'counters', {
+Object.defineProperty(SequenceFlow.prototype, 'counters', {
   enumerable: true,
   get() {
     return {
@@ -70,8 +69,7 @@ Object.defineProperty(proto, 'counters', {
     };
   }
 });
-proto.take = function take(content = {}) {
-  this.looped = undefined;
+SequenceFlow.prototype.take = function take(content = {}) {
   const {
     sequenceId
   } = content;
@@ -80,7 +78,7 @@ proto.take = function take(content = {}) {
   this._publishEvent('take', content);
   return true;
 };
-proto.discard = function discard(content = {}) {
+SequenceFlow.prototype.discard = function discard(content = {}) {
   const {
     sequenceId = (0, _shared.getUniqueId)(this.id)
   } = content;
@@ -95,25 +93,25 @@ proto.discard = function discard(content = {}) {
   ++this[kCounters].discard;
   this._publishEvent('discard', content);
 };
-proto.getState = function getState() {
+SequenceFlow.prototype.getState = function getState() {
   return this.createMessage({
     counters: this.counters,
     broker: this.broker.getState(true)
   });
 };
-proto.recover = function recover(state) {
+SequenceFlow.prototype.recover = function recover(state) {
   Object.assign(this[kCounters], state.counters);
   this.broker.recover(state.broker);
 };
-proto.getApi = function getApi(message) {
+SequenceFlow.prototype.getApi = function getApi(message) {
   return (0, _Api.FlowApi)(this.broker, message || {
     content: this.createMessage()
   });
 };
-proto.stop = function stop() {
+SequenceFlow.prototype.stop = function stop() {
   this.broker.stop();
 };
-proto.shake = function shake(message) {
+SequenceFlow.prototype.shake = function shake(message) {
   const content = (0, _messageHelper.cloneContent)(message.content);
   content.sequence = content.sequence || [];
   content.sequence.push({
@@ -137,7 +135,7 @@ proto.shake = function shake(message) {
     type: 'shake'
   });
 };
-proto.getCondition = function getCondition() {
+SequenceFlow.prototype.getCondition = function getCondition() {
   const conditionExpression = this.behaviour.conditionExpression;
   if (!conditionExpression) return null;
   const {
@@ -153,7 +151,7 @@ proto.getCondition = function getCondition() {
   }
   return new ExpressionCondition(this, conditionExpression.body);
 };
-proto.createMessage = function createMessage(override) {
+SequenceFlow.prototype.createMessage = function createMessage(override) {
   return {
     ...override,
     id: this.id,
@@ -166,7 +164,7 @@ proto.createMessage = function createMessage(override) {
     parent: (0, _messageHelper.cloneParent)(this.parent)
   };
 };
-proto._publishEvent = function publishEvent(action, content) {
+SequenceFlow.prototype._publishEvent = function publishEvent(action, content) {
   const eventContent = this.createMessage({
     action,
     ...content

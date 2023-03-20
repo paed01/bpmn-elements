@@ -4,6 +4,7 @@ Changelog
 # 9.0.0
 
 - Turn into module with exports for node
+- Add basic type declaration, still learning
 
 # 8.2.4
 

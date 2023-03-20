@@ -49,17 +49,16 @@ function LinkEventDefinition(activity, eventDefinition) {
     });
   }
 }
-const proto = LinkEventDefinition.prototype;
-Object.defineProperty(proto, 'executionId', {
+Object.defineProperty(LinkEventDefinition.prototype, 'executionId', {
   get() {
     const message = this[kExecuteMessage];
     return message && message.content.executionId;
   }
 });
-proto.execute = function execute(executeMessage) {
+LinkEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
-proto.executeCatch = function executeCatch(executeMessage) {
+LinkEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[kExecuteMessage] = executeMessage;
   this[kCompleted] = false;
   const executeContent = executeMessage.content;
@@ -93,7 +92,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
   waitContent.parent = (0, _messageHelper.shiftParent)(parent);
   broker.publish('event', 'activity.wait', waitContent);
 };
-proto.executeThrow = function executeThrow(executeMessage) {
+LinkEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const {
     executionId,
@@ -116,12 +115,12 @@ proto.executeThrow = function executeThrow(executeMessage) {
   });
   return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
-proto._onCatchLink = function onCatchLink(routingKey, message) {
+LinkEventDefinition.prototype._onCatchLink = function onCatchLink(routingKey, message) {
   if ((0, _getPropertyValue.default)(message, 'content.message.linkName') !== this.reference.linkName) return;
   if (message.content.state === 'discard') return this._discard();
   return this._complete('caught', message.content.message);
 };
-proto._onApiMessage = function onApiMessage(routingKey, message) {
+LinkEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   const messageType = message.properties.type;
   switch (messageType) {
     case 'discard':
@@ -135,7 +134,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
       }
   }
 };
-proto._complete = function complete(verb, output) {
+LinkEventDefinition.prototype._complete = function complete(verb, output) {
   this[kCompleted] = true;
   this._stop();
   this._debug(`${verb} link ${this.reference.linkName}`);
@@ -160,12 +159,12 @@ proto._complete = function complete(verb, output) {
     state: 'catch'
   }));
 };
-proto._discard = function discard() {
+LinkEventDefinition.prototype._discard = function discard() {
   this[kCompleted] = true;
   this._stop();
   return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[kExecuteMessage].content));
 };
-proto._stop = function stop() {
+LinkEventDefinition.prototype._stop = function stop() {
   const broker = this.broker,
     executionId = this.executionId;
   broker.cancel(`_api-link-${executionId}`);
@@ -173,7 +172,7 @@ proto._stop = function stop() {
   broker.cancel(`_api-${executionId}`);
   this[kMessageQ].purge();
 };
-proto._onDiscard = function onDiscard(_, message) {
+LinkEventDefinition.prototype._onDiscard = function onDiscard(_, message) {
   this.broker.publish('event', 'activity.link.discard', (0, _messageHelper.cloneContent)(message.content, {
     message: {
       ...this.reference
@@ -184,6 +183,6 @@ proto._onDiscard = function onDiscard(_, message) {
     delegate: true
   });
 };
-proto._debug = function debug(msg) {
+LinkEventDefinition.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
 };

@@ -26,8 +26,7 @@ function CallActivityBehaviour(activity) {
   this.broker = activity.broker;
   this.environment = activity.environment;
 }
-const proto = CallActivityBehaviour.prototype;
-proto.execute = function execute(executeMessage) {
+CallActivityBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;
   if (loopCharacteristics && executeContent.isRootScope) {
@@ -62,7 +61,7 @@ proto.execute = function execute(executeMessage) {
     type: 'call'
   });
 };
-proto._onDelegatedApiMessage = function onDelegatedApiMessage(calledElement, executeMessage, routingKey, message) {
+CallActivityBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMessage(calledElement, executeMessage, routingKey, message) {
   if (!message.properties.delegate) return;
   const {
     content: delegateContent
@@ -89,7 +88,7 @@ proto._onDelegatedApiMessage = function onDelegatedApiMessage(calledElement, exe
   });
   return this._onApiMessage(calledElement, executeMessage, routingKey, message);
 };
-proto._onApiMessage = function onApiMessage(calledElement, executeMessage, routingKey, message) {
+CallActivityBehaviour.prototype._onApiMessage = function onApiMessage(calledElement, executeMessage, routingKey, message) {
   const {
     type: messageType,
     correlationId
@@ -132,7 +131,7 @@ proto._onApiMessage = function onApiMessage(calledElement, executeMessage, routi
       });
   }
 };
-proto._stop = function stop(executionId) {
+CallActivityBehaviour.prototype._stop = function stop(executionId) {
   const broker = this.broker;
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_api-delegated-${executionId}`);

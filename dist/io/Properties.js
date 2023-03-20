@@ -72,8 +72,7 @@ function Properties(activity, propertiesDef, context) {
     }
   }
 }
-const proto = Properties.prototype;
-proto.activate = function activate(message) {
+Properties.prototype.activate = function activate(message) {
   if (this[kConsuming]) return;
   if (message.fields.redelivered && message.fields.routingKey === 'run.start') {
     this._onActivityEvent('activity.enter', message);
@@ -85,10 +84,10 @@ proto.activate = function activate(message) {
     noAck: true
   });
 };
-proto.deactivate = function deactivate() {
+Properties.prototype.deactivate = function deactivate() {
   if (this[kConsuming]) this[kConsuming] = this[kConsuming].cancel();
 };
-proto._onActivityEvent = function onActivityEvent(routingKey, message) {
+Properties.prototype._onActivityEvent = function onActivityEvent(routingKey, message) {
   switch (routingKey) {
     case 'activity.enter':
     case 'activity.extension.resume':
@@ -97,7 +96,7 @@ proto._onActivityEvent = function onActivityEvent(routingKey, message) {
       return this._formatOnComplete(message);
   }
 };
-proto._formatOnEnter = function formatOnEnter(message) {
+Properties.prototype._formatOnEnter = function formatOnEnter(message) {
   const startRoutingKey = 'run.enter.bpmn-properties';
   const dataInputObjects = this[kProperties].dataInputObjects;
   const broker = this.broker;
@@ -121,7 +120,7 @@ proto._formatOnEnter = function formatOnEnter(message) {
     });
   });
 };
-proto._formatOnComplete = function formatOnComplete(message) {
+Properties.prototype._formatOnComplete = function formatOnComplete(message) {
   const startRoutingKey = 'run.end.bpmn-properties';
   const messageOutput = (0, _getPropertyValue.default)(message, 'content.output.properties') || {};
   const outputProperties = this._getProperties(message, messageOutput);
@@ -147,7 +146,7 @@ proto._formatOnComplete = function formatOnComplete(message) {
     });
   });
 };
-proto._getProperties = function getProperties(message, values) {
+Properties.prototype._getProperties = function getProperties(message, values) {
   let response = {};
   if (message.content.properties) {
     response = {

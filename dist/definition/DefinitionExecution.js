@@ -62,42 +62,41 @@ function DefinitionExecution(definition, context) {
     onProcessMessage: this._onProcessMessage.bind(this)
   };
 }
-const proto = DefinitionExecution.prototype;
-Object.defineProperty(proto, 'stopped', {
+Object.defineProperty(DefinitionExecution.prototype, 'stopped', {
   enumerable: true,
   get() {
     return this[kStopped];
   }
 });
-Object.defineProperty(proto, 'completed', {
+Object.defineProperty(DefinitionExecution.prototype, 'completed', {
   enumerable: true,
   get() {
     return this[kCompleted];
   }
 });
-Object.defineProperty(proto, 'status', {
+Object.defineProperty(DefinitionExecution.prototype, 'status', {
   enumerable: true,
   get() {
     return this[kStatus];
   }
 });
-Object.defineProperty(proto, 'processes', {
+Object.defineProperty(DefinitionExecution.prototype, 'processes', {
   enumerable: true,
   get() {
     return this[kProcesses].running;
   }
 });
-Object.defineProperty(proto, 'postponedCount', {
+Object.defineProperty(DefinitionExecution.prototype, 'postponedCount', {
   get() {
     return this[kProcesses].postponed.length;
   }
 });
-Object.defineProperty(proto, 'isRunning', {
+Object.defineProperty(DefinitionExecution.prototype, 'isRunning', {
   get() {
     return this[kActivated];
   }
 });
-proto.execute = function execute(executeMessage) {
+DefinitionExecution.prototype.execute = function execute(executeMessage) {
   if (!executeMessage) throw new Error('Definition execution requires message');
   const content = executeMessage.content;
   const executionId = this.executionId = content.executionId;
@@ -131,7 +130,7 @@ proto.execute = function execute(executeMessage) {
   this._start();
   return true;
 };
-proto.resume = function resume() {
+DefinitionExecution.prototype.resume = function resume() {
   this._debug(`resume ${this[kStatus]} definition execution`);
   if (this[kCompleted]) return this._complete('completed');
   const {
@@ -147,7 +146,7 @@ proto.resume = function resume() {
   if (this[kCompleted]) return;
   for (const bp of running) bp.resume();
 };
-proto.recover = function recover(state) {
+DefinitionExecution.prototype.recover = function recover(state) {
   if (!state) return this;
   this.executionId = state.executionId;
   this[kStopped] = state.stopped;
@@ -172,10 +171,10 @@ proto.recover = function recover(state) {
   }
   return this;
 };
-proto.stop = function stop() {
+DefinitionExecution.prototype.stop = function stop() {
   this.getApi().stop();
 };
-proto.getProcesses = function getProcesses() {
+DefinitionExecution.prototype.getProcesses = function getProcesses() {
   const {
     running,
     processes
@@ -186,24 +185,24 @@ proto.getProcesses = function getProcesses() {
   }
   return result;
 };
-proto.getProcessById = function getProcessById(processId) {
+DefinitionExecution.prototype.getProcessById = function getProcessById(processId) {
   return this.getProcesses().find(bp => bp.id === processId);
 };
-proto.getProcessesById = function getProcessesById(processId) {
+DefinitionExecution.prototype.getProcessesById = function getProcessesById(processId) {
   return this.getProcesses().filter(bp => bp.id === processId);
 };
-proto.getProcessByExecutionId = function getProcessByExecutionId(processExecutionId) {
+DefinitionExecution.prototype.getProcessByExecutionId = function getProcessByExecutionId(processExecutionId) {
   const running = this[kProcesses].running;
   return running.find(bp => bp.executionId === processExecutionId);
 };
-proto.getRunningProcesses = function getRunningProcesses() {
+DefinitionExecution.prototype.getRunningProcesses = function getRunningProcesses() {
   const running = this[kProcesses].running;
   return running.filter(bp => bp.executionId);
 };
-proto.getExecutableProcesses = function getExecutableProcesses() {
+DefinitionExecution.prototype.getExecutableProcesses = function getExecutableProcesses() {
   return this[kProcesses].executable.slice();
 };
-proto.getState = function getState() {
+DefinitionExecution.prototype.getState = function getState() {
   return {
     executionId: this.executionId,
     stopped: this[kStopped],
@@ -212,7 +211,7 @@ proto.getState = function getState() {
     processes: this[kProcesses].running.map(bp => bp.getState())
   };
 };
-proto.getApi = function getApi(apiMessage) {
+DefinitionExecution.prototype.getApi = function getApi(apiMessage) {
   if (!apiMessage) apiMessage = this[kExecuteMessage] || {
     content: this._createMessage()
   };
@@ -232,14 +231,14 @@ proto.getApi = function getApi(apiMessage) {
   };
   return api;
 };
-proto.getPostponed = function getPostponed(...args) {
+DefinitionExecution.prototype.getPostponed = function getPostponed(...args) {
   const running = this[kProcesses].running;
   return running.reduce((result, p) => {
     result = result.concat(p.getPostponed(...args));
     return result;
   }, []);
 };
-proto._start = function start() {
+DefinitionExecution.prototype._start = function start() {
   const {
     ids,
     executable,
@@ -262,7 +261,7 @@ proto._start = function start() {
     consumerTag: `_definition-activity-${this.executionId}`
   });
 };
-proto._activate = function activate(processList) {
+DefinitionExecution.prototype._activate = function activate(processList) {
   this.broker.subscribeTmp('api', '#', this[kMessageHandlers].onApiMessage, {
     noAck: true,
     consumerTag: '_definition-api-consumer'
@@ -270,7 +269,7 @@ proto._activate = function activate(processList) {
   for (const bp of processList) this._activateProcess(bp);
   this[kActivated] = true;
 };
-proto._activateProcess = function activateProcess(bp) {
+DefinitionExecution.prototype._activateProcess = function activateProcess(bp) {
   const handlers = this[kMessageHandlers];
   bp.broker.subscribeTmp('message', 'message.outbound', handlers.onMessageOutbound, {
     noAck: true,
@@ -302,7 +301,7 @@ proto._activateProcess = function activateProcess(bp) {
     priority: 100
   });
 };
-proto._onChildEvent = function onChildEvent(routingKey, originalMessage) {
+DefinitionExecution.prototype._onChildEvent = function onChildEvent(routingKey, originalMessage) {
   const message = (0, _messageHelper.cloneMessage)(originalMessage);
   const content = message.content;
   const parent = content.parent = content.parent || {};
@@ -319,13 +318,13 @@ proto._onChildEvent = function onChildEvent(routingKey, originalMessage) {
   if (!isDirectChild) return;
   this[kProcessesQ].queueMessage(message.fields, (0, _messageHelper.cloneContent)(content), message.properties);
 };
-proto._deactivate = function deactivate() {
+DefinitionExecution.prototype._deactivate = function deactivate() {
   this.broker.cancel('_definition-api-consumer');
   this.broker.cancel(`_definition-activity-${this.executionId}`);
   for (const bp of this[kProcesses].running) this._deactivateProcess(bp);
   this[kActivated] = false;
 };
-proto._deactivateProcess = function deactivateProcess(bp) {
+DefinitionExecution.prototype._deactivateProcess = function deactivateProcess(bp) {
   bp.broker.cancel('_definition-outbound-message-consumer');
   bp.broker.cancel('_definition-activity-consumer');
   bp.broker.cancel('_definition-signal-consumer');
@@ -333,7 +332,7 @@ proto._deactivateProcess = function deactivateProcess(bp) {
   bp.broker.cancel('_definition-call-consumer');
   bp.broker.cancel('_definition-call-cancel-consumer');
 };
-proto._onProcessMessage = function onProcessMessage(routingKey, message) {
+DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(routingKey, message) {
   const content = message.content;
   const isRedelivered = message.fields.redelivered;
   const {
@@ -411,7 +410,7 @@ proto._onProcessMessage = function onProcessMessage(routingKey, message) {
       }
   }
 };
-proto._stateChangeMessage = function stateChangeMessage(message, postponeMessage) {
+DefinitionExecution.prototype._stateChangeMessage = function stateChangeMessage(message, postponeMessage) {
   let previousMsg;
   const postponed = this[kProcesses].postponed;
   const idx = postponed.findIndex(msg => msg.content.executionId === message.content.executionId);
@@ -421,7 +420,7 @@ proto._stateChangeMessage = function stateChangeMessage(message, postponeMessage
   if (previousMsg) previousMsg.ack();
   if (postponeMessage) postponed.push(message);
 };
-proto._onProcessCompleted = function onProcessCompleted(message) {
+DefinitionExecution.prototype._onProcessCompleted = function onProcessCompleted(message) {
   this._stateChangeMessage(message, false);
   if (message.fields.redelivered) return message.ack();
   const {
@@ -440,7 +439,7 @@ proto._onProcessCompleted = function onProcessCompleted(message) {
     this._complete('completed');
   }
 };
-proto._onStopped = function onStopped(message) {
+DefinitionExecution.prototype._onStopped = function onStopped(message) {
   const running = this[kProcesses].running;
   this._debug(`stop definition execution (stop process executions ${running.length})`);
   this[kProcessesQ].close();
@@ -454,7 +453,7 @@ proto._onStopped = function onStopped(message) {
     persistent: false
   });
 };
-proto._onApiMessage = function onApiMessage(routingKey, message) {
+DefinitionExecution.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   const messageType = message.properties.type;
   const delegate = message.properties.delegate;
   if (delegate && this.id === message.content.id) {
@@ -478,7 +477,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
     });
   }
 };
-proto._startProcessesByMessage = function startProcessesByMessage(reference) {
+DefinitionExecution.prototype._startProcessesByMessage = function startProcessesByMessage(reference) {
   const {
     processes: bps,
     running
@@ -505,7 +504,7 @@ proto._startProcessesByMessage = function startProcessesByMessage(reference) {
     if (reference.referenceType === 'message') return;
   }
 };
-proto._onMessageOutbound = function onMessageOutbound(routingKey, message) {
+DefinitionExecution.prototype._onMessageOutbound = function onMessageOutbound(routingKey, message) {
   const content = message.content;
   const {
     target,
@@ -531,7 +530,7 @@ proto._onMessageOutbound = function onMessageOutbound(routingKey, message) {
   targetProcess.run();
   targetProcess.sendMessage(message);
 };
-proto._onCallActivity = function onCallActivity(routingKey, message) {
+DefinitionExecution.prototype._onCallActivity = function onCallActivity(routingKey, message) {
   const content = message.content;
   const {
     calledElement,
@@ -564,7 +563,7 @@ proto._onCallActivity = function onCallActivity(routingKey, message) {
     inbound: [(0, _messageHelper.cloneContent)(content)]
   });
 };
-proto._onCancelCallActivity = function onCancelCallActivity(routingKey, message) {
+DefinitionExecution.prototype._onCancelCallActivity = function onCancelCallActivity(routingKey, message) {
   const {
     calledElement,
     id: fromId,
@@ -578,7 +577,7 @@ proto._onCancelCallActivity = function onCancelCallActivity(routingKey, message)
   this._debug(`cancel call from <${fromParent.id}.${fromId}> to <${calledElement}>`);
   targetProcess.getApi().discard();
 };
-proto._onDelegateMessage = function onDelegateMessage(routingKey, executeMessage) {
+DefinitionExecution.prototype._onDelegateMessage = function onDelegateMessage(routingKey, executeMessage) {
   const content = executeMessage.content;
   const messageType = executeMessage.properties.type;
   const delegateMessage = executeMessage.content.message;
@@ -604,13 +603,13 @@ proto._onDelegateMessage = function onDelegateMessage(routingKey, executeMessage
     type: messageType
   });
 };
-proto._removeProcessByExecutionId = function removeProcessByExecutionId(processExecutionId) {
+DefinitionExecution.prototype._removeProcessByExecutionId = function removeProcessByExecutionId(processExecutionId) {
   const running = this[kProcesses].running;
   const idx = running.findIndex(p => p.executionId === processExecutionId);
   if (idx === -1) return;
   return running.splice(idx, 1)[0];
 };
-proto._complete = function complete(completionType, content, options) {
+DefinitionExecution.prototype._complete = function complete(completionType, content, options) {
   this._deactivate();
   const stateMessage = this[kExecuteMessage];
   this._debug(`definition execution ${completionType} in ${Date.now() - stateMessage.properties.timestamp}ms`);
@@ -631,7 +630,7 @@ proto._complete = function complete(completionType, content, options) {
     ...options
   });
 };
-proto._createMessage = function createMessage(content = {}) {
+DefinitionExecution.prototype._createMessage = function createMessage(content = {}) {
   return {
     id: this.id,
     type: this.type,
@@ -640,7 +639,7 @@ proto._createMessage = function createMessage(content = {}) {
     ...content
   };
 };
-proto._getProcessApi = function getProcessApi(message) {
+DefinitionExecution.prototype._getProcessApi = function getProcessApi(message) {
   const content = message.content;
   let api = this._getProcessApiByExecutionId(content.executionId, message);
   if (api) return api;
@@ -653,11 +652,11 @@ proto._getProcessApi = function getProcessApi(message) {
     if (api) return api;
   }
 };
-proto._getProcessApiByExecutionId = function getProcessApiByExecutionId(parentExecutionId, message) {
+DefinitionExecution.prototype._getProcessApiByExecutionId = function getProcessApiByExecutionId(parentExecutionId, message) {
   const processInstance = this.getProcessByExecutionId(parentExecutionId);
   if (!processInstance) return;
   return processInstance.getApi(message);
 };
-proto._debug = function debug(logMessage) {
+DefinitionExecution.prototype._debug = function debug(logMessage) {
   this[kParent].logger.debug(`<${this.executionId} (${this.id})> ${logMessage}`);
 };

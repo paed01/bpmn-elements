@@ -29,14 +29,13 @@ function ActivityExecution(activity, context) {
     onExecuteMessage: this._onExecuteMessage.bind(this)
   };
 }
-const proto = ActivityExecution.prototype;
-Object.defineProperty(proto, 'completed', {
+Object.defineProperty(ActivityExecution.prototype, 'completed', {
   enumerable: true,
   get() {
     return this[kCompleted];
   }
 });
-proto.execute = function execute(executeMessage) {
+ActivityExecution.prototype.execute = function execute(executeMessage) {
   if (!executeMessage) throw new Error('Execution requires message');
   const executionId = executeMessage.content && executeMessage.content.executionId;
   if (!executionId) throw new Error('Execution requires execution id');
@@ -60,7 +59,7 @@ proto.execute = function execute(executeMessage) {
   this.source = new this.activity.Behaviour(this.activity, this.context);
   this.broker.publish('execution', 'execute.start', (0, _messageHelper.cloneContent)(initMessage.content));
 };
-proto.activate = function activate() {
+ActivityExecution.prototype.activate = function activate() {
   if (this[kCompleted]) return;
   const broker = this.broker;
   const batchSize = this.activity.environment.settings.batchSize || 50;
@@ -84,19 +83,19 @@ proto.activate = function activate() {
     priority: 200
   });
 };
-proto.deactivate = function deactivate() {
+ActivityExecution.prototype.deactivate = function deactivate() {
   const broker = this.broker;
   broker.cancel('_activity-api-execution');
   broker.cancel('_activity-execute');
   broker.unbindQueue('execute-q', 'execution', 'execute.#');
 };
-proto.discard = function discard() {
+ActivityExecution.prototype.discard = function discard() {
   if (this[kCompleted]) return;
   const initMessage = this[kExecuteMessage];
   if (!initMessage) return this.activity.logger.warn(`<${this.id}> is not executing`);
   this.getApi(initMessage).discard();
 };
-proto.getApi = function getApi(apiMessage) {
+ActivityExecution.prototype.getApi = function getApi(apiMessage) {
   const self = this;
   if (!apiMessage) apiMessage = this[kExecuteMessage];
   if (self.source.getApi) {
@@ -113,17 +112,17 @@ proto.getApi = function getApi(apiMessage) {
   };
   return api;
 };
-proto.passthrough = function passthrough(executeMessage) {
+ActivityExecution.prototype.passthrough = function passthrough(executeMessage) {
   if (!this.source) return this.execute(executeMessage);
   return this._sourceExecute(executeMessage);
 };
-proto.getPostponed = function getPostponed() {
+ActivityExecution.prototype.getPostponed = function getPostponed() {
   let apis = this[kPostponed].map(msg => this.getApi(msg));
   if (!this.activity.isSubProcess || !this.source) return apis;
   apis = apis.concat(this.source.getPostponed());
   return apis;
 };
-proto.getState = function getState() {
+ActivityExecution.prototype.getState = function getState() {
   const result = {
     completed: this[kCompleted]
   };
@@ -134,7 +133,7 @@ proto.getState = function getState() {
     ...source.getState()
   };
 };
-proto.recover = function recover(state) {
+ActivityExecution.prototype.recover = function recover(state) {
   this[kPostponed].splice(0);
   if (!state) return this;
   if ('completed' in state) this[kCompleted] = state.completed;
@@ -144,12 +143,12 @@ proto.recover = function recover(state) {
   }
   return this;
 };
-proto.stop = function stop() {
+ActivityExecution.prototype.stop = function stop() {
   const executeMessage = this[kExecuteMessage];
   if (!executeMessage) return;
   this.getApi(executeMessage).stop();
 };
-proto._sourceExecute = function sourceExecute(executeMessage) {
+ActivityExecution.prototype._sourceExecute = function sourceExecute(executeMessage) {
   try {
     return this.source.execute(executeMessage);
   } catch (error) {
@@ -158,7 +157,7 @@ proto._sourceExecute = function sourceExecute(executeMessage) {
     }));
   }
 };
-proto._onExecuteMessage = function onExecuteMessage(routingKey, message) {
+ActivityExecution.prototype._onExecuteMessage = function onExecuteMessage(routingKey, message) {
   const {
     fields,
     content,
@@ -209,7 +208,7 @@ proto._onExecuteMessage = function onExecuteMessage(routingKey, message) {
       }
   }
 };
-proto._onStateChangeMessage = function onStateChangeMessage(message) {
+ActivityExecution.prototype._onStateChangeMessage = function onStateChangeMessage(message) {
   const {
     ignoreIfExecuting,
     executionId
@@ -229,7 +228,7 @@ proto._onStateChangeMessage = function onStateChangeMessage(message) {
   postponed.push(message);
   return true;
 };
-proto._onExecutionCompleted = function onExecutionCompleted(message) {
+ActivityExecution.prototype._onExecutionCompleted = function onExecutionCompleted(message) {
   const postponedMsg = this._ackPostponed(message);
   if (!postponedMsg) return;
   const postponed = this[kPostponed];
@@ -258,7 +257,7 @@ proto._onExecutionCompleted = function onExecutionCompleted(message) {
     ...message.content
   }, message.properties.correlationId);
 };
-proto._onExecutionDiscarded = function onExecutionDiscarded(message) {
+ActivityExecution.prototype._onExecutionDiscarded = function onExecutionDiscarded(message) {
   const postponedMsg = this._ackPostponed(message);
   const {
     isRootScope,
@@ -288,7 +287,7 @@ proto._onExecutionDiscarded = function onExecutionDiscarded(message) {
   }
   this._publishExecutionCompleted('discard', message.content, correlationId);
 };
-proto._publishExecutionCompleted = function publishExecutionCompleted(completionType, completeContent, correlationId) {
+ActivityExecution.prototype._publishExecutionCompleted = function publishExecutionCompleted(completionType, completeContent, correlationId) {
   this[kCompleted] = true;
   this.broker.publish('execution', `execution.${completionType}`, {
     ...completeContent,
@@ -298,7 +297,7 @@ proto._publishExecutionCompleted = function publishExecutionCompleted(completion
     correlationId
   });
 };
-proto._ackPostponed = function ackPostponed(completeMessage) {
+ActivityExecution.prototype._ackPostponed = function ackPostponed(completeMessage) {
   const {
     executionId: eid
   } = completeMessage.content;
@@ -311,7 +310,7 @@ proto._ackPostponed = function ackPostponed(completeMessage) {
   msg.ack();
   return msg;
 };
-proto._onParentApiMessage = function onParentApiMessage(routingKey, message) {
+ActivityExecution.prototype._onParentApiMessage = function onParentApiMessage(routingKey, message) {
   switch (message.properties.type) {
     case 'error':
       return this[kExecuteQ].queueMessage({
@@ -329,7 +328,7 @@ proto._onParentApiMessage = function onParentApiMessage(routingKey, message) {
       }
   }
 };
-proto._onStop = function onStop(message) {
+ActivityExecution.prototype._onStop = function onStop(message) {
   const stoppedId = message && message.content && message.content.executionId;
   const running = this.getPostponed();
   for (const api of running) {
@@ -340,7 +339,7 @@ proto._onStop = function onStop(message) {
   this.broker.cancel('_activity-execute');
   this.broker.cancel('_activity-api-execution');
 };
-proto._debug = function debug(logMessage, executionId) {
+ActivityExecution.prototype._debug = function debug(logMessage, executionId) {
   executionId = executionId || this.executionId;
   this.activity.logger.debug(`<${executionId} (${this.id})> ${logMessage}`);
 };

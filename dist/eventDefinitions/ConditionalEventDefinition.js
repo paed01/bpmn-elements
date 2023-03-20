@@ -27,18 +27,17 @@ function ConditionalEventDefinition(activity, eventDefinition) {
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
 }
-const proto = ConditionalEventDefinition.prototype;
-Object.defineProperty(proto, 'executionId', {
+Object.defineProperty(ConditionalEventDefinition.prototype, 'executionId', {
   get() {
     const message = this[kExecuteMessage];
     return message && message.content.executionId;
   }
 });
-proto.execute = function execute(executeMessage) {
+ConditionalEventDefinition.prototype.execute = function execute(executeMessage) {
   this[kExecuteMessage] = executeMessage;
   return this.isWaiting ? this.executeWait(executeMessage) : this.executeCatch(executeMessage);
 };
-proto.executeWait = function executeWait(executeMessage) {
+ConditionalEventDefinition.prototype.executeWait = function executeWait(executeMessage) {
   const executeContent = executeMessage.content;
   const {
     executionId,
@@ -63,7 +62,7 @@ proto.executeWait = function executeWait(executeMessage) {
   waitContent.parent = (0, _messageHelper.shiftParent)(parent);
   broker.publish('event', 'activity.wait', waitContent);
 };
-proto.executeCatch = function executeCatch(executeMessage) {
+ConditionalEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   const executeContent = executeMessage.content;
   const {
     executionId,
@@ -83,7 +82,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
     consumerTag: `_onend-${executionId}_${index}`
   });
 };
-proto._onWaitApiMessage = function onWaitApiMessage(routingKey, message) {
+ConditionalEventDefinition.prototype._onWaitApiMessage = function onWaitApiMessage(routingKey, message) {
   const messageType = message.properties.type;
   switch (messageType) {
     case 'signal':
@@ -103,7 +102,7 @@ proto._onWaitApiMessage = function onWaitApiMessage(routingKey, message) {
       }
   }
 };
-proto._evaluateWait = function evaluate(message) {
+ConditionalEventDefinition.prototype._evaluateWait = function evaluate(message) {
   const executeMessage = this[kExecuteMessage];
   const broker = this.broker,
     executeContent = executeMessage.content;
@@ -126,13 +125,13 @@ proto._evaluateWait = function evaluate(message) {
     output
   }));
 };
-proto._stopWait = function stopWait() {
+ConditionalEventDefinition.prototype._stopWait = function stopWait() {
   const broker = this.broker,
     executionId = this.executionId;
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_parent-signal-${executionId}`);
 };
-proto._onAttachedCompleted = function onAttachedCompleted(routingKey, message) {
+ConditionalEventDefinition.prototype._onAttachedCompleted = function onAttachedCompleted(routingKey, message) {
   this._stopCatch();
   const executeMessage = this[kExecuteMessage];
   const broker = this.broker,
@@ -156,7 +155,7 @@ proto._onAttachedCompleted = function onAttachedCompleted(routingKey, message) {
     }));
   }
 };
-proto._onCatchApiMessage = function onCatchApiMessage(routingKey, message) {
+ConditionalEventDefinition.prototype._onCatchApiMessage = function onCatchApiMessage(routingKey, message) {
   const messageType = message.properties.type;
   switch (messageType) {
     case 'discard':
@@ -174,7 +173,7 @@ proto._onCatchApiMessage = function onCatchApiMessage(routingKey, message) {
       }
   }
 };
-proto._stopCatch = function stopCatch() {
+ConditionalEventDefinition.prototype._stopCatch = function stopCatch() {
   const {
     executionId,
     index
@@ -182,6 +181,6 @@ proto._stopCatch = function stopCatch() {
   this.activity.attachedTo.broker.cancel(`_onend-${executionId}_${index}`);
   this.broker.cancel(`_api-${executionId}_${index}`);
 };
-proto._debug = function debug(msg) {
+ConditionalEventDefinition.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
 };

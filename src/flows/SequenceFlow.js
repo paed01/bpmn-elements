@@ -48,8 +48,6 @@ Object.defineProperty(SequenceFlow.prototype, 'counters', {
 });
 
 SequenceFlow.prototype.take = function take(content = {}) {
-  this.looped = undefined;
-
   const {sequenceId} = content;
 
   this.logger.debug(`<${sequenceId} (${this.id})> take, target <${this.targetId}>`);

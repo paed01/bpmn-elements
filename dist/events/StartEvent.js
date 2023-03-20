@@ -21,14 +21,13 @@ function StartEventBehaviour(activity) {
   this.broker = activity.broker;
   this[kExecution] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions);
 }
-const proto = StartEventBehaviour.prototype;
-Object.defineProperty(proto, 'executionId', {
+Object.defineProperty(StartEventBehaviour.prototype, 'executionId', {
   get() {
     const message = this[kExecuteMessage];
     return message && message.content.executionId;
   }
 });
-proto.execute = function execute(executeMessage) {
+StartEventBehaviour.prototype.execute = function execute(executeMessage) {
   const execution = this[kExecution];
   if (execution) {
     return execution.execute(executeMessage);
@@ -55,7 +54,7 @@ proto.execute = function execute(executeMessage) {
     state: 'wait'
   });
 };
-proto._onApiMessage = function onApiMessage(routingKey, message) {
+StartEventBehaviour.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   const {
     type: messageType,
     correlationId
@@ -84,7 +83,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
       }
   }
 };
-proto._onDelegatedApiMessage = function onDelegatedApiMessage(routingKey, message) {
+StartEventBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMessage(routingKey, message) {
   if (!message.properties.delegate) return;
   const content = message.content;
   if (!content.message) return;
@@ -108,7 +107,7 @@ proto._onDelegatedApiMessage = function onDelegatedApiMessage(routingKey, messag
   });
   return this._onApiMessage(routingKey, message);
 };
-proto._stop = function stop() {
+StartEventBehaviour.prototype._stop = function stop() {
   const broker = this.broker,
     executionId = this.executionId;
   broker.cancel(`_api-${executionId}`);

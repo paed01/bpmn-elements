@@ -21,8 +21,7 @@ function IoSpecification(activity, ioSpecificationDef, context) {
   this.broker = activity.broker;
   this.context = context;
 }
-const proto = IoSpecification.prototype;
-proto.activate = function activate(message) {
+IoSpecification.prototype.activate = function activate(message) {
   if (this[kConsuming]) return;
   if (message && message.fields.redelivered && message.fields.routingKey === 'run.start') {
     this._onFormatEnter();
@@ -34,10 +33,10 @@ proto.activate = function activate(message) {
     noAck: true
   });
 };
-proto.deactivate = function deactivate() {
+IoSpecification.prototype.deactivate = function deactivate() {
   if (this[kConsuming]) this[kConsuming] = this[kConsuming].cancel();
 };
-proto._onActivityEvent = function onActivityEvent(routingKey, message) {
+IoSpecification.prototype._onActivityEvent = function onActivityEvent(routingKey, message) {
   const {
     dataInputs,
     dataOutputs
@@ -49,7 +48,7 @@ proto._onActivityEvent = function onActivityEvent(routingKey, message) {
     this._onFormatComplete(message);
   }
 };
-proto._onFormatEnter = function onFormatOnEnter() {
+IoSpecification.prototype._onFormatEnter = function onFormatOnEnter() {
   const safeType = (0, _shared.brokerSafeId)(this.type).toLowerCase();
   const startRoutingKey = `run.onstart.${safeType}`;
   const {
@@ -117,7 +116,7 @@ proto._onFormatEnter = function onFormatOnEnter() {
     });
   });
 };
-proto._onFormatComplete = function formatOnComplete(message) {
+IoSpecification.prototype._onFormatComplete = function formatOnComplete(message) {
   const safeType = (0, _shared.brokerSafeId)(this.type).toLowerCase();
   const messageInputs = (0, _getPropertyValue.default)(message, 'content.ioSpecification.dataInputs');
   const messageOutputs = (0, _getPropertyValue.default)(message, 'content.output.ioSpecification.dataOutputs') || [];
@@ -191,7 +190,7 @@ proto._onFormatComplete = function formatOnComplete(message) {
     });
   });
 };
-proto._getDataOutputs = function getDataOutputs(dataOutputs) {
+IoSpecification.prototype._getDataOutputs = function getDataOutputs(dataOutputs) {
   if (!dataOutputs) return;
   return dataOutputs.map(dataOutput => {
     return {
