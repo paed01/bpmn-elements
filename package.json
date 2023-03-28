@@ -17,7 +17,7 @@
     "posttest": "npm run lint && npm run dist",
     "lint": "eslint . --cache",
     "prepack": "npm run dist",
-    "cov:html": "c8 -r html -r text mocha",
+    "cov:html": "c8 -r html -r text mocha -R dot",
     "test:lcov": "c8 -r lcov mocha && npm run lint",
     "dist": "babel src -d dist/"
   },

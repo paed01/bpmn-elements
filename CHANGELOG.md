@@ -5,6 +5,7 @@ Changelog
 
 - Turn into module with exports for node
 - Add basic type declaration, still learning
+- return Api instance for Message- and Association flows, as stated by type declaration
 
 # 8.2.4
 

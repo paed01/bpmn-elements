@@ -1,6 +1,7 @@
 import {brokerSafeId} from '../shared.js';
 import {cloneParent} from '../messageHelper.js';
 import {MessageFlowBroker} from '../EventBroker.js';
+import {Api} from '../Api.js';
 
 const kCounters = Symbol.for('counters');
 const kSourceElement = Symbol.for('sourceElement');
@@ -52,8 +53,8 @@ MessageFlow.prototype.recover = function recover(state) {
   Object.assign(this[kCounters], state.counters);
 };
 
-MessageFlow.prototype.getApi = function getApi() {
-  return this;
+MessageFlow.prototype.getApi = function getApi(message) {
+  return new Api('message', this.broker, message || {content: this._createMessageContent()});
 };
 
 MessageFlow.prototype.activate = function activate() {
@@ -75,10 +76,10 @@ MessageFlow.prototype._onSourceEnd = function onSourceEnd({content}) {
   const source = this.source;
   const target = this.target;
   this.logger.debug(`<${this.id}> sending message from <${source.processId}.${source.id}> to <${target.id ? `${target.processId}.${target.id}` : target.processId}>`);
-  this.broker.publish('event', 'message.outbound', this._createMessage(content.message));
+  this.broker.publish('event', 'message.outbound', this._createMessageContent(content.message));
 };
 
-MessageFlow.prototype._createMessage = function createMessage(message) {
+MessageFlow.prototype._createMessageContent = function createMessage(message) {
   return {
     id: this.id,
     type: this.type,

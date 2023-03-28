@@ -1,6 +1,6 @@
 import {cloneParent} from '../messageHelper.js';
 import {EventBroker} from '../EventBroker.js';
-import {FlowApi} from '../Api.js';
+import {Api} from '../Api.js';
 import {getUniqueId} from '../shared.js';
 
 const kCounters = Symbol.for('counters');
@@ -81,7 +81,7 @@ Association.prototype.recover = function recover(state) {
 };
 
 Association.prototype.getApi = function getApi(message) {
-  return FlowApi(this.broker, message || {content: this._createMessageContent()});
+  return new Api('association', this.broker, message || {content: this._createMessageContent()});
 };
 
 Association.prototype.stop = function stop() {

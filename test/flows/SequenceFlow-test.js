@@ -607,4 +607,15 @@ describe('SequenceFlow', () => {
       });
     });
   });
+
+  describe('getApi()', () => {
+    it('getApi() returns message Api with default message', async () => {
+      const context = await testHelpers.context(factory.resource('multiple-multiple-inbound.bpmn').toString());
+
+      const flow = context.getSequenceFlowById('taskflow-1');
+
+      const api = flow.getApi();
+      expect(api).to.have.property('id', 'taskflow-1');
+    });
+  });
 });

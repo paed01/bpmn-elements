@@ -89,7 +89,7 @@ Association.prototype.recover = function recover(state) {
   this.broker.recover(state.broker);
 };
 Association.prototype.getApi = function getApi(message) {
-  return (0, _Api.FlowApi)(this.broker, message || {
+  return new _Api.Api('association', this.broker, message || {
     content: this._createMessageContent()
   });
 };

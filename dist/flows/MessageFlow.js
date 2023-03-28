@@ -7,6 +7,7 @@ exports.default = MessageFlow;
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
 var _EventBroker = require("../EventBroker.js");
+var _Api = require("../Api.js");
 const kCounters = Symbol.for('counters');
 const kSourceElement = Symbol.for('sourceElement');
 function MessageFlow(flowDef, context) {
@@ -64,8 +65,10 @@ MessageFlow.prototype.getState = function getState() {
 MessageFlow.prototype.recover = function recover(state) {
   Object.assign(this[kCounters], state.counters);
 };
-MessageFlow.prototype.getApi = function getApi() {
-  return this;
+MessageFlow.prototype.getApi = function getApi(message) {
+  return new _Api.Api('message', this.broker, message || {
+    content: this._createMessageContent()
+  });
 };
 MessageFlow.prototype.activate = function activate() {
   const sourceElement = this[kSourceElement];
@@ -90,9 +93,9 @@ MessageFlow.prototype._onSourceEnd = function onSourceEnd({
   const source = this.source;
   const target = this.target;
   this.logger.debug(`<${this.id}> sending message from <${source.processId}.${source.id}> to <${target.id ? `${target.processId}.${target.id}` : target.processId}>`);
-  this.broker.publish('event', 'message.outbound', this._createMessage(content.message));
+  this.broker.publish('event', 'message.outbound', this._createMessageContent(content.message));
 };
-MessageFlow.prototype._createMessage = function createMessage(message) {
+MessageFlow.prototype._createMessageContent = function createMessage(message) {
   return {
     id: this.id,
     type: this.type,

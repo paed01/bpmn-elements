@@ -102,4 +102,54 @@ describe('MessageFlow', () => {
 
     expect(flow.counters).to.have.property('messages', 3);
   });
+
+  it('getApi() returns message Api', () => {
+    const activity = ActivityBroker();
+    const context = {
+      environment: new Environment(),
+      getActivityById() {
+        return activity;
+      },
+    };
+
+    const flow = new MessageFlow({
+      id: 'message',
+      type: 'messageflow',
+      parent: {},
+      source: {
+        id: 'task',
+      },
+      target: {
+        id: 'task1',
+      },
+    }, context);
+
+    const api = flow.getApi();
+    expect(api).to.have.property('id', 'message');
+  });
+
+  it('getApi(message) returns message Api', () => {
+    const activity = ActivityBroker();
+    const context = {
+      environment: new Environment(),
+      getActivityById() {
+        return activity;
+      },
+    };
+
+    const flow = new MessageFlow({
+      id: 'message',
+      type: 'messageflow',
+      parent: {},
+      source: {
+        id: 'task',
+      },
+      target: {
+        id: 'task1',
+      },
+    }, context);
+
+    const api = flow.getApi({ content: {id: 'foo'} });
+    expect(api).to.have.property('id', 'foo');
+  });
 });
