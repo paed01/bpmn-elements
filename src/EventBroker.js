@@ -48,6 +48,7 @@ function ExecutionBroker(brokerOwner, prefix, onBrokerReturn) {
   const runQ = broker.assertQueue('run-q', {durable: true, autoDelete: false});
   const formatRunQ = broker.assertQueue('format-run-q', {durable: true, autoDelete: false});
   const executionQ = broker.assertQueue('execution-q', {durable: true, autoDelete: false});
+  broker.assertQueue('inbound-q', {durable: true, autoDelete: false});
 
   broker.bindQueue(runQ.name, 'run', 'run.#');
   broker.bindQueue(formatRunQ.name, 'format', 'run.#');

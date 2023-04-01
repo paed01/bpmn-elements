@@ -1099,8 +1099,8 @@ function AssertMessage(processContext, messages, inSequence = true) {
 
     if (!compareState) return message;
 
-    const activity = processContext.getActivityById(id);
     const {source, context, id} = message.content;
+    const activity = processContext.getActivityById(id);
     const activityApi = activity.getApi(source, context);
 
     expect(activityApi.getState(), `${routingKey} ${activityId} state`).to.deep.include(compareState);

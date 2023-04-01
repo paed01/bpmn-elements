@@ -117,6 +117,11 @@ Object.defineProperty(Process.prototype, 'status', {
     return this[kStatus];
   }
 });
+Object.defineProperty(Process.prototype, 'activityStatus', {
+  get() {
+    return this[kExec].execution && this[kExec].execution.activityStatus || 'idle';
+  }
+});
 Process.prototype.init = function init(useAsExecutionId) {
   const exec = this[kExec];
   const initExecutionId = exec.initExecutionId = useAsExecutionId || (0, _shared.getUniqueId)(this.id);

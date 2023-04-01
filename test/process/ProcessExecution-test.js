@@ -638,6 +638,7 @@ describe('Process execution', () => {
         },
       });
 
+      const execution = new ProcessExecution(bp, bp.context);
       const stop = new Promise((resolve) => {
         bp.broker.subscribeOnce('event', 'activity.wait', () => {
           execution.stop();
@@ -645,7 +646,6 @@ describe('Process execution', () => {
         });
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -715,6 +715,7 @@ describe('Process execution', () => {
         },
       });
 
+      const execution = new ProcessExecution(bp, bp.context);
       const stop = new Promise((resolve) => {
         bp.broker.subscribeOnce('event', 'activity.wait', () => {
           execution.stop();
@@ -722,7 +723,6 @@ describe('Process execution', () => {
         });
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -781,6 +781,7 @@ describe('Process execution', () => {
         getSequenceFlows() {},
       });
 
+      const execution = new ProcessExecution(bp, bp.context);
       const stop = new Promise((resolve) => {
         bp.broker.subscribeOnce('event', 'activity.wait', () => {
           execution.stop();
@@ -788,7 +789,6 @@ describe('Process execution', () => {
         });
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {
@@ -920,6 +920,7 @@ describe('Process execution', () => {
         getSequenceFlows() {},
       });
 
+      const execution = new ProcessExecution(bp, bp.context);
       const discard = new Promise((resolve) => {
         bp.broker.subscribeOnce('event', 'activity.wait', () => {
           execution.discard();
@@ -927,7 +928,6 @@ describe('Process execution', () => {
         });
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
         fields: {},
         content: {

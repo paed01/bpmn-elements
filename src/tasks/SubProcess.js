@@ -205,9 +205,10 @@ SubProcessBehaviour.prototype._onExecutionCompleted = function onExecutionComple
       broker.cancel(message.fields.consumerTag);
       break;
     }
+    case 'cancel':
     case 'discard': {
       broker.cancel(message.fields.consumerTag);
-      broker.publish('execution', 'execute.discard', cloneContent(content));
+      broker.publish('execution', 'execute.' + messageType, cloneContent(content));
       break;
     }
     case 'completed': {

@@ -101,6 +101,32 @@ Object.defineProperty(DefinitionExecution.prototype, 'isRunning', {
   },
 });
 
+Object.defineProperty(DefinitionExecution.prototype, 'activityStatus', {
+  get() {
+    let status = 'idle';
+    const running = this[kProcesses].running;
+    if (!running || !running.length) return status;
+
+    for (const bp of running) {
+      const bpStatus = bp.activityStatus;
+      switch (bp.activityStatus) {
+        case 'idle':
+          break;
+        case 'executing':
+          return bpStatus;
+        case 'timer':
+          status = bpStatus;
+          break;
+        case 'wait':
+          if (status === 'idle') status = bpStatus;
+          break;
+      }
+    }
+
+    return status;
+  },
+});
+
 DefinitionExecution.prototype.execute = function execute(executeMessage) {
   if (!executeMessage) throw new Error('Definition execution requires message');
   const content = executeMessage.content;

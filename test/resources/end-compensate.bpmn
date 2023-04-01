@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0lp530z" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.8.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.18.0">
+  <bpmn:process id="theProcess" isExecutable="true">
+    <bpmn:startEvent id="start">
+      <bpmn:outgoing>flow1</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="flow1" sourceRef="start" targetRef="service" />
+    <bpmn:serviceTask id="service">
+      <bpmn:incoming>flow1</bpmn:incoming>
+      <bpmn:outgoing>flow2</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics isSequential="true" />
+    </bpmn:serviceTask>
+    <bpmn:boundaryEvent id="compensation" attachedToRef="service">
+      <bpmn:compensateEventDefinition id="CompensateEventDefinition_15djpxr" />
+    </bpmn:boundaryEvent>
+    <bpmn:boundaryEvent id="onError" attachedToRef="service">
+      <bpmn:outgoing>Flow_1h09w9s</bpmn:outgoing>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_1a4f9o8" />
+    </bpmn:boundaryEvent>
+    <bpmn:serviceTask id="undoService" isForCompensation="true" />
+    <bpmn:endEvent id="end1">
+      <bpmn:incoming>flow2</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="flow2" sourceRef="service" targetRef="end1" />
+    <bpmn:sequenceFlow id="Flow_1h09w9s" sourceRef="onError" targetRef="end2" />
+    <bpmn:endEvent id="end2">
+      <bpmn:incoming>Flow_1h09w9s</bpmn:incoming>
+      <bpmn:compensateEventDefinition id="CompensateEventDefinition_1disp04" />
+    </bpmn:endEvent>
+    <bpmn:association id="association_0" associationDirection="One" sourceRef="compensation" targetRef="undoService" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="theProcess">
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="start">
+        <dc:Bounds x="179" y="79" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_17hg5q7_di" bpmnElement="service">
+        <dc:Bounds x="270" y="57" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1hf9yof_di" bpmnElement="end1">
+        <dc:Bounds x="432" y="79" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1ro0iet_di" bpmnElement="undoService">
+        <dc:Bounds x="250" y="270" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1x73syd_di" bpmnElement="end2">
+        <dc:Bounds x="422" y="202" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Association_0lg4ntm_di" bpmnElement="association_0">
+        <di:waypoint x="270" y="155" />
+        <di:waypoint x="270" y="213" />
+        <di:waypoint x="300" y="213" />
+        <di:waypoint x="300" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1spm15v_di" bpmnElement="compensation">
+        <dc:Bounds x="252" y="119" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1jmhd5e_di" bpmnElement="onError">
+        <dc:Bounds x="352" y="119" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0ovfbim_di" bpmnElement="flow1">
+        <di:waypoint x="215" y="97" />
+        <di:waypoint x="270" y="97" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1v5i2jt_di" bpmnElement="flow2">
+        <di:waypoint x="370" y="97" />
+        <di:waypoint x="432" y="97" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1h09w9s_di" bpmnElement="Flow_1h09w9s">
+        <di:waypoint x="370" y="155" />
+        <di:waypoint x="370" y="220" />
+        <di:waypoint x="422" y="220" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

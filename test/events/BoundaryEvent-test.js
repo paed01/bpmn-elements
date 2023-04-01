@@ -448,6 +448,7 @@ describe('BoundaryEvent', () => {
               Behaviour: ErrorEventDefinition,
             }],
           },
+          removeInboundListeners() {},
         }, {
           getOutboundAssociations() {},
         });

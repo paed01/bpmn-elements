@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 9.1.0
+
+- refactor compensation and transaction functionality
+- fix event based gateway bug when/if a subsequent event completes immediately
+- add somewhat expirimental activityStatus property to process and definition, tracked by Tracker that tracks executing, wait, and timer activity
+
 # 9.0.0
 
 - Turn into module with exports for node

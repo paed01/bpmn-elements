@@ -106,6 +106,12 @@ Object.defineProperty(Definition.prototype, 'stopped', {
   },
 });
 
+Object.defineProperty(Definition.prototype, 'activityStatus', {
+  get() {
+    return this[kExec].execution && this[kExec].execution.activityStatus || 'idle';
+  },
+});
+
 Definition.prototype.run = function run(optionsOrCallback, optionalCallback) {
   const [runOptions, callback] = getOptionsAndCallback(optionsOrCallback, optionalCallback);
   if (this.isRunning) {
@@ -182,8 +188,6 @@ Definition.prototype.recover = function recover(state) {
 
 Definition.prototype.shake = function shake(startId) {
   let result = {};
-  const broker = this.broker;
-
   let bps;
   if (startId) {
     const startActivity = this.getActivityById(startId);
@@ -193,30 +197,29 @@ Definition.prototype.shake = function shake(startId) {
     bps = [bp];
   } else bps = this.getProcesses();
 
-  bps.forEach(shakeProcess);
+  bps.forEach((bp) => {
+    result = {...result, ...this._shakeProcess(bp, startId)};
+  });
 
   return result;
+};
 
-  function shakeProcess(shakeBp) {
-    let shovel;
-    if (!shakeBp.isRunning) {
-      shovel = shakeBp.broker.createShovel('shaker', {
-        exchange: 'event',
-        pattern: '*.shake#',
-      }, {
-        broker,
-        exchange: 'event',
-      });
-    }
-
-    const shakeResult = shakeBp.shake(startId);
-    if (shovel) shakeBp.broker.closeShovel('shaker');
-
-    result = {
-      ...result,
-      ...shakeResult,
-    };
+Definition.prototype._shakeProcess = function shakeProcess(shakeBp, startId) {
+  let shovel;
+  if (!shakeBp.isRunning) {
+    shovel = shakeBp.broker.createShovel('shaker', {
+      exchange: 'event',
+      pattern: '*.shake#',
+    }, {
+      broker: this.broker,
+      exchange: 'event',
+    });
   }
+
+  const shakeResult = shakeBp.shake(startId);
+  if (shovel) shakeBp.broker.closeShovel('shaker');
+
+  return shakeResult;
 };
 
 Definition.prototype.getState = function getState() {

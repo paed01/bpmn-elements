@@ -22,13 +22,13 @@ Feature('Definition', () => {
     </definitions>`;
 
     let definition, assertMessage;
+    const messages = [];
     Given('a definition', async () => {
       const context = await testHelpers.context(source);
       definition = new Definition(context);
       assertMessage = AssertMessage(definition, messages, true);
     });
 
-    const messages = [];
     And('the definition is subscribed to', () => {
       definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
         messages.push(message);
@@ -72,6 +72,7 @@ Feature('Definition', () => {
 
   Scenario('A definition with lanes', () => {
     let definition, assertMessage;
+    const messages = [];
     Given('a definition with lanes and extensions', async () => {
       const context = await testHelpers.context(factory.resource('lanes.bpmn'), {extensions});
       definition = new Definition(context, {
@@ -80,7 +81,6 @@ Feature('Definition', () => {
       assertMessage = AssertMessage(definition, messages, true);
     });
 
-    const messages = [];
     And('the definition is subscribed to', () => {
       definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
         messages.push(message);
@@ -479,13 +479,13 @@ Feature('Definition', () => {
 
   Scenario('Two executable processes', () => {
     let assertMessage, definition;
+    const messages = [];
     Given('a definition with user task, timer event, and loop', async () => {
       const context = await testHelpers.context(factory.resource('two-executable-processes.bpmn'), {extensions});
       definition = new Definition(context);
       assertMessage = AssertMessage(definition, messages, true);
     });
 
-    const messages = [];
     And('the definition is subscribed to', () => {
       definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
         if (routingKey.indexOf('flow') === 0) return;

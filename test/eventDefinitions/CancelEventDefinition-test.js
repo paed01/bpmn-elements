@@ -15,307 +15,23 @@ describe('CancelEventDefinition', () => {
       };
     });
 
-    it('expects cancel with canceled routing key', () => {
+    it('publishes wait event on parent broker', () => {
       const catchEvent = new CancelEventDefinition(event, {
         type: 'bpmn:CancelEventDefinition',
       });
-      expect(catchEvent.executionId, 'executionId').to.be.undefined;
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.expect', (_, msg) => {
+      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
         messages.push(msg);
       }, {noAck: true});
 
       catchEvent.execute({
         fields: {},
         content: {
-          id: 'event_1',
           executionId: 'event_1_0',
           index: 0,
           parent: {
-            id: 'event_1',
-            executionId: 'event_1',
-            path: [{
-              id: 'transaction',
-              executionId: 'transaction_0',
-            }],
-          },
-        },
-      });
-
-      expect(messages).to.have.length(1);
-      expect(messages[0].content).to.have.property('executionId', 'event_1_0');
-      expect(messages[0].content).to.have.property('exchangeKey', 'execute.canceled.event_1_0');
-    });
-
-    it('completes when cancel routing key is published', () => {
-      const catchEvent = new CancelEventDefinition(event, {
-        type: 'bpmn:CancelEventDefinition',
-      });
-
-      const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
-
-      catchEvent.execute({
-        fields: {},
-        content: {
-          id: 'event_1',
-          executionId: 'event_1_0',
-          index: 0,
-          parent: {
-            id: 'event_1',
-            executionId: 'event_1',
-            path: [{
-              id: 'transaction',
-              executionId: 'transaction_0',
-            }],
-          },
-        },
-      });
-
-      event.broker.publish('execution', 'execute.canceled.event_1_0', {});
-
-      expect(messages).to.have.length(1);
-      expect(messages[0].content).to.have.property('executionId', 'event_1_0');
-
-      event.broker.cancel('_test-tag');
-      expect(event.broker).to.have.property('consumerCount', 0);
-    });
-
-    it('completes if canceled by api before execution', () => {
-      const catchEvent = new CancelEventDefinition(event, {
-        type: 'bpmn:CancelEventDefinition',
-      });
-
-      event.broker.publish('api', 'activity.cancel.event_1_0', {});
-
-      const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
-
-      catchEvent.execute({
-        fields: {},
-        content: {
-          id: 'event_1',
-          executionId: 'event_1_0',
-          index: 0,
-          parent: {
-            id: 'event_1',
-            executionId: 'event_1',
-            path: [{
-              id: 'transaction',
-              executionId: 'transaction_0',
-            }],
-          },
-        },
-      });
-
-      expect(messages).to.have.length(1);
-      expect(messages[0].content).to.have.property('executionId', 'event_1_0');
-
-      event.broker.cancel('_test-tag');
-      expect(event.broker).to.have.property('consumerCount', 0);
-    });
-
-    it('publish compensate event if cancel emanates from a transaction', () => {
-      const catchEvent = new CancelEventDefinition(event, {
-        type: 'bpmn:CancelEventDefinition',
-      });
-
-      const messages = [];
-      event.broker.subscribeTmp('event', 'activity.compensate', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
-
-      catchEvent.execute({
-        fields: {},
-        content: {
-          id: 'event_1',
-          executionId: 'event_1_0',
-          index: 0,
-          parent: {
-            id: 'event_1',
-            executionId: 'event_1',
-            path: [{
-              id: 'transaction',
-              executionId: 'transaction_0',
-            }],
-          },
-        },
-      });
-
-      event.broker.publish('execution', 'execute.canceled.event_1_0', {id: 'atomic', isTransaction: true});
-
-      expect(messages).to.have.length(1);
-      expect(messages[0].content).to.have.property('id', 'atomic');
-
-      event.broker.cancel('_test-tag');
-      expect(event.broker).to.have.property('consumerCount').that.is.above(0);
-    });
-
-    it('publish compensate event if cancel transaction api message is published before execution', () => {
-      const catchEvent = new CancelEventDefinition(event, {
-        type: 'bpmn:CancelEventDefinition',
-      });
-
-      event.broker.publish('api', 'activity.cancel.event_1_0', {id: 'atomic', isTransaction: true});
-
-      const messages = [];
-      event.broker.subscribeTmp('event', 'activity.compensate', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
-
-      catchEvent.execute({
-        fields: {},
-        content: {
-          id: 'event_1',
-          executionId: 'event_1_0',
-          index: 0,
-          parent: {
-            id: 'event_1',
-            executionId: 'event_1',
-            path: [{
-              id: 'transaction',
-              executionId: 'transaction_0',
-            }],
-          },
-        },
-      });
-
-      expect(messages).to.have.length(1);
-      expect(messages[0].content).to.have.property('id', 'atomic');
-
-      event.broker.cancel('_test-tag');
-      expect(event.broker).to.have.property('consumerCount').that.is.above(0);
-    });
-
-    it('detaches if cancel emanates from a transaction and creates cancel exchange', () => {
-      const catchEvent = new CancelEventDefinition(event, {
-        type: 'bpmn:CancelEventDefinition',
-      });
-
-      const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.detach', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
-
-      catchEvent.execute({
-        fields: {},
-        content: {
-          id: 'event_1',
-          executionId: 'event_1_0',
-          attachedTo: 'atomic',
-          index: 0,
-          parent: {
-            id: 'event_1',
-            executionId: 'event_1',
-            path: [{
-              id: 'transaction',
-              executionId: 'transaction_0',
-            }],
-          },
-        },
-      });
-
-      event.broker.publish('execution', 'execute.canceled.event_1_0', {id: 'atomic', isTransaction: true});
-
-      expect(messages).to.have.length(1);
-      expect(messages[0].content).to.have.property('id', 'event_1');
-
-      expect(event.broker.getExchange('cancel')).to.be.ok;
-    });
-
-    it('completes when bound event detects that transaction is complete', () => {
-      const catchEvent = new CancelEventDefinition(event, {
-        type: 'bpmn:CancelEventDefinition',
-      });
-
-      const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
-
-      catchEvent.execute({
-        fields: {},
-        content: {
-          id: 'event_1',
-          attachedTo: 'atomic',
-          executionId: 'event_1_0',
-          index: 0,
-          parent: {
-            id: 'event_1',
-            executionId: 'event_1',
-            path: [{
-              id: 'transaction',
-              executionId: 'transaction_0',
-            }],
-          },
-        },
-      });
-
-      event.broker.publish('execution', 'execute.canceled.event_1_0', {id: 'atomic', isTransaction: true});
-      event.broker.publish('cancel', 'activity.leave', {id: 'atomic'});
-
-      expect(messages).to.have.length(1);
-      expect(messages[0].content).to.have.property('id', 'event_1');
-    });
-
-    it('ignores leave message if not matching attachedTo', () => {
-      const catchEvent = new CancelEventDefinition(event, {
-        type: 'bpmn:CancelEventDefinition',
-      });
-
-      const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
-
-      catchEvent.execute({
-        fields: {},
-        content: {
-          id: 'event_1',
-          attachedTo: 'atomic',
-          executionId: 'event_1_0',
-          index: 0,
-          parent: {
-            id: 'event_1',
-            executionId: 'event_1',
-            path: [{
-              id: 'transaction',
-              executionId: 'transaction_0',
-            }],
-          },
-        },
-      });
-
-      event.broker.publish('execution', 'execute.canceled.event_1_0', {id: 'atomic', isTransaction: true});
-      event.broker.publish('cancel', 'activity.leave', {id: 'end'});
-
-      expect(messages).to.have.length(0);
-    });
-
-    it('completes and clears listeners when transaction is complete', () => {
-      const catchEvent = new CancelEventDefinition(event, {
-        type: 'bpmn:CancelEventDefinition',
-      });
-
-      const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag-1'});
-
-      catchEvent.execute({
-        fields: {},
-        content: {
-          id: 'event_1',
-          attachedTo: 'atomic',
-          executionId: 'event_1_0',
-          index: 0,
-          parent: {
-            id: 'event_1',
+            id: 'bound',
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
@@ -325,11 +41,79 @@ describe('CancelEventDefinition', () => {
         },
       });
 
-      event.broker.publish('execution', 'execute.canceled.event_1_0', {id: 'atomic', isTransaction: true});
-      event.broker.publish('cancel', 'activity.leave', {id: 'atomic'});
+      expect(messages).to.have.length(1);
+      expect(messages[0].fields).to.have.property('routingKey', 'activity.wait');
+      expect(messages[0].content).to.have.property('executionId', 'event_1');
+      expect(messages[0].content.parent).to.have.property('id', 'theProcess');
+      expect(messages[0].content.parent).to.have.property('executionId', 'theProcess_0');
+    });
 
-      event.broker.cancel('_test-tag-1');
+    it('expects cancel with canceled routing key', () => {
+      const catchEvent = new CancelEventDefinition(event, {
+        type: 'bpmn:CancelEventDefinition',
+      });
+      expect(catchEvent.executionId, 'executionId').to.be.undefined;
 
+      const messages = [];
+      event.broker.subscribeTmp('event', 'activity.wait', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      catchEvent.execute({
+        fields: {},
+        content: {
+          id: 'event_1',
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'event_1',
+            executionId: 'event_1',
+            path: [{
+              id: 'transaction',
+              executionId: 'transaction_0',
+            }],
+          },
+        },
+      });
+
+      expect(messages).to.have.length(1);
+      expect(messages[0].content).to.have.property('executionId', 'event_1');
+      expect(messages[0].content).to.have.property('expect', 'cancel');
+    });
+
+    it('completes when attached to activity is cancelled', () => {
+      const catchEvent = new CancelEventDefinition(event, {
+        type: 'bpmn:CancelEventDefinition',
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true, consumerTag: '_test-tag'});
+
+      catchEvent.execute({
+        fields: {},
+        content: {
+          id: 'event_1',
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'event_1',
+            executionId: 'event_1',
+            path: [{
+              id: 'transaction',
+              executionId: 'transaction_0',
+            }],
+          },
+        },
+      });
+
+      event.broker.publish('execution', 'execute.cancelled.event_1_0', {});
+
+      expect(messages).to.have.length(1);
+      expect(messages[0].content).to.have.property('executionId', 'event_1_0');
+
+      event.broker.cancel('_test-tag');
       expect(event.broker).to.have.property('consumerCount', 0);
     });
 
@@ -346,7 +130,7 @@ describe('CancelEventDefinition', () => {
           executionId: 'event_1_0',
           index: 0,
           parent: {
-            id: 'event_1',
+            id: 'event',
             executionId: 'event_1',
             path: [{
               id: 'theProcess',
@@ -356,7 +140,6 @@ describe('CancelEventDefinition', () => {
         },
       });
 
-      event.broker.publish('execution', 'execute.canceled.event_1_0', {id: 'atomic', isTransaction: true});
       event.broker.publish('api', 'activity.stop.event_1_0', {}, {type: 'stop'});
 
       expect(event.broker).to.have.property('consumerCount', 0);
