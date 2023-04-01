@@ -1,10 +1,10 @@
 import ck from 'chronokinesis';
-import Environment from '../../src/Environment';
-import testHelpers from '../helpers/testHelpers';
-import TimerEventDefinition from '../../src/eventDefinitions/TimerEventDefinition';
-import {ActivityApi, DefinitionApi} from '../../src/Api';
-import {ActivityBroker} from '../../src/EventBroker';
-import {Timers} from '../../src/Timers';
+import Environment from '../../src/Environment.js';
+import testHelpers from '../helpers/testHelpers.js';
+import TimerEventDefinition from '../../src/eventDefinitions/TimerEventDefinition.js';
+import {ActivityApi, DefinitionApi} from '../../src/Api.js';
+import {ActivityBroker} from '../../src/EventBroker.js';
+import {Timers} from '../../src/Timers.js';
 
 describe('TimerEventDefinition', () => {
   let event;

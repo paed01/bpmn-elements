@@ -1,8 +1,8 @@
-import Environment from '../../src/Environment';
-import Escalation from '../../src/activity/Escalation';
-import EscalationEventDefinition from '../../src/eventDefinitions/EscalationEventDefinition';
-import {ActivityBroker} from '../../src/EventBroker';
-import {Logger} from '../helpers/testHelpers';
+import Environment from '../../src/Environment.js';
+import Escalation from '../../src/activity/Escalation.js';
+import EscalationEventDefinition from '../../src/eventDefinitions/EscalationEventDefinition.js';
+import {ActivityBroker} from '../../src/EventBroker.js';
+import {Logger} from '../helpers/testHelpers.js';
 
 describe('EscalationEventDefinition', () => {
   let event;

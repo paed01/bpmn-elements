@@ -1,6 +1,6 @@
-import Activity from '../activity/Activity';
-import {ActivityError} from '../error/Errors';
-import {cloneContent} from '../messageHelper';
+import Activity from '../activity/Activity.js';
+import {ActivityError} from '../error/Errors.js';
+import {cloneContent} from '../messageHelper.js';
 
 export default function CallActivity(activityDef, context) {
   return new Activity(CallActivityBehaviour, activityDef, context);
@@ -18,9 +18,7 @@ export function CallActivityBehaviour(activity) {
   this.environment = activity.environment;
 }
 
-const proto = CallActivityBehaviour.prototype;
-
-proto.execute = function execute(executeMessage) {
+CallActivityBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;
   if (loopCharacteristics && executeContent.isRootScope) {
@@ -59,7 +57,7 @@ proto.execute = function execute(executeMessage) {
   });
 };
 
-proto._onDelegatedApiMessage = function onDelegatedApiMessage(calledElement, executeMessage, routingKey, message) {
+CallActivityBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMessage(calledElement, executeMessage, routingKey, message) {
   if (!message.properties.delegate) return;
   const {content: delegateContent} = message;
   if (!delegateContent || !delegateContent.message) return;
@@ -82,7 +80,7 @@ proto._onDelegatedApiMessage = function onDelegatedApiMessage(calledElement, exe
   return this._onApiMessage(calledElement, executeMessage, routingKey, message);
 };
 
-proto._onApiMessage = function onApiMessage(calledElement, executeMessage, routingKey, message) {
+CallActivityBehaviour.prototype._onApiMessage = function onApiMessage(calledElement, executeMessage, routingKey, message) {
   const {type: messageType, correlationId} = message.properties;
   const executeContent = executeMessage.content;
 
@@ -123,7 +121,7 @@ proto._onApiMessage = function onApiMessage(calledElement, executeMessage, routi
   }
 };
 
-proto._stop = function stop(executionId) {
+CallActivityBehaviour.prototype._stop = function stop(executionId) {
   const broker = this.broker;
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_api-delegated-${executionId}`);

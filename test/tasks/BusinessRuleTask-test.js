@@ -1,4 +1,4 @@
-import testHelpers from '../helpers/testHelpers';
+import testHelpers from '../helpers/testHelpers.js';
 
 describe('BusinessRuleTask', () => {
   it('behaves like service task', async () => {

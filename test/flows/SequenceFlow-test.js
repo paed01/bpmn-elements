@@ -1,10 +1,10 @@
-import Environment from '../../src/Environment';
-import factory from '../helpers/factory';
-import js from '../resources/extensions/JsExtension';
-import testHelpers from '../helpers/testHelpers';
-import SequenceFlow from '../../src/flows/SequenceFlow';
+import Environment from '../../src/Environment.js';
+import factory from '../helpers/factory.js';
+import js from '../resources/extensions/JsExtension.js';
+import testHelpers from '../helpers/testHelpers.js';
+import SequenceFlow from '../../src/flows/SequenceFlow.js';
 import {resolveExpression} from '@aircall/expression-parser';
-import {Scripts} from '../helpers/JavaScripts';
+import {Scripts} from '../helpers/JavaScripts.js';
 
 const extensions = {
   js,
@@ -605,6 +605,17 @@ describe('SequenceFlow', () => {
         looped: 0,
         take: 1,
       });
+    });
+  });
+
+  describe('getApi()', () => {
+    it('getApi() returns message Api with default message', async () => {
+      const context = await testHelpers.context(factory.resource('multiple-multiple-inbound.bpmn').toString());
+
+      const flow = context.getSequenceFlowById('taskflow-1');
+
+      const api = flow.getApi();
+      expect(api).to.have.property('id', 'taskflow-1');
     });
   });
 });

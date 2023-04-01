@@ -1,10 +1,13 @@
-import * as types from '../../index';
-import BpmnModdle from 'bpmn-moddle';
-import Context from '../../src/Context';
+import fs from 'fs';
 import Debug from 'debug';
-import Environment from '../../src/Environment';
+import * as types from '../../src/index.js';
+import BpmnModdle from 'bpmn-moddle';
+import Context from '../../src/Context.js';
+import Environment from '../../src/Environment.js';
 import {default as Serializer, TypeResolver} from 'moddle-context-serializer';
-import {Scripts} from './JavaScripts';
+import {Scripts} from './JavaScripts.js';
+
+const camundaBpmnModdle = JSON.parse(fs.readFileSync('./node_modules/camunda-bpmn-moddle/resources/camunda.json'));
 
 const typeResolver = TypeResolver(types);
 
@@ -14,6 +17,7 @@ export default {
   emptyContext,
   moddleContext,
   Logger,
+  camundaBpmnModdle,
 };
 
 async function context(source, ...args) {

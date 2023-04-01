@@ -1,5 +1,5 @@
-import {brokerSafeId} from '../shared';
-import {cloneContent, shiftParent} from '../messageHelper';
+import {brokerSafeId} from '../shared.js';
+import {cloneContent, shiftParent} from '../messageHelper.js';
 
 const kCompleted = Symbol.for('completed');
 const kMessageQ = Symbol.for('messageQ');
@@ -36,20 +36,18 @@ export default function ErrorEventDefinition(activity, eventDefinition) {
   }
 }
 
-const proto = ErrorEventDefinition.prototype;
-
-Object.defineProperty(proto, 'executionId', {
+Object.defineProperty(ErrorEventDefinition.prototype, 'executionId', {
   get() {
     const message = this[kExecuteMessage];
     return message && message.content.executionId;
   },
 });
 
-proto.execute = function execute(executeMessage) {
+ErrorEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 
-proto.executeCatch = function executeCatch(executeMessage) {
+ErrorEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[kExecuteMessage] = executeMessage;
   this[kCompleted] = false;
 
@@ -97,7 +95,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
   broker.publish('event', 'activity.wait', waitContent);
 };
 
-proto.executeThrow = function executeThrow(executeMessage) {
+ErrorEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const {executionId, parent} = executeContent;
 
@@ -120,7 +118,7 @@ proto.executeThrow = function executeThrow(executeMessage) {
   }));
 };
 
-proto._onErrorMessage = function onErrorMessage(routingKey, message) {
+ErrorEventDefinition.prototype._onErrorMessage = function onErrorMessage(routingKey, message) {
   const error = message.content.error;
   if (!this[kReferenceElement]) return this._catchError(routingKey, message, error);
 
@@ -132,7 +130,7 @@ proto._onErrorMessage = function onErrorMessage(routingKey, message) {
   return this._catchError(routingKey, message, error);
 };
 
-proto._onThrowApiMessage = function onThrowApiMessage(routingKey, message) {
+ErrorEventDefinition.prototype._onThrowApiMessage = function onThrowApiMessage(routingKey, message) {
   const error = message.content.message;
   if (!this[kReferenceElement]) return this._catchError(routingKey, message, error);
 
@@ -141,7 +139,7 @@ proto._onThrowApiMessage = function onThrowApiMessage(routingKey, message) {
   return this._catchError(routingKey, message, error);
 };
 
-proto._catchError = function catchError(routingKey, message, error) {
+ErrorEventDefinition.prototype._catchError = function catchError(routingKey, message, error) {
   this[kCompleted] = true;
 
   this._stop();
@@ -171,7 +169,7 @@ proto._catchError = function catchError(routingKey, message, error) {
   }));
 };
 
-proto._onApiMessage = function onApiMessage(routingKey, message) {
+ErrorEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   const messageType = message.properties.type;
 
   switch (messageType) {
@@ -187,7 +185,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-proto._stop = function stop() {
+ErrorEventDefinition.prototype._stop = function stop() {
   const broker = this.broker, executionId = this.executionId;
   broker.cancel(`_onthrow-${executionId}`);
   broker.cancel(`_onerror-${executionId}`);
@@ -195,7 +193,7 @@ proto._stop = function stop() {
   this[kMessageQ].purge();
 };
 
-proto._getReferenceInfo = function getReferenceInfo(message) {
+ErrorEventDefinition.prototype._getReferenceInfo = function getReferenceInfo(message) {
   const referenceElement = this[kReferenceElement];
   if (!referenceElement) {
     return {
@@ -214,6 +212,6 @@ proto._getReferenceInfo = function getReferenceInfo(message) {
   return result;
 };
 
-proto._debug = function debug(msg) {
+ErrorEventDefinition.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
 };

@@ -1,5 +1,5 @@
-import Definition from '../../src/definition/Definition';
-import testHelpers from '../helpers/testHelpers';
+import Definition from '../../src/definition/Definition.js';
+import testHelpers from '../helpers/testHelpers.js';
 
 Feature('Multiple start events', () => {
   Scenario('Two start events waiting to be signaled ending up in a task', () => {

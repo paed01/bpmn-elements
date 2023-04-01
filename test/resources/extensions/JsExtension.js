@@ -1,5 +1,7 @@
-import moddleOptions from '../js-bpmn-moddle.json';
-import {brokerSafeId} from '../../../src/shared';
+import fs from 'fs';
+import {brokerSafeId} from '../../../src/shared.js';
+
+const moddleOptions = JSON.parse(fs.readFileSync('./test/resources/js-bpmn-moddle.json'));
 
 export default {
   extension: Js,

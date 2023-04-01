@@ -1,6 +1,6 @@
-import Definition from '../../src/definition/Definition';
-import factory from '../helpers/factory';
-import testHelpers from '../helpers/testHelpers';
+import Definition from '../../src/definition/Definition.js';
+import factory from '../helpers/factory.js';
+import testHelpers from '../helpers/testHelpers.js';
 
 const ebgSource = factory.resource('event-based-gateway.bpmn');
 

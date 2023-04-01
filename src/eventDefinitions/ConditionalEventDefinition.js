@@ -1,5 +1,5 @@
-import {cloneContent, shiftParent} from '../messageHelper';
-import {ActivityError} from '../error/Errors';
+import {cloneContent, shiftParent} from '../messageHelper.js';
+import {ActivityError} from '../error/Errors.js';
 
 const kExecuteMessage = Symbol.for('executeMessage');
 
@@ -18,21 +18,19 @@ export default function ConditionalEventDefinition(activity, eventDefinition) {
   this.logger = environment.Logger(type.toLowerCase());
 }
 
-const proto = ConditionalEventDefinition.prototype;
-
-Object.defineProperty(proto, 'executionId', {
+Object.defineProperty(ConditionalEventDefinition.prototype, 'executionId', {
   get() {
     const message = this[kExecuteMessage];
     return message && message.content.executionId;
   },
 });
 
-proto.execute = function execute(executeMessage) {
+ConditionalEventDefinition.prototype.execute = function execute(executeMessage) {
   this[kExecuteMessage] = executeMessage;
   return this.isWaiting ? this.executeWait(executeMessage) : this.executeCatch(executeMessage);
 };
 
-proto.executeWait = function executeWait(executeMessage) {
+ConditionalEventDefinition.prototype.executeWait = function executeWait(executeMessage) {
   const executeContent = executeMessage.content;
   const {executionId, parent} = executeContent;
   const parentExecutionId = parent.executionId;
@@ -59,7 +57,7 @@ proto.executeWait = function executeWait(executeMessage) {
   broker.publish('event', 'activity.wait', waitContent);
 };
 
-proto.executeCatch = function executeCatch(executeMessage) {
+ConditionalEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   const executeContent = executeMessage.content;
   const {executionId, index} = executeContent;
 
@@ -78,7 +76,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
   });
 };
 
-proto._onWaitApiMessage = function onWaitApiMessage(routingKey, message) {
+ConditionalEventDefinition.prototype._onWaitApiMessage = function onWaitApiMessage(routingKey, message) {
   const messageType = message.properties.type;
 
   switch (messageType) {
@@ -95,7 +93,7 @@ proto._onWaitApiMessage = function onWaitApiMessage(routingKey, message) {
   }
 };
 
-proto._evaluateWait = function evaluate(message) {
+ConditionalEventDefinition.prototype._evaluateWait = function evaluate(message) {
   const executeMessage = this[kExecuteMessage];
   const broker = this.broker, executeContent = executeMessage.content;
 
@@ -116,13 +114,13 @@ proto._evaluateWait = function evaluate(message) {
   return broker.publish('execution', 'execute.completed', cloneContent(executeContent, {output}));
 };
 
-proto._stopWait = function stopWait() {
+ConditionalEventDefinition.prototype._stopWait = function stopWait() {
   const broker = this.broker, executionId = this.executionId;
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_parent-signal-${executionId}`);
 };
 
-proto._onAttachedCompleted = function onAttachedCompleted(routingKey, message) {
+ConditionalEventDefinition.prototype._onAttachedCompleted = function onAttachedCompleted(routingKey, message) {
   this._stopCatch();
 
   const executeMessage = this[kExecuteMessage];
@@ -144,7 +142,7 @@ proto._onAttachedCompleted = function onAttachedCompleted(routingKey, message) {
   }
 };
 
-proto._onCatchApiMessage = function onCatchApiMessage(routingKey, message) {
+ConditionalEventDefinition.prototype._onCatchApiMessage = function onCatchApiMessage(routingKey, message) {
   const messageType = message.properties.type;
   switch (messageType) {
     case 'discard': {
@@ -159,12 +157,12 @@ proto._onCatchApiMessage = function onCatchApiMessage(routingKey, message) {
   }
 };
 
-proto._stopCatch = function stopCatch() {
+ConditionalEventDefinition.prototype._stopCatch = function stopCatch() {
   const {executionId, index} = this[kExecuteMessage].content;
   this.activity.attachedTo.broker.cancel(`_onend-${executionId}_${index}`);
   this.broker.cancel(`_api-${executionId}_${index}`);
 };
 
-proto._debug = function debug(msg) {
+ConditionalEventDefinition.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
 };

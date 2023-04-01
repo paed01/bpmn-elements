@@ -1,8 +1,8 @@
-import Activity from '../../src/activity/Activity';
-import Environment from '../../src/Environment';
-import SequenceFlow from '../../src/flows/SequenceFlow';
-import testHelpers from '../helpers/testHelpers';
-import {TaskBehaviour} from '../../src/tasks/Task';
+import Activity from '../../src/activity/Activity.js';
+import Environment from '../../src/Environment.js';
+import SequenceFlow from '../../src/flows/SequenceFlow.js';
+import testHelpers from '../helpers/testHelpers.js';
+import {TaskBehaviour} from '../../src/tasks/Task.js';
 
 const Logger = testHelpers.Logger;
 

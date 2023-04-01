@@ -1,5 +1,5 @@
-import {brokerSafeId} from '../shared';
-import {cloneContent, cloneMessage, shiftParent} from '../messageHelper';
+import {brokerSafeId} from '../shared.js';
+import {cloneContent, cloneMessage, shiftParent} from '../messageHelper.js';
 
 const kCompleted = Symbol.for('completed');
 const kExecuteMessage = Symbol.for('executeMessage');
@@ -27,20 +27,18 @@ export default function CompensateEventDefinition(activity, eventDefinition, con
   }
 }
 
-const proto = CompensateEventDefinition.prototype;
-
-Object.defineProperty(proto, 'executionId', {
+Object.defineProperty(CompensateEventDefinition.prototype, 'executionId', {
   get() {
     const message = this[kExecuteMessage];
     return message && message.content.executionId;
   },
 });
 
-proto.execute = function execute(executeMessage) {
+CompensateEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 
-proto.executeCatch = function executeCatch(executeMessage) {
+CompensateEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[kExecuteMessage] = executeMessage;
   this[kCompleted] = false;
 
@@ -84,7 +82,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
   broker.publish('event', 'activity.detach', detachContent);
 };
 
-proto.executeThrow = function executeThrow(executeMessage) {
+CompensateEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const {executionId, parent} = executeContent;
   const parentExecutionId = parent && parent.executionId;
@@ -102,7 +100,7 @@ proto.executeThrow = function executeThrow(executeMessage) {
   return broker.publish('execution', 'execute.completed', cloneContent(executeContent));
 };
 
-proto._onCollect = function onCollect(routingKey, message) {
+CompensateEventDefinition.prototype._onCollect = function onCollect(routingKey, message) {
 
   switch (routingKey) {
     case 'execute.error':
@@ -112,7 +110,7 @@ proto._onCollect = function onCollect(routingKey, message) {
   }
 };
 
-proto._onCompensateApiMessage = function onCompensateApiMessage(routingKey, message) {
+CompensateEventDefinition.prototype._onCompensateApiMessage = function onCompensateApiMessage(routingKey, message) {
   const output = message.content.message;
   this[kCompleted] = true;
 
@@ -141,11 +139,11 @@ proto._onCompensateApiMessage = function onCompensateApiMessage(routingKey, mess
   }
 };
 
-proto._onCollected = function onCollected(routingKey, message) {
+CompensateEventDefinition.prototype._onCollected = function onCollected(routingKey, message) {
   for (const association of this[kAssociations]) association.take(cloneMessage(message));
 };
 
-proto._onApiMessage = function onApiMessage(routingKey, message) {
+CompensateEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   const messageType = message.properties.type;
 
   switch (messageType) {
@@ -165,7 +163,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-proto._stop = function stop() {
+CompensateEventDefinition.prototype._stop = function stop() {
   const broker = this.broker, executionId = this.executionId;
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_oncompensate-${executionId}`);
@@ -174,6 +172,6 @@ proto._stop = function stop() {
   this[kMessageQ].purge();
 };
 
-proto._debug = function debug(msg) {
+CompensateEventDefinition.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
 };

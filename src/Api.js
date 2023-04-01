@@ -1,5 +1,5 @@
-import {cloneMessage} from './messageHelper';
-import {getUniqueId} from './shared';
+import {cloneMessage} from './messageHelper.js';
+import {getUniqueId} from './shared.js';
 
 export {
   ActivityApi,
@@ -44,29 +44,27 @@ function Api(pfx, broker, sourceMessage, environment) {
   this.messagePrefix = pfx;
 }
 
-const proto = Api.prototype;
-
-proto.cancel = function cancel(message, options) {
+Api.prototype.cancel = function cancel(message, options) {
   this.sendApiMessage('cancel', {message}, options);
 };
 
-proto.discard = function discard() {
+Api.prototype.discard = function discard() {
   this.sendApiMessage('discard');
 };
 
-proto.fail = function fail(error) {
+Api.prototype.fail = function fail(error) {
   this.sendApiMessage('error', {error});
 };
 
-proto.signal = function signal(message, options) {
+Api.prototype.signal = function signal(message, options) {
   this.sendApiMessage('signal', {message}, options);
 };
 
-proto.stop = function stop() {
+Api.prototype.stop = function stop() {
   this.sendApiMessage('stop');
 };
 
-proto.resolveExpression = function resolveExpression(expression) {
+Api.prototype.resolveExpression = function resolveExpression(expression) {
   return this.environment.resolveExpression(expression, {
     fields: this.fields,
     content: this.content,
@@ -74,20 +72,20 @@ proto.resolveExpression = function resolveExpression(expression) {
   }, this.owner);
 };
 
-proto.sendApiMessage = function sendApiMessage(action, content, options) {
+Api.prototype.sendApiMessage = function sendApiMessage(action, content, options) {
   const correlationId = (options && options.correlationId) || getUniqueId(`${this.id || this.messagePrefix}_signal`);
   let key = `${this.messagePrefix}.${action}`;
   if (this.executionId) key += `.${this.executionId}`;
   this.broker.publish('api', key, this.createMessage(content), {...options, correlationId, type: action});
 };
 
-proto.getPostponed = function getPostponed(...args) {
+Api.prototype.getPostponed = function getPostponed(...args) {
   if (this.owner.getPostponed) return this.owner.getPostponed(...args);
   if (this.owner.isSubProcess && this.owner.execution) return this.owner.execution.getPostponed(...args);
   return [];
 };
 
-proto.createMessage = function createMessage(content) {
+Api.prototype.createMessage = function createMessage(content) {
   return {
     ...this.content,
     ...content,

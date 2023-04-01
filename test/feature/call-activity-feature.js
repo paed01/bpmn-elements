@@ -1,6 +1,6 @@
-import factory from '../helpers/factory';
-import testHelpers from '../helpers/testHelpers';
-import Definition from '../../src/definition/Definition';
+import factory from '../helpers/factory.js';
+import testHelpers from '../helpers/testHelpers.js';
+import Definition from '../../src/definition/Definition.js';
 
 Feature('Call activity', () => {
   Scenario('call process in the same diagram', () => {

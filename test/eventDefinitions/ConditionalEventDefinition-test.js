@@ -1,8 +1,8 @@
-import ConditionalEventDefinition from '../../src/eventDefinitions/ConditionalEventDefinition';
-import Environment from '../../src/Environment';
-import testHelpers from '../helpers/testHelpers';
-import {ActivityBroker} from '../../src/EventBroker';
-import {ActivityApi} from '../../src/Api';
+import ConditionalEventDefinition from '../../src/eventDefinitions/ConditionalEventDefinition.js';
+import Environment from '../../src/Environment.js';
+import testHelpers from '../helpers/testHelpers.js';
+import {ActivityBroker} from '../../src/EventBroker.js';
+import {ActivityApi} from '../../src/Api.js';
 
 describe('ConditionalEventDefinition', () => {
   let event, task;

@@ -1,5 +1,5 @@
-import Activity from '../activity/Activity';
-import {cloneContent} from '../messageHelper';
+import Activity from '../activity/Activity.js';
+import {cloneContent} from '../messageHelper.js';
 
 const kCompleted = Symbol.for('completed');
 const kTargets = Symbol.for('targets');

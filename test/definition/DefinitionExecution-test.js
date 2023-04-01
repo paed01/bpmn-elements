@@ -1,7 +1,7 @@
-import Environment from '../../src/Environment';
-import DefinitionExecution from '../../src/definition/DefinitionExecution';
-import testHelpers from '../helpers/testHelpers';
-import {DefinitionBroker, ProcessBroker} from '../../src/EventBroker';
+import Environment from '../../src/Environment.js';
+import DefinitionExecution from '../../src/definition/DefinitionExecution.js';
+import testHelpers from '../helpers/testHelpers.js';
+import {DefinitionBroker, ProcessBroker} from '../../src/EventBroker.js';
 
 describe('Definition execution', () => {
   describe('execute()', () => {

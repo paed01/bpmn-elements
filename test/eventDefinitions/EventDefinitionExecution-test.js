@@ -1,7 +1,7 @@
-import EventDefinitionExecution from '../../src/eventDefinitions/EventDefinitionExecution';
-import {ActivityBroker} from '../../src/EventBroker';
-import {cloneContent} from '../../src/messageHelper';
-import {Logger} from '../helpers/testHelpers';
+import EventDefinitionExecution from '../../src/eventDefinitions/EventDefinitionExecution.js';
+import {ActivityBroker} from '../../src/EventBroker.js';
+import {cloneContent} from '../../src/messageHelper.js';
+import {Logger} from '../helpers/testHelpers.js';
 
 describe('EventDefinitionExecution', () => {
   it('publishes root message with prevent complete instruction when executed', () => {

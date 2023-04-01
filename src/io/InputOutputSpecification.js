@@ -1,5 +1,5 @@
-import getPropertyValue from '../getPropertyValue';
-import {brokerSafeId} from '../shared';
+import getPropertyValue from '../getPropertyValue.js';
+import {brokerSafeId} from '../shared.js';
 
 const kConsuming = Symbol.for('consuming');
 
@@ -13,9 +13,7 @@ export default function IoSpecification(activity, ioSpecificationDef, context) {
   this.context = context;
 }
 
-const proto = IoSpecification.prototype;
-
-proto.activate = function activate(message) {
+IoSpecification.prototype.activate = function activate(message) {
   if (this[kConsuming]) return;
   if (message && message.fields.redelivered && message.fields.routingKey === 'run.start') {
     this._onFormatEnter();
@@ -26,11 +24,11 @@ proto.activate = function activate(message) {
   this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {noAck: true});
 };
 
-proto.deactivate = function deactivate() {
+IoSpecification.prototype.deactivate = function deactivate() {
   if (this[kConsuming]) this[kConsuming] = this[kConsuming].cancel();
 };
 
-proto._onActivityEvent = function onActivityEvent(routingKey, message) {
+IoSpecification.prototype._onActivityEvent = function onActivityEvent(routingKey, message) {
   const {dataInputs, dataOutputs} = this.behaviour;
   if ((dataInputs || dataOutputs) && routingKey === 'activity.enter') {
     return this._onFormatEnter();
@@ -41,7 +39,7 @@ proto._onActivityEvent = function onActivityEvent(routingKey, message) {
   }
 };
 
-proto._onFormatEnter = function onFormatOnEnter() {
+IoSpecification.prototype._onFormatEnter = function onFormatOnEnter() {
   const safeType = brokerSafeId(this.type).toLowerCase();
   const startRoutingKey = `run.onstart.${safeType}`;
   const {dataInputs, dataOutputs} = this.behaviour;
@@ -105,7 +103,7 @@ proto._onFormatEnter = function onFormatOnEnter() {
   });
 };
 
-proto._onFormatComplete = function formatOnComplete(message) {
+IoSpecification.prototype._onFormatComplete = function formatOnComplete(message) {
   const safeType = brokerSafeId(this.type).toLowerCase();
   const messageInputs = getPropertyValue(message, 'content.ioSpecification.dataInputs');
   const messageOutputs = getPropertyValue(message, 'content.output.ioSpecification.dataOutputs') || [];
@@ -173,7 +171,7 @@ proto._onFormatComplete = function formatOnComplete(message) {
   });
 };
 
-proto._getDataOutputs = function getDataOutputs(dataOutputs) {
+IoSpecification.prototype._getDataOutputs = function getDataOutputs(dataOutputs) {
   if (!dataOutputs) return;
   return dataOutputs.map((dataOutput) => {
     return {

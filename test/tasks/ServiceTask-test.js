@@ -1,9 +1,9 @@
-import JsExtension from '../resources/extensions/JsExtension';
+import JsExtension from '../resources/extensions/JsExtension.js';
 import nock from 'nock';
 import got from 'got';
-import ServiceTask from '../../src/tasks/ServiceTask';
-import testHelpers from '../helpers/testHelpers';
-import { ActivityError } from '../../src/error/Errors';
+import ServiceTask from '../../src/tasks/ServiceTask.js';
+import testHelpers from '../helpers/testHelpers.js';
+import { ActivityError } from '../../src/error/Errors.js';
 
 describe('ServiceTask', () => {
   describe('behaviour', () => {

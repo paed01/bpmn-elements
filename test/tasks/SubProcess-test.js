@@ -1,9 +1,9 @@
-import factory from '../helpers/factory';
-import JsExtension from '../resources/extensions/JsExtension';
-import SignalTask from '../../src/tasks/SignalTask';
-import SubProcess from '../../src/tasks/SubProcess';
-import testHelpers from '../helpers/testHelpers';
-import {BpmnError} from '../../src/error/Errors';
+import factory from '../helpers/factory.js';
+import JsExtension from '../resources/extensions/JsExtension.js';
+import SignalTask from '../../src/tasks/SignalTask.js';
+import SubProcess from '../../src/tasks/SubProcess.js';
+import testHelpers from '../helpers/testHelpers.js';
+import {BpmnError} from '../../src/error/Errors.js';
 
 const subProcessSource = factory.resource('sub-process.bpmn');
 

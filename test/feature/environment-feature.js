@@ -1,5 +1,5 @@
-import testHelpers from '../helpers/testHelpers';
-import Definition from '../../src/definition/Definition';
+import testHelpers from '../helpers/testHelpers.js';
+import Definition from '../../src/definition/Definition.js';
 
 Feature('Definition', () => {
   Scenario('A definition with one process and a user task', () => {

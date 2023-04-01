@@ -1,4 +1,4 @@
-import testHelpers from '../helpers/testHelpers';
+import testHelpers from '../helpers/testHelpers.js';
 
 Feature('BoundaryEvent', () => {
   Scenario('task with boundary event followed by a join', () => {

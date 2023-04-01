@@ -1,4 +1,4 @@
-import testHelpers from '../helpers/testHelpers';
+import testHelpers from '../helpers/testHelpers.js';
 
 describe('UserTask', () => {
   describe('execution', () => {

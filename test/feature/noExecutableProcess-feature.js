@@ -1,11 +1,10 @@
-import factory from '../helpers/factory';
-import testHelpers from '../helpers/testHelpers';
-import Definition from '../../src/definition/Definition';
-import camundaBpmnModdle from 'camunda-bpmn-moddle/resources/camunda';
+import factory from '../helpers/factory.js';
+import testHelpers from '../helpers/testHelpers.js';
+import Definition from '../../src/definition/Definition.js';
 
 const extensions = {
   camunda: {
-    moddleOptions: camundaBpmnModdle,
+    moddleOptions: testHelpers.camundaBpmnModdle,
   },
 };
 

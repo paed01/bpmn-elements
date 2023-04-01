@@ -1,6 +1,6 @@
-import Activity from '../activity/Activity';
-import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution';
-import {cloneContent} from '../messageHelper';
+import Activity from '../activity/Activity.js';
+import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution.js';
+import {cloneContent} from '../messageHelper.js';
 
 const kExecution = Symbol.for('execution');
 

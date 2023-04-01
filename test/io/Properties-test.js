@@ -1,6 +1,6 @@
-import Environment from '../../src/Environment';
-import Properties from '../../src/io/Properties';
-import {ActivityBroker} from '../../src/EventBroker';
+import Environment from '../../src/Environment.js';
+import Properties from '../../src/io/Properties.js';
+import {ActivityBroker} from '../../src/EventBroker.js';
 
 describe('Properties', () => {
   it('activate twice has no effect', () => {

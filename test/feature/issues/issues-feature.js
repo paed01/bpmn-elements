@@ -2,7 +2,8 @@ import Definition from '../../../src/definition/Definition.js';
 import factory from '../../helpers/factory.js';
 import testHelpers from '../../helpers/testHelpers.js';
 import js from '../../resources/extensions/JsExtension.js';
-import camundaBpmnModdle from 'camunda-bpmn-moddle/resources/camunda';
+
+const camundaBpmnModdle = testHelpers.camundaBpmnModdle;
 
 Feature('Issues', () => {
   Scenario('Multiple discard loop back', () => {

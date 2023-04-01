@@ -1,6 +1,12 @@
 Changelog
 =========
 
+# 9.0.0
+
+- Turn into module with exports for node
+- Add basic type declaration, still learning
+- return Api instance for Message- and Association flows, as stated by type declaration
+
 # 8.2.4
 
 - allow process to start before receiving api messages, should fix issue #32

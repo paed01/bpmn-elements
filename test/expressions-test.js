@@ -1,4 +1,4 @@
-import Expressions from '../src/Expressions';
+import Expressions from '../src/Expressions.js';
 import {resolveExpression} from '@aircall/expression-parser';
 
 const expressions = Expressions();

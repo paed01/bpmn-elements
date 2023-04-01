@@ -1,4 +1,4 @@
-import SubProcess from './SubProcess';
+import SubProcess from './SubProcess.js';
 
 export default function Transaction(activityDef, context) {
   const transaction = {type: 'transaction', ...activityDef, isTransaction: true};

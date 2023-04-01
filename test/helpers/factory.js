@@ -119,7 +119,7 @@ function multipleInbound() {
 }
 
 function resource(name) {
-  const sourcePath = path.join(__dirname, '..', 'resources', name);
+  const sourcePath = path.join('./test/resources', name);
   if (sourcePath in cache) return cache[sourcePath];
   const source = fs.readFileSync(sourcePath);
   cache[sourcePath] = source;

@@ -1,4 +1,4 @@
-import {cloneContent, unshiftParent, shiftParent, cloneParent} from '../messageHelper';
+import {cloneContent, unshiftParent, shiftParent, cloneParent} from '../messageHelper.js';
 
 const kCompleted = Symbol.for('completed');
 const kExecuteMessage = Symbol.for('executeMessage');
@@ -15,23 +15,21 @@ export default function EventDefinitionExecution(activity, eventDefinitions, com
   this[kExecuteMessage] = null;
 }
 
-const proto = EventDefinitionExecution.prototype;
-
-Object.defineProperty(proto, 'completed', {
+Object.defineProperty(EventDefinitionExecution.prototype, 'completed', {
   enumerable: true,
   get() {
     return this[kCompleted];
   },
 });
 
-Object.defineProperty(proto, 'stopped', {
+Object.defineProperty(EventDefinitionExecution.prototype, 'stopped', {
   enumerable: true,
   get() {
     return this[kStopped];
   },
 });
 
-proto.execute = function execute(executeMessage) {
+EventDefinitionExecution.prototype.execute = function execute(executeMessage) {
   const content = executeMessage.content;
 
   if (content.isDefinitionScope) return this._executeDefinition(executeMessage);
@@ -82,7 +80,7 @@ proto.execute = function execute(executeMessage) {
   }
 };
 
-proto._onApiMessage = function onApiMessage(_, message) {
+EventDefinitionExecution.prototype._onApiMessage = function onApiMessage(_, message) {
   const messageType = message.properties.type;
   switch (messageType) {
     case 'stop':
@@ -91,7 +89,7 @@ proto._onApiMessage = function onApiMessage(_, message) {
   }
 };
 
-proto._onExecuteMessage = function onExecuteMessage(routingKey, message) {
+EventDefinitionExecution.prototype._onExecuteMessage = function onExecuteMessage(routingKey, message) {
   switch (routingKey) {
     case 'execute.completed': {
       this._stop();
@@ -111,7 +109,7 @@ proto._onExecuteMessage = function onExecuteMessage(routingKey, message) {
   }
 };
 
-proto._complete = function complete(message) {
+EventDefinitionExecution.prototype._complete = function complete(message) {
   const {executionId, type, index, parent} = message.content;
   this[kCompleted] = true;
 
@@ -127,7 +125,7 @@ proto._complete = function complete(message) {
   this.broker.publish('execution', this.completedRoutingKey, completeContent, {correlationId: message.properties.correlationId});
 };
 
-proto._executeDefinition = function executeDefinition(message) {
+EventDefinitionExecution.prototype._executeDefinition = function executeDefinition(message) {
   const {executionId, index} = message.content;
   const ed = this.eventDefinitions[index];
   if (!ed) return this.activity.logger.warn(`<${executionId} (${this.id})> found no event definition on index ${index}`);
@@ -135,12 +133,12 @@ proto._executeDefinition = function executeDefinition(message) {
   ed.execute(message);
 };
 
-proto._stop = function stop() {
+EventDefinitionExecution.prototype._stop = function stop() {
   this[kStopped] = true;
   this.broker.cancel('_eventdefinition-execution-execute-tag');
   this.broker.cancel('_eventdefinition-execution-api-tag');
 };
 
-proto._debug = function debug(executionId, msg) {
+EventDefinitionExecution.prototype._debug = function debug(executionId, msg) {
   this.activity.logger.debug(`<${executionId} (${this.id})> ${msg}`);
 };

@@ -1,5 +1,5 @@
-import Definition from '../../src/definition/Definition';
-import testHelpers from '../helpers/testHelpers';
+import Definition from '../../src/definition/Definition.js';
+import testHelpers from '../helpers/testHelpers.js';
 
 class Scripts {
   register({behaviour}) {

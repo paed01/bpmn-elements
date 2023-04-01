@@ -1,8 +1,8 @@
-import camunda from '../resources/extensions/CamundaExtension';
-import Definition from '../../src/definition/Definition';
-import factory from '../helpers/factory';
-import JsExtension from '../resources/extensions/JsExtension';
-import testHelpers from '../helpers/testHelpers';
+import camunda from '../resources/extensions/CamundaExtension.js';
+import Definition from '../../src/definition/Definition.js';
+import factory from '../helpers/factory.js';
+import JsExtension from '../resources/extensions/JsExtension.js';
+import testHelpers from '../helpers/testHelpers.js';
 
 const signalsSource = factory.resource('signals.bpmn');
 

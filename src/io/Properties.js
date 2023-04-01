@@ -1,4 +1,4 @@
-import getPropertyValue from '../getPropertyValue';
+import getPropertyValue from '../getPropertyValue.js';
 
 const kProperties = Symbol.for('properties');
 const kConsuming = Symbol.for('consuming');
@@ -57,9 +57,7 @@ export default function Properties(activity, propertiesDef, context) {
   }
 }
 
-const proto = Properties.prototype;
-
-proto.activate = function activate(message) {
+Properties.prototype.activate = function activate(message) {
   if (this[kConsuming]) return;
   if (message.fields.redelivered && message.fields.routingKey === 'run.start') {
     this._onActivityEvent('activity.enter', message);
@@ -72,11 +70,11 @@ proto.activate = function activate(message) {
   this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {noAck: true});
 };
 
-proto.deactivate = function deactivate() {
+Properties.prototype.deactivate = function deactivate() {
   if (this[kConsuming]) this[kConsuming] = this[kConsuming].cancel();
 };
 
-proto._onActivityEvent = function onActivityEvent(routingKey, message) {
+Properties.prototype._onActivityEvent = function onActivityEvent(routingKey, message) {
   switch (routingKey) {
     case 'activity.enter':
     case 'activity.extension.resume':
@@ -86,7 +84,7 @@ proto._onActivityEvent = function onActivityEvent(routingKey, message) {
   }
 };
 
-proto._formatOnEnter = function formatOnEnter(message) {
+Properties.prototype._formatOnEnter = function formatOnEnter(message) {
   const startRoutingKey = 'run.enter.bpmn-properties';
 
   const dataInputObjects = this[kProperties].dataInputObjects;
@@ -110,7 +108,7 @@ proto._formatOnEnter = function formatOnEnter(message) {
   });
 };
 
-proto._formatOnComplete = function formatOnComplete(message) {
+Properties.prototype._formatOnComplete = function formatOnComplete(message) {
   const startRoutingKey = 'run.end.bpmn-properties';
 
   const messageOutput = getPropertyValue(message, 'content.output.properties') || {};
@@ -137,7 +135,7 @@ proto._formatOnComplete = function formatOnComplete(message) {
   });
 };
 
-proto._getProperties = function getProperties(message, values) {
+Properties.prototype._getProperties = function getProperties(message, values) {
   let response = {};
 
   if (message.content.properties) {

@@ -1,6 +1,6 @@
-import Expressions from './Expressions';
-import {Scripts as IScripts} from './Scripts';
-import {Timers} from './Timers';
+import Expressions from './Expressions.js';
+import {Scripts as IScripts} from './Scripts.js';
+import {Timers} from './Timers.js';
 
 const kServices = Symbol.for('services');
 const kVariables = Symbol.for('variables');
@@ -31,16 +31,14 @@ export default function Environment(options = {}) {
   this[kVariables] = options.variables || {};
 }
 
-const proto = Environment.prototype;
-
-Object.defineProperty(proto, 'variables', {
+Object.defineProperty(Environment.prototype, 'variables', {
   enumerable: true,
   get() {
     return this[kVariables];
   },
 });
 
-Object.defineProperty(proto, 'services', {
+Object.defineProperty(Environment.prototype, 'services', {
   enumerable: true,
   get() {
     return this[kServices];
@@ -54,7 +52,7 @@ Object.defineProperty(proto, 'services', {
   },
 });
 
-proto.getState = function getState() {
+Environment.prototype.getState = function getState() {
   return {
     settings: {...this.settings},
     variables: {...this[kVariables]},
@@ -62,7 +60,7 @@ proto.getState = function getState() {
   };
 };
 
-proto.recover = function recover(state) {
+Environment.prototype.recover = function recover(state) {
   if (!state) return this;
 
   if (state.settings) Object.assign(this.settings, state.settings);
@@ -72,7 +70,7 @@ proto.recover = function recover(state) {
   return this;
 };
 
-proto.clone = function clone(overrideOptions = {}) {
+Environment.prototype.clone = function clone(overrideOptions = {}) {
   const services = this[kServices];
   const newOptions = {
     settings: {...this.settings},
@@ -92,7 +90,7 @@ proto.clone = function clone(overrideOptions = {}) {
   return new this.constructor(newOptions);
 };
 
-proto.assignVariables = function assignVariables(newVars) {
+Environment.prototype.assignVariables = function assignVariables(newVars) {
   if (!newVars || typeof newVars !== 'object') return;
 
   this[kVariables] = {
@@ -101,7 +99,7 @@ proto.assignVariables = function assignVariables(newVars) {
   };
 };
 
-proto.assignSettings = function assignVariables(newSettings) {
+Environment.prototype.assignSettings = function assignVariables(newSettings) {
   if (!newSettings || typeof newSettings !== 'object') return;
 
   this.settings = {
@@ -110,19 +108,19 @@ proto.assignSettings = function assignVariables(newSettings) {
   };
 };
 
-proto.getScript = function getScript(...args) {
+Environment.prototype.getScript = function getScript(...args) {
   return this.scripts.getScript(...args);
 };
 
-proto.registerScript = function registerScript(...args) {
+Environment.prototype.registerScript = function registerScript(...args) {
   return this.scripts.register(...args);
 };
 
-proto.getServiceByName = function getServiceByName(serviceName) {
+Environment.prototype.getServiceByName = function getServiceByName(serviceName) {
   return this[kServices][serviceName];
 };
 
-proto.resolveExpression = function resolveExpression(expression, message = {}, expressionFnContext) {
+Environment.prototype.resolveExpression = function resolveExpression(expression, message = {}, expressionFnContext) {
   const from = {
     environment: this,
     ...message,
@@ -131,7 +129,7 @@ proto.resolveExpression = function resolveExpression(expression, message = {}, e
   return this.expressions.resolveExpression(expression, from, expressionFnContext);
 };
 
-proto.addService = function addService(name, fn) {
+Environment.prototype.addService = function addService(name, fn) {
   this[kServices][name] = fn;
 };
 

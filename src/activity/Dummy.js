@@ -1,4 +1,4 @@
-import {cloneParent} from '../messageHelper';
+import {cloneParent} from '../messageHelper.js';
 
 export default function DummyActivity(activityDef) {
   const {id, type = 'dummy', name, parent, behaviour} = activityDef;

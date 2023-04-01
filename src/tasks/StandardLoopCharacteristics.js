@@ -1,4 +1,4 @@
-import LoopCharacteristics from './LoopCharacteristics';
+import LoopCharacteristics from './LoopCharacteristics.js';
 
 export default function StandardLoopCharacteristics(activity, loopCharacteristics) {
   let {behaviour} = loopCharacteristics;

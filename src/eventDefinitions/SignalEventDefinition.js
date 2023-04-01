@@ -1,6 +1,6 @@
-import getPropertyValue from '../getPropertyValue';
-import {brokerSafeId} from '../shared';
-import {cloneContent, shiftParent} from '../messageHelper';
+import getPropertyValue from '../getPropertyValue.js';
+import {brokerSafeId} from '../shared.js';
+import {cloneContent, shiftParent} from '../messageHelper.js';
 
 const kCompleted = Symbol.for('completed');
 const kMessageQ = Symbol.for('messageQ');
@@ -36,20 +36,18 @@ export default function SignalEventDefinition(activity, eventDefinition) {
   }
 }
 
-const proto = SignalEventDefinition.prototype;
-
-Object.defineProperty(proto, 'executionId', {
+Object.defineProperty(SignalEventDefinition.prototype, 'executionId', {
   get() {
     const message = this[kExecuteMessage];
     return message && message.content.executionId;
   },
 });
 
-proto.execute = function execute(executeMessage) {
+SignalEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 
-proto.executeCatch = function executeCatch(executeMessage) {
+SignalEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[kExecuteMessage] = executeMessage;
   this[kCompleted] = false;
 
@@ -94,7 +92,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
   broker.publish('event', 'activity.wait', waitContent);
 };
 
-proto.executeThrow = function executeThrow(executeMessage) {
+SignalEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const {executionId, parent} = executeContent;
 
@@ -115,7 +113,7 @@ proto.executeThrow = function executeThrow(executeMessage) {
   return broker.publish('execution', 'execute.completed', cloneContent(executeContent));
 };
 
-proto._onCatchMessage = function onCatchMessage(routingKey, message) {
+SignalEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
   const info = this[kReferenceInfo];
   if (getPropertyValue(message, 'content.message.id') !== info.message.id) return;
   this[kCompleted] = true;
@@ -132,7 +130,7 @@ proto._onCatchMessage = function onCatchMessage(routingKey, message) {
   return this._complete(message.content.message, message.properties);
 };
 
-proto._onApiMessage = function onApiMessage(routingKey, message) {
+SignalEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   const {type, correlationId} = message.properties;
 
   switch (type) {
@@ -151,7 +149,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-proto._complete = function complete(output, options) {
+SignalEventDefinition.prototype._complete = function complete(output, options) {
   this[kCompleted] = true;
   this._stop();
   this._debug(`signaled with ${this[kReferenceInfo].description}`);
@@ -161,7 +159,7 @@ proto._complete = function complete(output, options) {
   }), options);
 };
 
-proto._stop = function stop() {
+SignalEventDefinition.prototype._stop = function stop() {
   const broker = this.broker, executionId = this.executionId;
   broker.cancel(`_api-signal-${executionId}`);
   broker.cancel(`_api-parent-${executionId}`);
@@ -170,7 +168,7 @@ proto._stop = function stop() {
   if (this.activity.isStart) this[kMessageQ].purge();
 };
 
-proto._getReferenceInfo = function getReferenceInfo(message) {
+SignalEventDefinition.prototype._getReferenceInfo = function getReferenceInfo(message) {
   const referenceElement = this[kReferenceElement];
   if (!referenceElement) {
     return {
@@ -188,6 +186,6 @@ proto._getReferenceInfo = function getReferenceInfo(message) {
   return result;
 };
 
-proto._debug = function debug(msg) {
+SignalEventDefinition.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
 };

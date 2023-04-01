@@ -1,5 +1,5 @@
-import Environment from '../src/Environment';
-import {Timers} from '../src/Timers';
+import Environment from '../src/Environment.js';
+import {Timers} from '../src/Timers.js';
 
 describe('Environment', () => {
   describe('ctor', () => {

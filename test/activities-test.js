@@ -1,5 +1,5 @@
 import BpmnModdle from 'bpmn-moddle';
-import testHelpers from './helpers/testHelpers';
+import testHelpers from './helpers/testHelpers.js';
 
 const moddle = new BpmnModdle();
 

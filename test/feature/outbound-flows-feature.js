@@ -1,7 +1,7 @@
-import Definition from '../../src/definition/Definition';
-import factory from '../helpers/factory';
+import Definition from '../../src/definition/Definition.js';
+import factory from '../helpers/factory.js';
 
-import testHelpers from '../helpers/testHelpers';
+import testHelpers from '../helpers/testHelpers.js';
 
 Feature('Outbound flows', () => {
   Scenario('A process containing a task with conditional flows', () => {

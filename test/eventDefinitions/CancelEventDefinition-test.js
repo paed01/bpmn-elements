@@ -1,7 +1,7 @@
-import CancelEventDefinition from '../../src/eventDefinitions/CancelEventDefinition';
-import Environment from '../../src/Environment';
-import {ActivityBroker} from '../../src/EventBroker';
-import {Logger} from '../helpers/testHelpers';
+import CancelEventDefinition from '../../src/eventDefinitions/CancelEventDefinition.js';
+import Environment from '../../src/Environment.js';
+import {ActivityBroker} from '../../src/EventBroker.js';
+import {Logger} from '../helpers/testHelpers.js';
 
 describe('CancelEventDefinition', () => {
   describe('catching bound event', () => {

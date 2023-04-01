@@ -10,6 +10,7 @@
     "node": false
   },
   "extends": "eslint:recommended",
+  "plugins": ["import"],
   "rules": {
     "brace-style": [2, "1tbs", {
       "allowSingleLine": false
@@ -39,6 +40,7 @@
     "eol-last": 2,
     "eqeqeq": 2,
     "handle-callback-err": 2,
+    "import/extensions": [ "error", "ignorePackages" ],
     "indent": [2, 2, {
       "SwitchCase": 1
     }],

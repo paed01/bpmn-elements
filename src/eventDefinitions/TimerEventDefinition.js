@@ -1,4 +1,4 @@
-import {cloneContent} from '../messageHelper';
+import {cloneContent} from '../messageHelper.js';
 import {toSeconds, parse} from 'iso8601-duration';
 
 const kStopped = Symbol.for('stopped');
@@ -7,7 +7,7 @@ const kTimer = Symbol.for('timer');
 const repeatPattern = /^\s*R(\d+)\//;
 
 export default function TimerEventDefinition(activity, eventDefinition) {
-  const type = this.type = eventDefinition.type || 'TimerEventDefinition';
+  const type = this.type = eventDefinition.type || 'TimerEventDefinition.js';
   this.activity = activity;
   const environment = this.environment = activity.environment;
   this.eventDefinition = eventDefinition;
@@ -24,30 +24,28 @@ export default function TimerEventDefinition(activity, eventDefinition) {
   this[kTimer] = null;
 }
 
-const proto = TimerEventDefinition.prototype;
-
-Object.defineProperty(proto, 'executionId', {
+Object.defineProperty(TimerEventDefinition.prototype, 'executionId', {
   get() {
     const content = this[kTimerContent];
     return content && content.executionId;
   },
 });
 
-Object.defineProperty(proto, 'stopped', {
+Object.defineProperty(TimerEventDefinition.prototype, 'stopped', {
   enumerable: true,
   get() {
     return this[kStopped];
   },
 });
 
-Object.defineProperty(proto, 'timer', {
+Object.defineProperty(TimerEventDefinition.prototype, 'timer', {
   enumerable: true,
   get() {
     return this[kTimer];
   },
 });
 
-proto.execute = function execute(executeMessage) {
+TimerEventDefinition.prototype.execute = function execute(executeMessage) {
   const {routingKey: executeKey, redelivered: isResumed} = executeMessage.fields;
   const timer = this[kTimer];
   if (timer && executeKey === 'execute.timer') {
@@ -95,12 +93,12 @@ proto.execute = function execute(executeMessage) {
   });
 };
 
-proto.stop = function stopTimer() {
+TimerEventDefinition.prototype.stop = function stopTimer() {
   const timer = this[kTimer];
   if (timer) this[kTimer] = this.environment.timers.clearTimeout(timer);
 };
 
-proto._completed = function completed(completeContent, options) {
+TimerEventDefinition.prototype._completed = function completed(completeContent, options) {
   this._stop();
 
   const stoppedAt = new Date();
@@ -122,7 +120,7 @@ proto._completed = function completed(completeContent, options) {
   broker.publish('execution', 'execute.completed', cloneContent(timerContent, content), options);
 };
 
-proto._onDelegatedApiMessage = function onDelegatedApiMessage(routingKey, message) {
+TimerEventDefinition.prototype._onDelegatedApiMessage = function onDelegatedApiMessage(routingKey, message) {
   if (!message.properties.delegate) return;
 
   const content = message.content;
@@ -145,7 +143,7 @@ proto._onDelegatedApiMessage = function onDelegatedApiMessage(routingKey, messag
   return this._onApiMessage(routingKey, message);
 };
 
-proto._onApiMessage = function onApiMessage(routingKey, message) {
+TimerEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   const {type: messageType, correlationId} = message.properties;
 
   switch (messageType) {
@@ -168,7 +166,7 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-proto._stop = function stop() {
+TimerEventDefinition.prototype._stop = function stop() {
   this[kStopped] = true;
   const timer = this[kTimer];
   if (timer) this[kTimer] = this.environment.timers.clearTimeout(timer);
@@ -177,7 +175,7 @@ proto._stop = function stop() {
   broker.cancel(`_api-delegated-${this.executionId}`);
 };
 
-proto._getTimers = function getTimers(executeMessage) {
+TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
   const content = executeMessage.content;
 
   const now = Date.now();
@@ -241,7 +239,7 @@ proto._getTimers = function getTimers(executeMessage) {
   return result;
 };
 
-proto._getDurationInMilliseconds = function getDurationInMilliseconds(duration) {
+TimerEventDefinition.prototype._getDurationInMilliseconds = function getDurationInMilliseconds(duration) {
   try {
     return toSeconds(parse(duration)) * 1000;
   } catch (err) {
@@ -249,10 +247,10 @@ proto._getDurationInMilliseconds = function getDurationInMilliseconds(duration) 
   }
 };
 
-proto._debug = function debug(msg) {
+TimerEventDefinition.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
 };
 
-proto._warn = function debug(msg) {
+TimerEventDefinition.prototype._warn = function debug(msg) {
   this.logger.warn(`<${this.executionId} (${this.activity.id})> ${msg}`);
 };

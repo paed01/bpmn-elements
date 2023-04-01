@@ -1,4 +1,4 @@
-import {cloneMessage} from '../messageHelper';
+import {cloneMessage} from '../messageHelper.js';
 
 class ActivityError extends Error {
   constructor(description, sourceMessage, inner) {

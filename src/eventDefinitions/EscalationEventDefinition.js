@@ -1,6 +1,6 @@
-import getPropertyValue from '../getPropertyValue';
-import {brokerSafeId} from '../shared';
-import {cloneContent, shiftParent} from '../messageHelper';
+import getPropertyValue from '../getPropertyValue.js';
+import {brokerSafeId} from '../shared.js';
+import {cloneContent, shiftParent} from '../messageHelper.js';
 
 const kCompleted = Symbol.for('completed');
 const kMessageQ = Symbol.for('messageQ');
@@ -36,20 +36,18 @@ export default function EscalationEventDefinition(activity, eventDefinition) {
   }
 }
 
-const proto = EscalationEventDefinition.prototype;
-
-Object.defineProperty(proto, 'executionId', {
+Object.defineProperty(EscalationEventDefinition.prototype, 'executionId', {
   get() {
     const message = this[kExecuteMessage];
     return message && message.content.executionId;
   },
 });
 
-proto.execute = function execute(executeMessage) {
+EscalationEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 
-proto.executeCatch = function executeCatch(executeMessage) {
+EscalationEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[kExecuteMessage] = executeMessage;
   this[kCompleted] = false;
 
@@ -82,7 +80,7 @@ proto.executeCatch = function executeCatch(executeMessage) {
   broker.publish('event', 'activity.wait', waitContent);
 };
 
-proto.executeThrow = function executeThrow(executeMessage) {
+EscalationEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const {executionId, parent} = executeContent;
 
@@ -102,7 +100,7 @@ proto.executeThrow = function executeThrow(executeMessage) {
   return broker.publish('execution', 'execute.completed', cloneContent(executeContent));
 };
 
-proto._onCatchMessage = function onCatchMessage(routingKey, message) {
+EscalationEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
   const info = this[kReference];
   if (getPropertyValue(message, 'content.message.id') !== info.message.id) return;
 
@@ -127,7 +125,7 @@ proto._onCatchMessage = function onCatchMessage(routingKey, message) {
   return broker.publish('execution', 'execute.completed', cloneContent(executeContent, {output, state: 'catch'}));
 };
 
-proto._onApiMessage = function onApiMessage(routingKey, message) {
+EscalationEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   switch (message.properties.type) {
     case 'escalate': {
       return this._onCatchMessage(routingKey, message);
@@ -144,13 +142,13 @@ proto._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
-proto._stop = function stop() {
+EscalationEventDefinition.prototype._stop = function stop() {
   const broker = this.broker, executionId = this.executionId;
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_onescalate-${executionId}`);
 };
 
-proto._getReferenceInfo = function getReferenceInfo(message) {
+EscalationEventDefinition.prototype._getReferenceInfo = function getReferenceInfo(message) {
   const referenceElement = this[kReferenceElement];
   if (!referenceElement) {
     return {
@@ -168,6 +166,6 @@ proto._getReferenceInfo = function getReferenceInfo(message) {
   return result;
 };
 
-proto._debug = function debug(msg) {
+EscalationEventDefinition.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
 };

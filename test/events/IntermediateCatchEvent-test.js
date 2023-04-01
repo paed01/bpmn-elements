@@ -1,5 +1,5 @@
-import IntermediateCatchEvent from '../../src/events/IntermediateCatchEvent';
-import testHelpers from '../helpers/testHelpers';
+import IntermediateCatchEvent from '../../src/events/IntermediateCatchEvent.js';
+import testHelpers from '../helpers/testHelpers.js';
 
 describe('IntermediateCatchEvent', () => {
   describe('without event definitions', () => {
