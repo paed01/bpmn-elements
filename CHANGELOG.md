@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 9.1.1
+
+- fix type Logger declaration
+- type declare element `getState` return states
+
 # 9.1.0
 
 - refactor compensation and transaction functionality

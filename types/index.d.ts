@@ -1,5 +1,6 @@
 declare module 'bpmn-elements' {
   import { Broker } from 'smqp';
+  import { BrokerState } from 'smqp/types/Broker';
   import { Consumer } from 'smqp/types/Queue';
   import { MessageMessage } from 'smqp/types/Message';
   import { SerializableContext, SerializableElement } from 'moddle-context-serializer';
@@ -43,7 +44,7 @@ declare module 'bpmn-elements' {
     get isThrowing(): boolean;
     get activity(): Activity;
     get broker(): Broker;
-    get logger(): Logger;
+    get logger(): ILogger;
     get reference(): {
       id?: string,
       name: string,
@@ -62,14 +63,12 @@ declare module 'bpmn-elements' {
     get broker(): Broker;
     get environment(): Environment;
     get context(): Context;
-    get logger(): Logger;
+    get logger(): ILogger;
   }
 
   abstract class Element<T> extends ElementBase {
     get broker(): ElementBroker<T>;
-    getState(): any;
     stop(): void;
-    recover(state?: any): T;
     resume(): void;
     getApi(message?: ElementBrokerMessage): Api<T>;
     on(eventName: string, callback: CallableFunction, options?: any): Consumer;
@@ -110,10 +109,13 @@ declare module 'bpmn-elements' {
     settings?: EnvironmentSettings;
     variables?: Record<string, any>;
     services?: Record<string, CallableFunction>;
-    logger?: Logger;
+    Logger?: LoggerFactory;
     timers?: ITimers;
     scripts?: IScripts;
     extensions?: Record<string, Extension>;
+    /**
+     * optional override expressions handler
+     */
     expressions?: IExpressions;
   }
 
@@ -162,7 +164,6 @@ declare module 'bpmn-elements' {
     get status(): boolean;
     get processes(): Process[];
     get postponedCount(): number;
-    get isRunning(): boolean;
     get isRunning(): boolean;
     get activityStatus(): ActivityStatus;
     execute(executeMessage: ElementBrokerMessage): void;
@@ -235,14 +236,14 @@ declare module 'bpmn-elements' {
     extensions: Record<string, IExtension>;
     scripts: IScripts;
     timers: ITimers;
-    Logger: Logger;
+    Logger: LoggerFactory;
     get settings(): EnvironmentSettings;
     get variables(): Record<string, any>;
     get output(): Record<string, any>;
     set services(arg: any);
     get services(): any;
-    getState(): any;
-    recover(state?: any): Environment;
+    getState(): EnvironmentState;
+    recover(state?: EnvironmentState): Environment;
     clone(overrideOptions?: EnvironmentOptions): Environment;
     assignVariables(newVars: Record<string, any>): void;
     assignSettings(newSettings: Record<string, any>): void;
@@ -284,10 +285,93 @@ declare module 'bpmn-elements' {
     loadExtensions(activity: ElementBase): IExtension;
   }
 
+  interface ElementState {
+    id: string;
+    type: string;
+    name: string;
+    broker?: BrokerState;
+    [x: string]: any;
+  }
+
+  interface EnvironmentState {
+    settings: EnvironmentSettings;
+    variables: Record<string, any>;
+    output: Record<string, any>;
+  }
+
+  type completedCounters = { completed: number, discarded: number };
+
+  interface ActivityExecutionState {
+    completed: boolean;
+    [x: string]: any;
+  }
+
+  interface ActivityState extends ElementState {
+    executionId: string;
+    stopped: boolean;
+    behaviour: Record<string, any>;
+    counters: { taken: number, discarded: number };
+    execution?: ActivityExecutionState;
+  }
+
+  interface SequenceFlowState extends ElementState {
+    counters: {take: number, discard: number, looped: number};
+  }
+
+  interface MessageFlowState {
+    id: string;
+    type: string;
+    counters: {messages: number};
+  }
+
+  interface AssociationState extends ElementState {
+    counters: {take: number, discard: number };
+    sourceId: string;
+    targetId: string;
+    isAssociation: boolean;
+  }
+
+  interface ProcessExecutionState {
+    executionId: string;
+    stopped: boolean;
+    completed: boolean;
+    status: string;
+    children: ActivityState[];
+    flows?: SequenceFlowState[];
+    messageFlows?: MessageFlowState[];
+    associations?: AssociationState[];
+  }
+
+  interface ProcessState extends ElementState {
+    status: string;
+    stopped: boolean,
+    executionId?: string;
+    counters: completedCounters;
+    environment: EnvironmentState;
+    execution?: ProcessExecutionState;
+  }
+
+  interface DefinitionExecutionState {
+    executionId: string;
+    stopped: boolean;
+    completed: boolean;
+    status: string;
+    processes: ProcessState[];
+  }
+
+  interface DefinitionState extends ElementState {
+    status: string;
+    stopped: boolean,
+    executionId?: string;
+    counters: completedCounters;
+    environment: EnvironmentState;
+    execution?: DefinitionExecutionState;
+  }
+
   type runCallback = (err: Error, definitionApi: Api<Definition>) => void;
   class Definition extends Element<Definition> {
     constructor(context: Context, options?: EnvironmentOptions);
-    get counters(): { completed: number, discarded: number };
+    get counters(): completedCounters;
     get execution(): DefinitionExecution;
     get executionId(): string;
     get isRunning(): boolean;
@@ -298,6 +382,10 @@ declare module 'bpmn-elements' {
     run(runContent: Record<string, any>): Definition;
     run(runContent: Record<string, any>, callback: runCallback): Definition;
     run(callback: runCallback): Definition;
+    getState(): DefinitionState;
+    recover(state?: DefinitionState): Definition;
+    resume(): void;
+    resume(callback: (err: Error, definitionApi: Api<Definition>) => void): void;
     shake(startId?: string): object;
     getProcesses(): Process[];
     /** get processes marked with isExecutable=true */
@@ -316,7 +404,7 @@ declare module 'bpmn-elements' {
   class Process extends Element<Process> {
     constructor(processDef: SerializableElement, context: Context);
     get isExecutable(): boolean;
-    get counters(): { completed: number, discarded: number };
+    get counters(): completedCounters;
     get extensions(): IExtension;
     get stopped(): boolean;
     get isRunning(): boolean;
@@ -326,6 +414,8 @@ declare module 'bpmn-elements' {
     get activityStatus(): ActivityStatus;
     init(useAsExecutionId?: string): void;
     run(runContent?: Record<string, any>): void;
+    getState(): ProcessState;
+    recover(state?: ProcessState): Process;
     shake(startId?: string): void;
     signal(message: any): any;
     cancelActivity(message: any): any;
@@ -392,7 +482,9 @@ declare module 'bpmn-elements' {
     discard(content?: any): boolean;
   }
 
-  interface Logger {
+  type LoggerFactory = (scope: string) => ILogger;
+
+  interface ILogger {
     debug(...args: any[]): void;
     error(...args: any[]): void;
     warn(...args: any[]): void;
