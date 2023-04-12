@@ -14,6 +14,7 @@ Object.defineProperty(ActivityTracker.prototype, 'activityStatus', {
 
 ActivityTracker.prototype.track = function track(routingKey, message) {
   const content = message.content;
+  if (content.isAssociation) return;
   if (content.isSequenceFlow) return;
   if (content.isSubProcess) return;
   const executionId = content.executionId;

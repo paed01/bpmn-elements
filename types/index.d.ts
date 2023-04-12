@@ -503,7 +503,7 @@ declare module 'bpmn-elements' {
   }
 
   interface IScripts {
-    register(activity: any): Script;
+    register(activity: any): Script | undefined;
     getScript(language: string, identifier: {id: string, [x: string]: any}): Script;
   }
 

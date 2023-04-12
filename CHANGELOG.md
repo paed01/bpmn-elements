@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 9.1.2
+
+- allow type IScripts.register to return undefined
+
 # 9.1.1
 
 - fix type Logger declaration
