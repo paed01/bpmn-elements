@@ -2,7 +2,7 @@ declare module 'bpmn-elements' {
   import { Broker } from 'smqp';
   import { BrokerState } from 'smqp/types/Broker';
   import { Consumer } from 'smqp/types/Queue';
-  import { MessageMessage } from 'smqp/types/Message';
+  import { MessageMessage, MessageFields, MessageProperties } from 'smqp/types/Message';
   import { SerializableContext, SerializableElement } from 'moddle-context-serializer';
 
   interface ElementBroker<T> extends Broker {
@@ -25,16 +25,16 @@ declare module 'bpmn-elements' {
     [x: string]: any,
   }
 
-  type elementContent = {
-    id?: string,
-    type?: string,
-    executionId?: string,
-    parent?: ElementParent,
-    [x: string]: any,
+  interface ElementMessageContent {
+    id?: string;
+    type?: string;
+    executionId?: string;
+    parent?: ElementParent;
+    [x: string]: any;
   }
 
   interface ElementBrokerMessage extends MessageMessage {
-    content: elementContent,
+    content: ElementMessageContent,
   }
 
   interface EventDefinition {
@@ -211,8 +211,31 @@ declare module 'bpmn-elements' {
     createMessage(content?: Record<string, any>): any;
   }
 
+  interface ExecutionScope {
+    /** Calling element id */
+    id: string;
+    /** Calling element type */
+    type: string;
+    /** Execution message fields */
+    fields: MessageFields;
+    /** Execution message content */
+    content: ElementMessageContent;
+    /** Execution message properties */
+    properties: MessageProperties;
+    environment: Environment;
+    /** Calling element logger instance */
+    logger?: ILogger;
+    /**
+     * Resolve expression with the current scope
+     * @param expression expression string
+     * @returns Whatever the expression returns
+     */
+    resolveExpression: (expression: string) => any;
+    ActivityError: ActivityError;
+  }
+
   interface Script {
-    execute(executionContext: any, callback: CallableFunction): void;
+    execute(executionContext: ExecutionScope, callback: CallableFunction): void;
   }
 
   abstract class MessageElement {
@@ -601,12 +624,14 @@ declare module 'bpmn-elements' {
   class Signal extends MessageElement {}
   class Escalation extends MessageElement {}
 
-  interface ActivityError extends Error {
+  class ActivityError extends Error {
     type: string;
     description: string;
     /** Activity that threw error */
     source?: ElementBrokerMessage;
     /** Original error */
     inner?: Error;
+    code?: string;
+    constructor(description: string, sourceMessage: MessageMessage, inner?: Error);
   }
 }

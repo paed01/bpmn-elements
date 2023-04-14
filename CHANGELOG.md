@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 9.1.3
+
+- type declare execution scope
+
 # 9.1.2
 
 - allow type IScripts.register to return undefined
