@@ -481,6 +481,13 @@ declare module 'bpmn-elements' {
     shake(message: any): number;
     getCondition(): any;
     createMessage(override?: any): object;
+    /**
+     * Evaluate flow
+     * Executes condition if any, default flow is
+     * @param fromMessage Activity message
+     * @param {evaluateCallback} callback Callback with evaluation result, if truthy flow should be taken
+     */
+    evaluate(fromMessage: ElementBrokerMessage, callback: (err: Error, result: any) => void): void;
   }
 
   interface MessageFlowReference {
@@ -635,3 +642,10 @@ declare module 'bpmn-elements' {
     constructor(description: string, sourceMessage: MessageMessage, inner?: Error);
   }
 }
+
+/**
+ * Evaluate flow callback
+ * @callback evaluateCallback
+ * @param {Error} err Evaluation error
+ * @param {boolean|object} evaluationResult If thruthy flow should be taken
+ */

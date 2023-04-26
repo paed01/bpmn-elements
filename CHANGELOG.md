@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 9.2.0
+
+- move outbound sequence flow evaluation logic from activity to sequence flow, where it belongs
+- spread sequence flow evaluation result, if object, to sequence flow take message
+
 # 9.1.3
 
 - type declare execution scope

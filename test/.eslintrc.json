@@ -3,6 +3,9 @@
     "mocha": true,
     "node": true
   },
+  "parserOptions": {
+    "ecmaVersion": 2020
+  },
   "rules": {
     "no-unused-expressions": 0,
     "no-var": 1,

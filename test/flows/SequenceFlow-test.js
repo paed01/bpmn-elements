@@ -10,11 +10,13 @@ const extensions = {
   js,
 };
 
+const multipleInboundSource = factory.resource('multiple-multiple-inbound.bpmn').toString();
+
 describe('SequenceFlow', () => {
   describe('properties', () => {
     let context;
     before(async () => {
-      context = await testHelpers.context(factory.resource('multiple-multiple-inbound.bpmn').toString());
+      context = await testHelpers.context(multipleInboundSource);
       expect(context.getSequenceFlows().length).to.be.above(0);
     });
 
@@ -610,12 +612,34 @@ describe('SequenceFlow', () => {
 
   describe('getApi()', () => {
     it('getApi() returns message Api with default message', async () => {
-      const context = await testHelpers.context(factory.resource('multiple-multiple-inbound.bpmn').toString());
+      const context = await testHelpers.context(multipleInboundSource);
 
       const flow = context.getSequenceFlowById('taskflow-1');
 
       const api = flow.getApi();
       expect(api).to.have.property('id', 'taskflow-1');
+    });
+  });
+
+  describe('shake(message)', () => {
+    it('shake defaults content shake sequence to empty array', async () => {
+      const context = await testHelpers.context(multipleInboundSource);
+
+      const flow = context.getSequenceFlowById('taskflow-1');
+
+      let message;
+      flow.broker.subscribeOnce('event', 'flow.shake', (_, msg) => {
+        message = msg;
+      });
+
+      flow.shake({content: {}});
+
+      expect(message.content.sequence).to.deep.equal([{
+        id: flow.id,
+        isSequenceFlow: true,
+        targetId: 'decision-1',
+        type: 'bpmn:SequenceFlow',
+      }]);
     });
   });
 });

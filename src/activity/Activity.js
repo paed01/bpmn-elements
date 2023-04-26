@@ -807,9 +807,10 @@ Activity.prototype._doOutbound = function doOutbound(fromMessage, isDiscarded, c
 
 Activity.prototype._doRunOutbound = function doRunOutbound(outboundList, content, discardSequence) {
   for (const outboundFlow of outboundList) {
-    const {id: flowId, action} = outboundFlow;
+    const {id: flowId, action, result} = outboundFlow;
     this.broker.publish('run', 'run.outbound.' + action, cloneContent(content, {
       flow: {
+        ...(result && typeof result === 'object' && result),
         ...outboundFlow,
         sequenceId: getUniqueId(`${flowId}_${action}`),
         ...(discardSequence && {discardSequence: discardSequence.slice()}),
@@ -1000,17 +1001,8 @@ OutboundEvaluator.prototype.onEvaluated = function onEvaluated(routingKey, messa
 
 OutboundEvaluator.prototype.evaluateFlow = function evaluateFlow(flow) {
   const broker = this.broker;
-  if (flow.isDefault) {
-    return broker.publish('execution', 'evaluate.flow.take', formatFlowAction(flow, {action: 'take'}), {persistent: false});
-  }
-
-  const flowCondition = flow.getCondition();
-  if (!flowCondition) {
-    return broker.publish('execution', 'evaluate.flow.take', formatFlowAction(flow, {action: 'take'}), {persistent: false});
-  }
-
   const {fromMessage, evaluationId} = this.evaluateArgs;
-  flowCondition.execute(cloneMessage(fromMessage), (err, result) => {
+  flow.evaluate(cloneMessage(fromMessage), (err, result) => {
     if (err) return this.completed(err);
     const action = result ? 'take' : 'discard';
     return broker.publish('execution', 'evaluate.flow.' + action, formatFlowAction(flow, {

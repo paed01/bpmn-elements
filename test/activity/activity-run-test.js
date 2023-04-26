@@ -236,7 +236,7 @@ describe('activity run', () => {
     expect(current.content).to.have.property('dod', 42);
   });
 
-  it('format is possible on enter and execution completed', async () => {
+  it('format is possible on enter, start, execution completed, and end', async () => {
     const activity = createActivity(false);
     activity.broker.subscribeTmp('event', 'activity.#', (routingKey, message) => {
       const formatting = (message.content.formatting || []).slice();

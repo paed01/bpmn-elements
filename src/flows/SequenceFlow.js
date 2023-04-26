@@ -101,7 +101,7 @@ SequenceFlow.prototype.shake = function shake(message) {
 
   if (content.id === this.targetId) return this.broker.publish('event', 'flow.shake.loop', content, {persistent: false, type: 'shake'});
 
-  for (const s of message.content.sequence) {
+  for (const s of message.content.sequence || []) {
     if (s.id === this.id) return this.broker.publish('event', 'flow.shake.loop', content, {persistent: false, type: 'shake'});
   }
 
@@ -138,6 +138,19 @@ SequenceFlow.prototype.createMessage = function createMessage(override) {
     isDefault: this.isDefault,
     parent: cloneParent(this.parent),
   };
+};
+
+SequenceFlow.prototype.evaluate = function evaluate(fromMessage, callback) {
+  if (this.isDefault) {
+    return callback(null, true);
+  }
+
+  const flowCondition = this.getCondition();
+  if (!flowCondition) {
+    return callback(null, true);
+  }
+
+  flowCondition.execute(fromMessage, callback);
 };
 
 SequenceFlow.prototype._publishEvent = function publishEvent(action, content) {
