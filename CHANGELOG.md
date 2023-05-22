@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 10.0.0
+
+- drop iso8601-duration dependency and copy source (with licence). Extend with repeat pattern parsing, e.g. `R3/PT1H` that corresponds to three repetions every one hour
+
 # 9.2.0
 
 - move outbound sequence flow evaluation logic from activity to sequence flow, where it belongs

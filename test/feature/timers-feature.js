@@ -620,6 +620,86 @@ Feature('Timers', () => {
     });
   });
 
+  Scenario('repeated time duration timer', () => {
+    let context, definition;
+    const timerEvents = [];
+    Given('a start event time duration repeat timer expression', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="Process_0" isExecutable="true">
+          <startEvent id="start">
+            <timerEventDefinition>
+              <timeDuration xsi:type="tFormalExpression">R3/PT0.01S</timeDuration>
+            </timerEventDefinition>
+          </startEvent>
+          <sequenceFlow id="to-end" sourceRef="start" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = new Definition(context, {
+        expressions: {resolveExpression},
+      });
+    });
+
+    let end;
+    When('definition is ran', () => {
+      definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => timerEvents.push(msg), {noAck: true});
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('only one timer event was triggered', () => {
+      expect(timerEvents.length).to.equal(1);
+    });
+
+    Given('an intermediate throw event time duration repeat timer expression', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="Process_0" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-timer" sourceRef="start" targetRef="timer" />
+          <intermediateThrowEvent id="timer">
+            <timerEventDefinition>
+              <timeDuration xsi:type="tFormalExpression">R3/PT0.01S</timeDuration>
+            </timerEventDefinition>
+          </intermediateThrowEvent>
+          <sequenceFlow id="to-end" sourceRef="timer" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = new Definition(context, {
+        expressions: {resolveExpression},
+      });
+    });
+
+    When('definition is ran', () => {
+      timerEvents.splice(0);
+      definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => timerEvents.push(msg), {noAck: true});
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('only one timer event was triggered', () => {
+      expect(timerEvents.length).to.equal(1);
+    });
+  });
+
   Scenario('faulty timer expression', () => {
     let context, definition;
     Given('a source with a faulty timer expression', async () => {

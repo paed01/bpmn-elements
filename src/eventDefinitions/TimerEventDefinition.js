@@ -1,10 +1,9 @@
 import {cloneContent} from '../messageHelper.js';
-import {toSeconds, parse} from 'iso8601-duration';
+import {toSeconds, parse} from '../iso-duration.js';
 
 const kStopped = Symbol.for('stopped');
 const kTimerContent = Symbol.for('timerContent');
 const kTimer = Symbol.for('timer');
-const repeatPattern = /^\s*R(\d+)\//;
 
 export default function TimerEventDefinition(activity, eventDefinition) {
   const type = this.type = eventDefinition.type || 'TimerEventDefinition.js';
@@ -85,12 +84,14 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
   if (timerContent.timeout <= 0) return this._completed();
 
   const timers = this.environment.timers.register(timerContent);
-  this[kTimer] = timers.setTimeout(this._completed.bind(this), timerContent.timeout, {
+  const delay = timerContent.timeout;
+  this[kTimer] = timers.setTimeout(this._completed.bind(this), delay, {
     id: content.id,
     type: this.type,
     executionId,
     state: 'timeout',
   });
+  this._debug(`set timeout with delay ${delay}`);
 };
 
 TimerEventDefinition.prototype.stop = function stopTimer() {
@@ -183,6 +184,7 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
     ...('expireAt' in content && {expireAt: new Date(content.expireAt)}),
   };
 
+  let parseErr;
   for (const t of ['timeDuration', 'timeDate', 'timeCycle']) {
     if (t in content) result[t] = content[t];
     else if (t in this) result[t] = this.environment.resolveExpression(this[t], executeMessage);
@@ -192,13 +194,16 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
     const timerStr = result[t];
     if (timerStr) {
       switch (t) {
-        case 'timeCycle': {
-          const mRepeat = timerStr.match(repeatPattern);
-          if (mRepeat && mRepeat.length) repeat = parseInt(mRepeat[1]);
-        }
+        case 'timeCycle':
         case 'timeDuration': {
-          const delay = this._getDurationInMilliseconds(timerStr);
-          if (delay !== undefined) expireAtDate = new Date(now + delay);
+          try {
+            const parsed = parse(timerStr);
+            if (parsed.repeat) repeat = parsed.repeat;
+            const delay = toSeconds(parsed) * 1000;
+            if (delay !== undefined) expireAtDate = new Date(now + delay);
+          } catch (err) {
+            parseErr = err;
+          }
           break;
         }
         case 'timeDate': {
@@ -207,7 +212,7 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
           if (!isNaN(ms)) {
             expireAtDate = new Date(ms);
           } else {
-            this._warn(`invalid timeDate >${dateStr}<`);
+            parseErr = new TypeError(`invalid timeDate >${dateStr}<`);
           }
           break;
         }
@@ -232,6 +237,10 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
     result.timeout = 0;
   }
 
+  if (!('timeout' in result) && parseErr) {
+    this.logger.warn(`<${this.activity.id}> failed to parse timer: ${parseErr.message}`);
+  }
+
   if (content.inbound && 'repeat' in content.inbound[0]) {
     result.repeat = content.inbound[0].repeat;
   }
@@ -239,18 +248,6 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
   return result;
 };
 
-TimerEventDefinition.prototype._getDurationInMilliseconds = function getDurationInMilliseconds(duration) {
-  try {
-    return toSeconds(parse(duration)) * 1000;
-  } catch (err) {
-    this._warn(`failed to parse ${this.timerType} >${duration}<: ${err.message}`);
-  }
-};
-
 TimerEventDefinition.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
-};
-
-TimerEventDefinition.prototype._warn = function debug(msg) {
-  this.logger.warn(`<${this.executionId} (${this.activity.id})> ${msg}`);
 };
