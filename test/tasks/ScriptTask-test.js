@@ -290,7 +290,7 @@ describe('ScriptTask', () => {
       let callback;
 
       const context = await testHelpers.context(source, {
-        timers: Timers({
+        timers: new Timers({
           setTimeout(next) {
             callback = next;
           },

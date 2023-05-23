@@ -37,7 +37,8 @@ declare module 'bpmn-elements' {
     content: ElementMessageContent,
   }
 
-  interface EventDefinition {
+  class EventDefinition {
+    constructor(activity: Activity, eventDefinitionElement: SerializableElement)
     get id(): string;
     get type(): string;
     get executionId(): string;
@@ -521,15 +522,53 @@ declare module 'bpmn-elements' {
     [x: string]: any,
   }
 
-  type wrappedSetTimeout = (handler: CallableFunction, timeout: number, ...args: unknown[]) => any;
-  type wrappedClearTimeout = (id?: any) => void;
+  type wrappedSetTimeout = (handler: TimerHandler, delay: number, ...args: any[]) => Timer;
+  type wrappedClearTimeout = (ref: any) => void;
 
-  interface ITimers {
-    get executing(): any[];
+  interface Timer {
+    /** The function to call when the timer elapses */
+    readonly callback: TimerHandler;
+    /** The number of milliseconds to wait before calling the callback */
+    readonly delay: number;
+    /** Optional arguments to pass when the callback is called */
+    readonly args?: any[];
+    /** Timer owner if any */
+    readonly owner?: any;
+    /** Timer Id */
+    readonly timerId: string;
+    /** Timeout, return from setTimeout */
+    readonly timerRef: any;
+    [x: string]: any;
+  }
+
+  interface RegisteredTimer {
+    owner?: any;
     get setTimeout(): wrappedSetTimeout;
     get clearTimeout(): wrappedClearTimeout;
-    register(owner?: any): { setTimeout: wrappedSetTimeout, clearTimeout: wrappedClearTimeout };
-    [x: string]: any,
+  }
+
+  interface ITimers {
+    get setTimeout(): wrappedSetTimeout;
+    get clearTimeout(): wrappedClearTimeout;
+    register(owner?: any): RegisteredTimer;
+    [x: string]: any;
+  }
+
+  interface TimersOptions {
+    /** Defaults to builtin setTimeout */
+    setTimeout?: typeof setTimeout;
+    /** Defaults to builtin clearTimeout */
+    clearTimeout?: typeof clearTimeout;
+    [x: string]: any;
+  }
+
+  class Timers implements ITimers {
+    options: TimersOptions;
+    constructor(options?: TimersOptions);
+    get executing(): Timer[];
+    get setTimeout(): wrappedSetTimeout;
+    get clearTimeout(): wrappedClearTimeout;
+    register(owner?: any): RegisteredTimer;
   }
 
   interface IScripts {
@@ -602,7 +641,30 @@ declare module 'bpmn-elements' {
   var MessageEventDefinition: EventDefinition;
   var SignalEventDefinition: EventDefinition;
   var TerminateEventDefinition: EventDefinition;
-  var TimerEventDefinition: EventDefinition;
+
+  const enum TimerType {
+    TimeCycle = 'timeCycle',
+    TimeDuration = 'timeDuration',
+    TimeDate = 'timeDate',
+  }
+
+  type parsedTimer = {
+    /** Expires at date time */
+    expireAt?: Date,
+    /** Repeat number of times */
+    repeat?: number,
+    /** Delay in milliseconds */
+    delay?: number,
+  };
+
+  class TimerEventDefinition extends EventDefinition {
+    /**
+     * Parse timer type
+     * @param timerType type of timer
+     * @param timerValue resolved expression timer string
+     */
+    parse(timerType: TimerType, timerValue: string): parsedTimer;
+  }
 
   class BpmnError {
     get id(): string;
@@ -641,6 +703,28 @@ declare module 'bpmn-elements' {
     code?: string;
     constructor(description: string, sourceMessage: MessageMessage, inner?: Error);
   }
+
+  interface Duration {
+    years?: number;
+    months?: number;
+    weeks?: number;
+    days?: number;
+    hours?: number;
+    minutes?: number;
+    seconds?: number;
+    repeat?: number;
+  }
+
+  type ISODurationApi = {
+    /** Parse PnYnMnDTnHnMnS format to object */
+    parse: (durationString: string) => Duration,
+    /** Convert ISO8601 duration object to an end Date. */
+    end: (durationInput: Duration, startDate?: Date) => Date,
+    /** Convert ISO8601 duration object to seconds */
+    toSeconds: (durationInput: Duration, startDate?: Date) => number,
+  }
+
+  const ISODuration: ISODurationApi;
 }
 
 /**

@@ -17,7 +17,7 @@ function Environment(options = {}) {
   this.extensions = options.extensions;
   this.output = options.output || {};
   this.scripts = options.scripts || (0, _Scripts.Scripts)();
-  this.timers = options.timers || (0, _Timers.Timers)();
+  this.timers = options.timers || new _Timers.Timers();
   this.settings = {
     ...options.settings
   };

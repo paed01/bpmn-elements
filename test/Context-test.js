@@ -193,6 +193,31 @@ describe('Context', () => {
         expect(sequenceFlows.indexOf(inbound[i]), `${inbound[i].id}`).to.be.above(-1);
       }
     });
+
+    it('returns empty list as default', () => {
+      function Behaviour(...args) {
+        return new Activity(this, ...args);
+      }
+
+      const activityDef = {
+        id: 'task',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'theProcess',
+        },
+        behaviour: {},
+        Behaviour,
+      };
+
+      const ctx = testHelpers.emptyContext({
+        getActivityById() {
+          return activityDef;
+        },
+        getInboundSequenceFlows() {},
+      });
+
+      expect(ctx.getInboundSequenceFlows('task')).to.have.length(0);
+    });
   });
 
   describe('getOutboundSequenceFlows(activityId)', () => {
@@ -232,6 +257,85 @@ describe('Context', () => {
       for (let i = 0; i < outbound.length; i++) {
         expect(sequenceFlows.indexOf(outbound[i]), `${outbound[i].id}`).to.be.above(-1);
       }
+    });
+
+    it('returns empty list as default', () => {
+      function Behaviour(...args) {
+        return new Activity(this, ...args);
+      }
+
+      const activityDef = {
+        id: 'task',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'theProcess',
+        },
+        behaviour: {},
+        Behaviour,
+      };
+
+      const ctx = testHelpers.emptyContext({
+        getActivityById() {
+          return activityDef;
+        },
+        getOutboundSequenceFlows() {},
+      });
+
+      expect(ctx.getOutboundSequenceFlows('task')).to.have.length(0);
+    });
+  });
+
+  describe('getInboundAssociations(activityId)', () => {
+    it('returns empty list as default', () => {
+      function Behaviour(...args) {
+        return new Activity(this, ...args);
+      }
+
+      const activityDef = {
+        id: 'task',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'theProcess',
+        },
+        behaviour: {},
+        Behaviour,
+      };
+
+      const ctx = testHelpers.emptyContext({
+        getActivityById() {
+          return activityDef;
+        },
+        getInboundAssociations() {},
+      });
+
+      expect(ctx.getInboundAssociations('task')).to.have.length(0);
+    });
+  });
+
+  describe('getOutboundAssociations(activityId)', () => {
+    it('returns empty list as default', () => {
+      function Behaviour(...args) {
+        return new Activity(this, ...args);
+      }
+
+      const activityDef = {
+        id: 'task',
+        type: 'bpmn:Task',
+        parent: {
+          id: 'theProcess',
+        },
+        behaviour: {},
+        Behaviour,
+      };
+
+      const ctx = testHelpers.emptyContext({
+        getActivityById() {
+          return activityDef;
+        },
+        getOutboundAssociations() {},
+      });
+
+      expect(ctx.getOutboundAssociations('task')).to.have.length(0);
     });
   });
 
@@ -275,6 +379,13 @@ describe('Context', () => {
       for (let i = 0; i < clonedSequenceFlows.length; i++) {
         expect(sequenceFlows.indexOf(clonedSequenceFlows[i]), `${clonedSequenceFlows[i].id}`).to.equal(-1);
       }
+    });
+  });
+
+  describe('getStartActivities(filterOptions, scopeId)', () => {
+    it('returns all start activities if called without arguments', async () => {
+      const context = await testHelpers.context(motherOfAllSource);
+      expect(context.getStartActivities()).to.have.length(3);
     });
   });
 });

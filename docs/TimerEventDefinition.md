@@ -53,3 +53,20 @@ The shortest timeout will be picked to start the timer.
 If the parent event start message has an `expireAt` date or `timeout` positive integer property a timer will be started.
 
 See how to format these messages [here](/docs/Extension.md).
+
+# Api
+
+Timer event definition api.
+
+## `TimerEventDefinition.parse(timerType, value)`
+
+Parse timer value into expire date.
+
+Arguments:
+- `timerType`: timer type string, one of `timeDuration`, `timeCycle`, or `timeDate`
+- `value`: resolved expression timer string
+
+Returns object:
+- `expireAt`: expires at date
+- `delay`: delay in milliseconds
+- `repeat`: repeat number of times

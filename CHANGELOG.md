@@ -3,7 +3,9 @@ Changelog
 
 # 10.0.0
 
-- drop iso8601-duration dependency and copy source (with licence). Extend with repeat pattern parsing, e.g. `R3/PT1H` that corresponds to three repetions every one hour
+- drop iso8601-duration dependency and copy source (with licence). Export as `ISODuration`. Extend with repeat pattern parsing, e.g. `R3/PT1H` that corresponds to three repetitions every one hour
+- expose `TimerEventDefinition.parse(timerType, value)` function for extension purposes
+- prototype and export built-in `Timers`
 
 # 9.2.0
 

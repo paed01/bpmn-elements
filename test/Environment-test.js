@@ -481,7 +481,7 @@ describe('Environment', () => {
   describe('timers', () => {
     it('timers.setTimeout adds timer to executing', () => {
       const {timers} = new Environment({
-        timers: Timers({
+        timers: new Timers({
           setTimeout() {},
         }),
       });
@@ -490,13 +490,13 @@ describe('Environment', () => {
 
       expect(timers.executing).to.have.length(1);
       expect(timers.executing[0]).to.have.property('delay', 11);
-      expect(timers.executing[0].owner === timers, 'timers instance as owner').to.be.true;
+      expect(timers.executing[0].owner, 'owner is null').to.be.null;
     });
 
     it('removes timer from executing when timed out', () => {
       let onTimeout;
       const {timers} = new Environment({
-        timers: Timers({
+        timers: new Timers({
           setTimeout(callback) {
             onTimeout = callback;
           },
@@ -515,7 +515,7 @@ describe('Environment', () => {
     it('callback called twice is ignored', () => {
       let onTimeout;
       const {timers} = new Environment({
-        timers: Timers({
+        timers: new Timers({
           setTimeout(callback) {
             onTimeout = callback;
           },
@@ -534,7 +534,7 @@ describe('Environment', () => {
 
     it('timers.clearTimeout removes timer from executing', () => {
       const {timers} = new Environment({
-        timers: Timers({
+        timers: new Timers({
           setTimeout() {},
           clearTimeout() {},
         }),
@@ -551,7 +551,7 @@ describe('Environment', () => {
 
     it('timers.clearTimeout can be called twice', () => {
       const {timers} = new Environment({
-        timers: Timers({
+        timers: new Timers({
           setTimeout() {},
           clearTimeout() {},
         }),
@@ -588,7 +588,7 @@ describe('Environment', () => {
 
       it('setTimeout adds timer to executing', () => {
         const {timers} = new Environment({
-          timers: Timers({
+          timers: new Timers({
             setTimeout() {},
           }),
         });
@@ -605,7 +605,7 @@ describe('Environment', () => {
 
       it('setTimeout adds timer to executing', () => {
         const {timers} = new Environment({
-          timers: Timers({
+          timers: new Timers({
             setTimeout() {},
           }),
         });
@@ -622,7 +622,7 @@ describe('Environment', () => {
 
       it('multiple setTimeout adds timers to executing', () => {
         const {timers} = new Environment({
-          timers: Timers({
+          timers: new Timers({
             setTimeout() {},
           }),
         });
@@ -645,7 +645,7 @@ describe('Environment', () => {
 
       it('clearTimeout removes timer from executing', () => {
         const {timers} = new Environment({
-          timers: Timers({
+          timers: new Timers({
             setTimeout() {},
             clearTimeout() {},
           }),
@@ -664,7 +664,7 @@ describe('Environment', () => {
 
       it('clearTimeout removes only ref from executing', () => {
         const {timers} = new Environment({
-          timers: Timers({
+          timers: new Timers({
             setTimeout() {},
           }),
         });
@@ -685,7 +685,7 @@ describe('Environment', () => {
 
       it('timers.clearTimeout removes registered timer from executing', () => {
         const {timers} = new Environment({
-          timers: Timers({
+          timers: new Timers({
             setTimeout() {},
             clearTimeout() {},
           }),
@@ -704,7 +704,7 @@ describe('Environment', () => {
 
       it('clearTimeout can be called twice', () => {
         const {timers} = new Environment({
-          timers: Timers({
+          timers: new Timers({
             setTimeout() {},
             clearTimeout() {},
           }),
@@ -724,7 +724,7 @@ describe('Environment', () => {
 
       it('clearTimeout can be called with unknown ref', () => {
         const {timers} = new Environment({
-          timers: Timers({
+          timers: new Timers({
             setTimeout() {},
             clearTimeout() {},
           }),

@@ -245,7 +245,7 @@ describe('TimerEventDefinition', () => {
           if (idx > -1) timers.splice(idx, 1);
         }
 
-        event.environment.timers = Timers({
+        event.environment.timers = new Timers({
           setTimeout: fakeSetTimeout,
           clearTimeout: fakeClearTimeout,
         });
@@ -1659,6 +1659,76 @@ describe('TimerEventDefinition', () => {
 
       expect(event.environment.timers.executing.length).to.equal(1);
       expect(timer === event.environment.timers.executing[0], 'new timer ref').to.be.true;
+
+      definition.stop();
+    });
+
+    it('timeDuration without repeat and closer timeCycle with repeat sets repeat from timeCycle', () => {
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: 'PT1M',
+          timeCycle: 'R3/PT1S',
+        },
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      definition.execute({
+        fields: {
+          routingKey: 'execute.start',
+          redelivered: true,
+        },
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+          },
+        },
+      });
+
+      expect(messages[0].content).to.have.property('timerType', 'timeCycle');
+      expect(messages[0].content).to.have.property('repeat', 3);
+
+      definition.stop();
+    });
+
+    it('timeDuration with repeat and closer timeCycle without repeat resets repeat', () => {
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: 'R3/PT1M',
+          timeCycle: 'PT1S',
+        },
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
+        messages.push(msg);
+      }, {noAck: true});
+
+      definition.execute({
+        fields: {
+          routingKey: 'execute.start',
+          redelivered: true,
+        },
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+          },
+        },
+      });
+
+      expect(messages[0].content).to.have.property('timerType', 'timeCycle');
+      expect(messages[0].content.repeat).to.be.undefined;
 
       definition.stop();
     });

@@ -22,6 +22,10 @@ Feature('Timers', () => {
     after(ck.reset);
 
     let context, definition;
+    after(() => {
+      expect(definition?.environment.timers.executing).to.have.length(0);
+    });
+
     Given('a time cycle start event, bound time duration event, throw time date event, and a user task with due date', async () => {
       context = await testHelpers.context(timersSource, {extensions});
       definition = new Definition(context, {
@@ -436,6 +440,10 @@ Feature('Timers', () => {
 
   Scenario('bound activity non-interrupting timer cycle', () => {
     let context, definition;
+    after(() => {
+      expect(definition?.environment.timers.executing).to.have.length(0);
+    });
+
     Given('a task with a bound non-interrupting repeated timer cycle', async () => {
       const source = `<?xml version="1.0" encoding="UTF-8"?>
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -569,6 +577,10 @@ Feature('Timers', () => {
 
   Scenario('bound activity interrupting timer cycle', () => {
     let context, definition;
+    after(() => {
+      expect(definition?.environment.timers.executing).to.have.length(0);
+    });
+
     Given('a task with a bound interrupting repeated timer cycle', async () => {
       const source = `<?xml version="1.0" encoding="UTF-8"?>
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -622,6 +634,10 @@ Feature('Timers', () => {
 
   Scenario('repeated time duration timer', () => {
     let context, definition;
+    after(() => {
+      expect(definition?.environment.timers.executing).to.have.length(0);
+    });
+
     const timerEvents = [];
     Given('a start event time duration repeat timer expression', async () => {
       const source = `<?xml version="1.0" encoding="UTF-8"?>
@@ -702,6 +718,10 @@ Feature('Timers', () => {
 
   Scenario('faulty timer expression', () => {
     let context, definition;
+    after(() => {
+      expect(definition?.environment.timers.executing).to.have.length(0);
+    });
+
     Given('a source with a faulty timer expression', async () => {
       const source = `<?xml version="1.0" encoding="UTF-8"?>
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
@@ -731,6 +751,66 @@ Feature('Timers', () => {
     Then('run fails', async () => {
       const err = await errored;
       expect(err.content.error).to.match(/syntax/i);
+    });
+  });
+
+  Scenario('timer delay does not fit into a 32-bit signed integer', () => {
+    before(ck.reset);
+
+    let context, definition;
+    Given('a source with a timer expression of one year', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="Process_0" isExecutable="true">
+          <startEvent id="start-cycle">
+            <timerEventDefinition>
+              <timeCycle xsi:type="tFormalExpression">P1Y</timeCycle>
+            </timerEventDefinition>
+          </startEvent>
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let timer;
+    When('definition is ran', () => {
+      ck.freeze(2023, 4, 23);
+      timer = definition.waitFor('activity.timer');
+      definition.run();
+    });
+
+    Then('activity timer is emitted', async () => {
+      const timerEvent = await timer;
+      expect(timerEvent.content.expireAt.getFullYear()).to.equal(2024);
+    });
+
+    let state;
+    When('run is stopped and state is saved', () => {
+      definition.stop();
+      state = definition.getState();
+    });
+
+    Then('timers are cleared', () => {
+      expect(definition?.environment.timers.executing).to.have.length(0);
+    });
+
+    let end;
+    When('run is resumed one year later', () => {
+      ck.travel(new Date(2024, 4, 23));
+
+      definition = new Definition(context.clone()).recover(state);
+
+      end = definition.waitFor('leave');
+
+      definition.resume();
+    });
+
+    Then('run completes', () => {
+      return end;
     });
   });
 });

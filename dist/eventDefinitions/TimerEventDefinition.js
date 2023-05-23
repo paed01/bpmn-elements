@@ -10,7 +10,7 @@ const kStopped = Symbol.for('stopped');
 const kTimerContent = Symbol.for('timerContent');
 const kTimer = Symbol.for('timer');
 function TimerEventDefinition(activity, eventDefinition) {
-  const type = this.type = eventDefinition.type || 'TimerEventDefinition.js';
+  const type = this.type = eventDefinition.type || 'TimerEventDefinition';
   this.activity = activity;
   const environment = this.environment = activity.environment;
   this.eventDefinition = eventDefinition;
@@ -189,9 +189,38 @@ TimerEventDefinition.prototype._stop = function stop() {
   broker.cancel(`_api-${this.executionId}`);
   broker.cancel(`_api-delegated-${this.executionId}`);
 };
+TimerEventDefinition.prototype.parse = function parse(timerType, value) {
+  let repeat, delay, expireAt;
+  switch (timerType) {
+    case 'timeCycle':
+    case 'timeDuration':
+      {
+        const parsed = (0, _isoDuration.parse)(value);
+        if (parsed.repeat) repeat = parsed.repeat;
+        delay = (0, _isoDuration.toSeconds)(parsed) * 1000;
+        expireAt = new Date(Date.now() + delay);
+        break;
+      }
+    case 'timeDate':
+      {
+        const ms = Date.parse(value);
+        if (!isNaN(ms)) {
+          expireAt = new Date(ms);
+          delay = Date.now() - expireAt;
+        } else {
+          throw new TypeError(`invalid timeDate >${value}<`);
+        }
+        break;
+      }
+  }
+  return {
+    expireAt,
+    repeat,
+    delay
+  };
+};
 TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
   const content = executeMessage.content;
-  const now = Date.now();
   const result = {
     ...('expireAt' in content && {
       expireAt: new Date(content.expireAt)
@@ -203,44 +232,28 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
     let expireAtDate, repeat;
     const timerStr = result[t];
     if (timerStr) {
-      switch (t) {
-        case 'timeCycle':
-        case 'timeDuration':
-          {
-            try {
-              const parsed = (0, _isoDuration.parse)(timerStr);
-              if (parsed.repeat) repeat = parsed.repeat;
-              const delay = (0, _isoDuration.toSeconds)(parsed) * 1000;
-              if (delay !== undefined) expireAtDate = new Date(now + delay);
-            } catch (err) {
-              parseErr = err;
-            }
-            break;
-          }
-        case 'timeDate':
-          {
-            const dateStr = result[t];
-            const ms = Date.parse(dateStr);
-            if (!isNaN(ms)) {
-              expireAtDate = new Date(ms);
-            } else {
-              parseErr = new TypeError(`invalid timeDate >${dateStr}<`);
-            }
-            break;
-          }
+      try {
+        const {
+          repeat: parsedRepeat,
+          expireAt: parsedExpireAt
+        } = this.parse(t, timerStr);
+        repeat = parsedRepeat;
+        expireAtDate = parsedExpireAt;
+      } catch (err) {
+        parseErr = err;
       }
     } else {
-      expireAtDate = new Date(now);
+      expireAtDate = new Date();
     }
     if (!expireAtDate) continue;
     if (!('expireAt' in result) || result.expireAt > expireAtDate) {
       result.timerType = t;
       result.expireAt = expireAtDate;
-      if (repeat) result.repeat = repeat;
+      result.repeat = repeat;
     }
   }
   if ('expireAt' in result) {
-    result.timeout = result.expireAt - now;
+    result.timeout = result.expireAt - Date.now();
   } else if ('timeout' in content) {
     result.timeout = content.timeout;
   } else if (!Object.keys(result).length) {

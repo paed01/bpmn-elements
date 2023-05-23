@@ -1775,6 +1775,32 @@ describe('Process', () => {
       bp.run();
     });
   });
+
+  describe('broker api exchange', () => {
+    let context;
+    before(async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="flow1" sourceRef="start" targetRef="task" />
+          <userTask id="task" />
+          <sequenceFlow id="flow2" sourceRef="task" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    it('non-delegated api message addressing activity is forwarded to activity', () => {
+      const [bp] = context.clone().getProcesses();
+      bp.run();
+      const [task] = bp.getPostponed();
+      bp.broker.publish('api', 'activity.signal.' + task.executionId, {id: 'task'}, {type: 'signal'});
+      expect(bp.counters).to.have.property('completed', 1);
+    });
+  });
 });
 
 function Context() {

@@ -46,6 +46,8 @@ import Task from './tasks/Task.js';
 import TerminateEventDefinition from './eventDefinitions/TerminateEventDefinition.js';
 import TimerEventDefinition from './eventDefinitions/TimerEventDefinition.js';
 import Transaction from './tasks/Transaction.js';
+import {Timers} from './Timers.js';
+import * as ISODuration from './iso-duration.js';
 
 export {
   Association,
@@ -103,4 +105,6 @@ export {
   TerminateEventDefinition,
   TimerEventDefinition,
   Transaction,
+  Timers,
+  ISODuration,
 };

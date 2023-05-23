@@ -57,7 +57,6 @@ function parse(durationString) {
 }
 
 /** Convert ISO8601 duration object to an end Date. */
-
 function end(durationInput, startDate) {
   const duration = Object.assign({}, defaultDuration, durationInput);
   // Create two equal timestamps, add duration to 'then' and return time difference
