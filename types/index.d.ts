@@ -471,6 +471,17 @@ declare module 'bpmn-elements' {
     getApi(message?: ElementBrokerMessage): Api<ElementBase>;
   }
 
+  interface ISequenceFlowCondition {
+    /** Condition type, e.g. script or expression */
+    get type(): string;
+    /**
+     * Execute sequence flow condition
+     * @param message Source element execution message
+     * @param callback Callback with truthy result if flow should be taken
+     */
+    execute(message: ElementBrokerMessage, callback: (err: Error, result: any) => void): void;
+  }
+
   class SequenceFlow extends Element<SequenceFlow> {
     get sourceId(): string;
     get targetId(): string;
@@ -480,7 +491,7 @@ declare module 'bpmn-elements' {
     take(content?: any): boolean;
     discard(content?: any): void;
     shake(message: any): number;
-    getCondition(): any;
+    getCondition(): ISequenceFlowCondition | null;
     createMessage(override?: any): object;
     /**
      * Evaluate flow
@@ -496,6 +507,7 @@ declare module 'bpmn-elements' {
     get id(): string;
     get processId(): string;
   }
+
   class MessageFlow extends Element<MessageFlow> {
     get source(): MessageFlowReference;
     get target(): MessageFlowReference;

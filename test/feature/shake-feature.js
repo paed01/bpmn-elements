@@ -511,15 +511,7 @@ Feature('Shaking', () => {
           });
         }
 
-        const messages = [];
-        And('shake messages are collected', () => {
-          definition.broker.subscribeTmp('event', '*.shake*', (routingKey) => {
-            messages.push(routingKey);
-          }, {noAck: true});
-        });
-
         When('start event is shook', () => {
-          messages.splice(0);
           result = definition.shake('start');
         });
 
@@ -549,6 +541,62 @@ Feature('Shaking', () => {
           expect(sequence[1]).to.have.property('id', 'to-subend');
           expect(sequence[2]).to.have.property('id', 'subend');
         });
+      });
+    });
+  });
+
+  Scenario('shaking a task by api call', () => {
+    let context;
+    Given('a flow with a task in the middle, a loop back to task gateway, and an end event', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="withSubProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-sub" sourceRef="start" targetRef="task" />
+          <userTask id="task" />
+          <sequenceFlow id="to-gw" sourceRef="task" targetRef="gw" />
+          <exclusiveGateway id="gw" default="to-end" />
+          <sequenceFlow id="from-gw" sourceRef="gw" targetRef="task" />
+          <sequenceFlow id="to-end" sourceRef="gw" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    describe('definition is running', () => {
+      let definition;
+      Given('definition is initiated', () => {
+        definition = new Definition(context.clone());
+      });
+
+      And('definition is running', () => {
+        definition.run();
+      });
+
+      const messages = [];
+      And('shake messages are collected', () => {
+        definition.broker.subscribeTmp('event', '*.shake#', (_, msg) => {
+          messages.push(msg);
+        }, {noAck: true});
+      });
+
+      When('task is shook by api', () => {
+        messages.splice(0);
+        const [task] = definition.getPostponed();
+        task.sendApiMessage('shake');
+      });
+
+      Then('sequences is returned', () => {
+        const shakeEndMessage = messages.pop();
+        expect(shakeEndMessage.fields).to.have.property('routingKey', 'activity.shake.end');
+        expect(shakeEndMessage.content.sequence).to.have.length(5);
+        expect(shakeEndMessage.content.sequence[0]).to.have.property('id', 'task');
+        expect(shakeEndMessage.content.sequence[1]).to.have.property('id', 'to-gw');
+        expect(shakeEndMessage.content.sequence[2]).to.have.property('id', 'gw');
+        expect(shakeEndMessage.content.sequence[3]).to.have.property('id', 'to-end');
+        expect(shakeEndMessage.content.sequence[4]).to.have.property('id', 'end');
       });
     });
   });
