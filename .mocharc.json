@@ -1,0 +1,7 @@
+{
+  "require": "./test/helpers/setup.cjs",
+  "reporter": "spec",
+  "recursive": true,
+  "timeout": 1000,
+  "ui": "mocha-cakes-2"
+}

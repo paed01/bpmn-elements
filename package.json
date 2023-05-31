@@ -13,7 +13,7 @@
   },
   "sideEffects": false,
   "scripts": {
-    "test": "mocha -R dot",
+    "test": "mocha -R @bonniernews/hot-bev -p",
     "posttest": "npm run lint && npm run dist",
     "lint": "eslint . --cache",
     "prepack": "npm run dist",
@@ -49,6 +49,7 @@
     "@babel/core": "^7.22.1",
     "@babel/preset-env": "^7.22.4",
     "@babel/register": "^7.21.0",
+    "@bonniernews/hot-bev": "^0.4.0",
     "bpmn-moddle": "^8.0.1",
     "c8": "^7.14.0",
     "camunda-bpmn-moddle": "^7.0.1",
