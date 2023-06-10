@@ -102,7 +102,8 @@ function Activity(Behaviour, activityDef, context) {
     attachedTo,
     isTransaction: activityDef.isTransaction,
     isParallelJoin,
-    isThrowing: activityDef.isThrowing
+    isThrowing: activityDef.isThrowing,
+    lane: activityDef.lane && activityDef.lane.id
   };
   this[kExec] = {};
   this[kMessageHandlers] = {
@@ -236,10 +237,25 @@ Object.defineProperty(Activity.prototype, 'attachedTo', {
     return this.getActivityById(attachedToId);
   }
 });
+Object.defineProperty(Activity.prototype, 'lane', {
+  enumerable: true,
+  get() {
+    const laneId = this[kFlags].lane;
+    if (!laneId) return undefined;
+    const parent = this.parentElement;
+    return parent.getLaneById && parent.getLaneById(laneId);
+  }
+});
 Object.defineProperty(Activity.prototype, 'eventDefinitions', {
   enumerable: true,
   get() {
     return this[kEventDefinitions];
+  }
+});
+Object.defineProperty(Activity.prototype, 'parentElement', {
+  enumerable: true,
+  get() {
+    return this.context.getActivityParentById(this.id);
   }
 });
 Activity.prototype.activate = function activate() {

@@ -23,6 +23,7 @@ import InclusiveGateway from './gateways/InclusiveGateway.js';
 import InputOutputSpecification from './io/InputOutputSpecification.js';
 import IntermediateCatchEvent from './events/IntermediateCatchEvent.js';
 import IntermediateThrowEvent from './events/IntermediateThrowEvent.js';
+import Lane from './process/Lane.js';
 import LinkEventDefinition from './eventDefinitions/LinkEventDefinition.js';
 import LoopCharacteristics from './tasks/LoopCharacteristics.js';
 import Message from './activity/Message.js';
@@ -82,6 +83,7 @@ export {
   Message,
   MessageEventDefinition,
   MessageFlow,
+  Lane,
   LoopCharacteristics as MultiInstanceLoopCharacteristics,
   ParallelGateway,
   Process,

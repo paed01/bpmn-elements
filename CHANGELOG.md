@@ -1,6 +1,13 @@
 Changelog
 =========
 
+# 10.1.0
+
+- introduce Lane behaviour
+- add process `lanes` property with Lane instances
+- add activity `lane` property containing a reference to the process lane instance
+- add activity `parentElement` property referencing parent process or sub process
+
 # 10.0.0
 
 - drop iso8601-duration dependency and copy source (with licence). Export as `ISODuration`. Extend with repeat pattern parsing, e.g. `R3/PT1H` that corresponds to three repetitions every one hour

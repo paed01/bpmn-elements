@@ -17,6 +17,7 @@ const kCounters = Symbol.for('counters');
 const kExec = Symbol.for('execution');
 const kExecuteMessage = Symbol.for('executeMessage');
 const kExtensions = Symbol.for('extensions');
+const kLanes = Symbol.for('lanes');
 const kMessageHandlers = Symbol.for('messageHandlers');
 const kStateMessage = Symbol.for('stateMessage');
 const kStatus = Symbol.for('status');
@@ -66,6 +67,9 @@ function Process(processDef, context) {
     onExecutionMessage: this._onExecutionMessage.bind(this)
   };
   this.logger = environment.Logger(type.toLowerCase());
+  if (behaviour.lanes) {
+    this[kLanes] = behaviour.lanes.map(lane => new lane.Behaviour(this, lane));
+  }
   this[kExtensions] = context.loadExtensions(this);
 }
 Object.defineProperty(Process.prototype, 'counters', {
@@ -74,6 +78,13 @@ Object.defineProperty(Process.prototype, 'counters', {
     return {
       ...this[kCounters]
     };
+  }
+});
+Object.defineProperty(Process.prototype, 'lanes', {
+  enumerable: true,
+  get() {
+    const lanes = this[kLanes];
+    return lanes && lanes.slice();
   }
 });
 Object.defineProperty(Process.prototype, 'extensions', {
@@ -403,6 +414,11 @@ Process.prototype.getSequenceFlows = function getSequenceFlows() {
   const execution = this.execution;
   if (execution) return execution.getSequenceFlows();
   return this.context.getSequenceFlows();
+};
+Process.prototype.getLaneById = function getLaneById(laneId) {
+  const lanes = this[kLanes];
+  if (!lanes) return;
+  return lanes.find(lane => lane.id === laneId);
 };
 Process.prototype.getPostponed = function getPostponed(...args) {
   const execution = this.execution;

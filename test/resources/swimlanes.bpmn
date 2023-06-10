@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0kr5nvo" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.11.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.19.0">
+  <bpmn:collaboration id="Collaboration_0b70f8s">
+    <bpmn:participant id="Participant_0fvtmhu" name="System" processRef="Process_1" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:laneSet id="LaneSet_06p7csg">
+      <bpmn:lane id="customer-lane" name="Customer">
+        <bpmn:documentation>Customer lane</bpmn:documentation>
+        <bpmn:flowNodeRef>StartEvent_1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>fillform</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_06ou83i</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="admin-lane" name="Admin">
+        <bpmn:documentation>Admin lane</bpmn:documentation>
+        <bpmn:extensionElements>
+          <camunda:properties>
+            <camunda:property name="username" value="admin" />
+          </camunda:properties>
+        </bpmn:extensionElements>
+        <bpmn:flowNodeRef>approveform</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>sub</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_06ubrfw</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:userTask id="fillform" name="Fill">
+      <bpmn:documentation>Customer fills out form</bpmn:documentation>
+      <bpmn:incoming>Flow_06ubrfw</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ak5a9e</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="approveform" name="Approve">
+      <bpmn:documentation>Admin approves form</bpmn:documentation>
+      <bpmn:incoming>Flow_0ak5a9e</bpmn:incoming>
+      <bpmn:outgoing>Flow_0sy8hvt</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:endEvent id="Event_06ou83i">
+      <bpmn:incoming>Flow_11ihrin</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:subProcess id="sub">
+      <bpmn:incoming>Flow_0sy8hvt</bpmn:incoming>
+      <bpmn:outgoing>Flow_11ihrin</bpmn:outgoing>
+      <bpmn:manualTask id="subtask" name="Sub task" />
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="Flow_06ubrfw" sourceRef="StartEvent_1" targetRef="fillform" />
+    <bpmn:sequenceFlow id="Flow_0ak5a9e" sourceRef="fillform" targetRef="approveform" />
+    <bpmn:sequenceFlow id="Flow_0sy8hvt" sourceRef="approveform" targetRef="sub" />
+    <bpmn:sequenceFlow id="Flow_11ihrin" sourceRef="sub" targetRef="Event_06ou83i" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_0b70f8s">
+      <bpmndi:BPMNShape id="Participant_0fvtmhu_di" bpmnElement="Participant_0fvtmhu" isHorizontal="true">
+        <dc:Bounds x="129" y="80" width="831" height="510" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_06ozy7t_di" bpmnElement="customer-lane" isHorizontal="true">
+        <dc:Bounds x="159" y="80" width="801" height="204" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1rb8ifc_di" bpmnElement="admin-lane" isHorizontal="true">
+        <dc:Bounds x="159" y="284" width="801" height="306" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="202" y="162" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0pij2b3_di" bpmnElement="fillform">
+        <dc:Bounds x="320" y="140" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0nlq4ve_di" bpmnElement="approveform">
+        <dc:Bounds x="320" y="410" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_06ou83i_di" bpmnElement="Event_06ou83i">
+        <dc:Bounds x="672" y="162" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0rw1uyl_di" bpmnElement="sub" isExpanded="true">
+        <dc:Bounds x="500" y="350" width="350" height="200" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1wowpb1_di" bpmnElement="subtask">
+        <dc:Bounds x="630" y="410" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_06ubrfw_di" bpmnElement="Flow_06ubrfw">
+        <di:waypoint x="238" y="180" />
+        <di:waypoint x="320" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ak5a9e_di" bpmnElement="Flow_0ak5a9e">
+        <di:waypoint x="370" y="220" />
+        <di:waypoint x="370" y="410" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0sy8hvt_di" bpmnElement="Flow_0sy8hvt">
+        <di:waypoint x="420" y="450" />
+        <di:waypoint x="500" y="450" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_11ihrin_di" bpmnElement="Flow_11ihrin">
+        <di:waypoint x="690" y="350" />
+        <di:waypoint x="690" y="198" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

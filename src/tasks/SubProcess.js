@@ -135,7 +135,7 @@ SubProcessBehaviour.prototype.recover = function recover(state) {
   }
 
   const subEnvironment = this.environment.clone().recover(state.environment);
-  const subContext = this.context.clone(subEnvironment);
+  const subContext = this.context.clone(subEnvironment, this.activity);
 
   const execution = new ProcessExecution(this.activity, subContext).recover(state);
 
@@ -176,7 +176,7 @@ SubProcessBehaviour.prototype._upsertExecution = function upsertExecution(execut
   }
 
   const subEnvironment = this.environment.clone();
-  const subContext = this.context.clone(subEnvironment);
+  const subContext = this.context.clone(subEnvironment, this.activity);
 
   execution = new ProcessExecution(this.activity, subContext);
   this[kExecutions].push(execution);

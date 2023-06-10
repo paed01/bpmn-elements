@@ -38,9 +38,8 @@ Activity properties:
 - `parent`: activity parent
   - `id`: id of parent
   - `type`: parent type
-- `lane`: activity lane
-  - `id`: id of parent
-  - `type`: parent type
+- `parentElement`: activity parent process or sub process reference
+- `lane`: activity lane reference if any
 - `status`: current status
 - `stopped`: boolean indicating if the activity is in a stopped state
 
@@ -148,4 +147,3 @@ Arguments:
       - `isDefault`: boolean indicating if flow is default flow
       - `result`: result of condition
       - `message`: optional message passed from argument `brokerMessage.content.message`
-

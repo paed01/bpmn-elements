@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "10.0.1",
+  "version": "10.1.0",
   "description": "Executable workflow elements based on BPMN 2.0",
   "type": "module",
   "main": "dist/index.js",
@@ -13,11 +13,11 @@
   },
   "sideEffects": false,
   "scripts": {
-    "test": "mocha -R @bonniernews/hot-bev -p",
+    "test": "mocha -R @bonniernews/hot-bev -p -t 2000",
     "posttest": "npm run lint && npm run dist",
     "lint": "eslint . --cache",
     "prepack": "npm run dist",
-    "cov:html": "c8 -r html -r text mocha -R dot",
+    "cov:html": "c8 -r html -r text mocha -R @bonniernews/hot-bev -p -t 2000",
     "test:lcov": "c8 -r lcov mocha && npm run lint",
     "dist": "babel src -d dist/"
   },
@@ -45,10 +45,10 @@
   ],
   "devDependencies": {
     "@aircall/expression-parser": "^1.0.4",
-    "@babel/cli": "^7.21.5",
-    "@babel/core": "^7.22.1",
-    "@babel/preset-env": "^7.22.4",
-    "@babel/register": "^7.21.0",
+    "@babel/cli": "^7.22.5",
+    "@babel/core": "^7.22.5",
+    "@babel/preset-env": "^7.22.5",
+    "@babel/register": "^7.22.5",
     "@bonniernews/hot-bev": "^0.4.0",
     "bpmn-moddle": "^8.0.1",
     "c8": "^7.14.0",
@@ -56,12 +56,12 @@
     "chai": "^4.3.7",
     "chronokinesis": "^5.0.2",
     "debug": "^4.3.4",
-    "eslint": "^8.41.0",
+    "eslint": "^8.42.0",
     "eslint-plugin-import": "^2.27.5",
     "got": "^12.6.1",
     "mocha": "^10.1.0",
     "mocha-cakes-2": "^3.3.0",
-    "moddle-context-serializer": "^3.2.2",
+    "moddle-context-serializer": "^4.0.0",
     "nock": "^13.3.1"
   },
   "dependencies": {

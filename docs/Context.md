@@ -18,6 +18,7 @@ Properties:
 - `sid`: some unique id
 - `definitionContext`: the passed serializable context
 - `environment`: [Environment](/docs/Environment.md) instance
+- `owner`: reference to owning process or sub process
 
 ### `clone([environment])`
 

@@ -288,6 +288,8 @@ declare module 'bpmn-elements' {
     get sid(): string;
     get definitionContext(): SerializableContext;
     get environment(): Environment;
+    /** Context owner, Process or SubProcess activity */
+    get owner(): Process | Activity | undefined;
     getActivityById<T>(activityId: string): T;
     getSequenceFlowById(sequenceFlowId: string): SequenceFlow;
     getInboundSequenceFlows(activityId: string): SequenceFlow[];
@@ -429,6 +431,7 @@ declare module 'bpmn-elements' {
     constructor(processDef: SerializableElement, context: Context);
     get isExecutable(): boolean;
     get counters(): completedCounters;
+    get lanes(): Lane[] | undefined;
     get extensions(): IExtension;
     get stopped(): boolean;
     get isRunning(): boolean;
@@ -448,6 +451,7 @@ declare module 'bpmn-elements' {
     getActivities(): Activity[];
     getStartActivities(filterOptions?: startActivityFilterOptions): Activity[];
     getSequenceFlows(): SequenceFlow[];
+    getLaneById(laneId: string): Lane | undefined;
     getPostponed(filterFn: filterPostponed): Api<ElementBase>[];
   }
 
@@ -469,6 +473,13 @@ declare module 'bpmn-elements' {
     getActivityById<T>(activityId: string): T;
     getSequenceFlows(): SequenceFlow[];
     getApi(message?: ElementBrokerMessage): Api<ElementBase>;
+  }
+
+  class Lane extends ElementBase {
+    constructor(process: Process, laneDefinition: SerializableElement);
+    /** Process broker */
+    get broker(): Broker;
+    get process(): Process;
   }
 
   interface ISequenceFlowCondition {
@@ -608,6 +619,8 @@ declare module 'bpmn-elements' {
     get triggeredByEvent(): boolean;
     get attachedTo(): Activity;
     get eventDefinitions(): EventDefinition[];
+    /** Parent element process or sub process reference */
+    get parentElement(): Process | Activity;
     activate(): void;
     deactivate(): void;
     init(initContent?: any): void;

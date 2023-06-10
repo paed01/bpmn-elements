@@ -322,32 +322,29 @@ DefinitionExecution.prototype._activate = function activate(processList) {
 
 DefinitionExecution.prototype._activateProcess = function activateProcess(bp) {
   const handlers = this[kMessageHandlers];
+  const broker = bp.broker;
 
-  bp.broker.subscribeTmp('message', 'message.outbound', handlers.onMessageOutbound, {
+  broker.subscribeTmp('message', 'message.outbound', handlers.onMessageOutbound, {
     noAck: true,
     consumerTag: '_definition-outbound-message-consumer',
   });
-  bp.broker.subscribeTmp('event', 'activity.signal', handlers.onDelegateMessage, {
-    noAck: true,
-    consumerTag: '_definition-signal-consumer',
-    priority: 200,
-  });
-  bp.broker.subscribeTmp('event', 'activity.message', handlers.onDelegateMessage, {
-    noAck: true,
-    consumerTag: '_definition-message-consumer',
-    priority: 200,
-  });
-  bp.broker.subscribeTmp('event', 'activity.call', handlers.onCallActivity, {
+
+  const delegateEventQ = broker.assertQueue('_delegate-event-q', {autoDelete: false, durable: false});
+  delegateEventQ.consume(handlers.onDelegateMessage, {noAck: true, consumerTag: '_definition-signal-consumer'});
+  broker.bindQueue('_delegate-event-q', 'event', 'activity.signal', {priority: 200});
+  broker.bindQueue('_delegate-event-q', 'event', 'activity.message', {priority: 200});
+
+  broker.subscribeTmp('event', 'activity.call', handlers.onCallActivity, {
     noAck: true,
     consumerTag: '_definition-call-consumer',
     priority: 200,
   });
-  bp.broker.subscribeTmp('event', 'activity.call.cancel', handlers.onCancelCallActivity, {
+  broker.subscribeTmp('event', 'activity.call.cancel', handlers.onCancelCallActivity, {
     noAck: true,
     consumerTag: '_definition-call-cancel-consumer',
     priority: 200,
   });
-  bp.broker.subscribeTmp('event', '#', handlers.onChildEvent, {
+  broker.subscribeTmp('event', '#', handlers.onChildEvent, {
     noAck: true,
     consumerTag: '_definition-activity-consumer',
     priority: 100,
@@ -383,7 +380,6 @@ DefinitionExecution.prototype._deactivateProcess = function deactivateProcess(bp
   bp.broker.cancel('_definition-outbound-message-consumer');
   bp.broker.cancel('_definition-activity-consumer');
   bp.broker.cancel('_definition-signal-consumer');
-  bp.broker.cancel('_definition-message-consumer');
   bp.broker.cancel('_definition-call-consumer');
   bp.broker.cancel('_definition-call-cancel-consumer');
 };

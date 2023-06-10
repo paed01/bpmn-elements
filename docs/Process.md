@@ -25,6 +25,7 @@ Process properties:
   - `type`: parent type
 - `status`: current status
 - `stopped`: boolean indicating if the process is in a stopped state
+- `lanes`: list of process Lane instances
 
 ### `getApi(message)`
 
@@ -42,6 +43,10 @@ Get all process [activity instances](/docs/Activity.md).
 ### `getActivityById(id)`
 
 Get [activity instance](/docs/Activity.md) by id.
+
+### `getLaneById(id)`
+
+Get process swim lane by id.
 
 ### `getSequenceFlows()`
 
@@ -107,4 +112,3 @@ Arguments:
   - `owner`: broker owner, in this case probably the actual activity
 
 Returns Promise that will resolve with element [api](/docs/SharedApi.md) on event name or reject on error.
-

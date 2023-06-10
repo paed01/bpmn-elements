@@ -9,11 +9,12 @@ var _Environment = _interopRequireDefault(require("./Environment.js"));
 var _ExtensionsMapper = _interopRequireDefault(require("./ExtensionsMapper.js"));
 var _shared = require("./shared.js");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+const kOwner = Symbol.for('owner');
 function Context(definitionContext, environment) {
   environment = environment ? environment.clone() : new _Environment.default();
   return new ContextInstance(definitionContext, environment);
 }
-function ContextInstance(definitionContext, environment) {
+function ContextInstance(definitionContext, environment, owner) {
   const {
     id = 'Def',
     name,
@@ -38,7 +39,13 @@ function ContextInstance(definitionContext, environment) {
     sequenceFlowRefs: {},
     sequenceFlows: []
   };
+  this[kOwner] = owner;
 }
+Object.defineProperty(ContextInstance.prototype, 'owner', {
+  get() {
+    return this[kOwner];
+  }
+});
 ContextInstance.prototype.getActivityById = function getActivityById(activityId) {
   const activityInstance = this.refs.activityRefs[activityId];
   if (activityInstance) return activityInstance;
@@ -95,8 +102,8 @@ ContextInstance.prototype.upsertAssociation = function upsertAssociation(associa
   instance = refs[associationDefinition.id] = new associationDefinition.Behaviour(associationDefinition, this);
   return instance;
 };
-ContextInstance.prototype.clone = function clone(newEnvironment) {
-  return new ContextInstance(this.definitionContext, newEnvironment || this.environment);
+ContextInstance.prototype.clone = function clone(newEnvironment, newOwner) {
+  return new ContextInstance(this.definitionContext, newEnvironment || this.environment, newOwner);
 };
 ContextInstance.prototype.getProcessById = function getProcessById(processId) {
   const refs = this.refs.processRefs;
@@ -106,13 +113,16 @@ ContextInstance.prototype.getProcessById = function getProcessById(processId) {
   if (!processDefinition) return null;
   const bpContext = this.clone(this.environment.clone());
   bp = refs[processId] = new processDefinition.Behaviour(processDefinition, bpContext);
+  bpContext[kOwner] = bp;
   this.refs.processes.push(bp);
   return bp;
 };
 ContextInstance.prototype.getNewProcessById = function getNewProcessById(processId) {
   if (!this.getProcessById(processId)) return null;
   const bpDef = this.definitionContext.getProcessById(processId);
-  const bp = new bpDef.Behaviour(bpDef, this.clone(this.environment.clone()));
+  const bpContext = this.clone(this.environment.clone());
+  const bp = new bpDef.Behaviour(bpDef, bpContext);
+  bpContext[kOwner] = bp;
   return bp;
 };
 ContextInstance.prototype.getProcesses = function getProcesses() {
@@ -175,4 +185,11 @@ ContextInstance.prototype.loadExtensions = function loadExtensions(activity) {
   if (io.hasIo) extensions.extensions.push(io);
   if (!extensions.extensions.length) return;
   return extensions;
+};
+ContextInstance.prototype.getActivityParentById = function getActivityParentById(activityId) {
+  const owner = this[kOwner];
+  if (owner) return owner;
+  const activity = this.getActivityById(activityId);
+  const parentId = activity.parent.id;
+  return this.getProcessById(parentId) || this.getActivityById(parentId);
 };

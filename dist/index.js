@@ -172,6 +172,12 @@ Object.defineProperty(exports, "IntermediateThrowEvent", {
     return _IntermediateThrowEvent.default;
   }
 });
+Object.defineProperty(exports, "Lane", {
+  enumerable: true,
+  get: function () {
+    return _Lane.default;
+  }
+});
 Object.defineProperty(exports, "LinkEventDefinition", {
   enumerable: true,
   get: function () {
@@ -365,6 +371,7 @@ var _InclusiveGateway = _interopRequireDefault(require("./gateways/InclusiveGate
 var _InputOutputSpecification = _interopRequireDefault(require("./io/InputOutputSpecification.js"));
 var _IntermediateCatchEvent = _interopRequireDefault(require("./events/IntermediateCatchEvent.js"));
 var _IntermediateThrowEvent = _interopRequireDefault(require("./events/IntermediateThrowEvent.js"));
+var _Lane = _interopRequireDefault(require("./process/Lane.js"));
 var _LinkEventDefinition = _interopRequireDefault(require("./eventDefinitions/LinkEventDefinition.js"));
 var _LoopCharacteristics = _interopRequireDefault(require("./tasks/LoopCharacteristics.js"));
 var _Message = _interopRequireDefault(require("./activity/Message.js"));

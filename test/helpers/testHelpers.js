@@ -4,7 +4,7 @@ import * as types from '../../src/index.js';
 import BpmnModdle from 'bpmn-moddle';
 import Context from '../../src/Context.js';
 import Environment from '../../src/Environment.js';
-import {default as Serializer, TypeResolver} from 'moddle-context-serializer';
+import {Serializer, TypeResolver} from 'moddle-context-serializer';
 import {Scripts} from './JavaScripts.js';
 
 const camundaBpmnModdle = JSON.parse(fs.readFileSync('./node_modules/camunda-bpmn-moddle/resources/camunda.json'));

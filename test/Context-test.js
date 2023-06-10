@@ -30,14 +30,15 @@ describe('Context', () => {
   });
 
   describe('getProcessById(id)', () => {
-    it('return process', () => {
-      function Behaviour(def) {
-        return {
-          id: def.id,
-          run() {},
-        };
-      }
+    function Behaviour(def, context) {
+      return {
+        id: def.id,
+        context,
+        run() {},
+      };
+    }
 
+    it('return process', () => {
       const ctx = Context({
         id: 'newDef',
         name: 'New def',
@@ -61,6 +62,7 @@ describe('Context', () => {
       const bp = ctx.getProcessById('theProcess');
       expect(bp).to.have.property('id', 'theProcess');
       expect(bp).to.have.property('run').that.is.a('function');
+      expect(bp.context.owner === bp, 'process context owner is process').to.be.true;
     });
 
     it('return null if not found', () => {
@@ -75,6 +77,45 @@ describe('Context', () => {
       });
 
       expect(ctx.getProcessById('theProcess')).to.be.null;
+    });
+  });
+
+  describe('getNewProcessById(id)', () => {
+    function Behaviour(def, context) {
+      return {
+        id: def.id,
+        context,
+        run() {},
+      };
+    }
+
+    it('return process but doesn\'t add it to instance list', () => {
+      const ctx = Context({
+        id: 'newDef',
+        name: 'New def',
+        type: 'fake-context',
+        getProcessById() {
+          return {
+            id: 'theProcess',
+            type: 'bpmn:Process',
+            behaviour: {},
+            Behaviour,
+          };
+        },
+        getInboundSequenceFlows() {
+          return [];
+        },
+        getOutboundSequenceFlows() {
+          return [];
+        },
+      });
+
+      const bp = ctx.getNewProcessById('theProcess');
+      expect(bp).to.have.property('id', 'theProcess');
+      expect(bp).to.have.property('run').that.is.a('function');
+      expect(bp.context.owner === bp, 'process context owner is process').to.be.true;
+
+      expect(ctx.getProcessById('theProcess') === bp, 'from instance list').to.be.false;
     });
   });
 
