@@ -75,10 +75,12 @@ SequenceFlow.prototype.discard = function discard(content = {}) {
 };
 
 SequenceFlow.prototype.getState = function getState() {
-  return this.createMessage({
+  return {
+    id: this.id,
+    type: this.type,
     counters: this.counters,
     broker: this.broker.getState(true),
-  });
+  };
 };
 
 SequenceFlow.prototype.recover = function recover(state) {

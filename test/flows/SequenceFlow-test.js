@@ -561,7 +561,6 @@ describe('SequenceFlow', () => {
       expect(flow.getState()).to.deep.include({
         id: 'flow1',
         type: 'bpmn:SequenceFlow',
-        name: 'first flow',
         counters: {
           discard: 0,
           looped: 0,

@@ -162,6 +162,17 @@ Definition.prototype.resume = function resume(callback) {
   return this;
 };
 
+Definition.prototype.getState = function getState() {
+  return this._createMessage({
+    status: this.status,
+    stopped: this.stopped,
+    counters: this.counters,
+    environment: this.environment.getState(),
+    execution: this.execution && this.execution.getState(),
+    broker: this.broker.getState(true),
+  });
+};
+
 Definition.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error('cannot recover running definition');
   if (!state) return this;
@@ -220,17 +231,6 @@ Definition.prototype._shakeProcess = function shakeProcess(shakeBp, startId) {
   if (shovel) shakeBp.broker.closeShovel('shaker');
 
   return shakeResult;
-};
-
-Definition.prototype.getState = function getState() {
-  return this._createMessage({
-    status: this.status,
-    stopped: this.stopped,
-    counters: this.counters,
-    environment: this.environment.getState(),
-    execution: this.execution && this.execution.getState(),
-    broker: this.broker.getState(true),
-  });
 };
 
 Definition.prototype.getProcesses = function getProcesses() {

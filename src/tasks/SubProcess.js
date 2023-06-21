@@ -76,8 +76,6 @@ SubProcessBehaviour.prototype.execute = function execute(executeMessage) {
   }
 
   const processExecution = this._upsertExecution(executeMessage);
-  if (!processExecution) return;
-
   return processExecution.execute(executeMessage);
 };
 

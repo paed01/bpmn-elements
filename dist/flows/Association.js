@@ -72,10 +72,12 @@ Association.prototype.discard = function discard(content = {}) {
   return true;
 };
 Association.prototype.getState = function getState() {
-  return this._createMessageContent({
+  return {
+    id: this.id,
+    type: this.type,
     counters: this.counters,
     broker: this.broker.getState(true)
-  });
+  };
 };
 Association.prototype.recover = function recover(state) {
   Object.assign(this[kCounters], state.counters);

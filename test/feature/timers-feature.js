@@ -813,4 +813,94 @@ Feature('Timers', () => {
       return end;
     });
   });
+
+  Scenario('timer bound to user task is resumed on wait', () => {
+    before(ck.reset);
+
+    let context, definition;
+    Given('a source with user task and a bound timer', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="bp" isExecutable="true">
+          <userTask id="task" />
+          <boundaryEvent id="bound-timer" attachedToRef="task">
+            <timerEventDefinition>
+              <timeDuration xsi:type="tFormalExpression">PT10S</timeDuration>
+            </timerEventDefinition>
+          </boundaryEvent>
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let waiting, waitingState;
+    When('definition is ran with state save on wait', () => {
+      definition.broker.subscribeOnce('event', 'activity.wait', () => {
+        waitingState = JSON.parse(JSON.stringify(definition.getState()));
+      });
+      waiting = definition.waitFor('activity.wait');
+      definition.run();
+    });
+
+    Then('user task is waiting', () => {
+      return waiting;
+    });
+
+    And('state is saved', () => {
+      expect(waitingState).to.be.ok.and.have.property('execution');
+      expect(waitingState).to.property('status', 'executing');
+      definition.stop();
+    });
+
+    let end;
+    When('run is recovered, resumed, and task is signaled', () => {
+      definition = new Definition(context.clone()).recover(waitingState);
+
+      end = definition.waitFor('leave');
+
+      definition.resume();
+      definition.signal({id: 'task'});
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    let timer, timerState;
+    When('definition is ran with state save on timer', () => {
+      definition = new Definition(context.clone());
+
+      definition.broker.subscribeOnce('event', 'activity.timer', () => {
+        timerState = definition.getState();
+      });
+
+      timer = definition.waitFor('activity.timer');
+      definition.run();
+    });
+
+    Then('bound even is waiting for timer', () => {
+      return timer;
+    });
+
+    And('state is saved', () => {
+      expect(timerState).to.be.ok.and.have.property('execution');
+      expect(timerState).to.property('status', 'executing');
+      definition.stop();
+    });
+
+    When('run is recovered, resumed, and task is signaled', () => {
+      definition = new Definition(context.clone()).recover(timerState);
+
+      end = definition.waitFor('leave');
+
+      definition.resume();
+      definition.signal({id: 'task'});
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+  });
 });

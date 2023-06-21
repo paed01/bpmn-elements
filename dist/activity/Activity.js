@@ -296,6 +296,22 @@ Activity.prototype.run = function run(runContent) {
   broker.publish('run', 'run.start', (0, _messageHelper.cloneContent)(content));
   this._consumeRunQ();
 };
+Activity.prototype.getState = function getState() {
+  const status = this.status;
+  const exec = this[kExec];
+  return {
+    id: this.id,
+    type: this.type,
+    ...(status && {
+      status
+    }),
+    executionId: exec.executionId,
+    stopped: this.stopped,
+    counters: this.counters,
+    broker: this.broker.getState(true),
+    execution: exec.execution && exec.execution.getState()
+  };
+};
 Activity.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error(`cannot recover running activity <${this.id}>`);
   if (!state) return;
@@ -379,21 +395,6 @@ Activity.prototype.shake = function shake() {
 };
 Activity.prototype.evaluateOutbound = function evaluateOutbound(fromMessage, discardRestAtTake, callback) {
   return this[kFlows].outboundEvaluator.evaluate(fromMessage, discardRestAtTake, callback);
-};
-Activity.prototype.getState = function getState() {
-  const msg = this._createMessage();
-  const exec = this[kExec];
-  return {
-    ...msg,
-    executionId: exec.executionId,
-    stopped: this.stopped,
-    behaviour: {
-      ...this.behaviour
-    },
-    counters: this.counters,
-    broker: this.broker.getState(true),
-    execution: exec.execution && exec.execution.getState()
-  };
 };
 Activity.prototype.getApi = function getApi(message) {
   const execution = this[kExec].execution;

@@ -59,11 +59,13 @@ MessageFlow.prototype.getState = function getState() {
   return {
     id: this.id,
     type: this.type,
-    counters: this.counters
+    counters: this.counters,
+    broker: this.broker.getState(true)
   };
 };
 MessageFlow.prototype.recover = function recover(state) {
   Object.assign(this[kCounters], state.counters);
+  this.broker.recover(state.broker);
 };
 MessageFlow.prototype.getApi = function getApi(message) {
   return new _Api.Api('message', this.broker, message || {

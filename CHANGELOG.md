@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 11.0.0
+
+- slim activity state by removing properties not needed for recover, might be breaking if state is inspected
+- slim process state by removing properties not needed for recover, might be breaking if state is inspected
+
 # 10.1.0
 
 - introduce Lane behaviour

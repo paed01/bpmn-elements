@@ -86,7 +86,6 @@ SubProcessBehaviour.prototype.execute = function execute(executeMessage) {
     return loopCharacteristics.execute(executeMessage);
   }
   const processExecution = this._upsertExecution(executeMessage);
-  if (!processExecution) return;
   return processExecution.execute(executeMessage);
 };
 SubProcessBehaviour.prototype.stop = function stop() {

@@ -167,6 +167,19 @@ Process.prototype.resume = function resume() {
   this._activateRunConsumers();
   return this;
 };
+Process.prototype.getState = function getState() {
+  return {
+    id: this.id,
+    type: this.type,
+    executionId: this.executionId,
+    environment: this.environment.getState(),
+    status: this.status,
+    stopped: this.stopped,
+    counters: this.counters,
+    broker: this.broker.getState(true),
+    execution: this.execution && this.execution.getState()
+  };
+};
 Process.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error(`cannot recover running process <${this.id}>`);
   if (!state) return this;
@@ -201,16 +214,6 @@ Process.prototype.getApi = function getApi(message) {
 Process.prototype.signal = function signal(message) {
   return this.getApi().signal(message, {
     delegate: true
-  });
-};
-Process.prototype.getState = function getState() {
-  return this._createMessage({
-    environment: this.environment.getState(),
-    status: this.status,
-    stopped: this.stopped,
-    counters: this.counters,
-    broker: this.broker.getState(true),
-    execution: this.execution && this.execution.getState()
   });
 };
 Process.prototype.cancelActivity = function cancelActivity(message) {

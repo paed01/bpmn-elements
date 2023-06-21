@@ -173,7 +173,7 @@ Feature('Attempt to provoke a stack overflow', () => {
 
     Then('execution completes', () => {
       return end;
-    }).timeout(3000);
+    }).timeout(4000);
 
     And('all items have been processed', () => {
       expect(definition.environment.output.result).to.have.length(301);

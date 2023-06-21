@@ -169,6 +169,24 @@ ProcessExecution.prototype.resume = function resume() {
   if (!postponed.length && status === 'executing') return this._complete('completed');
 };
 
+ProcessExecution.prototype.getState = function getState() {
+  const {children, flows, outboundMessageFlows, associations} = this[kElements];
+  return {
+    executionId: this.executionId,
+    stopped: this[kStopped],
+    completed: this[kCompleted],
+    status: this.status,
+    children: children.reduce((result, activity) => {
+      if (activity.placeholder) return result;
+      result.push(activity.getState());
+      return result;
+    }, []),
+    ...(flows.length && {flows: flows.map((f) => f.getState())}),
+    ...(outboundMessageFlows.length && {messageFlows: outboundMessageFlows.length && outboundMessageFlows.map((f) => f.getState())}),
+    ...(associations.length && {associations: associations.map((f) => f.getState())}),
+  };
+};
+
 ProcessExecution.prototype.recover = function recover(state) {
   if (!state) return this;
   this.executionId = state.executionId;
@@ -280,24 +298,6 @@ ProcessExecution.prototype.cancel = function discard() {
     type: this.type,
     executionId: this.executionId,
   }, { type: 'cancel' });
-};
-
-ProcessExecution.prototype.getState = function getState() {
-  const {children, flows, outboundMessageFlows, associations} = this[kElements];
-  return {
-    executionId: this.executionId,
-    stopped: this[kStopped],
-    completed: this[kCompleted],
-    status: this.status,
-    children: children.reduce((result, activity) => {
-      if (activity.placeholder) return result;
-      result.push(activity.getState());
-      return result;
-    }, []),
-    ...(flows.length && {flows: flows.map((f) => f.getState())}),
-    ...(outboundMessageFlows.length && {messageFlows: outboundMessageFlows.length && outboundMessageFlows.map((f) => f.getState())}),
-    ...(associations.length && {associations: associations.map((f) => f.getState())}),
-  };
 };
 
 ProcessExecution.prototype.getActivities = function getActivities() {
