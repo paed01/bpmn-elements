@@ -129,6 +129,23 @@ declare module 'bpmn-elements' {
 
   type filterPostponed = (elementApi: Api<ElementBase>) => boolean;
 
+  const enum DefinitionRunStatus {
+    Entered = 'entered',
+    Start = 'start',
+    Executing = 'executing',
+    End = 'end',
+    Discarded = 'discarded',
+  }
+
+  const enum ProcessRunStatus {
+    Entered = 'entered',
+    Start = 'start',
+    Executing = 'executing',
+    Errored = 'errored',
+    End = 'end',
+    Discarded = 'discarded',
+  }
+
   /**
    * Activity status
    * Can be used to decide when to save states, Timer and Wait is recommended.
@@ -153,6 +170,30 @@ declare module 'bpmn-elements' {
     Wait = 'wait',
   }
 
+  /**
+   * Activity run status
+   */
+  const enum ActivityRunStatus {
+    /** Run entered, triggered by taken inbound flow */
+    Entered = 'entered',
+    /** Run started */
+    Started = 'started',
+    /** Executing activity behaviour */
+    Executing = 'executing',
+    /** Activity behaviour execution completed successfully */
+    Executed = 'executed',
+    /** Run end, take outbound flows */
+    End = 'end',
+    /** Entering discard run, triggered by discarded inbound flow */
+    Discard = 'discard',
+    /** Run was discarded, discard outbound flows */
+    Discarded = 'discarded',
+    /** Activity behaviour execution failed, discard run */
+    Error = 'error',
+    /** Formatting next run message */
+    Formatting = 'formatting',
+  }
+
   interface DefinitionExecution {
     get id(): string;
     get type(): string;
@@ -162,7 +203,7 @@ declare module 'bpmn-elements' {
     get executionId(): string;
     get stopped(): boolean;
     get completed(): boolean;
-    get status(): boolean;
+    get status(): string;
     get processes(): Process[];
     get postponedCount(): number;
     get isRunning(): boolean;
@@ -314,7 +355,6 @@ declare module 'bpmn-elements' {
   interface ElementState {
     id: string;
     type: string;
-    name: string;
     broker?: BrokerState;
     [x: string]: any;
   }
@@ -333,9 +373,9 @@ declare module 'bpmn-elements' {
   }
 
   interface ActivityState extends ElementState {
+    status?: string,
     executionId: string;
     stopped: boolean;
-    behaviour: Record<string, any>;
     counters: { taken: number, discarded: number };
     execution?: ActivityExecutionState;
   }
@@ -344,17 +384,12 @@ declare module 'bpmn-elements' {
     counters: {take: number, discard: number, looped: number};
   }
 
-  interface MessageFlowState {
-    id: string;
-    type: string;
+  interface MessageFlowState extends ElementState {
     counters: {messages: number};
   }
 
   interface AssociationState extends ElementState {
     counters: {take: number, discard: number };
-    sourceId: string;
-    targetId: string;
-    isAssociation: boolean;
   }
 
   interface ProcessExecutionState {
@@ -401,7 +436,7 @@ declare module 'bpmn-elements' {
     get execution(): DefinitionExecution;
     get executionId(): string;
     get isRunning(): boolean;
-    get status(): string;
+    get status(): DefinitionRunStatus | undefined;
     get stopped(): boolean;
     get activityStatus(): ActivityStatus;
     run(): Definition;
@@ -437,7 +472,7 @@ declare module 'bpmn-elements' {
     get isRunning(): boolean;
     get executionId(): string;
     get execution(): ProcessExecution;
-    get status(): string;
+    get status(): ProcessRunStatus | undefined;
     get activityStatus(): ActivityStatus;
     init(useAsExecutionId?: string): void;
     run(runContent?: Record<string, any>): void;
@@ -602,7 +637,7 @@ declare module 'bpmn-elements' {
   interface Activity extends Element<Activity> {
     get Behaviour(): ActivityBehaviour;
     get stopped(): boolean;
-    get status(): string;
+    get status(): ActivityRunStatus | undefined;
     get counters(): { taken: number, discarded: number };
     get execution(): ActivityExecution;
     get executionId(): string;

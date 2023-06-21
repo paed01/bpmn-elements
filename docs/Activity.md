@@ -36,11 +36,20 @@ Activity properties:
 - `logger`: activity [logger](/docs/Environment.md#logger) instance
 - `outbound`: list of outbound sequence flows
 - `parent`: activity parent
-  - `id`: id of parent
-  - `type`: parent type
+  * `id`: id of parent
+  * `type`: parent type
 - `parentElement`: activity parent process or sub process reference
 - `lane`: activity lane reference if any
-- `status`: current status
+- `status`: current run status
+  * `entered`: Run entered, triggered by taken inbound flow
+  * `started`: Run started
+  * `executing`: Executing activity behaviour
+  * `executed`: Activity behaviour execution completed successfully
+  * `end`: Run end, take outbound flows
+  * `discard`: Entering discard run, triggered by discarded inbound flow
+  * `discarded`: Run was discarded, discard outbound flows
+  * `error`: Activity behaviour execution failed, discard run
+  * `formatting`: Formatting next run message
 - `stopped`: boolean indicating if the activity is in a stopped state
 
 ### `activate()`
