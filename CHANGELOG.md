@@ -1,9 +1,9 @@
 Changelog
 =========
 
-# 11.0.2
+# 11.1.0
 
-- bump smqp@8
+- bump [smqp@8](https://github.com/paed01/smqp/blob/default/CHANGELOG.md)
 
 # 11.0.1
 
