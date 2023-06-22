@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "11.0.1",
+  "version": "11.0.2",
   "description": "Executable workflow elements based on BPMN 2.0",
   "type": "module",
   "main": "dist/index.js",
@@ -65,6 +65,6 @@
     "nock": "^13.3.1"
   },
   "dependencies": {
-    "smqp": "^7.1.4"
+    "smqp": "^8.0.0"
   }
 }

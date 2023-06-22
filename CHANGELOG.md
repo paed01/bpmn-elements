@@ -1,6 +1,14 @@
 Changelog
 =========
 
+# 11.0.2
+
+- bump smqp@8
+
+# 11.0.1
+
+- update neglected type definition
+
 # 11.0.0
 
 - slim activity state by removing properties not needed for recover, might be breaking if state is inspected
