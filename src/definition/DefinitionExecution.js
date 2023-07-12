@@ -614,7 +614,16 @@ DefinitionExecution.prototype._onCancelCallActivity = function onCancelCallActiv
 
   this._debug(`cancel call from <${fromParent.id}.${fromId}> to <${calledElement}>`);
 
-  targetProcess.getApi().discard();
+  if (!targetProcess.isRunning) {
+    targetProcess.getApi({
+      content: {
+        id: targetProcess.id,
+        executionId: targetProcess.executionId,
+      },
+    }).discard();
+  } else {
+    targetProcess.getApi().discard();
+  }
 };
 
 DefinitionExecution.prototype._onDelegateMessage = function onDelegateMessage(routingKey, executeMessage) {

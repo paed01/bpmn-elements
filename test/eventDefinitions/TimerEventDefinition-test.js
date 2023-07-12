@@ -894,7 +894,7 @@ describe('TimerEventDefinition', () => {
         ActivityApi(broker, timerMessage).discard();
       });
 
-      it('can be canceled', (done) => {
+      it('can be cancelled', (done) => {
         const definition = new TimerEventDefinition(event, {
           type: 'bpmn:TimerEventDefinition',
           behaviour: {
@@ -1097,7 +1097,7 @@ describe('TimerEventDefinition', () => {
       after(ck.reset);
 
       describe('cancel ' + descr, () => {
-        it('completes when parent is canceled', (done) => {
+        it('completes when parent is cancelled', (done) => {
           const messages = [];
           event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
             messages.push(msg);
@@ -1124,7 +1124,7 @@ describe('TimerEventDefinition', () => {
           ActivityApi(event.broker, messages[0]).cancel();
         });
 
-        it('completes when parent is canceled on activity timer event', (done) => {
+        it('completes when parent is cancelled on activity timer event', (done) => {
           event.broker.subscribeOnce('execution', 'execute.completed', () => {
             done();
           });
@@ -1146,7 +1146,7 @@ describe('TimerEventDefinition', () => {
           });
         });
 
-        it('completes if canceled on activity timer event', (done) => {
+        it('completes if cancelled on activity timer event', (done) => {
           event.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
             ActivityApi(event.broker, msg).cancel();
           }, {noAck: true});
@@ -1168,7 +1168,7 @@ describe('TimerEventDefinition', () => {
           });
         });
 
-        it('completes when delegated a canceled with parent id', (done) => {
+        it('completes when delegated a cancelled with parent id', (done) => {
           const messages = [];
           event.broker.subscribeTmp('event', 'activity.timeout', (_, msg) => {
             messages.push(msg);
@@ -1399,7 +1399,7 @@ describe('TimerEventDefinition', () => {
             ActivityApi(broker, timerMessage).discard();
           });
 
-          it('can be canceled', (done) => {
+          it('can be cancelled', (done) => {
             const broker = event.broker;
 
             let timerMessage;

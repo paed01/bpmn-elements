@@ -1,8 +1,12 @@
+import * as ck from 'chronokinesis';
+
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 import Definition from '../../src/definition/Definition.js';
 
 Feature('Call activity', () => {
+  after(ck.reset);
+
   Scenario('call process in the same diagram', () => {
     let definition;
     Given('a process with a call activity referencing a process', async () => {
@@ -107,7 +111,7 @@ Feature('Call activity', () => {
     });
   });
 
-  Scenario('call activity is canceled', () => {
+  Scenario('call activity is cancelled by timer', () => {
     let definition;
     Given('a process with a call activity referencing a process', async () => {
       const source = `
@@ -773,6 +777,67 @@ Feature('Call activity', () => {
     Then('run fails', async () => {
       const err = await end;
       expect(err.content.error).to.match(/not found/i);
+    });
+  });
+
+  Scenario('recovered call activity is cancelled by timer', () => {
+    let context, definition;
+    Given('a process with a call activity referencing a process', async () => {
+      const source = `
+      <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+          <callActivity id="call-activity" calledElement="called-process" />
+          <boundaryEvent id="bound-timer" attachedToRef="call-activity">
+            <timerEventDefinition>
+              <timeDuration xsi:type="tFormalExpression">P1D</timeDuration>
+            </timerEventDefinition>
+          </boundaryEvent>
+          <endEvent id="end" />
+          <sequenceFlow id="to-end" sourceRef="call-activity" targetRef="end" />
+        </process>
+        <process id="called-process" isExecutable="false">
+          <userTask id="task" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    When('ran', () => {
+      definition.run();
+    });
+
+    Then('call activity has started process', () => {
+      expect(definition.getRunningProcesses()).to.have.length(2);
+    });
+
+    And('a timer is running', () => {
+      expect(definition.environment.timers.executing).to.have.length(1);
+    });
+
+    let state;
+    Given('state is saved and run is stopped', () => {
+      state = definition.getState();
+      definition.stop();
+    });
+
+    let end;
+    When('run is recovered and resumed at timeout', () => {
+      ck.travel(Date.now() + 1000 * 60 * 60 * 24);
+
+      definition = new Definition(context.clone());
+
+      end = definition.waitFor('end');
+
+      definition.recover(state);
+      definition.resume();
+    });
+
+    Then('run completes', () => {
+      return end;
     });
   });
 });

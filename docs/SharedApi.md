@@ -49,6 +49,10 @@ Arguments:
 - `options`: optional object with broker message options
   - `delegate`: optional boolean to delegate the signal to all interested parties
 
+### `fail(error)`
+
+Fail activity with error. The purpose is to fail user-/signal tasks waiting for user input. The behaviour differs between different type of activities.
+
 ### `stop()`
 
 Stop element run. Publishes stop message on element broker `api` exchange.

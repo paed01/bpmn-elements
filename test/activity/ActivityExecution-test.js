@@ -1517,7 +1517,7 @@ describe('ActivityExecution', () => {
       }
     });
 
-    it('last iteration canceled completes execution', () => {
+    it('last iteration cancelled completes execution', () => {
       const task = createActivity(Behaviour);
       const execution = new ActivityExecution(task);
 

@@ -22,7 +22,7 @@ Object with properties. A subset:
 
 ## `activity.timeout`
 
-Fired when the timer has timed out or was canceled.
+Fired when the timer has timed out or was cancelled.
 
 Object with `activity.timer` properties and some:
 
@@ -42,7 +42,7 @@ Behaves the same as `timeDuration`. Due date will timeout immediately. An invali
 
 Default support for ISO8601 repeating interval.
 
-If another format is used, e.g. cron, the event definition will wait until canceled. There are several modules to handle time cycles and this project tries to keep the number of dependencies to a minimum.
+If another format is used, e.g. cron, the event definition will wait until cancelled. There are several modules to handle time cycles and this project tries to keep the number of dependencies to a minimum.
 
 # Combined `timeDuration` and `timeDate`
 

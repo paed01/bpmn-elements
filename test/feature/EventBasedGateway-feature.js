@@ -59,7 +59,7 @@ Feature('EventBasedGateway', () => {
       signalApi = await wait;
     });
 
-    When('timer is canceled', () => {
+    When('timer is cancelled', () => {
       bp.cancelActivity({id: timerApi.id});
     });
 

@@ -84,7 +84,7 @@ Feature('Timers', () => {
       expect(execution.content).to.have.property('expireAt').to.deep.equal(new Date('1993-06-26'));
     });
 
-    When('throw event is canceled', () => {
+    When('throw event is cancelled', () => {
       definition.cancelActivity({id: activity.id});
     });
 
@@ -146,7 +146,7 @@ Feature('Timers', () => {
       expect(execution.content).to.have.property('timeCycle', 'R3/PT10H');
     });
 
-    Given('start event is canceled', () => {
+    Given('start event is cancelled', () => {
       definition.cancelActivity({id: 'start-cycle'});
     });
 
@@ -270,7 +270,7 @@ Feature('Timers', () => {
       expect(execution.content).to.have.property('timeCycle', 'R3/PT10H');
     });
 
-    When('start event is canceled', () => {
+    When('start event is cancelled', () => {
       definition.cancelActivity({id: 'start-cycle'});
     });
 
@@ -300,7 +300,7 @@ Feature('Timers', () => {
       expect(execution.content).to.have.property('expireAt').to.deep.equal(new Date('1993-06-26'));
     });
 
-    When('throw event is canceled', () => {
+    When('throw event is cancelled', () => {
       definition.cancelActivity({id: activity.id});
     });
 
@@ -361,7 +361,7 @@ Feature('Timers', () => {
       expect(execution.content).to.have.property('timeCycle', 'R3/PT10H');
     });
 
-    Given('start event is canceled', () => {
+    Given('start event is cancelled', () => {
       definition.cancelActivity({id: 'start-cycle'});
     });
 
@@ -897,6 +897,104 @@ Feature('Timers', () => {
 
       definition.resume();
       definition.signal({id: 'task'});
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+  });
+
+  Scenario('timer bound to user task is resumed at timeout', () => {
+    before(ck.reset);
+
+    let context, definition;
+    Given('a source with user task and a bound timer', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="bp" isExecutable="true">
+          <userTask id="task" />
+          <boundaryEvent id="bound-timer" attachedToRef="task">
+            <timerEventDefinition>
+              <timeDuration xsi:type="tFormalExpression">PT8H</timeDuration>
+            </timerEventDefinition>
+          </boundaryEvent>
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    When('definition is ran with state save on wait', () => {
+      definition.run();
+    });
+
+    Then('user task and timer is running', () => {
+      expect(definition.getPostponed()).to.have.length(2);
+    });
+
+    let state;
+    Given('state is saved', () => {
+      state = definition.getState();
+      definition.stop();
+    });
+
+    let end;
+    When('run is recovered, resumed at timeout', () => {
+      ck.travel(Date.now() + 1000 * 60 * 60 * 8);
+      definition = new Definition(context.clone()).recover(state);
+      end = definition.waitFor('leave');
+      definition.resume();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+  });
+
+  Scenario('timer bound to sub process is resumed at timeout', () => {
+    before(ck.reset);
+
+    let context, definition;
+    Given('a source with sub process user task and a bound timer', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="bp" isExecutable="true">
+          <subProcess id="sub">
+            <userTask id="task" />
+          </subProcess>
+          <boundaryEvent id="bound-timer" attachedToRef="sub">
+            <timerEventDefinition>
+              <timeDuration xsi:type="tFormalExpression">PT8H</timeDuration>
+            </timerEventDefinition>
+          </boundaryEvent>
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    When('definition is ran with state save on wait', () => {
+      definition.run();
+    });
+
+    Then('sub process and timer is running', () => {
+      expect(definition.getPostponed()).to.have.length(2);
+    });
+
+    let state;
+    Given('state is saved', () => {
+      state = definition.getState();
+      definition.stop();
+    });
+
+    let end;
+    When('run is recovered, resumed at timeout', () => {
+      ck.travel(Date.now() + 1000 * 60 * 60 * 8);
+      definition = new Definition(context.clone()).recover(state);
+      end = definition.waitFor('leave');
+      definition.resume();
     });
 
     Then('run completes', () => {

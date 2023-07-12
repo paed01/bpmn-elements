@@ -48,7 +48,7 @@ describe('CancelEventDefinition', () => {
       expect(messages[0].content.parent).to.have.property('executionId', 'theProcess_0');
     });
 
-    it('expects cancel with canceled routing key', () => {
+    it('expects cancel with cancelled routing key', () => {
       const catchEvent = new CancelEventDefinition(event, {
         type: 'bpmn:CancelEventDefinition',
       });
@@ -168,7 +168,7 @@ describe('CancelEventDefinition', () => {
         },
       });
 
-      event.broker.publish('execution', 'execute.canceled.event_1_0', {id: 'atomic', isTransaction: true});
+      event.broker.publish('execution', 'execute.cancelled.event_1_0', {id: 'atomic', isTransaction: true});
       event.broker.publish('api', 'activity.stop.event_1', {}, {type: 'stop'});
 
       expect(event.broker).to.have.property('consumerCount', 0);

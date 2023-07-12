@@ -1073,7 +1073,7 @@ Feature('Issues', () => {
     });
 
     let end;
-    When('interrupting timeout timer is canceled', () => {
+    When('interrupting timeout timer is cancelled', () => {
       postponed = definition.getPostponed();
       expect(postponed).to.have.length(2);
       expect(postponed[0].id).to.equal('approvalTimeout');

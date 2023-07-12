@@ -107,13 +107,28 @@ BoundaryEventBehaviour.prototype._onCompleted = function onCompleted(_, {
     }));
   }
   this[kCompleteContent] = content;
-  const inbound = this[kExecuteMessage].content.inbound;
+  const {
+    inbound,
+    executionId
+  } = this[kExecuteMessage].content;
   const attachedToContent = inbound && inbound[0];
   const attachedTo = this.attachedTo;
-  this.activity.logger.debug(`<${this.executionId} (${this.id})> cancel ${attachedTo.status} activity <${attachedToContent.executionId} (${attachedToContent.id})>`);
-  attachedTo.getApi({
-    content: attachedToContent
-  }).discard();
+  this.activity.logger.debug(`<${executionId} (${this.id})> cancel ${attachedTo.status} activity <${attachedToContent.executionId} (${attachedToContent.id})>`);
+  if (content.isRecovered && !attachedTo.isRunning) {
+    const attachedExecuteTag = `_on-attached-execute-${executionId}`;
+    this[kAttachedTags].push(attachedExecuteTag);
+    attachedTo.broker.subscribeOnce('execution', '#', () => {
+      attachedTo.getApi({
+        content: attachedToContent
+      }).discard();
+    }, {
+      consumerTag: attachedExecuteTag
+    });
+  } else {
+    attachedTo.getApi({
+      content: attachedToContent
+    }).discard();
+  }
 };
 BoundaryEventBehaviour.prototype._onAttachedLeave = function onAttachedLeave(_, {
   content

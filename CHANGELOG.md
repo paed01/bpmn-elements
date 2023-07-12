@@ -271,7 +271,7 @@ Refactor scripts again
 
 # 2.1.0
 
-Transactions and compensation if canceled.
+Transactions and compensation if cancelled.
 
 ## Additions
 - Add support for Transaction

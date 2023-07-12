@@ -62,7 +62,7 @@ The following elements are tested and supported.
 - SignalEventDefinition
   - throw
   - catch
-- SignalTask
+- [SignalTask](/docs/SignalTask.md)
   - ManualTask
   - UserTask
 - [StandardLoopCharacteristics](/docs/LoopCharacteristics.md)
