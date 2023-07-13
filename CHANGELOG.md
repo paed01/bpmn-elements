@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 11.1.1
+
+- fix boundary event not cancelling task if resumed before task was resumed
+- a cancelled call activity should also cancel the called process even if resumed before called process was resumed later
+
 # 11.1.0
 
 - bump [smqp@8](https://github.com/paed01/smqp/blob/default/CHANGELOG.md)
