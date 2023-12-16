@@ -25,8 +25,7 @@ const kFormatter = Symbol.for('formatter');
 const kMessageHandlers = Symbol.for('messageHandlers');
 const kStateMessage = Symbol.for('stateMessage');
 const kActivated = Symbol.for('activated');
-var _default = Activity;
-exports.default = _default;
+var _default = exports.default = Activity;
 function Activity(Behaviour, activityDef, context) {
   const {
     id,

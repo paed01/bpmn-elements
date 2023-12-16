@@ -1,6 +1,14 @@
 Changelog
 =========
 
+# 12.0.0
+
+Memory issues running sequential multi-instance sub-process (MISP). All MISP executions are put in a list to be able to save state.
+
+## Breaking
+
+- remove MISP execution from execution reference list when iteration is completed, discarded, or errored
+
 # 11.1.1
 
 - fix boundary event not cancelling task if resumed before task was resumed

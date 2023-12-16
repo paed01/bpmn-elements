@@ -11,8 +11,7 @@ const kExecuteQ = Symbol.for('executeQ');
 const kExecuteMessage = Symbol.for('executeMessage');
 const kMessageHandlers = Symbol.for('messageHandlers');
 const kPostponed = Symbol.for('postponed');
-var _default = ActivityExecution;
-exports.default = _default;
+var _default = exports.default = ActivityExecution;
 function ActivityExecution(activity, context) {
   this.activity = activity;
   this.context = context;

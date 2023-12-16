@@ -1490,7 +1490,7 @@ describe('ActivityExecution', () => {
       });
 
       expect(startMessages).to.have.length(4);
-      expect(discardMessages).to.have.length(4);
+      expect(discardMessages).to.have.length(5);
 
       expect(discardMsg).to.be.ok;
       expect(discardMsg.content).to.have.property('executionId', startMessages[0].content.executionId);

@@ -573,7 +573,8 @@ describe('SubProcess', () => {
       it('getState() returns iteration child states', async () => {
         const task = context.getActivityById('sub-process-task');
         let waiting = task.waitFor('wait');
-        const left = task.waitFor('leave');
+        const leave = task.waitFor('leave', (_, msg) => msg.content.id === task.id);
+        const end = task.waitFor('end', (_, msg) => msg.content.id === task.id);
 
         task.run({data: 1});
 
@@ -593,7 +594,8 @@ describe('SubProcess', () => {
 
         state = task.getState();
 
-        expect(state.execution.executions[0]).to.have.property('environment').with.property('output').that.eql({labour: 1});
+        expect(state.execution.executions).to.have.length(1);
+        expect(state.execution.executions[0]).to.have.property('environment').with.property('variables').with.property('content').with.property('index', 1);
 
         taskApi = await waiting;
 
@@ -601,16 +603,22 @@ describe('SubProcess', () => {
         taskApi.signal(2);
 
         state = task.getState();
-        expect(state.execution.executions[1]).to.have.property('environment').with.property('output').that.eql({archiving: 2});
+
+        expect(state.execution.executions).to.have.length(1);
+        expect(state.execution.executions[0]).to.have.property('environment').with.property('variables').with.property('content').with.property('index', 2);
 
         taskApi = await waiting;
 
         taskApi.signal(3);
 
         state = task.getState();
-        expect(state.execution.executions[2]).to.have.property('environment').with.property('output').that.eql({shopping: 3});
 
-        await left;
+        expect(state.execution.executions).to.have.length(0);
+
+        const endmsg = await end;
+        expect(endmsg.content).to.have.property('output').that.deep.equal([ { labour: 1 }, { archiving: 2 }, { shopping: 3 } ]);
+
+        await leave;
       });
 
       it('keeps sub process children in the dark that they are looped', async () => {
@@ -897,6 +905,7 @@ describe('SubProcess', () => {
 
       it('getState() returns iteration states', async () => {
         const task = context.getActivityById('sub-process-task');
+        const end = task.waitFor('end', (_, msg) => msg.content.id === task.id);
         const leave = task.waitFor('leave', (_, msg) => msg.content.id === task.id);
 
         task.run({data: 1});
@@ -918,27 +927,27 @@ describe('SubProcess', () => {
         state = task.getState();
 
         expect(state).to.have.property('execution');
-        expect(state.execution).to.have.property('executions').with.length(3);
-        expect(state.execution.executions[0]).to.have.property('environment').with.property('output').that.eql({labour: 1});
+        expect(state.execution).to.have.property('executions').with.length(2);
+
         expect(state.execution.executions[0]).to.have.property('environment').with.property('variables');
         expect(state.execution.executions[0].environment.variables).to.have.property('content').with.property('executionId');
         expect(state.execution.executions[0].environment.variables).to.have.property('fields').with.property('routingKey');
 
-        task.execution.source.executions[2].getPostponed()[0].signal(3);
+        task.execution.source.executions[1].getPostponed()[0].signal(3);
+
+        expect(state).to.have.property('execution');
+        expect(state.execution).to.have.property('executions').with.length(2);
+
+        task.execution.source.executions[0].getPostponed()[0].signal(2);
         state = task.getState();
 
         expect(state).to.have.property('execution');
-        expect(state.execution).to.have.property('executions').with.length(3);
-        expect(state.execution.executions[2]).to.have.property('environment').with.property('output').that.eql({shopping: 3});
-
-        task.execution.source.executions[1].getPostponed()[0].signal(2);
-        state = task.getState();
-
-        expect(state).to.have.property('execution');
-        expect(state.execution).to.have.property('executions').with.length(3);
-        expect(state.execution.executions[1]).to.have.property('environment').with.property('output').that.eql({archiving: 2});
+        expect(state.execution).to.have.property('executions').with.length(0);
 
         await leave;
+
+        const endmsg = await end;
+        expect(endmsg.content).to.have.property('output').that.deep.equal([ { labour: 1 }, { archiving: 2 }, { shopping: 3 } ]);
       });
 
       it('resumes from last completed', async () => {

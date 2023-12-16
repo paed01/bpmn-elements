@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1q3fhll" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.17.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.20.0">
+  <bpmn:process id="Process_0" isExecutable="true" camunda:historyTimeToLive="180">
+    <bpmn:subProcess id="sub">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:outputParameter name="process">
+            <camunda:map>
+              <camunda:entry key="tag">purge</camunda:entry>
+              <camunda:entry key="tag">purge:0:Completed</camunda:entry>
+            </camunda:map>
+          </camunda:outputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>backto-task</bpmn:incoming>
+      <bpmn:incoming>to-sub</bpmn:incoming>
+      <bpmn:outgoing>to-gw</bpmn:outgoing>
+      <bpmn:multiInstanceLoopCharacteristics>
+        <bpmn:loopCardinality xsi:type="bpmn:tFormalExpression">${environment.variables.cardinality}</bpmn:loopCardinality>
+      </bpmn:multiInstanceLoopCharacteristics>
+      <bpmn:userTask id="user" />
+    </bpmn:subProcess>
+    <bpmn:endEvent id="end">
+      <bpmn:incoming>to-end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:exclusiveGateway id="gw" default="to-end">
+      <bpmn:incoming>to-gw</bpmn:incoming>
+      <bpmn:outgoing>to-end</bpmn:outgoing>
+      <bpmn:outgoing>backto-task</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:startEvent id="start3m">
+      <bpmn:outgoing>to-sub</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="to-gw" sourceRef="sub" targetRef="gw" />
+    <bpmn:sequenceFlow id="to-end" sourceRef="gw" targetRef="end" />
+    <bpmn:sequenceFlow id="to-sub" sourceRef="start3m" targetRef="sub" />
+    <bpmn:sequenceFlow id="backto-task" sourceRef="gw" targetRef="sub">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression" language="js">const loopback = environment.variables.loopback;
+environment.variables.loopback = false;
+next(null, loopback);</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_0">
+      <bpmndi:BPMNShape id="Activity_0kkf6h5_di" bpmnElement="sub">
+        <dc:Bounds x="240" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0sh7cb3_di" bpmnElement="end">
+        <dc:Bounds x="492" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0q2n65c_di" bpmnElement="gw" isMarkerVisible="true">
+        <dc:Bounds x="385" y="95" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0xodulq_di" bpmnElement="start3m">
+        <dc:Bounds x="152" y="102" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1td7sz9_di" bpmnElement="to-gw">
+        <di:waypoint x="340" y="120" />
+        <di:waypoint x="385" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1nnxznf_di" bpmnElement="to-end">
+        <di:waypoint x="435" y="120" />
+        <di:waypoint x="492" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0g9daso_di" bpmnElement="to-sub">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="240" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0cyp5l6_di" bpmnElement="backto-task">
+        <di:waypoint x="410" y="145" />
+        <di:waypoint x="410" y="223" />
+        <di:waypoint x="290" y="223" />
+        <di:waypoint x="290" y="160" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1ebx4yx">
+    <bpmndi:BPMNPlane id="BPMNPlane_1rfnaff" bpmnElement="sub">
+      <bpmndi:BPMNShape id="Activity_084qbt1_di" bpmnElement="user">
+        <dc:Bounds x="160" y="80" width="100" height="80" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

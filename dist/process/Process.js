@@ -22,8 +22,7 @@ const kMessageHandlers = Symbol.for('messageHandlers');
 const kStateMessage = Symbol.for('stateMessage');
 const kStatus = Symbol.for('status');
 const kStopped = Symbol.for('stopped');
-var _default = Process;
-exports.default = _default;
+var _default = exports.default = Process;
 function Process(processDef, context) {
   const {
     id,

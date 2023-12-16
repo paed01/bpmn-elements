@@ -11,8 +11,7 @@ var _EventBroker = require("../EventBroker.js");
 var _Api = require("../Api.js");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 const kCounters = Symbol.for('counters');
-var _default = SequenceFlow;
-exports.default = _default;
+var _default = exports.default = SequenceFlow;
 function SequenceFlow(flowDef, {
   environment
 }) {

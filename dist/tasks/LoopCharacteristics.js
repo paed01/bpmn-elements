@@ -116,14 +116,21 @@ function ParallelLoopCharacteristics(activity, characteristics) {
   this.characteristics = characteristics;
   this.running = 0;
   this.index = 0;
+  this.discarded = 0;
 }
 ParallelLoopCharacteristics.prototype.execute = function execute(executeMessage) {
   const chr = this.characteristics;
   if (!chr.cardinality) throw new _Errors.RunError(`<${this.id}> cardinality or collection is required in parallel loops`, executeMessage);
   const isRedelivered = executeMessage.fields.redelivered;
   if (isRedelivered) {
-    if (!isNaN(executeMessage.content.index)) this.index = executeMessage.content.index;
-    if (!isNaN(executeMessage.content.running)) this.running = executeMessage.content.running;
+    const {
+      index,
+      running,
+      discarded
+    } = executeMessage.content;
+    if (!isNaN(index)) this.index = index;
+    if (!isNaN(running)) this.running = running;
+    if (!isNaN(discarded)) this.discarded = discarded;
   }
   chr.subscribe(this._onCompleteMessage.bind(this));
   if (isRedelivered) return;
@@ -148,6 +155,7 @@ ParallelLoopCharacteristics.prototype._startBatch = function startBatch() {
     ...chr.getContent(),
     index: this.index,
     running: this.running,
+    discarded: this.discarded,
     output: chr.output,
     preventComplete: true
   });
@@ -155,27 +163,31 @@ ParallelLoopCharacteristics.prototype._startBatch = function startBatch() {
     broker.publish('execution', 'execute.start', content);
   }
 };
-ParallelLoopCharacteristics.prototype._onCompleteMessage = function onCompleteMessage(_, message) {
+ParallelLoopCharacteristics.prototype._onCompleteMessage = function onCompleteMessage(routingKey, message) {
   const chr = this.characteristics;
   const {
     content
   } = message;
   if (content.output !== undefined) chr.output[content.index] = content.output;
+  if (routingKey === 'execute.discard') {
+    this.discarded++;
+  }
   this.running--;
   this.activity.broker.publish('execution', 'execute.iteration.completed', {
     ...content,
     ...chr.getContent(),
     index: this.index,
     running: this.running,
+    discarded: this.discarded,
     output: chr.output,
     state: 'iteration.completed',
     preventComplete: true
   });
   if (this.running <= 0 && !chr.next(this.index)) {
-    return chr.complete(content);
+    return chr.complete(content, this.discarded === this.index);
   }
   if (chr.isCompletionConditionMet(message)) {
-    return chr.complete(content);
+    return chr.complete(content, this.discarded === this.index);
   }
   if (this.running <= 0) {
     this.running = 0;
@@ -263,9 +275,9 @@ Characteristics.prototype.isCompletionConditionMet = function isCompletionCondit
     loopOutput: this.output
   }));
 };
-Characteristics.prototype.complete = function complete(content) {
+Characteristics.prototype.complete = function complete(content, allDiscarded) {
   this.stop();
-  return this.broker.publish('execution', 'execute.completed', {
+  return this.broker.publish('execution', 'execute.' + (allDiscarded ? 'discard' : 'completed'), {
     ...content,
     ...this.getContent(),
     output: this.output
@@ -286,6 +298,7 @@ Characteristics.prototype.subscribe = function subscribe(onIterationCompleteMess
   function onComplete(routingKey, message, ...args) {
     if (!message.content.isMultiInstance) return;
     switch (routingKey) {
+      case 'execute.discard':
       case 'execute.cancel':
       case 'execute.completed':
         return onIterationCompleteMessage(routingKey, message, ...args);

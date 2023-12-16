@@ -8,8 +8,7 @@ const propertyPattern = /(\w+)\((.*?)(?:\))|(\.|\[|^)(.+?)(?:\]|\[|\.|$)/;
 const stringConstantPattern = /^(['"])(.*)\1$/;
 const numberConstantPattern = /^\W*-?\d+(.\d+)?\W*$/;
 const negativeIndexPattern = /^-\d+$/;
-var _default = getPropertyValue;
-exports.default = _default;
+var _default = exports.default = getPropertyValue;
 function getPropertyValue(inputContext, propertyPath, fnScope) {
   if (!inputContext) return;
   let resultValue;

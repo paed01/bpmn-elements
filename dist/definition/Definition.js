@@ -20,8 +20,7 @@ const kMessageHandlers = Symbol.for('messageHandlers');
 const kStateMessage = Symbol.for('stateMessage');
 const kStatus = Symbol.for('status');
 const kStopped = Symbol.for('stopped');
-var _default = Definition;
-exports.default = _default;
+var _default = exports.default = Definition;
 function Definition(context, options) {
   if (!(this instanceof Definition)) return new Definition(context, options);
   if (!context) throw new Error('No context');

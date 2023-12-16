@@ -936,4 +936,49 @@ Feature('Transaction', () => {
       await end;
     });
   });
+
+  Scenario('transaction is discarded', () => {
+    let definition;
+    const undoService = [];
+
+    Given('a transaction a user task monitored by cancel- and error-listener', async () => {
+      const context = await testHelpers.context(transactionSource);
+      definition = new Definition(context, {
+        services: {
+          compare(answer, str) {
+            return answer === str;
+          },
+          compensate(...args) {
+            undoService.push(args);
+          },
+        },
+      });
+    });
+
+    let end;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    let transaction, userTask;
+    Then('the transaction waits for user input', () => {
+      transaction = definition.getPostponed((e) => e.id === 'atomic')[0];
+      expect(transaction).to.have.property('id', 'atomic');
+
+      userTask = transaction.getPostponed().pop();
+
+      expect(transaction.content).to.have.property('isTransaction', true);
+
+      expect(userTask).to.have.property('id', 'areUSure');
+    });
+
+    When('transaction is discarded', () => {
+      transaction.discard();
+    });
+
+    Then('definition run completes', () => {
+      return end;
+    });
+  });
 });
