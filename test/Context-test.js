@@ -196,6 +196,17 @@ describe('Context', () => {
     });
   });
 
+  describe('getSequenceFlowById(id)', () => {
+    let context;
+    beforeEach(async () => {
+      context = await testHelpers.context(motherOfAllSource);
+    });
+
+    it('returns null if not found', () => {
+      expect(context.getSequenceFlowById('non-existing')).to.be.null;
+    });
+  });
+
   describe('getInboundSequenceFlows(activityId)', () => {
     let context;
     beforeEach(async () => {
@@ -427,6 +438,20 @@ describe('Context', () => {
     it('returns all start activities if called without arguments', async () => {
       const context = await testHelpers.context(motherOfAllSource);
       expect(context.getStartActivities()).to.have.length(3);
+    });
+  });
+
+  describe('getDataObjectById(id)', () => {
+    it('returns undefined if not found', async () => {
+      const context = await testHelpers.context(factory.userTask());
+      expect(context.getDataObjectById('non-existing')).to.be.undefined;
+    });
+  });
+
+  describe('getDataStoreById(id)', () => {
+    it('returns undefined if not found', async () => {
+      const context = await testHelpers.context(factory.resource('data-store-reference.bpmn'));
+      expect(context.getDataStoreById('non-existing')).to.be.undefined;
     });
   });
 });
