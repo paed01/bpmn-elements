@@ -114,147 +114,128 @@ function Activity(Behaviour, activityDef, context) {
   this[kEventDefinitions] = eventDefinitions && eventDefinitions.map(ed => new ed.Behaviour(this, ed, this.context));
   this[kExtensions] = context.loadExtensions(this);
 }
-Object.defineProperty(Activity.prototype, 'counters', {
-  enumerable: true,
-  get() {
-    return {
-      ...this[kCounters]
-    };
-  }
-});
-Object.defineProperty(Activity.prototype, 'execution', {
-  enumerable: true,
-  get() {
-    return this[kExec].execution;
-  }
-});
-Object.defineProperty(Activity.prototype, 'executionId', {
-  enumerable: true,
-  get() {
-    return this[kExec].executionId;
-  }
-});
-Object.defineProperty(Activity.prototype, 'extensions', {
-  enumerable: true,
-  get() {
-    return this[kExtensions];
-  }
-});
-Object.defineProperty(Activity.prototype, 'bpmnIo', {
-  enumerable: true,
-  get() {
-    const extensions = this[kExtensions];
-    return extensions && extensions.extensions.find(e => e.type === 'bpmnio');
-  }
-});
-Object.defineProperty(Activity.prototype, 'formatter', {
-  enumerable: true,
-  get() {
-    let formatter = this[kFormatter];
-    if (formatter) return formatter;
-    const broker = this.broker;
-    formatter = this[kFormatter] = new _MessageFormatter.Formatter({
-      id: this.id,
-      broker,
-      logger: this.logger
-    }, broker.getQueue('format-run-q'));
-    return formatter;
-  }
-});
-Object.defineProperty(Activity.prototype, 'isRunning', {
-  enumerable: true,
-  get() {
-    if (!this[kConsuming]) return false;
-    return !!this.status;
-  }
-});
-Object.defineProperty(Activity.prototype, 'outbound', {
-  enumerable: true,
-  get() {
-    return this[kFlows].outboundSequenceFlows;
-  }
-});
-Object.defineProperty(Activity.prototype, 'inbound', {
-  enumerable: true,
-  get() {
-    return this[kFlows].inboundSequenceFlows;
-  }
-});
-Object.defineProperty(Activity.prototype, 'isEnd', {
-  enumerable: true,
-  get() {
-    return this[kFlags].isEnd;
-  }
-});
-Object.defineProperty(Activity.prototype, 'isStart', {
-  enumerable: true,
-  get() {
-    return this[kFlags].isStart;
-  }
-});
-Object.defineProperty(Activity.prototype, 'isSubProcess', {
-  enumerable: true,
-  get() {
-    return this[kFlags].isSubProcess;
-  }
-});
-Object.defineProperty(Activity.prototype, 'isTransaction', {
-  enumerable: true,
-  get() {
-    return this[kFlags].isTransaction;
-  }
-});
-Object.defineProperty(Activity.prototype, 'isMultiInstance', {
-  enumerable: true,
-  get() {
-    return this[kFlags].isMultiInstance;
-  }
-});
-Object.defineProperty(Activity.prototype, 'isThrowing', {
-  enumerable: true,
-  get() {
-    return this[kFlags].isThrowing;
-  }
-});
-Object.defineProperty(Activity.prototype, 'isForCompensation', {
-  enumerable: true,
-  get() {
-    return this[kFlags].isForCompensation;
-  }
-});
-Object.defineProperty(Activity.prototype, 'triggeredByEvent', {
-  enumerable: true,
-  get() {
-    return this[kActivityDef].triggeredByEvent;
-  }
-});
-Object.defineProperty(Activity.prototype, 'attachedTo', {
-  enumerable: true,
-  get() {
-    const attachedToId = this[kFlags].attachedTo;
-    if (!attachedToId) return null;
-    return this.getActivityById(attachedToId);
-  }
-});
-Object.defineProperty(Activity.prototype, 'lane', {
-  enumerable: true,
-  get() {
-    const laneId = this[kFlags].lane;
-    if (!laneId) return undefined;
-    const parent = this.parentElement;
-    return parent.getLaneById && parent.getLaneById(laneId);
-  }
-});
-Object.defineProperty(Activity.prototype, 'eventDefinitions', {
-  enumerable: true,
-  get() {
-    return this[kEventDefinitions];
-  }
-});
-Object.defineProperty(Activity.prototype, 'parentElement', {
-  enumerable: true,
-  get() {
-    return this.context.getActivityParentById(this.id);
+Object.defineProperties(Activity.prototype, {
+  counters: {
+    get() {
+      return {
+        ...this[kCounters]
+      };
+    }
+  },
+  execution: {
+    get() {
+      return this[kExec].execution;
+    }
+  },
+  executionId: {
+    get() {
+      return this[kExec].executionId;
+    }
+  },
+  extensions: {
+    get() {
+      return this[kExtensions];
+    }
+  },
+  bpmnIo: {
+    get() {
+      const extensions = this[kExtensions];
+      return extensions && extensions.extensions.find(e => e.type === 'bpmnio');
+    }
+  },
+  formatter: {
+    get() {
+      let formatter = this[kFormatter];
+      if (formatter) return formatter;
+      const broker = this.broker;
+      formatter = this[kFormatter] = new _MessageFormatter.Formatter({
+        id: this.id,
+        broker,
+        logger: this.logger
+      }, broker.getQueue('format-run-q'));
+      return formatter;
+    }
+  },
+  isRunning: {
+    get() {
+      if (!this[kConsuming]) return false;
+      return !!this.status;
+    }
+  },
+  outbound: {
+    get() {
+      return this[kFlows].outboundSequenceFlows;
+    }
+  },
+  inbound: {
+    get() {
+      return this[kFlows].inboundSequenceFlows;
+    }
+  },
+  isEnd: {
+    get() {
+      return this[kFlags].isEnd;
+    }
+  },
+  isStart: {
+    get() {
+      return this[kFlags].isStart;
+    }
+  },
+  isSubProcess: {
+    get() {
+      return this[kFlags].isSubProcess;
+    }
+  },
+  isTransaction: {
+    get() {
+      return this[kFlags].isTransaction;
+    }
+  },
+  isMultiInstance: {
+    get() {
+      return this[kFlags].isMultiInstance;
+    }
+  },
+  isThrowing: {
+    get() {
+      return this[kFlags].isThrowing;
+    }
+  },
+  isForCompensation: {
+    get() {
+      return this[kFlags].isForCompensation;
+    }
+  },
+  triggeredByEvent: {
+    get() {
+      return this[kActivityDef].triggeredByEvent;
+    }
+  },
+  attachedTo: {
+    get() {
+      const attachedToId = this[kFlags].attachedTo;
+      if (!attachedToId) return null;
+      return this.getActivityById(attachedToId);
+    }
+  },
+  lane: {
+    get() {
+      const laneId = this[kFlags].lane;
+      if (!laneId) return undefined;
+      const parent = this.parentElement;
+      return parent.getLaneById && parent.getLaneById(laneId);
+    }
+  },
+  eventDefinitions: {
+    get() {
+      return this[kEventDefinitions];
+    }
+  },
+  parentElement: {
+    get() {
+      return this.context.getActivityParentById(this.id);
+    }
   }
 });
 Activity.prototype.activate = function activate() {

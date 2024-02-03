@@ -64,37 +64,36 @@ function ProcessExecution(parentActivity, context) {
     onMessageFlowEvent: this._onMessageFlowEvent.bind(this)
   };
 }
-Object.defineProperty(ProcessExecution.prototype, 'stopped', {
-  enumerable: true,
-  get() {
-    return this[kStopped];
-  }
-});
-Object.defineProperty(ProcessExecution.prototype, 'completed', {
-  enumerable: true,
-  get() {
-    return this[kCompleted];
-  }
-});
-Object.defineProperty(ProcessExecution.prototype, 'status', {
-  enumerable: true,
-  get() {
-    return this[kStatus];
-  }
-});
-Object.defineProperty(ProcessExecution.prototype, 'postponedCount', {
-  get() {
-    return this[kElements].postponed.length;
-  }
-});
-Object.defineProperty(ProcessExecution.prototype, 'isRunning', {
-  get() {
-    return this[kActivated];
-  }
-});
-Object.defineProperty(ProcessExecution.prototype, 'activityStatus', {
-  get() {
-    return this[kTracker].activityStatus;
+Object.defineProperties(ProcessExecution.prototype, {
+  stopped: {
+    get() {
+      return this[kStopped];
+    }
+  },
+  completed: {
+    get() {
+      return this[kCompleted];
+    }
+  },
+  status: {
+    get() {
+      return this[kStatus];
+    }
+  },
+  postponedCount: {
+    get() {
+      return this[kElements].postponed.length;
+    }
+  },
+  isRunning: {
+    get() {
+      return this[kActivated];
+    }
+  },
+  activityStatus: {
+    get() {
+      return this[kTracker].activityStatus;
+    }
   }
 });
 ProcessExecution.prototype.execute = function execute(executeMessage) {

@@ -62,61 +62,59 @@ function DefinitionExecution(definition, context) {
     onProcessMessage: this._onProcessMessage.bind(this)
   };
 }
-Object.defineProperty(DefinitionExecution.prototype, 'stopped', {
-  enumerable: true,
-  get() {
-    return this[kStopped];
-  }
-});
-Object.defineProperty(DefinitionExecution.prototype, 'completed', {
-  enumerable: true,
-  get() {
-    return this[kCompleted];
-  }
-});
-Object.defineProperty(DefinitionExecution.prototype, 'status', {
-  enumerable: true,
-  get() {
-    return this[kStatus];
-  }
-});
-Object.defineProperty(DefinitionExecution.prototype, 'processes', {
-  enumerable: true,
-  get() {
-    return this[kProcesses].running;
-  }
-});
-Object.defineProperty(DefinitionExecution.prototype, 'postponedCount', {
-  get() {
-    return this[kProcesses].postponed.length;
-  }
-});
-Object.defineProperty(DefinitionExecution.prototype, 'isRunning', {
-  get() {
-    return this[kActivated];
-  }
-});
-Object.defineProperty(DefinitionExecution.prototype, 'activityStatus', {
-  get() {
-    let status = 'idle';
-    const running = this[kProcesses].running;
-    if (!running || !running.length) return status;
-    for (const bp of running) {
-      const bpStatus = bp.activityStatus;
-      switch (bp.activityStatus) {
-        case 'idle':
-          break;
-        case 'executing':
-          return bpStatus;
-        case 'timer':
-          status = bpStatus;
-          break;
-        case 'wait':
-          if (status === 'idle') status = bpStatus;
-          break;
-      }
+Object.defineProperties(DefinitionExecution.prototype, {
+  stopped: {
+    get() {
+      return this[kStopped];
     }
-    return status;
+  },
+  completed: {
+    get() {
+      return this[kCompleted];
+    }
+  },
+  status: {
+    get() {
+      return this[kStatus];
+    }
+  },
+  processes: {
+    get() {
+      return this[kProcesses].running;
+    }
+  },
+  postponedCount: {
+    get() {
+      return this[kProcesses].postponed.length;
+    }
+  },
+  isRunning: {
+    get() {
+      return this[kActivated];
+    }
+  },
+  activityStatus: {
+    get() {
+      let status = 'idle';
+      const running = this[kProcesses].running;
+      if (!running || !running.length) return status;
+      for (const bp of running) {
+        const bpStatus = bp.activityStatus;
+        switch (bp.activityStatus) {
+          case 'idle':
+            break;
+          case 'executing':
+            return bpStatus;
+          case 'timer':
+            status = bpStatus;
+            break;
+          case 'wait':
+            if (status === 'idle') status = bpStatus;
+            break;
+        }
+      }
+      return status;
+    }
   }
 });
 DefinitionExecution.prototype.execute = function execute(executeMessage) {

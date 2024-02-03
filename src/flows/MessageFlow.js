@@ -35,7 +35,6 @@ export default function MessageFlow(flowDef, context) {
 }
 
 Object.defineProperty(MessageFlow.prototype, 'counters', {
-  enumerable: true,
   get() {
     return {...this[kCounters]};
   },

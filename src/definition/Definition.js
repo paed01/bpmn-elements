@@ -63,52 +63,42 @@ export function Definition(context, options) {
   this.logger = environment.Logger(type.toLowerCase());
 }
 
-Object.defineProperty(Definition.prototype, 'counters', {
-  enumerable: true,
-  get() {
-    return {...this[kCounters]};
+Object.defineProperties(Definition.prototype, {
+  counters: {
+    get() {
+      return {...this[kCounters]};
+    },
   },
-});
-
-Object.defineProperty(Definition.prototype, 'execution', {
-  enumerable: true,
-  get() {
-    return this[kExec].execution;
+  execution: {
+    get() {
+      return this[kExec].execution;
+    },
   },
-});
-
-Object.defineProperty(Definition.prototype, 'executionId', {
-  enumerable: true,
-  get() {
-    return this[kExec].executionId;
+  executionId: {
+    get() {
+      return this[kExec].executionId;
+    },
   },
-});
-
-Object.defineProperty(Definition.prototype, 'isRunning', {
-  enumerable: true,
-  get() {
-    if (!this[kConsuming]) return false;
-    return !!this.status;
+  isRunning: {
+    get() {
+      if (!this[kConsuming]) return false;
+      return !!this.status;
+    },
   },
-});
-
-Object.defineProperty(Definition.prototype, 'status', {
-  enumerable: true,
-  get() {
-    return this[kStatus];
+  status: {
+    get() {
+      return this[kStatus];
+    },
   },
-});
-
-Object.defineProperty(Definition.prototype, 'stopped', {
-  enumerable: true,
-  get() {
-    return this[kStopped];
+  stopped: {
+    get() {
+      return this[kStopped];
+    },
   },
-});
-
-Object.defineProperty(Definition.prototype, 'activityStatus', {
-  get() {
-    return this[kExec].execution && this[kExec].execution.activityStatus || 'idle';
+  activityStatus: {
+    get() {
+      return this[kExec].execution && this[kExec].execution.activityStatus || 'idle';
+    },
   },
 });
 

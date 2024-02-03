@@ -25,7 +25,6 @@ function ActivityExecution(activity, context) {
 }
 
 Object.defineProperty(ActivityExecution.prototype, 'completed', {
-  enumerable: true,
   get() {
     return this[kCompleted];
   },

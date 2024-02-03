@@ -15,17 +15,16 @@ export default function EventDefinitionExecution(activity, eventDefinitions, com
   this[kExecuteMessage] = null;
 }
 
-Object.defineProperty(EventDefinitionExecution.prototype, 'completed', {
-  enumerable: true,
-  get() {
-    return this[kCompleted];
+Object.defineProperties(EventDefinitionExecution.prototype, {
+  completed: {
+    get() {
+      return this[kCompleted];
+    },
   },
-});
-
-Object.defineProperty(EventDefinitionExecution.prototype, 'stopped', {
-  enumerable: true,
-  get() {
-    return this[kStopped];
+  stopped: {
+    get() {
+      return this[kStopped];
+    },
   },
 });
 

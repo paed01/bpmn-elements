@@ -25,23 +25,23 @@ function Environment(options = {}) {
   this[kServices] = options.services || {};
   this[kVariables] = options.variables || {};
 }
-Object.defineProperty(Environment.prototype, 'variables', {
-  enumerable: true,
-  get() {
-    return this[kVariables];
-  }
-});
-Object.defineProperty(Environment.prototype, 'services', {
-  enumerable: true,
-  get() {
-    return this[kServices];
-  },
-  set(value) {
-    const services = this[kServices];
-    for (const name in services) {
-      if (!(name in value)) delete services[name];
+Object.defineProperties(Environment.prototype, {
+  variables: {
+    get() {
+      return this[kVariables];
     }
-    Object.assign(services, value);
+  },
+  services: {
+    get() {
+      return this[kServices];
+    },
+    set(value) {
+      const services = this[kServices];
+      for (const name in services) {
+        if (!(name in value)) delete services[name];
+      }
+      Object.assign(services, value);
+    }
   }
 });
 Environment.prototype.getState = function getState() {

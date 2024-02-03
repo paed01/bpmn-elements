@@ -61,69 +61,61 @@ export default function DefinitionExecution(definition, context) {
   };
 }
 
-Object.defineProperty(DefinitionExecution.prototype, 'stopped', {
-  enumerable: true,
-  get() {
-    return this[kStopped];
+Object.defineProperties(DefinitionExecution.prototype, {
+  stopped: {
+    get() {
+      return this[kStopped];
+    },
   },
-});
-
-Object.defineProperty(DefinitionExecution.prototype, 'completed', {
-  enumerable: true,
-  get() {
-    return this[kCompleted];
+  completed: {
+    get() {
+      return this[kCompleted];
+    },
   },
-});
-
-Object.defineProperty(DefinitionExecution.prototype, 'status', {
-  enumerable: true,
-  get() {
-    return this[kStatus];
+  status: {
+    get() {
+      return this[kStatus];
+    },
   },
-});
-
-Object.defineProperty(DefinitionExecution.prototype, 'processes', {
-  enumerable: true,
-  get() {
-    return this[kProcesses].running;
+  processes: {
+    get() {
+      return this[kProcesses].running;
+    },
   },
-});
-
-Object.defineProperty(DefinitionExecution.prototype, 'postponedCount', {
-  get() {
-    return this[kProcesses].postponed.length;
+  postponedCount: {
+    get() {
+      return this[kProcesses].postponed.length;
+    },
   },
-});
-
-Object.defineProperty(DefinitionExecution.prototype, 'isRunning', {
-  get() {
-    return this[kActivated];
+  isRunning: {
+    get() {
+      return this[kActivated];
+    },
   },
-});
+  activityStatus: {
+    get() {
+      let status = 'idle';
+      const running = this[kProcesses].running;
+      if (!running || !running.length) return status;
 
-Object.defineProperty(DefinitionExecution.prototype, 'activityStatus', {
-  get() {
-    let status = 'idle';
-    const running = this[kProcesses].running;
-    if (!running || !running.length) return status;
-
-    for (const bp of running) {
-      const bpStatus = bp.activityStatus;
-      switch (bp.activityStatus) {
-        case 'idle':
-          break;
-        case 'executing':
-          return bpStatus;
-        case 'timer':
-          status = bpStatus;
-          break;
-        case 'wait':
-          if (status === 'idle') status = bpStatus;
-          break;
+      for (const bp of running) {
+        const bpStatus = bp.activityStatus;
+        switch (bp.activityStatus) {
+          case 'idle':
+            break;
+          case 'executing':
+            return bpStatus;
+          case 'timer':
+            status = bpStatus;
+            break;
+          case 'wait':
+            if (status === 'idle') status = bpStatus;
+            break;
+        }
       }
-    }
 
-    return status;
+      return status;
+    },
   },
 });
 

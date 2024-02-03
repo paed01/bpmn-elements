@@ -52,7 +52,6 @@ function Association(associationDef, {
   logger.debug(`<${id}> init, <${sourceId}> -> <${targetId}>`);
 }
 Object.defineProperty(Association.prototype, 'counters', {
-  enumerable: true,
   get() {
     return {
       ...this[kCounters]

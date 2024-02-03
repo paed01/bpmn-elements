@@ -60,68 +60,54 @@ export function Process(processDef, context) {
   this[kExtensions] = context.loadExtensions(this);
 }
 
-Object.defineProperty(Process.prototype, 'counters', {
-  enumerable: true,
-  get() {
-    return {...this[kCounters]};
+Object.defineProperties(Process.prototype, {
+  counters: {
+    get() {
+      return {...this[kCounters]};
+    },
   },
-});
-
-Object.defineProperty(Process.prototype, 'lanes', {
-  enumerable: true,
-  get() {
-    const lanes = this[kLanes];
-    return lanes && lanes.slice();
+  lanes: {
+    get() {
+      const lanes = this[kLanes];
+      return lanes && lanes.slice();
+    },
   },
-});
-
-Object.defineProperty(Process.prototype, 'extensions', {
-  enumerable: true,
-  get() {
-    return this[kExtensions];
+  extensions: {
+    get() {
+      return this[kExtensions];
+    },
   },
-});
-
-Object.defineProperty(Process.prototype, 'stopped', {
-  enumerable: true,
-  get() {
-    return this[kStopped];
+  stopped: {
+    get() {
+      return this[kStopped];
+    },
   },
-});
-
-Object.defineProperty(Process.prototype, 'isRunning', {
-  enumerable: true,
-  get() {
-    if (!this[kConsuming]) return false;
-    return !!this.status;
+  isRunning: {
+    get() {
+      if (!this[kConsuming]) return false;
+      return !!this.status;
+    },
   },
-});
-
-Object.defineProperty(Process.prototype, 'executionId', {
-  enumerable: true,
-  get() {
-    const {executionId, initExecutionId} = this[kExec];
-    return executionId || initExecutionId;
+  executionId: {
+    get() {
+      const {executionId, initExecutionId} = this[kExec];
+      return executionId || initExecutionId;
+    },
   },
-});
-
-Object.defineProperty(Process.prototype, 'execution', {
-  enumerable: true,
-  get() {
-    return this[kExec].execution;
+  execution: {
+    get() {
+      return this[kExec].execution;
+    },
   },
-});
-
-Object.defineProperty(Process.prototype, 'status', {
-  enumerable: true,
-  get() {
-    return this[kStatus];
+  status: {
+    get() {
+      return this[kStatus];
+    },
   },
-});
-
-Object.defineProperty(Process.prototype, 'activityStatus', {
-  get() {
-    return this[kExec].execution && this[kExec].execution.activityStatus || 'idle';
+  activityStatus: {
+    get() {
+      return this[kExec].execution && this[kExec].execution.activityStatus || 'idle';
+    },
   },
 });
 

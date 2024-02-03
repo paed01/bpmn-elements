@@ -5,6 +5,7 @@ Changelog
 
 - export task-, events-, and gateway activity behaviors through `bpmn-elements/tasks`, `bpmn-elements/events`, and `bpmn-elements/gateways` respectively
 - refactor type definitions for three days to make the above type safe and VS-code happy. Why is it so freaking complicated? Ambient bla bla bla ts(4-digit-number)??? Looped through all 10.000 ts-typescript errors. Patches are inevitable and imminent
+- use `Object.defineProperties` when feasible and skip pointless enumerable option on property
 
 # 12.0.0
 

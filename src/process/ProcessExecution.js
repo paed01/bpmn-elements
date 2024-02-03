@@ -58,42 +58,36 @@ function ProcessExecution(parentActivity, context) {
   };
 }
 
-Object.defineProperty(ProcessExecution.prototype, 'stopped', {
-  enumerable: true,
-  get() {
-    return this[kStopped];
+Object.defineProperties(ProcessExecution.prototype, {
+  stopped: {
+    get() {
+      return this[kStopped];
+    },
   },
-});
-
-Object.defineProperty(ProcessExecution.prototype, 'completed', {
-  enumerable: true,
-  get() {
-    return this[kCompleted];
+  completed: {
+    get() {
+      return this[kCompleted];
+    },
   },
-});
-
-Object.defineProperty(ProcessExecution.prototype, 'status', {
-  enumerable: true,
-  get() {
-    return this[kStatus];
+  status: {
+    get() {
+      return this[kStatus];
+    },
   },
-});
-
-Object.defineProperty(ProcessExecution.prototype, 'postponedCount', {
-  get() {
-    return this[kElements].postponed.length;
+  postponedCount: {
+    get() {
+      return this[kElements].postponed.length;
+    },
   },
-});
-
-Object.defineProperty(ProcessExecution.prototype, 'isRunning', {
-  get() {
-    return this[kActivated];
+  isRunning: {
+    get() {
+      return this[kActivated];
+    },
   },
-});
-
-Object.defineProperty(ProcessExecution.prototype, 'activityStatus', {
-  get() {
-    return this[kTracker].activityStatus;
+  activityStatus: {
+    get() {
+      return this[kTracker].activityStatus;
+    },
   },
 });
 

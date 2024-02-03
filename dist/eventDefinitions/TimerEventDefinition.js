@@ -27,22 +27,22 @@ function TimerEventDefinition(activity, eventDefinition) {
   this[kStopped] = false;
   this[kTimer] = null;
 }
-Object.defineProperty(TimerEventDefinition.prototype, 'executionId', {
-  get() {
-    const content = this[kTimerContent];
-    return content && content.executionId;
-  }
-});
-Object.defineProperty(TimerEventDefinition.prototype, 'stopped', {
-  enumerable: true,
-  get() {
-    return this[kStopped];
-  }
-});
-Object.defineProperty(TimerEventDefinition.prototype, 'timer', {
-  enumerable: true,
-  get() {
-    return this[kTimer];
+Object.defineProperties(TimerEventDefinition.prototype, {
+  executionId: {
+    get() {
+      const content = this[kTimerContent];
+      return content && content.executionId;
+    }
+  },
+  stopped: {
+    get() {
+      return this[kStopped];
+    }
+  },
+  timer: {
+    get() {
+      return this[kTimer];
+    }
   }
 });
 TimerEventDefinition.prototype.execute = function execute(executeMessage) {

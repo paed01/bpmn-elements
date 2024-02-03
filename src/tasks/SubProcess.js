@@ -44,12 +44,12 @@ export function SubProcessBehaviour(activity, context) {
 }
 
 Object.defineProperties(SubProcessBehaviour.prototype, {
-  'execution': {
+  execution: {
     get() {
       return this[kExecutions][0];
     },
   },
-  'executions': {
+  executions: {
     get() {
       return this[kExecutions].slice();
     },

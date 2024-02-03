@@ -48,7 +48,6 @@ function MessageFlow(flowDef, context) {
   this.logger = context.environment.Logger(type.toLowerCase());
 }
 Object.defineProperty(MessageFlow.prototype, 'counters', {
-  enumerable: true,
   get() {
     return {
       ...this[kCounters]

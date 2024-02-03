@@ -69,48 +69,44 @@ function Definition(context, options) {
   this.emitFatal = emitFatal;
   this.logger = environment.Logger(type.toLowerCase());
 }
-Object.defineProperty(Definition.prototype, 'counters', {
-  enumerable: true,
-  get() {
-    return {
-      ...this[kCounters]
-    };
-  }
-});
-Object.defineProperty(Definition.prototype, 'execution', {
-  enumerable: true,
-  get() {
-    return this[kExec].execution;
-  }
-});
-Object.defineProperty(Definition.prototype, 'executionId', {
-  enumerable: true,
-  get() {
-    return this[kExec].executionId;
-  }
-});
-Object.defineProperty(Definition.prototype, 'isRunning', {
-  enumerable: true,
-  get() {
-    if (!this[kConsuming]) return false;
-    return !!this.status;
-  }
-});
-Object.defineProperty(Definition.prototype, 'status', {
-  enumerable: true,
-  get() {
-    return this[kStatus];
-  }
-});
-Object.defineProperty(Definition.prototype, 'stopped', {
-  enumerable: true,
-  get() {
-    return this[kStopped];
-  }
-});
-Object.defineProperty(Definition.prototype, 'activityStatus', {
-  get() {
-    return this[kExec].execution && this[kExec].execution.activityStatus || 'idle';
+Object.defineProperties(Definition.prototype, {
+  counters: {
+    get() {
+      return {
+        ...this[kCounters]
+      };
+    }
+  },
+  execution: {
+    get() {
+      return this[kExec].execution;
+    }
+  },
+  executionId: {
+    get() {
+      return this[kExec].executionId;
+    }
+  },
+  isRunning: {
+    get() {
+      if (!this[kConsuming]) return false;
+      return !!this.status;
+    }
+  },
+  status: {
+    get() {
+      return this[kStatus];
+    }
+  },
+  stopped: {
+    get() {
+      return this[kStopped];
+    }
+  },
+  activityStatus: {
+    get() {
+      return this[kExec].execution && this[kExec].execution.activityStatus || 'idle';
+    }
   }
 });
 Definition.prototype.run = function run(optionsOrCallback, optionalCallback) {

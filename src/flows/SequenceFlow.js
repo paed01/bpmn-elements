@@ -41,7 +41,6 @@ function SequenceFlow(flowDef, {environment}) {
 }
 
 Object.defineProperty(SequenceFlow.prototype, 'counters', {
-  enumerable: true,
   get() {
     return {...this[kCounters]};
   },

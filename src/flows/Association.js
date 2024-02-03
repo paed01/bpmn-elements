@@ -34,7 +34,6 @@ export default function Association(associationDef, {environment}) {
 }
 
 Object.defineProperty(Association.prototype, 'counters', {
-  enumerable: true,
   get() {
     return {...this[kCounters]};
   },

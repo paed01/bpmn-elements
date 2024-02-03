@@ -25,18 +25,18 @@ export function BoundaryEventBehaviour(activity) {
   this[kAttachedTags] = [];
 }
 
-Object.defineProperty(BoundaryEventBehaviour.prototype, 'executionId', {
-  get() {
-    const message = this[kExecuteMessage];
-    return message && message.content.executionId;
+Object.defineProperties(BoundaryEventBehaviour.prototype, {
+  executionId: {
+    get() {
+      const message = this[kExecuteMessage];
+      return message && message.content.executionId;
+    },
   },
-});
-
-Object.defineProperty(BoundaryEventBehaviour.prototype, 'cancelActivity', {
-  enumerable: true,
-  get() {
-    const behaviour = this.activity.behaviour || {};
-    return 'cancelActivity' in behaviour ? behaviour.cancelActivity : true;
+  cancelActivity: {
+    get() {
+      const behaviour = this.activity.behaviour || {};
+      return 'cancelActivity' in behaviour ? behaviour.cancelActivity : true;
+    },
   },
 });
 

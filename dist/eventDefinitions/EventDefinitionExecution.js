@@ -18,16 +18,16 @@ function EventDefinitionExecution(activity, eventDefinitions, completedRoutingKe
   this[kStopped] = false;
   this[kExecuteMessage] = null;
 }
-Object.defineProperty(EventDefinitionExecution.prototype, 'completed', {
-  enumerable: true,
-  get() {
-    return this[kCompleted];
-  }
-});
-Object.defineProperty(EventDefinitionExecution.prototype, 'stopped', {
-  enumerable: true,
-  get() {
-    return this[kStopped];
+Object.defineProperties(EventDefinitionExecution.prototype, {
+  completed: {
+    get() {
+      return this[kCompleted];
+    }
+  },
+  stopped: {
+    get() {
+      return this[kStopped];
+    }
   }
 });
 EventDefinitionExecution.prototype.execute = function execute(executeMessage) {

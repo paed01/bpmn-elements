@@ -61,7 +61,6 @@ function SequenceFlow(flowDef, {
   logger.debug(`<${id}> init, <${sourceId}> -> <${targetId}>`);
 }
 Object.defineProperty(SequenceFlow.prototype, 'counters', {
-  enumerable: true,
   get() {
     return {
       ...this[kCounters]
