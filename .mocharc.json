@@ -1,5 +1,5 @@
 {
-  "require": "./test/helpers/setup.cjs",
+  "require": "./test/helpers/setup.js",
   "reporter": "spec",
   "recursive": true,
   "timeout": 1000,

@@ -1,15 +1,33 @@
 {
   "name": "bpmn-elements",
-  "version": "12.0.0",
+  "version": "13.0.0",
   "description": "Executable workflow elements based on BPMN 2.0",
   "type": "module",
-  "main": "dist/index.js",
-  "module": "src/index.js",
+  "main": "./dist/index.js",
+  "module": "./src/index.js",
   "jsnext:main": "./src/index.js",
-  "types": "./types",
+  "types": "./types/index.d.ts",
   "exports": {
-    "import": "./src/index.js",
-    "require": "./dist/index.js"
+    ".": {
+      "types": "./types/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./src/index.js"
+    },
+    "./events": {
+      "types": "./types/index.d.ts",
+      "require": "./dist/events/index.js",
+      "import": "./src/events/index.js"
+    },
+    "./gateways": {
+      "types": "./types/index.d.ts",
+      "require": "./dist/gateways/index.js",
+      "import": "./src/gateways/index.js"
+    },
+    "./tasks": {
+      "types": "./types/index.d.ts",
+      "require": "./dist/tasks/index.js",
+      "import": "./src/tasks/index.js"
+    }
   },
   "sideEffects": false,
   "scripts": {
@@ -41,28 +59,30 @@
   "files": [
     "dist",
     "types",
-    "src"
+    "src",
+    "*.d.ts"
   ],
   "devDependencies": {
     "@aircall/expression-parser": "^1.0.4",
-    "@babel/cli": "^7.22.9",
-    "@babel/core": "^7.23.6",
-    "@babel/preset-env": "^7.23.6",
-    "@babel/register": "^7.22.5",
+    "@babel/cli": "^7.23.9",
+    "@babel/core": "^7.23.9",
+    "@babel/preset-env": "^7.23.9",
+    "@babel/register": "^7.23.7",
     "@bonniernews/hot-bev": "^0.4.0",
-    "bpmn-moddle": "^8.0.1",
-    "c8": "^8.0.0",
+    "@types/node": "^16.18.79",
+    "bpmn-moddle": "^8.1.0",
+    "c8": "^9.1.0",
     "camunda-bpmn-moddle": "^7.0.1",
-    "chai": "^4.3.7",
+    "chai": "^5.0.3",
     "chronokinesis": "^6.0.0",
     "debug": "^4.3.4",
     "eslint": "^8.56.0",
     "eslint-plugin-import": "^2.29.1",
-    "got": "^12.6.1",
+    "got": "^14.1.0",
     "mocha": "^10.1.0",
     "mocha-cakes-2": "^3.3.0",
     "moddle-context-serializer": "^4.0.0",
-    "nock": "^13.4.0"
+    "nock": "^13.5.1"
   },
   "dependencies": {
     "smqp": "^8.0.0"

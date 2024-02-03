@@ -1,6 +1,11 @@
 Changelog
 =========
 
+# 13.0.0
+
+- export task-, events-, and gateway activity behaviors through `bpmn-elements/tasks`, `bpmn-elements/events`, and `bpmn-elements/gateways` respectively
+- refactor type definitions for three days to make the above type safe and VS-code happy. Why is it so freaking complicated? Ambient bla bla bla ts(4-digit-number)??? Looped through all 10.000 ts-typescript errors. Patches are inevitable and imminent
+
 # 12.0.0
 
 Memory issues running sequential multi-instance sub-process (MISP). All MISP executions are put in a list to be able to save state.
