@@ -3,7 +3,7 @@ Changelog
 
 # 13.1.1
 
-- found the real reason for massive state size - `activity.leave` messages where not acked by process execution. Doh!
+- found the real reason for massive state size - `activity.leave` messages were not acked by process execution. Doh!
 
 # 13.1.0
 
