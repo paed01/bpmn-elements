@@ -58,6 +58,10 @@ Feature('Process', () => {
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
     });
+
+    And('process queues are empty', () => {
+      expect(processInstance.getState().broker).to.be.undefined;
+    });
   });
 
   Scenario('A process with two succeeding activities', () => {

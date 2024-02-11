@@ -51,6 +51,10 @@ Feature('Recover resume', () => {
       expect(state.execution.processes[0].execution.flows).to.have.length(0);
     });
 
+    And('process broker state has only one user task', () => {
+      expect(state.execution.processes[0].broker.queues[1].messages).to.have.length(1);
+    });
+
     When('definition is recovered and resumed', () => {
       definition.stop();
 
@@ -67,6 +71,38 @@ Feature('Recover resume', () => {
 
     Then('run completes', () => {
       return end;
+    });
+
+    Given('a definition with setting enabled track', async () => {
+      context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    When('run', () => {
+      wait = definition.waitFor('wait');
+      definition.run();
+    });
+
+    Then('run is waiting', () => {
+      return wait;
+    });
+
+    When('getting state', () => {
+      state = definition.getState();
+    });
+
+    Then('state has all children', () => {
+      expect(state.execution.processes[0].execution.children).to.have.length(3);
+    });
+
+    And('all flows but without broker state', () => {
+      expect(state.execution.processes[0].execution.flows).to.have.length(2);
+      expect(state.execution.processes[0].execution.flows[0].broker).to.be.undefined;
+      expect(state.execution.processes[0].execution.flows[1].broker).to.be.undefined;
+    });
+
+    And('process broker state has only one user task', () => {
+      expect(state.execution.processes[0].broker.queues[1].messages).to.have.length(1);
     });
   });
 
@@ -109,6 +145,10 @@ Feature('Recover resume', () => {
 
     And('no associations', () => {
       expect(state.execution.processes[0].execution.associations).to.be.undefined;
+    });
+
+    And('process broker state has only one user task', () => {
+      expect(state.execution.processes[0].broker.queues[1].messages).to.have.length(1);
     });
 
     When('definition is recovered and resumed', () => {

@@ -1,6 +1,10 @@
 Changelog
 =========
 
+# 13.1.1
+
+- found the real reason for massive state size - `activity.leave` messages where not acked by process execution. Doh!
+
 # 13.1.0
 
 - introduce `disableTrackState` setting. Tracking of elements is done by counters, e.g. activity taken or discarded, sequence flow taken and discarded. Counters are saved when getting state. If you run really big flows the state will keep all elements just to be able to recover the number of times an element has been touched. Needless to say it the state will grow out of it's comfort zone. Setting `disableTrackState` to true will only return state for elements that are actually running

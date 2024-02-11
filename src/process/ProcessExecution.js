@@ -635,6 +635,7 @@ ProcessExecution.prototype._onChildCompleted = function onChildCompleted(message
     return this._complete('completed');
   }
 
+  message.ack();
   this._debug(`left <${id}> (${type}), pending runs ${postponedCount}, ${postponed.map((a) => a.content.id).join(',')}`);
 
   if (postponedCount && postponedCount === detachedActivities.length) {
