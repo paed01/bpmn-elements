@@ -279,6 +279,8 @@ Activity.prototype.run = function run(runContent) {
 Activity.prototype.getState = function getState() {
   const status = this.status;
   const exec = this[kExec];
+  const brokerState = this.broker.getState(true);
+  if (!brokerState && this.environment.settings.disableTrackState) return;
   return {
     id: this.id,
     type: this.type,
@@ -288,7 +290,7 @@ Activity.prototype.getState = function getState() {
     executionId: exec.executionId,
     stopped: this.stopped,
     counters: this.counters,
-    broker: this.broker.getState(true),
+    broker: brokerState,
     execution: exec.execution && exec.execution.getState()
   };
 };

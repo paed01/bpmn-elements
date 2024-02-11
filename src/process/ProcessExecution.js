@@ -165,6 +165,13 @@ ProcessExecution.prototype.resume = function resume() {
 
 ProcessExecution.prototype.getState = function getState() {
   const {children, flows, outboundMessageFlows, associations} = this[kElements];
+
+  const flowStates = flows.reduce((result, flow) => {
+    const elmState = flow.getState();
+    if (elmState) result.push(elmState);
+    return result;
+  }, []);
+
   return {
     executionId: this.executionId,
     stopped: this[kStopped],
@@ -172,12 +179,13 @@ ProcessExecution.prototype.getState = function getState() {
     status: this.status,
     children: children.reduce((result, activity) => {
       if (activity.placeholder) return result;
-      result.push(activity.getState());
+      const elmState = activity.getState();
+      if (elmState) result.push(elmState);
       return result;
     }, []),
-    ...(flows.length && {flows: flows.map((f) => f.getState())}),
-    ...(outboundMessageFlows.length && {messageFlows: outboundMessageFlows.length && outboundMessageFlows.map((f) => f.getState())}),
-    ...(associations.length && {associations: associations.map((f) => f.getState())}),
+    ...(flows.length && { flows: flowStates }),
+    ...(outboundMessageFlows.length && { messageFlows: outboundMessageFlows.length && outboundMessageFlows.map((f) => f.getState()).filter(Boolean) }),
+    ...(associations.length && { associations: associations.map((f) => f.getState()).filter(Boolean) }),
   };
 };
 

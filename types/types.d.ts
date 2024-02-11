@@ -96,12 +96,18 @@ declare interface IExpressions {
 declare interface EnvironmentSettings {
   /** true returns dummy service function for service task if not found */
   enableDummyService?: boolean;
-  /** true makes activity runs to go forward in steps, defaults to false */
+  /** true forces activity runs to go forward in steps, defaults to false */
   step?: boolean;
   /** strict mode, see documentation, defaults to false */
   strict?: boolean;
   /** positive integer to control parallel loop batch size, defaults to 50 */
   batchSize?: number;
+  /**
+   * disable tracking state between recover and resume
+   * true will only return state for elements that are actually running
+   * Defaults to falsy
+   */
+  disableTrackState?: boolean;
   [x: string]: any;
 }
 
@@ -229,7 +235,7 @@ declare interface IActivityBehaviour {
   type: string;
   activity: Activity;
   environment: Environment;
-  new(acttivity: Activity, context: ContextInstance): IActivityBehaviour
+  new(activity: Activity, context: ContextInstance): IActivityBehaviour
   execute(executeMessage: ElementBrokerMessage): void;
 }
 
@@ -530,6 +536,7 @@ declare interface ISequenceFlowCondition {
 }
 
 declare class SequenceFlow extends Element<SequenceFlow> {
+  constructor(flowDef: SerializableElement, context: ContextInstance)
   get sourceId(): string;
   get targetId(): string;
   get isDefault(): boolean;
@@ -547,6 +554,7 @@ declare class SequenceFlow extends Element<SequenceFlow> {
    * @param {evaluateCallback} callback Callback with evaluation result, if truthy flow should be taken
    */
   evaluate(fromMessage: ElementBrokerMessage, callback: (err: Error, result: any) => void): void;
+  getState(): SequenceFlowState | undefined;
 }
 
 declare interface MessageFlowReference {
@@ -556,20 +564,24 @@ declare interface MessageFlowReference {
 }
 
 declare class MessageFlow extends Element<MessageFlow> {
+  constructor(flowDef: SerializableElement, context: ContextInstance)
   get source(): MessageFlowReference;
   get target(): MessageFlowReference;
   get counters(): { messages: number };
   activate(): void;
   deactivate(): void;
+  getState(): MessageFlowState | undefined;
 }
 
 declare class Association extends Element<Association> {
+  constructor(associationDef: SerializableElement, context: ContextInstance)
   get sourceId(): string;
   get targetId(): string;
   get isAssociation(): boolean;
   get counters(): {take: number, discard: number };
   take(content?: any): boolean;
   discard(content?: any): boolean;
+  getState(): AssociationState | undefined;
 }
 
 declare type LoggerFactory = (scope: string) => ILogger;
@@ -635,10 +647,12 @@ declare interface IScripts {
   getScript(language: string, identifier: {id: string, [x: string]: any}): Script;
 }
 
-declare interface Activity extends Element<Activity> {
+declare class Activity extends Element<Activity> {
+  constructor(behaviour: IActivityBehaviour, activityDef: SerializableElement, context: ContextInstance)
   get Behaviour(): IActivityBehaviour;
   get stopped(): boolean;
   get status(): ActivityRunStatus | undefined;
+  get context(): ContextInstance;
   get counters(): { taken: number, discarded: number };
   get execution(): ActivityExecution;
   get executionId(): string;
@@ -665,6 +679,7 @@ declare interface Activity extends Element<Activity> {
   next(): ElementBrokerMessage;
   shake(): void;
   evaluateOutbound(fromMessage: ElementBrokerMessage, discardRestAtTake: boolean, callback: (err: Error, evaluationResult: any) => void): void;
+  getState(): ActivityState | undefined;
 }
 
 declare class ActivityError extends Error {

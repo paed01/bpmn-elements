@@ -15,6 +15,7 @@ Arguments:
     - `enableDummyService`: boolean, true returns dummy service function for service task
     - `strict`: boolean, [strict mode](#strict-mode) defaults to false
     - `batchSize`: optional positive integer to control parallel loop batch size, defaults to 50
+    - `disableTrackState`: optional boolean to disable tracking of element counters between recover and resume. State of idle elements are not returned when getting state. Recommended if running and recovering really large flows
   - `scripts`: [Scripts instance](/docs/Scripts.md)
   - `timers`: [Timers instance](/docs/Timers.md)
   - `expressions`: expressions handler, defaults to [Expressions instance](/docs/Expression.md)

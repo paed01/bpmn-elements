@@ -79,7 +79,7 @@ Get [activity](/docs/Activity.md) by id from context.
 
 ### `getState()`
 
-Get activity state.
+Get activity state. If `environment.settings.disableTrackState === true` the state may be undefined if the task is not running.
 
 ### `message(messageContent)`
 

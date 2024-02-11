@@ -58,11 +58,14 @@ Association.prototype.discard = function discard(content = {}) {
 };
 
 Association.prototype.getState = function getState() {
+  const brokerState = this.broker.getState(true);
+  if (!brokerState && this.environment.settings.disableTrackState) return;
+
   return {
     id: this.id,
     type: this.type,
     counters: this.counters,
-    broker: this.broker.getState(true),
+    broker: brokerState,
   };
 };
 
