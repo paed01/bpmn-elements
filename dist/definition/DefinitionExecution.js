@@ -412,6 +412,7 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
       }
     case 'process.error':
       {
+        // message.ack();
         if (inbound && inbound.length) {
           const calledFrom = inbound[0];
           this._getProcessApi({
@@ -454,13 +455,13 @@ DefinitionExecution.prototype._onProcessCompleted = function onProcessCompleted(
     type,
     inbound
   } = message.content;
+  message.ack();
   this._debug(`left <${executionId} (${id})> (${type}), pending runs ${this.postponedCount}`);
   if (inbound && inbound.length) {
     const bp = this._removeProcessByExecutionId(executionId);
     this._deactivateProcess(bp);
   }
   if (!this.postponedCount) {
-    message.ack();
     this._complete('completed');
   }
 };

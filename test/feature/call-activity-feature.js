@@ -332,8 +332,22 @@ Feature('Call activity', () => {
       });
     });
 
-    When('multi-instance completes', () => {
-      serviceCalls.forEach((args, idx) => args.pop()(null, idx + 1));
+    And('process iteration run messages are registered in definition execute queue', () => {
+      const execQ = definition.execution.broker.getState().queues.find((q) => q.name === `execute-${definition.executionId}-q`);
+      expect(execQ.messages).to.have.length(4);
+    });
+
+    When('first iteration completes', () => {
+      serviceCalls.shift().pop()(null, 1);
+    });
+
+    Then('one process iteration run message is removed from definition execute queue', () => {
+      const execQ = definition.execution.broker.getState().queues.find((q) => q.name === `execute-${definition.executionId}-q`);
+      expect(execQ.messages).to.have.length(3);
+    });
+
+    When('rest of multi-instance completes', () => {
+      serviceCalls.forEach((args, idx) => args.pop()(null, idx + 2));
     });
 
     Then('run completes', () => {

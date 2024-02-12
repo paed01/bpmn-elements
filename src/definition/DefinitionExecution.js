@@ -422,6 +422,7 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
       break;
     }
     case 'process.error': {
+      // message.ack();
       if (inbound && inbound.length) {
         const calledFrom = inbound[0];
 
@@ -458,6 +459,7 @@ DefinitionExecution.prototype._onProcessCompleted = function onProcessCompleted(
   if (message.fields.redelivered) return message.ack();
 
   const {id, executionId, type, inbound} = message.content;
+  message.ack();
   this._debug(`left <${executionId} (${id})> (${type}), pending runs ${this.postponedCount}`);
 
   if (inbound && inbound.length) {
@@ -466,7 +468,6 @@ DefinitionExecution.prototype._onProcessCompleted = function onProcessCompleted(
   }
 
   if (!this.postponedCount) {
-    message.ack();
     this._complete('completed');
   }
 };

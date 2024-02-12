@@ -1,9 +1,13 @@
 Changelog
 =========
 
+# 13.1.2
+
+- fix another lingering leave message. Now it was the definition execution that kept `process.leave` messages around for sentimental reasons
+
 # 13.1.1
 
-- found the real reason for massive state size - `activity.leave` messages were not acked by process execution. Doh!
+- found the real reason behind ever groving state size - `activity.leave` messages were not acked by process execution. Doh!
 
 # 13.1.0
 
