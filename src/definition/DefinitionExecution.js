@@ -422,7 +422,6 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
       break;
     }
     case 'process.error': {
-      // message.ack();
       if (inbound && inbound.length) {
         const calledFrom = inbound[0];
 

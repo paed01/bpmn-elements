@@ -412,7 +412,6 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
       }
     case 'process.error':
       {
-        // message.ack();
         if (inbound && inbound.length) {
           const calledFrom = inbound[0];
           this._getProcessApi({

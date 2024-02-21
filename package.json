@@ -69,11 +69,11 @@
     "@babel/preset-env": "^7.23.9",
     "@babel/register": "^7.23.7",
     "@bonniernews/hot-bev": "^0.4.0",
-    "@types/node": "^16.18.80",
+    "@types/node": "^16.18.82",
     "bpmn-moddle": "^8.1.0",
     "c8": "^9.1.0",
     "camunda-bpmn-moddle": "^7.0.1",
-    "chai": "^5.0.3",
+    "chai": "^5.1.0",
     "chronokinesis": "^6.0.0",
     "debug": "^4.3.4",
     "eslint": "^8.56.0",
@@ -82,7 +82,7 @@
     "mocha": "^10.3.0",
     "mocha-cakes-2": "^3.3.0",
     "moddle-context-serializer": "^4.1.2",
-    "nock": "^13.5.1"
+    "nock": "^13.5.3"
   },
   "dependencies": {
     "smqp": "^8.2.2"
