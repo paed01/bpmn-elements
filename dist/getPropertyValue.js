@@ -48,7 +48,6 @@ function executeFn(fn, args, base, fnScope) {
   }
   if (!fnScope) return fn.apply(null, callArguments);
   return function ScopedIIFE() {
-    // eslint-disable-line no-extra-parens
     return fn.apply(this, callArguments);
   }.call(fnScope);
 }

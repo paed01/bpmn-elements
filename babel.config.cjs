@@ -1,4 +1,3 @@
-/* global module */
 module.exports = function babelRoot(api) {
   api.cache(true);
 
