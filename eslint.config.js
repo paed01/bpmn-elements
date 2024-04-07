@@ -1,12 +1,10 @@
 import js from '@eslint/js';
-import pluginImport from 'eslint-plugin-import';
 import globals from 'globals';
 
 const rules = {
   'dot-notation': [2, { 'allowKeywords': true }],
   'eol-last': 2,
   'eqeqeq': 2,
-  'import/extensions': [ 'error', 'ignorePackages' ],
   'linebreak-style': ['error', 'unix'],
   'no-alert': 2,
   'no-array-constructor': 2,
@@ -65,9 +63,6 @@ const rules = {
 export default [
   js.configs.recommended,
   {
-    plugins: {
-      import: pluginImport,
-    },
     rules,
   },
   {
