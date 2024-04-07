@@ -1,4 +1,4 @@
-import {Definition} from '../../../src/index.js';
+import { Definition } from '../../../src/index.js';
 import testHelpers from '../../helpers/testHelpers.js';
 import factory from '../../helpers/factory.js';
 
@@ -7,11 +7,14 @@ const sourceParallelJoin = factory.resource('issue-31-cm.bpmn');
 
 Feature('Issue 31 - Error handling on save and resume', () => {
   function makeRequestServiceSync(message, callback) {
-    callback({
-      name: 'requestError',
-      description: 'Error happened',
-      code: 'code000',
-    }, null);
+    callback(
+      {
+        name: 'requestError',
+        description: 'Error happened',
+        code: 'code000',
+      },
+      null,
+    );
   }
 
   function makeRequestServiceAsync(message, callback) {
@@ -20,23 +23,28 @@ Feature('Issue 31 - Error handling on save and resume', () => {
     }, 1);
   }
 
-  const scenarios = [{
-    description: 'original source, sync service',
-    source,
-    service: makeRequestServiceSync,
-  }, {
-    description: 'original source, async service',
-    source,
-    service: makeRequestServiceAsync,
-  }, {
-    description: 'parallel join source, sync service',
-    source: sourceParallelJoin,
-    service: makeRequestServiceSync,
-  }, {
-    description: 'parallel join source, async service',
-    source: sourceParallelJoin,
-    service: makeRequestServiceAsync,
-  }];
+  const scenarios = [
+    {
+      description: 'original source, sync service',
+      source,
+      service: makeRequestServiceSync,
+    },
+    {
+      description: 'original source, async service',
+      source,
+      service: makeRequestServiceAsync,
+    },
+    {
+      description: 'parallel join source, sync service',
+      source: sourceParallelJoin,
+      service: makeRequestServiceSync,
+    },
+    {
+      description: 'parallel join source, async service',
+      source: sourceParallelJoin,
+      service: makeRequestServiceAsync,
+    },
+  ];
 
   scenarios.forEach((test) => {
     describe(test.description, () => {

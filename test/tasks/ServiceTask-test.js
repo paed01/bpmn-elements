@@ -16,18 +16,21 @@ describe('ServiceTask', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, {settings: {disableDummyService: true}});
+      const context = await testHelpers.context(source, { settings: { disableDummyService: true } });
       const task = context.getActivityById('task');
 
       let error;
-      const fail = task.waitFor('leave').catch(err => {
+      const fail = task.waitFor('leave').catch((err) => {
         error = err;
       });
       task.run();
 
       await fail;
 
-      expect(error).to.be.instanceOf(ActivityError).and.have.property('message').that.match(/service not defined/);
+      expect(error)
+        .to.be.instanceOf(ActivityError)
+        .and.have.property('message')
+        .that.match(/service not defined/);
     });
 
     it('no service on execution runs if disableDummyService is NOT disabled', async () => {
@@ -60,7 +63,9 @@ describe('ServiceTask', () => {
       context.environment.addService('getService', (inputContext) => {
         expect(inputContext.content).to.have.property('id', 'serviceTask');
         expect(inputContext.content).to.have.property('type', 'bpmn:ServiceTask');
-        expect(inputContext.content).to.have.property('executionId').that.match(/^serviceTask.+/);
+        expect(inputContext.content)
+          .to.have.property('executionId')
+          .that.match(/^serviceTask.+/);
 
         return (...a) => {
           a.pop()();
@@ -78,22 +83,25 @@ describe('ServiceTask', () => {
     it('runs service behavior stop function on stop', () => {
       let stopped = false;
       let discarded = false;
-      const task = ServiceTask({
-        id: 'service',
-        behaviour: {
-          Service: function Service() {
-            return {
-              execute() {},
-              stop(msg) {
-                stopped = msg;
-              },
-              discard(msg) {
-                discarded = msg;
-              },
-            };
+      const task = ServiceTask(
+        {
+          id: 'service',
+          behaviour: {
+            Service: function Service() {
+              return {
+                execute() {},
+                stop(msg) {
+                  stopped = msg;
+                },
+                discard(msg) {
+                  discarded = msg;
+                },
+              };
+            },
           },
         },
-      }, testHelpers.emptyContext());
+        testHelpers.emptyContext(),
+      );
 
       task.run();
       task.stop();
@@ -105,22 +113,25 @@ describe('ServiceTask', () => {
     it('runs service behavior discard function on discard', () => {
       let discarded = false;
       let stopped = false;
-      const task = ServiceTask({
-        id: 'service',
-        behaviour: {
-          Service: function Service() {
-            return {
-              execute() {},
-              discard(msg) {
-                discarded = msg;
-              },
-              stop(msg) {
-                stopped = msg;
-              },
-            };
+      const task = ServiceTask(
+        {
+          id: 'service',
+          behaviour: {
+            Service: function Service() {
+              return {
+                execute() {},
+                discard(msg) {
+                  discarded = msg;
+                },
+                stop(msg) {
+                  stopped = msg;
+                },
+              };
+            },
           },
         },
-      }, testHelpers.emptyContext());
+        testHelpers.emptyContext(),
+      );
 
       task.run();
       task.discard();
@@ -131,19 +142,22 @@ describe('ServiceTask', () => {
 
     it('runs service behavior stop function on discard if no discard function', () => {
       let stopped = false;
-      const task = ServiceTask({
-        id: 'service',
-        behaviour: {
-          Service: function Service() {
-            return {
-              execute() {},
-              stop(msg) {
-                stopped = msg;
-              },
-            };
+      const task = ServiceTask(
+        {
+          id: 'service',
+          behaviour: {
+            Service: function Service() {
+              return {
+                execute() {},
+                stop(msg) {
+                  stopped = msg;
+                },
+              };
+            },
           },
         },
-      }, testHelpers.emptyContext());
+        testHelpers.emptyContext(),
+      );
 
       task.run();
       task.discard();
@@ -154,16 +168,19 @@ describe('ServiceTask', () => {
 
   describe('recover and resume', () => {
     it('run stop resume while executing service function', () => {
-      const task = ServiceTask({
-        id: 'service',
-        behaviour: {
-          Service: function Service() {
-            return {
-              execute() {},
-            };
+      const task = ServiceTask(
+        {
+          id: 'service',
+          behaviour: {
+            Service: function Service() {
+              return {
+                execute() {},
+              };
+            },
           },
         },
-      }, testHelpers.emptyContext());
+        testHelpers.emptyContext(),
+      );
 
       task.run();
       task.stop();
@@ -171,33 +188,39 @@ describe('ServiceTask', () => {
     });
 
     it('run stop recover resume while executing service function', () => {
-      const task = ServiceTask({
-        id: 'service',
-        behaviour: {
-          Service: function Service() {
-            return {
-              execute() {},
-            };
+      const task = ServiceTask(
+        {
+          id: 'service',
+          behaviour: {
+            Service: function Service() {
+              return {
+                execute() {},
+              };
+            },
           },
         },
-      }, testHelpers.emptyContext());
+        testHelpers.emptyContext(),
+      );
 
       task.run();
       task.stop();
 
       const state = task.getState();
-      const recovered = ServiceTask({
-        id: 'service',
-        behaviour: {
-          Service: function Service() {
-            return {
-              execute(...args) {
-                args.pop()();
-              },
-            };
+      const recovered = ServiceTask(
+        {
+          id: 'service',
+          behaviour: {
+            Service: function Service() {
+              return {
+                execute(...args) {
+                  args.pop()();
+                },
+              };
+            },
           },
         },
-      }, testHelpers.emptyContext()).recover(JSON.parse(JSON.stringify(state)));
+        testHelpers.emptyContext(),
+      ).recover(JSON.parse(JSON.stringify(state)));
 
       recovered.resume();
       expect(recovered.counters).to.have.property('taken', 1);
@@ -205,34 +228,40 @@ describe('ServiceTask', () => {
 
     it('stop in service function, recover resume', () => {
       let state;
-      const task = ServiceTask({
-        id: 'service',
-        behaviour: {
-          Service: function Service(activity) {
-            return {
-              execute() {
-                activity.stop();
-                state = activity.getState();
-              },
-            };
+      const task = ServiceTask(
+        {
+          id: 'service',
+          behaviour: {
+            Service: function Service(activity) {
+              return {
+                execute() {
+                  activity.stop();
+                  state = activity.getState();
+                },
+              };
+            },
           },
         },
-      }, testHelpers.emptyContext());
+        testHelpers.emptyContext(),
+      );
 
       task.run();
 
-      const recovered = ServiceTask({
-        id: 'service',
-        behaviour: {
-          Service: function Service() {
-            return {
-              execute(...args) {
-                args.pop()();
-              },
-            };
+      const recovered = ServiceTask(
+        {
+          id: 'service',
+          behaviour: {
+            Service: function Service() {
+              return {
+                execute(...args) {
+                  args.pop()();
+                },
+              };
+            },
           },
         },
-      }, testHelpers.emptyContext()).recover(state);
+        testHelpers.emptyContext(),
+      ).recover(state);
 
       recovered.resume();
       expect(recovered.counters).to.have.property('taken', 1);
@@ -464,7 +493,7 @@ describe('ServiceTask', () => {
 
       const task = context.getActivityById('serviceTask');
       const leave = task.waitFor('leave');
-      task.run({input: 1});
+      task.run({ input: 1 });
 
       const api = await leave;
 
@@ -527,7 +556,7 @@ describe('ServiceTask', () => {
 
       await leave;
 
-      expect(context.environment.output).to.eql({result: [1]});
+      expect(context.environment.output).to.eql({ result: [1] });
     });
   });
 
@@ -549,7 +578,7 @@ describe('ServiceTask', () => {
           .delay(30)
           .reply(200, {})
           .get('/api/immanuel?version=2')
-          .reply(409, {}, {'content-type': 'application/json'});
+          .reply(409, {}, { 'content-type': 'application/json' });
 
         const completed = task.waitFor('leave');
         task.run();
@@ -562,17 +591,22 @@ describe('ServiceTask', () => {
       it('completes with output from loop', async () => {
         const task = context.getActivityById('task');
 
-        task.broker.subscribeTmp('execution', 'execute.start', (routingKey, message) => {
-          if (!message.content.isMultiInstance) return;
-          const {index, item} = message.content;
+        task.broker.subscribeTmp(
+          'execution',
+          'execute.start',
+          (routingKey, message) => {
+            if (!message.content.isMultiInstance) return;
+            const { index, item } = message.content;
 
-          nock('http://example.com')
-            .get(`/api${item}?version=${index}`)
-            .delay(50 - index * 10)
-            .reply(index < 2 ? 200 : 409, {
-              idx: index,
-            });
-        }, {noAck: true});
+            nock('http://example.com')
+              .get(`/api${item}?version=${index}`)
+              .delay(50 - index * 10)
+              .reply(index < 2 ? 200 : 409, {
+                idx: index,
+              });
+          },
+          { noAck: true },
+        );
 
         const leave = task.waitFor('leave');
         task.run();
@@ -580,24 +614,30 @@ describe('ServiceTask', () => {
         const api = await leave;
 
         expect(api.content.output).to.have.length(3);
-        expect(api.content.output[0]).to.eql([{
-          statusCode: 200,
-          body: {
-            idx: 0,
+        expect(api.content.output[0]).to.eql([
+          {
+            statusCode: 200,
+            body: {
+              idx: 0,
+            },
           },
-        }]);
-        expect(api.content.output[1]).to.eql([{
-          statusCode: 200,
-          body: {
-            idx: 1,
+        ]);
+        expect(api.content.output[1]).to.eql([
+          {
+            statusCode: 200,
+            body: {
+              idx: 1,
+            },
           },
-        }]);
-        expect(api.content.output[2]).to.eql([{
-          statusCode: 409,
-          body: {
-            idx: 2,
+        ]);
+        expect(api.content.output[2]).to.eql([
+          {
+            statusCode: 409,
+            body: {
+              idx: 2,
+            },
           },
-        }]);
+        ]);
       });
 
       expect(nock.isDone()).to.be.true;
@@ -636,15 +676,20 @@ describe('ServiceTask', () => {
         const task = context.getActivityById('task');
         task.activate();
 
-        task.broker.subscribeTmp('execution', 'execute.start', (routingKey, message) => {
-          const {index, item: pathname} = message.content;
-          nock('http://example.com')
-            .get(`/api${pathname}?version=${index}`)
-            .delay(50 - index * 10)
-            .reply(index < 2 ? 200 : 409, {
-              idx: index,
-            });
-        }, {noAck: true});
+        task.broker.subscribeTmp(
+          'execution',
+          'execute.start',
+          (routingKey, message) => {
+            const { index, item: pathname } = message.content;
+            nock('http://example.com')
+              .get(`/api${pathname}?version=${index}`)
+              .delay(50 - index * 10)
+              .reply(index < 2 ? 200 : 409, {
+                idx: index,
+              });
+          },
+          { noAck: true },
+        );
 
         const leave = task.waitFor('leave');
         task.run();
@@ -652,24 +697,30 @@ describe('ServiceTask', () => {
         const api = await leave;
 
         expect(api.content.output).to.have.length(3);
-        expect(api.content.output[0]).to.eql([{
-          statusCode: 200,
-          body: {
-            idx: 0,
+        expect(api.content.output[0]).to.eql([
+          {
+            statusCode: 200,
+            body: {
+              idx: 0,
+            },
           },
-        }]);
-        expect(api.content.output[1]).to.eql([{
-          statusCode: 200,
-          body: {
-            idx: 1,
+        ]);
+        expect(api.content.output[1]).to.eql([
+          {
+            statusCode: 200,
+            body: {
+              idx: 1,
+            },
           },
-        }]);
-        expect(api.content.output[2]).to.eql([{
-          statusCode: 409,
-          body: {
-            idx: 2,
+        ]);
+        expect(api.content.output[2]).to.eql([
+          {
+            statusCode: 409,
+            body: {
+              idx: 2,
+            },
           },
-        }]);
+        ]);
       });
     });
   });
@@ -697,12 +748,12 @@ async function getLoopContext(isSequential) {
   context.environment.variables.paths = ['/pal', '/franz', '/immanuel'];
   context.environment.addService('get', () => {
     return async function getService(scope, next) {
-      const {item, index} = scope.content;
+      const { item, index } = scope.content;
       const callUrl = `http://example.com/api${item}?version=${index}`;
 
       try {
-        const {statusCode, body} = await got(callUrl, {throwHttpErrors: false, responseType: 'json'});
-        return next(null, {statusCode, body});
+        const { statusCode, body } = await got(callUrl, { throwHttpErrors: false, responseType: 'json' });
+        return next(null, { statusCode, body });
       } catch (err) {
         return next(err);
       }

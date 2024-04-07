@@ -1,5 +1,4 @@
-TimerEventDefinition
-====================
+# TimerEventDefinition
 
 TimerEventDefinition behaviour.
 
@@ -63,10 +62,12 @@ Timer event definition api.
 Parse timer value into expire date.
 
 Arguments:
+
 - `timerType`: timer type string, one of `timeDuration`, `timeCycle`, or `timeDate`
 - `value`: resolved expression timer string
 
 Returns object:
+
 - `expireAt`: expires at date
 - `delay`: delay in milliseconds
 - `repeat`: repeat number of times

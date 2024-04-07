@@ -2,19 +2,19 @@ import Environment from '../../src/Environment.js';
 import SignalEventDefinition from '../../src/eventDefinitions/SignalEventDefinition.js';
 import testHelpers from '../helpers/testHelpers.js';
 import Signal from '../../src/activity/Signal.js';
-import {ActivityBroker} from '../../src/EventBroker.js';
-import {Logger} from '../helpers/testHelpers.js';
+import { ActivityBroker } from '../../src/EventBroker.js';
+import { Logger } from '../helpers/testHelpers.js';
 
 describe('SignalEventDefinition', () => {
   let event;
   beforeEach(() => {
     event = {
       id: 'event',
-      environment: new Environment({Logger}),
+      environment: new Environment({ Logger }),
       broker: ActivityBroker(this).broker,
       getActivityById(id) {
         if (id !== 'Signal_0') return;
-        return Signal({id}, testHelpers.emptyContext());
+        return Signal({ id }, testHelpers.emptyContext());
       },
     };
   });
@@ -26,9 +26,14 @@ describe('SignalEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       catchSignal.execute({
         fields: {},
@@ -38,10 +43,12 @@ describe('SignalEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -59,9 +66,14 @@ describe('SignalEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       catchSignal.execute({
         fields: {},
@@ -71,10 +83,12 @@ describe('SignalEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -88,16 +102,24 @@ describe('SignalEventDefinition', () => {
     });
 
     it('completes and clears listeners if event is a start event and signaled before execution', () => {
-      const catchSignal = new SignalEventDefinition({...event, isStart: true}, {
-        type: 'bpmn:SignalEventDefinition',
-      });
+      const catchSignal = new SignalEventDefinition(
+        { ...event, isStart: true },
+        {
+          type: 'bpmn:SignalEventDefinition',
+        },
+      );
 
       event.broker.publish('api', 'activity.signal.event_1', {});
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       catchSignal.execute({
         fields: {},
@@ -107,10 +129,12 @@ describe('SignalEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -128,9 +152,14 @@ describe('SignalEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.discard', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.discard',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       catchSignal.execute({
         fields: {},
@@ -140,15 +169,17 @@ describe('SignalEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
 
-      event.broker.publish('api', 'activity.discard.event_1_0', {}, {type: 'discard'});
+      event.broker.publish('api', 'activity.discard.event_1_0', {}, { type: 'discard' });
 
       event.broker.cancel('_test-tag');
 
@@ -170,15 +201,17 @@ describe('SignalEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
 
-      event.broker.publish('api', 'activity.stop.event_1_0', {}, {type: 'stop'});
+      event.broker.publish('api', 'activity.stop.event_1_0', {}, { type: 'stop' });
 
       event.broker.cancel('_test-tag');
 
@@ -191,9 +224,14 @@ describe('SignalEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -203,15 +241,17 @@ describe('SignalEventDefinition', () => {
           parent: {
             id: 'event',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
 
-      event.broker.publish('api', 'activity.sometype.event_1_0', {}, {type: 'signal'});
+      event.broker.publish('api', 'activity.sometype.event_1_0', {}, { type: 'signal' });
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'execute.completed');
@@ -230,9 +270,14 @@ describe('SignalEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -242,10 +287,12 @@ describe('SignalEventDefinition', () => {
           parent: {
             id: 'intermediate',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -270,9 +317,14 @@ describe('SignalEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.signal', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.signal',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -285,10 +337,12 @@ describe('SignalEventDefinition', () => {
           parent: {
             id: 'intermediate',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -309,9 +363,14 @@ describe('SignalEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -322,10 +381,12 @@ describe('SignalEventDefinition', () => {
           parent: {
             id: 'event',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -353,9 +414,14 @@ describe('SignalEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.signal', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.signal',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -369,10 +435,12 @@ describe('SignalEventDefinition', () => {
           parent: {
             id: 'event',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });

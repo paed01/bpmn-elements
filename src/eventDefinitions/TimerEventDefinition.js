@@ -1,17 +1,17 @@
-import {cloneContent} from '../messageHelper.js';
-import {toSeconds, parse as parseIsoDuration} from '../iso-duration.js';
+import { cloneContent } from '../messageHelper.js';
+import { toSeconds, parse as parseIsoDuration } from '../iso-duration.js';
 
 const kStopped = Symbol.for('stopped');
 const kTimerContent = Symbol.for('timerContent');
 const kTimer = Symbol.for('timer');
 
 export default function TimerEventDefinition(activity, eventDefinition) {
-  const type = this.type = eventDefinition.type || 'TimerEventDefinition';
+  const type = (this.type = eventDefinition.type || 'TimerEventDefinition');
   this.activity = activity;
-  const environment = this.environment = activity.environment;
+  const environment = (this.environment = activity.environment);
   this.eventDefinition = eventDefinition;
 
-  const {timeDuration, timeCycle, timeDate} = eventDefinition.behaviour || {};
+  const { timeDuration, timeCycle, timeDate } = eventDefinition.behaviour || {};
   if (timeDuration) this.timeDuration = timeDuration;
   if (timeCycle) this.timeCycle = timeCycle;
   if (timeDate) this.timeDate = timeDate;
@@ -43,7 +43,7 @@ Object.defineProperties(TimerEventDefinition.prototype, {
 });
 
 TimerEventDefinition.prototype.execute = function execute(executeMessage) {
-  const {routingKey: executeKey, redelivered: isResumed} = executeMessage.fields;
+  const { routingKey: executeKey, redelivered: isResumed } = executeMessage.fields;
   const timer = this[kTimer];
   if (timer && executeKey === 'execute.timer') {
     return;
@@ -54,23 +54,25 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
 
   const content = executeMessage.content;
   const executionId = content.executionId;
-  const startedAt = this.startedAt = 'startedAt' in content ? new Date(content.startedAt) : new Date();
+  const startedAt = (this.startedAt = 'startedAt' in content ? new Date(content.startedAt) : new Date());
 
   const resolvedTimer = this._getTimers(executeMessage);
-  const timerContent = this[kTimerContent] = cloneContent(content, {
+  const timerContent = (this[kTimerContent] = cloneContent(content, {
     ...resolvedTimer,
-    ...(isResumed && {isResumed}),
+    ...(isResumed && { isResumed }),
     startedAt,
     state: 'timer',
-  });
+  }));
 
   const broker = this.broker;
   broker.subscribeTmp('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {
-    noAck: true, consumerTag: `_api-${executionId}`,
+    noAck: true,
+    consumerTag: `_api-${executionId}`,
     priority: 400,
   });
   broker.subscribeTmp('api', '#.cancel.*', this._onDelegatedApiMessage.bind(this), {
-    noAck: true, consumerTag: `_api-delegated-${executionId}`,
+    noAck: true,
+    consumerTag: `_api-delegated-${executionId}`,
   });
 
   broker.publish('execution', 'execute.timer', cloneContent(timerContent));
@@ -106,14 +108,14 @@ TimerEventDefinition.prototype._completed = function completed(completeContent, 
   this._debug(`completed in ${runningTime}ms`);
 
   const timerContent = this[kTimerContent];
-  const content = {stoppedAt, runningTime, state: 'timeout', ...completeContent};
+  const content = { stoppedAt, runningTime, state: 'timeout', ...completeContent };
 
   const broker = this.broker;
   broker.publish('event', 'activity.timeout', cloneContent(timerContent, content), options);
 
   if (timerContent.repeat > 1) {
     const repeat = timerContent.repeat - 1;
-    broker.publish('execution', 'execute.repeat', cloneContent(timerContent, {...content, repeat}), options);
+    broker.publish('execution', 'execute.repeat', cloneContent(timerContent, { ...content, repeat }), options);
   }
 
   broker.publish('execution', 'execute.completed', cloneContent(timerContent, content), options);
@@ -125,33 +127,41 @@ TimerEventDefinition.prototype._onDelegatedApiMessage = function onDelegatedApiM
   const content = message.content;
   if (!content.message) return;
 
-  const {id: signalId, executionId: signalExecutionId} = content.message;
+  const { id: signalId, executionId: signalExecutionId } = content.message;
 
   const executionId = this.executionId;
   const id = this.activity.id;
   if (signalId !== id && signalExecutionId !== executionId) return;
   if (signalExecutionId && signalId === id && signalExecutionId !== executionId) return;
 
-  const {type, correlationId} = message.properties;
-  this.broker.publish('event', 'activity.consumed', cloneContent(this[kTimerContent], {
-    message: {
-      ...content.message,
-    },
-  }), {correlationId, type});
+  const { type, correlationId } = message.properties;
+  this.broker.publish(
+    'event',
+    'activity.consumed',
+    cloneContent(this[kTimerContent], {
+      message: {
+        ...content.message,
+      },
+    }),
+    { correlationId, type },
+  );
 
   return this._onApiMessage(routingKey, message);
 };
 
 TimerEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
-  const {type: messageType, correlationId} = message.properties;
+  const { type: messageType, correlationId } = message.properties;
 
   switch (messageType) {
     case 'cancel': {
       this._stop();
-      return this._completed({
-        state: 'cancel',
-        ...(message.content.message && {message: message.content.message}),
-      }, {correlationId});
+      return this._completed(
+        {
+          state: 'cancel',
+          ...(message.content.message && { message: message.content.message }),
+        },
+        { correlationId },
+      );
     }
     case 'stop': {
       this._stop();
@@ -160,7 +170,9 @@ TimerEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey,
     case 'discard': {
       this._stop();
       this._debug('discarded');
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kTimerContent], {state: 'discard'}), {correlationId});
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kTimerContent], { state: 'discard' }), {
+        correlationId,
+      });
     }
   }
 };
@@ -208,7 +220,7 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
   const content = executeMessage.content;
 
   const result = {
-    ...('expireAt' in content && {expireAt: new Date(content.expireAt)}),
+    ...('expireAt' in content && { expireAt: new Date(content.expireAt) }),
   };
 
   let parseErr;
@@ -221,7 +233,7 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
     const timerStr = result[t];
     if (timerStr) {
       try {
-        const {repeat: parsedRepeat, expireAt: parsedExpireAt} = this.parse(t, timerStr);
+        const { repeat: parsedRepeat, expireAt: parsedExpireAt } = this.parse(t, timerStr);
         repeat = parsedRepeat;
         expireAtDate = parsedExpireAt;
       } catch (err) {

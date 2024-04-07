@@ -21,9 +21,14 @@ Feature('Activity IO', () => {
     When('ran', () => {
       end = definition.waitFor('end');
 
-      definition.broker.subscribeTmp('event', 'activity.start', (_, msg) => {
-        if (msg.content.id === 'Activity_0ksziuo') taskMessage = msg;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.start',
+        (_, msg) => {
+          if (msg.content.id === 'Activity_0ksziuo') taskMessage = msg;
+        },
+        { noAck: true },
+      );
 
       definition.run();
     });
@@ -91,9 +96,14 @@ Feature('Activity IO', () => {
     When('ran', () => {
       end = definition.waitFor('end');
 
-      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
-        if (msg.content.id === 'task') taskMessage = msg;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          if (msg.content.id === 'task') taskMessage = msg;
+        },
+        { noAck: true },
+      );
 
       definition.run();
     });
@@ -165,9 +175,14 @@ Feature('Activity IO', () => {
     When('ran', () => {
       end = definition.waitFor('end');
 
-      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
-        if (msg.content.id === 'task') taskMessage = msg;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          if (msg.content.id === 'task') taskMessage = msg;
+        },
+        { noAck: true },
+      );
 
       definition.run();
     });
@@ -242,9 +257,14 @@ Feature('Activity IO', () => {
     When('ran', () => {
       end = definition.waitFor('end');
 
-      definition.broker.subscribeTmp('event', 'activity.#', (_, msg) => {
-        if (msg.content.id === 'task') taskMessage = msg;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.#',
+        (_, msg) => {
+          if (msg.content.id === 'task') taskMessage = msg;
+        },
+        { noAck: true },
+      );
 
       definition.run();
     });
@@ -257,22 +277,27 @@ Feature('Activity IO', () => {
     And('io specification', () => {
       expect(taskMessage.content).to.deep.include({
         ioSpecification: {
-          dataInputs: [{
-            id: 'userInput',
-            type: 'bpmn:DataInput',
-            name: 'input',
-            value: 1,
-          }, {
-            id: 'userInfo',
-            type: 'bpmn:DataInput',
-            name: 'info',
-            value: 2,
-          }],
-          dataOutputs: [{
-            id: 'userOutput',
-            type: 'bpmn:DataOutput',
-            name: 'input',
-          }],
+          dataInputs: [
+            {
+              id: 'userInput',
+              type: 'bpmn:DataInput',
+              name: 'input',
+              value: 1,
+            },
+            {
+              id: 'userInfo',
+              type: 'bpmn:DataInput',
+              name: 'info',
+              value: 2,
+            },
+          ],
+          dataOutputs: [
+            {
+              id: 'userOutput',
+              type: 'bpmn:DataOutput',
+              name: 'input',
+            },
+          ],
         },
       });
     });
@@ -280,10 +305,12 @@ Feature('Activity IO', () => {
     When('user task is signaled', () => {
       definition.getApi(taskMessage).signal({
         ioSpecification: {
-          dataOutputs: [{
-            id: 'userOutput',
-            value: 3,
-          }],
+          dataOutputs: [
+            {
+              id: 'userOutput',
+              value: 3,
+            },
+          ],
         },
       });
     });
@@ -349,16 +376,24 @@ Feature('Activity IO', () => {
     When('ran', () => {
       end = definition.waitFor('end');
 
-      definition.broker.subscribeTmp('event', 'activity.#', (_, msg) => {
-        if (msg.content.id === 'task1') taskMessage1 = msg;
-        if (msg.content.id === 'task2') taskMessage2 = msg;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.#',
+        (_, msg) => {
+          if (msg.content.id === 'task1') taskMessage1 = msg;
+          if (msg.content.id === 'task2') taskMessage2 = msg;
+        },
+        { noAck: true },
+      );
 
       definition.run();
     });
 
     Then('user task has properties', () => {
-      expect(taskMessage1.content.properties, 'ds-prop-1').to.have.property('ds-prop-1').with.property('value').that.deep.equal({value: 1});
+      expect(taskMessage1.content.properties, 'ds-prop-1')
+        .to.have.property('ds-prop-1')
+        .with.property('value')
+        .that.deep.equal({ value: 1 });
     });
 
     let state;
@@ -367,7 +402,7 @@ Feature('Activity IO', () => {
       definition.getApi(taskMessage1).signal({
         properties: {
           'ds-prop-1': {
-            value: {value: 3},
+            value: { value: 3 },
           },
         },
       });
@@ -378,12 +413,15 @@ Feature('Activity IO', () => {
     });
 
     And('property value was set on second task', () => {
-      expect(taskMessage2.content.properties, 'ds-prop-2').to.have.property('ds-prop-2').with.property('value').that.deep.equal({value: 3});
+      expect(taskMessage2.content.properties, 'ds-prop-2')
+        .to.have.property('ds-prop-2')
+        .with.property('value')
+        .that.deep.equal({ value: 3 });
     });
 
     And('data has been updated', () => {
       const environmentData = definition.environment.variables._data;
-      expect(environmentData).to.have.property('DataStoreReference_1').that.deep.equal({value: 3});
+      expect(environmentData).to.have.property('DataStoreReference_1').that.deep.equal({ value: 3 });
     });
 
     Given('data has been updated', () => {
@@ -394,27 +432,34 @@ Feature('Activity IO', () => {
 
     let resumedTaskMessage1;
     When('resumed from user task and data has been updated', () => {
-
       definition = new Definition(context.clone()).recover(state);
       end = definition.waitFor('end');
 
-      definition.broker.subscribeTmp('event', 'activity.#', (_, msg) => {
-        if (msg.content.id === 'task1') resumedTaskMessage1 = msg;
-        if (msg.content.id === 'task2') taskMessage2 = msg;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.#',
+        (_, msg) => {
+          if (msg.content.id === 'task1') resumedTaskMessage1 = msg;
+          if (msg.content.id === 'task2') taskMessage2 = msg;
+        },
+        { noAck: true },
+      );
 
       definition.resume();
     });
 
     Then('user task has properties from state', () => {
-      expect(resumedTaskMessage1.content.properties, 'ds-prop-1').to.have.property('ds-prop-1').with.property('value').that.deep.equal({value: 1});
+      expect(resumedTaskMessage1.content.properties, 'ds-prop-1')
+        .to.have.property('ds-prop-1')
+        .with.property('value')
+        .that.deep.equal({ value: 1 });
     });
 
     When('recovered user task is signaled', () => {
       definition.getApi(resumedTaskMessage1).signal({
         properties: {
           'ds-prop-1': {
-            value: {value: 5},
+            value: { value: 5 },
           },
         },
       });
@@ -425,12 +470,15 @@ Feature('Activity IO', () => {
     });
 
     And('property value was set on second task', () => {
-      expect(taskMessage2.content.properties, 'ds-prop-2').to.have.property('ds-prop-2').with.property('value').that.deep.equal({value: 5});
+      expect(taskMessage2.content.properties, 'ds-prop-2')
+        .to.have.property('ds-prop-2')
+        .with.property('value')
+        .that.deep.equal({ value: 5 });
     });
 
     And('data has been updated', () => {
       const environmentData = definition.environment.variables._data;
-      expect(environmentData).to.have.property('DataStoreReference_1').that.deep.equal({value: 5});
+      expect(environmentData).to.have.property('DataStoreReference_1').that.deep.equal({ value: 5 });
     });
   });
 
@@ -494,16 +542,24 @@ Feature('Activity IO', () => {
     When('ran', () => {
       end = definition.waitFor('end');
 
-      definition.broker.subscribeTmp('event', 'activity.#', (_, msg) => {
-        if (msg.content.id === 'task1') taskMessage1 = msg;
-        if (msg.content.id === 'task2') taskMessage2 = msg;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.#',
+        (_, msg) => {
+          if (msg.content.id === 'task1') taskMessage1 = msg;
+          if (msg.content.id === 'task2') taskMessage2 = msg;
+        },
+        { noAck: true },
+      );
 
       definition.run();
     });
 
     Then('user task has properties', () => {
-      expect(taskMessage1.content.properties, 'ds-prop-1').to.have.property('ds-prop-1').with.property('value').that.deep.equal({value: 1});
+      expect(taskMessage1.content.properties, 'ds-prop-1')
+        .to.have.property('ds-prop-1')
+        .with.property('value')
+        .that.deep.equal({ value: 1 });
     });
 
     let state;
@@ -512,7 +568,7 @@ Feature('Activity IO', () => {
       definition.getApi(taskMessage1).signal({
         properties: {
           'ds-prop-1': {
-            value: {value: 3},
+            value: { value: 3 },
           },
         },
       });
@@ -523,12 +579,15 @@ Feature('Activity IO', () => {
     });
 
     And('property value was set on second task', () => {
-      expect(taskMessage2.content.properties, 'ds-prop-2').to.have.property('ds-prop-2').with.property('value').that.deep.equal({value: 3});
+      expect(taskMessage2.content.properties, 'ds-prop-2')
+        .to.have.property('ds-prop-2')
+        .with.property('value')
+        .that.deep.equal({ value: 3 });
     });
 
     And('data has been updated', () => {
       const environmentData = definition.environment.variables._data;
-      expect(environmentData).to.have.property('datastore').that.deep.equal({value: 3});
+      expect(environmentData).to.have.property('datastore').that.deep.equal({ value: 3 });
     });
 
     Given('data has been updated', () => {
@@ -539,27 +598,34 @@ Feature('Activity IO', () => {
 
     let resumedTaskMessage1;
     When('resumed from user task and data has been updated', () => {
-
       definition = new Definition(context.clone()).recover(state);
       end = definition.waitFor('end');
 
-      definition.broker.subscribeTmp('event', 'activity.#', (_, msg) => {
-        if (msg.content.id === 'task1') resumedTaskMessage1 = msg;
-        if (msg.content.id === 'task2') taskMessage2 = msg;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.#',
+        (_, msg) => {
+          if (msg.content.id === 'task1') resumedTaskMessage1 = msg;
+          if (msg.content.id === 'task2') taskMessage2 = msg;
+        },
+        { noAck: true },
+      );
 
       definition.resume();
     });
 
     Then('user task has properties from state', () => {
-      expect(resumedTaskMessage1.content.properties, 'ds-prop-1').to.have.property('ds-prop-1').with.property('value').that.deep.equal({value: 1});
+      expect(resumedTaskMessage1.content.properties, 'ds-prop-1')
+        .to.have.property('ds-prop-1')
+        .with.property('value')
+        .that.deep.equal({ value: 1 });
     });
 
     When('recovered user task is signaled', () => {
       definition.getApi(resumedTaskMessage1).signal({
         properties: {
           'ds-prop-1': {
-            value: {value: 5},
+            value: { value: 5 },
           },
         },
       });
@@ -570,12 +636,15 @@ Feature('Activity IO', () => {
     });
 
     And('property value was set on second task', () => {
-      expect(taskMessage2.content.properties, 'ds-prop-2').to.have.property('ds-prop-2').with.property('value').that.deep.equal({value: 5});
+      expect(taskMessage2.content.properties, 'ds-prop-2')
+        .to.have.property('ds-prop-2')
+        .with.property('value')
+        .that.deep.equal({ value: 5 });
     });
 
     And('data has been updated', () => {
       const environmentData = definition.environment.variables._data;
-      expect(environmentData).to.have.property('datastore').that.deep.equal({value: 5});
+      expect(environmentData).to.have.property('datastore').that.deep.equal({ value: 5 });
     });
   });
 
@@ -606,13 +675,15 @@ Feature('Activity IO', () => {
 
     Then('activity get property with name only', async () => {
       const api = await activity;
-      expect(api.content).to.have.property('properties').that.deep.equal({
-        'prop-1': {
-          id: 'prop-1',
-          name: 'Lonely prop',
-          type: 'bpmn:Property',
-        },
-      });
+      expect(api.content)
+        .to.have.property('properties')
+        .that.deep.equal({
+          'prop-1': {
+            id: 'prop-1',
+            name: 'Lonely prop',
+            type: 'bpmn:Property',
+          },
+        });
       return end;
     });
 

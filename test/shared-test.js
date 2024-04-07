@@ -1,4 +1,4 @@
-import {generateId, brokerSafeId} from '../src/shared.js';
+import { generateId, brokerSafeId } from '../src/shared.js';
 
 describe('shared', () => {
   describe('brokerSafeId', () => {

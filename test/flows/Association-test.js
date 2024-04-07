@@ -1,6 +1,6 @@
 import Environment from '../../src/Environment.js';
 import Association from '../../src/flows/Association.js';
-import {ActivityBroker} from '../../src/EventBroker.js';
+import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('Association', () => {
   it('stop() stops broker', () => {
@@ -12,17 +12,20 @@ describe('Association', () => {
       },
     };
 
-    const flow = new Association({
-      id: 'association',
-      type: 'bpmn:Association',
-      parent: {},
-      source: {
-        id: 'task',
+    const flow = new Association(
+      {
+        id: 'association',
+        type: 'bpmn:Association',
+        parent: {},
+        source: {
+          id: 'task',
+        },
+        target: {
+          id: 'task1',
+        },
       },
-      target: {
-        id: 'task1',
-      },
-    }, context);
+      context,
+    );
 
     expect(flow.broker.getExchange('event').stopped).to.be.false;
     flow.stop();
@@ -38,17 +41,20 @@ describe('Association', () => {
       },
     };
 
-    const flow = new Association({
-      id: 'association',
-      type: 'bpmn:Association',
-      parent: {},
-      source: {
-        id: 'task',
+    const flow = new Association(
+      {
+        id: 'association',
+        type: 'bpmn:Association',
+        parent: {},
+        source: {
+          id: 'task',
+        },
+        target: {
+          id: 'task1',
+        },
       },
-      target: {
-        id: 'task1',
-      },
-    }, context);
+      context,
+    );
 
     const api = flow.getApi();
     expect(api).to.have.property('id', 'association');
@@ -63,19 +69,22 @@ describe('Association', () => {
       },
     };
 
-    const flow = new Association({
-      id: 'association',
-      type: 'bpmn:Association',
-      parent: {},
-      source: {
-        id: 'task',
+    const flow = new Association(
+      {
+        id: 'association',
+        type: 'bpmn:Association',
+        parent: {},
+        source: {
+          id: 'task',
+        },
+        target: {
+          id: 'task1',
+        },
       },
-      target: {
-        id: 'task1',
-      },
-    }, context);
+      context,
+    );
 
-    const api = flow.getApi({ content: {id: 'foo'} });
+    const api = flow.getApi({ content: { id: 'foo' } });
     expect(api).to.have.property('id', 'foo');
   });
 });

@@ -5,7 +5,7 @@ describe('IntermediateCatchEvent', () => {
   describe('without event definitions', () => {
     let event;
     beforeEach(() => {
-      event = IntermediateCatchEvent({id: 'emptyEvent'}, testHelpers.emptyContext());
+      event = IntermediateCatchEvent({ id: 'emptyEvent' }, testHelpers.emptyContext());
     });
 
     it('completes when signaled', async () => {
@@ -76,9 +76,14 @@ describe('IntermediateCatchEvent', () => {
       const event = context.getActivityById('event');
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
       const wait = event.waitFor('wait');
       const leave = event.waitFor('leave');
@@ -91,17 +96,22 @@ describe('IntermediateCatchEvent', () => {
 
       await leave;
 
-      const discarded = messages.filter(({fields}) => fields.routingKey === 'execute.discard');
-      expect(discarded.map(({content}) => content.type)).to.have.same.members(['bpmn:TimerEventDefinition']);
+      const discarded = messages.filter(({ fields }) => fields.routingKey === 'execute.discard');
+      expect(discarded.map(({ content }) => content.type)).to.have.same.members(['bpmn:TimerEventDefinition']);
     });
 
     it('discards all event definitions if discarded while executing', async () => {
       const event = context.getActivityById('event');
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
       const wait = event.waitFor('wait');
       const leave = event.waitFor('leave');
@@ -115,8 +125,8 @@ describe('IntermediateCatchEvent', () => {
 
       expect(event.counters).to.have.property('discarded', 1);
 
-      const discarded = messages.filter(({fields}) => fields.routingKey === 'execute.discard');
-      expect(discarded.map(({content}) => content.type)).to.have.members(['bpmn:MessageEventDefinition', 'bpmn:TimerEventDefinition']);
+      const discarded = messages.filter(({ fields }) => fields.routingKey === 'execute.discard');
+      expect(discarded.map(({ content }) => content.type)).to.have.members(['bpmn:MessageEventDefinition', 'bpmn:TimerEventDefinition']);
     });
   });
 
@@ -219,7 +229,7 @@ describe('IntermediateCatchEvent', () => {
 
       await wait;
 
-      event.getApi().signal({data: 1});
+      event.getApi().signal({ data: 1 });
 
       await leave;
 
@@ -277,7 +287,7 @@ describe('IntermediateCatchEvent', () => {
       await wait;
 
       event.environment.variables.conditionMet = true;
-      event.getApi().signal({data: 1});
+      event.getApi().signal({ data: 1 });
 
       await leave;
 
@@ -292,7 +302,7 @@ describe('IntermediateCatchEvent', () => {
 
       await wait;
 
-      event.getApi().signal({data: 1});
+      event.getApi().signal({ data: 1 });
 
       expect(event.counters).to.have.property('taken', 0);
     });

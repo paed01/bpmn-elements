@@ -137,11 +137,16 @@ describe('StartEvent', () => {
       event.run();
       await wait;
 
-      event.broker.publish('api', 'definition.signal.some-id', {
-        message: {
-          id: 'start',
+      event.broker.publish(
+        'api',
+        'definition.signal.some-id',
+        {
+          message: {
+            id: 'start',
+          },
         },
-      }, {delegate: false});
+        { delegate: false },
+      );
 
       expect(event.counters).property('taken', 0);
     });
@@ -154,7 +159,7 @@ describe('StartEvent', () => {
       event.run();
       await wait;
 
-      event.broker.publish('api', 'definition.signal.some-id', {}, {delegate: true});
+      event.broker.publish('api', 'definition.signal.some-id', {}, { delegate: true });
 
       expect(event.counters).property('taken', 0);
     });
@@ -167,11 +172,16 @@ describe('StartEvent', () => {
       event.run();
       await wait;
 
-      event.broker.publish('api', 'definition.signal.some-id', {
-        message: {
-          id: 'end',
+      event.broker.publish(
+        'api',
+        'definition.signal.some-id',
+        {
+          message: {
+            id: 'end',
+          },
         },
-      }, {delegate: true});
+        { delegate: true },
+      );
 
       expect(event.counters).property('taken', 0);
     });
@@ -358,9 +368,14 @@ describe('StartEvent', () => {
       const wait = event.waitFor('wait');
 
       const discarded = [];
-      event.broker.subscribeTmp('execution', 'execute.discard', (_, message) => {
-        discarded.push(message);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.discard',
+        (_, message) => {
+          discarded.push(message);
+        },
+        { noAck: true },
+      );
 
       event.run();
 
@@ -378,9 +393,12 @@ describe('StartEvent', () => {
 
   describe('stop', () => {
     it('on enter cancels all listeners', () => {
-      const event = StartEvent({
-        id: 'start',
-      }, testHelpers.emptyContext());
+      const event = StartEvent(
+        {
+          id: 'start',
+        },
+        testHelpers.emptyContext(),
+      );
 
       event.once('enter', (api) => api.stop());
 
@@ -390,9 +408,12 @@ describe('StartEvent', () => {
     });
 
     it('on start cancels all listeners', () => {
-      const event = StartEvent({
-        id: 'start',
-      }, testHelpers.emptyContext());
+      const event = StartEvent(
+        {
+          id: 'start',
+        },
+        testHelpers.emptyContext(),
+      );
 
       event.once('start', (api) => api.stop());
 
@@ -402,13 +423,16 @@ describe('StartEvent', () => {
     });
 
     it('on wait cancels all listeners', () => {
-      const event = StartEvent({
-        id: 'start',
-        type: 'startevent',
-        behaviour: {
-          eventDefinitions: [{Behaviour: MessageEventDefinition}],
+      const event = StartEvent(
+        {
+          id: 'start',
+          type: 'startevent',
+          behaviour: {
+            eventDefinitions: [{ Behaviour: MessageEventDefinition }],
+          },
         },
-      }, testHelpers.emptyContext());
+        testHelpers.emptyContext(),
+      );
 
       event.once('wait', (api) => api.stop());
 
@@ -420,9 +444,12 @@ describe('StartEvent', () => {
 
   describe('discard', () => {
     it('on enter discards run', () => {
-      const event = StartEvent({
-        id: 'start',
-      }, testHelpers.emptyContext());
+      const event = StartEvent(
+        {
+          id: 'start',
+        },
+        testHelpers.emptyContext(),
+      );
 
       event.once('enter', (api) => api.discard());
 
@@ -432,9 +459,12 @@ describe('StartEvent', () => {
     });
 
     it('on start discards run', () => {
-      const event = StartEvent({
-        id: 'start',
-      }, testHelpers.emptyContext());
+      const event = StartEvent(
+        {
+          id: 'start',
+        },
+        testHelpers.emptyContext(),
+      );
 
       event.once('start', (api) => api.discard());
 
@@ -444,13 +474,16 @@ describe('StartEvent', () => {
     });
 
     it('discard on message wait discards run and ignores signal', () => {
-      const event = StartEvent({
-        id: 'start',
-        type: 'startevent',
-        behaviour: {
-          eventDefinitions: [{Behaviour: MessageEventDefinition}],
+      const event = StartEvent(
+        {
+          id: 'start',
+          type: 'startevent',
+          behaviour: {
+            eventDefinitions: [{ Behaviour: MessageEventDefinition }],
+          },
         },
-      }, testHelpers.emptyContext());
+        testHelpers.emptyContext(),
+      );
 
       event.once('wait', (api) => {
         api.discard();
@@ -464,13 +497,16 @@ describe('StartEvent', () => {
     });
 
     it('discard on form wait discards run and ignores signal', () => {
-      const event = StartEvent({
-        id: 'start',
-        type: 'startevent',
-        behaviour: {},
-      }, testHelpers.emptyContext());
+      const event = StartEvent(
+        {
+          id: 'start',
+          type: 'startevent',
+          behaviour: {},
+        },
+        testHelpers.emptyContext(),
+      );
 
-      event.once('enter', () => event.broker.publish('format', 'run.enter', {form: {key: 1}}));
+      event.once('enter', () => event.broker.publish('format', 'run.enter', { form: { key: 1 } }));
       event.once('wait', (api) => {
         api.discard();
         api.signal();

@@ -52,9 +52,9 @@ function executeFn(fn, args, base, fnScope) {
 
   if (!fnScope) return fn.apply(null, callArguments);
 
-  return (function ScopedIIFE() {
+  return function ScopedIIFE() {
     return fn.apply(this, callArguments);
-  }).call(fnScope);
+  }.call(fnScope);
 }
 
 function splitArguments(args, base, fnScope) {
@@ -69,14 +69,12 @@ function splitArguments(args, base, fnScope) {
     const charPos = args.charAt(i);
 
     if (!insideString) {
-
       if (charPos === ',') {
         argCompleted = true;
-
       } else if (charPos !== ' ') {
         arg += charPos;
 
-        if (charPos === '\'' || charPos === '"') {
+        if (charPos === "'" || charPos === '"') {
           insideString = true;
           delimiter = charPos;
         }
@@ -90,7 +88,6 @@ function splitArguments(args, base, fnScope) {
     }
 
     if (argCompleted) {
-
       if (arg.length > 0) {
         callArguments.push(getFunctionArgument(base, arg.trim(), fnScope));
       }

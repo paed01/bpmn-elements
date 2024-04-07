@@ -1,10 +1,10 @@
-import {cloneMessage} from '../messageHelper.js';
-import {ActivityError, BpmnError} from '../error/Errors.js';
+import { cloneMessage } from '../messageHelper.js';
+import { ActivityError, BpmnError } from '../error/Errors.js';
 
 export default function ExecutionScope(activity, initMessage) {
-  const {id, type, environment, logger} = activity;
+  const { id, type, environment, logger } = activity;
 
-  const {fields, content, properties} = cloneMessage(initMessage);
+  const { fields, content, properties } = cloneMessage(initMessage);
 
   const scope = {
     id,

@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "13.1.2",
+  "version": "13.2.0",
   "description": "Executable workflow elements based on BPMN 2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -33,7 +33,7 @@
   "scripts": {
     "test": "mocha -R @bonniernews/hot-bev -p -t 3000",
     "posttest": "npm run lint && npm run dist",
-    "lint": "eslint . --cache",
+    "lint": "eslint . --cache && prettier . --check --cache",
     "prepack": "npm run dist",
     "cov:html": "c8 -r html -r text mocha -R @bonniernews/hot-bev -p -t 3000",
     "test:lcov": "c8 -r lcov mocha && npm run lint",
@@ -82,7 +82,8 @@
     "mocha": "^10.4.0",
     "mocha-cakes-2": "^3.3.0",
     "moddle-context-serializer": "^4.1.2",
-    "nock": "^13.5.3"
+    "nock": "^13.5.3",
+    "prettier": "^3.2.5"
   },
   "dependencies": {
     "smqp": "^8.2.2"

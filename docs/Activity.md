@@ -1,5 +1,4 @@
-Activity
-========
+# Activity
 
 Shared activity behaviour.
 
@@ -12,11 +11,13 @@ All activities except EventBasedGateway share this lifecycle. The EventBasedGate
 ## `new Activity(Behaviour, activityDefinition, context)`
 
 Arguments:
+
 - `Behaviour`: activity [Behaviour](/docs/Extend.md) function, called with new
 - `activityDefinition`: activity definition object from serializable context
 - `context`: [shared context](/docs/Context.md)
 
 Activity properties:
+
 - `id`: activity id
 - `type`: activity type
 - `name`: activity name
@@ -32,24 +33,24 @@ Activity properties:
 - `inbound`: list of inbound sequence flows
 - `isRunning`: boolean indicating if the activity is running
 - `isStart`: boolean indicating if the activity a start activity
-- `isSubProcess`:  boolean indicating if the activity is a sub process
+- `isSubProcess`: boolean indicating if the activity is a sub process
 - `logger`: activity [logger](/docs/Environment.md#logger) instance
 - `outbound`: list of outbound sequence flows
 - `parent`: activity parent
-  * `id`: id of parent
-  * `type`: parent type
+  - `id`: id of parent
+  - `type`: parent type
 - `parentElement`: activity parent process or sub process reference
 - `lane`: activity lane reference if any
 - `status`: current run status
-  * `entered`: Run entered, triggered by taken inbound flow
-  * `started`: Run started
-  * `executing`: Executing activity behaviour
-  * `executed`: Activity behaviour execution completed successfully
-  * `end`: Run end, take outbound flows
-  * `discard`: Entering discard run, triggered by discarded inbound flow
-  * `discarded`: Run was discarded, discard outbound flows
-  * `error`: Activity behaviour execution failed, discard run
-  * `formatting`: Formatting next run message
+  - `entered`: Run entered, triggered by taken inbound flow
+  - `started`: Run started
+  - `executing`: Executing activity behaviour
+  - `executed`: Activity behaviour execution completed successfully
+  - `end`: Run end, take outbound flows
+  - `discard`: Entering discard run, triggered by discarded inbound flow
+  - `discarded`: Run was discarded, discard outbound flows
+  - `error`: Activity behaviour execution failed, discard run
+  - `formatting`: Formatting next run message
 - `stopped`: boolean indicating if the activity is in a stopped state
 
 ### `activate()`
@@ -69,6 +70,7 @@ Discard activity. If the activity is running - discard run.
 Get activity api.
 
 Arguments:
+
 - `message`: activity broker message
 
 Returns activity [api](/docs/SharedApi.md)
@@ -94,6 +96,7 @@ Take next message in run-queue. Only appears if environment settings have `step:
 Listen for events.
 
 Arguments:
+
 - `eventName`: name of event
 - `handler`: required function called when events occur
   - `api`: [activity api](/docs/SharedApi.md)
@@ -104,6 +107,7 @@ Arguments:
 Listen for event.
 
 Arguments:
+
 - `eventName`: name of event
 - `handler`: required function called when event occur
   - `api`: [activity api](/docs/SharedApi.md)
@@ -122,6 +126,7 @@ Resume recovered or stopped activity.
 Run activity.
 
 Arguments:
+
 - `runContent`: optional object containing extra content for the broker run messages.
 
 ### `stop()`
@@ -133,6 +138,7 @@ Stop activity run.
 Wait for event to occur as promised.
 
 Arguments:
+
 - `eventName`: name of event
 - `onMessage`: optional message callback for event filtering purposes. Return false if the promise should not resolve. Called with the following arguments:
   - `routingKey`: broker message routing key
@@ -146,13 +152,14 @@ Returns Promise that will resolve with [activity api](/docs/SharedApi.md) on eve
 Evaluate all outbound sequence flows.
 
 Arguments:
+
 - `brokerMessage`: broker message that will be passed to condition
 - `discardRestAtTake`: boolean, discard all other outbound flows if one flow is taken
 - `callback`: function with signature, `(err, outbound)`
   - `err`: occasional error
   - `outbound`: list with flow actions, i.e. discard or take
-      - `id`: outbound flow id
-      - `action`: discard or take as string
-      - `isDefault`: boolean indicating if flow is default flow
-      - `result`: result of condition
-      - `message`: optional message passed from argument `brokerMessage.content.message`
+    - `id`: outbound flow id
+    - `action`: discard or take as string
+    - `isDefault`: boolean indicating if flow is default flow
+    - `result`: result of condition
+    - `message`: optional message passed from argument `brokerMessage.content.message`

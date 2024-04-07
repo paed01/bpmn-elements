@@ -1,13 +1,7 @@
-import {cloneMessage} from './messageHelper.js';
-import {getUniqueId} from './shared.js';
+import { cloneMessage } from './messageHelper.js';
+import { getUniqueId } from './shared.js';
 
-export {
-  ActivityApi,
-  DefinitionApi,
-  ProcessApi,
-  FlowApi,
-  Api,
-};
+export { ActivityApi, DefinitionApi, ProcessApi, FlowApi, Api };
 
 function ActivityApi(broker, apiMessage, environment) {
   return new Api('activity', broker, apiMessage, environment);
@@ -30,7 +24,7 @@ function Api(pfx, broker, sourceMessage, environment) {
 
   const apiMessage = cloneMessage(sourceMessage);
 
-  const {id, type, name, executionId} = apiMessage.content;
+  const { id, type, name, executionId } = apiMessage.content;
   this.id = id;
   this.type = type;
   this.name = name;
@@ -45,7 +39,7 @@ function Api(pfx, broker, sourceMessage, environment) {
 }
 
 Api.prototype.cancel = function cancel(message, options) {
-  this.sendApiMessage('cancel', {message}, options);
+  this.sendApiMessage('cancel', { message }, options);
 };
 
 Api.prototype.discard = function discard() {
@@ -53,11 +47,11 @@ Api.prototype.discard = function discard() {
 };
 
 Api.prototype.fail = function fail(error) {
-  this.sendApiMessage('error', {error});
+  this.sendApiMessage('error', { error });
 };
 
 Api.prototype.signal = function signal(message, options) {
-  this.sendApiMessage('signal', {message}, options);
+  this.sendApiMessage('signal', { message }, options);
 };
 
 Api.prototype.stop = function stop() {
@@ -65,18 +59,22 @@ Api.prototype.stop = function stop() {
 };
 
 Api.prototype.resolveExpression = function resolveExpression(expression) {
-  return this.environment.resolveExpression(expression, {
-    fields: this.fields,
-    content: this.content,
-    properties: this.messageProperties,
-  }, this.owner);
+  return this.environment.resolveExpression(
+    expression,
+    {
+      fields: this.fields,
+      content: this.content,
+      properties: this.messageProperties,
+    },
+    this.owner,
+  );
 };
 
 Api.prototype.sendApiMessage = function sendApiMessage(action, content, options) {
   const correlationId = (options && options.correlationId) || getUniqueId(`${this.id || this.messagePrefix}_signal`);
   let key = `${this.messagePrefix}.${action}`;
   if (this.executionId) key += `.${this.executionId}`;
-  this.broker.publish('api', key, this.createMessage(content), {...options, correlationId, type: action});
+  this.broker.publish('api', key, this.createMessage(content), { ...options, correlationId, type: action });
 };
 
 Api.prototype.getPostponed = function getPostponed(...args) {

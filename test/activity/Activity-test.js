@@ -3,9 +3,9 @@ import Association from '../../src/flows/Association.js';
 import Environment from '../../src/Environment.js';
 import SequenceFlow from '../../src/flows/SequenceFlow.js';
 import testHelpers from '../helpers/testHelpers.js';
-import {ActivityBroker} from '../../src/EventBroker.js';
-import {TaskBehaviour} from '../../src/tasks/Task.js';
-import {SignalTaskBehaviour} from '../../src/tasks/SignalTask.js';
+import { ActivityBroker } from '../../src/EventBroker.js';
+import { TaskBehaviour } from '../../src/tasks/Task.js';
+import { SignalTaskBehaviour } from '../../src/tasks/SignalTask.js';
 
 function Behaviour() {
   return {
@@ -13,10 +13,10 @@ function Behaviour() {
   };
 }
 
-function CompleteBehaviour({broker}) {
+function CompleteBehaviour({ broker }) {
   return {
-    execute({content}) {
-      broker.publish('execution', 'execute.completed', {...content});
+    execute({ content }) {
+      broker.publish('execution', 'execute.completed', { ...content });
     },
   };
 }
@@ -36,26 +36,34 @@ describe('Activity', () => {
         },
       });
 
-      let activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      let activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       expect(activity).to.have.property('isEnd', true);
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       expect(activity).to.have.property('isEnd', false);
     });
@@ -68,26 +76,34 @@ describe('Activity', () => {
         },
       });
 
-      let activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      let activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       expect(activity).to.have.property('isMultiInstance', false);
 
-      activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
+          behaviour: {
+            loopCharacteristics: {},
+          },
         },
-        behaviour: {
-          loopCharacteristics: {},
-        },
-      }, context);
+        context,
+      );
 
       expect(activity).to.have.property('isMultiInstance', true);
     });
@@ -100,26 +116,34 @@ describe('Activity', () => {
         },
       });
 
-      let activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      let activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       expect(activity).to.have.property('isForCompensation', false);
 
-      activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
+          behaviour: {
+            isForCompensation: true,
+          },
         },
-        behaviour: {
-          isForCompensation: true,
-        },
-      }, context);
+        context,
+      );
 
       expect(activity).to.have.property('isForCompensation', true);
     });
@@ -134,16 +158,20 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const enter = activity.waitFor('enter');
 
@@ -163,16 +191,20 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       activity.activate();
 
@@ -201,16 +233,20 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       activity.activate();
 
@@ -239,16 +275,20 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       activity.activate();
 
@@ -267,16 +307,20 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      const activity = new Activity(behaviours.CompleteBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.CompleteBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       activity.activate();
 
@@ -294,7 +338,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
       const executeMessages = [];
@@ -306,13 +350,17 @@ describe('Activity', () => {
         };
       }
 
-      const activity = new Activity(CollectBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        CollectBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       activity.activate();
 
@@ -335,7 +383,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
       const executeMessages = [];
@@ -347,13 +395,17 @@ describe('Activity', () => {
         };
       }
 
-      const activity = new Activity(CollectBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        CollectBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       activity.activate();
 
@@ -373,16 +425,20 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      const activity = new Activity(behaviours.CompleteBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.CompleteBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       activity.activate();
 
@@ -403,29 +459,33 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
       let executeMessage;
-      function SpecialBehaviour({broker}) {
+      function SpecialBehaviour({ broker }) {
         return {
           execute(msg) {
             executeMessage = msg;
-            broker.publish('execution', 'execute.completed', {...msg.content});
+            broker.publish('execution', 'execute.completed', { ...msg.content });
           },
         };
       }
 
-      const activity = new Activity(SpecialBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        SpecialBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       activity.activate();
-      sequenceFlow.take({message: 1});
+      sequenceFlow.take({ message: 1 });
 
       expect(executeMessage).to.be.ok;
       expect(executeMessage).to.have.property('content').with.property('message', 1);
@@ -439,16 +499,20 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      const activity = new Activity(behaviours.CompleteBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.CompleteBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       activity.activate();
 
@@ -472,18 +536,22 @@ describe('Activity', () => {
             return sequenceFlows;
           },
         });
-        const sequenceFlow1 = new SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
-        const sequenceFlow2 = new SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
+        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
+        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
 
         sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
-        const activity = new Activity(behaviours.Behaviour, {
-          id: 'activity',
-          isParallelGateway: true,
-          parent: {
-            id: 'process1',
+        const activity = new Activity(
+          behaviours.Behaviour,
+          {
+            id: 'activity',
+            isParallelGateway: true,
+            parent: {
+              id: 'process1',
+            },
           },
-        }, context);
+          context,
+        );
 
         activity.activate();
 
@@ -519,18 +587,22 @@ describe('Activity', () => {
             return sequenceFlows;
           },
         });
-        const sequenceFlow1 = new SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
-        const sequenceFlow2 = new SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
+        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
+        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
 
         sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
-        const activity = new Activity(behaviours.Behaviour, {
-          id: 'activity',
-          isParallelGateway: true,
-          parent: {
-            id: 'process1',
+        const activity = new Activity(
+          behaviours.Behaviour,
+          {
+            id: 'activity',
+            isParallelGateway: true,
+            parent: {
+              id: 'process1',
+            },
           },
-        }, context);
+          context,
+        );
 
         activity.activate();
 
@@ -565,18 +637,22 @@ describe('Activity', () => {
             return sequenceFlows;
           },
         });
-        const sequenceFlow1 = new SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
-        const sequenceFlow2 = new SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
+        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
+        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
 
         sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
-        const activity = new Activity(behaviours.Behaviour, {
-          id: 'activity',
-          isParallelGateway: true,
-          parent: {
-            id: 'process1',
+        const activity = new Activity(
+          behaviours.Behaviour,
+          {
+            id: 'activity',
+            isParallelGateway: true,
+            parent: {
+              id: 'process1',
+            },
           },
-        }, context);
+          context,
+        );
 
         activity.activate();
 
@@ -611,18 +687,22 @@ describe('Activity', () => {
             return sequenceFlows;
           },
         });
-        const sequenceFlow1 = new SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
-        const sequenceFlow2 = new SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
+        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
+        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
 
         sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
-        const activity = new Activity(behaviours.Behaviour, {
-          id: 'activity',
-          isParallelGateway: true,
-          parent: {
-            id: 'process1',
+        const activity = new Activity(
+          behaviours.Behaviour,
+          {
+            id: 'activity',
+            isParallelGateway: true,
+            parent: {
+              id: 'process1',
+            },
           },
-        }, context);
+          context,
+        );
 
         activity.activate();
 
@@ -657,18 +737,22 @@ describe('Activity', () => {
             return sequenceFlows;
           },
         });
-        const sequenceFlow1 = new SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
-        const sequenceFlow2 = new SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
+        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
+        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
 
         sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
-        const activity = new Activity(behaviours.Behaviour, {
-          id: 'activity',
-          isParallelGateway: true,
-          parent: {
-            id: 'process1',
+        const activity = new Activity(
+          behaviours.Behaviour,
+          {
+            id: 'activity',
+            isParallelGateway: true,
+            parent: {
+              id: 'process1',
+            },
           },
-        }, context);
+          context,
+        );
 
         activity.activate();
 
@@ -699,25 +783,34 @@ describe('Activity', () => {
             return sequenceFlows;
           },
         });
-        const sequenceFlow1 = new SequenceFlow({id: 'flow1', targetId: 'activity', parent: {id: 'process1'}}, context);
-        const sequenceFlow2 = new SequenceFlow({id: 'flow2', targetId: 'activity', parent: {id: 'process1'}}, context);
+        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', targetId: 'activity', parent: { id: 'process1' } }, context);
+        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', targetId: 'activity', parent: { id: 'process1' } }, context);
 
         sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
-        const activity = new Activity(behaviours.CompleteBehaviour, {
-          id: 'activity',
-          isParallelGateway: true,
-          parent: {
-            id: 'process1',
+        const activity = new Activity(
+          behaviours.CompleteBehaviour,
+          {
+            id: 'activity',
+            isParallelGateway: true,
+            parent: {
+              id: 'process1',
+            },
           },
-        }, context);
+          context,
+        );
 
         activity.activate();
 
         let message;
-        activity.broker.subscribeTmp('event', 'activity.enter', (_, msg) => {
-          message = msg;
-        }, {noAck: true});
+        activity.broker.subscribeTmp(
+          'event',
+          'activity.enter',
+          (_, msg) => {
+            message = msg;
+          },
+          { noAck: true },
+        );
 
         let leave = activity.waitFor('leave');
 
@@ -758,16 +851,20 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const leave = activity.waitFor('leave');
 
@@ -786,22 +883,26 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const leave = activity.waitFor('leave');
 
       activity.run();
 
-      activity.broker.publish('execution', 'execution.completed', {output: 1});
+      activity.broker.publish('execution', 'execution.completed', { output: 1 });
 
       const leaveApi = await leave;
 
@@ -825,16 +926,20 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const leave = activity.waitFor('leave');
 
@@ -853,7 +958,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
       function SpecialBehaviour(parent) {
@@ -864,13 +969,17 @@ describe('Activity', () => {
         };
       }
 
-      const activity = new Activity(SpecialBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        SpecialBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const leave = activity.waitFor('leave');
       activity.run();
@@ -888,7 +997,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
       function SpecialBehaviour() {
@@ -897,13 +1006,17 @@ describe('Activity', () => {
         };
       }
 
-      const activity = new Activity(SpecialBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        SpecialBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const leave = activity.waitFor('leave');
       activity.discard();
@@ -921,16 +1034,20 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      const activity = new Activity(behaviours.CompleteBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.CompleteBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       activity.broker.subscribeOnce('event', 'activity.enter', () => {
         activity.discard();
@@ -952,16 +1069,20 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      const activity = new Activity(behaviours.CompleteBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.CompleteBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const end = activity.waitFor('end');
       const leave = activity.waitFor('leave');
@@ -1156,10 +1277,10 @@ describe('Activity', () => {
     });
 
     it('stop on event publishes activity.stop', () => {
-      function SpecialBehaviour({broker}) {
+      function SpecialBehaviour({ broker }) {
         return {
-          execute({content}) {
-            broker.publish('event', 'activity.wait', {...content});
+          execute({ content }) {
+            broker.publish('event', 'activity.wait', { ...content });
           },
         };
       }
@@ -1190,9 +1311,14 @@ describe('Activity', () => {
       activity.run();
 
       const messages = [];
-      activity.broker.subscribeTmp('event', 'activity.stop', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      activity.broker.subscribeTmp(
+        'event',
+        'activity.stop',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       activity.stop();
       activity.stop();
@@ -1208,9 +1334,12 @@ describe('Activity', () => {
 
   describe('init()', () => {
     it('publishes init event', () => {
-      const activity = getActivity({
-        id: 'start',
-      }, behaviours.Behaviour);
+      const activity = getActivity(
+        {
+          id: 'start',
+        },
+        behaviours.Behaviour,
+      );
 
       const initialized = activity.waitFor('init');
       activity.init();
@@ -1221,7 +1350,7 @@ describe('Activity', () => {
       let executionId;
       function SpecialBehaviour() {
         return {
-          execute({content}) {
+          execute({ content }) {
             executionId = content.executionId;
           },
         };
@@ -1238,14 +1367,22 @@ describe('Activity', () => {
     });
 
     it('can be called twice and so forth', () => {
-      const activity = getActivity({
-        id: 'start',
-      }, behaviours.Behaviour);
+      const activity = getActivity(
+        {
+          id: 'start',
+        },
+        behaviours.Behaviour,
+      );
 
       const messages = [];
-      activity.broker.subscribeTmp('event', 'activity.#', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      activity.broker.subscribeTmp(
+        'event',
+        'activity.#',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       activity.init();
       activity.init();
@@ -1262,10 +1399,10 @@ describe('Activity', () => {
 
   describe('error', () => {
     it('throws if execute error is NOT caught', () => {
-      function SpecialBehaviour({broker}) {
+      function SpecialBehaviour({ broker }) {
         return {
           execute(executeMessage) {
-            broker.publish('execution', 'execute.error', {...executeMessage.content, error: new Error('unstable')}, {type: 'error'});
+            broker.publish('execution', 'execute.error', { ...executeMessage.content, error: new Error('unstable') }, { type: 'error' });
           },
         };
       }
@@ -1289,10 +1426,15 @@ describe('Activity', () => {
     });
 
     it.skip('throws if activity event error is NOT caught', () => {
-      function SpecialBehaviour({broker}) {
+      function SpecialBehaviour({ broker }) {
         return {
           execute(executeMessage) {
-            broker.publish('event', 'activity.error', {...executeMessage.content, error: new Error('unstable')}, {type: 'error', mandatory: true});
+            broker.publish(
+              'event',
+              'activity.error',
+              { ...executeMessage.content, error: new Error('unstable') },
+              { type: 'error', mandatory: true },
+            );
           },
         };
       }
@@ -1303,10 +1445,15 @@ describe('Activity', () => {
     });
 
     it('continues execution if execute error is caught', async () => {
-      function SpecialBehaviour({broker}) {
+      function SpecialBehaviour({ broker }) {
         return {
           execute(executeMessage) {
-            broker.publish('execution', 'execute.error', {...executeMessage.content, error: new Error('unstable')}, {type: 'error', mandatory: true});
+            broker.publish(
+              'execution',
+              'execute.error',
+              { ...executeMessage.content, error: new Error('unstable') },
+              { type: 'error', mandatory: true },
+            );
           },
         };
       }
@@ -1341,16 +1488,20 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      const activity = new Activity(behaviours.CompleteBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.CompleteBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const leave = activity.waitFor('leave');
 
@@ -1370,24 +1521,28 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      function SpecialBehaviour({broker}) {
+      function SpecialBehaviour({ broker }) {
         return {
-          execute({content}) {
-            broker.publish('execution', 'execute.completed', {...content, message: 1});
+          execute({ content }) {
+            broker.publish('execution', 'execute.completed', { ...content, message: 1 });
           },
         };
       }
 
-      const activity = new Activity(SpecialBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        SpecialBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       let takeMessage;
       sequenceFlow.broker.subscribeOnce('event', 'flow.take', (_, msg) => {
@@ -1415,17 +1570,21 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow1 = new SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
-      const sequenceFlow2 = new SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
+      const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
+      const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
-      const activity = new Activity(behaviours.CompleteBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.CompleteBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const leave = activity.waitFor('leave');
 
@@ -1446,34 +1605,41 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow1 = new SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
-      const sequenceFlow2 = new SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
+      const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
+      const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
-      function SpecialBehaviour({broker}) {
+      function SpecialBehaviour({ broker }) {
         return {
-          execute({content}) {
+          execute({ content }) {
             broker.publish('execution', 'execute.completed', {
               ...content,
-              outbound: [{
-                id: 'flow1',
-                action: 'take',
-              }, {
-                id: 'flow2',
-                action: 'discard',
-              }],
+              outbound: [
+                {
+                  id: 'flow1',
+                  action: 'take',
+                },
+                {
+                  id: 'flow2',
+                  action: 'discard',
+                },
+              ],
             });
           },
         };
       }
 
-      const activity = new Activity(SpecialBehaviour, {
-        id: 'activity',
-        type: 'bpmn:ExclusiveGateway',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        SpecialBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:ExclusiveGateway',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const leave = activity.waitFor('leave');
 
@@ -1494,16 +1660,20 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({id: 'flow', parent: {id: 'process1'}}, context);
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow);
 
-      const activity = new Activity(behaviours.CompleteBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.CompleteBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const leave = activity.waitFor('leave');
 
@@ -1522,34 +1692,41 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow1 = new SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
-      const sequenceFlow2 = new SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
+      const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
+      const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
-      function SpecialBehaviour({broker}) {
+      function SpecialBehaviour({ broker }) {
         return {
-          execute({content}) {
+          execute({ content }) {
             broker.publish('execution', 'execute.completed', {
               ...content,
-              outbound: [{
-                id: 'flow1',
-                action: 'discard',
-              }, {
-                id: 'flow2',
-                action: 'discard',
-              }],
+              outbound: [
+                {
+                  id: 'flow1',
+                  action: 'discard',
+                },
+                {
+                  id: 'flow2',
+                  action: 'discard',
+                },
+              ],
             });
           },
         };
       }
 
-      const activity = new Activity(SpecialBehaviour, {
-        id: 'activity',
-        type: 'bpmn:ExclusiveGateway',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        SpecialBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:ExclusiveGateway',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const leave = activity.waitFor('leave');
 
@@ -1570,37 +1747,45 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow1 = new SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, context);
-      const sequenceFlow2 = new SequenceFlow({id: 'flow2', parent: {id: 'process1'}}, context);
+      const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
+      const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
-      function SpecialBehaviour({broker}) {
+      function SpecialBehaviour({ broker }) {
         return {
-          execute({content}) {
+          execute({ content }) {
             broker.publish('execution', 'execute.completed', {
               ...content,
-              outbound: [{
-                id: 'flow1',
-                action: 'discard',
-              }, {
-                id: 'flow2',
-                action: 'discard',
-              }, {
-                id: 'flow1',
-                action: 'take',
-              }],
+              outbound: [
+                {
+                  id: 'flow1',
+                  action: 'discard',
+                },
+                {
+                  id: 'flow2',
+                  action: 'discard',
+                },
+                {
+                  id: 'flow1',
+                  action: 'take',
+                },
+              ],
             });
           },
         };
       }
 
-      const activity = new Activity(SpecialBehaviour, {
-        id: 'activity',
-        type: 'bpmn:ExclusiveGateway',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        SpecialBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:ExclusiveGateway',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const leave = activity.waitFor('leave');
 
@@ -1621,42 +1806,49 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow1 = new SequenceFlow({id: 'flow1', sourceId: 'activity', parent: {id: 'process1'}}, context);
-      const sequenceFlow2 = new SequenceFlow({id: 'flow2', sourceId: 'activity', parent: {id: 'process1'}}, context);
+      const sequenceFlow1 = new SequenceFlow({ id: 'flow1', sourceId: 'activity', parent: { id: 'process1' } }, context);
+      const sequenceFlow2 = new SequenceFlow({ id: 'flow2', sourceId: 'activity', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
       const messages = [];
-      sequenceFlow1.broker.subscribeOnce('event', 'flow.discard', (_, {content}) => {
+      sequenceFlow1.broker.subscribeOnce('event', 'flow.discard', (_, { content }) => {
         messages.push(content);
       });
-      sequenceFlow2.broker.subscribeOnce('event', 'flow.discard', (_, {content}) => {
+      sequenceFlow2.broker.subscribeOnce('event', 'flow.discard', (_, { content }) => {
         messages.push(content);
       });
 
-      function SpecialBehaviour({broker}) {
+      function SpecialBehaviour({ broker }) {
         return {
-          execute({content}) {
+          execute({ content }) {
             broker.publish('execution', 'execute.completed', {
               ...content,
-              outbound: [{
-                id: 'flow1',
-                action: 'discard',
-              }, {
-                id: 'flow2',
-                action: 'discard',
-              }],
+              outbound: [
+                {
+                  id: 'flow1',
+                  action: 'discard',
+                },
+                {
+                  id: 'flow2',
+                  action: 'discard',
+                },
+              ],
             });
           },
         };
       }
 
-      const activity = new Activity(SpecialBehaviour, {
-        id: 'activity',
-        type: 'bpmn:ExclusiveGateway',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        SpecialBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:ExclusiveGateway',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const leave = activity.waitFor('leave');
 
@@ -1682,28 +1874,32 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow0 = new SequenceFlow({id: 'flow0', sourceId: 'start', targetId: 'activity', parent: {id: 'process1'}}, context);
+      const sequenceFlow0 = new SequenceFlow({ id: 'flow0', sourceId: 'start', targetId: 'activity', parent: { id: 'process1' } }, context);
       inboundFlows.push(sequenceFlow0);
 
-      const sequenceFlow1 = new SequenceFlow({id: 'flow1', sourceId: 'activity', parent: {id: 'process1'}}, context);
-      const sequenceFlow2 = new SequenceFlow({id: 'flow2', sourceId: 'activity', parent: {id: 'process1'}}, context);
+      const sequenceFlow1 = new SequenceFlow({ id: 'flow1', sourceId: 'activity', parent: { id: 'process1' } }, context);
+      const sequenceFlow2 = new SequenceFlow({ id: 'flow2', sourceId: 'activity', parent: { id: 'process1' } }, context);
       outboundFlows.push(sequenceFlow1, sequenceFlow2);
 
       const messages = [];
-      sequenceFlow1.broker.subscribeOnce('event', 'flow.discard', (_, {content}) => {
+      sequenceFlow1.broker.subscribeOnce('event', 'flow.discard', (_, { content }) => {
         messages.push(content);
       });
-      sequenceFlow2.broker.subscribeOnce('event', 'flow.discard', (_, {content}) => {
+      sequenceFlow2.broker.subscribeOnce('event', 'flow.discard', (_, { content }) => {
         messages.push(content);
       });
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:ExclusiveGateway',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:ExclusiveGateway',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const leave = activity.waitFor('leave');
 
@@ -1729,36 +1925,40 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow1 = new SequenceFlow({id: 'flow1', sourceId: 'start1', parent: {id: 'process1'}}, context);
-      const sequenceFlow2 = new SequenceFlow({id: 'flow2', sourceId: 'task', parent: {id: 'process1'}}, context);
+      const sequenceFlow1 = new SequenceFlow({ id: 'flow1', sourceId: 'start1', parent: { id: 'process1' } }, context);
+      const sequenceFlow2 = new SequenceFlow({ id: 'flow2', sourceId: 'task', parent: { id: 'process1' } }, context);
 
       inboundFlows.push(sequenceFlow1, sequenceFlow2);
 
-      const sequenceFlow3 = new SequenceFlow({id: 'flow3', sourceId: 'activity', parent: {id: 'process1'}}, context);
-      const sequenceFlow4 = new SequenceFlow({id: 'flow4', sourceId: 'activity', parent: {id: 'process1'}}, context);
+      const sequenceFlow3 = new SequenceFlow({ id: 'flow3', sourceId: 'activity', parent: { id: 'process1' } }, context);
+      const sequenceFlow4 = new SequenceFlow({ id: 'flow4', sourceId: 'activity', parent: { id: 'process1' } }, context);
       outboundFlows.push(sequenceFlow3, sequenceFlow4);
 
       const messages = [];
-      sequenceFlow3.broker.subscribeOnce('event', 'flow.discard', (_, {content}) => {
+      sequenceFlow3.broker.subscribeOnce('event', 'flow.discard', (_, { content }) => {
         messages.push(content);
       });
-      sequenceFlow4.broker.subscribeOnce('event', 'flow.discard', (_, {content}) => {
+      sequenceFlow4.broker.subscribeOnce('event', 'flow.discard', (_, { content }) => {
         messages.push(content);
       });
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        isParallelGateway: true,
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          isParallelGateway: true,
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       const leave = activity.waitFor('leave');
 
       activity.activate();
       sequenceFlow1.discard();
-      sequenceFlow2.discard({discardSequence: ['start2']});
+      sequenceFlow2.discard({ discardSequence: ['start2'] });
 
       expect(messages).to.have.length(2);
       expect(messages[0]).to.have.property('discardSequence').that.eql(['start1', 'start2', 'task', 'activity']);
@@ -1784,13 +1984,17 @@ describe('Activity', () => {
         },
       });
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       expect(activity.extensions).to.be.ok;
 
@@ -1816,13 +2020,17 @@ describe('Activity', () => {
         },
       });
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       activity.discard();
 
@@ -1847,13 +2055,17 @@ describe('Activity', () => {
         },
       });
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       activity.run();
       activity.stop();
@@ -1881,23 +2093,27 @@ describe('Activity', () => {
         },
       });
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:BoundaryEvent',
-        behaviour: {
-          attachedTo: {
-            id: 'task',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:BoundaryEvent',
+          behaviour: {
+            attachedTo: {
+              id: 'task',
+            },
+          },
+          parent: {
+            id: 'process1',
           },
         },
-        parent: {
-          id: 'process1',
-        },
-      }, context);
+        context,
+      );
 
       activity.activate();
 
       const enter = activity.waitFor('enter');
-      attachedTo.broker.publish('event', 'activity.enter', {id: attachedTo.id});
+      attachedTo.broker.publish('event', 'activity.enter', { id: attachedTo.id });
 
       return enter;
     });
@@ -1917,18 +2133,22 @@ describe('Activity', () => {
         },
       });
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:BoundaryEvent',
-        behaviour: {
-          attachedTo: {
-            id: 'task',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:BoundaryEvent',
+          behaviour: {
+            attachedTo: {
+              id: 'task',
+            },
+          },
+          parent: {
+            id: 'process1',
           },
         },
-        parent: {
-          id: 'process1',
-        },
-      }, context);
+        context,
+      );
 
       activity.activate();
 
@@ -1937,7 +2157,7 @@ describe('Activity', () => {
         message = msg;
       });
 
-      attachedTo.broker.publish('event', 'activity.enter', {id: 'task', type: 'bpmn:ServiceTask'});
+      attachedTo.broker.publish('event', 'activity.enter', { id: 'task', type: 'bpmn:ServiceTask' });
 
       expect(message).to.be.ok;
       expect(message.content.inbound).to.have.length(1);
@@ -1963,18 +2183,22 @@ describe('Activity', () => {
         },
       });
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:BoundaryEvent',
-        behaviour: {
-          attachedTo: {
-            id: 'task',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:BoundaryEvent',
+          behaviour: {
+            attachedTo: {
+              id: 'task',
+            },
+          },
+          parent: {
+            id: 'process1',
           },
         },
-        parent: {
-          id: 'process1',
-        },
-      }, context);
+        context,
+      );
 
       activity.activate();
 
@@ -1983,7 +2207,7 @@ describe('Activity', () => {
         message = msg;
       });
 
-      attachedTo.broker.publish('event', 'activity.discard', {id: 'task', type: 'bpmn:ServiceTask', discardSequence: ['start']});
+      attachedTo.broker.publish('event', 'activity.discard', { id: 'task', type: 'bpmn:ServiceTask', discardSequence: ['start'] });
 
       expect(message).to.be.ok;
       expect(message.content.inbound).to.have.length(1);
@@ -2014,35 +2238,39 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow1 = new SequenceFlow({id: 'flow1', sourceId: 'activity', parent: {id: 'process1'}}, context);
-      const sequenceFlow2 = new SequenceFlow({id: 'flow2', sourceId: 'activity', parent: {id: 'process1'}}, context);
+      const sequenceFlow1 = new SequenceFlow({ id: 'flow1', sourceId: 'activity', parent: { id: 'process1' } }, context);
+      const sequenceFlow2 = new SequenceFlow({ id: 'flow2', sourceId: 'activity', parent: { id: 'process1' } }, context);
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
       const messages = [];
-      sequenceFlow1.broker.subscribeOnce('event', 'flow.discard', (_, {content}) => {
+      sequenceFlow1.broker.subscribeOnce('event', 'flow.discard', (_, { content }) => {
         messages.push(content);
       });
-      sequenceFlow2.broker.subscribeOnce('event', 'flow.discard', (_, {content}) => {
+      sequenceFlow2.broker.subscribeOnce('event', 'flow.discard', (_, { content }) => {
         messages.push(content);
       });
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:BoundaryEvent',
-        behaviour: {
-          attachedTo: {
-            id: 'task',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:BoundaryEvent',
+          behaviour: {
+            attachedTo: {
+              id: 'task',
+            },
+          },
+          parent: {
+            id: 'process1',
           },
         },
-        parent: {
-          id: 'process1',
-        },
-      }, context);
+        context,
+      );
 
       activity.activate();
       const leave = activity.waitFor('leave');
 
-      attachedTo.broker.publish('event', 'activity.discard', {id: 'task', type: 'bpmn:ServiceTask', discardSequence: ['start']});
+      attachedTo.broker.publish('event', 'activity.discard', { id: 'task', type: 'bpmn:ServiceTask', discardSequence: ['start'] });
 
       expect(messages).to.have.length(2);
       expect(messages[0]).to.have.property('discardSequence').that.eql(['start', 'activity']);
@@ -2062,18 +2290,22 @@ describe('Activity', () => {
         },
       });
 
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:BoundaryEvent',
-        behaviour: {
-          attachedTo: {
-            id: 'task',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:BoundaryEvent',
+          behaviour: {
+            attachedTo: {
+              id: 'task',
+            },
+          },
+          parent: {
+            id: 'process1',
           },
         },
-        parent: {
-          id: 'process1',
-        },
-      }, context);
+        context,
+      );
 
       activity.activate();
 
@@ -2082,8 +2314,8 @@ describe('Activity', () => {
         message = msg;
       });
 
-      attachedTo.broker.publish('event', 'activity.enter', {id: 'task', type: 'bpmn:ServiceTask'});
-      attachedTo.broker.publish('event', 'activity.enter', {id: 'task', type: 'bpmn:ServiceTask'});
+      attachedTo.broker.publish('event', 'activity.enter', { id: 'task', type: 'bpmn:ServiceTask' });
+      attachedTo.broker.publish('event', 'activity.enter', { id: 'task', type: 'bpmn:ServiceTask' });
 
       expect(message).to.be.ok;
       expect(message.content.inbound).to.have.length(1);
@@ -2105,10 +2337,15 @@ describe('Activity', () => {
     });
 
     it('waiting for error resolves to activity api with error in content', async () => {
-      function SpecialBehaviour({broker}) {
+      function SpecialBehaviour({ broker }) {
         return {
           execute(executeMessage) {
-            broker.publish('event', 'activity.error', {...executeMessage.content, error: new Error('unstable')}, {type: 'error', mandatory: true});
+            broker.publish(
+              'event',
+              'activity.error',
+              { ...executeMessage.content, error: new Error('unstable') },
+              { type: 'error', mandatory: true },
+            );
           },
         };
       }
@@ -2124,10 +2361,15 @@ describe('Activity', () => {
     });
 
     it('rejects if activity error is published', (done) => {
-      function SpecialBehaviour({broker}) {
+      function SpecialBehaviour({ broker }) {
         return {
           execute(executeMessage) {
-            broker.publish('event', 'activity.error', {...executeMessage.content, error: new Error('unstable')}, {type: 'error', mandatory: true});
+            broker.publish(
+              'event',
+              'activity.error',
+              { ...executeMessage.content, error: new Error('unstable') },
+              { type: 'error', mandatory: true },
+            );
           },
         };
       }
@@ -2143,10 +2385,10 @@ describe('Activity', () => {
     });
 
     it('rejects if execute error is published', (done) => {
-      function SpecialBehaviour({broker}) {
+      function SpecialBehaviour({ broker }) {
         return {
           execute(executeMessage) {
-            broker.publish('execution', 'execute.error', {...executeMessage.content, error: new Error('unstable')});
+            broker.publish('execution', 'execute.error', { ...executeMessage.content, error: new Error('unstable') });
           },
         };
       }
@@ -2168,7 +2410,7 @@ describe('Activity', () => {
       const state = activity.getState();
 
       expect(state.status).to.be.undefined;
-      expect(state.counters).to.eql({discarded: 0, taken: 0});
+      expect(state.counters).to.eql({ discarded: 0, taken: 0 });
       expect(state).to.have.property('broker').that.is.not.ok;
       expect(state.execution).to.be.undefined;
     });
@@ -2192,7 +2434,7 @@ describe('Activity', () => {
       expect(state).to.have.property('status', 'executing');
       expect(state).to.have.property('execution').with.property('completed', false);
       expect(state.execution).to.have.property('behaviourState', true);
-      expect(state.counters).to.eql({discarded: 0, taken: 0});
+      expect(state.counters).to.eql({ discarded: 0, taken: 0 });
       expect(state).to.have.property('broker').with.property('queues');
     });
 
@@ -2204,7 +2446,7 @@ describe('Activity', () => {
 
       const state = activity.getState();
 
-      expect(state.counters).to.eql({discarded: 0, taken: 0});
+      expect(state.counters).to.eql({ discarded: 0, taken: 0 });
       expect(state.status).to.equal('executing');
       expect(state).to.have.property('broker').with.property('queues');
     });
@@ -2217,7 +2459,7 @@ describe('Activity', () => {
       const state = activity.getState();
 
       expect(state.status).to.be.undefined;
-      expect(state.counters).to.eql({discarded: 0, taken: 1});
+      expect(state.counters).to.eql({ discarded: 0, taken: 1 });
       expect(state).to.have.property('broker').that.is.not.ok;
     });
 
@@ -2230,7 +2472,7 @@ describe('Activity', () => {
       const state = activity.getState();
 
       expect(state.status).to.be.undefined;
-      expect(state.counters).to.eql({discarded: 0, taken: 2});
+      expect(state.counters).to.eql({ discarded: 0, taken: 2 });
       expect(state).to.have.property('broker').that.is.not.ok;
     });
 
@@ -2242,7 +2484,7 @@ describe('Activity', () => {
       const state = activity.getState();
 
       expect(state.status).to.be.undefined;
-      expect(state.counters).to.eql({discarded: 1, taken: 0});
+      expect(state.counters).to.eql({ discarded: 1, taken: 0 });
       expect(state).to.have.property('broker').that.is.not.ok;
     });
 
@@ -2255,7 +2497,7 @@ describe('Activity', () => {
       const state = activity.getState();
 
       expect(state.status).to.be.undefined;
-      expect(state.counters).to.eql({discarded: 1, taken: 1});
+      expect(state.counters).to.eql({ discarded: 1, taken: 1 });
       expect(state).to.have.property('broker').that.is.not.ok;
     });
   });
@@ -2357,7 +2599,7 @@ describe('Activity', () => {
     it('recovers new activity with running state', () => {
       const activity = getActivity(undefined, SignalTaskBehaviour);
       activity.run();
-      expect(activity.counters).to.eql({discarded: 0, taken: 0});
+      expect(activity.counters).to.eql({ discarded: 0, taken: 0 });
 
       const state = activity.getState();
       state.counters.taken = 1;
@@ -2366,7 +2608,7 @@ describe('Activity', () => {
       recoveredActivity.recover(state);
 
       expect(recoveredActivity.status).to.equal('executing');
-      expect(recoveredActivity.counters).to.eql({discarded: 0, taken: 1});
+      expect(recoveredActivity.counters).to.eql({ discarded: 0, taken: 1 });
 
       expect(recoveredActivity.broker.getQueue('run-q')).to.have.property('consumerCount', 0);
       expect(recoveredActivity.broker.getQueue('run-q')).to.have.property('messageCount', 1);
@@ -2407,7 +2649,7 @@ describe('Activity', () => {
       expect(activity.broker.getQueue('execute-q')).to.have.property('messageCount', 2);
 
       activity.getApi().signal();
-      expect(activity.counters).to.eql({discarded: 0, taken: 1});
+      expect(activity.counters).to.eql({ discarded: 0, taken: 1 });
     });
 
     it('resumes recovered activity with state', () => {
@@ -2416,7 +2658,7 @@ describe('Activity', () => {
       activity.run();
 
       activity.stop();
-      expect(activity.counters).to.eql({discarded: 0, taken: 0});
+      expect(activity.counters).to.eql({ discarded: 0, taken: 0 });
 
       const state = activity.getState();
       const recoveredActivity = getActivity(undefined, SignalTaskBehaviour);
@@ -2432,7 +2674,7 @@ describe('Activity', () => {
       expect(recoveredActivity.broker.getQueue('execute-q')).to.have.property('messageCount', 2);
 
       recoveredActivity.getApi().signal();
-      expect(recoveredActivity.counters).to.eql({discarded: 0, taken: 1});
+      expect(recoveredActivity.counters).to.eql({ discarded: 0, taken: 1 });
     });
 
     it('resumes recovered activity with running state', () => {
@@ -2440,7 +2682,7 @@ describe('Activity', () => {
 
       activity.run();
 
-      expect(activity.counters).to.eql({discarded: 0, taken: 0});
+      expect(activity.counters).to.eql({ discarded: 0, taken: 0 });
 
       const state = activity.getState();
       const recoveredActivity = getActivity(undefined, SignalTaskBehaviour);
@@ -2457,7 +2699,7 @@ describe('Activity', () => {
       expect(recoveredActivity.broker.getQueue('execute-q')).to.have.property('messageCount', 2);
 
       recoveredActivity.getApi().signal();
-      expect(recoveredActivity.counters).to.eql({discarded: 0, taken: 1});
+      expect(recoveredActivity.counters).to.eql({ discarded: 0, taken: 1 });
     });
 
     it('throws if resume is called when activity is running', () => {
@@ -2543,17 +2785,25 @@ describe('Activity', () => {
         },
       });
 
-      const activity = new Activity(behaviours.CompleteBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.CompleteBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
-      activity.evaluateOutbound({
-        content: {},
-      }, false, done);
+      activity.evaluateOutbound(
+        {
+          content: {},
+        },
+        false,
+        done,
+      );
     });
   });
 
@@ -2566,19 +2816,23 @@ describe('Activity', () => {
         },
       });
 
-      const association = new Association({id: 'association', parent: {id: 'process1'}}, context);
+      const association = new Association({ id: 'association', parent: { id: 'process1' } }, context);
       associations.push(association);
 
-      const activity = new Activity(behaviours.CompleteBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.CompleteBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
+          behaviour: {
+            isForCompensation: true,
+          },
         },
-        behaviour: {
-          isForCompensation: true,
-        },
-      }, context);
+        context,
+      );
 
       activity.activate();
 
@@ -2595,19 +2849,23 @@ describe('Activity', () => {
         },
       });
 
-      const association = new Association({id: 'association', parent: {id: 'process1'}}, context);
+      const association = new Association({ id: 'association', parent: { id: 'process1' } }, context);
       associations.push(association);
 
-      const activity = new Activity(behaviours.CompleteBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.CompleteBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
+          behaviour: {
+            isForCompensation: true,
+          },
         },
-        behaviour: {
-          isForCompensation: true,
-        },
-      }, context);
+        context,
+      );
 
       activity.activate();
 
@@ -2625,19 +2883,23 @@ describe('Activity', () => {
         },
       });
 
-      const association = new Association({id: 'association', parent: {id: 'process1'}}, context);
+      const association = new Association({ id: 'association', parent: { id: 'process1' } }, context);
       associations.push(association);
 
-      const activity = new Activity(behaviours.CompleteBehaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.CompleteBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
+          behaviour: {
+            isForCompensation: true,
+          },
         },
-        behaviour: {
-          isForCompensation: true,
-        },
-      }, context);
+        context,
+      );
 
       activity.activate();
 
@@ -2656,13 +2918,17 @@ describe('Activity', () => {
 
   describe('stepping with next()', () => {
     it('ignored if environment step is falsy', () => {
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, getContext());
+        getContext(),
+      );
 
       activity.run();
       activity.next();
@@ -2671,13 +2937,17 @@ describe('Activity', () => {
     it('ignored if not running', () => {
       const context = getContext();
       context.environment.settings.step = true;
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       activity.next();
       expect(activity.isRunning).to.false;
@@ -2686,13 +2956,17 @@ describe('Activity', () => {
     it('ignored if executing', () => {
       const context = getContext();
       context.environment.settings.step = true;
-      const activity = new Activity(behaviours.Behaviour, {
-        id: 'activity',
-        type: 'bpmn:Task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, context);
+        context,
+      );
 
       activity.run();
       expect(activity).to.have.property('status', 'entered');
@@ -2708,20 +2982,24 @@ describe('Activity', () => {
 });
 
 function getActivity(override = {}, OBehaviour = TaskBehaviour) {
-  const activity = new Activity(OBehaviour, {
-    id: 'activity',
-    type: 'test:activity',
-    name: 'Test activity',
-    parent: {
-      id: 'process1',
+  const activity = new Activity(
+    OBehaviour,
+    {
+      id: 'activity',
+      type: 'test:activity',
+      name: 'Test activity',
+      parent: {
+        id: 'process1',
+      },
+      ...override,
     },
-    ...override,
-  }, getContext());
+    getContext(),
+  );
   return activity;
 }
 
 function getContext(override) {
-  const environment = new Environment({Logger: testHelpers.Logger});
+  const environment = new Environment({ Logger: testHelpers.Logger });
   return {
     environment,
     getActivityExtensions() {
@@ -2729,7 +3007,7 @@ function getContext(override) {
     },
     getInboundSequenceFlows(id) {
       if (id !== 'activity') return [];
-      return [new SequenceFlow({id: 'flow', sourceId: 'start', targetId: 'activity', parent: {id: 'process1'}}, {environment})];
+      return [new SequenceFlow({ id: 'flow', sourceId: 'start', targetId: 'activity', parent: { id: 'process1' } }, { environment })];
     },
     getOutboundMessageFlows() {
       return [];

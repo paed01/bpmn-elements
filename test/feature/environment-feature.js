@@ -13,7 +13,7 @@ Feature('Definition', () => {
 
     let context, definition;
     Given('a definition', async () => {
-      context = await testHelpers.context(source, {settings: {}});
+      context = await testHelpers.context(source, { settings: {} });
 
       definition = new Definition(context, {
         settings: {
@@ -54,7 +54,7 @@ Feature('Definition', () => {
     });
 
     And('settings', () => {
-      expect(task.environment.settings).to.deep.equal({strict: true});
+      expect(task.environment.settings).to.deep.equal({ strict: true });
     });
 
     And('differs from definition', () => {
@@ -63,7 +63,7 @@ Feature('Definition', () => {
     });
 
     And('definition environment variables has the expected properties', () => {
-      expect(definition.environment.variables).to.deep.equal({data: 1});
+      expect(definition.environment.variables).to.deep.equal({ data: 1 });
     });
 
     And('same services are available', () => {
@@ -71,16 +71,16 @@ Feature('Definition', () => {
     });
 
     And('settings', () => {
-      expect(runningBp.environment.settings).to.deep.equal({strict: true});
+      expect(runningBp.environment.settings).to.deep.equal({ strict: true });
     });
 
     When('definition completes', () => {
-      definition.signal({id: 'task'});
+      definition.signal({ id: 'task' });
     });
 
     Then('definition environment variables has the expected variables', async () => {
       await end;
-      expect(definition.environment.variables).to.deep.equal({data: 1});
+      expect(definition.environment.variables).to.deep.equal({ data: 1 });
     });
 
     When('ran again with a new service function and settings', () => {
@@ -103,7 +103,7 @@ Feature('Definition', () => {
     });
 
     And('settings', () => {
-      expect(runningBp.environment.settings).to.deep.equal({strict: false});
+      expect(runningBp.environment.settings).to.deep.equal({ strict: false });
     });
 
     But('differs from definition', () => {
@@ -112,7 +112,7 @@ Feature('Definition', () => {
     });
 
     And('definition environment variables have the expected properties', () => {
-      expect(definition.environment.variables).to.deep.equal({data: 1});
+      expect(definition.environment.variables).to.deep.equal({ data: 1 });
     });
 
     And('same services are available', () => {
@@ -121,21 +121,21 @@ Feature('Definition', () => {
     });
 
     And('settings', () => {
-      expect(runningBp.environment.settings).to.deep.equal({strict: false});
+      expect(runningBp.environment.settings).to.deep.equal({ strict: false });
     });
 
     When('definition completes', () => {
-      definition.signal({id: 'task'});
+      definition.signal({ id: 'task' });
     });
 
     Then('definition environment variables has the expected variables', async () => {
       await end;
-      expect(definition.environment.variables).to.deep.equal({data: 1});
+      expect(definition.environment.variables).to.deep.equal({ data: 1 });
     });
 
     When('ran again with a assigned service object', () => {
       end = definition.waitFor('leave');
-      definition.environment.services = {newFn() {}, extraFn() {}};
+      definition.environment.services = { newFn() {}, extraFn() {} };
       definition.run();
     });
 

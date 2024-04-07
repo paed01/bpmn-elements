@@ -113,40 +113,57 @@ describe('EndEvent', () => {
 
   describe('with multiple inbounds', () => {
     it('publish enter or discard on each inbound', () => {
-      const parent = {id: 'process'};
+      const parent = { id: 'process' };
       const context = testHelpers.emptyContext({
         getInboundSequenceFlows() {
-          return [{
-            id: 'flow1',
-            parent,
-            Behaviour: SequenceFlow,
-          }, {
-            id: 'flow2',
-            parent,
-            Behaviour: SequenceFlow,
-          }, {
-            id: 'flow3',
-            parent,
-            Behaviour: SequenceFlow,
-          }];
+          return [
+            {
+              id: 'flow1',
+              parent,
+              Behaviour: SequenceFlow,
+            },
+            {
+              id: 'flow2',
+              parent,
+              Behaviour: SequenceFlow,
+            },
+            {
+              id: 'flow3',
+              parent,
+              Behaviour: SequenceFlow,
+            },
+          ];
         },
       });
 
-      const event = EndEvent({
-        type: 'bpmn:EndEvent',
-        id: 'end',
-        parent,
-      }, context);
+      const event = EndEvent(
+        {
+          type: 'bpmn:EndEvent',
+          id: 'end',
+          parent,
+        },
+        context,
+      );
 
       event.activate();
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.enter', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
-      event.broker.subscribeTmp('event', 'activity.discard', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.enter',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
+      event.broker.subscribeTmp(
+        'event',
+        'activity.discard',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       context.getInboundSequenceFlows()[0].discard();
       context.getInboundSequenceFlows()[1].take();

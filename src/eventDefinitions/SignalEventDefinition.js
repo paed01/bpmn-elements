@@ -1,6 +1,6 @@
 import getPropertyValue from '../getPropertyValue.js';
-import {brokerSafeId} from '../shared.js';
-import {cloneContent, shiftParent} from '../messageHelper.js';
+import { brokerSafeId } from '../shared.js';
+import { cloneContent, shiftParent } from '../messageHelper.js';
 
 const kCompleted = Symbol.for('completed');
 const kMessageQ = Symbol.for('messageQ');
@@ -9,30 +9,30 @@ const kReferenceElement = Symbol.for('referenceElement');
 const kReferenceInfo = Symbol.for('referenceInfo');
 
 export default function SignalEventDefinition(activity, eventDefinition) {
-  const {id, broker, environment, isStart, isThrowing} = activity;
-  const {type, behaviour = {}} = eventDefinition;
+  const { id, broker, environment, isStart, isThrowing } = activity;
+  const { type, behaviour = {} } = eventDefinition;
 
   this.id = id;
   this.type = type;
 
-  const reference = this.reference = {
+  const reference = (this.reference = {
     name: 'anonymous',
     ...behaviour.signalRef,
     referenceType: 'signal',
-  };
+  });
 
   this.isThrowing = isThrowing;
   this.activity = activity;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
 
-  const referenceElement = this[kReferenceElement] = reference.id && activity.getActivityById(reference.id);
+  const referenceElement = (this[kReferenceElement] = reference.id && activity.getActivityById(reference.id));
   if (!isThrowing && isStart) {
     this[kCompleted] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(referenceId)}-q`;
-    this[kMessageQ] = broker.assertQueue(messageQueueName, {autoDelete: false, durable: true});
-    broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, {durable: true});
+    this[kMessageQ] = broker.assertQueue(messageQueueName, { autoDelete: false, durable: true });
+    broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, { durable: true });
   }
 }
 
@@ -52,10 +52,10 @@ SignalEventDefinition.prototype.executeCatch = function executeCatch(executeMess
   this[kCompleted] = false;
 
   const executeContent = executeMessage.content;
-  const {executionId, parent} = executeContent;
+  const { executionId, parent } = executeContent;
   const parentExecutionId = parent && parent.executionId;
 
-  const info = this[kReferenceInfo] = this._getReferenceInfo(executeMessage);
+  const info = (this[kReferenceInfo] = this._getReferenceInfo(executeMessage));
   const broker = this.broker;
 
   const onCatchMessage = this._onCatchMessage.bind(this);
@@ -85,7 +85,7 @@ SignalEventDefinition.prototype.executeCatch = function executeCatch(executeMess
 
   const waitContent = cloneContent(executeContent, {
     executionId: parent.executionId,
-    signal: {...info.message},
+    signal: { ...info.message },
   });
   waitContent.parent = shiftParent(parent);
 
@@ -94,7 +94,7 @@ SignalEventDefinition.prototype.executeCatch = function executeCatch(executeMess
 
 SignalEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
-  const {executionId, parent} = executeContent;
+  const { executionId, parent } = executeContent;
 
   const info = this._getReferenceInfo(executeMessage);
 
@@ -102,13 +102,13 @@ SignalEventDefinition.prototype.executeThrow = function executeThrow(executeMess
 
   const throwContent = cloneContent(executeContent, {
     executionId: parent.executionId,
-    message: {...executeContent.input, ...info.message},
+    message: { ...executeContent.input, ...info.message },
     state: 'throw',
   });
   throwContent.parent = shiftParent(parent);
 
   const broker = this.broker;
-  broker.publish('event', 'activity.signal', throwContent, {type: 'signal'});
+  broker.publish('event', 'activity.signal', throwContent, { type: 'signal' });
 
   return broker.publish('execution', 'execute.completed', cloneContent(executeContent));
 };
@@ -119,28 +119,33 @@ SignalEventDefinition.prototype._onCatchMessage = function onCatchMessage(routin
   this[kCompleted] = true;
   this._stop();
 
-  const {type, correlationId} = message.properties;
-  this.broker.publish('event', 'activity.consumed', cloneContent(this[kExecuteMessage].content, {
-    message: { ...message.content.message},
-  }), {
-    correlationId,
-    type,
-  });
+  const { type, correlationId } = message.properties;
+  this.broker.publish(
+    'event',
+    'activity.consumed',
+    cloneContent(this[kExecuteMessage].content, {
+      message: { ...message.content.message },
+    }),
+    {
+      correlationId,
+      type,
+    },
+  );
 
   return this._complete(message.content.message, message.properties);
 };
 
 SignalEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
-  const {type, correlationId} = message.properties;
+  const { type, correlationId } = message.properties;
 
   switch (type) {
     case 'signal': {
-      return this._complete(message.content.message, {correlationId});
+      return this._complete(message.content.message, { correlationId });
     }
     case 'discard': {
       this[kCompleted] = true;
       this._stop();
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content), {correlationId});
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content), { correlationId });
     }
     case 'stop': {
       this._stop();
@@ -153,14 +158,20 @@ SignalEventDefinition.prototype._complete = function complete(output, options) {
   this[kCompleted] = true;
   this._stop();
   this._debug(`signaled with ${this[kReferenceInfo].description}`);
-  return this.broker.publish('execution', 'execute.completed', cloneContent(this[kExecuteMessage].content, {
-    output,
-    state: 'signal',
-  }), options);
+  return this.broker.publish(
+    'execution',
+    'execute.completed',
+    cloneContent(this[kExecuteMessage].content, {
+      output,
+      state: 'signal',
+    }),
+    options,
+  );
 };
 
 SignalEventDefinition.prototype._stop = function stop() {
-  const broker = this.broker, executionId = this.executionId;
+  const broker = this.broker,
+    executionId = this.executionId;
   broker.cancel(`_api-signal-${executionId}`);
   broker.cancel(`_api-parent-${executionId}`);
   broker.cancel(`_api-${executionId}`);
@@ -172,7 +183,7 @@ SignalEventDefinition.prototype._getReferenceInfo = function getReferenceInfo(me
   const referenceElement = this[kReferenceElement];
   if (!referenceElement) {
     return {
-      message: {...this.reference},
+      message: { ...this.reference },
       description: 'anonymous signal',
     };
   }

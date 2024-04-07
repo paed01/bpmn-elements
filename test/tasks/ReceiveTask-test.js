@@ -5,31 +5,39 @@ import testHelpers from '../helpers/testHelpers.js';
 describe('ReceiveTask', () => {
   let task;
   beforeEach(() => {
-    task = ReceiveTask({
-      id: 'task',
-      parent: {
-        id: 'theProcess',
+    task = ReceiveTask(
+      {
+        id: 'task',
+        parent: {
+          id: 'theProcess',
+        },
       },
-    }, testHelpers.emptyContext({
-      getActivityById(id) {
-        if (id !== 'message_1') return;
-        return {
-          id: 'message_1',
-          type: 'bpmn:Message',
-          name: 'My Message ${content.id}',
-          Behaviour: Message,
-        };
-      },
-    }));
+      testHelpers.emptyContext({
+        getActivityById(id) {
+          if (id !== 'message_1') return;
+          return {
+            id: 'message_1',
+            type: 'bpmn:Message',
+            name: 'My Message ${content.id}',
+            Behaviour: Message,
+          };
+        },
+      }),
+    );
   });
 
   it('publishes wait event on parent broker with resolved message', () => {
     const messages = [];
-    task.behaviour.messageRef = {id: 'message_1'};
+    task.behaviour.messageRef = { id: 'message_1' };
 
-    task.broker.subscribeTmp('event', 'activity.wait', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true});
+    task.broker.subscribeTmp(
+      'event',
+      'activity.wait',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true },
+    );
 
     task.run();
 
@@ -43,11 +51,16 @@ describe('ReceiveTask', () => {
 
   it('ignores message and keeps listeners if message id doesn´t match', () => {
     const messages = [];
-    task.behaviour.messageRef = {id: 'message_1'};
+    task.behaviour.messageRef = { id: 'message_1' };
 
-    task.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true, consumerTag: '_test-tag'});
+    task.broker.subscribeTmp(
+      'execution',
+      'execute.completed',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true, consumerTag: '_test-tag' },
+    );
 
     task.run();
 
@@ -67,15 +80,25 @@ describe('ReceiveTask', () => {
 
   it('completes when expected message is caught', () => {
     const messages = [];
-    task.behaviour.messageRef = {id: 'message_1'};
+    task.behaviour.messageRef = { id: 'message_1' };
 
-    task.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true, consumerTag: '_test-tag-1'});
+    task.broker.subscribeTmp(
+      'execution',
+      'execute.completed',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true, consumerTag: '_test-tag-1' },
+    );
 
-    task.broker.subscribeTmp('event', 'activity.catch', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true, consumerTag: '_test-tag-2'});
+    task.broker.subscribeTmp(
+      'event',
+      'activity.catch',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true, consumerTag: '_test-tag-2' },
+    );
 
     task.run();
 
@@ -107,9 +130,14 @@ describe('ReceiveTask', () => {
 
   it('completes when anonymous message is caught', () => {
     const messages = [];
-    task.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true, consumerTag: '_test-tag'});
+    task.broker.subscribeTmp(
+      'execution',
+      'execute.completed',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true, consumerTag: '_test-tag' },
+    );
 
     task.run();
 
@@ -122,16 +150,21 @@ describe('ReceiveTask', () => {
   });
 
   it('completes if messaged before execution', () => {
-    task.behaviour.messageRef = {id: 'message_1'};
+    task.behaviour.messageRef = { id: 'message_1' };
 
     task.broker.publish('api', 'definition.message.def_1', {
       message: task.getActivityById('message_1').resolve(),
     });
 
     const messages = [];
-    task.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true, consumerTag: '_test-tag'});
+    task.broker.subscribeTmp(
+      'execution',
+      'execute.completed',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true, consumerTag: '_test-tag' },
+    );
 
     task.run();
 
@@ -144,9 +177,14 @@ describe('ReceiveTask', () => {
 
   it('discards if discarded', () => {
     const messages = [];
-    task.broker.subscribeTmp('execution', 'execute.discard', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true, consumerTag: '_test-tag'});
+    task.broker.subscribeTmp(
+      'execution',
+      'execute.discard',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true, consumerTag: '_test-tag' },
+    );
 
     task.run();
 
@@ -157,9 +195,14 @@ describe('ReceiveTask', () => {
 
   it('completes if signaled', () => {
     const messages = [];
-    task.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true, consumerTag: '_test-tag'});
+    task.broker.subscribeTmp(
+      'execution',
+      'execute.completed',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true, consumerTag: '_test-tag' },
+    );
 
     task.run();
 
@@ -170,9 +213,14 @@ describe('ReceiveTask', () => {
 
   it('stops and clears listeners if stopped', () => {
     const messages = [];
-    task.broker.subscribeTmp('execution', 'execute.#', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true, consumerTag: '_test-tag'});
+    task.broker.subscribeTmp(
+      'execution',
+      'execute.#',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true, consumerTag: '_test-tag' },
+    );
 
     task.run();
     task.getApi().stop();

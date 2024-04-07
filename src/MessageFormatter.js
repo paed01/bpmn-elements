@@ -1,15 +1,15 @@
-import {cloneMessage} from './messageHelper.js';
-import {getUniqueId} from './shared.js';
-import {ActivityError} from './error/Errors.js';
-import {getRoutingKeyPattern} from 'smqp';
+import { cloneMessage } from './messageHelper.js';
+import { getUniqueId } from './shared.js';
+import { ActivityError } from './error/Errors.js';
+import { getRoutingKeyPattern } from 'smqp';
 
 const kOnMessage = Symbol.for('onMessage');
 const kExecution = Symbol.for('execution');
 
-export {Formatter};
+export { Formatter };
 
 function Formatter(element, formatQ) {
-  const {id, broker, logger} = element;
+  const { id, broker, logger } = element;
   this.id = id;
   this.broker = broker;
   this.logger = logger;
@@ -21,16 +21,20 @@ function Formatter(element, formatQ) {
 }
 
 Formatter.prototype.format = function format(message, callback) {
-  const correlationId = this._runId = getUniqueId(message.fields.routingKey);
+  const correlationId = (this._runId = getUniqueId(message.fields.routingKey));
   const consumerTag = '_formatter-' + correlationId;
   const formatQ = this.formatQ;
 
-  formatQ.queueMessage({
-    routingKey: '_formatting.exec',
-  }, {}, {
-    correlationId,
-    persistent: false,
-  });
+  formatQ.queueMessage(
+    {
+      routingKey: '_formatting.exec',
+    },
+    {},
+    {
+      correlationId,
+      persistent: false,
+    },
+  );
 
   this[kExecution] = {
     correlationId,
@@ -49,7 +53,7 @@ Formatter.prototype.format = function format(message, callback) {
 };
 
 Formatter.prototype._onMessage = function onMessage(routingKey, message) {
-  const {formatKey, correlationId, pending, executeMessage} = this[kExecution];
+  const { formatKey, correlationId, pending, executeMessage } = this[kExecution];
   const asyncFormatting = pending.length;
 
   switch (routingKey) {
@@ -72,7 +76,7 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
       }
 
       if (asyncFormatting) {
-        const {isError, message: startMessage} = this._popFormatStart(pending, routingKey);
+        const { isError, message: startMessage } = this._popFormatStart(pending, routingKey);
         if (startMessage) startMessage.ack();
 
         if (isError) {
@@ -91,7 +95,7 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
 };
 
 Formatter.prototype._complete = function complete(message, isError) {
-  const {runMessage, formatKey, callback, formatted, executeMessage} = this[kExecution];
+  const { runMessage, formatKey, callback, formatted, executeMessage } = this[kExecution];
   this[kExecution] = null;
   if (executeMessage) executeMessage.ack();
 
@@ -134,15 +138,15 @@ Formatter.prototype._decorate = function decorate(withContent) {
 Formatter.prototype._popFormatStart = function popFormattingStart(pending, routingKey) {
   for (let idx = 0; idx < pending.length; idx++) {
     const msg = pending[idx];
-    const {endRoutingKey, errorRoutingKey = '#.error'} = msg.content;
+    const { endRoutingKey, errorRoutingKey = '#.error' } = msg.content;
 
     if (endRoutingKey && getRoutingKeyPattern(endRoutingKey).test(routingKey)) {
       this._debug(`completed formatting ${msg.fields.routingKey} message content with formatter ${routingKey}`);
       pending.splice(idx, 1);
-      return {message: msg};
+      return { message: msg };
     } else if (getRoutingKeyPattern(errorRoutingKey).test(routingKey)) {
       pending.splice(idx, 1);
-      return {isError: true, message: msg};
+      return { isError: true, message: msg };
     }
   }
 

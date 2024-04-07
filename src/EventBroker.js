@@ -1,13 +1,7 @@
 import { Broker } from 'smqp';
 import { makeErrorFromMessage } from './error/Errors.js';
 
-export {
-  ActivityBroker,
-  DefinitionBroker,
-  MessageFlowBroker,
-  ProcessBroker,
-  EventBroker
-};
+export { ActivityBroker, DefinitionBroker, MessageFlowBroker, ProcessBroker, EventBroker };
 
 function ActivityBroker(activity) {
   const executionBroker = ExecutionBroker(activity, 'activity');
@@ -16,7 +10,7 @@ function ActivityBroker(activity) {
 
 function ProcessBroker(owner) {
   const executionBroker = ExecutionBroker(owner, 'process');
-  executionBroker.broker.assertQueue('api-q', {durable: false, autoDelete: false});
+  executionBroker.broker.assertQueue('api-q', { durable: false, autoDelete: false });
   executionBroker.broker.bindQueue('api-q', 'api', '#');
   return executionBroker;
 }
@@ -26,29 +20,29 @@ function DefinitionBroker(owner, onBrokerReturn) {
 }
 
 function MessageFlowBroker(owner) {
-  const eventBroker = new EventBroker(owner, {prefix: 'messageflow', autoDelete: false, durable: false});
+  const eventBroker = new EventBroker(owner, { prefix: 'messageflow', autoDelete: false, durable: false });
   const broker = eventBroker.broker;
 
-  broker.assertExchange('message', 'topic', {durable: true, autoDelete: false});
-  broker.assertQueue('message-q', {durable: true, autoDelete: false});
+  broker.assertExchange('message', 'topic', { durable: true, autoDelete: false });
+  broker.assertQueue('message-q', { durable: true, autoDelete: false });
   broker.bindQueue('message-q', 'message', 'message.#');
 
   return eventBroker;
 }
 
 function ExecutionBroker(brokerOwner, prefix, onBrokerReturn) {
-  const eventBroker = new EventBroker(brokerOwner, {prefix, autoDelete: false, durable: false}, onBrokerReturn);
+  const eventBroker = new EventBroker(brokerOwner, { prefix, autoDelete: false, durable: false }, onBrokerReturn);
   const broker = eventBroker.broker;
 
-  broker.assertExchange('api', 'topic', {autoDelete: false, durable: false});
-  broker.assertExchange('run', 'topic', {autoDelete: false});
-  broker.assertExchange('format', 'topic', {autoDelete: false});
-  broker.assertExchange('execution', 'topic', {autoDelete: false});
+  broker.assertExchange('api', 'topic', { autoDelete: false, durable: false });
+  broker.assertExchange('run', 'topic', { autoDelete: false });
+  broker.assertExchange('format', 'topic', { autoDelete: false });
+  broker.assertExchange('execution', 'topic', { autoDelete: false });
 
-  const runQ = broker.assertQueue('run-q', {durable: true, autoDelete: false});
-  const formatRunQ = broker.assertQueue('format-run-q', {durable: true, autoDelete: false});
-  const executionQ = broker.assertQueue('execution-q', {durable: true, autoDelete: false});
-  broker.assertQueue('inbound-q', {durable: true, autoDelete: false});
+  const runQ = broker.assertQueue('run-q', { durable: true, autoDelete: false });
+  const formatRunQ = broker.assertQueue('format-run-q', { durable: true, autoDelete: false });
+  const executionQ = broker.assertQueue('execution-q', { durable: true, autoDelete: false });
+  broker.assertQueue('inbound-q', { durable: true, autoDelete: false });
 
   broker.bindQueue(runQ.name, 'run', 'run.#');
   broker.bindQueue(formatRunQ.name, 'format', 'run.#');
@@ -61,7 +55,7 @@ function EventBroker(brokerOwner, options, onBrokerReturn) {
   this.options = options;
   this.eventPrefix = options.prefix;
 
-  const broker = this.broker = Broker(brokerOwner);
+  const broker = (this.broker = Broker(brokerOwner));
   broker.assertExchange('event', 'topic', options);
   broker.on('return', onBrokerReturn ? onBrokerReturn.bind(brokerOwner) : this._onBrokerReturnFn.bind(this));
 
@@ -76,7 +70,7 @@ EventBroker.prototype.on = function on(eventName, callback, eventOptions = { onc
   const key = this._getEventRoutingKey(eventName);
 
   if (eventOptions.once) return this.broker.subscribeOnce('event', key, eventCallback, eventOptions);
-  return this.broker.subscribeTmp('event', key, eventCallback, {...eventOptions, noAck: true});
+  return this.broker.subscribeTmp('event', key, eventCallback, { ...eventOptions, noAck: true });
 
   function eventCallback(routingKey, message, owner) {
     if (eventName === 'error') return callback(makeErrorFromMessage(message));
@@ -85,7 +79,7 @@ EventBroker.prototype.on = function on(eventName, callback, eventOptions = { onc
 };
 
 EventBroker.prototype.once = function once(eventName, callback, eventOptions = {}) {
-  return this.on(eventName, callback, {...eventOptions, once: true});
+  return this.on(eventName, callback, { ...eventOptions, once: true });
 };
 
 EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
@@ -93,8 +87,8 @@ EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
 
   return new Promise((resolve, reject) => {
     const consumers = [
-      this.broker.subscribeTmp('event', key, eventCallback, {noAck: true}),
-      this.broker.subscribeTmp('event', '*.error', errorCallback, {noAck: true}),
+      this.broker.subscribeTmp('event', key, eventCallback, { noAck: true }),
+      this.broker.subscribeTmp('event', '*.error', errorCallback, { noAck: true }),
     ];
 
     function eventCallback(routingKey, message, owner) {
@@ -118,11 +112,11 @@ EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
 };
 
 EventBroker.prototype.emit = function emit(eventName, content, props) {
-  this.broker.publish('event', `${this.eventPrefix}.${eventName}`, {...content}, {type: eventName, ...props});
+  this.broker.publish('event', `${this.eventPrefix}.${eventName}`, { ...content }, { type: eventName, ...props });
 };
 
 EventBroker.prototype.emitFatal = function emitFatal(error, content) {
-  this.emit('error', {...content, error}, {mandatory: true});
+  this.emit('error', { ...content, error }, { mandatory: true });
 };
 
 EventBroker.prototype._onBrokerReturnFn = function onBrokerReturnFn(message) {

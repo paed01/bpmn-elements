@@ -40,11 +40,11 @@ describe('EventBasedGateway', () => {
       const [bp] = context.getProcesses();
 
       bp.run();
-      bp.signal({id: 'usertask'});
+      bp.signal({ id: 'usertask' });
 
       expect(bp.counters).to.have.property('completed', 0);
 
-      bp.signal({id: 'receive'});
+      bp.signal({ id: 'receive' });
 
       expect(bp.counters).to.have.property('completed', 1);
     });
@@ -73,7 +73,7 @@ describe('EventBasedGateway', () => {
       const receive = bp.getActivityById('receive');
 
       bp.run();
-      bp.signal({id: 'usertask'});
+      bp.signal({ id: 'usertask' });
 
       expect(gateway.counters).to.have.property('taken', 1);
 
@@ -86,7 +86,7 @@ describe('EventBasedGateway', () => {
       expect(usertask.counters, 'usertask').to.have.property('taken', 1);
       expect(receive.counters, 'receive').to.have.property('discarded', 1);
 
-      bp.signal({id: 'usertask'});
+      bp.signal({ id: 'usertask' });
 
       expect(bp.counters).to.have.property('completed', 0);
       expect(gateway.counters, 'gateway').to.have.property('taken', 2);
@@ -94,7 +94,7 @@ describe('EventBasedGateway', () => {
       expect(usertask.counters, 'usertask').to.have.property('taken', 2);
       expect(receive.counters, 'receive').to.have.property('discarded', 2);
 
-      bp.signal({id: 'receive'});
+      bp.signal({ id: 'receive' });
 
       expect(bp.counters).to.have.property('completed', 1);
       expect(gateway.counters, 'gateway').to.have.property('taken', 3);
@@ -135,14 +135,14 @@ describe('EventBasedGateway', () => {
       });
 
       bp1.run();
-      bp1.signal({id: 'usertask'});
+      bp1.signal({ id: 'usertask' });
 
       expect(bp1.counters).to.have.property('completed', 1);
 
       const [bp2] = context.clone().getProcesses();
       bp2.recover(state);
       bp2.resume();
-      bp2.signal({id: 'usertask'});
+      bp2.signal({ id: 'usertask' });
 
       expect(bp2.counters).to.have.property('completed', 1);
       const receive = bp2.getActivityById('receive');
@@ -177,7 +177,7 @@ describe('EventBasedGateway', () => {
       });
 
       bp1.run();
-      bp1.signal({id: 'usertask'});
+      bp1.signal({ id: 'usertask' });
 
       expect(bp1.counters).to.have.property('completed', 1);
 
@@ -185,7 +185,7 @@ describe('EventBasedGateway', () => {
 
       bp2.recover(state);
       bp2.resume();
-      bp2.signal({id: 'usertask'});
+      bp2.signal({ id: 'usertask' });
 
       expect(bp2.counters).to.have.property('completed', 1);
       const receive = bp2.getActivityById('receive');

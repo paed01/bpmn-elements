@@ -1,5 +1,4 @@
-ParallelGateway
-===============
+# ParallelGateway
 
 Join or fork gateway.
 
@@ -8,9 +7,11 @@ Join or fork gateway.
 There is an edge case where the behaviour of a joining parallel gateway is not clear to yours truly. Suggestions on how to tackle this are appreciated.
 
 ### Case
+
 If inbound sequence flows are touched more than once before the last join inbound flow have completed: what is the expected joining gateway behaviour?
 
 ### Proposed behaviours
+
 1. Ignore inbound flows that are touched more than once before all have been touched
 2. Collect all inbound flow actions and complete join as soon as the last inbound flow is touched
 

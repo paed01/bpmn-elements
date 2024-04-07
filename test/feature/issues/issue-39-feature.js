@@ -72,9 +72,9 @@ class FlorianSequenceFlow extends SequenceFlow {
     function asyncExecute(message, callback) {
       execute.call(condition, message, (executeErr, result) => {
         if (executeErr) return callback(executeErr);
-        return Promise.resolve(result).then(r =>
-          callback ? callback(null, r) : result).catch(err =>
-          callback ? callback(err) : err);
+        return Promise.resolve(result)
+          .then((r) => (callback ? callback(null, r) : result))
+          .catch((err) => (callback ? callback(err) : err));
       });
     }
   }

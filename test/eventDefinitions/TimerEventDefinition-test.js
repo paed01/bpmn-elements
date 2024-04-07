@@ -2,9 +2,9 @@ import ck from 'chronokinesis';
 import Environment from '../../src/Environment.js';
 import testHelpers from '../helpers/testHelpers.js';
 import TimerEventDefinition from '../../src/eventDefinitions/TimerEventDefinition.js';
-import {ActivityApi, DefinitionApi} from '../../src/Api.js';
-import {ActivityBroker} from '../../src/EventBroker.js';
-import {Timers} from '../../src/Timers.js';
+import { ActivityApi, DefinitionApi } from '../../src/Api.js';
+import { ActivityBroker } from '../../src/EventBroker.js';
+import { Timers } from '../../src/Timers.js';
 
 describe('TimerEventDefinition', () => {
   let event;
@@ -12,7 +12,7 @@ describe('TimerEventDefinition', () => {
     event = {
       id: 'event',
       type: 'bpmn:Event',
-      environment: new Environment({Logger: testHelpers.Logger}),
+      environment: new Environment({ Logger: testHelpers.Logger }),
     };
     event.broker = ActivityBroker(event).broker;
   });
@@ -31,9 +31,14 @@ describe('TimerEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -147,13 +152,23 @@ describe('TimerEventDefinition', () => {
         },
       });
 
-      event.broker.subscribeTmp('execution', 'execute.completed', () => {
-        throw new Error('Should not complete');
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        () => {
+          throw new Error('Should not complete');
+        },
+        { noAck: true },
+      );
 
-      event.broker.subscribeTmp('execution', 'execute.error', () => {
-        throw new Error('Should not throw');
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.error',
+        () => {
+          throw new Error('Should not throw');
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -235,7 +250,7 @@ describe('TimerEventDefinition', () => {
 
         const timers = [];
         function fakeSetTimeout(callback, delay, ...args) {
-          const ref = {callback, delay, args};
+          const ref = { callback, delay, args };
           timers.push(ref);
           return ref;
         }
@@ -371,7 +386,7 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
+        definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
         setTimeout(() => {
           ActivityApi(broker, timerMessage).stop();
@@ -404,7 +419,7 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
+        definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
         setTimeout(() => {
           ActivityApi(broker, timerMessage).stop();
@@ -438,9 +453,14 @@ describe('TimerEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -501,9 +521,14 @@ describe('TimerEventDefinition', () => {
       ck.travel(1993, 5, 28);
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.timeout', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.timeout',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -536,9 +561,14 @@ describe('TimerEventDefinition', () => {
         },
       });
 
-      event.broker.subscribeTmp('execution', 'execute.completed', () => {
-        done();
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        () => {
+          done();
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -563,18 +593,33 @@ describe('TimerEventDefinition', () => {
         },
       });
 
-      event.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
-        expect(msg.content).to.have.property('timeDate', 'Last tuesday');
-        expect(msg.content).to.not.have.property('timeout');
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.timer',
+        (_, msg) => {
+          expect(msg.content).to.have.property('timeDate', 'Last tuesday');
+          expect(msg.content).to.not.have.property('timeout');
+        },
+        { noAck: true },
+      );
 
-      event.broker.subscribeTmp('execution', 'execute.completed', () => {
-        throw new Error('Should not complete');
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        () => {
+          throw new Error('Should not complete');
+        },
+        { noAck: true },
+      );
 
-      event.broker.subscribeTmp('execution', 'execute.error', () => {
-        throw new Error('Should not throw');
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.error',
+        () => {
+          throw new Error('Should not throw');
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -707,15 +752,25 @@ describe('TimerEventDefinition', () => {
           },
         });
 
-        event.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
-          expect(msg.content).to.have.property('timeDate', 'Last tuesday');
-          expect(msg.content).to.not.have.property('timeout');
-          ActivityApi(event.broker, msg).stop();
-        }, {noAck: true});
+        event.broker.subscribeTmp(
+          'event',
+          'activity.timer',
+          (_, msg) => {
+            expect(msg.content).to.have.property('timeDate', 'Last tuesday');
+            expect(msg.content).to.not.have.property('timeout');
+            ActivityApi(event.broker, msg).stop();
+          },
+          { noAck: true },
+        );
 
-        event.broker.subscribeTmp('execution', 'execute.completed', () => {
-          throw new Error('Should not complete');
-        }, {noAck: true});
+        event.broker.subscribeTmp(
+          'execution',
+          'execute.completed',
+          () => {
+            throw new Error('Should not complete');
+          },
+          { noAck: true },
+        );
 
         definition.execute({
           fields: {},
@@ -744,9 +799,14 @@ describe('TimerEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -852,7 +912,7 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
+        definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
         ActivityApi(broker, timerMessage).stop();
 
@@ -880,7 +940,7 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
+        definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
         ActivityApi(broker, timerMessage).stop();
 
@@ -909,7 +969,7 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
+        definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
         ActivityApi(broker, timerMessage).stop();
 
@@ -939,9 +999,14 @@ describe('TimerEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.timer', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.timer',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -978,9 +1043,14 @@ describe('TimerEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.timer',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -1018,11 +1088,16 @@ describe('TimerEventDefinition', () => {
         },
       });
 
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        expect(msg.content).to.have.property('timerType', 'timeDate');
-        expect(msg.content).to.have.property('runningTime').that.is.above(0);
-        done();
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        (_, msg) => {
+          expect(msg.content).to.have.property('timerType', 'timeDate');
+          expect(msg.content).to.have.property('runningTime').that.is.above(0);
+          done();
+        },
+        { noAck: true },
+      );
 
       setTimeout(() => {
         definition.execute({
@@ -1051,11 +1126,16 @@ describe('TimerEventDefinition', () => {
         },
       });
 
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        expect(msg.content).to.have.property('timerType', 'timeDuration');
-        expect(msg.content).to.have.property('runningTime').that.is.above(0);
-        done();
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        (_, msg) => {
+          expect(msg.content).to.have.property('timerType', 'timeDuration');
+          expect(msg.content).to.have.property('runningTime').that.is.above(0);
+          done();
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -1072,9 +1152,9 @@ describe('TimerEventDefinition', () => {
   });
 
   [
-    {timeDuration: 'PT1M'},
-    {timeDate: '1993-06-27'},
-    {timeCycle: 'R3/PT10H'},
+    { timeDuration: 'PT1M' },
+    { timeDate: '1993-06-27' },
+    { timeCycle: 'R3/PT10H' },
     {
       timeDuration: 'PT1M',
       timeDate: '1993-06-27',
@@ -1099,9 +1179,14 @@ describe('TimerEventDefinition', () => {
       describe('cancel ' + descr, () => {
         it('completes when parent is cancelled', (done) => {
           const messages = [];
-          event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-            messages.push(msg);
-          }, {noAck: true});
+          event.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (_, msg) => {
+              messages.push(msg);
+            },
+            { noAck: true },
+          );
 
           event.broker.subscribeOnce('execution', 'execute.completed', () => {
             expect(messages[1].fields).to.have.property('routingKey', 'activity.timeout');
@@ -1129,9 +1214,14 @@ describe('TimerEventDefinition', () => {
             done();
           });
 
-          event.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
-            ActivityApi(event.broker, msg).cancel();
-          }, {noAck: true});
+          event.broker.subscribeTmp(
+            'event',
+            'activity.timer',
+            (_, msg) => {
+              ActivityApi(event.broker, msg).cancel();
+            },
+            { noAck: true },
+          );
 
           definition.execute({
             fields: {},
@@ -1147,13 +1237,23 @@ describe('TimerEventDefinition', () => {
         });
 
         it('completes if cancelled on activity timer event', (done) => {
-          event.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
-            ActivityApi(event.broker, msg).cancel();
-          }, {noAck: true});
+          event.broker.subscribeTmp(
+            'event',
+            'activity.timer',
+            (_, msg) => {
+              ActivityApi(event.broker, msg).cancel();
+            },
+            { noAck: true },
+          );
 
-          event.broker.subscribeTmp('execution', 'execute.completed', () => {
-            done();
-          }, {noAck: true});
+          event.broker.subscribeTmp(
+            'execution',
+            'execute.completed',
+            () => {
+              done();
+            },
+            { noAck: true },
+          );
 
           definition.execute({
             fields: {},
@@ -1170,9 +1270,14 @@ describe('TimerEventDefinition', () => {
 
         it('completes when delegated a cancelled with parent id', (done) => {
           const messages = [];
-          event.broker.subscribeTmp('event', 'activity.timeout', (_, msg) => {
-            messages.push(msg);
-          }, {noAck: true});
+          event.broker.subscribeTmp(
+            'event',
+            'activity.timeout',
+            (_, msg) => {
+              messages.push(msg);
+            },
+            { noAck: true },
+          );
 
           event.broker.subscribeOnce('execution', 'execute.completed', () => {
             expect(messages[0].content).to.have.property('runningTime');
@@ -1191,13 +1296,16 @@ describe('TimerEventDefinition', () => {
             },
           });
 
-          DefinitionApi(event.broker, {content: {id: 'Def_1', executionId: 'Def_1_1'}}).cancel({
-            id: 'event',
-          }, {delegate: true});
+          DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel(
+            {
+              id: 'event',
+            },
+            { delegate: true },
+          );
         });
 
         it('ignored when delegated cancel with other parent id', () => {
-          event.broker.subscribeOnce('execution', 'execute.completed', (_, {content}) => {
+          event.broker.subscribeOnce('execution', 'execute.completed', (_, { content }) => {
             if (content.state === 'cancel') throw new Error('Should have ignored cancel');
           });
 
@@ -1213,18 +1321,26 @@ describe('TimerEventDefinition', () => {
             },
           });
 
-          DefinitionApi(event.broker, {content: {id: 'Def_1', executionId: 'Def_1_1'}}).cancel({
-            id: 'task',
-          }, {delegate: true});
+          DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel(
+            {
+              id: 'task',
+            },
+            { delegate: true },
+          );
 
           definition.stop();
         });
 
         it('completes when delegated cancel with event definition execution id', (done) => {
           const messages = [];
-          event.broker.subscribeTmp('event', 'activity.timeout', (_, msg) => {
-            messages.push(msg);
-          }, {noAck: true});
+          event.broker.subscribeTmp(
+            'event',
+            'activity.timeout',
+            (_, msg) => {
+              messages.push(msg);
+            },
+            { noAck: true },
+          );
 
           event.broker.subscribeOnce('execution', 'execute.completed', () => {
             expect(messages[0].content).to.have.property('runningTime');
@@ -1243,13 +1359,16 @@ describe('TimerEventDefinition', () => {
             },
           });
 
-          DefinitionApi(event.broker, {content: {id: 'Def_1', executionId: 'Def_1_1'}}).cancel({
-            executionId: 'event_1_0',
-          }, {delegate: true});
+          DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel(
+            {
+              executionId: 'event_1_0',
+            },
+            { delegate: true },
+          );
         });
 
         it('ignored when delegated cancel with parent id but different execution id', () => {
-          event.broker.subscribeOnce('execution', 'execute.completed', (_, {content}) => {
+          event.broker.subscribeOnce('execution', 'execute.completed', (_, { content }) => {
             if (content.state === 'cancel') throw new Error('Should have ignored cancel');
           });
 
@@ -1270,10 +1389,13 @@ describe('TimerEventDefinition', () => {
               id: 'Def_1',
               executionId: 'Def_1_1',
             },
-          }).cancel({
-            id: 'event',
-            executionId: 'event_1_1',
-          }, {delegate: true});
+          }).cancel(
+            {
+              id: 'event',
+              executionId: 'event_1_1',
+            },
+            { delegate: true },
+          );
 
           definition.stop();
         });
@@ -1309,9 +1431,14 @@ describe('TimerEventDefinition', () => {
             done();
           });
 
-          event.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
-            ActivityApi(event.broker, msg).discard();
-          }, {noAck: true});
+          event.broker.subscribeTmp(
+            'event',
+            'activity.timer',
+            (_, msg) => {
+              ActivityApi(event.broker, msg).discard();
+            },
+            { noAck: true },
+          );
 
           definition.execute({
             fields: {},
@@ -1330,8 +1457,8 @@ describe('TimerEventDefinition', () => {
       describe('stop ' + descr, () => {
         it('on activity timer event keeps message in queue and cancels consumers', () => {
           const broker = event.broker;
-          const executeQ = broker.assertQueue('execute-q', {durable: true, autoDelete: false});
-          broker.bindQueue(executeQ.name, 'execution', 'execute.#', {priority: 100});
+          const executeQ = broker.assertQueue('execute-q', { durable: true, autoDelete: false });
+          broker.bindQueue(executeQ.name, 'execution', 'execute.#', { priority: 100 });
 
           broker.subscribeOnce('event', 'activity.timer', (_, msg) => {
             ActivityApi(broker, msg).stop();
@@ -1364,7 +1491,7 @@ describe('TimerEventDefinition', () => {
               timerMessage = msg;
             });
 
-            definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
+            definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
             ActivityApi(broker, timerMessage).stop();
 
@@ -1385,7 +1512,7 @@ describe('TimerEventDefinition', () => {
               timerMessage = msg;
             });
 
-            definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
+            definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
             ActivityApi(broker, timerMessage).stop();
 
@@ -1407,7 +1534,7 @@ describe('TimerEventDefinition', () => {
               timerMessage = msg;
             });
 
-            definition.execute({fields: {}, content: {executionId: 'def-execution-id'}});
+            definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
             ActivityApi(broker, timerMessage).stop();
 
@@ -1487,9 +1614,14 @@ describe('TimerEventDefinition', () => {
         type: 'bpmn:TimerEventDefinition',
       });
 
-      event.broker.subscribeTmp('execution', 'execute.completed', () => {
-        done();
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        () => {
+          done();
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -1515,9 +1647,14 @@ describe('TimerEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -1576,7 +1713,7 @@ describe('TimerEventDefinition', () => {
         },
       });
 
-      DefinitionApi(event.broker, {content: {id: 'Def_1', executionId: 'Def_1_1'}}).cancel({
+      DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel({
         id: 'event',
       });
 
@@ -1607,7 +1744,7 @@ describe('TimerEventDefinition', () => {
         },
       });
 
-      DefinitionApi(event.broker, {content: {id: 'Def_1', executionId: 'Def_1_1'}}).cancel(undefined, {delegate: true});
+      DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel(undefined, { delegate: true });
 
       definition.stop();
     });
@@ -1621,9 +1758,14 @@ describe('TimerEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {
@@ -1673,9 +1815,14 @@ describe('TimerEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.timer',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {
@@ -1708,9 +1855,14 @@ describe('TimerEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.timer',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {

@@ -160,7 +160,7 @@ Feature('Linking', () => {
       `;
 
       context = await testHelpers.context(source, {
-        extensions: {js: JsExtension},
+        extensions: { js: JsExtension },
       });
 
       definition = new Definition(context, {

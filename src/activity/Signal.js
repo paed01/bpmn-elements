@@ -1,7 +1,7 @@
 export default function Signal(signalDef, context) {
-  const {id, type = 'Signal', name, parent: originalParent} = signalDef;
-  const {environment} = context;
-  const parent = {...originalParent};
+  const { id, type = 'Signal', name, parent: originalParent } = signalDef;
+  const { environment } = context;
+  const parent = { ...originalParent };
 
   return {
     id,
@@ -16,8 +16,8 @@ export default function Signal(signalDef, context) {
       id,
       type,
       messageType: 'signal',
-      ...(name && {name: environment.resolveExpression(name, executionMessage)}),
-      parent: {...parent},
+      ...(name && { name: environment.resolveExpression(name, executionMessage) }),
+      parent: { ...parent },
     };
   }
 }

@@ -1,11 +1,11 @@
-Shared Api
-==========
+# Shared Api
 
 Activity, Process, and Definition elements share the same api interface. The element must not necessarely implement listeners for all the api calls.
 
 The Api is composed from the element event message.
 
 Api properties:
+
 - `id`: element id
 - `type`: element type
 - `name`: element name
@@ -32,6 +32,7 @@ Api properties:
 Cancel run. Publishes cancel message via element broker on element broker `api` exchange.
 
 Arguments:
+
 - `message`: optional object sent as message
 - `options`: optional object with broker message options
   - `delegate`: optional boolean to delegate the cancel to all interested parties
@@ -45,6 +46,7 @@ Discard run. Publishes discard message on element broker `api` exchange.
 Signal activity. Publishes signal message on element broker `api` exchange.
 
 Arguments:
+
 - `message`: signal message
 - `options`: optional object with broker message options
   - `delegate`: optional boolean to delegate the signal to all interested parties
@@ -70,6 +72,7 @@ Utility function to create new message content from the api message.
 Utility function to publish message with element broker.
 
 Arguments:
+
 - `action`: message action, will be prefixed with the element type, e.g. `signal` will be sent as `activity.signal` if used to signal activity
 - `content`: optional message content
 - `options`: optional object with broker message options

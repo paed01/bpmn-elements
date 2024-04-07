@@ -81,7 +81,7 @@ Feature('Stop and resume', () => {
 
     When('resumed and signaled', () => {
       definition.resume();
-      definition.signal({id: stoppedAt, executionId: stoppedAtExecutionIds.shift()});
+      definition.signal({ id: stoppedAt, executionId: stoppedAtExecutionIds.shift() });
     });
 
     Then('run has stopped at user task', () => {
@@ -91,7 +91,7 @@ Feature('Stop and resume', () => {
 
     When('resumed and signaled', () => {
       definition.resume();
-      definition.signal({id: stoppedAt, executionId: stoppedAtExecutionIds.shift()});
+      definition.signal({ id: stoppedAt, executionId: stoppedAtExecutionIds.shift() });
     });
 
     Then('run has stopped at parallell looped activity', () => {
@@ -101,9 +101,9 @@ Feature('Stop and resume', () => {
 
     When('resumed and signal all pending parallell iteration', () => {
       definition.resume();
-      definition.signal({id: stoppedAt, executionId: stoppedAtExecutionIds.shift()});
-      definition.signal({id: stoppedAt, executionId: stoppedAtExecutionIds.shift()});
-      definition.signal({id: stoppedAt, executionId: stoppedAtExecutionIds.shift()});
+      definition.signal({ id: stoppedAt, executionId: stoppedAtExecutionIds.shift() });
+      definition.signal({ id: stoppedAt, executionId: stoppedAtExecutionIds.shift() });
+      definition.signal({ id: stoppedAt, executionId: stoppedAtExecutionIds.shift() });
     });
 
     Then('run has stopped at receive task', () => {
@@ -113,7 +113,7 @@ Feature('Stop and resume', () => {
 
     When('resumed and signaled', () => {
       definition.resume();
-      definition.signal({id: stoppedAt, executionId: stoppedAtExecutionIds.shift()});
+      definition.signal({ id: stoppedAt, executionId: stoppedAtExecutionIds.shift() });
     });
 
     Then('run has stopped at first sequential looped activity iteration', () => {
@@ -123,7 +123,7 @@ Feature('Stop and resume', () => {
 
     When('resumed and signaled', () => {
       definition.resume();
-      definition.signal({id: stoppedAt, executionId: stoppedAtExecutionIds.shift()});
+      definition.signal({ id: stoppedAt, executionId: stoppedAtExecutionIds.shift() });
     });
 
     Then('run has stopped at second sequential looped activity iteration', () => {
@@ -133,7 +133,7 @@ Feature('Stop and resume', () => {
 
     When('resumed and signaled', () => {
       definition.resume();
-      definition.signal({id: stoppedAt, executionId: stoppedAtExecutionIds.shift()});
+      definition.signal({ id: stoppedAt, executionId: stoppedAtExecutionIds.shift() });
     });
 
     Then('run has stopped at third sequential looped activity iteration', () => {
@@ -143,7 +143,7 @@ Feature('Stop and resume', () => {
 
     When('resumed and signaled', () => {
       definition.resume();
-      definition.signal({id: stoppedAt, executionId: stoppedAtExecutionIds.shift()});
+      definition.signal({ id: stoppedAt, executionId: stoppedAtExecutionIds.shift() });
     });
 
     Then('run has stopped at anonymous signal event', () => {
@@ -191,7 +191,7 @@ Feature('Stop and resume', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, {timers: Timers()});
+      const context = await testHelpers.context(source, { timers: Timers() });
       definition = new Definition(context);
     });
 
@@ -240,7 +240,7 @@ Feature('Stop and resume', () => {
 
     When('recovered and resumed', async () => {
       ck.travel(Date.now() + 5000);
-      const context = await testHelpers.context(source, {timers: Timers()});
+      const context = await testHelpers.context(source, { timers: Timers() });
       definition = new Definition(context);
 
       definition.recover(state);
@@ -257,7 +257,7 @@ Feature('Stop and resume', () => {
     });
 
     Given('a listener that will save state at activity timer', async () => {
-      const context = await testHelpers.context(source, {timers: Timers()});
+      const context = await testHelpers.context(source, { timers: Timers() });
       definition = new Definition(context);
     });
 
@@ -291,7 +291,7 @@ Feature('Stop and resume', () => {
     When('recovered and resumed', async () => {
       ck.travel(Date.now() + 5000);
 
-      const context = await testHelpers.context(source, {timers: Timers()});
+      const context = await testHelpers.context(source, { timers: Timers() });
       definition = new Definition(context);
 
       definition.recover(state);
@@ -369,17 +369,22 @@ Feature('Stop and resume', () => {
     }
 
     Given('a definition with a task with two timeouts, first loops back to previous task', async () => {
-      context = await testHelpers.context(source, {timers: Timers()});
+      context = await testHelpers.context(source, { timers: Timers() });
       definition = new Definition(context);
     });
 
     let state;
     When('ran and stopped at definition second bound activity.timer', (done) => {
-      definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
-        if (msg.content.id !== 'timeout2') return;
-        definition.broker.cancel(msg.fields.consumerTag);
-        setImmediate(() => definition.stop());
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.timer',
+        (_, msg) => {
+          if (msg.content.id !== 'timeout2') return;
+          definition.broker.cancel(msg.fields.consumerTag);
+          setImmediate(() => definition.stop());
+        },
+        { noAck: true },
+      );
 
       definition.once('stop', () => {
         state = definition.getState();
@@ -387,7 +392,7 @@ Feature('Stop and resume', () => {
       });
 
       definition.run();
-      definition.signal({id: 'task1'});
+      definition.signal({ id: 'task1' });
     });
 
     Then('state is saved', () => {
@@ -395,17 +400,22 @@ Feature('Stop and resume', () => {
     });
 
     When('recovered and resumed', async () => {
-      context = await testHelpers.context(source, {timers: Timers()});
+      context = await testHelpers.context(source, { timers: Timers() });
       definition = new Definition(context).recover(state);
       definition.resume();
     });
 
     And('first timeout kicks', (done) => {
-      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
-        if (msg.content.id !== 'timeout1') return;
-        definition.broker.cancel(msg.fields.consumerTag);
-        setImmediate(() => definition.stop());
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          if (msg.content.id !== 'timeout1') return;
+          definition.broker.cancel(msg.fields.consumerTag);
+          setImmediate(() => definition.stop());
+        },
+        { noAck: true },
+      );
 
       definition.once('stop', () => {
         state = definition.getState();
@@ -413,8 +423,8 @@ Feature('Stop and resume', () => {
       });
 
       expect(instances).to.have.length(2);
-      const idx = instances.findIndex(([,, msg]) => msg.id === 'timeout1');
-      const [cb,, ...args] = instances.splice(idx, 1).pop();
+      const idx = instances.findIndex(([, , msg]) => msg.id === 'timeout1');
+      const [cb, , ...args] = instances.splice(idx, 1).pop();
       cb(...args);
     });
 
@@ -423,21 +433,26 @@ Feature('Stop and resume', () => {
     });
 
     When('recovered and resumed', async () => {
-      context = await testHelpers.context(source, {timers: Timers()});
+      context = await testHelpers.context(source, { timers: Timers() });
       definition = new Definition(context).recover(state);
       definition.resume();
     });
 
     And('previous task is signaled', () => {
-      definition.signal({id: 'task1'});
+      definition.signal({ id: 'task1' });
     });
 
     And('second timeout kicks and state is saved at timeout', (done) => {
-      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
-        if (msg.content.id !== 'timeout2') return;
-        definition.broker.cancel(msg.fields.consumerTag);
-        definition.stop();
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          if (msg.content.id !== 'timeout2') return;
+          definition.broker.cancel(msg.fields.consumerTag);
+          definition.stop();
+        },
+        { noAck: true },
+      );
 
       definition.once('stop', () => {
         state = definition.getState();
@@ -445,14 +460,14 @@ Feature('Stop and resume', () => {
       });
 
       expect(instances).to.have.length(2);
-      const idx = instances.findIndex(([,, msg]) => msg.id === 'timeout2');
-      const [cb,, ...args] = instances.splice(idx, 1).pop();
+      const idx = instances.findIndex(([, , msg]) => msg.id === 'timeout2');
+      const [cb, , ...args] = instances.splice(idx, 1).pop();
       cb(...args);
     });
 
     let leave;
     When('recovered and resumed', async () => {
-      context = await testHelpers.context(source, {timers: Timers()});
+      context = await testHelpers.context(source, { timers: Timers() });
       definition = new Definition(context).recover(state);
       leave = definition.waitFor('leave');
       definition.resume();
@@ -487,7 +502,7 @@ Feature('Stop and resume', () => {
     let state;
     When('first user task is signaled', () => {
       definition.run();
-      definition.signal({id: 'task1'});
+      definition.signal({ id: 'task1' });
     });
 
     Then('state is saved', () => {
@@ -520,7 +535,7 @@ Feature('Stop and resume', () => {
     });
 
     And('second user task is signaled', () => {
-      definition.signal({id: 'task2'});
+      definition.signal({ id: 'task2' });
     });
 
     Then('resumed flow completes', () => {
@@ -545,11 +560,11 @@ Feature('Stop and resume', () => {
 
       const activity = definition.getActivityById('task1');
       activity.broker.subscribeOnce('event', 'activity.execution.completed', () => {
-        activity.broker.publish('format', 'run.end.format', {endRoutingKey: 'run.end.format.complete'});
+        activity.broker.publish('format', 'run.end.format', { endRoutingKey: 'run.end.format.complete' });
         definition.stop();
       });
 
-      definition.broker.subscribeTmp('event', 'activity.#', (rk) => events.push(rk), {noAck: true});
+      definition.broker.subscribeTmp('event', 'activity.#', (rk) => events.push(rk), { noAck: true });
     });
 
     let stopped;
@@ -564,20 +579,14 @@ Feature('Stop and resume', () => {
     });
 
     And('activity events are emitted as expected', () => {
-      expect(events).to.deep.equal([
-        'activity.init',
-        'activity.enter',
-        'activity.start',
-        'activity.execution.completed',
-        'activity.stop',
-      ]);
+      expect(events).to.deep.equal(['activity.init', 'activity.enter', 'activity.start', 'activity.execution.completed', 'activity.stop']);
     });
 
     let end;
     When('recovered and resumed', () => {
       definition = new Definition(context.clone()).recover(state);
       end = definition.waitFor('end');
-      definition.broker.subscribeTmp('event', 'activity.#', (rk) => events.push(rk), {noAck: true});
+      definition.broker.subscribeTmp('event', 'activity.#', (rk) => events.push(rk), { noAck: true });
       definition.resume();
     });
 

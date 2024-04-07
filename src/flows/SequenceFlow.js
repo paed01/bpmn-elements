@@ -1,15 +1,15 @@
 import ExecutionScope from '../activity/ExecutionScope.js';
-import {cloneParent, cloneContent} from '../messageHelper.js';
-import {getUniqueId} from '../shared.js';
-import {EventBroker} from '../EventBroker.js';
-import {FlowApi} from '../Api.js';
+import { cloneParent, cloneContent } from '../messageHelper.js';
+import { getUniqueId } from '../shared.js';
+import { EventBroker } from '../EventBroker.js';
+import { FlowApi } from '../Api.js';
 
 const kCounters = Symbol.for('counters');
 
 export default SequenceFlow;
 
-function SequenceFlow(flowDef, {environment}) {
-  const {id, type = 'sequenceflow', name, parent, targetId, sourceId, isDefault, behaviour = {}} = flowDef;
+function SequenceFlow(flowDef, { environment }) {
+  const { id, type = 'sequenceflow', name, parent, targetId, sourceId, isDefault, behaviour = {} } = flowDef;
 
   this.id = id;
   this.type = type;
@@ -21,7 +21,7 @@ function SequenceFlow(flowDef, {environment}) {
   this.isDefault = isDefault;
   this.isSequenceFlow = true;
   this.environment = environment;
-  const logger = this.logger = environment.Logger(type.toLowerCase());
+  const logger = (this.logger = environment.Logger(type.toLowerCase()));
 
   this[kCounters] = {
     looped: 0,
@@ -30,7 +30,7 @@ function SequenceFlow(flowDef, {environment}) {
   };
 
   environment.registerScript(this);
-  const {broker, on, once, waitFor, emitFatal} = new EventBroker(this, {prefix: 'flow', durable: true, autoDelete: false});
+  const { broker, on, once, waitFor, emitFatal } = new EventBroker(this, { prefix: 'flow', durable: true, autoDelete: false });
   this.broker = broker;
   this.on = on;
   this.once = once;
@@ -42,12 +42,12 @@ function SequenceFlow(flowDef, {environment}) {
 
 Object.defineProperty(SequenceFlow.prototype, 'counters', {
   get() {
-    return {...this[kCounters]};
+    return { ...this[kCounters] };
   },
 });
 
 SequenceFlow.prototype.take = function take(content = {}) {
-  const {sequenceId} = content;
+  const { sequenceId } = content;
 
   this.logger.debug(`<${sequenceId} (${this.id})> take, target <${this.targetId}>`);
   ++this[kCounters].take;
@@ -58,8 +58,8 @@ SequenceFlow.prototype.take = function take(content = {}) {
 };
 
 SequenceFlow.prototype.discard = function discard(content = {}) {
-  const {sequenceId = getUniqueId(this.id)} = content;
-  const discardSequence = content.discardSequence = (content.discardSequence || []).slice();
+  const { sequenceId = getUniqueId(this.id) } = content;
+  const discardSequence = (content.discardSequence = (content.discardSequence || []).slice());
   if (discardSequence.indexOf(this.targetId) > -1) {
     ++this[kCounters].looped;
     this.logger.debug(`<${this.id}> discard loop detected <${this.sourceId}> -> <${this.targetId}>. Stop.`);
@@ -91,7 +91,7 @@ SequenceFlow.prototype.recover = function recover(state) {
 };
 
 SequenceFlow.prototype.getApi = function getApi(message) {
-  return FlowApi(this.broker, message || {content: this.createMessage()});
+  return FlowApi(this.broker, message || { content: this.createMessage() });
 };
 
 SequenceFlow.prototype.stop = function stop() {
@@ -101,29 +101,31 @@ SequenceFlow.prototype.stop = function stop() {
 SequenceFlow.prototype.shake = function shake(message) {
   const content = cloneContent(message.content);
   content.sequence = content.sequence || [];
-  content.sequence.push({id: this.id, type: this.type, isSequenceFlow: true, targetId: this.targetId});
+  content.sequence.push({ id: this.id, type: this.type, isSequenceFlow: true, targetId: this.targetId });
 
-  if (content.id === this.targetId) return this.broker.publish('event', 'flow.shake.loop', content, {persistent: false, type: 'shake'});
+  if (content.id === this.targetId) return this.broker.publish('event', 'flow.shake.loop', content, { persistent: false, type: 'shake' });
 
   for (const s of message.content.sequence || []) {
-    if (s.id === this.id) return this.broker.publish('event', 'flow.shake.loop', content, {persistent: false, type: 'shake'});
+    if (s.id === this.id) return this.broker.publish('event', 'flow.shake.loop', content, { persistent: false, type: 'shake' });
   }
 
-  this.broker.publish('event', 'flow.shake', content, {persistent: false, type: 'shake'});
+  this.broker.publish('event', 'flow.shake', content, { persistent: false, type: 'shake' });
 };
 
 SequenceFlow.prototype.getCondition = function getCondition() {
   const conditionExpression = this.behaviour.conditionExpression;
   if (!conditionExpression) return null;
 
-  const {language} = conditionExpression;
+  const { language } = conditionExpression;
   const script = this.environment.getScript(language, this);
   if (script) {
     return new ScriptCondition(this, script, language);
   }
 
   if (!conditionExpression.body) {
-    const msg = language ? `Condition expression script ${language} is unsupported or was not registered` : 'Condition expression without body is unsupported';
+    const msg = language
+      ? `Condition expression script ${language} is unsupported or was not registered`
+      : 'Condition expression without body is unsupported';
     return this.emitFatal(new Error(msg), this.createMessage());
   }
 
@@ -163,7 +165,7 @@ SequenceFlow.prototype._publishEvent = function publishEvent(action, content) {
     ...content,
   });
 
-  this.broker.publish('event', `flow.${action}`, eventContent, {type: action});
+  this.broker.publish('event', `flow.${action}`, eventContent, { type: action });
 };
 
 function ScriptCondition(owner, script, language) {

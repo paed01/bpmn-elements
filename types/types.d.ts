@@ -14,15 +14,15 @@ declare type signalMessage = {
    * - Activity id
    * - Signal-, Message-, Escalation id, etc
    */
-  id?: string,
+  id?: string;
   /**
    * Optional execution id
    * e.g. excutionId of a parallel multi instance user task
    */
-  executionId?: string,
+  executionId?: string;
   /** Any other input that will be added to completed activity output */
-  [x: string]: any,
-}
+  [x: string]: any;
+};
 
 declare interface ElementMessageContent {
   id?: string;
@@ -33,11 +33,11 @@ declare interface ElementMessageContent {
 }
 
 declare interface ElementBrokerMessage extends MessageMessage {
-  content: ElementMessageContent,
+  content: ElementMessageContent;
 }
 
 declare class EventDefinition {
-  constructor(activity: Activity, eventDefinitionElement: SerializableElement)
+  constructor(activity: Activity, eventDefinitionElement: SerializableElement);
   get id(): string;
   get type(): string;
   get executionId(): string;
@@ -46,9 +46,9 @@ declare class EventDefinition {
   get broker(): Broker;
   get logger(): ILogger;
   get reference(): {
-    id?: string,
-    name: string,
-    referenceType: string,
+    id?: string;
+    name: string;
+    referenceType: string;
   };
   [x: string]: any;
   execute(executeMessage: ElementBrokerMessage): void;
@@ -127,9 +127,9 @@ declare interface EnvironmentOptions {
 
 declare type startActivityFilterOptions = {
   /** Event definition id, i.e. Message, Signal, Error, etc */
-  referenceId?: string,
+  referenceId?: string;
   /** Event definition type, i.e. message, signal, error, etc */
-  referenceType?: string
+  referenceType?: string;
 };
 
 type filterPostponed = (elementApi: Api<ElementBase>) => boolean;
@@ -235,7 +235,7 @@ declare interface IActivityBehaviour {
   type: string;
   activity: Activity;
   environment: Environment;
-  new(activity: Activity, context: ContextInstance): IActivityBehaviour
+  new (activity: Activity, context: ContextInstance): IActivityBehaviour;
   execute(executeMessage: ElementBrokerMessage): void;
 }
 
@@ -320,7 +320,7 @@ declare class Environment {
   assignVariables(newVars: Record<string, any>): void;
   assignSettings(newSettings: Record<string, any>): void;
   registerScript(activity: any): Script;
-  getScript(language: string, identifier: {id: string, [x: string]: any}): Script;
+  getScript(language: string, identifier: { id: string; [x: string]: any }): Script;
   getServiceByName(serviceName: string): CallableFunction;
   resolveExpression(expression: string, message?: ElementBrokerMessage, expressionFnContext?: any): any;
   addService(name: string, fn: CallableFunction): void;
@@ -372,7 +372,7 @@ declare interface EnvironmentState {
   output: Record<string, any>;
 }
 
-declare type completedCounters = { completed: number, discarded: number };
+declare type completedCounters = { completed: number; discarded: number };
 
 declare interface ActivityExecutionState {
   completed: boolean;
@@ -380,23 +380,23 @@ declare interface ActivityExecutionState {
 }
 
 declare interface ActivityState extends ElementState {
-  status?: string,
+  status?: string;
   executionId: string;
   stopped: boolean;
-  counters: { taken: number, discarded: number };
+  counters: { taken: number; discarded: number };
   execution?: ActivityExecutionState;
 }
 
 declare interface SequenceFlowState extends ElementState {
-  counters: {take: number, discard: number, looped: number};
+  counters: { take: number; discard: number; looped: number };
 }
 
 declare interface MessageFlowState extends ElementState {
-  counters: {messages: number};
+  counters: { messages: number };
 }
 
 declare interface AssociationState extends ElementState {
-  counters: {take: number, discard: number };
+  counters: { take: number; discard: number };
 }
 
 declare interface ProcessExecutionState {
@@ -412,7 +412,7 @@ declare interface ProcessExecutionState {
 
 declare interface ProcessState extends ElementState {
   status: string;
-  stopped: boolean,
+  stopped: boolean;
   executionId?: string;
   counters: completedCounters;
   environment: EnvironmentState;
@@ -429,7 +429,7 @@ declare interface DefinitionExecutionState {
 
 declare interface DefinitionState extends ElementState {
   status: string;
-  stopped: boolean,
+  stopped: boolean;
   executionId?: string;
   counters: completedCounters;
   environment: EnvironmentState;
@@ -536,12 +536,12 @@ declare interface ISequenceFlowCondition {
 }
 
 declare class SequenceFlow extends Element<SequenceFlow> {
-  constructor(flowDef: SerializableElement, context: ContextInstance)
+  constructor(flowDef: SerializableElement, context: ContextInstance);
   get sourceId(): string;
   get targetId(): string;
   get isDefault(): boolean;
   get isSequenceFlow(): boolean;
-  get counters(): {take: number, discard: number, looped: number};
+  get counters(): { take: number; discard: number; looped: number };
   take(content?: any): boolean;
   discard(content?: any): void;
   shake(message: any): number;
@@ -564,7 +564,7 @@ declare interface MessageFlowReference {
 }
 
 declare class MessageFlow extends Element<MessageFlow> {
-  constructor(flowDef: SerializableElement, context: ContextInstance)
+  constructor(flowDef: SerializableElement, context: ContextInstance);
   get source(): MessageFlowReference;
   get target(): MessageFlowReference;
   get counters(): { messages: number };
@@ -574,11 +574,11 @@ declare class MessageFlow extends Element<MessageFlow> {
 }
 
 declare class Association extends Element<Association> {
-  constructor(associationDef: SerializableElement, context: ContextInstance)
+  constructor(associationDef: SerializableElement, context: ContextInstance);
   get sourceId(): string;
   get targetId(): string;
   get isAssociation(): boolean;
-  get counters(): {take: number, discard: number };
+  get counters(): { take: number; discard: number };
   take(content?: any): boolean;
   discard(content?: any): boolean;
   getState(): AssociationState | undefined;
@@ -590,7 +590,7 @@ declare interface ILogger {
   debug(...args: any[]): void;
   error(...args: any[]): void;
   warn(...args: any[]): void;
-  [x: string]: any,
+  [x: string]: any;
 }
 
 declare type wrappedSetTimeout = (handler: CallableFunction, delay: number, ...args: any[]) => Timer;
@@ -644,16 +644,16 @@ declare class Timers implements ITimers {
 
 declare interface IScripts {
   register(activity: any): Script | undefined;
-  getScript(language: string, identifier: {id: string, [x: string]: any}): Script;
+  getScript(language: string, identifier: { id: string; [x: string]: any }): Script;
 }
 
 declare class Activity extends Element<Activity> {
-  constructor(behaviour: IActivityBehaviour, activityDef: SerializableElement, context: ContextInstance)
+  constructor(behaviour: IActivityBehaviour, activityDef: SerializableElement, context: ContextInstance);
   get Behaviour(): IActivityBehaviour;
   get stopped(): boolean;
   get status(): ActivityRunStatus | undefined;
   get context(): ContextInstance;
-  get counters(): { taken: number, discarded: number };
+  get counters(): { taken: number; discarded: number };
   get execution(): ActivityExecution;
   get executionId(): string;
   get extensions(): IExtension;
@@ -678,7 +678,11 @@ declare class Activity extends Element<Activity> {
   discard(discardContent?: any): void;
   next(): ElementBrokerMessage;
   shake(): void;
-  evaluateOutbound(fromMessage: ElementBrokerMessage, discardRestAtTake: boolean, callback: (err: Error, evaluationResult: any) => void): void;
+  evaluateOutbound(
+    fromMessage: ElementBrokerMessage,
+    discardRestAtTake: boolean,
+    callback: (err: Error, evaluationResult: any) => void,
+  ): void;
   getState(): ActivityState | undefined;
 }
 
@@ -706,12 +710,12 @@ declare interface Duration {
 
 declare type ISODurationApi = {
   /** Parse PnYnMnDTnHnMnS format to object */
-  parse: (durationString: string) => Duration,
+  parse: (durationString: string) => Duration;
   /** Convert ISO8601 duration object to an end Date. */
-  end: (durationInput: Duration, startDate?: Date) => Date,
+  end: (durationInput: Duration, startDate?: Date) => Date;
   /** Convert ISO8601 duration object to seconds */
-  toSeconds: (durationInput: Duration, startDate?: Date) => number,
-}
+  toSeconds: (durationInput: Duration, startDate?: Date) => number;
+};
 
 /**
  * Evaluate flow callback

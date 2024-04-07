@@ -1,6 +1,6 @@
 import Environment from '../../src/Environment.js';
 import ExecutionScope from '../../src/activity/ExecutionScope.js';
-import {ActivityError, BpmnError} from '../../src/error/Errors.js';
+import { ActivityError, BpmnError } from '../../src/error/Errors.js';
 
 describe('ExecutionScope', () => {
   it('exposes environment, error classes, and passed message', () => {
@@ -29,15 +29,24 @@ describe('ExecutionScope', () => {
     expect(scope).to.have.property('environment', activity.environment);
     expect(scope).to.have.property('BpmnError', BpmnError);
     expect(scope).to.have.property('ActivityError', ActivityError);
-    expect(scope).to.have.property('fields').that.eql({
-      routingKey: 'run.execute',
-    }).but.not.equal(message.fields);
-    expect(scope).to.have.property('content').that.eql({
-      id: 'task1',
-    }).but.not.equal(message.content);
-    expect(scope).to.have.property('properties').that.eql({
-      messageId: 'm1',
-    }).but.not.equal(message.properties);
+    expect(scope)
+      .to.have.property('fields')
+      .that.eql({
+        routingKey: 'run.execute',
+      })
+      .but.not.equal(message.fields);
+    expect(scope)
+      .to.have.property('content')
+      .that.eql({
+        id: 'task1',
+      })
+      .but.not.equal(message.content);
+    expect(scope)
+      .to.have.property('properties')
+      .that.eql({
+        messageId: 'm1',
+      })
+      .but.not.equal(message.properties);
   });
 
   it('exposes resolve expression', () => {

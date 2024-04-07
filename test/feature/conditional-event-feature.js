@@ -1,4 +1,4 @@
-import {Definition} from '../../src/definition/Definition.js';
+import { Definition } from '../../src/definition/Definition.js';
 import testHelpers from '../helpers/testHelpers.js';
 
 Feature('Conditional event', () => {
@@ -48,10 +48,7 @@ Feature('Conditional event', () => {
 
     Then('run is errored', async () => {
       const err = await errored;
-      expect(err.content.error)
-        .to.have.property('source')
-        .with.property('content')
-        .with.property('id', 'conditionalEvent');
+      expect(err.content.error).to.have.property('source').with.property('content').with.property('id', 'conditionalEvent');
     });
   });
 
@@ -101,10 +98,7 @@ Feature('Conditional event', () => {
 
     Then('run is errored', async () => {
       const err = await errored;
-      expect(err.content.error)
-        .to.have.property('source')
-        .with.property('content')
-        .with.property('id', 'conditionalEvent');
+      expect(err.content.error).to.have.property('source').with.property('content').with.property('id', 'conditionalEvent');
     });
   });
 
@@ -146,10 +140,7 @@ Feature('Conditional event', () => {
 
     Then('run is errored', async () => {
       const err = await errored;
-      expect(err.content.error)
-        .to.have.property('source')
-        .with.property('content')
-        .with.property('id', 'start');
+      expect(err.content.error).to.have.property('source').with.property('content').with.property('id', 'start');
     });
 
     When('ran again where start waits to be signaled', () => {
@@ -169,10 +160,7 @@ Feature('Conditional event', () => {
 
     Then('run is errored', async () => {
       const err = await errored;
-      expect(err.content.error)
-        .to.have.property('source')
-        .with.property('content')
-        .with.property('id', 'start');
+      expect(err.content.error).to.have.property('source').with.property('content').with.property('id', 'start');
     });
   });
 });

@@ -5,86 +5,92 @@
   "xml": {
     "tagAlias": "lowerCase"
   },
-  "types": [{
-    "name": "ProcessProperties",
-    "isAbstract": true,
-    "extends": [
-      "bpmn:Process"
-    ],
-    "properties": [{
-      "name": "candidateStarterUsers",
-      "isAttr": true,
-      "type": "String"
-    }, {
-      "name": "versionTag",
-      "isAttr": true,
-      "type": "String"
-    }]
-  }, {
-    "name": "TaskResult",
-    "isAbstract": true,
-    "extends": [
-      "bpmn:Task",
-      "bpmn:SubProcess"
-    ],
-    "properties": [{
-      "name": "result",
-      "isAttr": true,
-      "type": "String"
-    }]
-  }, {
-    "name": "Output",
-    "superClass": ["Element"]
-  }, {
-    "name": "Collectable",
-    "isAbstract": true,
-    "extends": ["bpmn:MultiInstanceLoopCharacteristics"],
-    "properties": [{
-      "name": "collection",
-      "isAttr": true,
-      "type": "String"
-    }, {
-      "name": "elementVariable",
-      "isAttr": true,
-      "type": "String"
-    }]
-  }, {
-    "name": "FormSupported",
-    "isAbstract": true,
-    "extends": [
-      "bpmn:StartEvent",
-      "bpmn:UserTask"
-    ],
-    "properties": [{
-      "name": "formKey",
-      "type": "String",
-      "isAttr": true
-    }]
-  }, {
-    "name": "ScriptTask",
-    "isAbstract": true,
-    "extends": [
-      "bpmn:ScriptTask"
-    ],
-    "properties": [
-      {
-        "name": "resource",
-        "isAttr": true,
-        "type": "String"
-      }
-    ]
-  }, {
-    "name": "FormalExpression",
-    "isAbstract": true,
-    "extends": [
-      "bpmn:FormalExpression"
-    ],
-    "properties": [
-      {
-        "name": "resource",
-        "isAttr": true,
-        "type": "String"
-      }
-    ]
-  }]
+  "types": [
+    {
+      "name": "ProcessProperties",
+      "isAbstract": true,
+      "extends": ["bpmn:Process"],
+      "properties": [
+        {
+          "name": "candidateStarterUsers",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "versionTag",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "TaskResult",
+      "isAbstract": true,
+      "extends": ["bpmn:Task", "bpmn:SubProcess"],
+      "properties": [
+        {
+          "name": "result",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "Output",
+      "superClass": ["Element"]
+    },
+    {
+      "name": "Collectable",
+      "isAbstract": true,
+      "extends": ["bpmn:MultiInstanceLoopCharacteristics"],
+      "properties": [
+        {
+          "name": "collection",
+          "isAttr": true,
+          "type": "String"
+        },
+        {
+          "name": "elementVariable",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "FormSupported",
+      "isAbstract": true,
+      "extends": ["bpmn:StartEvent", "bpmn:UserTask"],
+      "properties": [
+        {
+          "name": "formKey",
+          "type": "String",
+          "isAttr": true
+        }
+      ]
+    },
+    {
+      "name": "ScriptTask",
+      "isAbstract": true,
+      "extends": ["bpmn:ScriptTask"],
+      "properties": [
+        {
+          "name": "resource",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
+    },
+    {
+      "name": "FormalExpression",
+      "isAbstract": true,
+      "extends": ["bpmn:FormalExpression"],
+      "properties": [
+        {
+          "name": "resource",
+          "isAttr": true,
+          "type": "String"
+        }
+      ]
+    }
+  ]
 }

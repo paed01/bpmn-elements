@@ -2,9 +2,9 @@ import js from '../resources/extensions/JsExtension.js';
 import nock from 'nock';
 import request from 'got';
 import testHelpers from '../helpers/testHelpers.js';
-import {ActivityError} from '../../src/error/Errors.js';
-import {Scripts} from '../helpers/JavaScripts.js';
-import {Timers} from '../../src/Timers.js';
+import { ActivityError } from '../../src/error/Errors.js';
+import { Scripts } from '../helpers/JavaScripts.js';
+import { Timers } from '../../src/Timers.js';
 
 const extensions = {
   js,
@@ -28,12 +28,12 @@ describe('ScriptTask', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, {extensions, Logger: testHelpers.Logger});
+      const context = await testHelpers.context(source, { extensions, Logger: testHelpers.Logger });
       context.environment.variables.input = 42;
       const task = context.getActivityById('task');
 
       const wait = task.waitFor('end');
-      task.run({input: 42});
+      task.run({ input: 42 });
 
       const api = await wait;
 
@@ -86,13 +86,12 @@ describe('ScriptTask', () => {
       const context = await testHelpers.context(source, {
         extensions,
         scripts: {
-          register() {
-          },
-          getScript(_, {id}) {
+          register() {},
+          getScript(_, { id }) {
             if (id !== 'scriptTask') return;
             return {
               execute(executionContext, callback) {
-                return callback(null, {input: 3});
+                return callback(null, { input: 3 });
               },
             };
           },
@@ -116,14 +115,14 @@ describe('ScriptTask', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, {extensions, scripts: Scripts(true)});
+      const context = await testHelpers.context(source, { extensions, scripts: Scripts(true) });
       const task = context.getActivityById('task');
       const leave = task.waitFor('leave');
       task.run();
       return leave;
     });
 
-    it('throws error if script handler doesn\'t recognize script', async () => {
+    it("throws error if script handler doesn't recognize script", async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="theProcess" isExecutable="true">
@@ -137,15 +136,17 @@ describe('ScriptTask', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, {extensions, scripts: Scripts(false)});
+      const context = await testHelpers.context(source, { extensions, scripts: Scripts(false) });
       const task = context.getActivityById('task');
 
-      const fail = task.waitFor('leave').catch(err => err);
+      const fail = task.waitFor('leave').catch((err) => err);
       task.run();
 
       const err = await fail;
 
-      expect(err).to.be.instanceOf(ActivityError).and.match(/unsupported/);
+      expect(err)
+        .to.be.instanceOf(ActivityError)
+        .and.match(/unsupported/);
     });
 
     it('throws error if returned in next function', async () => {
@@ -179,7 +180,9 @@ describe('ScriptTask', () => {
         var err = e; // eslint-disable-line
       }
 
-      expect(err).to.be.instanceOf(ActivityError).and.match(/Inside/);
+      expect(err)
+        .to.be.instanceOf(ActivityError)
+        .and.match(/Inside/);
     });
 
     it('can access services', async () => {
@@ -205,13 +208,15 @@ describe('ScriptTask', () => {
         </process>
       </definitions>`;
 
-      nock('http://example.com')
-        .get('/test')
-        .reply(200, {
+      nock('http://example.com').get('/test').reply(
+        200,
+        {
           data: 2,
-        }, {
+        },
+        {
           'content-type': 'application/json',
-        });
+        },
+      );
 
       const context = await testHelpers.context(source);
       context.environment.addService('request', request);
@@ -256,7 +261,7 @@ describe('ScriptTask', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      context.environment.assignVariables({data: 1});
+      context.environment.assignVariables({ data: 1 });
 
       const task = context.getActivityById('scriptTask');
       task.activate();
@@ -296,7 +301,7 @@ describe('ScriptTask', () => {
           },
         }),
       });
-      context.environment.assignVariables({data: 1});
+      context.environment.assignVariables({ data: 1 });
 
       const task = context.getActivityById('scriptTask');
       task.activate();

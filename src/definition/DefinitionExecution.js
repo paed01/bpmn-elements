@@ -1,7 +1,7 @@
 import getPropertyValue from '../getPropertyValue.js';
-import {DefinitionApi} from '../Api.js';
-import {brokerSafeId} from '../shared.js';
-import {cloneContent, cloneMessage, pushParent, cloneParent} from '../messageHelper.js';
+import { DefinitionApi } from '../Api.js';
+import { brokerSafeId } from '../shared.js';
+import { cloneContent, cloneMessage, pushParent, cloneParent } from '../messageHelper.js';
 
 const kActivated = Symbol.for('activated');
 const kProcessesQ = Symbol.for('processesQ');
@@ -20,7 +20,7 @@ export default function DefinitionExecution(definition, context) {
   this.id = definition.id;
   this.type = definition.type;
   this.broker = broker;
-  const environment = this.environment = definition.environment;
+  const environment = (this.environment = definition.environment);
   this.context = context;
 
   const processes = context.getProcesses();
@@ -41,7 +41,7 @@ export default function DefinitionExecution(definition, context) {
     postponed: [],
   };
 
-  broker.assertExchange('execution', 'topic', {autoDelete: false, durable: true});
+  broker.assertExchange('execution', 'topic', { autoDelete: false, durable: true });
 
   this.executionId = undefined;
   this[kCompleted] = false;
@@ -122,7 +122,7 @@ Object.defineProperties(DefinitionExecution.prototype, {
 DefinitionExecution.prototype.execute = function execute(executeMessage) {
   if (!executeMessage) throw new Error('Definition execution requires message');
   const content = executeMessage.content;
-  const executionId = this.executionId = content.executionId;
+  const executionId = (this.executionId = content.executionId);
   if (!executionId) throw new Error('Definition execution requires execution id');
 
   this[kExecuteMessage] = cloneMessage(executeMessage, {
@@ -132,13 +132,13 @@ DefinitionExecution.prototype.execute = function execute(executeMessage) {
 
   this[kStopped] = false;
 
-  this[kProcessesQ] = this.broker.assertQueue(`execute-${executionId}-q`, {durable: true, autoDelete: false});
+  this[kProcessesQ] = this.broker.assertQueue(`execute-${executionId}-q`, { durable: true, autoDelete: false });
 
   if (executeMessage.fields.redelivered) {
     return this.resume();
   }
 
-  const {running, executable} = this[kProcesses];
+  const { running, executable } = this[kProcesses];
 
   if (content.processId) {
     const startWithProcess = this.getProcessById(content.processId);
@@ -160,7 +160,7 @@ DefinitionExecution.prototype.resume = function resume() {
 
   if (this[kCompleted]) return this._complete('completed');
 
-  const {running, postponed} = this[kProcesses];
+  const { running, postponed } = this[kProcesses];
   this._activate(running);
   postponed.splice(0);
   this[kProcessesQ].consume(this[kMessageHandlers].onProcessMessage, {
@@ -210,7 +210,7 @@ DefinitionExecution.prototype.stop = function stop() {
 };
 
 DefinitionExecution.prototype.getProcesses = function getProcesses() {
-  const {running, processes} = this[kProcesses];
+  const { running, processes } = this[kProcesses];
   const result = running.slice();
   for (const bp of processes) {
     if (!result.find((runningBp) => bp.id === runningBp.id)) result.push(bp);
@@ -251,7 +251,7 @@ DefinitionExecution.prototype.getState = function getState() {
 };
 
 DefinitionExecution.prototype.getApi = function getApi(apiMessage) {
-  if (!apiMessage) apiMessage = this[kExecuteMessage] || {content: this._createMessage()};
+  if (!apiMessage) apiMessage = this[kExecuteMessage] || { content: this._createMessage() };
 
   const content = apiMessage.content;
   if (content.executionId !== this.executionId) {
@@ -282,13 +282,13 @@ DefinitionExecution.prototype.getPostponed = function getPostponed(...args) {
 };
 
 DefinitionExecution.prototype._start = function start() {
-  const {ids, executable, postponed} = this[kProcesses];
+  const { ids, executable, postponed } = this[kProcesses];
   if (!ids.length) {
     return this._complete('completed');
   }
 
   if (!executable.length) {
-    return this._complete('error', {error: new Error('No executable process')});
+    return this._complete('error', { error: new Error('No executable process') });
   }
 
   this[kStatus] = 'start';
@@ -321,10 +321,10 @@ DefinitionExecution.prototype._activateProcess = function activateProcess(bp) {
     consumerTag: '_definition-outbound-message-consumer',
   });
 
-  const delegateEventQ = broker.assertQueue('_delegate-event-q', {autoDelete: false, durable: false});
-  delegateEventQ.consume(handlers.onDelegateMessage, {noAck: true, consumerTag: '_definition-signal-consumer'});
-  broker.bindQueue('_delegate-event-q', 'event', 'activity.signal', {priority: 200});
-  broker.bindQueue('_delegate-event-q', 'event', 'activity.message', {priority: 200});
+  const delegateEventQ = broker.assertQueue('_delegate-event-q', { autoDelete: false, durable: false });
+  delegateEventQ.consume(handlers.onDelegateMessage, { noAck: true, consumerTag: '_definition-signal-consumer' });
+  broker.bindQueue('_delegate-event-q', 'event', 'activity.signal', { priority: 200 });
+  broker.bindQueue('_delegate-event-q', 'event', 'activity.message', { priority: 200 });
 
   broker.subscribeTmp('event', 'activity.call', handlers.onCallActivity, {
     noAck: true,
@@ -346,7 +346,7 @@ DefinitionExecution.prototype._activateProcess = function activateProcess(bp) {
 DefinitionExecution.prototype._onChildEvent = function onChildEvent(routingKey, originalMessage) {
   const message = cloneMessage(originalMessage);
   const content = message.content;
-  const parent = content.parent = content.parent || {};
+  const parent = (content.parent = content.parent || {});
 
   const isDirectChild = this[kProcesses].ids.indexOf(content.id) > -1;
   if (isDirectChild) {
@@ -355,7 +355,7 @@ DefinitionExecution.prototype._onChildEvent = function onChildEvent(routingKey, 
     content.parent = pushParent(parent, this);
   }
 
-  this.broker.publish('event', routingKey, content, {...message.properties, mandatory: false});
+  this.broker.publish('event', routingKey, content, { ...message.properties, mandatory: false });
   if (!isDirectChild) return;
 
   this[kProcessesQ].queueMessage(message.fields, cloneContent(content), message.properties);
@@ -379,7 +379,7 @@ DefinitionExecution.prototype._deactivateProcess = function deactivateProcess(bp
 DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(routingKey, message) {
   const content = message.content;
   const isRedelivered = message.fields.redelivered;
-  const {id: childId, inbound} = content;
+  const { id: childId, inbound } = content;
 
   if (isRedelivered && message.properties.persistent === false) return;
 
@@ -402,7 +402,7 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
     case 'process.discarded': {
       if (inbound && inbound.length) {
         const calledFrom = inbound[0];
-        this._getProcessApi({content: calledFrom}).cancel({
+        this._getProcessApi({ content: calledFrom }).cancel({
           executionId: calledFrom.executionId,
         });
       }
@@ -412,9 +412,9 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
       if (inbound && inbound.length) {
         const calledFrom = inbound[0];
 
-        this._getProcessApi({content: calledFrom}).signal({
+        this._getProcessApi({ content: calledFrom }).signal({
           executionId: calledFrom.executionId,
-          output: {...content.output},
+          output: { ...content.output },
         });
       } else {
         Object.assign(this.environment.output, content.output);
@@ -425,16 +425,20 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
       if (inbound && inbound.length) {
         const calledFrom = inbound[0];
 
-        this._getProcessApi({content: calledFrom}).sendApiMessage('error', {
-          executionId: calledFrom.executionId,
-          error: content.error,
-        }, {mandatory: true, type: 'error'});
+        this._getProcessApi({ content: calledFrom }).sendApiMessage(
+          'error',
+          {
+            executionId: calledFrom.executionId,
+            error: content.error,
+          },
+          { mandatory: true, type: 'error' },
+        );
       } else {
         for (const bp of this[kProcesses].running.slice()) {
           if (bp.id !== childId) bp.stop();
         }
 
-        this._complete('error', {error: content.error});
+        this._complete('error', { error: content.error });
       }
       break;
     }
@@ -457,7 +461,7 @@ DefinitionExecution.prototype._onProcessCompleted = function onProcessCompleted(
   this._stateChangeMessage(message, false);
   if (message.fields.redelivered) return message.ack();
 
-  const {id, executionId, type, inbound} = message.content;
+  const { id, executionId, type, inbound } = message.content;
   message.ack();
   this._debug(`left <${executionId} (${id})> (${type}), pending runs ${this.postponedCount}`);
 
@@ -479,9 +483,14 @@ DefinitionExecution.prototype._onStopped = function onStopped(message) {
   this._deactivate();
 
   this[kStopped] = true;
-  return this.broker.publish('execution', `execution.stopped.${this.executionId}`, cloneContent(this[kExecuteMessage].content, {
-    ...message.content,
-  }), {type: 'stopped', persistent: false});
+  return this.broker.publish(
+    'execution',
+    `execution.stopped.${this.executionId}`,
+    cloneContent(this[kExecuteMessage].content, {
+      ...message.content,
+    }),
+    { type: 'stopped', persistent: false },
+  );
 };
 
 DefinitionExecution.prototype._onApiMessage = function onApiMessage(routingKey, message) {
@@ -490,7 +499,7 @@ DefinitionExecution.prototype._onApiMessage = function onApiMessage(routingKey, 
 
   if (delegate && this.id === message.content.id) {
     const referenceId = getPropertyValue(message, 'content.message.id');
-    this._startProcessesByMessage({referenceId, referenceType: messageType});
+    this._startProcessesByMessage({ referenceId, referenceType: messageType });
   }
 
   if (delegate) {
@@ -502,12 +511,12 @@ DefinitionExecution.prototype._onApiMessage = function onApiMessage(routingKey, 
   if (this.executionId !== message.content.executionId) return;
 
   if (messageType === 'stop') {
-    this[kProcessesQ].queueMessage({routingKey: 'execution.stop'}, cloneContent(message.content), {persistent: false});
+    this[kProcessesQ].queueMessage({ routingKey: 'execution.stop' }, cloneContent(message.content), { persistent: false });
   }
 };
 
 DefinitionExecution.prototype._startProcessesByMessage = function startProcessesByMessage(reference) {
-  const {processes: bps, running} = this[kProcesses];
+  const { processes: bps, running } = this[kProcesses];
   if (bps.length < 2) return;
 
   for (const bp of bps) {
@@ -537,9 +546,12 @@ DefinitionExecution.prototype._startProcessesByMessage = function startProcesses
 
 DefinitionExecution.prototype._onMessageOutbound = function onMessageOutbound(routingKey, message) {
   const content = message.content;
-  const {target, source} = content;
+  const { target, source } = content;
 
-  this._debug(`conveying message from <${source.processId}.${source.id}> to`, target.id ? `<${target.processId}.${target.id}>` : `<${target.processId}>`);
+  this._debug(
+    `conveying message from <${source.processId}.${source.id}> to`,
+    target.id ? `<${target.processId}.${target.id}>` : `<${target.processId}>`,
+  );
 
   const targetProcesses = this.getProcessesById(target.processId);
   if (!targetProcesses.length) return;
@@ -567,7 +579,7 @@ DefinitionExecution.prototype._onMessageOutbound = function onMessageOutbound(ro
 
 DefinitionExecution.prototype._onCallActivity = function onCallActivity(routingKey, message) {
   const content = message.content;
-  const {calledElement, id: fromId, executionId: fromExecutionId, name: fromName, parent: fromParent} = content;
+  const { calledElement, id: fromId, executionId: fromExecutionId, name: fromName, parent: fromParent } = content;
   if (!calledElement) return;
 
   const bpExecutionId = `${brokerSafeId(calledElement)}_${fromExecutionId}`;
@@ -593,11 +605,11 @@ DefinitionExecution.prototype._onCallActivity = function onCallActivity(routingK
   this._activateProcess(targetProcess);
   this[kProcesses].running.push(targetProcess);
   targetProcess.init(bpExecutionId);
-  targetProcess.run({inbound: [cloneContent(content)]});
+  targetProcess.run({ inbound: [cloneContent(content)] });
 };
 
 DefinitionExecution.prototype._onCancelCallActivity = function onCancelCallActivity(routingKey, message) {
-  const {calledElement, id: fromId, executionId: fromExecutionId, parent: fromParent} = message.content;
+  const { calledElement, id: fromId, executionId: fromExecutionId, parent: fromParent } = message.content;
   if (!calledElement) return;
 
   const bpExecutionId = `${brokerSafeId(calledElement)}_${fromExecutionId}`;
@@ -607,12 +619,14 @@ DefinitionExecution.prototype._onCancelCallActivity = function onCancelCallActiv
   this._debug(`cancel call from <${fromParent.id}.${fromId}> to <${calledElement}>`);
 
   if (!targetProcess.isRunning) {
-    targetProcess.getApi({
-      content: {
-        id: targetProcess.id,
-        executionId: targetProcess.executionId,
-      },
-    }).discard();
+    targetProcess
+      .getApi({
+        content: {
+          id: targetProcess.id,
+          executionId: targetProcess.executionId,
+        },
+      })
+      .discard();
   } else {
     targetProcess.getApi().discard();
   }
@@ -626,22 +640,33 @@ DefinitionExecution.prototype._onDelegateMessage = function onDelegateMessage(ro
   const reference = this.context.getActivityById(delegateMessage.id);
   const message = reference && reference.resolve(executeMessage);
 
-  this._debug(`<${reference ? `${messageType} ${delegateMessage.id}>` : `anonymous ${messageType}`} event received from <${content.parent.id}.${content.id}>. Delegating.`);
+  this._debug(
+    `<${reference ? `${messageType} ${delegateMessage.id}>` : `anonymous ${messageType}`} event received from <${content.parent.id}.${content.id}>. Delegating.`,
+  );
 
-  this.getApi().sendApiMessage(messageType, {
-    source: {
-      id: content.id,
-      executionId: content.executionId,
-      type: content.type,
-      parent: cloneParent(content.parent),
+  this.getApi().sendApiMessage(
+    messageType,
+    {
+      source: {
+        id: content.id,
+        executionId: content.executionId,
+        type: content.type,
+        parent: cloneParent(content.parent),
+      },
+      message,
+      originalMessage: content.message,
     },
-    message,
-    originalMessage: content.message,
-  }, {delegate: true, type: messageType});
+    { delegate: true, type: messageType },
+  );
 
-  this.broker.publish('event', `definition.${messageType}`, this._createMessage({
-    message: message && cloneContent(message),
-  }), {type: messageType});
+  this.broker.publish(
+    'event',
+    `definition.${messageType}`,
+    this._createMessage({
+      message: message && cloneContent(message),
+    }),
+    { type: messageType },
+  );
 };
 
 DefinitionExecution.prototype._removeProcessByExecutionId = function removeProcessByExecutionId(processExecutionId) {
@@ -660,12 +685,17 @@ DefinitionExecution.prototype._complete = function complete(completionType, cont
   this[kStatus] = completionType;
   this.broker.deleteQueue(this[kProcessesQ].name);
 
-  return this.broker.publish('execution', `execution.${completionType}.${this.executionId}`, {
-    ...stateMessage.content,
-    output: {...this.environment.output},
-    ...content,
-    state: completionType,
-  }, {type: completionType, mandatory: completionType === 'error', ...options});
+  return this.broker.publish(
+    'execution',
+    `execution.${completionType}.${this.executionId}`,
+    {
+      ...stateMessage.content,
+      output: { ...this.environment.output },
+      ...content,
+      state: completionType,
+    },
+    { type: completionType, mandatory: completionType === 'error', ...options },
+  );
 };
 
 DefinitionExecution.prototype._createMessage = function createMessage(content = {}) {

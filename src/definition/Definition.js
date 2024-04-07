@@ -1,9 +1,9 @@
 import DefinitionExecution from './DefinitionExecution.js';
-import {DefinitionApi} from '../Api.js';
-import {DefinitionBroker} from '../EventBroker.js';
-import {getUniqueId, getOptionsAndCallback} from '../shared.js';
-import {makeErrorFromMessage} from '../error/Errors.js';
-import {cloneMessage, cloneContent} from '../messageHelper.js';
+import { DefinitionApi } from '../Api.js';
+import { DefinitionBroker } from '../EventBroker.js';
+import { getUniqueId, getOptionsAndCallback } from '../shared.js';
+import { makeErrorFromMessage } from '../error/Errors.js';
+import { cloneMessage, cloneContent } from '../messageHelper.js';
 
 const kConsuming = Symbol.for('consuming');
 const kCounters = Symbol.for('counters');
@@ -20,7 +20,7 @@ export function Definition(context, options) {
   if (!(this instanceof Definition)) return new Definition(context, options);
   if (!context) throw new Error('No context');
 
-  const {id, name, type = 'definition'} = context;
+  const { id, name, type = 'definition' } = context;
 
   this.id = id;
   this.type = type;
@@ -51,7 +51,7 @@ export function Definition(context, options) {
     onExecutionMessage: this._onExecutionMessage.bind(this),
   };
 
-  const {broker, on, once, waitFor, emit, emitFatal} = DefinitionBroker(this, onBrokerReturn);
+  const { broker, on, once, waitFor, emit, emitFatal } = DefinitionBroker(this, onBrokerReturn);
   this.broker = broker;
 
   this.on = on;
@@ -66,7 +66,7 @@ export function Definition(context, options) {
 Object.defineProperties(Definition.prototype, {
   counters: {
     get() {
-      return {...this[kCounters]};
+      return { ...this[kCounters] };
     },
   },
   execution: {
@@ -97,7 +97,7 @@ Object.defineProperties(Definition.prototype, {
   },
   activityStatus: {
     get() {
-      return this[kExec].execution && this[kExec].execution.activityStatus || 'idle';
+      return (this[kExec].execution && this[kExec].execution.activityStatus) || 'idle';
     },
   },
 });
@@ -116,7 +116,7 @@ Definition.prototype.run = function run(optionsOrCallback, optionalCallback) {
 
   const exec = this[kExec];
   exec.executionId = getUniqueId(this.id);
-  const content = this._createMessage({...runOptions});
+  const content = this._createMessage({ ...runOptions });
 
   const broker = this.broker;
   broker.publish('run', 'run.enter', content);
@@ -147,7 +147,7 @@ Definition.prototype.resume = function resume(callback) {
   this.logger.debug(`<${this.executionId} (${this.id})> resume`);
 
   const content = this._createMessage();
-  this.broker.publish('run', 'run.resume', content, {persistent: false});
+  this.broker.publish('run', 'run.resume', content, { persistent: false });
   this._activateRunConsumers();
   return this;
 };
@@ -173,7 +173,7 @@ Definition.prototype.recover = function recover(state) {
   const exec = this[kExec];
   exec.executionId = state.executionId;
   if (state.counters) {
-    this[kCounters] = {...this[kCounters], ...state.counters};
+    this[kCounters] = { ...this[kCounters], ...state.counters };
   }
 
   this.environment.recover(state.environment);
@@ -199,7 +199,7 @@ Definition.prototype.shake = function shake(startId) {
   } else bps = this.getProcesses();
 
   bps.forEach((bp) => {
-    result = {...result, ...this._shakeProcess(bp, startId)};
+    result = { ...result, ...this._shakeProcess(bp, startId) };
   });
 
   return result;
@@ -208,13 +208,17 @@ Definition.prototype.shake = function shake(startId) {
 Definition.prototype._shakeProcess = function shakeProcess(shakeBp, startId) {
   let shovel;
   if (!shakeBp.isRunning) {
-    shovel = shakeBp.broker.createShovel('shaker', {
-      exchange: 'event',
-      pattern: '*.shake#',
-    }, {
-      broker: this.broker,
-      exchange: 'event',
-    });
+    shovel = shakeBp.broker.createShovel(
+      'shaker',
+      {
+        exchange: 'event',
+        pattern: '*.shake#',
+      },
+      {
+        broker: this.broker,
+        exchange: 'event',
+      },
+    );
   }
 
   const shakeResult = shakeBp.shake(startId);
@@ -273,24 +277,24 @@ Definition.prototype.getApi = function getApi(message) {
 };
 
 Definition.prototype.signal = function signal(message) {
-  return this.getApi().signal(message, {delegate: true});
+  return this.getApi().signal(message, { delegate: true });
 };
 
 Definition.prototype.cancelActivity = function cancelActivity(message) {
-  return this.getApi().cancel(message, {delegate: true});
+  return this.getApi().cancel(message, { delegate: true });
 };
 
 Definition.prototype.sendMessage = function sendMessage(message) {
-  const messageContent = {message};
+  const messageContent = { message };
   let messageType = 'message';
   const reference = message && message.id && this.getElementById(message.id);
   if (reference && reference.resolve) {
-    const resolvedReference = reference.resolve(this._createMessage({message}));
+    const resolvedReference = reference.resolve(this._createMessage({ message }));
     messageType = resolvedReference.messageType || messageType;
-    messageContent.message = {...message, ...resolvedReference};
+    messageContent.message = { ...message, ...resolvedReference };
   }
 
-  return this.getApi().sendApiMessage(messageType, messageContent, {delegate: true});
+  return this.getApi().sendApiMessage(messageType, messageContent, { delegate: true });
 };
 
 Definition.prototype.stop = function stop() {
@@ -301,7 +305,7 @@ Definition.prototype.stop = function stop() {
 Definition.prototype._activateRunConsumers = function activateRunConsumers() {
   this[kConsuming] = true;
   const broker = this.broker;
-  const {onApiMessage, onRunMessage} = this[kMessageHandlers];
+  const { onApiMessage, onRunMessage } = this[kMessageHandlers];
   broker.subscribeTmp('api', `definition.*.${this.executionId}`, onApiMessage, {
     noAck: true,
     consumerTag: '_definition-api',
@@ -331,7 +335,7 @@ Definition.prototype._createMessage = function createMessage(override) {
 };
 
 Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) {
-  const {content, fields} = message;
+  const { content, fields } = message;
   if (routingKey === 'run.resume') {
     return this._onResumeMessage(message);
   }
@@ -388,10 +392,14 @@ Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) 
       break;
     }
     case 'run.error': {
-      this._publishEvent('error', {
-        ...content,
-        error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
-      }, {mandatory: true});
+      this._publishEvent(
+        'error',
+        {
+          ...content,
+          error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
+        },
+        { mandatory: true },
+      );
       break;
     }
     case 'run.discarded': {
@@ -438,7 +446,7 @@ Definition.prototype._onResumeMessage = function onResumeMessage(message) {
 };
 
 Definition.prototype._onExecutionMessage = function onExecutionMessage(routingKey, message) {
-  const {content, properties} = message;
+  const { content, properties } = message;
   const messageType = properties.type;
 
   message.ack();
@@ -508,9 +516,9 @@ function addConsumerCallbacks(definition, callback) {
   const broker = definition.broker;
   clearConsumers();
 
-  broker.subscribeOnce('event', 'definition.stop', cbLeave, {consumerTag: '_definition-callback-stop'});
-  broker.subscribeOnce('event', 'definition.leave', cbLeave, {consumerTag: '_definition-callback-leave'});
-  broker.subscribeOnce('event', 'definition.error', cbError, {consumerTag: '_definition-callback-error'});
+  broker.subscribeOnce('event', 'definition.stop', cbLeave, { consumerTag: '_definition-callback-stop' });
+  broker.subscribeOnce('event', 'definition.leave', cbLeave, { consumerTag: '_definition-callback-leave' });
+  broker.subscribeOnce('event', 'definition.error', cbError, { consumerTag: '_definition-callback-error' });
 
   function cbLeave(_, message) {
     clearConsumers();

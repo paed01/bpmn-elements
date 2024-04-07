@@ -1,8 +1,6 @@
-LoopCharacteristics
-===================
+# LoopCharacteristics
 
 Task loops can made based on conditions, cardinality, and/or a collection.
-
 
 ## `bpmn:multiInstanceLoopCharacteristics`
 
@@ -31,6 +29,7 @@ Loop a fixed number of times or until number of iterations match cardinality. Th
 ```
 
 or as activity behaviour
+
 ```json
 {
   "id": "task1",
@@ -52,6 +51,7 @@ Loop until condition is met. The condition body can be a script or an [expressio
 ```
 
 or as activity behaviour
+
 ```json
 {
   "id": "task1",
@@ -73,6 +73,7 @@ Loop all items in a list. The `collection` and `elementVariable` attributes are 
 ```
 
 or as activity behaviour
+
 ```json
 {
   "id": "task1",

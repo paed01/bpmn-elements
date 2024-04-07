@@ -17,30 +17,36 @@ describe('CompensateEventDefinition', () => {
             parent: {
               id: 'theProcess',
             },
-            ...(id === 'event' ? {
-              type: 'boundaryevent',
-              Behaviour: BoundaryEvent,
-              behaviour: {
-                attachedTo: {id: 'task'},
-                eventDefinitions: [{
-                  type: 'compensateeventdefinition',
-                  Behaviour: CompensateEventDefinition,
-                }],
-              },
-            } : {
-              type: 'task',
-              Behaviour: Task,
-            }),
+            ...(id === 'event'
+              ? {
+                  type: 'boundaryevent',
+                  Behaviour: BoundaryEvent,
+                  behaviour: {
+                    attachedTo: { id: 'task' },
+                    eventDefinitions: [
+                      {
+                        type: 'compensateeventdefinition',
+                        Behaviour: CompensateEventDefinition,
+                      },
+                    ],
+                  },
+                }
+              : {
+                  type: 'task',
+                  Behaviour: Task,
+                }),
           };
         },
         getOutboundAssociations() {
-          return [{
-            id: 'assoc',
-            parent: { id: 'Bp_1' },
-            sourceId: 'event',
-            targetId: 'service',
-            Behaviour: Association,
-          }];
+          return [
+            {
+              id: 'assoc',
+              parent: { id: 'Bp_1' },
+              sourceId: 'event',
+              targetId: 'service',
+              Behaviour: Association,
+            },
+          ];
         },
       });
       event = context.getActivityById('event');
@@ -72,20 +78,27 @@ describe('CompensateEventDefinition', () => {
           parent: {
             id: 'event',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '__test-subscr'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '__test-subscr' },
+      );
 
-      event.broker.publish('api', 'activity.sometype.event_1_0', {}, {type: 'compensate'});
+      event.broker.publish('api', 'activity.sometype.event_1_0', {}, { type: 'compensate' });
 
       expect(messages).to.have.length(1);
 
@@ -108,20 +121,27 @@ describe('CompensateEventDefinition', () => {
           parent: {
             id: 'event',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '__test-subscr'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '__test-subscr' },
+      );
 
-      event.broker.publish('api', 'activity.sometype.event_1', {}, {type: 'compensate'});
+      event.broker.publish('api', 'activity.sometype.event_1', {}, { type: 'compensate' });
 
       expect(messages).to.have.length(2);
       expect(messages[0].fields).to.have.property('routingKey', 'execute.compensating');
@@ -140,15 +160,20 @@ describe('CompensateEventDefinition', () => {
       const [association] = event.context.getOutboundAssociations('event');
 
       const messages = [];
-      association.broker.subscribeTmp('event', '#', (_, msg) => messages.push(msg), {noAck: true});
-      event.broker.subscribeTmp('execution', 'execute.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '__test-subscr'});
+      association.broker.subscribeTmp('event', '#', (_, msg) => messages.push(msg), { noAck: true });
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '__test-subscr' },
+      );
 
       event.run();
 
-      event.attachedTo.broker.publish('execution', 'execute.completed', {id: 'task', executionId: 'task_0'});
-      event.broker.publish('api', 'activity.compensate.event_0', {}, {type: 'compensate'});
+      event.attachedTo.broker.publish('execution', 'execute.completed', { id: 'task', executionId: 'task_0' });
+      event.broker.publish('api', 'activity.compensate.event_0', {}, { type: 'compensate' });
 
       expect(messages).to.have.length(8);
 
@@ -173,14 +198,14 @@ describe('CompensateEventDefinition', () => {
       const [association] = event.context.getOutboundAssociations('event');
 
       const messages = [];
-      association.broker.subscribeTmp('event', '#', (_, msg) => messages.push(msg), {noAck: true});
+      association.broker.subscribeTmp('event', '#', (_, msg) => messages.push(msg), { noAck: true });
 
       event.run();
 
-      event.attachedTo.broker.publish('execution', 'execute.completed', {id: 'task', executionId: 'task_0'});
-      event.attachedTo.broker.publish('execution', 'execute.completed', {id: 'task', executionId: 'task_1'});
+      event.attachedTo.broker.publish('execution', 'execute.completed', { id: 'task', executionId: 'task_0' });
+      event.attachedTo.broker.publish('execution', 'execute.completed', { id: 'task', executionId: 'task_1' });
 
-      event.broker.publish('api', 'activity.compensate.event_0', {}, {type: 'compensate'});
+      event.broker.publish('api', 'activity.compensate.event_0', {}, { type: 'compensate' });
 
       expect(messages).to.have.length(2);
 
@@ -197,14 +222,14 @@ describe('CompensateEventDefinition', () => {
       const [association] = event.context.getOutboundAssociations('event');
 
       const messages = [];
-      association.broker.subscribeTmp('event', '#', (_, msg) => messages.push(msg), {noAck: true});
+      association.broker.subscribeTmp('event', '#', (_, msg) => messages.push(msg), { noAck: true });
 
       event.run();
 
-      event.attachedTo.broker.publish('execution', 'execute.error', {id: 'task', executionId: 'task_0'});
-      event.attachedTo.broker.publish('execution', 'execute.completed', {id: 'task', executionId: 'task_1'});
+      event.attachedTo.broker.publish('execution', 'execute.error', { id: 'task', executionId: 'task_0' });
+      event.attachedTo.broker.publish('execution', 'execute.completed', { id: 'task', executionId: 'task_1' });
 
-      event.broker.publish('api', 'activity.compensate.event_0', {}, {type: 'compensate'});
+      event.broker.publish('api', 'activity.compensate.event_0', {}, { type: 'compensate' });
 
       expect(messages).to.have.length(2);
 
@@ -223,14 +248,14 @@ describe('CompensateEventDefinition', () => {
       const [association] = event.context.getOutboundAssociations('event');
 
       const messages = [];
-      association.broker.subscribeTmp('event', '#', (_, msg) => messages.push(msg), {noAck: true});
+      association.broker.subscribeTmp('event', '#', (_, msg) => messages.push(msg), { noAck: true });
       event.run();
 
-      event.attachedTo.broker.publish('execution', 'execute.completed', {id: 'task', executionId: 'task_0'});
+      event.attachedTo.broker.publish('execution', 'execute.completed', { id: 'task', executionId: 'task_0' });
 
-      event.broker.publish('api', 'activity.compensate.event_0', {}, {type: 'compensate'});
+      event.broker.publish('api', 'activity.compensate.event_0', {}, { type: 'compensate' });
 
-      event.attachedTo.broker.publish('execution', 'execute.completed', {id: 'task', executionId: 'task_0'});
+      event.attachedTo.broker.publish('execution', 'execute.completed', { id: 'task', executionId: 'task_0' });
 
       expect(messages).to.have.length(1);
 
@@ -239,9 +264,14 @@ describe('CompensateEventDefinition', () => {
 
     it('publishes detach execution message on parent broker when executed', () => {
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -251,10 +281,12 @@ describe('CompensateEventDefinition', () => {
           parent: {
             id: 'event',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -268,9 +300,14 @@ describe('CompensateEventDefinition', () => {
 
     it('publishes activity detach event on parent broker', () => {
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       event.run();
 
@@ -284,9 +321,14 @@ describe('CompensateEventDefinition', () => {
       event.broker.publish('api', 'activity.compensate.event_1', {});
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.#', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.#',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       definition.execute({
         fields: {},
@@ -296,10 +338,12 @@ describe('CompensateEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -313,9 +357,14 @@ describe('CompensateEventDefinition', () => {
 
     it('completes once on double compensate api messages', () => {
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -325,16 +374,18 @@ describe('CompensateEventDefinition', () => {
           parent: {
             id: 'event',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
 
-      event.broker.publish('api', 'activity.sometype.event_1_0', {}, {type: 'compensate'});
-      event.broker.publish('api', 'activity.sometype.event_1_0', {}, {type: 'compensate'});
+      event.broker.publish('api', 'activity.sometype.event_1_0', {}, { type: 'compensate' });
+      event.broker.publish('api', 'activity.sometype.event_1_0', {}, { type: 'compensate' });
 
       expect(messages).to.have.length(3);
       expect(messages[0].fields).to.have.property('routingKey', 'execute.detach');
@@ -344,9 +395,14 @@ describe('CompensateEventDefinition', () => {
 
     it('completes and clears listeners if discarded', () => {
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.discard', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.discard',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       definition.execute({
         fields: {},
@@ -356,15 +412,17 @@ describe('CompensateEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
 
-      event.broker.publish('api', 'activity.discard.event_1_0', {}, {type: 'discard'});
+      event.broker.publish('api', 'activity.discard.event_1_0', {}, { type: 'discard' });
 
       event.broker.cancel('_test-tag');
 
@@ -382,29 +440,36 @@ describe('CompensateEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
 
-      event.broker.publish('api', 'activity.stop.event_1_0', {}, {type: 'stop'});
+      event.broker.publish('api', 'activity.stop.event_1_0', {}, { type: 'stop' });
 
       expect(event.broker).to.have.property('consumerCount', 0);
     });
 
     it('completes event and clears listeners when completed', () => {
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.leave', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.leave',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       event.activate();
       event.attachedTo.run();
 
-      event.broker.publish('api', 'activity.compensate.' + event.executionId, {}, {type: 'compensate'});
+      event.broker.publish('api', 'activity.compensate.' + event.executionId, {}, { type: 'compensate' });
 
       expect(messages).to.have.length(1);
     });
@@ -412,16 +477,21 @@ describe('CompensateEventDefinition', () => {
     it('stops and clears event listeners if stopped', () => {
       event.run();
 
-      event.broker.publish('api', 'activity.stop.' + event.executionId, {}, {type: 'stop'});
+      event.broker.publish('api', 'activity.stop.' + event.executionId, {}, { type: 'stop' });
 
       expect(event.broker).to.have.property('consumerCount', 0);
     });
 
     it('resumed boundary event sends detach event again', () => {
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.detach', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.detach',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       event.run();
       event.stop();
@@ -439,9 +509,14 @@ describe('CompensateEventDefinition', () => {
       recoveredEvent.recover(state);
 
       const messages = [];
-      recoveredEvent.broker.subscribeTmp('event', 'activity.detach', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      recoveredEvent.broker.subscribeTmp(
+        'event',
+        'activity.detach',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       recoveredEvent.resume();
 
@@ -451,7 +526,7 @@ describe('CompensateEventDefinition', () => {
     it('recovered and resumed compensate boundary event keeps attached target messages', () => {
       event.run();
 
-      event.attachedTo.broker.publish('execution', 'execute.completed', {id: 'task', executionId: 'task_0'});
+      event.attachedTo.broker.publish('execution', 'execute.completed', { id: 'task', executionId: 'task_0' });
 
       event.stop();
 
@@ -461,7 +536,7 @@ describe('CompensateEventDefinition', () => {
 
       const [association] = recoveredEvent.context.getOutboundAssociations('event');
       const messages = [];
-      association.broker.subscribeTmp('event', '#', (_, msg) => messages.push(msg), {noAck: true});
+      association.broker.subscribeTmp('event', '#', (_, msg) => messages.push(msg), { noAck: true });
 
       recoveredEvent.resume();
 
@@ -474,9 +549,14 @@ describe('CompensateEventDefinition', () => {
 
     it('multiple attached runs only starts compensate boundary event once', () => {
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.detach', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.detach',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       event.activate();
 
@@ -490,9 +570,14 @@ describe('CompensateEventDefinition', () => {
 
     it('attached discarded is ignored', () => {
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.detach', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.detach',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       event.activate();
 
@@ -530,10 +615,12 @@ describe('CompensateEventDefinition', () => {
             type: 'intermediatethrowevent',
             Behaviour: IntermediateThrowEvent,
             behaviour: {
-              eventDefinitions: [{
-                type: 'compensateeventdefinition',
-                Behaviour: CompensateEventDefinition,
-              }],
+              eventDefinitions: [
+                {
+                  type: 'compensateeventdefinition',
+                  Behaviour: CompensateEventDefinition,
+                },
+              ],
             },
           };
         },
@@ -544,9 +631,14 @@ describe('CompensateEventDefinition', () => {
 
     it('publishes compensate event on parent broker', () => {
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -557,10 +649,12 @@ describe('CompensateEventDefinition', () => {
           parent: {
             id: 'event',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -574,9 +668,14 @@ describe('CompensateEventDefinition', () => {
 
     it('completes throw event when executed', () => {
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.leave', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.leave',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       event.run();
 
@@ -591,10 +690,12 @@ describe('CompensateEventDefinition', () => {
             type: 'endevent',
             Behaviour: EndEvent,
             behaviour: {
-              eventDefinitions: [{
-                type: 'compensateeventdefinition',
-                Behaviour: CompensateEventDefinition,
-              }],
+              eventDefinitions: [
+                {
+                  type: 'compensateeventdefinition',
+                  Behaviour: CompensateEventDefinition,
+                },
+              ],
             },
           };
         },
@@ -602,9 +703,14 @@ describe('CompensateEventDefinition', () => {
       const endEvent = endContext.getActivityById('end');
 
       const messages = [];
-      endEvent.broker.subscribeTmp('event', 'activity.leave', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      endEvent.broker.subscribeTmp(
+        'event',
+        'activity.leave',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       endEvent.run();
 

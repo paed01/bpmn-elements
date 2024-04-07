@@ -28,9 +28,14 @@ Feature('Shaking', () => {
 
     const messages = [];
     When('definition is ran', () => {
-      definition.broker.subscribeTmp('event', 'activity.shake.end', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.shake.end',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.run();
     });
@@ -96,13 +101,23 @@ Feature('Shaking', () => {
 
     const messages = [];
     When('definition is ran', () => {
-      definition.broker.subscribeTmp('event', 'activity.shake.end', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.shake.end',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
-      definition.broker.subscribeTmp('event', 'flow.shake.loop', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'flow.shake.loop',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.run();
     });
@@ -196,15 +211,20 @@ Feature('Shaking', () => {
         if (run) {
           And('definition is running', () => {
             definition.run();
-            definition.signal({id: 'Message2'});
+            definition.signal({ id: 'Message2' });
           });
         }
 
         const messages = [];
         And('shake messages are collected', () => {
-          definition.broker.subscribeTmp('event', '*.shake#', (routingKey) => {
-            messages.push(routingKey);
-          }, {noAck: true});
+          definition.broker.subscribeTmp(
+            'event',
+            '*.shake#',
+            (routingKey) => {
+              messages.push(routingKey);
+            },
+            { noAck: true },
+          );
         });
 
         When('definition shakes first start event', () => {
@@ -318,7 +338,7 @@ Feature('Shaking', () => {
           let end;
           When('user task is signaled', () => {
             end = definition.waitFor('end');
-            definition.signal({id: 'task'});
+            definition.signal({ id: 'task' });
           });
 
           Then('run completes', () => {
@@ -336,7 +356,7 @@ Feature('Shaking', () => {
         definition.once('wait', () => {
           definition.stop();
         });
-        definition.signal({id: 'Message2'});
+        definition.signal({ id: 'Message2' });
       });
 
       And('is stopped on user task wait', () => {
@@ -404,7 +424,7 @@ Feature('Shaking', () => {
       let end;
       When('user task is signaled', () => {
         end = definition.waitFor('leave');
-        definition.signal({id: 'task'});
+        definition.signal({ id: 'task' });
       });
 
       Then('execution completes', () => {
@@ -423,7 +443,7 @@ Feature('Shaking', () => {
         definition.once('stop', () => {
           state = definition.getState();
         });
-        definition.signal({id: 'Message2'});
+        definition.signal({ id: 'Message2' });
       });
 
       And('state is saved on user task wait', () => {
@@ -467,7 +487,7 @@ Feature('Shaking', () => {
       When('definition is resumed and user task is signaled', () => {
         end = definition.waitFor('leave');
         definition.resume();
-        definition.signal({id: 'task'});
+        definition.signal({ id: 'task' });
       });
 
       Then('execution completes', () => {
@@ -577,9 +597,14 @@ Feature('Shaking', () => {
 
       const messages = [];
       And('shake messages are collected', () => {
-        definition.broker.subscribeTmp('event', '*.shake#', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
+        definition.broker.subscribeTmp(
+          'event',
+          '*.shake#',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true },
+        );
       });
 
       When('task is shook by api', () => {

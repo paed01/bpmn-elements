@@ -22,13 +22,23 @@ Feature('Process', () => {
     });
 
     And('the process is subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', 'process.#', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'process.#',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed;
@@ -84,13 +94,23 @@ Feature('Process', () => {
     });
 
     And('the process is subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', 'process.#', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'process.#',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed;
@@ -142,13 +162,23 @@ Feature('Process', () => {
     });
 
     And('the process is subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', 'process.#', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'process.#',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed;
@@ -216,13 +246,23 @@ Feature('Process', () => {
     });
 
     And('the process is subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', 'process.#', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'process.#',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed;
@@ -462,13 +502,23 @@ Feature('Process', () => {
     });
 
     And('the process is subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', 'process.#', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'process.#',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed;
@@ -534,13 +584,23 @@ Feature('Process', () => {
     });
 
     And('the process is subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', 'process.#', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'process.#',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed;
@@ -612,14 +672,19 @@ Feature('Process', () => {
 
     let looped = 0;
     And('the process is subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', '#', (routingKey, message) => {
-        if (message.content.id === 'activity1' && routingKey === 'activity.discard') {
-          ++looped;
-          if (looped > 2) throw new Error('Inifinty loop');
-        }
+      processInstance.broker.subscribeTmp(
+        'event',
+        '#',
+        (routingKey, message) => {
+          if (message.content.id === 'activity1' && routingKey === 'activity.discard') {
+            ++looped;
+            if (looped > 2) throw new Error('Inifinty loop');
+          }
 
-        messages.push(message);
-      }, {noAck: true});
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed;
@@ -735,13 +800,23 @@ Feature('Process', () => {
     });
 
     And('the process is subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', 'process.#', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'process.#',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed;
@@ -821,9 +896,14 @@ Feature('Process', () => {
     });
 
     And('the process is subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed;
@@ -895,9 +975,14 @@ Feature('Process', () => {
     });
 
     And('the activities are subscribed to', () => {
-      bp.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      bp.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let waiting;
@@ -926,11 +1011,15 @@ Feature('Process', () => {
     });
 
     When('a message is received', () => {
-      bp.getApi().sendApiMessage('message', {
-        target: {
-          id: 'receive',
+      bp.getApi().sendApiMessage(
+        'message',
+        {
+          target: {
+            id: 'receive',
+          },
         },
-      }, {delegate: true});
+        { delegate: true },
+      );
     });
 
     Then('the process continuous execution and completes', async () => {
@@ -981,9 +1070,14 @@ Feature('Process', () => {
     });
 
     And('the activities are subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed;
@@ -1106,9 +1200,14 @@ Feature('Process', () => {
     });
 
     And('the process is subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', '#', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        '#',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let failure, stateChange;
@@ -1167,9 +1266,14 @@ Feature('Process', () => {
     });
 
     And('the activities are subscribed to', () => {
-      bp.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      bp.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed, stateChange;
@@ -1297,9 +1401,14 @@ Feature('Process', () => {
     });
 
     And('the activities are subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed, stateChange;
@@ -1443,9 +1552,14 @@ Feature('Process', () => {
     });
 
     And('the activities are subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed, stateChange;
@@ -1561,9 +1675,14 @@ Feature('Process', () => {
     });
 
     And('the activities are subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let waiting;
@@ -1641,9 +1760,14 @@ Feature('Process', () => {
     });
 
     And('the activities are subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed, waiting;
@@ -1668,9 +1792,14 @@ Feature('Process', () => {
 
     When('process is recovered', () => {
       processInstance = context.clone().getProcessById('theProcess').recover(state);
-      processInstance.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     And('resuming execution', () => {
@@ -1748,14 +1877,19 @@ Feature('Process', () => {
 
     let looped = 0;
     And('the process is subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', '#', (routingKey, message) => {
-        if (message.content.id === 'activity0' && routingKey === 'activity.discard') {
-          ++looped;
-          if (looped > 2) throw new Error('Inifinty loop');
-        }
+      processInstance.broker.subscribeTmp(
+        'event',
+        '#',
+        (routingKey, message) => {
+          if (message.content.id === 'activity0' && routingKey === 'activity.discard') {
+            ++looped;
+            if (looped > 2) throw new Error('Inifinty loop');
+          }
 
-        messages.push(message);
-      }, {noAck: true});
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let stopTrigger;
@@ -1909,9 +2043,14 @@ Feature('Process', () => {
     });
 
     And('the activities are subscribed to', () => {
-      bp.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      bp.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let waiting;
@@ -1993,9 +2132,14 @@ Feature('Process', () => {
     });
 
     And('the activities are subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', '#', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      processInstance.broker.subscribeTmp(
+        'event',
+        '#',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     When('run', () => {
@@ -2071,18 +2215,28 @@ Feature('Process', () => {
 
     let looped = 0;
     And('the process is subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', '#', (routingKey, message) => {
-        if (message.content.id === 'userTask1' && routingKey === 'activity.discard') {
-          ++looped;
-          if (looped > 2) throw new Error('Inifinty loop');
-        }
+      processInstance.broker.subscribeTmp(
+        'event',
+        '#',
+        (routingKey, message) => {
+          if (message.content.id === 'userTask1' && routingKey === 'activity.discard') {
+            ++looped;
+            if (looped > 2) throw new Error('Inifinty loop');
+          }
 
-        messages.push(message);
-      }, {noAck: true});
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
-      processInstance.broker.subscribeTmp('event', 'process.leave', () => {
-        throw new Error('Left too early');
-      }, {noAck: true, consumerTag: 'too-early'});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'process.leave',
+        () => {
+          throw new Error('Left too early');
+        },
+        { noAck: true, consumerTag: 'too-early' },
+      );
     });
 
     let waiting;
@@ -2174,9 +2328,14 @@ Feature('Process', () => {
 
     let left;
     When('process is ran again', () => {
-      processInstance.broker.subscribeTmp('event', 'process.leave', () => {
-        throw new Error('Left too early');
-      }, {noAck: true, consumerTag: 'too-early'});
+      processInstance.broker.subscribeTmp(
+        'event',
+        'process.leave',
+        () => {
+          throw new Error('Left too early');
+        },
+        { noAck: true, consumerTag: 'too-early' },
+      );
 
       left = processInstance.waitFor('leave');
       processInstance.run();
@@ -2198,14 +2357,19 @@ Feature('Process', () => {
 
     let looped = 0;
     And('the process is subscribed to', () => {
-      processInstance.broker.subscribeTmp('event', '#', (routingKey, message) => {
-        if (message.content.id === 'userTask1' && routingKey === 'activity.discard') {
-          ++looped;
-          if (looped > 2) throw new Error('Inifinty loop');
-        }
+      processInstance.broker.subscribeTmp(
+        'event',
+        '#',
+        (routingKey, message) => {
+          if (message.content.id === 'userTask1' && routingKey === 'activity.discard') {
+            ++looped;
+            if (looped > 2) throw new Error('Inifinty loop');
+          }
 
-        messages.push(message);
-      }, {noAck: true});
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let waiting;
@@ -2342,11 +2506,11 @@ Feature('Process', () => {
     });
 
     And('process was completed', () => {
-      expect(bp.counters).to.deep.equal({completed: 1, discarded: 0});
+      expect(bp.counters).to.deep.equal({ completed: 1, discarded: 0 });
     });
 
     And('running activity was discarded', () => {
-      expect(bp.getActivityById('activity').counters).to.deep.equal({discarded: 1, taken: 0});
+      expect(bp.getActivityById('activity').counters).to.deep.equal({ discarded: 1, taken: 0 });
     });
   });
 });

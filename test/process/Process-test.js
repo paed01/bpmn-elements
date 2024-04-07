@@ -8,18 +8,18 @@ import { Process } from '../../src/process/Process.js';
 describe('Process', () => {
   describe('requirements', () => {
     it('requires a process definition with id and a context with an environment', () => {
-      const bp = new Process({id: 'theProcess'}, testHelpers.emptyContext());
+      const bp = new Process({ id: 'theProcess' }, testHelpers.emptyContext());
       expect(bp.run).to.be.a('function');
     });
 
     it('requires context with getActivities(), and getSequenceFlows() to run', () => {
-      const bp = new Process({id: 'theProcess'}, testHelpers.emptyContext());
+      const bp = new Process({ id: 'theProcess' }, testHelpers.emptyContext());
       bp.run();
       expect(bp.counters).to.have.property('completed', 1);
     });
 
     it('maps isExecutable behaviour to process', () => {
-      const bp = new Process({id: 'theProcess', behaviour: {isExecutable: true} }, testHelpers.emptyContext());
+      const bp = new Process({ id: 'theProcess', behaviour: { isExecutable: true } }, testHelpers.emptyContext());
       expect(bp.isExecutable).to.be.true;
     });
   });
@@ -98,7 +98,7 @@ describe('Process', () => {
 
   describe('stop()', () => {
     it('when executing sets stopped flag and cancels process broker consumers', () => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
 
       bp.run();
       bp.stop();
@@ -114,13 +114,13 @@ describe('Process', () => {
     });
 
     it('ignored if not executing', () => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
       bp.stop();
       expect(bp.getState().stopped).to.be.false;
     });
 
     it('stops run queue and leaves run message', () => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
       bp.run();
       bp.stop();
 
@@ -131,7 +131,7 @@ describe('Process', () => {
     });
 
     it('stops all child executions', () => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
       bp.run();
       bp.stop();
 
@@ -140,7 +140,7 @@ describe('Process', () => {
     });
 
     it('stop on process enter stops all running activities', (done) => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
 
       bp.once('enter', () => {
         bp.stop();
@@ -160,7 +160,7 @@ describe('Process', () => {
     });
 
     it('stop on activity start stops all running activities', (done) => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
 
       bp.once('activity.start', () => {
         bp.stop();
@@ -355,7 +355,7 @@ describe('Process', () => {
 
   describe('getState()', () => {
     it('returns expected state when not running', () => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
 
       const state = bp.getState();
 
@@ -367,7 +367,7 @@ describe('Process', () => {
     });
 
     it('returns expected state when running', () => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
       bp.run();
 
       const state = bp.getState();
@@ -381,7 +381,7 @@ describe('Process', () => {
     });
 
     it('returns expected state when stopped', () => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
       bp.run();
       bp.stop();
 
@@ -398,7 +398,7 @@ describe('Process', () => {
 
   describe('recover(state)', () => {
     it('throws if called when process is running', () => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
       bp.run();
 
       const state = bp.getState();
@@ -409,7 +409,7 @@ describe('Process', () => {
     });
 
     it('returns process if called without state', () => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
       expect(bp === bp.recover()).to.be.true;
     });
   });
@@ -430,7 +430,7 @@ describe('Process', () => {
 
       bp.resume();
 
-      bp.getPostponed().forEach(p => {
+      bp.getPostponed().forEach((p) => {
         if (p.type === 'bpmn:UserTask') {
           p.signal();
         }
@@ -438,7 +438,7 @@ describe('Process', () => {
 
       bp.resume();
 
-      bp.getPostponed().forEach(p => {
+      bp.getPostponed().forEach((p) => {
         if (p.type === 'bpmn:UserTask') {
           p.signal();
         }
@@ -446,7 +446,7 @@ describe('Process', () => {
     });
 
     it('resumes after stopped', () => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
 
       bp.run();
       bp.stop();
@@ -459,12 +459,12 @@ describe('Process', () => {
     });
 
     it('resumes with stopped state', () => {
-      const bp1 = new Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({ id: 'theProcess' }, Context());
 
       bp1.run();
       bp1.stop();
 
-      const bp2 = new Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({ id: 'theProcess' }, Context());
       bp2.recover(bp1.getState());
 
       bp2.resume();
@@ -475,11 +475,11 @@ describe('Process', () => {
     });
 
     it('resumes with running state', () => {
-      const bp1 = new Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({ id: 'theProcess' }, Context());
 
       bp1.run();
 
-      const bp2 = new Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({ id: 'theProcess' }, Context());
       bp2.recover(bp1.getState());
 
       bp2.resume();
@@ -490,14 +490,14 @@ describe('Process', () => {
     });
 
     it('resumes on enter', () => {
-      const bp1 = new Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({ id: 'theProcess' }, Context());
       bp1.once('enter', (api) => {
         api.stop();
       });
 
       bp1.run();
 
-      const bp2 = new Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({ id: 'theProcess' }, Context());
       bp2.recover(bp1.getState());
 
       bp2.resume();
@@ -508,14 +508,14 @@ describe('Process', () => {
     });
 
     it('resumes stopped recovered on enter', () => {
-      const bp1 = new Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({ id: 'theProcess' }, Context());
       bp1.once('enter', (api) => {
         api.stop();
       });
 
       bp1.run();
 
-      const bp2 = new Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({ id: 'theProcess' }, Context());
       bp2.recover(bp1.getState());
 
       bp2.resume();
@@ -526,14 +526,14 @@ describe('Process', () => {
     });
 
     it('resumes stopped recovered on start', () => {
-      const bp1 = new Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({ id: 'theProcess' }, Context());
       bp1.once('start', (api) => {
         api.stop();
       });
 
       bp1.run();
 
-      const bp2 = new Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({ id: 'theProcess' }, Context());
       bp2.recover(bp1.getState());
 
       bp2.resume();
@@ -544,7 +544,7 @@ describe('Process', () => {
     });
 
     it('resumes on start state', () => {
-      const bp1 = new Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({ id: 'theProcess' }, Context());
       let state;
       bp1.once('enter', () => {
         state = bp1.getState();
@@ -552,7 +552,7 @@ describe('Process', () => {
 
       bp1.run();
 
-      const bp2 = new Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({ id: 'theProcess' }, Context());
       bp2.recover(state);
 
       bp2.resume();
@@ -563,7 +563,7 @@ describe('Process', () => {
     });
 
     it('resumes stopped recovered on end', async () => {
-      const bp1 = new Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({ id: 'theProcess' }, Context());
       const stopped = bp1.waitFor('stop');
       bp1.once('end', (api) => {
         api.stop();
@@ -574,7 +574,7 @@ describe('Process', () => {
 
       await stopped;
 
-      const bp2 = new Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({ id: 'theProcess' }, Context());
       bp2.recover(bp1.getState());
 
       bp2.resume();
@@ -583,7 +583,7 @@ describe('Process', () => {
     });
 
     it('resumes stopped recovered on activity event', () => {
-      const bp1 = new Process({id: 'theProcess'}, Context());
+      const bp1 = new Process({ id: 'theProcess' }, Context());
       bp1.once('wait', (api) => {
         api.stop();
       });
@@ -591,7 +591,7 @@ describe('Process', () => {
       bp1.run();
       expect(bp1.counters).to.have.property('completed', 0);
 
-      const bp2 = new Process({id: 'theProcess'}, Context());
+      const bp2 = new Process({ id: 'theProcess' }, Context());
       bp2.recover(JSON.parse(JSON.stringify(bp1.getState())));
 
       bp2.resume();
@@ -602,7 +602,7 @@ describe('Process', () => {
     });
 
     it('throws if called while process is running', () => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
       bp.run();
 
       expect(() => {
@@ -611,7 +611,7 @@ describe('Process', () => {
     });
 
     it('ignored if never started', () => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
       bp.broker.subscribeTmp('event', '#', () => {
         throw new Error('Shouldn´t happen');
       });
@@ -619,7 +619,7 @@ describe('Process', () => {
     });
 
     it('ignored if completed', () => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
 
       bp.on('wait', (activityApi) => {
         activityApi.signal();
@@ -749,14 +749,20 @@ describe('Process', () => {
       postponed[0].signal();
 
       postponed = bp.getPostponed();
-      expect(postponed, postponed.map((a) => a.id)).to.have.length(2);
+      expect(
+        postponed,
+        postponed.map((a) => a.id),
+      ).to.have.length(2);
       expect(postponed[0].id).to.equal('task2');
       expect(postponed[1].id).to.equal('subProcess');
 
       postponed[0].signal();
 
       postponed = bp.getPostponed();
-      expect(postponed, postponed.map((a) => a.id)).to.have.length(1);
+      expect(
+        postponed,
+        postponed.map((a) => a.id),
+      ).to.have.length(1);
       expect(postponed[0].id).to.equal('subProcess');
       expect(postponed[0].content).to.have.property('isSubProcess', true);
       expect(postponed[0].owner).to.have.property('id', 'subProcess');
@@ -807,7 +813,10 @@ describe('Process', () => {
 
       const state = bp.getState();
 
-      const recovered = context.clone().getProcessById(state.id).recover(JSON.parse(JSON.stringify(state)));
+      const recovered = context
+        .clone()
+        .getProcessById(state.id)
+        .recover(JSON.parse(JSON.stringify(state)));
       recovered.resume();
 
       postponed = recovered.getPostponed();
@@ -917,11 +926,16 @@ describe('Process', () => {
 
     it('returns api on each event', () => {
       const [bp] = context.clone().getProcesses();
-      bp.broker.subscribeTmp('event', '#', (routingKey, message) => {
-        const api = bp.getApi(message);
-        expect(api, `api ${routingKey} ${message.content.id}`).to.be.ok;
-        expect(message.content.type).to.equal(api.content.type);
-      }, {noAck: true});
+      bp.broker.subscribeTmp(
+        'event',
+        '#',
+        (routingKey, message) => {
+          const api = bp.getApi(message);
+          expect(api, `api ${routingKey} ${message.content.id}`).to.be.ok;
+          expect(message.content.type).to.equal(api.content.type);
+        },
+        { noAck: true },
+      );
 
       bp.run();
     });
@@ -930,12 +944,17 @@ describe('Process', () => {
       const [bp] = context.clone().getProcesses();
 
       let api = false;
-      bp.broker.subscribeTmp('event', 'activity.#', (routingKey, message) => {
-        if (message.content.id === 'task3') {
-          delete message.content.parent;
-          api = bp.getApi(message);
-        }
-      }, {noAck: true});
+      bp.broker.subscribeTmp(
+        'event',
+        'activity.#',
+        (routingKey, message) => {
+          if (message.content.id === 'task3') {
+            delete message.content.parent;
+            api = bp.getApi(message);
+          }
+        },
+        { noAck: true },
+      );
 
       bp.run();
 
@@ -951,20 +970,22 @@ describe('Process', () => {
     it('with unknown id return nothing', () => {
       const [bp] = context.clone().getProcesses();
       bp.run();
-      expect(bp.getApi({content: {id: 'who?'}})).to.not.be.ok;
+      expect(bp.getApi({ content: { id: 'who?' } })).to.not.be.ok;
     });
 
     it('with unknown parent id return nothing', () => {
       const [bp] = context.clone().getProcesses();
       bp.run();
-      expect(bp.getApi({
-        content: {
-          id: 'who?',
-          parent: {
-            id: 'me?',
+      expect(
+        bp.getApi({
+          content: {
+            id: 'who?',
+            parent: {
+              id: 'me?',
+            },
           },
-        },
-      })).to.not.be.ok;
+        }),
+      ).to.not.be.ok;
     });
   });
 
@@ -1095,7 +1116,7 @@ describe('Process', () => {
 
       expect(bp.counters).to.have.property('completed', 1);
 
-      expect(bp.getActivityById('end').counters).to.eql({taken: 1, discarded: 0});
+      expect(bp.getActivityById('end').counters).to.eql({ taken: 1, discarded: 0 });
     });
 
     it('completes when sub process with terminate end event completes', async () => {
@@ -1127,7 +1148,7 @@ describe('Process', () => {
 
       expect(bp.counters).to.have.property('completed', 1);
 
-      expect(bp.getActivityById('end').counters).to.eql({taken: 1, discarded: 0});
+      expect(bp.getActivityById('end').counters).to.eql({ taken: 1, discarded: 0 });
     });
 
     it('stop process stops sub process', async () => {
@@ -1148,7 +1169,7 @@ describe('Process', () => {
       const [bp] = context.getProcesses();
 
       const stop = bp.waitFor('stop');
-      bp.on('activity.start', ({id}) => {
+      bp.on('activity.start', ({ id }) => {
         if (id === 'subProcess') bp.stop();
       });
       bp.run();
@@ -1209,12 +1230,16 @@ describe('Process', () => {
       const subProcess = bp.getActivityById('subProcess');
 
       const stop = bp.waitFor('stop');
-      bp.on('activity.start', ({id}) => {
-        if (id === subProcess.id) {
-          bp.broker.cancel('_test-tag');
-          bp.stop();
-        }
-      }, {consumerTag: '_test-tag'});
+      bp.on(
+        'activity.start',
+        ({ id }) => {
+          if (id === subProcess.id) {
+            bp.broker.cancel('_test-tag');
+            bp.stop();
+          }
+        },
+        { consumerTag: '_test-tag' },
+      );
 
       bp.run();
 
@@ -1255,12 +1280,16 @@ describe('Process', () => {
       const subProcess = bp.getActivityById('subProcess');
 
       const stop = bp.waitFor('stop');
-      bp.on('activity.start', ({id}) => {
-        if (id === subProcess.id) {
-          bp.broker.cancel('_test-tag');
-          bp.stop();
-        }
-      }, {consumerTag: '_test-tag'});
+      bp.on(
+        'activity.start',
+        ({ id }) => {
+          if (id === subProcess.id) {
+            bp.broker.cancel('_test-tag');
+            bp.stop();
+          }
+        },
+        { consumerTag: '_test-tag' },
+      );
 
       bp.run();
 
@@ -1401,7 +1430,7 @@ describe('Process', () => {
         fields: {},
         content: {
           id: 'messageFlow',
-          target: {id: 'start'},
+          target: { id: 'start' },
         },
         properties: {},
       });
@@ -1429,7 +1458,7 @@ describe('Process', () => {
         fields: {},
         content: {
           id: 'messageFlow',
-          target: {id: 'start2'},
+          target: { id: 'start2' },
         },
         properties: {},
       });
@@ -1459,10 +1488,12 @@ describe('Process', () => {
 
       taskApi.signal({
         ioSpecification: {
-          dataOutputs: [{
-            id: 'userInput',
-            value: 'von Rosen',
-          }],
+          dataOutputs: [
+            {
+              id: 'userInput',
+              value: 'von Rosen',
+            },
+          ],
         },
       });
 
@@ -1689,9 +1720,14 @@ describe('Process', () => {
       const context = await testHelpers.context(source);
       const bp = context.getProcessById('theProcess');
 
-      bp.broker.subscribeOnce('event', 'process.error', () => {
-        bp.stop();
-      }, {priority: 1000});
+      bp.broker.subscribeOnce(
+        'event',
+        'process.error',
+        () => {
+          bp.stop();
+        },
+        { priority: 1000 },
+      );
 
       bp.run();
 
@@ -1717,9 +1753,14 @@ describe('Process', () => {
       const context = await testHelpers.context(source);
       const bp = context.getProcessById('theProcess');
 
-      bp.broker.subscribeOnce('event', 'process.error', () => {
-        bp.stop();
-      }, {priority: 1000});
+      bp.broker.subscribeOnce(
+        'event',
+        'process.error',
+        () => {
+          bp.stop();
+        },
+        { priority: 1000 },
+      );
 
       bp.run();
 
@@ -1736,7 +1777,7 @@ describe('Process', () => {
 
   describe('waitFor()', () => {
     it('returns promise that resolves when event occur', () => {
-      const bp = new Process({id: 'theProcess'}, testHelpers.emptyContext());
+      const bp = new Process({ id: 'theProcess' }, testHelpers.emptyContext());
 
       const leave = bp.waitFor('leave');
 
@@ -1746,10 +1787,10 @@ describe('Process', () => {
     });
 
     it('rejects if process error is published', (done) => {
-      const bp = new Process({id: 'theProcess'}, testHelpers.emptyContext());
+      const bp = new Process({ id: 'theProcess' }, testHelpers.emptyContext());
 
       bp.once('end', () => {
-        bp.broker.publish('event', 'process.error', new Error('unstable'), {mandatory: true});
+        bp.broker.publish('event', 'process.error', new Error('unstable'), { mandatory: true });
       });
 
       bp.waitFor('leave').catch((err) => {
@@ -1761,10 +1802,10 @@ describe('Process', () => {
     });
 
     it('rejects if execution error occur', (done) => {
-      const bp = new Process({id: 'theProcess'}, Context());
+      const bp = new Process({ id: 'theProcess' }, Context());
 
       bp.once('wait', () => {
-        bp.broker.publish('execution', 'execution.error', {error: new Error('unstable')}, {mandatory: true, type: 'error'});
+        bp.broker.publish('execution', 'execution.error', { error: new Error('unstable') }, { mandatory: true, type: 'error' });
       });
 
       bp.waitFor('leave').catch((err) => {
@@ -1797,7 +1838,7 @@ describe('Process', () => {
       const [bp] = context.clone().getProcesses();
       bp.run();
       const [task] = bp.getPostponed();
-      bp.broker.publish('api', 'activity.signal.' + task.executionId, {id: 'task'}, {type: 'signal'});
+      bp.broker.publish('api', 'activity.signal.' + task.executionId, { id: 'task' }, { type: 'signal' });
       expect(bp.counters).to.have.property('completed', 1);
     });
   });
@@ -1808,14 +1849,22 @@ function Context() {
 
   let activities;
   context.getActivities = () => {
-    return activities || (activities = [SignalTask({
-      id: 'task',
-      type: 'bpmn:ManualTask',
-      Behaviour: SignalTask,
-      parent: {
-        id: 'theProcess',
-      },
-    }, context)]);
+    return (
+      activities ||
+      (activities = [
+        SignalTask(
+          {
+            id: 'task',
+            type: 'bpmn:ManualTask',
+            Behaviour: SignalTask,
+            parent: {
+              id: 'theProcess',
+            },
+          },
+          context,
+        ),
+      ])
+    );
   };
   context.getActivityById = (id) => {
     return activities.find((a) => a.id === id);

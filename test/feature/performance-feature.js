@@ -13,7 +13,7 @@ Feature('Performance', () => {
     let context;
     Given('a diagram with lots of script conditions and nested joins', async () => {
       const source = factory.resource('nested-joins.bpmn');
-      context = await testHelpers.context(source, {extensions});
+      context = await testHelpers.context(source, { extensions });
     });
 
     let definition, ended;

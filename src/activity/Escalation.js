@@ -1,7 +1,7 @@
 export default function Escalation(signalDef, context) {
-  const {id, type, name, parent: originalParent} = signalDef;
-  const {environment} = context;
-  const parent = {...originalParent};
+  const { id, type, name, parent: originalParent } = signalDef;
+  const { environment } = context;
+  const parent = { ...originalParent };
 
   return {
     id,
@@ -17,7 +17,7 @@ export default function Escalation(signalDef, context) {
       type,
       messageType: 'escalation',
       name: name && environment.resolveExpression(name, executionMessage),
-      parent: {...parent},
+      parent: { ...parent },
     };
   }
 }

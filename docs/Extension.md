@@ -1,5 +1,4 @@
-Extension
-=========
+# Extension
 
 The element behaviours in this project only support elements and attributed defined in the BPMN 2.0 scheme, but can be extended to understand other schemas.
 
@@ -8,10 +7,12 @@ The element behaviours in this project only support elements and attributed defi
 All activities will call extension functions when instantiated.
 
 Arguments:
+
 - `activity`: instance of [activity](/docs/Activity.md)
 - `context`: shared [context](/docs/Context.md)
 
 Example:
+
 ```js
 const definition = new Definition(context, {
   extensions: {
@@ -19,7 +20,7 @@ const definition = new Definition(context, {
   },
 });
 
-function saveAllOutputToEnvironmentExtension(activity, {environment}) {
+function saveAllOutputToEnvironmentExtension(activity, { environment }) {
   activity.on('end', (api) => {
     environment.output[api.id] = api.content.output;
   });
@@ -33,15 +34,15 @@ In some cases it may be required to add some extra data when an activity execute
 The basic flow is to publish a formatting message on the activity format queue.
 
 ```js
-import {Definition} from 'bpmn-elements';
+import { Definition } from 'bpmn-elements';
 
 const definition = new Definition(context, {
   variables: {
-    remoteFormUrl: 'https://exmple.com'
+    remoteFormUrl: 'https://exmple.com',
   },
   extensions: {
     addFormExtension,
-  }
+  },
 });
 
 definition.once('activity.start', (api) => {
@@ -51,36 +52,42 @@ definition.once('activity.start', (api) => {
 definition.run();
 
 function addFormExtension(activity) {
-  const {formKey} = activity.behaviour;
+  const { formKey } = activity.behaviour;
   if (!formKey) return;
 
-  const {broker} = activity;
-  const form = formKey === 'whatsYourName' ? {givenName: {type: 'string'}} : {age: {type: 'int'}};
+  const { broker } = activity;
+  const form = formKey === 'whatsYourName' ? { givenName: { type: 'string' } } : { age: { type: 'int' } };
 
-  broker.subscribeTmp('event', 'activity.enter', () => {
-    broker.publish('format', 'run.input', { form });
-  }, {noAck: true});
+  broker.subscribeTmp(
+    'event',
+    'activity.enter',
+    () => {
+      broker.publish('format', 'run.input', { form });
+    },
+    { noAck: true },
+  );
 }
 ```
 
 If an asynchronous operation is required pass an end routing key to formatting message. When the call is completed publish the end routing key.
 
 Example:
+
 ```js
 import bent from 'bent';
-import {Definition} from 'bpmn-elements';
-import {resolve} from 'url';
+import { Definition } from 'bpmn-elements';
+import { resolve } from 'url';
 
 const getJSON = bent('json');
 
 const definition = new Definition(context, {
   variables: {
-    remoteFormUrl: 'https://exmple.com'
+    remoteFormUrl: 'https://exmple.com',
   },
   extensions: {
     fetchAsyncFormExtension,
-    saveAllOutputToEnvironmentExtension
-  }
+    saveAllOutputToEnvironmentExtension,
+  },
 });
 
 definition.once('activity.start', (api) => {
@@ -89,32 +96,38 @@ definition.once('activity.start', (api) => {
 
 definition.run();
 
-function fetchAsyncFormExtension(activity, {environment}) {
+function fetchAsyncFormExtension(activity, { environment }) {
   if (!activity.behaviour.formKey) return;
 
-  const {broker} = activity;
+  const { broker } = activity;
 
-  broker.subscribeTmp('event', 'activity.enter', (_, message) => {
-    const endRoutingKey = 'run.input.end';
-    const errorRoutingKey = 'run.input.error';
-    broker.publish('format', 'run.input.start', { endRoutingKey, errorRoutingKey });
+  broker.subscribeTmp(
+    'event',
+    'activity.enter',
+    (_, message) => {
+      const endRoutingKey = 'run.input.end';
+      const errorRoutingKey = 'run.input.error';
+      broker.publish('format', 'run.input.start', { endRoutingKey, errorRoutingKey });
 
-    getFormData(activity.behaviour.formKey, message.content.id).then((form) => {
-      broker.publish('format', endRoutingKey, { form });
-    }).catch((error) => {
-      broker.publish('format', errorRoutingKey, { error });
-    });
-  }, {noAck: true});
+      getFormData(activity.behaviour.formKey, message.content.id)
+        .then((form) => {
+          broker.publish('format', endRoutingKey, { form });
+        })
+        .catch((error) => {
+          broker.publish('format', errorRoutingKey, { error });
+        });
+    },
+    { noAck: true },
+  );
 
   function getFormData(formKey, id) {
     return getJSON(resolve(environment.variables.remoteFormUrl, `/api/${formKey}?id=${encodeURIComponent(id)}`));
   }
 }
 
-function saveAllOutputToEnvironmentExtension(activity, {environment}) {
+function saveAllOutputToEnvironmentExtension(activity, { environment }) {
   activity.on('end', (api) => {
     environment.output[api.id] = api.content.output;
   });
 }
 ```
-

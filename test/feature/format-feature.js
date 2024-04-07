@@ -21,7 +21,7 @@ Feature('Format', () => {
       const context = await testHelpers.context(source);
       definition = new Definition(context, {
         services: {
-          saveState({content}, ...args) {
+          saveState({ content }, ...args) {
             process.nextTick(() => {
               states.push(content.id);
               args.pop()();
@@ -36,11 +36,11 @@ Feature('Format', () => {
             activity.on('end', (api) => {
               if (api.fields.redelivered) return;
 
-              const {broker} = activity;
-              broker.publish('format', 'run.end.state', {endRoutingKey: 'run.end.saved'});
+              const { broker } = activity;
+              broker.publish('format', 'run.end.state', { endRoutingKey: 'run.end.saved' });
 
               api.environment.services.saveState(api, () => {
-                broker.publish('format', 'run.end.saved', {stateSavedAt: new Date()});
+                broker.publish('format', 'run.end.saved', { stateSavedAt: new Date() });
               });
             });
           },
@@ -87,13 +87,13 @@ Feature('Format', () => {
             activity.on('end', (api) => {
               if (api.fields.redelivered) return;
 
-              const {broker} = activity;
-              broker.publish('format', 'run.end.state', {endRoutingKey: 'run.end.saved'});
+              const { broker } = activity;
+              broker.publish('format', 'run.end.state', { endRoutingKey: 'run.end.saved' });
 
               process.nextTick(() => {
-                const states = api.environment.output.states = api.environment.output.states || [];
+                const states = (api.environment.output.states = api.environment.output.states || []);
                 states.push(api.id);
-                broker.publish('format', 'run.end.saved', {stateSavedAt: new Date()});
+                broker.publish('format', 'run.end.saved', { stateSavedAt: new Date() });
               });
             });
           },
@@ -134,16 +134,16 @@ Feature('Format', () => {
           formatSomethingOnEnterAndEnd(activity) {
             if (activity.type !== 'bpmn:StartEvent') return;
 
-            const {broker} = activity;
+            const { broker } = activity;
 
             activity.on('enter', (api) => {
               if (api.fields.redelivered) return;
-              broker.publish('format', 'run.enter.format', {enteredAt: new Date()});
+              broker.publish('format', 'run.enter.format', { enteredAt: new Date() });
             });
 
             activity.on('end', (api) => {
               if (api.fields.redelivered) return;
-              broker.publish('format', 'run.end.format', {leftAt: new Date()});
+              broker.publish('format', 'run.end.format', { leftAt: new Date() });
             });
           },
         },
@@ -155,9 +155,14 @@ Feature('Format', () => {
     When('ran', () => {
       end = definition.waitFor('end');
 
-      definition.broker.subscribeTmp('event', 'activity.leave', (_, msg) => {
-        leaveMessages.push(msg);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.leave',
+        (_, msg) => {
+          leaveMessages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.run();
     });
@@ -195,16 +200,16 @@ Feature('Format', () => {
           formatSomethingOnEnterAndEnd(activity) {
             if (activity.type !== 'bpmn:StartEvent') return;
 
-            const {broker} = activity;
+            const { broker } = activity;
 
             activity.on('enter', (api) => {
               if (api.fields.redelivered) return;
-              broker.publish('format', 'run.enter.format', {enteredAt: new Date()});
+              broker.publish('format', 'run.enter.format', { enteredAt: new Date() });
             });
 
             activity.on('end', (api) => {
               if (api.fields.redelivered) return;
-              broker.publish('format', 'run.end.format', {leftAt: new Date()});
+              broker.publish('format', 'run.end.format', { leftAt: new Date() });
             });
           },
         },
@@ -216,9 +221,14 @@ Feature('Format', () => {
     When('ran', () => {
       end = definition.waitFor('end');
 
-      definition.broker.subscribeTmp('event', 'activity.leave', (_, msg) => {
-        leaveMessages.push(msg);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.leave',
+        (_, msg) => {
+          leaveMessages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.run();
     });
@@ -237,20 +247,20 @@ Feature('Format', () => {
           formatSomethingOnEnterAndEnd(activity) {
             if (activity.type !== 'bpmn:StartEvent') return;
 
-            const {broker} = activity;
+            const { broker } = activity;
 
             activity.on('enter', (api) => {
               if (api.fields.redelivered) return;
-              broker.publish('format', 'run.enter.format', {enteredAt: new Date()});
+              broker.publish('format', 'run.enter.format', { enteredAt: new Date() });
             });
 
             activity.on('end', (api) => {
               if (api.fields.redelivered) return;
-              broker.publish('format', 'run.end.format', {endRoutingKey: 'run.end.complete'});
+              broker.publish('format', 'run.end.format', { endRoutingKey: 'run.end.complete' });
 
               return new Promise((resolve) => {
                 process.nextTick(() => {
-                  resolve({leftAt: new Date()});
+                  resolve({ leftAt: new Date() });
                 });
               }).then((format) => {
                 broker.publish('format', 'run.end.complete', format);
@@ -264,9 +274,14 @@ Feature('Format', () => {
     When('ran', () => {
       end = definition.waitFor('end');
 
-      definition.broker.subscribeTmp('event', 'activity.leave', (_, msg) => {
-        leaveMessages.push(msg);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.leave',
+        (_, msg) => {
+          leaveMessages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.run();
     });
@@ -288,31 +303,34 @@ Feature('Format', () => {
           formatSomethingOnEnterAndEnd(activity) {
             if (activity.type !== 'bpmn:StartEvent') return;
 
-            const {broker} = activity;
+            const { broker } = activity;
             const formatQ = broker.getQueue('format-run-q');
 
             activity.on('enter', (api) => {
               if (api.fields.redelivered) return;
 
-              formatQ.queueMessage({routingKey: 'run.enter.async'}, {endRoutingKey: 'run.enter.complete'});
+              formatQ.queueMessage({ routingKey: 'run.enter.async' }, { endRoutingKey: 'run.enter.complete' });
 
               return new Promise((resolve) => {
                 process.nextTick(() => {
-                  resolve({enteredAt: new Date()});
+                  resolve({ enteredAt: new Date() });
                 });
               }).then((format) => {
                 broker.publish('format', 'run.enter.complete', format);
               });
             });
 
-            activity.on('end', (api) => {
-              if (api.fields.redelivered) return;
+            activity.on(
+              'end',
+              (api) => {
+                if (api.fields.redelivered) return;
 
-              broker.getQueue('format-run-q').queueMessage({routingKey: 'run.end.format'}, {leftAt: new Date()});
+                broker.getQueue('format-run-q').queueMessage({ routingKey: 'run.end.format' }, { leftAt: new Date() });
 
-              // broker.publish('format', 'run.end.format', {leftAt: new Date()});
-
-            }, {priority: 10000});
+                // broker.publish('format', 'run.end.format', {leftAt: new Date()});
+              },
+              { priority: 10000 },
+            );
           },
         },
       });
@@ -321,9 +339,14 @@ Feature('Format', () => {
     When('ran', () => {
       end = definition.waitFor('end');
 
-      definition.broker.subscribeTmp('event', 'activity.leave', (_, msg) => {
-        leaveMessages.push(msg);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.leave',
+        (_, msg) => {
+          leaveMessages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.run();
     });
@@ -345,17 +368,17 @@ Feature('Format', () => {
           formatSomethingOnEnterAndEnd(activity) {
             if (activity.type !== 'bpmn:StartEvent') return;
 
-            const {broker, environment} = activity;
+            const { broker, environment } = activity;
             const formatQ = broker.getQueue('format-run-q');
 
             activity.on('enter', (api) => {
               if (api.fields.redelivered) return;
 
-              formatQ.queueMessage({routingKey: 'run.enter.async'}, {endRoutingKey: 'run.enter.saved'});
+              formatQ.queueMessage({ routingKey: 'run.enter.async' }, { endRoutingKey: 'run.enter.saved' });
 
               return new Promise((resolve) => {
                 process.nextTick(() => {
-                  resolve({enteredAt: new Date()});
+                  resolve({ enteredAt: new Date() });
                 });
               }).then((format) => {
                 broker.publish('format', 'run.enter.saved', format);
@@ -365,13 +388,13 @@ Feature('Format', () => {
             activity.on('end', (api) => {
               if (api.fields.redelivered) return;
 
-              formatQ.queueMessage({routingKey: 'run.end.format'}, {endRoutingKey: 'run.end.saved'});
+              formatQ.queueMessage({ routingKey: 'run.end.format' }, { endRoutingKey: 'run.end.saved' });
 
               return new Promise((resolve) => {
                 process.nextTick(() => {
-                  const states = environment.output.states = environment.output.states || [];
+                  const states = (environment.output.states = environment.output.states || []);
                   states.push(api.content.id);
-                  resolve({leftAt: new Date()});
+                  resolve({ leftAt: new Date() });
                 });
               }).then((format) => {
                 broker.publish('format', 'run.end.saved', format);
@@ -385,9 +408,14 @@ Feature('Format', () => {
     When('ran', () => {
       end = definition.waitFor('end');
 
-      definition.broker.subscribeTmp('event', 'activity.leave', (_, msg) => {
-        leaveMessages.push(msg);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.leave',
+        (_, msg) => {
+          leaveMessages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.run();
     });
@@ -421,18 +449,18 @@ Feature('Format', () => {
           saveStateOnEnd(activity) {
             if (activity.type === 'bpmn:Process') return;
 
-            const {broker} = activity;
+            const { broker } = activity;
 
             activity.on('end', (api) => {
               if (api.fields.redelivered) return;
 
               try {
-                broker.publish('format', 'run.end.state', {endRoutingKey: 'run.end.saved', errorRoutingKey: 'run.end.failed'});
+                broker.publish('format', 'run.end.state', { endRoutingKey: 'run.end.saved', errorRoutingKey: 'run.end.failed' });
                 api.environment.services.saveState(api, () => {
-                  broker.publish('format', 'run.end.state', {savedAt: new Date()});
+                  broker.publish('format', 'run.end.state', { savedAt: new Date() });
                 });
               } catch (err) {
-                broker.publish('format', 'run.end.failed', {error: err});
+                broker.publish('format', 'run.end.failed', { error: err });
               }
             });
           },
@@ -465,18 +493,18 @@ Feature('Format', () => {
           saveStateOnEnd(activity) {
             if (activity.type === 'bpmn:Process') return;
 
-            const {broker} = activity;
+            const { broker } = activity;
 
             activity.on('end', (api) => {
               if (api.fields.redelivered) return;
 
               try {
-                broker.publish('format', 'run.end.state', {endRoutingKey: 'run.end.saved'});
+                broker.publish('format', 'run.end.state', { endRoutingKey: 'run.end.saved' });
                 api.environment.services.saveState(api, () => {
-                  broker.publish('format', 'run.end.state', {savedAt: new Date()});
+                  broker.publish('format', 'run.end.state', { savedAt: new Date() });
                 });
               } catch (err) {
-                broker.publish('format', 'run.end.error', {error: err});
+                broker.publish('format', 'run.end.error', { error: err });
               }
             });
           },
@@ -508,22 +536,22 @@ Feature('Format', () => {
           saveStateOnEnd(activity) {
             if (activity.type === 'bpmn:Process') return;
 
-            const {broker} = activity;
+            const { broker } = activity;
 
             activity.on('end', (api) => {
               if (api.fields.redelivered) return;
 
-              broker.publish('format', 'run.end.first', {endRoutingKey: 'run.end.second'});
+              broker.publish('format', 'run.end.first', { endRoutingKey: 'run.end.second' });
 
               try {
-                broker.publish('format', 'run.end.state', {endRoutingKey: 'run.end.saved'});
+                broker.publish('format', 'run.end.state', { endRoutingKey: 'run.end.saved' });
                 api.environment.services.saveState(api, () => {
-                  broker.publish('format', 'run.end.state', {savedAt: new Date()});
+                  broker.publish('format', 'run.end.state', { savedAt: new Date() });
                 });
 
-                broker.publish('format', 'run.end.second', {firstAt: new Date()});
+                broker.publish('format', 'run.end.second', { firstAt: new Date() });
               } catch (err) {
-                broker.publish('format', 'run.end.error', {error: err});
+                broker.publish('format', 'run.end.error', { error: err });
               }
             });
           },
@@ -555,14 +583,14 @@ Feature('Format', () => {
           saveStateOnEnd(activity) {
             if (activity.type === 'bpmn:Process') return;
 
-            const {broker} = activity;
+            const { broker } = activity;
 
             activity.on('end', (api) => {
               if (api.fields.redelivered) return;
 
-              broker.publish('format', 'run.end.first', {endRoutingKey: 'run.end.second'});
+              broker.publish('format', 'run.end.first', { endRoutingKey: 'run.end.second' });
 
-              broker.publish('format', 'run.end.state', {endRoutingKey: 'run.end.saved', errorRoutingKey: 'run.end.failed'});
+              broker.publish('format', 'run.end.state', { endRoutingKey: 'run.end.saved', errorRoutingKey: 'run.end.failed' });
               process.nextTick(() => {
                 broker.publish('format', 'run.end.failed');
               });
@@ -634,19 +662,27 @@ Feature('Format', () => {
         activate(msg) {
           const formatQ = activity.broker.getQueue('format-run-q');
           if (msg.fields.redelivered && msg.fields.routingKey === 'run.start') {
-            formatQ.queueMessage({routingKey: 'run.enter.format'}, {endRoutingKey: 'run.enter.complete'}, {persistent: false});
+            formatQ.queueMessage({ routingKey: 'run.enter.format' }, { endRoutingKey: 'run.enter.complete' }, { persistent: false });
           }
           if (msg.fields.redelivered && msg.fields.routingKey === 'run.end') {
-            formatQ.queueMessage({routingKey: 'run.end.format'}, {endRoutingKey: 'run.end.complete'}, {persistent: false});
+            formatQ.queueMessage({ routingKey: 'run.end.format' }, { endRoutingKey: 'run.end.complete' }, { persistent: false });
           }
 
-          activity.on('enter', () => {
-            formatQ.queueMessage({routingKey: 'run.enter.format'}, {endRoutingKey: 'run.enter.complete'}, {persistent: false});
-          }, {consumerTag: '_extension-on-enter'});
+          activity.on(
+            'enter',
+            () => {
+              formatQ.queueMessage({ routingKey: 'run.enter.format' }, { endRoutingKey: 'run.enter.complete' }, { persistent: false });
+            },
+            { consumerTag: '_extension-on-enter' },
+          );
 
-          activity.on('activity.execution.completed', () => {
-            formatQ.queueMessage({routingKey: 'run.end.format'}, {endRoutingKey: 'run.end.complete'}, {persistent: false});
-          }, {consumerTag: '_extension-on-end'});
+          activity.on(
+            'activity.execution.completed',
+            () => {
+              formatQ.queueMessage({ routingKey: 'run.end.format' }, { endRoutingKey: 'run.end.complete' }, { persistent: false });
+            },
+            { consumerTag: '_extension-on-end' },
+          );
         },
         deactivate() {
           activity.broker.cancel('_extension-on-enter');
@@ -658,7 +694,7 @@ Feature('Format', () => {
     When('definition run', () => {
       definition = new Definition(context, {
         variables: {
-          _data: {input: 'startio', prop: 72},
+          _data: { input: 'startio', prop: 72 },
         },
         settings: {
           enableDummyService: false,
@@ -704,7 +740,7 @@ Feature('Format', () => {
     And('resumed enter formatting completes', () => {
       const [api] = definition.getPostponed();
       const formatQ = api.owner.broker.getQueue('format-run-q');
-      formatQ.queueMessage({routingKey: 'run.enter.complete'}, {extended: true}, {persistent: false});
+      formatQ.queueMessage({ routingKey: 'run.enter.complete' }, { extended: true }, { persistent: false });
     });
 
     let serviceCall;
@@ -724,24 +760,28 @@ Feature('Format', () => {
         type: 'bpmn:DataInput',
         value: 'startio',
       });
-      expect(msg.content).to.have.property('properties').that.deep.equal({
-        Property_1: {
-          id: 'Property_1',
-          name: 'bpmnprop',
-          type: 'bpmn:Property',
-          value: 72,
-        },
-      });
+      expect(msg.content)
+        .to.have.property('properties')
+        .that.deep.equal({
+          Property_1: {
+            id: 'Property_1',
+            name: 'bpmnprop',
+            type: 'bpmn:Property',
+            value: 72,
+          },
+        });
     });
 
     When('service completes', () => {
       const [, callback] = serviceCall;
       callback(null, {
         ioSpecification: {
-          dataOutputs: [{
-            id: 'userInput',
-            value: 'endio',
-          }],
+          dataOutputs: [
+            {
+              id: 'userInput',
+              value: 'endio',
+            },
+          ],
         },
       });
     });
@@ -782,7 +822,7 @@ Feature('Format', () => {
     When('resumed end formatting completes', () => {
       const [api] = definition.getPostponed();
       const formatQ = api.owner.broker.getQueue('format-run-q');
-      formatQ.queueMessage({routingKey: 'run.end.complete'}, {serviceOutput: true}, {persistent: false});
+      formatQ.queueMessage({ routingKey: 'run.end.complete' }, { serviceOutput: true }, { persistent: false });
     });
 
     Then('resumed definition completes', () => {
@@ -800,14 +840,16 @@ Feature('Format', () => {
         type: 'bpmn:DataInput',
         value: 'startio',
       });
-      expect(api.content).to.have.property('properties').that.deep.equal({
-        Property_1: {
-          id: 'Property_1',
-          name: 'bpmnprop',
-          type: 'bpmn:Property',
-          value: 72,
-        },
-      });
+      expect(api.content)
+        .to.have.property('properties')
+        .that.deep.equal({
+          Property_1: {
+            id: 'Property_1',
+            name: 'bpmnprop',
+            type: 'bpmn:Property',
+            value: 72,
+          },
+        });
       expect(api.content).to.have.property('serviceOutput', true);
       expect(api.content.ioSpecification).to.have.property('dataOutputs').with.length(1);
       expect(api.content.ioSpecification.dataOutputs[0]).to.deep.equal({
@@ -842,7 +884,7 @@ Feature('Format', () => {
         activity.behaviour.Service = function Service() {
           return {
             execute(msg, callback) {
-              callback(null, {result: msg.content.entered});
+              callback(null, { result: msg.content.entered });
             },
           };
         };
@@ -853,24 +895,36 @@ Feature('Format', () => {
           const formatQ = activity.broker.getQueue('format-run-q');
           if (msg.fields.redelivered) {
             if (msg.fields.routingKey === 'run.start') {
-              formatQ.queueMessage({routingKey: 'run.enter.format'}, {endRoutingKey: 'run.enter.complete'}, {persistent: false});
+              formatQ.queueMessage({ routingKey: 'run.enter.format' }, { endRoutingKey: 'run.enter.complete' }, { persistent: false });
             }
             if (msg.fields.routingKey === 'run.execute') {
-              return activity.on('activity.execution.completed', () => {
-                formatQ.queueMessage({routingKey: 'run.end.format'}, {endRoutingKey: 'run.end.complete'}, {persistent: false});
-              }, {consumerTag: '_extension-on-end'});
+              return activity.on(
+                'activity.execution.completed',
+                () => {
+                  formatQ.queueMessage({ routingKey: 'run.end.format' }, { endRoutingKey: 'run.end.complete' }, { persistent: false });
+                },
+                { consumerTag: '_extension-on-end' },
+              );
             }
           }
 
-          activity.on('enter', (api) => {
-            formatQ.queueMessage({routingKey: 'run.enter.format'}, {endRoutingKey: 'run.enter.complete'}, {persistent: false});
-            api.environment.services.saveState(api);
-          }, {consumerTag: '_extension-on-enter'});
+          activity.on(
+            'enter',
+            (api) => {
+              formatQ.queueMessage({ routingKey: 'run.enter.format' }, { endRoutingKey: 'run.enter.complete' }, { persistent: false });
+              api.environment.services.saveState(api);
+            },
+            { consumerTag: '_extension-on-enter' },
+          );
 
-          activity.on('activity.execution.completed', (api) => {
-            formatQ.queueMessage({routingKey: 'run.end.format'}, {endRoutingKey: 'run.end.complete'}, {persistent: false});
-            api.environment.services.saveState(api);
-          }, {consumerTag: '_extension-on-end'});
+          activity.on(
+            'activity.execution.completed',
+            (api) => {
+              formatQ.queueMessage({ routingKey: 'run.end.format' }, { endRoutingKey: 'run.end.complete' }, { persistent: false });
+              api.environment.services.saveState(api);
+            },
+            { consumerTag: '_extension-on-end' },
+          );
         },
         deactivate() {
           activity.broker.cancel('_extension-on-enter');
@@ -924,7 +978,7 @@ Feature('Format', () => {
 
     And('resumed enter formatting completes', () => {
       const [api] = definition.getPostponed();
-      api.broker.getExchange('format').publish('run.enter.complete', { entered: 3 }, {persistent: false});
+      api.broker.getExchange('format').publish('run.enter.complete', { entered: 3 }, { persistent: false });
     });
 
     Then('run is stopped on formatting execution complete message', () => {

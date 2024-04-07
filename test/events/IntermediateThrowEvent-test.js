@@ -40,9 +40,14 @@ describe('IntermediateThrowEvent', () => {
       const event = context.getActivityById('event');
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
       const signaling = event.waitFor('signal');
       const leave = event.waitFor('leave');
@@ -53,8 +58,8 @@ describe('IntermediateThrowEvent', () => {
 
       await leave;
 
-      const discarded = messages.filter(({fields}) => fields.routingKey === 'execute.discard');
-      expect(discarded.map(({content}) => content.type)).to.have.same.members(['bpmn:TimerEventDefinition']);
+      const discarded = messages.filter(({ fields }) => fields.routingKey === 'execute.discard');
+      expect(discarded.map(({ content }) => content.type)).to.have.same.members(['bpmn:TimerEventDefinition']);
     });
   });
 

@@ -1,25 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 
-const eventActivities = [
-  'bpmn:IntermediateCatchEvent',
-  'bpmn:StartEvent',
-  'bpmn:EndEvent',
-];
+const eventActivities = ['bpmn:IntermediateCatchEvent', 'bpmn:StartEvent', 'bpmn:EndEvent'];
 
-const gateways = [
-  'bpmn:ExclusiveGateway',
-  'bpmn:InclusiveGateway',
-];
+const gateways = ['bpmn:ExclusiveGateway', 'bpmn:InclusiveGateway'];
 
-const activities = [
-  'bpmn:Task',
-  'bpmn:ScriptTask',
-  'bpmn:ServiceTask',
-  'bpmn:UserTask',
-  'bpmn:SubProcess',
-  'bpmn:ParallelGateway',
-];
+const activities = ['bpmn:Task', 'bpmn:ScriptTask', 'bpmn:ServiceTask', 'bpmn:UserTask', 'bpmn:SubProcess', 'bpmn:ParallelGateway'];
 
 const cache = {};
 

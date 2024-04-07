@@ -1,5 +1,4 @@
-bpmn-elements
-=============
+# bpmn-elements
 
 [![Build](https://github.com/paed01/bpmn-elements/actions/workflows/build.yaml/badge.svg)](https://github.com/paed01/bpmn-elements/actions/workflows/build.yaml)[![Coverage Status](https://coveralls.io/repos/github/paed01/bpmn-elements/badge.svg?branch=master)](https://coveralls.io/github/paed01/bpmn-elements?branch=master)
 

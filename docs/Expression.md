@@ -1,5 +1,4 @@
-Expressions
-===========
+# Expressions
 
 Expressions handler interface.
 
@@ -15,6 +14,7 @@ Expressions handler interface.
 Resolve expression.
 
 Arguments:
+
 - `expression`: expresion templated string
 - `context`: optional context from where to resolve expressions
 - `fnContext`: optional call context (this)
@@ -50,7 +50,6 @@ and, as utility:
 - `${false}` - return Boolean value `false`
 
 > Expressions in expressions is **not** supported and has unforeseeable outcome!
-
 
 # Community
 

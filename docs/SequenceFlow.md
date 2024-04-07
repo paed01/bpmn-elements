@@ -1,5 +1,4 @@
-SequenceFlow
-============
+# SequenceFlow
 
 Sequence flow behaviour.
 
@@ -31,6 +30,7 @@ Example source:
 ```
 
 Sequence flows:
+
 - `to-task2`: default flow. If no other flow was taken then default flow is taken
 - `to-task3`: unconditional. Flow is taken
 - `to-task4`: script condition. Callback (next) is called with environment variable as result. If result is truthy the flow is taken, otherwise discarded

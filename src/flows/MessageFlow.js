@@ -1,13 +1,13 @@
-import {brokerSafeId} from '../shared.js';
-import {cloneParent} from '../messageHelper.js';
-import {MessageFlowBroker} from '../EventBroker.js';
-import {Api} from '../Api.js';
+import { brokerSafeId } from '../shared.js';
+import { cloneParent } from '../messageHelper.js';
+import { MessageFlowBroker } from '../EventBroker.js';
+import { Api } from '../Api.js';
 
 const kCounters = Symbol.for('counters');
 const kSourceElement = Symbol.for('sourceElement');
 
 export default function MessageFlow(flowDef, context) {
-  const {id, type = 'messageflow', name, target, source, behaviour, parent} = flowDef;
+  const { id, type = 'messageflow', name, target, source, behaviour, parent } = flowDef;
 
   this.id = id;
   this.type = type;
@@ -23,7 +23,7 @@ export default function MessageFlow(flowDef, context) {
     messages: 0,
   };
 
-  const {broker, on, once, emit, waitFor} = MessageFlowBroker(this);
+  const { broker, on, once, emit, waitFor } = MessageFlowBroker(this);
   this.broker = broker;
   this.on = on;
   this.once = once;
@@ -36,7 +36,7 @@ export default function MessageFlow(flowDef, context) {
 
 Object.defineProperty(MessageFlow.prototype, 'counters', {
   get() {
-    return {...this[kCounters]};
+    return { ...this[kCounters] };
   },
 });
 
@@ -58,14 +58,14 @@ MessageFlow.prototype.recover = function recover(state) {
 };
 
 MessageFlow.prototype.getApi = function getApi(message) {
-  return new Api('message', this.broker, message || {content: this._createMessageContent()});
+  return new Api('message', this.broker, message || { content: this._createMessageContent() });
 };
 
 MessageFlow.prototype.activate = function activate() {
   const sourceElement = this[kSourceElement];
   const safeId = brokerSafeId(this.id);
-  sourceElement.on('message', this.deactivate.bind(this), {consumerTag: `_message-on-message-${safeId}`});
-  sourceElement.on('end', this._onSourceEnd.bind(this), {consumerTag: `_message-on-end-${safeId}`});
+  sourceElement.on('message', this.deactivate.bind(this), { consumerTag: `_message-on-message-${safeId}` });
+  sourceElement.on('end', this._onSourceEnd.bind(this), { consumerTag: `_message-on-end-${safeId}` });
 };
 
 MessageFlow.prototype.deactivate = function deactivate() {
@@ -75,11 +75,13 @@ MessageFlow.prototype.deactivate = function deactivate() {
   sourceElement.broker.cancel(`_message-on-message-${safeId}`);
 };
 
-MessageFlow.prototype._onSourceEnd = function onSourceEnd({content}) {
+MessageFlow.prototype._onSourceEnd = function onSourceEnd({ content }) {
   ++this[kCounters].messages;
   const source = this.source;
   const target = this.target;
-  this.logger.debug(`<${this.id}> sending message from <${source.processId}.${source.id}> to <${target.id ? `${target.processId}.${target.id}` : target.processId}>`);
+  this.logger.debug(
+    `<${this.id}> sending message from <${source.processId}.${source.id}> to <${target.id ? `${target.processId}.${target.id}` : target.processId}>`,
+  );
   this.broker.publish('event', 'message.outbound', this._createMessageContent(content.message));
 };
 
@@ -88,8 +90,8 @@ MessageFlow.prototype._createMessageContent = function createMessage(message) {
     id: this.id,
     type: this.type,
     name: this.name,
-    source: {...this.source},
-    target: {...this.target},
+    source: { ...this.source },
+    target: { ...this.target },
     parent: cloneParent(this.parent),
     message,
   };

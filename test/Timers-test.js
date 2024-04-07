@@ -1,6 +1,6 @@
 import ck from 'chronokinesis';
 
-import {Timers} from '../src/Timers.js';
+import { Timers } from '../src/Timers.js';
 
 describe('Timers', () => {
   describe('setTimeout', () => {

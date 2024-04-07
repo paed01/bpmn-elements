@@ -19,7 +19,7 @@ class IOProperties {
   resolve(message) {
     const properties = {};
 
-    for (const {id, name, value} of this.behaviour.values) {
+    for (const { id, name, value } of this.behaviour.values) {
       properties[id || name] = this.environment.resolveExpression(value, message);
     }
 
@@ -36,17 +36,20 @@ class SequenceFlowExtension {
   activate() {
     let idx = 0;
     for (const listener of this.extension.listeners) {
-      this.element.broker.subscribeTmp('event', 'flow.take', this._onFlowTake(listener), {noAck: true, consumerTag: '_ontake-listener-extension_' + (idx++)});
+      this.element.broker.subscribeTmp('event', 'flow.take', this._onFlowTake(listener), {
+        noAck: true,
+        consumerTag: '_ontake-listener-extension_' + idx++,
+      });
     }
   }
   deactivate() {
     let idx = 0;
     for (const listener of this.extension.listeners) {
-      listener.outbound.broker.cancel('_ontake-listener-extension_' + (idx++));
+      listener.outbound.broker.cancel('_ontake-listener-extension_' + idx++);
     }
   }
   load() {
-    const result = {listeners: new Set()};
+    const result = { listeners: new Set() };
     const environment = this.context.environment;
     const flow = this.element;
     const extValues = flow.behaviour.extensionElements?.values;
@@ -57,16 +60,16 @@ class SequenceFlowExtension {
     for (const ext of extValues) {
       switch (ext.$type) {
         case 'camunda:ExecutionListener': {
-          const {event, script} = ext;
+          const { event, script } = ext;
           const name = `${ext.$type}/${flow.id}/on${event}/${idx++}`;
 
           const execScript = environment.scripts.register({
             id: name,
             type: ext.$type,
-            behaviour: {scriptFormat: script.scriptFormat, script: script.value},
+            behaviour: { scriptFormat: script.scriptFormat, script: script.value },
             environment,
           });
-          result.listeners.add({name, outbound: flow, execScript});
+          result.listeners.add({ name, outbound: flow, execScript });
           break;
         }
         case 'camunda:Properties':
@@ -84,9 +87,9 @@ class SequenceFlowExtension {
     return properties.resolve(fromMessage);
   }
   _onFlowTake(listener) {
-    const {name, outbound} = listener;
+    const { name, outbound } = listener;
     return function runScript(_, message, owner) {
-      const script = owner.environment.getScript('js', {id: name});
+      const script = owner.environment.getScript('js', { id: name });
       script.execute(outbound.getApi(message), () => {});
     };
   }
@@ -206,9 +209,14 @@ Feature('Sequence flow', () => {
     const messages = [];
     let end;
     When('definition is ran', () => {
-      definition.broker.subscribeTmp('event', 'activity.start', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.start',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       end = definition.waitFor('end');
       definition.run();
@@ -221,22 +229,22 @@ Feature('Sequence flow', () => {
     });
 
     And('extension listeners has executed', () => {
-      expect(definition.environment.output).to.have.property('taken').that.deep.equal([
-        { id: 'to-end1', properties: {prop1: '1'} },
-      ]);
+      expect(definition.environment.output)
+        .to.have.property('taken')
+        .that.deep.equal([{ id: 'to-end1', properties: { prop1: '1' } }]);
     });
 
     And('sequence flow condition result is forwarded to target', () => {
       expect(messages[2].content).to.have.property('id', 'end2');
       expect(messages[2].content.inbound[0]).to.have.property('scripted', 2);
-      expect(messages[2].content.inbound[0]).to.have.property('properties').that.deep.equal({prop2: '2'});
+      expect(messages[2].content.inbound[0]).to.have.property('properties').that.deep.equal({ prop2: '2' });
     });
   });
 
   Scenario('extend sequence flow behaviour by overriding flow evaluate method', () => {
     let definition;
     Given('two start events, both waiting for a message and both ending with the same end event', async () => {
-      const context = await testHelpers.context(source, {extensions});
+      const context = await testHelpers.context(source, { extensions });
       definition = new Definition(context, {
         extensions: {
           SequenceFlowExt,
@@ -252,9 +260,14 @@ Feature('Sequence flow', () => {
     const messages = [];
     let end;
     When('definition is ran', () => {
-      definition.broker.subscribeTmp('event', 'activity.start', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.start',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       end = definition.waitFor('end');
       definition.run();
@@ -267,15 +280,15 @@ Feature('Sequence flow', () => {
     });
 
     And('extension listeners has executed', () => {
-      expect(definition.environment.output).to.have.property('taken').that.deep.equal([
-        { id: 'to-end1', properties: {prop1: '1'} },
-      ]);
+      expect(definition.environment.output)
+        .to.have.property('taken')
+        .that.deep.equal([{ id: 'to-end1', properties: { prop1: '1' } }]);
     });
 
     And('sequence flow condition result is forwarded to target', () => {
       expect(messages[2].content).to.have.property('id', 'end2');
       expect(messages[2].content.inbound[0]).to.have.property('scripted', 2);
-      expect(messages[2].content.inbound[0]).to.have.property('properties').that.deep.equal({prop2: '2'});
+      expect(messages[2].content.inbound[0]).to.have.property('properties').that.deep.equal({ prop2: '2' });
     });
   });
 });

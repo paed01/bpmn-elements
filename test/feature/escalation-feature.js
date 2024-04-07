@@ -23,16 +23,18 @@ Feature('Escalate', () => {
     let orderProcess, escalated;
     Then('escalation is monitored', () => {
       [escalated, orderProcess] = definition.getPostponed();
-      expect(escalated.content).to.have.property('escalation').that.eql({
-        id: 'AmountEscalation',
-        type: 'bpmn:Escalation',
-        messageType: 'escalation',
-        name: 'Escalate amount too big',
-        parent: {
-          id: 'Definition_0',
-          type: 'bpmn:Definitions',
-        },
-      });
+      expect(escalated.content)
+        .to.have.property('escalation')
+        .that.eql({
+          id: 'AmountEscalation',
+          type: 'bpmn:Escalation',
+          messageType: 'escalation',
+          name: 'Escalate amount too big',
+          parent: {
+            id: 'Definition_0',
+            type: 'bpmn:Definitions',
+          },
+        });
     });
 
     And('amount above treshold is ordered', () => {
@@ -54,16 +56,18 @@ Feature('Escalate', () => {
     And('signal is sent', async () => {
       const endSignal = await signal;
       expect(endSignal.owner.counters).to.have.property('completed', 1);
-      expect(endSignal.content).to.have.property('message').that.deep.include({
-        id: 'EscalatedSignal',
-        type: 'bpmn:Signal',
-        messageType: 'signal',
-        name: 'Too big signal',
-        parent: {
-          id: 'Definition_0',
-          type: 'bpmn:Definitions',
-        },
-      });
+      expect(endSignal.content)
+        .to.have.property('message')
+        .that.deep.include({
+          id: 'EscalatedSignal',
+          type: 'bpmn:Signal',
+          messageType: 'signal',
+          name: 'Too big signal',
+          parent: {
+            id: 'Definition_0',
+            type: 'bpmn:Definitions',
+          },
+        });
     });
 
     And('run is completed', () => {
@@ -94,16 +98,18 @@ Feature('Escalate', () => {
 
     Then('escalation is monitored', () => {
       [orderProcess, escalated] = definition.getPostponed();
-      expect(escalated.content).to.have.property('escalation').that.eql({
-        id: 'AmountEscalation',
-        type: 'bpmn:Escalation',
-        messageType: 'escalation',
-        name: 'Escalate amount too big',
-        parent: {
-          id: 'Definition_0',
-          type: 'bpmn:Definitions',
-        },
-      });
+      expect(escalated.content)
+        .to.have.property('escalation')
+        .that.eql({
+          id: 'AmountEscalation',
+          type: 'bpmn:Escalation',
+          messageType: 'escalation',
+          name: 'Escalate amount too big',
+          parent: {
+            id: 'Definition_0',
+            type: 'bpmn:Definitions',
+          },
+        });
     });
 
     And('amount above treshold is ordered', () => {
@@ -125,16 +131,18 @@ Feature('Escalate', () => {
     And('signal is sent', async () => {
       const endSignal = await signal;
       expect(endSignal.owner.counters).to.have.property('completed', 2);
-      expect(endSignal.content).to.have.property('message').that.deep.include({
-        id: 'EscalatedSignal',
-        type: 'bpmn:Signal',
-        messageType: 'signal',
-        name: 'Too big signal',
-        parent: {
-          id: 'Definition_0',
-          type: 'bpmn:Definitions',
-        },
-      });
+      expect(endSignal.content)
+        .to.have.property('message')
+        .that.deep.include({
+          id: 'EscalatedSignal',
+          type: 'bpmn:Signal',
+          messageType: 'signal',
+          name: 'Too big signal',
+          parent: {
+            id: 'Definition_0',
+            type: 'bpmn:Definitions',
+          },
+        });
     });
 
     And('run is completed', () => {
@@ -144,8 +152,10 @@ Feature('Escalate', () => {
 
   Scenario('a process with start escalation event', () => {
     let definition;
-    Given('escalate event, an escalation manager sub process, a boss that expects not to be bothered, and an anonymous signal process', async () => {
-      const source = `
+    Given(
+      'escalate event, an escalation manager sub process, a boss that expects not to be bothered, and an anonymous signal process',
+      async () => {
+        const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="escalateProcess" isExecutable="true">
           <subProcess id="escalateSubProcess">
@@ -169,9 +179,10 @@ Feature('Escalate', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source);
-      definition = new Definition(context);
-    });
+        const context = await testHelpers.context(source);
+        definition = new Definition(context);
+      },
+    );
 
     let end, caught;
     When('definition is ran', () => {

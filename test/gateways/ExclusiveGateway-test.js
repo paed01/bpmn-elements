@@ -1,5 +1,5 @@
 import testHelpers from '../helpers/testHelpers.js';
-import {ActivityError} from '../../src/error/Errors.js';
+import { ActivityError } from '../../src/error/Errors.js';
 
 describe('ExclusiveGateway', () => {
   describe('behavior', () => {
@@ -154,7 +154,7 @@ describe('ExclusiveGateway', () => {
         </process>
       </definitions>`;
 
-      context = await testHelpers.context(source2, {Logger: testHelpers.Logger});
+      context = await testHelpers.context(source2, { Logger: testHelpers.Logger });
       const activity = context.getActivityById('decision');
       context.environment.variables.input = 50;
 
@@ -223,7 +223,9 @@ describe('ExclusiveGateway', () => {
 
       const errApi = await error;
 
-      expect(errApi.content.error).to.be.instanceOf(ActivityError).and.match(/no conditional flow/i);
+      expect(errApi.content.error)
+        .to.be.instanceOf(ActivityError)
+        .and.match(/no conditional flow/i);
     });
   });
 
@@ -312,14 +314,14 @@ describe('ExclusiveGateway', () => {
       });
 
       bp1.run();
-      bp1.signal({id: 'usertask'});
+      bp1.signal({ id: 'usertask' });
 
       expect(bp1.counters).to.have.property('completed', 1);
 
       const [bp2] = context.clone().getProcesses();
       bp2.recover(state);
       bp2.resume();
-      bp2.signal({id: 'usertask'});
+      bp2.signal({ id: 'usertask' });
 
       expect(bp2.counters).to.have.property('completed', 1);
       const end = bp2.getActivityById('end');
@@ -356,7 +358,7 @@ describe('ExclusiveGateway', () => {
       });
 
       bp1.run();
-      bp1.signal({id: 'usertask'});
+      bp1.signal({ id: 'usertask' });
 
       expect(bp1.counters).to.have.property('completed', 1);
 
@@ -364,7 +366,7 @@ describe('ExclusiveGateway', () => {
 
       bp2.recover(state);
       bp2.resume();
-      bp2.signal({id: 'usertask'});
+      bp2.signal({ id: 'usertask' });
 
       expect(bp2.counters).to.have.property('completed', 1);
       const end = bp2.getActivityById('end');

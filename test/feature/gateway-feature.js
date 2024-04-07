@@ -42,7 +42,7 @@ Feature('Gateway', () => {
     });
 
     When('definition is ran with falsy second and first condition script', () => {
-      definition.environment.variables.condition = {var1: false};
+      definition.environment.variables.condition = { var1: false };
       definition.run();
     });
 
@@ -56,7 +56,7 @@ Feature('Gateway', () => {
     });
 
     When('definition is ran with truthy second condition script', () => {
-      definition.environment.variables.condition = {var1: true};
+      definition.environment.variables.condition = { var1: true };
       definition.run();
     });
 
@@ -75,7 +75,7 @@ Feature('Gateway', () => {
     });
 
     When('definition is ran with truthy second and third condition script', () => {
-      definition.environment.variables.condition = {var1: true};
+      definition.environment.variables.condition = { var1: true };
       definition.environment.variables.condition2 = true;
       definition.run();
     });
@@ -138,7 +138,7 @@ Feature('Gateway', () => {
     });
 
     When('definition is ran with falsy second and first condition script', () => {
-      definition.environment.variables.condition = {var1: false};
+      definition.environment.variables.condition = { var1: false };
       definition.run();
     });
 
@@ -152,7 +152,7 @@ Feature('Gateway', () => {
     });
 
     When('definition is ran with truthy second condition script', () => {
-      definition.environment.variables.condition = {var1: true};
+      definition.environment.variables.condition = { var1: true };
       definition.run();
     });
 
@@ -171,7 +171,7 @@ Feature('Gateway', () => {
     });
 
     When('definition is ran with truthy second and third condition script', () => {
-      definition.environment.variables.condition = {var1: true};
+      definition.environment.variables.condition = { var1: true };
       definition.environment.variables.condition2 = true;
       definition.run();
     });
@@ -211,17 +211,21 @@ Feature('Gateway', () => {
     Given('a rule engine', () => {
       nock('https://rules.local')
         .get('/maxAmount')
-        .reply(200, {
-          value: 100,
-        }, {
-          'content-type': 'application/json',
-        })
+        .reply(
+          200,
+          {
+            value: 100,
+          },
+          {
+            'content-type': 'application/json',
+          },
+        )
         .persist();
     });
 
     And('a flow with user amount, rule decision taking default flow or second flow with rule script condition', async () => {
       const source = factory.resource('async-decision.bpmn');
-      context = await testHelpers.context(source, {extensions, extendFn});
+      context = await testHelpers.context(source, { extensions, extendFn });
 
       function extendFn(mappedBehaviour) {
         if (mappedBehaviour.$type !== 'bpmn:ExclusiveGateway') return;
@@ -231,7 +235,7 @@ Feature('Gateway', () => {
         if (!properties) return;
 
         const rulesNames = properties.values.find((p) => p.name === 'rules');
-        return {rules: rulesNames.value.split(',').filter(Boolean)};
+        return { rules: rulesNames.value.split(',').filter(Boolean) };
       }
     });
 
@@ -246,19 +250,26 @@ Feature('Gateway', () => {
       function rulesExtension(activity) {
         if (!activity.behaviour.rules) return;
 
-        const {broker} = activity;
+        const { broker } = activity;
 
-        broker.subscribeTmp('event', 'activity.enter', async () => {
-          const endRoutingKey = 'run.rules.end';
-          broker.publish('format', 'run.rules.start', { endRoutingKey });
+        broker.subscribeTmp(
+          'event',
+          'activity.enter',
+          async () => {
+            const endRoutingKey = 'run.rules.end';
+            broker.publish('format', 'run.rules.start', { endRoutingKey });
 
-          const rules = await Promise.all(activity.behaviour.rules.map(getRule));
+            const rules = await Promise.all(activity.behaviour.rules.map(getRule));
 
-          broker.publish('format', endRoutingKey, { rules: rules.reduce((result, rule) => {
-            result[rule.rule] = rule.value;
-            return result;
-          }, {}) });
-        }, {noAck: true});
+            broker.publish('format', endRoutingKey, {
+              rules: rules.reduce((result, rule) => {
+                result[rule.rule] = rule.value;
+                return result;
+              }, {}),
+            });
+          },
+          { noAck: true },
+        );
       }
 
       async function getRule(rule) {
@@ -266,17 +277,22 @@ Feature('Gateway', () => {
           prefixUrl: 'https://rules.local',
         }).json();
 
-        return {rule, value: body.value};
+        return { rule, value: body.value };
       }
 
       function userInput(activity) {
         if (activity.type !== 'bpmn:UserTask') return;
 
-        const {broker, environment} = activity;
+        const { broker, environment } = activity;
 
-        broker.subscribeTmp('event', 'activity.end', (_, {content}) => {
-          environment.output.amount = content.output.amount;
-        }, {noAck: true});
+        broker.subscribeTmp(
+          'event',
+          'activity.end',
+          (_, { content }) => {
+            environment.output.amount = content.output.amount;
+          },
+          { noAck: true },
+        );
       }
     });
 
@@ -287,7 +303,7 @@ Feature('Gateway', () => {
     });
 
     And('user is enters amount above rule value', () => {
-      definition.signal({id: 'require-amount', amount: 140});
+      definition.signal({ id: 'require-amount', amount: 140 });
     });
 
     Then('execution completes', () => {
@@ -312,7 +328,7 @@ Feature('Gateway', () => {
     });
 
     And('user is enters allowed amount', () => {
-      definition.signal({id: 'require-amount', amount: 40});
+      definition.signal({ id: 'require-amount', amount: 40 });
     });
 
     Then('execution completes', () => {
@@ -378,15 +394,17 @@ Feature('Gateway', () => {
     });
 
     When('definition is ran with falsy second and first condition script', () => {
-      definition.environment.variables.condition = {var1: false};
+      definition.environment.variables.condition = { var1: false };
       definition.environment.services.evaluateRule = function evaluateRule(name, variables, callback) {
         return new Promise((resolve) => {
           resolve(variables.condition.var1);
-        }).then((result) => {
-          callback(null, result);
-        }).catch((err) => {
-          callback(err);
-        });
+        })
+          .then((result) => {
+            callback(null, result);
+          })
+          .catch((err) => {
+            callback(err);
+          });
       };
       definition.run();
     });
@@ -401,7 +419,7 @@ Feature('Gateway', () => {
     });
 
     When('definition is ran with truthy second condition script', () => {
-      definition.environment.variables.condition = {var1: true};
+      definition.environment.variables.condition = { var1: true };
       definition.run();
     });
 
@@ -420,7 +438,7 @@ Feature('Gateway', () => {
     });
 
     When('definition is ran with truthy second and third condition script', () => {
-      definition.environment.variables.condition = {var1: true};
+      definition.environment.variables.condition = { var1: true };
       definition.environment.variables.condition2 = true;
       definition.run();
     });

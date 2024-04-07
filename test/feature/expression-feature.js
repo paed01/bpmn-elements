@@ -1,6 +1,6 @@
 import testHelpers from '../helpers/testHelpers.js';
 import Definition from '../../src/definition/Definition.js';
-import {resolveExpression} from '@aircall/expression-parser';
+import { resolveExpression } from '@aircall/expression-parser';
 
 Feature('expressions', () => {
   Scenario('@aircall/expression-parser', () => {
@@ -23,7 +23,7 @@ Feature('expressions', () => {
 
       const context = await testHelpers.context(source);
       definition = new Definition(context, {
-        expressions: {resolveExpression},
+        expressions: { resolveExpression },
       });
     });
 

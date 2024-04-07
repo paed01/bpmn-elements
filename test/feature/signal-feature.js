@@ -70,7 +70,7 @@ Feature('Signals', () => {
     });
 
     When('trader trades', () => {
-      tradeTask.signal({form: {amount: 42}});
+      tradeTask.signal({ form: { amount: 42 } });
     });
 
     And('trade task is taken', () => {
@@ -155,7 +155,7 @@ Feature('Signals', () => {
     });
 
     When('trader trades', () => {
-      tradeTask.signal({amount: 42});
+      tradeTask.signal({ amount: 42 });
     });
 
     And('run is completed', () => {
@@ -231,7 +231,7 @@ Feature('Signals', () => {
     let end;
     When('trader trades', () => {
       end = definition.waitFor('end');
-      tradeTask.signal({amount: 42});
+      tradeTask.signal({ amount: 42 });
     });
 
     Then('run completes', () => {
@@ -411,8 +411,10 @@ Feature('Signals', () => {
 
   Scenario('Process with end throwing signal and a start event waiting for signal', () => {
     let definition;
-    Given('a process with two flows with user input, the first flow ends with signal, the second expects signal and then user input', async () => {
-      const source = `
+    Given(
+      'a process with two flows with user input, the first flow ends with signal, the second expects signal and then user input',
+      async () => {
+        const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="signalProcess" isExecutable="true">
           <startEvent id="start1" />
@@ -431,9 +433,10 @@ Feature('Signals', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source);
-      definition = new Definition(context);
-    });
+        const context = await testHelpers.context(source);
+        definition = new Definition(context);
+      },
+    );
 
     When('definition is ran', () => {
       definition.run();
@@ -582,9 +585,14 @@ Feature('Signals', () => {
       end = definition.waitFor('end');
       definition.run();
 
-      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
-        output[msg.content.id] = msg.content.output;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          output[msg.content.id] = msg.content.output;
+        },
+        { noAck: true },
+      );
     });
 
     let activity;
@@ -613,7 +621,7 @@ Feature('Signals', () => {
     });
 
     When('definition signals with unknown id', () => {
-      definition.signal({id: 'hittepa'});
+      definition.signal({ id: 'hittepa' });
     });
 
     Then('task is still running', () => {
@@ -622,7 +630,7 @@ Feature('Signals', () => {
     });
 
     When('definition signals with task id and some input', () => {
-      definition.signal({id: 'task1', input: 1});
+      definition.signal({ id: 'task1', input: 1 });
     });
 
     Then('task completes', () => {
@@ -639,7 +647,7 @@ Feature('Signals', () => {
     });
 
     When('definition signals with looped task id only', () => {
-      definition.signal({id: 'loopTask', input: 1});
+      definition.signal({ id: 'loopTask', input: 1 });
     });
 
     Then('looped task is still running', () => {
@@ -648,7 +656,7 @@ Feature('Signals', () => {
     });
 
     When('definition signals with unknown execution id', () => {
-      definition.signal({id: 'loopTask', executionId: 'hittepa', input: 1});
+      definition.signal({ id: 'loopTask', executionId: 'hittepa', input: 1 });
     });
 
     Then('looped task is still running', () => {
@@ -658,7 +666,7 @@ Feature('Signals', () => {
 
     When('definition signals with first iteration execution id', () => {
       const [iteration] = activity.getExecuting();
-      definition.signal({id: 'loopTask', executionId: iteration.executionId, input: 1});
+      definition.signal({ id: 'loopTask', executionId: iteration.executionId, input: 1 });
     });
 
     Then('looped task is still running', () => {
@@ -668,7 +676,7 @@ Feature('Signals', () => {
 
     When('definition signals with second iteration execution id', () => {
       const [iteration] = activity.getExecuting();
-      definition.signal({id: 'loopTask', executionId: iteration.executionId, input: 2});
+      definition.signal({ id: 'loopTask', executionId: iteration.executionId, input: 2 });
     });
 
     Then('looped task is still running', () => {
@@ -678,7 +686,7 @@ Feature('Signals', () => {
 
     When('definition signals with third iteration execution id', () => {
       const [iteration] = activity.getExecuting();
-      definition.signal({id: 'loopTask', executionId: iteration.executionId, input: 3});
+      definition.signal({ id: 'loopTask', executionId: iteration.executionId, input: 3 });
     });
 
     Then('looped task completes', () => {
@@ -711,7 +719,7 @@ Feature('Signals', () => {
     });
 
     When('definition sends signal with incorrect message id', () => {
-      definition.signal({id: 'hittepa'});
+      definition.signal({ id: 'hittepa' });
     });
 
     Then('receive task is still running', () => {
@@ -720,7 +728,7 @@ Feature('Signals', () => {
     });
 
     When('definition sends signal with correct message ref id', () => {
-      definition.signal({id: 'namedMessage', input: 15});
+      definition.signal({ id: 'namedMessage', input: 15 });
     });
 
     Then('receive task completes with output', () => {
@@ -734,7 +742,7 @@ Feature('Signals', () => {
     });
 
     When('definition sends signal with incorrect message id', () => {
-      definition.signal({id: 'hittepa'});
+      definition.signal({ id: 'hittepa' });
     });
 
     Then('looped receive task is still running', () => {
@@ -743,7 +751,7 @@ Feature('Signals', () => {
     });
 
     When('definition sends signal with correct message ref id', () => {
-      definition.signal({id: 'namedMessage', input: 1});
+      definition.signal({ id: 'namedMessage', input: 1 });
     });
 
     Then('loop receive task iteration completes', () => {
@@ -755,7 +763,7 @@ Feature('Signals', () => {
     });
 
     When('definition sends signal with correct message ref id', () => {
-      definition.signal({id: 'namedMessage', input: 2});
+      definition.signal({ id: 'namedMessage', input: 2 });
     });
 
     Then('loop receive task iteration completes', () => {
@@ -767,7 +775,7 @@ Feature('Signals', () => {
     });
 
     When('definition sends signal with correct message ref id', () => {
-      definition.signal({id: 'namedMessage', input: 3});
+      definition.signal({ id: 'namedMessage', input: 3 });
     });
 
     Then('loop receive task completes with output', () => {
@@ -797,7 +805,7 @@ Feature('Signals', () => {
     });
 
     When('definition signals with message', () => {
-      definition.signal({input: 6});
+      definition.signal({ input: 6 });
     });
 
     Then('second anonymous signal event completes with output', () => {
@@ -820,7 +828,7 @@ Feature('Signals', () => {
     });
 
     When('definition sends signal with incorrect signal id', () => {
-      definition.signal({id: 'hittepa'});
+      definition.signal({ id: 'hittepa' });
     });
 
     Then('named signal event is still running', () => {
@@ -829,7 +837,7 @@ Feature('Signals', () => {
     });
 
     When('definition sends signal with correct signal ref id', () => {
-      definition.signal({id: 'namedSignal', input: 5});
+      definition.signal({ id: 'namedSignal', input: 5 });
     });
 
     Then('named signal event completes with output', () => {
@@ -843,7 +851,7 @@ Feature('Signals', () => {
     });
 
     When('definition signals with message', () => {
-      definition.signal({input: 7});
+      definition.signal({ input: 7 });
     });
 
     Then('anonymous message event completes with output', () => {
@@ -866,7 +874,7 @@ Feature('Signals', () => {
     });
 
     When('definition sends signal with incorrect signal id', () => {
-      definition.signal({id: 'hittepa'});
+      definition.signal({ id: 'hittepa' });
     });
 
     Then('named signal event is still running', () => {
@@ -875,7 +883,7 @@ Feature('Signals', () => {
     });
 
     When('definition sends signal with correct signal ref id', () => {
-      definition.signal({id: 'namedMessage', input: 8});
+      definition.signal({ id: 'namedMessage', input: 8 });
     });
 
     Then('named signal event completes with output', () => {
@@ -890,8 +898,10 @@ Feature('Signals', () => {
 
   Scenario('Signal immediately after resume execution', () => {
     let context;
-    Given('a process with start event with form, user task, looped user task, receive task, signal events, and message events', async () => {
-      const source = `
+    Given(
+      'a process with start event with form, user task, looped user task, receive task, signal events, and message events',
+      async () => {
+        const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <signal id="namedSignal" name="NamedSignal" />
         <message id="namedMessage" name="NamedMessage" />
@@ -928,8 +938,9 @@ Feature('Signals', () => {
         </process>
       </definitions>`;
 
-      context = await testHelpers.context(source);
-    });
+        context = await testHelpers.context(source);
+      },
+    );
 
     let end, state, definition;
     const output = {};
@@ -937,9 +948,14 @@ Feature('Signals', () => {
       definition = new Definition(context);
       definition.run();
 
-      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
-        output[msg.content.id] = msg.content.output;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          output[msg.content.id] = msg.content.output;
+        },
+        { noAck: true },
+      );
     });
 
     let activity;
@@ -954,12 +970,17 @@ Feature('Signals', () => {
 
     When('definition is resumed and immediately signaled', () => {
       definition = new Definition(context.clone());
-      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
-        output[msg.content.id] = msg.content.output;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          output[msg.content.id] = msg.content.output;
+        },
+        { noAck: true },
+      );
       definition.recover(state);
       definition.resume();
-      definition.signal({id: activity.id, input: 1});
+      definition.signal({ id: activity.id, input: 1 });
     });
 
     Then('activity output is set signal message', () => {
@@ -977,9 +998,14 @@ Feature('Signals', () => {
 
     When('definition is resumed and immediately signaled', () => {
       definition = new Definition(context.clone());
-      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
-        output[msg.content.id] = msg.content.output;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          output[msg.content.id] = msg.content.output;
+        },
+        { noAck: true },
+      );
       definition.recover(state);
       definition.resume();
       definition.signal({
@@ -1003,9 +1029,14 @@ Feature('Signals', () => {
 
     When('definition is resumed and immediately signaled', () => {
       definition = new Definition(context.clone());
-      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
-        output[msg.content.id] = msg.content.output;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          output[msg.content.id] = msg.content.output;
+        },
+        { noAck: true },
+      );
       definition.recover(state);
       definition.resume();
 
@@ -1031,9 +1062,14 @@ Feature('Signals', () => {
     let wait;
     When('definition is resumed', () => {
       definition = new Definition(context.clone());
-      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
-        output[msg.content.id] = msg.content.output;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          output[msg.content.id] = msg.content.output;
+        },
+        { noAck: true },
+      );
       definition.recover(state);
 
       wait = definition.waitFor('wait');
@@ -1065,9 +1101,14 @@ Feature('Signals', () => {
 
     When('definition is resumed and immediately signaled', () => {
       definition = new Definition(context.clone());
-      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
-        output[msg.content.id] = msg.content.output;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          output[msg.content.id] = msg.content.output;
+        },
+        { noAck: true },
+      );
       definition.recover(state);
       definition.resume();
 
@@ -1092,9 +1133,14 @@ Feature('Signals', () => {
 
     When('definition is resumed and immediately signaled', () => {
       definition = new Definition(context.clone());
-      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
-        output[msg.content.id] = msg.content.output;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          output[msg.content.id] = msg.content.output;
+        },
+        { noAck: true },
+      );
       definition.recover(state);
       definition.resume();
 
@@ -1119,9 +1165,14 @@ Feature('Signals', () => {
 
     When('definition is resumed and immediately signaled', () => {
       definition = new Definition(context.clone());
-      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
-        output[msg.content.id] = msg.content.output;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          output[msg.content.id] = msg.content.output;
+        },
+        { noAck: true },
+      );
       definition.recover(state);
       definition.resume();
 
@@ -1146,9 +1197,14 @@ Feature('Signals', () => {
 
     When('definition is resumed and immediately signaled', () => {
       definition = new Definition(context.clone());
-      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
-        output[msg.content.id] = msg.content.output;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          output[msg.content.id] = msg.content.output;
+        },
+        { noAck: true },
+      );
       definition.recover(state);
 
       wait = definition.waitFor('wait');
@@ -1181,9 +1237,14 @@ Feature('Signals', () => {
 
     When('definition is resumed and immediately signaled', () => {
       definition = new Definition(context.clone());
-      definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => {
-        output[msg.content.id] = msg.content.output;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          output[msg.content.id] = msg.content.output;
+        },
+        { noAck: true },
+      );
       definition.recover(state);
       definition.resume();
 
@@ -1205,13 +1266,13 @@ Feature('Signals', () => {
 
 async function prepareSource() {
   const context = await testHelpers.context(signalsSource, {
-    extensions: {camunda},
+    extensions: { camunda },
   });
 
   const definition = new Definition(context, {
     settings: {
       dataStores: new DataStores({
-        SpotPriceDb: {price: 100},
+        SpotPriceDb: { price: 100 },
       }),
     },
     services: {
@@ -1233,7 +1294,7 @@ async function prepareSource() {
         if (activity.behaviour.dataOutputAssociations) {
           activity.on('end', (api) => {
             const db = activity.behaviour.dataOutputAssociations[0].behaviour.targetRef.id;
-            activity.environment.settings.dataStores.setDataStore(db, {...api.content.output});
+            activity.environment.settings.dataStores.setDataStore(db, { ...api.content.output });
           });
         }
       },

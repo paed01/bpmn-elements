@@ -2,7 +2,7 @@ import Activity from '../../src/activity/Activity.js';
 import Environment from '../../src/Environment.js';
 import SequenceFlow from '../../src/flows/SequenceFlow.js';
 import testHelpers from '../helpers/testHelpers.js';
-import {TaskBehaviour} from '../../src/tasks/Task.js';
+import { TaskBehaviour } from '../../src/tasks/Task.js';
 
 const Logger = testHelpers.Logger;
 
@@ -101,41 +101,41 @@ describe('activity run', () => {
     activity.activate();
 
     activity.inbound[0].take({
-      message: {data: 1},
+      message: { data: 1 },
     });
 
     expect(activity).to.have.property('status', 'entered');
     let current = activity.next();
     expect(current.fields).to.have.property('routingKey', 'run.enter');
-    expect(current.content).to.have.property('message').that.eql({data: 1});
+    expect(current.content).to.have.property('message').that.eql({ data: 1 });
     expect(current.content).to.have.property('inbound').with.length(1);
 
     expect(activity).to.have.property('status', 'started');
     current = activity.next();
     expect(current.fields).to.have.property('routingKey', 'run.start');
-    expect(current.content).to.have.property('message').that.eql({data: 1});
+    expect(current.content).to.have.property('message').that.eql({ data: 1 });
 
     expect(activity).to.have.property('status', 'executed');
     current = activity.next();
     expect(current.fields).to.have.property('routingKey', 'run.execute');
-    expect(current.content).to.have.property('message').that.eql({data: 1});
+    expect(current.content).to.have.property('message').that.eql({ data: 1 });
 
     expect(activity).to.have.property('status', 'end');
     current = activity.next();
     expect(current.fields).to.have.property('routingKey', 'run.end');
-    expect(current.content).to.have.property('message').that.eql({data: 1});
+    expect(current.content).to.have.property('message').that.eql({ data: 1 });
 
     expect(activity).to.have.property('status').that.is.undefined;
     current = activity.next();
     expect(current.fields).to.have.property('routingKey', 'run.leave');
-    expect(current.content).to.have.property('message').that.eql({data: 1});
+    expect(current.content).to.have.property('message').that.eql({ data: 1 });
   });
 
   it('format messages alters content of run queue messages', () => {
     const activity = createActivity();
 
-    activity.broker.subscribeOnce('event', 'activity.enter', (_, {content}) => {
-      activity.broker.publish('format', 'run.input', {...content, input: {data: 1}});
+    activity.broker.subscribeOnce('event', 'activity.enter', (_, { content }) => {
+      activity.broker.publish('format', 'run.input', { ...content, input: { data: 1 } });
     });
 
     activity.run();
@@ -183,7 +183,7 @@ describe('activity run', () => {
     expect(activity).to.have.property('status', 'formatting');
     expect(activity.next()).to.not.be.ok;
 
-    activity.broker.publish('format', 'run.input.end', {...formatContent, input: { data: 1 }});
+    activity.broker.publish('format', 'run.input.end', { ...formatContent, input: { data: 1 } });
 
     expect(activity).to.have.property('status', 'executed');
 
@@ -216,14 +216,14 @@ describe('activity run', () => {
     expect(activity).to.have.property('status', 'formatting');
     expect(activity.next()).to.not.be.ok;
 
-    activity.broker.publish('format', 'run.input.end', { input: { data: 1 }});
+    activity.broker.publish('format', 'run.input.end', { input: { data: 1 } });
     expect(activity).to.have.property('status', 'formatting');
     expect(activity.next()).to.not.be.ok;
 
-    activity.broker.publish('format', 'run.dod.end', {dod: 42});
+    activity.broker.publish('format', 'run.dod.end', { dod: 42 });
     expect(activity).to.have.property('status', 'formatting');
 
-    activity.broker.publish('format', 'run.add-prop.end', { properties: { myProp: '2' }});
+    activity.broker.publish('format', 'run.add-prop.end', { properties: { myProp: '2' } });
     expect(activity).to.have.property('status', 'executed');
 
     current = activity.next();
@@ -238,11 +238,16 @@ describe('activity run', () => {
 
   it('format is possible on enter, start, execution completed, and end', async () => {
     const activity = createActivity(false);
-    activity.broker.subscribeTmp('event', 'activity.#', (routingKey, message) => {
-      const formatting = (message.content.formatting || []).slice();
-      formatting.push(routingKey);
-      activity.broker.publish('format', `run.${routingKey}`, {formatting});
-    }, {noAck: true});
+    activity.broker.subscribeTmp(
+      'event',
+      'activity.#',
+      (routingKey, message) => {
+        const formatting = (message.content.formatting || []).slice();
+        formatting.push(routingKey);
+        activity.broker.publish('format', `run.${routingKey}`, { formatting });
+      },
+      { noAck: true },
+    );
 
     const leave = activity.waitFor('leave');
 
@@ -250,34 +255,36 @@ describe('activity run', () => {
 
     const api = await leave;
 
-    expect(api.content).to.have.property('formatting').that.eql([
-      'activity.enter',
-      'activity.start',
-      'activity.execution.completed',
-      'activity.end',
-    ]);
+    expect(api.content)
+      .to.have.property('formatting')
+      .that.eql(['activity.enter', 'activity.start', 'activity.execution.completed', 'activity.end']);
   });
 
   it('fundamental content is kept', async () => {
     const activity = createActivity(false);
     let content;
-    activity.broker.subscribeTmp('event', 'activity.execution.completed', (routingKey, message) => {
-      content = {...message.content};
+    activity.broker.subscribeTmp(
+      'event',
+      'activity.execution.completed',
+      (routingKey, message) => {
+        content = { ...message.content };
 
-      const formatting = (message.content.formatting || []).slice();
-      formatting.push(routingKey);
-      activity.broker.publish('format', `run.${routingKey}`, {
-        id: 'myId',
-        type: 'myType',
-        parent: '1',
-        attachedTo: 'myPal',
-        executionId: 'myExecId',
-        isSubProcess: true,
-        isMultiInstance: true,
-        inbound: ['apa'],
-        formatting,
-      });
-    }, {noAck: true});
+        const formatting = (message.content.formatting || []).slice();
+        formatting.push(routingKey);
+        activity.broker.publish('format', `run.${routingKey}`, {
+          id: 'myId',
+          type: 'myType',
+          parent: '1',
+          attachedTo: 'myPal',
+          executionId: 'myExecId',
+          isSubProcess: true,
+          isMultiInstance: true,
+          inbound: ['apa'],
+          formatting,
+        });
+      },
+      { noAck: true },
+    );
 
     const leave = activity.waitFor('leave');
 
@@ -299,24 +306,28 @@ describe('activity run', () => {
   describe('extensions', () => {
     it('are activated on enter', () => {
       let active = false;
-      const activity = new Activity(TaskBehaviour, {
-        id: 'activity',
-        type: 'task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        TaskBehaviour,
+        {
+          id: 'activity',
+          type: 'task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, getContext({
-        loadExtensions() {
-          return {
-            activate() {
-              active = true;
-            },
-            deactivate() {
-              active = false;
-            },
-          };
-        },
-      }));
+        getContext({
+          loadExtensions() {
+            return {
+              activate() {
+                active = true;
+              },
+              deactivate() {
+                active = false;
+              },
+            };
+          },
+        }),
+      );
 
       const activityEvents = [];
 
@@ -331,24 +342,28 @@ describe('activity run', () => {
 
     it('are activated on discard', () => {
       let active = false;
-      const activity = new Activity(TaskBehaviour, {
-        id: 'activity',
-        type: 'task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        TaskBehaviour,
+        {
+          id: 'activity',
+          type: 'task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, getContext({
-        loadExtensions() {
-          return {
-            activate() {
-              active = true;
-            },
-            deactivate() {
-              active = false;
-            },
-          };
-        },
-      }));
+        getContext({
+          loadExtensions() {
+            return {
+              activate() {
+                active = true;
+              },
+              deactivate() {
+                active = false;
+              },
+            };
+          },
+        }),
+      );
 
       const activityEvents = [];
 
@@ -363,24 +378,28 @@ describe('activity run', () => {
 
     it('are deactivated on activity leave', () => {
       let active = false;
-      const activity = new Activity(TaskBehaviour, {
-        id: 'activity',
-        type: 'task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        TaskBehaviour,
+        {
+          id: 'activity',
+          type: 'task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, getContext({
-        loadExtensions() {
-          return {
-            activate() {
-              active = true;
-            },
-            deactivate() {
-              active = false;
-            },
-          };
-        },
-      }));
+        getContext({
+          loadExtensions() {
+            return {
+              activate() {
+                active = true;
+              },
+              deactivate() {
+                active = false;
+              },
+            };
+          },
+        }),
+      );
 
       const activityEvents = [];
 
@@ -398,24 +417,28 @@ describe('activity run', () => {
 
     it('are deactivated on stop', () => {
       let active = false;
-      const activity = new Activity(TaskBehaviour, {
-        id: 'activity',
-        type: 'task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        TaskBehaviour,
+        {
+          id: 'activity',
+          type: 'task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, getContext({
-        loadExtensions() {
-          return {
-            activate() {
-              active = true;
-            },
-            deactivate() {
-              active = false;
-            },
-          };
-        },
-      }));
+        getContext({
+          loadExtensions() {
+            return {
+              activate() {
+                active = true;
+              },
+              deactivate() {
+                active = false;
+              },
+            };
+          },
+        }),
+      );
 
       const activityEvents = [];
 
@@ -435,24 +458,28 @@ describe('activity run', () => {
 
     it('are reactivated on next run', () => {
       let active = false;
-      const activity = new Activity(TaskBehaviour, {
-        id: 'activity',
-        type: 'task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        TaskBehaviour,
+        {
+          id: 'activity',
+          type: 'task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, getContext({
-        loadExtensions() {
-          return {
-            activate() {
-              active = true;
-            },
-            deactivate() {
-              active = false;
-            },
-          };
-        },
-      }));
+        getContext({
+          loadExtensions() {
+            return {
+              activate() {
+                active = true;
+              },
+              deactivate() {
+                active = false;
+              },
+            };
+          },
+        }),
+      );
 
       const activityEvents = [];
 
@@ -473,28 +500,37 @@ describe('activity run', () => {
   describe('run resume', () => {
     it('resumes last run message only', () => {
       const states = [];
-      const activity = new Activity(TaskBehaviour, {
-        id: 'activity',
-        type: 'task',
-        parent: {
-          id: 'process1',
+      const activity = new Activity(
+        TaskBehaviour,
+        {
+          id: 'activity',
+          type: 'task',
+          parent: {
+            id: 'process1',
+          },
         },
-      }, getContext({
-        loadExtensions(me) {
-          return {
-            activate(msg) {
-              states.push([msg.fields.routingKey, me.getState()]);
-            },
-            deactivate() {},
-          };
-        },
-      }));
+        getContext({
+          loadExtensions(me) {
+            return {
+              activate(msg) {
+                states.push([msg.fields.routingKey, me.getState()]);
+              },
+              deactivate() {},
+            };
+          },
+        }),
+      );
 
       const runMessages = [];
       const broker = activity.broker;
-      broker.subscribeTmp('run', '#', (_, message) => {
-        runMessages.push({...message});
-      }, {noAck: true, consumerTag: '_run_test'});
+      broker.subscribeTmp(
+        'run',
+        '#',
+        (_, message) => {
+          runMessages.push({ ...message });
+        },
+        { noAck: true, consumerTag: '_run_test' },
+      );
 
       activity.run();
       activity.stop();
@@ -518,21 +554,25 @@ function createActivity(step = true) {
     },
   });
 
-  return new Activity(TaskBehaviour, {
-    id: 'activity',
-    type: 'task',
-    parent: {
-      id: 'process1',
+  return new Activity(
+    TaskBehaviour,
+    {
+      id: 'activity',
+      type: 'task',
+      parent: {
+        id: 'process1',
+      },
     },
-  }, getContext({
-    environment,
-    getInboundSequenceFlows() {
-      return [new SequenceFlow({id: 'flow0', parent: {id: 'process1'}}, {environment})];
-    },
-    getOutboundSequenceFlows() {
-      return [new SequenceFlow({id: 'flow1', parent: {id: 'process1'}}, {environment})];
-    },
-  }));
+    getContext({
+      environment,
+      getInboundSequenceFlows() {
+        return [new SequenceFlow({ id: 'flow0', parent: { id: 'process1' } }, { environment })];
+      },
+      getOutboundSequenceFlows() {
+        return [new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, { environment })];
+      },
+    }),
+  );
 }
 
 function getContext(override) {

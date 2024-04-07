@@ -160,7 +160,9 @@ describe('InclusiveGateway', () => {
 
       const errApi = await error;
 
-      expect(errApi.content.error).to.be.instanceOf(ActivityError).and.match(/no conditional flow/i);
+      expect(errApi.content.error)
+        .to.be.instanceOf(ActivityError)
+        .and.match(/no conditional flow/i);
     });
   });
 });

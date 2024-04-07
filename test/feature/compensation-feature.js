@@ -49,8 +49,8 @@ Feature('Compensation', () => {
       function saveServiceOutput(activity, execContext) {
         if (activity.type !== 'bpmn:ServiceTask') return;
 
-        const {broker} = activity;
-        const {environment} = execContext;
+        const { broker } = activity;
+        const { environment } = execContext;
 
         return {
           activate,
@@ -60,7 +60,7 @@ Feature('Compensation', () => {
         };
 
         function activate() {
-          broker.subscribeTmp('event', 'activity.end', onActivityEnd, {noAck: true, consumerTag: '_test-save-to-environment'});
+          broker.subscribeTmp('event', 'activity.end', onActivityEnd, { noAck: true, consumerTag: '_test-save-to-environment' });
         }
 
         function onActivityEnd(_, message) {
@@ -87,7 +87,7 @@ Feature('Compensation', () => {
 
     When('service completes', () => {
       const [, callback] = execService.pop();
-      callback(null, {condition: true});
+      callback(null, { condition: true });
     });
 
     Then('compensation service is waiting for callback', () => {
@@ -97,10 +97,16 @@ Feature('Compensation', () => {
     let completeArgs, undoCallback;
     And('it has the execute complete data from the service task', () => {
       [completeArgs, undoCallback] = undoService.pop();
-      expect(completeArgs).to.have.property('content').with.property('message').with.property('fields').with.property('routingKey', 'execute.completed');
+      expect(completeArgs)
+        .to.have.property('content')
+        .with.property('message')
+        .with.property('fields')
+        .with.property('routingKey', 'execute.completed');
       expect(completeArgs.content.message).to.have.property('content');
       expect(completeArgs.content.message.content).to.have.property('id', 'service');
-      expect(completeArgs.content.message.content).to.have.property('output').that.eql([{condition: true}]);
+      expect(completeArgs.content.message.content)
+        .to.have.property('output')
+        .that.eql([{ condition: true }]);
     });
 
     And('association was taken', () => {
@@ -138,7 +144,7 @@ Feature('Compensation', () => {
 
     And('service completes', () => {
       const [, callback] = execService.pop();
-      callback(null, {condition: false});
+      callback(null, { condition: false });
     });
 
     Then('compensation service is NOT waiting for callback', () => {
@@ -182,7 +188,7 @@ Feature('Compensation', () => {
 
     When('service callback is called', () => {
       const [, callback] = execService.pop();
-      callback(null, {condition: true});
+      callback(null, { condition: true });
     });
 
     Then('compensation service is waiting for callback', () => {
@@ -276,7 +282,11 @@ Feature('Compensation', () => {
     And('it has the execute complete data from the service task', () => {
       [completeArgs, undoCallback] = undoService.pop();
 
-      expect(completeArgs).to.have.property('content').with.property('message').with.property('fields').with.property('routingKey', 'execute.error');
+      expect(completeArgs)
+        .to.have.property('content')
+        .with.property('message')
+        .with.property('fields')
+        .with.property('routingKey', 'execute.error');
       expect(completeArgs.content.message).to.have.property('content');
       expect(completeArgs.content.message.content).to.have.property('id', 'service');
       expect(completeArgs.content.message.content).to.have.property('error').with.property('message', 'volatile');
@@ -308,7 +318,7 @@ Feature('Compensation', () => {
 
     And('service completes', () => {
       const [, callback] = execService.pop();
-      callback(null, {data: 1});
+      callback(null, { data: 1 });
     });
 
     Then('compensation service is NOT waiting for callback', () => {
@@ -533,7 +543,11 @@ Feature('Compensation', () => {
       expect(undoService).to.have.length(1);
 
       [completeArgs, undoCallback] = undoService.pop();
-      expect(completeArgs).to.have.property('content').with.property('message').with.property('fields').with.property('routingKey', 'execute.completed');
+      expect(completeArgs)
+        .to.have.property('content')
+        .with.property('message')
+        .with.property('fields')
+        .with.property('routingKey', 'execute.completed');
       expect(completeArgs.content.message).to.have.property('content');
       expect(completeArgs.content.message.content).to.have.property('id', 'service');
       expect(completeArgs.content.message.content).to.have.property('isMultiInstance', true);
@@ -549,7 +563,11 @@ Feature('Compensation', () => {
       expect(undoService).to.have.length(1);
 
       [completeArgs, undoCallback] = undoService.pop();
-      expect(completeArgs).to.have.property('content').with.property('message').with.property('fields').with.property('routingKey', 'execute.completed');
+      expect(completeArgs)
+        .to.have.property('content')
+        .with.property('message')
+        .with.property('fields')
+        .with.property('routingKey', 'execute.completed');
       expect(completeArgs.content.message).to.have.property('content');
       expect(completeArgs.content.message.content).to.have.property('id', 'service');
       expect(completeArgs.content.message.content).to.have.property('isMultiInstance', true);
@@ -565,7 +583,11 @@ Feature('Compensation', () => {
       expect(undoService).to.have.length(1);
 
       [completeArgs, undoCallback] = undoService.pop();
-      expect(completeArgs).to.have.property('content').with.property('message').with.property('fields').with.property('routingKey', 'execute.error');
+      expect(completeArgs)
+        .to.have.property('content')
+        .with.property('message')
+        .with.property('fields')
+        .with.property('routingKey', 'execute.error');
       expect(completeArgs.content.message).to.have.property('content');
       expect(completeArgs.content.message.content).to.have.property('id', 'service');
       expect(completeArgs.content.message.content).to.have.property('isMultiInstance', true);
@@ -801,21 +823,21 @@ Feature('Compensation', () => {
     });
 
     And('both compensation listeners where taken', () => {
-      expect(definition.getActivityById('compensation1').counters, 'first').to.deep.equal({taken: 1, discarded: 0});
-      expect(definition.getActivityById('compensation2').counters, 'second').to.deep.equal({taken: 1, discarded: 0});
+      expect(definition.getActivityById('compensation1').counters, 'first').to.deep.equal({ taken: 1, discarded: 0 });
+      expect(definition.getActivityById('compensation2').counters, 'second').to.deep.equal({ taken: 1, discarded: 0 });
     });
 
     And('failing service task was discarded', () => {
-      expect(definition.getActivityById('service').counters).to.deep.equal({taken: 0, discarded: 1});
+      expect(definition.getActivityById('service').counters).to.deep.equal({ taken: 0, discarded: 1 });
     });
 
     And('error listener was taken', () => {
-      expect(definition.getActivityById('onError').counters).to.deep.equal({taken: 1, discarded: 0});
+      expect(definition.getActivityById('onError').counters).to.deep.equal({ taken: 1, discarded: 0 });
     });
 
     And('compensation services were taken', () => {
-      expect(definition.getActivityById('undoService1').counters, 'first').to.deep.equal({taken: 1, discarded: 0});
-      expect(definition.getActivityById('undoService2').counters, 'second').to.deep.equal({taken: 1, discarded: 0});
+      expect(definition.getActivityById('undoService1').counters, 'first').to.deep.equal({ taken: 1, discarded: 0 });
+      expect(definition.getActivityById('undoService2').counters, 'second').to.deep.equal({ taken: 1, discarded: 0 });
     });
 
     When('definition is ran again', () => {
@@ -829,13 +851,18 @@ Feature('Compensation', () => {
     let stopped, state;
     Given('a listener that stops on caught compensation', () => {
       stopped = definition.waitFor('stop');
-      definition.broker.subscribeTmp('event', 'activity.catch', (_, message) => {
-        if (message.content.id === 'compensation2') {
-          definition.stop();
-          state = definition.getState();
-          definition.broker.cancel(message.fields.consumerTag);
-        }
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.catch',
+        (_, message) => {
+          if (message.content.id === 'compensation2') {
+            definition.stop();
+            state = definition.getState();
+            definition.broker.cancel(message.fields.consumerTag);
+          }
+        },
+        { noAck: true },
+      );
     });
 
     When('service completes with error', () => {
@@ -880,21 +907,21 @@ Feature('Compensation', () => {
     });
 
     And('both compensation listeners where taken', () => {
-      expect(definition.getActivityById('compensation1').counters, 'first').to.deep.equal({taken: 2, discarded: 0});
-      expect(definition.getActivityById('compensation2').counters, 'second').to.deep.equal({taken: 2, discarded: 0});
+      expect(definition.getActivityById('compensation1').counters, 'first').to.deep.equal({ taken: 2, discarded: 0 });
+      expect(definition.getActivityById('compensation2').counters, 'second').to.deep.equal({ taken: 2, discarded: 0 });
     });
 
     And('failing service task was discarded', () => {
-      expect(definition.getActivityById('service').counters).to.deep.equal({taken: 0, discarded: 2});
+      expect(definition.getActivityById('service').counters).to.deep.equal({ taken: 0, discarded: 2 });
     });
 
     And('error listener was taken', () => {
-      expect(definition.getActivityById('onError').counters).to.deep.equal({taken: 2, discarded: 0});
+      expect(definition.getActivityById('onError').counters).to.deep.equal({ taken: 2, discarded: 0 });
     });
 
     And('compensation services were taken', () => {
-      expect(definition.getActivityById('undoService1').counters, 'first').to.deep.equal({taken: 2, discarded: 0});
-      expect(definition.getActivityById('undoService2').counters, 'second').to.deep.equal({taken: 2, discarded: 0});
+      expect(definition.getActivityById('undoService1').counters, 'first').to.deep.equal({ taken: 2, discarded: 0 });
+      expect(definition.getActivityById('undoService2').counters, 'second').to.deep.equal({ taken: 2, discarded: 0 });
     });
   });
 });

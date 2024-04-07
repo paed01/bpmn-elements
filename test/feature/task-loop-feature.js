@@ -41,7 +41,10 @@ Feature('Task loop', () => {
 
     And('task was looped expected number of times', () => {
       expect(iterations).to.have.length(4);
-      expect(iterations.every(({fields}) => fields.routingKey === 'execute.completed'), 'at completed').to.be.true;
+      expect(
+        iterations.every(({ fields }) => fields.routingKey === 'execute.completed'),
+        'at completed',
+      ).to.be.true;
     });
   });
 
@@ -142,7 +145,7 @@ Feature('Task loop', () => {
         </process>
       </definitions>`;
       context = await testHelpers.context(source, {
-        extensions: {js},
+        extensions: { js },
       });
     });
 
@@ -153,7 +156,7 @@ Feature('Task loop', () => {
           batchSize: 100,
         },
         variables: {
-          list: new Array(500).fill().map((_, idx) => ({idx})),
+          list: new Array(500).fill().map((_, idx) => ({ idx })),
         },
       });
 
@@ -209,7 +212,7 @@ Feature('Task loop', () => {
         </process>
       </definitions>`;
       context = await testHelpers.context(source, {
-        extensions: {js},
+        extensions: { js },
       });
     });
 
@@ -222,7 +225,7 @@ Feature('Task loop', () => {
         },
         variables: {
           cardinality,
-          list: new Array(50).fill().map((_, idx) => ({idx})),
+          list: new Array(50).fill().map((_, idx) => ({ idx })),
         },
       });
 
@@ -256,7 +259,7 @@ Feature('Task loop', () => {
         </process>
       </definitions>`;
       context = await testHelpers.context(source, {
-        extensions: {js},
+        extensions: { js },
       });
     });
 
@@ -276,7 +279,7 @@ Feature('Task loop', () => {
     });
 
     Then('definition breaks', async () => {
-      const {content} = await execError;
+      const { content } = await execError;
       expect(content.error.message).to.equal('<task> invalid loop cardinality >apapap<');
     });
 
@@ -298,7 +301,7 @@ Feature('Task loop', () => {
         </process>
       </definitions>`;
       context = await testHelpers.context(source, {
-        extensions: {js},
+        extensions: { js },
       });
     });
 
@@ -339,7 +342,7 @@ Feature('Task loop', () => {
         </process>
       </definitions>`;
       context = await testHelpers.context(source, {
-        extensions: {js},
+        extensions: { js },
       });
     });
 
@@ -356,7 +359,7 @@ Feature('Task loop', () => {
     });
 
     Then('definition breaks', async () => {
-      const {content} = await execError;
+      const { content } = await execError;
       expect(content.error.message).to.equal('<task> invalid loop cardinality >apapap<');
     });
 
@@ -372,7 +375,7 @@ Feature('Task loop', () => {
     });
 
     Then('definition breaks', async () => {
-      const {content} = await execError;
+      const { content } = await execError;
       expect(content.error.message).to.equal('<task> invalid loop cardinality >-1<');
     });
 
@@ -388,7 +391,7 @@ Feature('Task loop', () => {
     });
 
     Then('definition breaks', async () => {
-      const {content} = await execError;
+      const { content } = await execError;
       expect(content.error.message).to.equal('<task> cardinality or collection is required in parallel loops');
     });
 
@@ -439,7 +442,7 @@ Feature('Task loop', () => {
         </process>
       </definitions>`;
       context = await testHelpers.context(source, {
-        extensions: {js},
+        extensions: { js },
       });
     });
 
@@ -455,7 +458,7 @@ Feature('Task loop', () => {
     });
 
     Then('definition breaks', async () => {
-      const {content} = await execError;
+      const { content } = await execError;
       expect(content.error.message).to.equal('<task> cardinality or collection is required in parallel loops');
     });
 
@@ -474,7 +477,7 @@ Feature('Task loop', () => {
         </process>
       </definitions>`;
       context = await testHelpers.context(source, {
-        extensions: {js},
+        extensions: { js },
       });
     });
 
@@ -490,7 +493,7 @@ Feature('Task loop', () => {
     });
 
     Then('definition breaks since cardinality is required', async () => {
-      const {content} = await execError;
+      const { content } = await execError;
       expect(content.error.message).to.equal('<task> cardinality or collection is required in parallel loops');
     });
 
@@ -509,7 +512,7 @@ Feature('Task loop', () => {
         </process>
       </definitions>`;
       context = await testHelpers.context(source, {
-        extensions: {js},
+        extensions: { js },
       });
     });
 
@@ -529,7 +532,7 @@ Feature('Task loop', () => {
     });
 
     Then('definition breaks since collection item cannot be read', async () => {
-      const {content} = await execError;
+      const { content } = await execError;
       expect(content.error.message).to.equal('cannot');
     });
   });

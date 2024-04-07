@@ -49,11 +49,11 @@ describe('UserTask', () => {
       task.run();
 
       const taskApi = await waiting;
-      taskApi.signal({data: 1});
+      taskApi.signal({ data: 1 });
 
       const api = await left;
 
-      expect(api.content.output).to.eql({data: 1});
+      expect(api.content.output).to.eql({ data: 1 });
     });
 
     it('can be errored out via an error message', async () => {
@@ -65,7 +65,7 @@ describe('UserTask', () => {
       task.run();
 
       const taskApi = await waiting;
-      taskApi.sendApiMessage('error', {message: 'a user error occurred'});
+      taskApi.sendApiMessage('error', { message: 'a user error occurred' });
 
       const api = await error;
 
@@ -186,24 +186,24 @@ describe('UserTask', () => {
       expect(executeQ.messageCount, 'execute queue').to.equal(2);
 
       waiting = task.waitFor('wait');
-      taskApi.signal({iteration: 0});
+      taskApi.signal({ iteration: 0 });
 
       taskApi = await waiting;
 
       expect(executeQ.messageCount, 'execute queue').to.equal(2);
 
       waiting = task.waitFor('wait');
-      taskApi.signal({iteration: 1});
+      taskApi.signal({ iteration: 1 });
 
       taskApi = await waiting;
 
       expect(executeQ.messageCount, 'execute queue').to.equal(2);
 
       waiting = task.waitFor('wait');
-      taskApi.signal({iteration: 2});
+      taskApi.signal({ iteration: 2 });
 
       const left = await leave;
-      expect(left.content.output).to.eql([{iteration: 0}, {iteration: 1}, {iteration: 2}]);
+      expect(left.content.output).to.eql([{ iteration: 0 }, { iteration: 1 }, { iteration: 2 }]);
 
       expect(task.broker.getQueue('run-q').messageCount, 'run queue').to.equal(0);
       expect(executeQ.messageCount, 'execute queue').to.equal(0);
@@ -371,9 +371,9 @@ describe('UserTask', () => {
       const childExecutions = task.getApi().getExecuting();
       expect(childExecutions.length).to.equal(3);
 
-      childExecutions[2].signal({iteration: 2});
-      childExecutions[0].signal({iteration: 0});
-      childExecutions[1].signal({iteration: 1});
+      childExecutions[2].signal({ iteration: 2 });
+      childExecutions[0].signal({ iteration: 0 });
+      childExecutions[1].signal({ iteration: 1 });
 
       await left;
 

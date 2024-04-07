@@ -35,10 +35,15 @@ Feature('Multiple start events', () => {
           output(element) {
             if (element.type !== 'bpmn:Process') return;
 
-            const {broker, environment} = element;
-            broker.subscribeTmp('event', 'activity.end', (_, {content}) => {
-              environment.output[content.id] = 1;
-            }, {noAck: true});
+            const { broker, environment } = element;
+            broker.subscribeTmp(
+              'event',
+              'activity.end',
+              (_, { content }) => {
+                environment.output[content.id] = 1;
+              },
+              { noAck: true },
+            );
           },
         },
       });
@@ -54,12 +59,12 @@ Feature('Multiple start events', () => {
 
     Then('first end event is taken', () => {
       const endEvent = definition.getActivityById('end');
-      expect(endEvent.counters).to.deep.equal({taken: 1, discarded: 1});
+      expect(endEvent.counters).to.deep.equal({ taken: 1, discarded: 1 });
     });
 
     And('second end event is discarded', () => {
       const endEvent = definition.getActivityById('named-end');
-      expect(endEvent.counters).to.deep.equal({taken: 0, discarded: 2});
+      expect(endEvent.counters).to.deep.equal({ taken: 0, discarded: 2 });
     });
 
     And('process is completed', () => {
@@ -74,17 +79,17 @@ Feature('Multiple start events', () => {
     });
 
     And('second start event is signaled', () => {
-      definition.signal({id: 'Message_1'});
+      definition.signal({ id: 'Message_1' });
     });
 
     Then('second end event is taken', () => {
       const endEvent = definition.getActivityById('named-end');
-      expect(endEvent.counters).to.deep.equal({taken: 1, discarded: 3});
+      expect(endEvent.counters).to.deep.equal({ taken: 1, discarded: 3 });
     });
 
     And('first end event is discarded', () => {
       const endEvent = definition.getActivityById('end');
-      expect(endEvent.counters).to.deep.equal({taken: 1, discarded: 3});
+      expect(endEvent.counters).to.deep.equal({ taken: 1, discarded: 3 });
     });
 
     And('process is completed', () => {
@@ -128,10 +133,15 @@ Feature('Multiple start events', () => {
           output(element) {
             if (element.type !== 'bpmn:Process') return;
 
-            const {broker, environment} = element;
-            broker.subscribeTmp('event', 'activity.end', (_, {content}) => {
-              environment.output[content.id] = 1;
-            }, {noAck: true});
+            const { broker, environment } = element;
+            broker.subscribeTmp(
+              'event',
+              'activity.end',
+              (_, { content }) => {
+                environment.output[content.id] = 1;
+              },
+              { noAck: true },
+            );
           },
         },
       });
@@ -147,11 +157,11 @@ Feature('Multiple start events', () => {
 
     Then('parallel join is pending', () => {
       const join = definition.getActivityById('join');
-      expect(join.counters).to.deep.equal({taken: 0, discarded: 0});
+      expect(join.counters).to.deep.equal({ taken: 0, discarded: 0 });
     });
 
     When('second start event is signaled', () => {
-      definition.signal({id: 'Message_1'});
+      definition.signal({ id: 'Message_1' });
     });
 
     Then('process is completed', () => {
@@ -163,12 +173,12 @@ Feature('Multiple start events', () => {
 
     Then('first end event is discarded', () => {
       const endEvent = definition.getActivityById('end');
-      expect(endEvent.counters).to.deep.equal({taken: 0, discarded: 1});
+      expect(endEvent.counters).to.deep.equal({ taken: 0, discarded: 1 });
     });
 
     And('second end event is taken', () => {
       const endEvent = definition.getActivityById('named-end');
-      expect(endEvent.counters).to.deep.equal({taken: 1, discarded: 0});
+      expect(endEvent.counters).to.deep.equal({ taken: 1, discarded: 0 });
     });
 
     When('process is ran again', () => {
@@ -177,17 +187,17 @@ Feature('Multiple start events', () => {
 
     And('start events are signaled', () => {
       definition.signal();
-      definition.signal({id: 'Message_1'});
+      definition.signal({ id: 'Message_1' });
     });
 
     Then('first end event is discarded', () => {
       const endEvent = definition.getActivityById('end');
-      expect(endEvent.counters).to.deep.equal({taken: 0, discarded: 2});
+      expect(endEvent.counters).to.deep.equal({ taken: 0, discarded: 2 });
     });
 
     And('second end event is taken', () => {
       const endEvent = definition.getActivityById('named-end');
-      expect(endEvent.counters).to.deep.equal({taken: 2, discarded: 0});
+      expect(endEvent.counters).to.deep.equal({ taken: 2, discarded: 0 });
     });
 
     And('process is completed', () => {

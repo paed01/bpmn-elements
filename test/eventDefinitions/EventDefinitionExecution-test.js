@@ -1,16 +1,18 @@
 import EventDefinitionExecution from '../../src/eventDefinitions/EventDefinitionExecution.js';
-import {ActivityBroker} from '../../src/EventBroker.js';
-import {cloneContent} from '../../src/messageHelper.js';
-import {Logger} from '../helpers/testHelpers.js';
+import { ActivityBroker } from '../../src/EventBroker.js';
+import { cloneContent } from '../../src/messageHelper.js';
+import { Logger } from '../helpers/testHelpers.js';
 
 describe('EventDefinitionExecution', () => {
   it('publishes root message with prevent complete instruction when executed', () => {
     const event = getActivity();
 
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      Behaviour() {},
-    }]);
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        Behaviour() {},
+      },
+    ]);
 
     let message;
     event.broker.subscribeOnce('execution', 'execute.#', (_, msg) => {
@@ -41,10 +43,12 @@ describe('EventDefinitionExecution', () => {
   it('publishes start definition message when executed', () => {
     const event = getActivity();
 
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      Behaviour() {},
-    }]);
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        Behaviour() {},
+      },
+    ]);
 
     let message;
     event.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
@@ -72,24 +76,30 @@ describe('EventDefinitionExecution', () => {
     expect(message.content).to.have.property('executionId').that.is.ok.and.not.equal('root-execution-id');
     expect(message.content).to.have.property('index', 0);
     expect(message.content).to.have.property('isDefinitionScope', true);
-    expect(message.content).to.have.property('parent').that.eql({
-      id: 'event',
-      type: 'startevent',
-      executionId: 'root-execution-id',
-      path: [{
-        id: 'process1',
-        type: 'bpmn:Process',
-        executionId: 'process1_1',
-      }],
-    });
+    expect(message.content)
+      .to.have.property('parent')
+      .that.eql({
+        id: 'event',
+        type: 'startevent',
+        executionId: 'root-execution-id',
+        path: [
+          {
+            id: 'process1',
+            type: 'bpmn:Process',
+            executionId: 'process1_1',
+          },
+        ],
+      });
   });
 
   it('publishes no start message if redelivered execute message', () => {
     const event = getActivity();
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      Behaviour() {},
-    }]);
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        Behaviour() {},
+      },
+    ]);
 
     let message;
     event.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
@@ -117,12 +127,14 @@ describe('EventDefinitionExecution', () => {
     const event = getActivity();
 
     let executeMessage;
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      execute(msg) {
-        executeMessage = msg;
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute(msg) {
+          executeMessage = msg;
+        },
       },
-    }]);
+    ]);
 
     let startMessage;
     event.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
@@ -155,18 +167,26 @@ describe('EventDefinitionExecution', () => {
 
   it('starts all event definitions', () => {
     const event = getActivity();
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      execute() {},
-    }, {
-      type: 'bpmn:TimerEventDefinition',
-      execute() {},
-    }]);
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute() {},
+      },
+      {
+        type: 'bpmn:TimerEventDefinition',
+        execute() {},
+      },
+    ]);
 
     const messages = [];
-    event.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true});
+    event.broker.subscribeTmp(
+      'execution',
+      'execute.start',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true },
+    );
 
     execution.execute({
       fields: {},
@@ -202,20 +222,32 @@ describe('EventDefinitionExecution', () => {
 
   it('publishes event definition complete message with output to update root scope', () => {
     const event = getActivity();
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      execute() {},
-    }]);
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute() {},
+      },
+    ]);
 
     let completeMessage;
-    event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-      completeMessage = msg;
-    }, {noAck: true});
+    event.broker.subscribeTmp(
+      'execution',
+      'execute.completed',
+      (_, msg) => {
+        completeMessage = msg;
+      },
+      { noAck: true },
+    );
 
     const messages = [];
-    event.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true});
+    event.broker.subscribeTmp(
+      'execution',
+      'execute.start',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true },
+    );
 
     execution.execute({
       fields: {},
@@ -242,20 +274,32 @@ describe('EventDefinitionExecution', () => {
 
   it('publishes event definition complete message with message to update root scope', () => {
     const event = getActivity();
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      execute() {},
-    }]);
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute() {},
+      },
+    ]);
 
     let completeMessage;
-    event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-      completeMessage = msg;
-    }, {noAck: true});
+    event.broker.subscribeTmp(
+      'execution',
+      'execute.completed',
+      (_, msg) => {
+        completeMessage = msg;
+      },
+      { noAck: true },
+    );
 
     const startMessages = [];
-    event.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
-      startMessages.push(msg);
-    }, {noAck: true});
+    event.broker.subscribeTmp(
+      'execution',
+      'execute.start',
+      (_, msg) => {
+        startMessages.push(msg);
+      },
+      { noAck: true },
+    );
 
     execution.execute({
       fields: {},
@@ -282,23 +326,36 @@ describe('EventDefinitionExecution', () => {
 
   it('completes execution when first event definition completes', () => {
     const event = getActivity();
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:TimerEventDefinition',
-      execute() {},
-    }, {
-      type: 'bpmn:MessageEventDefinition',
-      execute() {},
-    }]);
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:TimerEventDefinition',
+        execute() {},
+      },
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute() {},
+      },
+    ]);
 
     let completeMessage;
-    event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-      completeMessage = msg;
-    }, {noAck: true});
+    event.broker.subscribeTmp(
+      'execution',
+      'execute.completed',
+      (_, msg) => {
+        completeMessage = msg;
+      },
+      { noAck: true },
+    );
 
     const messages = [];
-    event.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true});
+    event.broker.subscribeTmp(
+      'execution',
+      'execute.start',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true },
+    );
 
     execution.execute({
       fields: {},
@@ -326,29 +383,37 @@ describe('EventDefinitionExecution', () => {
   it('doesn´t start second event definition if first completes immediately', () => {
     const event = getActivity();
 
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      execute(executeMessage) {
-        return event.broker.publish('execution', 'execute.completed', {
-          ...executeMessage.content,
-          output: 1,
-        });
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute(executeMessage) {
+          return event.broker.publish('execution', 'execute.completed', {
+            ...executeMessage.content,
+            output: 1,
+          });
+        },
       },
-    }, {
-      type: 'bpmn:MessageEventDefinition',
-      execute(executeMessage) {
-        return event.broker.publish('execution', 'execute.completed', {
-          ...executeMessage.content,
-          output: 2,
-        });
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute(executeMessage) {
+          return event.broker.publish('execution', 'execute.completed', {
+            ...executeMessage.content,
+            output: 2,
+          });
+        },
       },
-    }]);
+    ]);
 
     const messages = [];
-    event.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
-      messages.push(msg);
-      execution.execute(msg);
-    }, {noAck: true, consumerTag: 'test-consumer'});
+    event.broker.subscribeTmp(
+      'execution',
+      'execute.start',
+      (_, msg) => {
+        messages.push(msg);
+        execution.execute(msg);
+      },
+      { noAck: true, consumerTag: 'test-consumer' },
+    );
 
     execution.execute({
       fields: {},
@@ -369,29 +434,37 @@ describe('EventDefinitionExecution', () => {
   it('doesn´t start second event definition if first is stopped immediately', () => {
     const event = getActivity();
 
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      execute(executeMessage) {
-        return event.broker.publish('execution', 'execute.completed', {
-          ...executeMessage.content,
-          output: 1,
-        });
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute(executeMessage) {
+          return event.broker.publish('execution', 'execute.completed', {
+            ...executeMessage.content,
+            output: 1,
+          });
+        },
       },
-    }, {
-      type: 'bpmn:MessageEventDefinition',
-      execute(executeMessage) {
-        return event.broker.publish('execution', 'execute.completed', {
-          ...executeMessage.content,
-          output: 2,
-        });
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute(executeMessage) {
+          return event.broker.publish('execution', 'execute.completed', {
+            ...executeMessage.content,
+            output: 2,
+          });
+        },
       },
-    }]);
+    ]);
 
     const messages = [];
-    event.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
-      messages.push(msg);
-      event.broker.publish('api', 'activity.stop.root-execution-id', {}, {type: 'stop'});
-    }, {noAck: true, consumerTag: 'test-consumer'});
+    event.broker.subscribeTmp(
+      'execution',
+      'execute.start',
+      (_, msg) => {
+        messages.push(msg);
+        event.broker.publish('api', 'activity.stop.root-execution-id', {}, { type: 'stop' });
+      },
+      { noAck: true, consumerTag: 'test-consumer' },
+    );
 
     execution.execute({
       fields: {},
@@ -412,15 +485,17 @@ describe('EventDefinitionExecution', () => {
   it('leaves no lingering listeners when complete', () => {
     const event = getActivity();
 
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      execute(executeMessage) {
-        return event.broker.publish('execution', 'execute.completed', {
-          ...executeMessage.content,
-          output: 1,
-        });
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute(executeMessage) {
+          return event.broker.publish('execution', 'execute.completed', {
+            ...executeMessage.content,
+            output: 1,
+          });
+        },
       },
-    }]);
+    ]);
 
     event.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
       execution.execute(msg);
@@ -446,12 +521,14 @@ describe('EventDefinitionExecution', () => {
     const event = getActivity();
 
     let executeMessage;
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      execute(msg) {
-        executeMessage = msg;
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute(msg) {
+          executeMessage = msg;
+        },
       },
-    }]);
+    ]);
 
     execution.execute({
       fields: {
@@ -487,12 +564,14 @@ describe('EventDefinitionExecution', () => {
   it('redelivered start event definition message with index that is not found is ignored', () => {
     const event = getActivity();
     let executeMessage;
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      execute(msg) {
-        executeMessage = msg;
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute(msg) {
+          executeMessage = msg;
+        },
       },
-    }]);
+    ]);
 
     execution.execute({
       fields: {
@@ -525,15 +604,22 @@ describe('EventDefinitionExecution', () => {
 
   it('redelivered messages, completes execution when event definition completes', () => {
     const event = getActivity();
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      execute() {},
-    }]);
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute() {},
+      },
+    ]);
 
     let completeMessage;
-    event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-      completeMessage = msg;
-    }, {noAck: true});
+    event.broker.subscribeTmp(
+      'execution',
+      'execute.completed',
+      (_, msg) => {
+        completeMessage = msg;
+      },
+      { noAck: true },
+    );
 
     execution.execute({
       fields: {
@@ -575,10 +661,12 @@ describe('EventDefinitionExecution', () => {
 
   it('stop cancels listeners', () => {
     const event = getActivity();
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      execute() {},
-    }]);
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute() {},
+      },
+    ]);
 
     const executionExchange = event.broker.getExchange('execution');
     expect(executionExchange).to.have.property('bindingCount', 1);
@@ -597,7 +685,7 @@ describe('EventDefinitionExecution', () => {
 
     expect(event.broker.getExchange('api')).to.have.property('bindingCount', 1);
 
-    event.broker.publish('api', 'activity.stop.root-execution-id', {}, {type: 'stop'});
+    event.broker.publish('api', 'activity.stop.root-execution-id', {}, { type: 'stop' });
 
     expect(executionExchange).to.have.property('bindingCount', 1);
     expect(event.broker.getExchange('api')).to.have.property('bindingCount', 0);
@@ -605,12 +693,18 @@ describe('EventDefinitionExecution', () => {
 
   it('completed routingKey overrides completed execution routingKey', (done) => {
     const event = getActivity();
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      execute({content}) {
-        event.broker.publish('execution', 'execute.completed', {...content});
-      },
-    }], 'execute.custom');
+    const execution = new EventDefinitionExecution(
+      event,
+      [
+        {
+          type: 'bpmn:MessageEventDefinition',
+          execute({ content }) {
+            event.broker.publish('execution', 'execute.completed', { ...content });
+          },
+        },
+      ],
+      'execute.custom',
+    );
 
     event.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
       execution.execute(msg);
@@ -636,20 +730,27 @@ describe('EventDefinitionExecution', () => {
   it('non root execute message is ignored', () => {
     const event = getActivity();
 
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      execute(executeMessage) {
-        return event.broker.publish('execution', 'execute.completed', {
-          ...executeMessage.content,
-          output: 1,
-        });
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute(executeMessage) {
+          return event.broker.publish('execution', 'execute.completed', {
+            ...executeMessage.content,
+            output: 1,
+          });
+        },
       },
-    }]);
+    ]);
 
     const messages = [];
-    event.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true, consumerTag: 'test-consumer'});
+    event.broker.subscribeTmp(
+      'execution',
+      'execute.start',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true, consumerTag: 'test-consumer' },
+    );
 
     execution.execute({
       fields: {},
@@ -668,10 +769,12 @@ describe('EventDefinitionExecution', () => {
   it('parent complete message stops execution', () => {
     const event = getActivity();
 
-    const execution = new EventDefinitionExecution(event, [{
-      type: 'bpmn:MessageEventDefinition',
-      execute() {},
-    }]);
+    const execution = new EventDefinitionExecution(event, [
+      {
+        type: 'bpmn:MessageEventDefinition',
+        execute() {},
+      },
+    ]);
 
     execution.execute({
       fields: {},

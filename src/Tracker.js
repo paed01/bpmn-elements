@@ -45,28 +45,28 @@ ActivityTracker.prototype.track = function track(routingKey, message) {
 };
 
 ActivityTracker.prototype._executing = function executing(id) {
-  const {wait, execute} = this.status;
+  const { wait, execute } = this.status;
   if (execute.indexOf(id) === -1) execute.push(id);
   let idx;
   if ((idx = wait.indexOf(id)) !== -1) wait.splice(idx, 1);
 };
 
 ActivityTracker.prototype._waiting = function waiting(id) {
-  const {wait, execute} = this.status;
+  const { wait, execute } = this.status;
   if (wait.indexOf(id) === -1) wait.push(id);
   let idx;
   if ((idx = execute.indexOf(id)) !== -1) execute.splice(idx, 1);
 };
 
 ActivityTracker.prototype._timer = function timerFn(id) {
-  const {timer, execute} = this.status;
+  const { timer, execute } = this.status;
   if (timer.indexOf(id) === -1) timer.push(id);
   let idx;
   if ((idx = execute.indexOf(id)) !== -1) execute.splice(idx, 1);
 };
 
 ActivityTracker.prototype._leave = function leave(id) {
-  const {wait, execute, timer} = this.status;
+  const { wait, execute, timer } = this.status;
   let idx;
   if ((idx = wait.indexOf(id)) !== -1) wait.splice(idx, 1);
   if ((idx = execute.indexOf(id)) !== -1) execute.splice(idx, 1);

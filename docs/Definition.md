@@ -1,15 +1,16 @@
-Definition
-==========
+# Definition
 
 Executable BPMN 2 definition. Pass [context](/docs/Context.md) and execute.
 
 ## `new Definition(context[, options])`
 
 Arguments:
+
 - `context`: context instance, see [Context](/docs/Context.md)
 - `options`: optional options that will be passed to [environment](/docs/Environment.md)
 
 Returns api with properties:
+
 - `id`: definition id
 - `name`: definition name
 - `type`: definition type
@@ -22,10 +23,10 @@ Returns api with properties:
 - `environment`: definition environment instance, see [Environment](/docs/Environment.md)
 - `isRunning`: boolean indicating if the definition is running
 - `activityStatus`: activity executing status. Can be used to decide when to save state, `timer` and `wait` is recommended.
-  * `idle`: idle, not running anything
-  * `executing`: at least one activity is executing, e.g. a service task making a asynchronous request
-  * `timer`: at least one activity is waiting for a timer to complete, usually only TimerEventDefinition's
-  * `wait`: at least one activity is waiting for a signal of some sort, e.g. user tasks, intermediate catch events, etc
+  - `idle`: idle, not running anything
+  - `executing`: at least one activity is executing, e.g. a service task making a asynchronous request
+  - `timer`: at least one activity is waiting for a timer to complete, usually only TimerEventDefinition's
+  - `wait`: at least one activity is waiting for a signal of some sort, e.g. user tasks, intermediate catch events, etc
 - `broker`: definition message broker
 
 ### `run([options, callback])`
@@ -33,6 +34,7 @@ Returns api with properties:
 Run definition with optional options and/or callback. The callback will be called on error, when run completes, or run is stopped.
 
 Arguments:
+
 - `options`: optional options
   - `processId`: string with process id, run a specific process. Also works for a non-executable process
 - `callback`: optional callback
@@ -48,6 +50,7 @@ Get activity by id
 Shake out the sequences in processes starting with start events, or by declaring an activity.
 
 Arguments:
+
 - `activityId`: optional activity id to shake out sequences from
 
 Returns:
@@ -58,6 +61,7 @@ Object with activity id(s) as property and sequences. The sequence property is a
 Delegate a signal message to all interested parties, usually MessageEventDefinition, SignalEventDefinition, SignalTask (user, manual), and ReceiveTask.
 
 Arguments:
+
 - `message`: optional object
   - `id`: optional task/element id to signal, also matched with Message and Signal id. If not passed only anonymous Signal- and MessageEventDefinitions will pick up the signal.
   - `executionId`: optional execution id to signal, specially for looped tasks, also works for signal tasks that are not looped
@@ -68,6 +72,7 @@ Arguments:
 Delegate a cancel message to all interested parties.
 
 Arguments:
+
 - `message`: optional object
   - `id`: optional task/element id to cancel
   - `executionId`: optional execution id to cancel
@@ -98,6 +103,7 @@ Get definition state.
 Recover definition.
 
 Arguments:
+
 - `state`: state from definition `getState()`
 
 Returns definition.
@@ -107,6 +113,7 @@ Returns definition.
 Resume stopped or recovered definition with optional callback. The callback will be called on error, when run completes, or run is stopped.
 
 Arguments:
+
 - `callback`: optional callback
   - `err`: occasional error
   - `api`: [api](/docs/SharedApi.md)
@@ -118,6 +125,7 @@ Returns definition.
 Listen for events.
 
 Arguments:
+
 - `eventName`: name of event
 - `handler`: required function called when events occur
   - `api`: element [api](/docs/SharedApi.md)
@@ -128,6 +136,7 @@ Arguments:
 Listen for event.
 
 Arguments:
+
 - `eventName`: name of event
 - `handler`: required function called when event occur
   - `api`: element [api](/docs/SharedApi.md)
@@ -142,6 +151,7 @@ Stop definition run.
 Wait for event to occur as promised.
 
 Arguments:
+
 - `eventName`: name of event
 - `onMessage`: optional message callback for event filtering purposes. Return false if the promise should not resolve. Called with the following arguments
   - `routingKey`: broker message routing key

@@ -1,17 +1,18 @@
-Context
-=======
+# Context
 
 Shared context.
 
 ## `new Context(serializableContext[, environment])`
 
 Arguments:
+
 - `serializableContext`: serializable context. Maybe from [moddle-context-serializer](https://www.npmjs.com/package/moddle-context-serializer)
 - `environment`: optional [Environment](/docs/Environment.md) instance
 
 Returns api.
 
 Properties:
+
 - `id`: definition id
 - `name`: definition name
 - `type`: definition type
@@ -25,6 +26,7 @@ Properties:
 Clone context.
 
 Arguments:
+
 - `environment`: optional new environment for cloned context
 
 Returns clone of context with new activity instances.

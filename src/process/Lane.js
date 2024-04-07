@@ -1,8 +1,8 @@
 const kProcess = Symbol.for('process');
 
 export default function Lane(process, laneDefinition) {
-  const {broker, environment} = process;
-  const {id, type, behaviour} = laneDefinition;
+  const { broker, environment } = process;
+  const { id, type, behaviour } = laneDefinition;
 
   this[kProcess] = process;
 
@@ -13,7 +13,7 @@ export default function Lane(process, laneDefinition) {
     id: process.id,
     type: process.type,
   };
-  this.behaviour = {...behaviour};
+  this.behaviour = { ...behaviour };
   this.environment = environment;
   this.broker = broker;
   this.context = process.context;

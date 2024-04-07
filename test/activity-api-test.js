@@ -1,11 +1,11 @@
 import Activity from '../src/activity/Activity.js';
 import testHelpers from './helpers/testHelpers.js';
-import {cloneContent} from '../src/messageHelper.js';
+import { cloneContent } from '../src/messageHelper.js';
 
 describe('activity api', () => {
   describe('properties', () => {
     it('exposes activity id, type, and name', () => {
-      const activity = new Activity(Behaviour, {id: 'task', type: 'bpmn:Task', name: 'Task'}, getContext());
+      const activity = new Activity(Behaviour, { id: 'task', type: 'bpmn:Task', name: 'Task' }, getContext());
 
       activity.run();
       const api = activity.getApi();
@@ -23,7 +23,7 @@ describe('activity api', () => {
 
   describe('discard()', () => {
     it('discards activity', () => {
-      const activity = new Activity(Behaviour, {id: 'task'}, getContext());
+      const activity = new Activity(Behaviour, { id: 'task' }, getContext());
 
       activity.run();
       activity.getApi().discard();
@@ -38,12 +38,17 @@ describe('activity api', () => {
     });
 
     it('discards sub execution', () => {
-      const activity = new Activity(Behaviour, {id: 'task'}, getContext());
+      const activity = new Activity(Behaviour, { id: 'task' }, getContext());
 
       const apiMessages = [];
-      activity.broker.subscribeTmp('api', '#', (_, msg) => {
-        apiMessages.push(msg);
-      }, {noAck: true});
+      activity.broker.subscribeTmp(
+        'api',
+        '#',
+        (_, msg) => {
+          apiMessages.push(msg);
+        },
+        { noAck: true },
+      );
 
       activity.run();
       activity.getApi().discard();
@@ -54,23 +59,32 @@ describe('activity api', () => {
       expect(apiMessages[0].content, apiMessages[0].content.executionId).to.property('isRootScope').that.is.true;
       expect(apiMessages[1].content, apiMessages[1].content.executionId).to.property('isRootScope').that.is.false;
 
-      function Behaviour({broker}) {
+      function Behaviour({ broker }) {
         return {
           execute(msg) {
             if (!msg.content.isRootScope) return;
-            broker.publish('execution', 'execute.start', {...cloneContent(msg.content), isRootScope: false, executionId: `${msg.content.executionId}_0`});
+            broker.publish('execution', 'execute.start', {
+              ...cloneContent(msg.content),
+              isRootScope: false,
+              executionId: `${msg.content.executionId}_0`,
+            });
           },
         };
       }
     });
 
     it('execution can be discarded by sub execution', () => {
-      const activity = new Activity(Behaviour, {id: 'task'}, getContext());
+      const activity = new Activity(Behaviour, { id: 'task' }, getContext());
 
       const apiMessages = [];
-      activity.broker.subscribeTmp('api', '#', (_, msg) => {
-        apiMessages.push(msg);
-      }, {noAck: true});
+      activity.broker.subscribeTmp(
+        'api',
+        '#',
+        (_, msg) => {
+          apiMessages.push(msg);
+        },
+        { noAck: true },
+      );
 
       activity.run();
       activity.getApi().discard();
@@ -80,7 +94,7 @@ describe('activity api', () => {
       expect(apiMessages).to.have.length(1);
       expect(apiMessages[0].content, apiMessages[0].content.executionId).to.property('isRootScope').that.is.true;
 
-      function Behaviour({broker}) {
+      function Behaviour({ broker }) {
         return {
           execute(msg) {
             if (!msg.content.isRootScope) return;
@@ -90,11 +104,16 @@ describe('activity api', () => {
             content.isRootScope = false;
             content.executionId = subExecutionId;
 
-            broker.subscribeTmp('api', `activity.*.${msg.content.executionId}`, () => {
-              broker.publish('execution', 'execute.discard', {...content});
-            }, {noAck: true, priority: 400});
+            broker.subscribeTmp(
+              'api',
+              `activity.*.${msg.content.executionId}`,
+              () => {
+                broker.publish('execution', 'execute.discard', { ...content });
+              },
+              { noAck: true, priority: 400 },
+            );
 
-            broker.publish('execution', 'execute.start', {...content});
+            broker.publish('execution', 'execute.start', { ...content });
           },
         };
       }
@@ -103,7 +122,7 @@ describe('activity api', () => {
 
   describe('stop()', () => {
     it('stops activity', () => {
-      const activity = new Activity(Behaviour, {id: 'task'}, getContext());
+      const activity = new Activity(Behaviour, { id: 'task' }, getContext());
 
       activity.run();
       activity.getApi().stop();
@@ -122,7 +141,7 @@ describe('activity api', () => {
 
   describe('getPostponed()', () => {
     it('returns empty array', () => {
-      const activity = new Activity(Behaviour, {id: 'task'}, getContext());
+      const activity = new Activity(Behaviour, { id: 'task' }, getContext());
 
       activity.run();
       expect(activity.getApi().getPostponed()).to.be.empty;
@@ -135,7 +154,7 @@ describe('activity api', () => {
     });
 
     it('calls behaviour getPostponed if sub process', () => {
-      const activity = new Activity(Behaviour, {id: 'task', isSubProcess: true}, getContext());
+      const activity = new Activity(Behaviour, { id: 'task', isSubProcess: true }, getContext());
 
       activity.run();
       expect(activity.getApi().getPostponed()).to.not.be.empty;

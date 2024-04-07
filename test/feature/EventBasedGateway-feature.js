@@ -60,7 +60,7 @@ Feature('EventBasedGateway', () => {
     });
 
     When('timer is cancelled', () => {
-      bp.cancelActivity({id: timerApi.id});
+      bp.cancelActivity({ id: timerApi.id });
     });
 
     Then('timer is taken', () => {
@@ -154,7 +154,7 @@ Feature('EventBasedGateway', () => {
       definition.recover(state);
       definition.resume();
 
-      definition.signal({id: 'Message_1'});
+      definition.signal({ id: 'Message_1' });
     });
 
     Then('definition completes run', () => {

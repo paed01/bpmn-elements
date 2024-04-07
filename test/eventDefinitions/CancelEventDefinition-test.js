@@ -1,13 +1,13 @@
 import CancelEventDefinition from '../../src/eventDefinitions/CancelEventDefinition.js';
 import Environment from '../../src/Environment.js';
-import {ActivityBroker} from '../../src/EventBroker.js';
-import {Logger} from '../helpers/testHelpers.js';
+import { ActivityBroker } from '../../src/EventBroker.js';
+import { Logger } from '../helpers/testHelpers.js';
 
 describe('CancelEventDefinition', () => {
   describe('catching bound event', () => {
     let event;
     beforeEach(() => {
-      const environment = new Environment({Logger});
+      const environment = new Environment({ Logger });
       event = {
         id: 'event',
         environment,
@@ -21,9 +21,14 @@ describe('CancelEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       catchEvent.execute({
         fields: {},
@@ -33,10 +38,12 @@ describe('CancelEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -55,9 +62,14 @@ describe('CancelEventDefinition', () => {
       expect(catchEvent.executionId, 'executionId').to.be.undefined;
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.wait', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.wait',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       catchEvent.execute({
         fields: {},
@@ -68,10 +80,12 @@ describe('CancelEventDefinition', () => {
           parent: {
             id: 'event_1',
             executionId: 'event_1',
-            path: [{
-              id: 'transaction',
-              executionId: 'transaction_0',
-            }],
+            path: [
+              {
+                id: 'transaction',
+                executionId: 'transaction_0',
+              },
+            ],
           },
         },
       });
@@ -87,9 +101,14 @@ describe('CancelEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       catchEvent.execute({
         fields: {},
@@ -100,10 +119,12 @@ describe('CancelEventDefinition', () => {
           parent: {
             id: 'event_1',
             executionId: 'event_1',
-            path: [{
-              id: 'transaction',
-              executionId: 'transaction_0',
-            }],
+            path: [
+              {
+                id: 'transaction',
+                executionId: 'transaction_0',
+              },
+            ],
           },
         },
       });
@@ -132,15 +153,17 @@ describe('CancelEventDefinition', () => {
           parent: {
             id: 'event',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
 
-      event.broker.publish('api', 'activity.stop.event_1_0', {}, {type: 'stop'});
+      event.broker.publish('api', 'activity.stop.event_1_0', {}, { type: 'stop' });
 
       expect(event.broker).to.have.property('consumerCount', 0);
     });
@@ -160,16 +183,18 @@ describe('CancelEventDefinition', () => {
           parent: {
             id: 'event_1',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
 
-      event.broker.publish('execution', 'execute.cancelled.event_1_0', {id: 'atomic', isTransaction: true});
-      event.broker.publish('api', 'activity.stop.event_1', {}, {type: 'stop'});
+      event.broker.publish('execution', 'execute.cancelled.event_1_0', { id: 'atomic', isTransaction: true });
+      event.broker.publish('api', 'activity.stop.event_1', {}, { type: 'stop' });
 
       expect(event.broker).to.have.property('consumerCount', 0);
     });
@@ -178,7 +203,7 @@ describe('CancelEventDefinition', () => {
   describe('throwing', () => {
     let event;
     beforeEach(() => {
-      const environment = new Environment({Logger});
+      const environment = new Environment({ Logger });
       event = {
         id: 'event',
         type: 'endevent',
@@ -195,9 +220,14 @@ describe('CancelEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -208,10 +238,12 @@ describe('CancelEventDefinition', () => {
           parent: {
             id: 'event',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });

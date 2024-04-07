@@ -1,4 +1,4 @@
-import {promises as fs} from 'fs';
+import { promises as fs } from 'fs';
 import Definition from '../../src/definition/Definition.js';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
@@ -25,8 +25,8 @@ Feature('Backward compatability 5.2', () => {
     });
 
     And('waiting tasks are signaled', () => {
-      definition.signal({id: 'userTask1'});
-      definition.signal({id: 'subUserTask1'});
+      definition.signal({ id: 'userTask1' });
+      definition.signal({ id: 'subUserTask1' });
     });
 
     Then('run completes', () => {

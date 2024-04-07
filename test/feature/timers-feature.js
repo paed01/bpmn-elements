@@ -3,7 +3,7 @@ import Definition from '../../src/definition/Definition.js';
 import testHelpers from '../helpers/testHelpers.js';
 import factory from '../helpers/factory.js';
 import CamundaExtension from '../resources/extensions/CamundaExtension.js';
-import {resolveExpression} from '@aircall/expression-parser';
+import { resolveExpression } from '@aircall/expression-parser';
 
 const extensions = {
   camunda: CamundaExtension,
@@ -27,7 +27,7 @@ Feature('Timers', () => {
     });
 
     Given('a time cycle start event, bound time duration event, throw time date event, and a user task with due date', async () => {
-      context = await testHelpers.context(timersSource, {extensions});
+      context = await testHelpers.context(timersSource, { extensions });
       definition = new Definition(context, {
         variables: {
           catchDate: '1993-06-26',
@@ -70,7 +70,7 @@ Feature('Timers', () => {
     });
 
     When('bound task is signaled', () => {
-      definition.signal({id: task.id});
+      definition.signal({ id: task.id });
     });
 
     Then('throw time date event is waiting', () => {
@@ -85,7 +85,7 @@ Feature('Timers', () => {
     });
 
     When('throw event is cancelled', () => {
-      definition.cancelActivity({id: activity.id});
+      definition.cancelActivity({ id: activity.id });
     });
 
     Then('user task with due date is waiting', () => {
@@ -98,7 +98,7 @@ Feature('Timers', () => {
     });
 
     When('user task is signaled', () => {
-      definition.signal({id: activity.id});
+      definition.signal({ id: activity.id });
     });
 
     Then('execution completes', () => {
@@ -147,7 +147,7 @@ Feature('Timers', () => {
     });
 
     Given('start event is cancelled', () => {
-      definition.cancelActivity({id: 'start-cycle'});
+      definition.cancelActivity({ id: 'start-cycle' });
     });
 
     And('definition is stopped and state is saved', () => {
@@ -193,7 +193,7 @@ Feature('Timers', () => {
     });
 
     Given('bound task is signaled', () => {
-      definition.signal({id: task.id});
+      definition.signal({ id: task.id });
     });
 
     And('definition is stopped and state is saved', () => {
@@ -210,9 +210,14 @@ Feature('Timers', () => {
       definition = new Definition(context.clone());
       definition.recover(JSON.parse(JSON.stringify(state)));
 
-      definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
-        timeoutMessage = msg;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.timer',
+        (_, msg) => {
+          timeoutMessage = msg;
+        },
+        { noAck: true },
+      );
 
       definition.resume();
     });
@@ -242,7 +247,7 @@ Feature('Timers', () => {
         };
       }
 
-      context = await testHelpers.context(timersSource, {extensions, timers: Timers()});
+      context = await testHelpers.context(timersSource, { extensions, timers: Timers() });
       definition = new Definition(context, {
         variables: {
           catchDate: '1993-06-26',
@@ -271,7 +276,7 @@ Feature('Timers', () => {
     });
 
     When('start event is cancelled', () => {
-      definition.cancelActivity({id: 'start-cycle'});
+      definition.cancelActivity({ id: 'start-cycle' });
     });
 
     let task;
@@ -286,7 +291,7 @@ Feature('Timers', () => {
     });
 
     When('bound task is signaled', () => {
-      definition.signal({id: task.id});
+      definition.signal({ id: task.id });
     });
 
     Then('throw time date event is waiting', () => {
@@ -301,7 +306,7 @@ Feature('Timers', () => {
     });
 
     When('throw event is cancelled', () => {
-      definition.cancelActivity({id: activity.id});
+      definition.cancelActivity({ id: activity.id });
     });
 
     Then('user task with due date is waiting', () => {
@@ -314,7 +319,7 @@ Feature('Timers', () => {
     });
 
     When('user task is signaled', () => {
-      definition.signal({id: activity.id});
+      definition.signal({ id: activity.id });
     });
 
     Then('execution completes', () => {
@@ -362,7 +367,7 @@ Feature('Timers', () => {
     });
 
     Given('start event is cancelled', () => {
-      definition.cancelActivity({id: 'start-cycle'});
+      definition.cancelActivity({ id: 'start-cycle' });
     });
 
     And('definition is stopped and state is saved', () => {
@@ -408,7 +413,7 @@ Feature('Timers', () => {
     });
 
     Given('bound task is signaled', () => {
-      definition.signal({id: task.id});
+      definition.signal({ id: task.id });
     });
 
     And('definition is stopped and state is saved', () => {
@@ -425,9 +430,14 @@ Feature('Timers', () => {
       definition = new Definition(context.clone());
       definition.recover(JSON.parse(JSON.stringify(state)));
 
-      definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
-        timeoutMessage = msg;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.timer',
+        (_, msg) => {
+          timeoutMessage = msg;
+        },
+        { noAck: true },
+      );
 
       definition.resume();
     });
@@ -539,7 +549,7 @@ Feature('Timers', () => {
     let end;
     When('task is signaled', () => {
       end = definition.waitFor('leave');
-      definition.signal({id: 'task'});
+      definition.signal({ id: 'task' });
     });
 
     Then('run completes', () => {
@@ -562,12 +572,12 @@ Feature('Timers', () => {
 
     When('cycle times out', () => {
       definition.environment.timers.executing[0].callback();
-      definition.cancelActivity({id: 'start-cycle'});
+      definition.cancelActivity({ id: 'start-cycle' });
     });
 
     When('task is signaled', () => {
       end = definition.waitFor('leave');
-      definition.signal({id: 'task'});
+      definition.signal({ id: 'task' });
     });
 
     Then('run completes', () => {
@@ -657,13 +667,13 @@ Feature('Timers', () => {
 
       context = await testHelpers.context(source);
       definition = new Definition(context, {
-        expressions: {resolveExpression},
+        expressions: { resolveExpression },
       });
     });
 
     let end;
     When('definition is ran', () => {
-      definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => timerEvents.push(msg), {noAck: true});
+      definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => timerEvents.push(msg), { noAck: true });
       end = definition.waitFor('end');
       definition.run();
     });
@@ -696,13 +706,13 @@ Feature('Timers', () => {
 
       context = await testHelpers.context(source);
       definition = new Definition(context, {
-        expressions: {resolveExpression},
+        expressions: { resolveExpression },
       });
     });
 
     When('definition is ran', () => {
       timerEvents.splice(0);
-      definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => timerEvents.push(msg), {noAck: true});
+      definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => timerEvents.push(msg), { noAck: true });
       end = definition.waitFor('end');
       definition.run();
     });
@@ -738,7 +748,7 @@ Feature('Timers', () => {
 
       context = await testHelpers.context(source);
       definition = new Definition(context, {
-        expressions: {resolveExpression},
+        expressions: { resolveExpression },
       });
     });
 
@@ -861,7 +871,7 @@ Feature('Timers', () => {
       end = definition.waitFor('leave');
 
       definition.resume();
-      definition.signal({id: 'task'});
+      definition.signal({ id: 'task' });
     });
 
     Then('run completes', () => {
@@ -896,7 +906,7 @@ Feature('Timers', () => {
       end = definition.waitFor('leave');
 
       definition.resume();
-      definition.signal({id: 'task'});
+      definition.signal({ id: 'task' });
     });
 
     Then('run completes', () => {

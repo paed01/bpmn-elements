@@ -1,7 +1,7 @@
 import Environment from '../../src/Environment.js';
 import DefinitionExecution from '../../src/definition/DefinitionExecution.js';
 import testHelpers from '../helpers/testHelpers.js';
-import {DefinitionBroker, ProcessBroker} from '../../src/EventBroker.js';
+import { DefinitionBroker, ProcessBroker } from '../../src/EventBroker.js';
 
 describe('Definition execution', () => {
   describe('execute()', () => {
@@ -63,18 +63,18 @@ describe('Definition execution', () => {
         },
       };
       const execution = new DefinitionExecution(definition, testHelpers.emptyContext());
-      expect(() => execution.execute({content: {}})).to.throw(/requires execution id/);
+      expect(() => execution.execute({ content: {} })).to.throw(/requires execution id/);
     });
   });
 
   describe('two executable processes', () => {
     it('completes when both are completed', () => {
-      function ProcessBehaviour({id, type}) {
+      function ProcessBehaviour({ id, type }) {
         return {
           id,
           type,
           isExecutable: true,
-          parent: {id: 'Def_1'},
+          parent: { id: 'Def_1' },
           broker: ProcessBroker(this).broker,
           environment: new Environment(),
           init() {
@@ -101,15 +101,18 @@ describe('Definition execution', () => {
         };
       }
 
-      const processes = [{
-        id: 'process_1',
-        type: 'process',
-        Behaviour: ProcessBehaviour,
-      }, {
-        id: 'process_2',
-        type: 'process',
-        Behaviour: ProcessBehaviour,
-      }];
+      const processes = [
+        {
+          id: 'process_1',
+          type: 'process',
+          Behaviour: ProcessBehaviour,
+        },
+        {
+          id: 'process_2',
+          type: 'process',
+          Behaviour: ProcessBehaviour,
+        },
+      ];
 
       const definition = {
         id: 'Def_1',
@@ -119,7 +122,7 @@ describe('Definition execution', () => {
       };
       const context = testHelpers.emptyContext({
         getProcessById(processId) {
-          return processes.find(({id}) => id === processId);
+          return processes.find(({ id }) => id === processId);
         },
         getProcesses() {
           return processes;
@@ -131,9 +134,14 @@ describe('Definition execution', () => {
       const execution = new DefinitionExecution(definition, context);
 
       let completed;
-      definition.broker.subscribeTmp('execution', 'execution.completed.*', () => {
-        completed = true;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'execution',
+        'execution.completed.*',
+        () => {
+          completed = true;
+        },
+        { noAck: true },
+      );
 
       execution.execute({
         fields: {},
@@ -156,48 +164,51 @@ describe('Definition execution', () => {
     });
 
     it('stops other processes if one throws', () => {
-      const processes = [{
-        id: 'process_1',
-        parent: {id: 'Def_1'},
-        isExecutable: true,
-        broker: ProcessBroker(this).broker,
-        environment: new Environment(),
-        init() {
-          this.broker.publish('event', 'process.init', {
-            id: this.id,
-            parent: this.parent,
-          });
+      const processes = [
+        {
+          id: 'process_1',
+          parent: { id: 'Def_1' },
+          isExecutable: true,
+          broker: ProcessBroker(this).broker,
+          environment: new Environment(),
+          init() {
+            this.broker.publish('event', 'process.init', {
+              id: this.id,
+              parent: this.parent,
+            });
+          },
+          run() {
+            this.broker.publish('event', 'process.enter', {
+              id: this.id,
+              parent: this.parent,
+            });
+          },
+          stop() {
+            this.stopped = true;
+          },
         },
-        run() {
-          this.broker.publish('event', 'process.enter', {
-            id: this.id,
-            parent: this.parent,
-          });
+        {
+          id: 'process_2',
+          isExecutable: true,
+          broker: ProcessBroker(this).broker,
+          environment: new Environment(),
+          init() {
+            this.broker.publish('event', 'process.init', {
+              id: this.id,
+              parent: this.parent,
+            });
+          },
+          run() {
+            this.broker.publish('event', 'process.enter', {
+              id: this.id,
+              parent: this.parent,
+            });
+          },
+          stop() {
+            this.stopped = true;
+          },
         },
-        stop() {
-          this.stopped = true;
-        },
-      }, {
-        id: 'process_2',
-        isExecutable: true,
-        broker: ProcessBroker(this).broker,
-        environment: new Environment(),
-        init() {
-          this.broker.publish('event', 'process.init', {
-            id: this.id,
-            parent: this.parent,
-          });
-        },
-        run() {
-          this.broker.publish('event', 'process.enter', {
-            id: this.id,
-            parent: this.parent,
-          });
-        },
-        stop() {
-          this.stopped = true;
-        },
-      }];
+      ];
 
       const definition = {
         id: 'Def_1',
@@ -206,13 +217,13 @@ describe('Definition execution', () => {
         broker: DefinitionBroker(this).broker,
       };
 
-      function Behaviour({id}) {
+      function Behaviour({ id }) {
         return processes.find((bp) => bp.id === id);
       }
 
       const context = testHelpers.emptyContext({
         getProcessById(processId) {
-          const bp = processes.find(({id}) => id === processId);
+          const bp = processes.find(({ id }) => id === processId);
           return {
             id: bp.id,
             Behaviour,
@@ -220,12 +231,12 @@ describe('Definition execution', () => {
         },
         getProcesses() {
           return processes.map((p) => {
-            return {id: p.id, Behaviour};
+            return { id: p.id, Behaviour };
           });
         },
         getExecutableProcesses() {
           return processes.map((p) => {
-            return {id: p.id, Behaviour};
+            return { id: p.id, Behaviour };
           });
         },
       });
@@ -233,9 +244,14 @@ describe('Definition execution', () => {
       const execution = new DefinitionExecution(definition, context);
 
       let completed;
-      definition.broker.subscribeTmp('execution', 'execution.error.*', () => {
-        completed = true;
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'execution',
+        'execution.error.*',
+        () => {
+          completed = true;
+        },
+        { noAck: true },
+      );
 
       execution.execute({
         fields: {},
@@ -262,11 +278,14 @@ describe('Definition execution', () => {
   describe('recover', () => {
     it('ignored if no state', () => {
       const context = testHelpers.emptyContext();
-      const execution = new DefinitionExecution({
-        id: 'Def_1',
-        environment: context.environment,
-        broker: new DefinitionBroker(this).broker,
-      }, context);
+      const execution = new DefinitionExecution(
+        {
+          id: 'Def_1',
+          environment: context.environment,
+          broker: new DefinitionBroker(this).broker,
+        },
+        context,
+      );
 
       expect(execution === execution.recover()).to.be.true;
     });
@@ -275,11 +294,14 @@ describe('Definition execution', () => {
   describe('activityStatus', () => {
     it('is idle before execute', () => {
       const context = testHelpers.emptyContext();
-      const execution = new DefinitionExecution({
-        id: 'Def_1',
-        environment: context.environment,
-        broker: new DefinitionBroker(this).broker,
-      }, context);
+      const execution = new DefinitionExecution(
+        {
+          id: 'Def_1',
+          environment: context.environment,
+          broker: new DefinitionBroker(this).broker,
+        },
+        context,
+      );
 
       expect(execution.activityStatus).to.equal('idle');
     });

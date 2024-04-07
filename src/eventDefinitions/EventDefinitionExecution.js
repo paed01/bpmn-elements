@@ -1,4 +1,4 @@
-import {cloneContent, unshiftParent, shiftParent, cloneParent} from '../messageHelper.js';
+import { cloneContent, unshiftParent, shiftParent, cloneParent } from '../messageHelper.js';
 
 const kCompleted = Symbol.for('completed');
 const kExecuteMessage = Symbol.for('executeMessage');
@@ -50,7 +50,7 @@ EventDefinitionExecution.prototype.execute = function execute(executeMessage) {
     priority: 300,
   });
 
-  broker.publish('execution', 'execute.update', cloneContent(content, {preventComplete: true}));
+  broker.publish('execution', 'execute.update', cloneContent(content, { preventComplete: true }));
 
   if (executeMessage.fields.redelivered) return;
 
@@ -96,7 +96,7 @@ EventDefinitionExecution.prototype._onExecuteMessage = function onExecuteMessage
       break;
     }
     case 'execute.discard': {
-      const {executionId, isDefinitionScope} = message.content;
+      const { executionId, isDefinitionScope } = message.content;
       if (isDefinitionScope) {
         this._debug(executionId, `event definition ${message.content.type} discarded, index ${message.content.index}`);
         break;
@@ -109,7 +109,7 @@ EventDefinitionExecution.prototype._onExecuteMessage = function onExecuteMessage
 };
 
 EventDefinitionExecution.prototype._complete = function complete(message) {
-  const {executionId, type, index, parent} = message.content;
+  const { executionId, type, index, parent } = message.content;
   this[kCompleted] = true;
 
   this._debug(executionId, `event definition ${type} completed, index ${index}`);
@@ -121,11 +121,11 @@ EventDefinitionExecution.prototype._complete = function complete(message) {
   });
   completeContent.parent = shiftParent(parent);
 
-  this.broker.publish('execution', this.completedRoutingKey, completeContent, {correlationId: message.properties.correlationId});
+  this.broker.publish('execution', this.completedRoutingKey, completeContent, { correlationId: message.properties.correlationId });
 };
 
 EventDefinitionExecution.prototype._executeDefinition = function executeDefinition(message) {
-  const {executionId, index} = message.content;
+  const { executionId, index } = message.content;
   const ed = this.eventDefinitions[index];
   if (!ed) return this.activity.logger.warn(`<${executionId} (${this.id})> found no event definition on index ${index}`);
   this._debug(executionId, `execute event definition ${ed.type}, index ${index}`);

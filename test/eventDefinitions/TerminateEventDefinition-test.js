@@ -1,6 +1,6 @@
 import Environment from '../../src/Environment.js';
 import TerminateEventDefinition from '../../src/eventDefinitions/TerminateEventDefinition.js';
-import {ActivityBroker} from '../../src/EventBroker.js';
+import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('TerminateEventDefinition', () => {
   let event;
@@ -15,12 +15,22 @@ describe('TerminateEventDefinition', () => {
     const terminateDefinition = new TerminateEventDefinition(event, {});
 
     const messages = [];
-    event.broker.subscribeTmp('event', 'process.*', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true});
-    event.broker.subscribeTmp('execution', '#', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true});
+    event.broker.subscribeTmp(
+      'event',
+      'process.*',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true },
+    );
+    event.broker.subscribeTmp(
+      'execution',
+      '#',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true },
+    );
 
     terminateDefinition.execute({
       content: {
@@ -30,10 +40,12 @@ describe('TerminateEventDefinition', () => {
           id: 'end',
           executionId: 'end_0',
           type: 'bpmn:EndEvent',
-          path: [{
-            id: 'theProcess',
-            executionId: 'theProcess_0',
-          }],
+          path: [
+            {
+              id: 'theProcess',
+              executionId: 'theProcess_0',
+            },
+          ],
         },
       },
     });

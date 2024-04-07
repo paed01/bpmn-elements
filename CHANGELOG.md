@@ -1,5 +1,4 @@
-Changelog
-=========
+# Changelog
 
 # 13.1.2
 
@@ -159,11 +158,13 @@ Support Call activity
 Isomorphism and state.
 
 ## Breaking
+
 - Stop calling `setTimeout.call(owner, ...args)` in default Timers.js. Doesn't work in browsers and results in `TypeError: Illegal invocation`. Hence, timeout callback context is no longer the owner of the timer. Altough, it works fine in nodejs. So feel free to build your own [Timers](/docs/Timers.md) and pass it as an [option](/docs/Definition.md).
 - Removed sequence flow function `evaluateCondition` since it not used and was inconsistent. Use `getCondition().execute(...args)` instead.
 - Generate a slimmer state. Element broker state now only contains queues that have pending messages and sometimes an exchange with undelivered message. Not really breaking unless broker state was inspected for some reason
 
 ## Bugfix
+
 - Sequence flow with expression condition that throws will now terminate the run
 - Association counters were flipped
 
@@ -186,6 +187,7 @@ Isomorphism and state.
 Sequential loop trouble.
 
 ## Bugfix
+
 - Fix nasty bug in sequential multi-instance loop where it ran to infinity when cardinality is set to 0. Thank you @deelef for uncovering this!
 - set cardinality to collection length if cardinality expression resolved to nothing
 
@@ -205,13 +207,16 @@ Improved expression handling by @javierlopezaircall
 Multi-/Standard-loop characteristics.
 
 ## Breaking
+
 - Cardinality and/or a collection is now required if designing a parallel multi instance loop
 - Start throwing error when cardinality is invalid, so no need for TS yet...
 
 ## Addititions
+
 - Introduce new setting to control parallel loop batch size, defaults to 50
 
 ## Bugfix
+
 - Fixed bug where multi instance parallel loop stalled when more than 100 iterations where required
 
 # 4.4.2
@@ -248,7 +253,7 @@ improve expression handling
 
 Timetracking
 
-- New [environment](/docs/Environment.md) [timers]((/docs/Timers.md)) property with tracked `setTimeout` and `clearTimeout`. Used by TimerEventDefinition and by inline scripts if necessary
+- New [environment](/docs/Environment.md) [timers](<(/docs/Timers.md)>) property with tracked `setTimeout` and `clearTimeout`. Used by TimerEventDefinition and by inline scripts if necessary
 
 # 4.2.0
 
@@ -267,16 +272,19 @@ Outbound sequence flows again.
 # 4.1.3
 
 ## Bugfix
+
 - Wrap conditional sequence flow script error in an Activity error
 
 # 4.1.2
 
 ## Bugfix
+
 - Return something else than undefined when calling definition run (!). The definition is returned.
 
 # 4.1.1
 
 ## Bugfix
+
 - Formatting message on activity end resulted in nasty bug where outbound flows were affected and run stopped prematurely. This stops now.
 
 # 4.1.0
@@ -288,6 +296,7 @@ Outbound sequence flows again.
 Refactor scripts again
 
 ## Breaking
+
 - ScriptTask now requires that a script is returned by [Script handler](/docs/Scripts.md) can off course return a dummy function
 - Conditional SequnceFlow respects script if returned by script handler
 
@@ -298,9 +307,11 @@ Refactor scripts again
 # 3.0.0
 
 ## Breaking
+
 - Outbound sequence flow with script condition requires `next(err, result)` to be called where result decides if it should be taken or discarded
 
 ## Addititions
+
 - Outbound sequence flow conditions are evaluated for all activities, as well as default flow
 - Process now also have `cancelActivity` function for facilitation
 
@@ -309,6 +320,7 @@ Refactor scripts again
 Transactions and compensation if cancelled.
 
 ## Additions
+
 - Add support for Transaction
 - Add support for CancelEventDefinition
 
@@ -323,6 +335,7 @@ Diagram sequence flow order affects recover as per [engine issue 105](https://gi
 # 1.6.1
 
 ## Bugfix:
+
 - Resumed definition with multiple loopbacks ran towards infinity, thats now finit as expected since there is an end to the fun. Thankyou @aowakennomai for uncovering bug
 
 # 1.6.0
@@ -338,9 +351,11 @@ Diagram sequence flow order affects recover as per [engine issue 105](https://gi
 Run a non-executable process.
 
 ## Additions
+
 - Add support for runnning a process that is NOT marked as executable by calling `definition.run({processId})`
 
 ## Bugfix
+
 - Multiple start events were not resumed in an orderly fashion when recovered, process was stuck, but is no more
 - Include occasional sub process sequence when shaking activities
 
@@ -349,6 +364,7 @@ Run a non-executable process.
 [TimerEventDefinition](/docs/TimerEventDefinition.md) `timeDate` and `timeCycle`.
 
 ## Additions
+
 - Add support for TimerEventDefinition `timeDate`. Will behave like `timeDuration` unless the date is due - timeout
 - TimerEventDefinition `timeCycle` is recognized but no timer is started. The non-action is due to uncertainty regarding cycle format. The event definition is stalled and waits for cancel
 - New [`cancelActivity`](/docs/Definition.md#cancelactivitymessage) function is added to definition
@@ -361,9 +377,11 @@ Run a non-executable process.
 # 1.1.0
 
 ## Additions
+
 - Add shake functionality to [definition](/docs/Definition.md) to facilitate getting the run sequences of an activity or processes by calling `definition.shake([activityId])`
 
 ## Patch
+
 - Bump to smqp@3
 - Patch copyright year
 
@@ -372,12 +390,15 @@ Run a non-executable process.
 Make it easier and possible to signal activities from [definition](/docs/Definition.md) by calling `definition.signal(message)`.
 
 ## Breaking
+
 - MessageEventDefinition and SignalEventDefinition will only listens for pre-execution messages if contained in a starting event
 
 ## Bugfix
+
 - Parallel looped ReceiveTask iterations all completed with one message, that was not intended and doesn't anymore. One message equals one completed iteration
 
 ## Minor
+
 - Bump to smqp@2.2
 - Bump dev dependencies
 
@@ -404,14 +425,17 @@ Make it easier and possible to signal activities from [definition](/docs/Definit
 - Recover now recovers environment as well
 
 ## Bugfix
+
 - getting state no longer throws if a placeholder activity is in activities
 
 # 0.9.0
 
 ## Addition
+
 - Compensation is now supported, but only by association
 
 ## Bugfix
+
 - Fix weird code where context ignores passed SequenceFlow and MessageFlow Behaviour function when making new instances
 
 # 0.8.1
@@ -435,11 +459,13 @@ Make it easier and possible to signal activities from [definition](/docs/Definit
 Focused on messaging.
 
 ## Breaking
+
 - ReceiveTask expects referenced message, it can still be signaled
 - IntermediateCatchEvent that lacks event definitions now expects to be signaled
 - Catching MessageEventDefinition expects referenced message. or at least a matching message id
 
 ## Additions
+
 - IntermediateThrowEvent with MessageEventDefinition now throws Message
 - Start activities conforming to the same flow is discarded when the flow reaches an end activity, unless a join is put in between
 
@@ -451,9 +477,11 @@ Focused on messaging.
 # 0.4.0
 
 ## Breaking
+
 - Catching ErrorEventDefinition now catches BpmnErrors. Support for catching by error code and anonymous errors is still supported
 - Event with throwing ErrorEventDefinition now throws non-fatal BpmnErrors
 
 ## Additions
+
 - Expose element name on Api
 - Extension function `deactivate` is now actually called, called on leave and stop

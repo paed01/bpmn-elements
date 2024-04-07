@@ -1,36 +1,37 @@
 import Activity from '../activity/Activity.js';
 import ProcessExecution from '../process/ProcessExecution.js';
-import {cloneContent} from '../messageHelper.js';
+import { cloneContent } from '../messageHelper.js';
 
 const kExecutions = Symbol.for('executions');
 const kMessageHandlers = Symbol.for('messageHandlers');
 
 export default function SubProcess(activityDef, context) {
   const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
-  const subProcess = new Activity(SubProcessBehaviour, {...activityDef, isSubProcess: true, triggeredByEvent}, context);
+  const subProcess = new Activity(SubProcessBehaviour, { ...activityDef, isSubProcess: true, triggeredByEvent }, context);
 
   subProcess.getStartActivities = function getStartActivities(filterOptions) {
     return context.getStartActivities(filterOptions, activityDef.id);
   };
 
   subProcess.broker.cancel('_api-shake');
-  subProcess.broker.subscribeTmp('api', 'activity.shake.*', onShake, {noAck: true, consumerTag: '_api-shake'});
+  subProcess.broker.subscribeTmp('api', 'activity.shake.*', onShake, { noAck: true, consumerTag: '_api-shake' });
 
   return subProcess;
 
   function onShake(_, message) {
-    const {startId} = message.content;
+    const { startId } = message.content;
     const last = message.content.sequence.pop();
     const sequence = new ProcessExecution(subProcess, context).shake(startId);
-    message.content.sequence.push({...last, isSubProcess: true, sequence});
+    message.content.sequence.push({ ...last, isSubProcess: true, sequence });
   }
 }
 
 export function SubProcessBehaviour(activity, context) {
-  const {id, type, behaviour} = activity;
+  const { id, type, behaviour } = activity;
   this.id = id;
   this.type = type;
-  this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  this.loopCharacteristics =
+    behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
   this.context = context;
   this.environment = activity.environment;
@@ -173,7 +174,7 @@ SubProcessBehaviour.prototype._onExecutionCompleted = function onExecutionComple
     case 'error': {
       broker.cancel(message.fields.consumerTag);
 
-      const {error} = content;
+      const { error } = content;
       this.activity.logger.error(`<${this.id}>`, error);
 
       return this._completeExecution('execute.error', content);

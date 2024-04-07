@@ -14,7 +14,7 @@ Feature('Definition', () => {
   Scenario('A definition with one non-executable process', () => {
     let definition, context;
     Given('a definition with a user task', async () => {
-      context = await testHelpers.context(source, {extensions});
+      context = await testHelpers.context(source, { extensions });
       definition = new Definition(context);
     });
 

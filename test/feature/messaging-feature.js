@@ -65,8 +65,10 @@ Feature('Messaging', () => {
 
   Scenario('A process that expects message to continue', () => {
     let definition;
-    Given('a start waiting for message 1, two intermediate catch events, both waiting for separate messages - 2 & 3 - and arrive at the same end', async () => {
-      const source = `
+    Given(
+      'a start waiting for message 1, two intermediate catch events, both waiting for separate messages - 2 & 3 - and arrive at the same end',
+      async () => {
+        const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="messageProcess" isExecutable="true">
           <startEvent id="start">
@@ -89,9 +91,10 @@ Feature('Messaging', () => {
         <message id="Message3" name="Intermediate message 2" />
       </definitions>`;
 
-      const context = await testHelpers.context(source);
-      definition = new Definition(context);
-    });
+        const context = await testHelpers.context(source);
+        definition = new Definition(context);
+      },
+    );
 
     let end;
     When('definition is ran', () => {
@@ -225,8 +228,10 @@ Feature('Messaging', () => {
 
   Scenario('Message flow targets participant process start activity', () => {
     let definition;
-    Given('a task with formatted end message and message flow to participant process, and a start event waiting for that message', async () => {
-      const source = `
+    Given(
+      'a task with formatted end message and message flow to participant process, and a start event waiting for that message',
+      async () => {
+        const source = `
       <definitions id="Def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
         <collaboration id="Collaboration_0">
@@ -249,9 +254,10 @@ Feature('Messaging', () => {
         <message id="Message1" name="Start message" />
       </definitions>`;
 
-      const context = await testHelpers.context(source);
-      definition = new Definition(context);
-    });
+        const context = await testHelpers.context(source);
+        definition = new Definition(context);
+      },
+    );
 
     let end;
     let main, participant;
@@ -283,8 +289,10 @@ Feature('Messaging', () => {
 
   Scenario('Message flow targets participant lane', () => {
     let definition;
-    Given('a task with formatted end message and message flow to participant process, and a start event waiting for that message', async () => {
-      const source = `
+    Given(
+      'a task with formatted end message and message flow to participant process, and a start event waiting for that message',
+      async () => {
+        const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <collaboration id="Collaboration_0">
           <messageFlow id="fromMainToParticipant" sourceRef="send" targetRef="lane2" />
@@ -307,9 +315,10 @@ Feature('Messaging', () => {
         <message id="Message1" name="Start message" />
       </definitions>`;
 
-      const context = await testHelpers.context(source);
-      definition = new Definition(context);
-    });
+        const context = await testHelpers.context(source);
+        definition = new Definition(context);
+      },
+    );
 
     let end;
     let main, participant;
@@ -341,8 +350,10 @@ Feature('Messaging', () => {
 
   Scenario('Message flow emanates from lane', () => {
     let definition;
-    Given('a task with formatted end message and message flow to participant process, and a start event waiting for that message', async () => {
-      const source = `
+    Given(
+      'a task with formatted end message and message flow to participant process, and a start event waiting for that message',
+      async () => {
+        const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <collaboration id="Collaboration_0">
           <messageFlow id="fromMainToParticipant" sourceRef="mainProcess" targetRef="lane2" />
@@ -365,9 +376,10 @@ Feature('Messaging', () => {
         <message id="Message1" name="Start message" />
       </definitions>`;
 
-      const context = await testHelpers.context(source);
-      definition = new Definition(context);
-    });
+        const context = await testHelpers.context(source);
+        definition = new Definition(context);
+      },
+    );
 
     let end;
     let main, participant;
@@ -399,8 +411,10 @@ Feature('Messaging', () => {
 
   Scenario('Message flow targets empty participant lane', () => {
     let definition;
-    Given('a task with formatted end message and message flow to participant process, and a start event waiting for that message', async () => {
-      const source = `
+    Given(
+      'a task with formatted end message and message flow to participant process, and a start event waiting for that message',
+      async () => {
+        const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <collaboration id="Collaboration_0">
           <messageFlow id="fromMain2Participant" sourceRef="send" targetRef="lane2" />
@@ -424,9 +438,10 @@ Feature('Messaging', () => {
         <message id="Message2" name="Second message" />
       </definitions>`;
 
-      const context = await testHelpers.context(source);
-      definition = new Definition(context);
-    });
+        const context = await testHelpers.context(source);
+        definition = new Definition(context);
+      },
+    );
 
     let end;
     let main, participant;
@@ -462,8 +477,10 @@ Feature('Messaging', () => {
 
   Scenario('Both message flow and throw message targeting the same activity', () => {
     let definition;
-    Given('a intermediate throw event with message, and message flow to an participant process with a start event waiting for that message', async () => {
-      const source = `
+    Given(
+      'a intermediate throw event with message, and message flow to an participant process with a start event waiting for that message',
+      async () => {
+        const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <collaboration id="Collaboration_0">
           <messageFlow id="fromMainToParticipant" sourceRef="send" targetRef="start2" />
@@ -485,9 +502,10 @@ Feature('Messaging', () => {
         <message id="Message1" name="Start message" />
       </definitions>`;
 
-      const context = await testHelpers.context(source);
-      definition = new Definition(context);
-    });
+        const context = await testHelpers.context(source);
+        definition = new Definition(context);
+      },
+    );
 
     let end;
     let main, participant;
@@ -778,7 +796,7 @@ Feature('Messaging', () => {
     });
 
     And('and a second participant process has completed', () => {
-      [,, participant2] = definition.getProcesses();
+      [, , participant2] = definition.getProcesses();
       expect(participant2.counters).to.have.property('completed', 1);
     });
 

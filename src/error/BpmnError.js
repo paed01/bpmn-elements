@@ -1,6 +1,6 @@
 export default function BpmnErrorActivity(errorDef, context) {
-  const {id, type, name = 'BpmnError', behaviour = {}} = errorDef;
-  const {environment} = context;
+  const { id, type, name = 'BpmnError', behaviour = {} } = errorDef;
+  const { environment } = context;
 
   return {
     id,
@@ -11,7 +11,7 @@ export default function BpmnErrorActivity(errorDef, context) {
   };
 
   function resolve(executionMessage, error) {
-    const resolveCtx = {...executionMessage, error};
+    const resolveCtx = { ...executionMessage, error };
     const result = {
       id,
       type,

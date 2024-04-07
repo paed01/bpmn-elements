@@ -1,12 +1,12 @@
-import {RunError} from '../error/Errors.js';
-import {cloneContent, cloneMessage, unshiftParent, cloneParent} from '../messageHelper.js';
+import { RunError } from '../error/Errors.js';
+import { cloneContent, cloneMessage, unshiftParent, cloneParent } from '../messageHelper.js';
 
 export default function LoopCharacteristics(activity, loopCharacteristics) {
   this.activity = activity;
   this.loopCharacteristics = loopCharacteristics;
-  const {type = 'LoopCharacteristics', behaviour = {}} = loopCharacteristics;
+  const { type = 'LoopCharacteristics', behaviour = {} } = loopCharacteristics;
   this.type = type;
-  const {isSequential = false, collection} = behaviour;
+  const { isSequential = false, collection } = behaviour;
   this.isSequential = isSequential;
   this.collection = collection;
 
@@ -36,10 +36,12 @@ export default function LoopCharacteristics(activity, loopCharacteristics) {
 
 LoopCharacteristics.prototype.execute = function execute(executeMessage) {
   if (!executeMessage) throw new TypeError('LoopCharacteristics execution requires message');
-  const chr = this.characteristics = this.characteristics || new Characteristics(this.activity, this.loopCharacteristics, executeMessage);
+  const chr = (this.characteristics = this.characteristics || new Characteristics(this.activity, this.loopCharacteristics, executeMessage));
   if (chr.cardinality === 0) return chr.complete();
 
-  const execution = this.isSequential ? new SequentialLoopCharacteristics(this.activity, chr) : new ParallelLoopCharacteristics(this.activity, chr);
+  const execution = this.isSequential
+    ? new SequentialLoopCharacteristics(this.activity, chr)
+    : new ParallelLoopCharacteristics(this.activity, chr);
   return execution.execute(executeMessage);
 };
 
@@ -50,7 +52,7 @@ function SequentialLoopCharacteristics(activity, characteristics) {
 }
 
 SequentialLoopCharacteristics.prototype.execute = function execute(executeMessage) {
-  const {routingKey: executeRoutingKey, redelivered: isRedelivered} = executeMessage.fields || {};
+  const { routingKey: executeRoutingKey, redelivered: isRedelivered } = executeMessage.fields || {};
   const chr = this.characteristics;
   if (!chr.cardinality && !chr.startCondition && !chr.completionCondition) {
     throw new RunError(`<${this.id}> cardinality, collection, or condition is required in sequential loops`, executeMessage);
@@ -70,7 +72,7 @@ SequentialLoopCharacteristics.prototype._startNext = function startNext(index, i
   const content = chr.next(index);
   if (!content) return;
 
-  if (chr.isStartConditionMet({content})) {
+  if (chr.isStartConditionMet({ content })) {
     chr.debug('start condition met');
     return;
   }
@@ -86,12 +88,12 @@ SequentialLoopCharacteristics.prototype._startNext = function startNext(index, i
     state: 'iteration.next',
   });
 
-  broker.publish('execution', 'execute.start', {...content, ignoreIfExecuting});
+  broker.publish('execution', 'execute.start', { ...content, ignoreIfExecuting });
   return content;
 };
 
 SequentialLoopCharacteristics.prototype._onCompleteMessage = function onCompleteMessage(_, message) {
-  const {content} = message;
+  const { content } = message;
   const chr = this.characteristics;
   const loopOutput = chr.output;
 
@@ -175,7 +177,7 @@ ParallelLoopCharacteristics.prototype._startBatch = function startBatch() {
 
 ParallelLoopCharacteristics.prototype._onCompleteMessage = function onCompleteMessage(routingKey, message) {
   const chr = this.characteristics;
-  const {content} = message;
+  const { content } = message;
   if (content.output !== undefined) chr.output[content.index] = content.output;
 
   if (routingKey === 'execute.discard') {
@@ -211,10 +213,10 @@ ParallelLoopCharacteristics.prototype._onCompleteMessage = function onCompleteMe
 
 function Characteristics(activity, loopCharacteristics, executeMessage) {
   this.activity = activity;
-  const behaviour = this.behaviour = loopCharacteristics.behaviour || {};
+  const behaviour = (this.behaviour = loopCharacteristics.behaviour || {});
   this.message = executeMessage;
 
-  const type = this.type = loopCharacteristics.type || 'LoopCharacteristics';
+  const type = (this.type = loopCharacteristics.type || 'LoopCharacteristics');
   this.id = activity.id;
   this.broker = activity.broker;
   this.parentExecutionId = executeMessage.content.executionId;
@@ -234,7 +236,7 @@ function Characteristics(activity, loopCharacteristics, executeMessage) {
     this.completionCondition = behaviour.completionCondition;
   }
 
-  const collection = this.collection = this.getCollection();
+  const collection = (this.collection = this.getCollection());
   if (collection) {
     this.elementVariable = behaviour.elementVariable || 'item';
   }
@@ -285,7 +287,7 @@ Characteristics.prototype.getCardinality = function getCardinality(collection) {
     return collectionLen;
   }
   const value = this.activity.environment.resolveExpression(this.loopCardinality, this.message);
-  if (value !== undefined && isNaN(value) || value < 0) {
+  if ((value !== undefined && isNaN(value)) || value < 0) {
     throw new RunError(`<${this.id}> invalid loop cardinality >${value}<`, this.message);
   }
   if (value === undefined) return collectionLen;
@@ -305,7 +307,7 @@ Characteristics.prototype.isStartConditionMet = function isStartConditionMet(mes
 
 Characteristics.prototype.isCompletionConditionMet = function isCompletionConditionMet(message) {
   if (!this.completionCondition) return false;
-  return this.activity.environment.resolveExpression(this.completionCondition, cloneMessage(message, {loopOutput: this.output}));
+  return this.activity.environment.resolveExpression(this.completionCondition, cloneMessage(message, { loopOutput: this.output }));
 };
 
 Characteristics.prototype.complete = function complete(content, allDiscarded) {
@@ -319,8 +321,18 @@ Characteristics.prototype.complete = function complete(content, allDiscarded) {
 };
 
 Characteristics.prototype.subscribe = function subscribe(onIterationCompleteMessage) {
-  this.broker.subscribeTmp('api', `activity.*.${this.parentExecutionId}`, this.onApiMessage, {noAck: true, consumerTag: '_api-multi-instance-tag'}, {priority: 400});
-  this.broker.subscribeTmp('execution', 'execute.*', onComplete, {noAck: true, consumerTag: '_execute-q-multi-instance-tag', priority: 300});
+  this.broker.subscribeTmp(
+    'api',
+    `activity.*.${this.parentExecutionId}`,
+    this.onApiMessage,
+    { noAck: true, consumerTag: '_api-multi-instance-tag' },
+    { priority: 400 },
+  );
+  this.broker.subscribeTmp('execution', 'execute.*', onComplete, {
+    noAck: true,
+    consumerTag: '_execute-q-multi-instance-tag',
+    priority: 300,
+  });
 
   function onComplete(routingKey, message, ...args) {
     if (!message.content.isMultiInstance) return;

@@ -8,11 +8,11 @@ export default {
 };
 
 function Camunda(activity) {
-  const {broker, environment, type, behaviour} = activity;
+  const { broker, environment, type, behaviour } = activity;
 
   return {
     type: 'camunda:extension',
-    extensions: {camundaExtension},
+    extensions: { camundaExtension },
     activate,
     deactivate,
   };
@@ -70,51 +70,71 @@ function Camunda(activity) {
   }
 
   function formFormatting(formData) {
-    broker.subscribeTmp('event', 'activity.enter', (_, message) => {
-      const form = {
-        fields: {},
-      };
-      formData.fields.forEach((field) => {
-        form.fields[field.id] = {...field};
-        form.fields[field.id].defaultValue = environment.resolveExpression(form.fields[field.id].defaultValue, message);
-      });
-      broker.publish('format', 'run.form', { form });
-    }, {noAck: true, consumerTag: '_camunda_form'});
+    broker.subscribeTmp(
+      'event',
+      'activity.enter',
+      (_, message) => {
+        const form = {
+          fields: {},
+        };
+        formData.fields.forEach((field) => {
+          form.fields[field.id] = { ...field };
+          form.fields[field.id].defaultValue = environment.resolveExpression(form.fields[field.id].defaultValue, message);
+        });
+        broker.publish('format', 'run.form', { form });
+      },
+      { noAck: true, consumerTag: '_camunda_form' },
+    );
   }
 
   function dueDateFormatting(dueDate) {
-    broker.subscribeTmp('event', 'activity.enter', (_, message) => {
-      const dueDateMs = Date.parse(environment.resolveExpression(dueDate, message));
+    broker.subscribeTmp(
+      'event',
+      'activity.enter',
+      (_, message) => {
+        const dueDateMs = Date.parse(environment.resolveExpression(dueDate, message));
 
-      if (isNaN(dueDateMs)) return;
+        if (isNaN(dueDateMs)) return;
 
-      broker.publish('format', 'run.duedate', {
-        dueDate: new Date(dueDateMs),
-      });
-    }, {noAck: true, consumerTag: '_camunda_due_date'});
+        broker.publish('format', 'run.duedate', {
+          dueDate: new Date(dueDateMs),
+        });
+      },
+      { noAck: true, consumerTag: '_camunda_due_date' },
+    );
   }
 
   function ioFormatting(ioData) {
     if (ioData.inputParameters) {
-      broker.subscribeTmp('event', 'activity.enter', (_, message) => {
-        const input = ioData.inputParameters.reduce((result, data) => {
-          result[data.name] = environment.resolveExpression(data.value, message);
-          return result;
-        }, {});
-        broker.publish('format', 'run.input', { input });
-      }, {noAck: true});
+      broker.subscribeTmp(
+        'event',
+        'activity.enter',
+        (_, message) => {
+          const input = ioData.inputParameters.reduce((result, data) => {
+            result[data.name] = environment.resolveExpression(data.value, message);
+            return result;
+          }, {});
+          broker.publish('format', 'run.input', { input });
+        },
+        { noAck: true },
+      );
     }
     if (ioData.outputParameters) {
-      broker.subscribeTmp('event', 'activity.execution.completed', (_, message) => {
-        const output = {};
-        ioData.outputParameters.forEach((data) => {
-          output[data.name] = environment.resolveExpression(data.value, message);
-        });
+      broker.subscribeTmp(
+        'event',
+        'activity.execution.completed',
+        (_, message) => {
+          const output = {};
+          ioData.outputParameters.forEach((data) => {
+            output[data.name] = environment.resolveExpression(data.value, message);
+          });
 
-        Object.assign(environment.output, output);
+          Object.assign(environment.output, output);
 
-        broker.publish('format', 'run.output', { output });
-      }, {noAck: true, consumerTag: '_camunda_io'});
+          broker.publish('format', 'run.output', { output });
+        },
+        { noAck: true, consumerTag: '_camunda_io' },
+      );
     }
   }
 }

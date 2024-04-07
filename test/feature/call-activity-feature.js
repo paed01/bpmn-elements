@@ -320,16 +320,21 @@ Feature('Call activity', () => {
     });
 
     And('executable process is running', () => {
-      expect(definition.getProcesses().filter(({id}) => id === 'main-process')).to.have.length(1);
+      expect(definition.getProcesses().filter(({ id }) => id === 'main-process')).to.have.length(1);
     });
 
     And('three instances of called process are running with unique execution ids', () => {
-      const called = definition.getProcesses().filter(({id}) => id === 'called-process');
+      const called = definition.getProcesses().filter(({ id }) => id === 'called-process');
       expect(called).to.have.length(3);
 
-      called.map(({executionId}) => executionId).forEach((bpExecId) => {
-        expect(called.filter(({executionId}) => executionId === bpExecId), bpExecId + ' reused').to.have.length(1);
-      });
+      called
+        .map(({ executionId }) => executionId)
+        .forEach((bpExecId) => {
+          expect(
+            called.filter(({ executionId }) => executionId === bpExecId),
+            bpExecId + ' reused',
+          ).to.have.length(1);
+        });
     });
 
     And('process iteration run messages are registered in definition execute queue', () => {
@@ -361,13 +366,17 @@ Feature('Call activity', () => {
     And('call activity has output from called process', () => {
       expect(definition.getActivityById('call-activity').counters).to.have.property('taken', 1);
       expect(definition.getProcessById('main-process').environment.output).to.deep.equal({
-        'call-activity': [{
-          task: 1,
-        }, {
-          task: 2,
-        }, {
-          task: 3,
-        }],
+        'call-activity': [
+          {
+            task: 1,
+          },
+          {
+            task: 2,
+          },
+          {
+            task: 3,
+          },
+        ],
       });
     });
 
@@ -412,13 +421,17 @@ Feature('Call activity', () => {
     And('call activity has output from called process', () => {
       expect(definition.getActivityById('call-activity').counters).to.have.property('taken', 2);
       expect(definition.getProcessById('main-process').environment.output).to.deep.equal({
-        'call-activity': [{
-          task: 10,
-        }, {
-          task: 11,
-        }, {
-          task: 12,
-        }],
+        'call-activity': [
+          {
+            task: 10,
+          },
+          {
+            task: 11,
+          },
+          {
+            task: 12,
+          },
+        ],
       });
     });
 
@@ -450,13 +463,17 @@ Feature('Call activity', () => {
 
     And('call activity has output from called process', () => {
       expect(definition.getProcessById('main-process').environment.output).to.deep.equal({
-        'call-activity': [{
-          task: 20,
-        }, {
-          task: 21,
-        }, {
-          task: 22,
-        }],
+        'call-activity': [
+          {
+            task: 20,
+          },
+          {
+            task: 21,
+          },
+          {
+            task: 22,
+          },
+        ],
       });
     });
   });
@@ -512,7 +529,7 @@ Feature('Call activity', () => {
     });
 
     When('first user task is signaled by id', () => {
-      definition.signal({id: 'task1', message: 'first'});
+      definition.signal({ id: 'task1', message: 'first' });
     });
 
     Then('second user task in all called processes are waiting', () => {
@@ -525,7 +542,7 @@ Feature('Call activity', () => {
     });
 
     When('second user task is signaled by id', () => {
-      definition.signal({id: 'task2', message: 'second'});
+      definition.signal({ id: 'task2', message: 'second' });
     });
 
     Then('run completes', () => {
@@ -539,16 +556,20 @@ Feature('Call activity', () => {
     And('call activity has output from called process', () => {
       expect(definition.getActivityById('call-activity').counters).to.have.property('taken', 1);
       expect(definition.getProcessById('main-process').environment.output).to.deep.equal({
-        'call-activity': [{
-          task1: 'first',
-          task2: 'second',
-        }, {
-          task1: 'first',
-          task2: 'second',
-        }, {
-          task1: 'first',
-          task2: 'second',
-        }],
+        'call-activity': [
+          {
+            task1: 'first',
+            task2: 'second',
+          },
+          {
+            task1: 'first',
+            task2: 'second',
+          },
+          {
+            task1: 'first',
+            task2: 'second',
+          },
+        ],
       });
     });
 
@@ -563,7 +584,7 @@ Feature('Call activity', () => {
     });
 
     When('first iteration user task is signaled by execution id', () => {
-      definition.signal({executionId: postponed[1].executionId, message: '#1 first'});
+      definition.signal({ executionId: postponed[1].executionId, message: '#1 first' });
     });
 
     Then('second user task in first called process is waiting', () => {
@@ -576,7 +597,7 @@ Feature('Call activity', () => {
     });
 
     When('first iteration second user task is signaled by execution id', () => {
-      definition.signal({executionId: postponed[1].executionId, message: '#1 second'});
+      definition.signal({ executionId: postponed[1].executionId, message: '#1 second' });
     });
 
     Then('first iteration completes', () => {
@@ -588,7 +609,7 @@ Feature('Call activity', () => {
     });
 
     When('second iteration user task is signaled by execution id', () => {
-      definition.signal({executionId: postponed[1].executionId, message: '#2 first'});
+      definition.signal({ executionId: postponed[1].executionId, message: '#2 first' });
     });
 
     Then('second user task in first called process is waiting', () => {
@@ -619,8 +640,8 @@ Feature('Call activity', () => {
     });
 
     When('tasks are signaled', () => {
-      definition.signal({id: 'task1', message: 'all first'});
-      definition.signal({id: 'task2', message: 'all second'});
+      definition.signal({ id: 'task1', message: 'all first' });
+      definition.signal({ id: 'task2', message: 'all second' });
     });
 
     Then('run completes', () => {
@@ -634,16 +655,20 @@ Feature('Call activity', () => {
     And('call activity has output from called process', () => {
       expect(definition.getActivityById('call-activity').counters).to.have.property('taken', 2);
       expect(definition.getProcessById('main-process').environment.output).to.deep.equal({
-        'call-activity': [{
-          task1: '#1 first',
-          task2: '#1 second',
-        }, {
-          task1: '#2 first',
-          task2: 'all second',
-        }, {
-          task1: 'all first',
-          task2: 'all second',
-        }],
+        'call-activity': [
+          {
+            task1: '#1 first',
+            task2: '#1 second',
+          },
+          {
+            task1: '#2 first',
+            task2: 'all second',
+          },
+          {
+            task1: 'all first',
+            task2: 'all second',
+          },
+        ],
       });
     });
 
@@ -669,8 +694,8 @@ Feature('Call activity', () => {
     });
 
     When('tasks are signaled', () => {
-      definition.signal({id: 'task1', message: 'all first'});
-      definition.signal({id: 'task2', message: 'all second'});
+      definition.signal({ id: 'task1', message: 'all first' });
+      definition.signal({ id: 'task2', message: 'all second' });
     });
 
     Then('run completes', () => {
@@ -679,16 +704,20 @@ Feature('Call activity', () => {
 
     And('call activity has output from called process', () => {
       expect(definition.getProcessById('main-process').environment.output).to.deep.equal({
-        'call-activity': [{
-          task1: '#1 first',
-          task2: '#1 second',
-        }, {
-          task1: '#2 first',
-          task2: 'all second',
-        }, {
-          task1: 'all first',
-          task2: 'all second',
-        }],
+        'call-activity': [
+          {
+            task1: '#1 first',
+            task2: '#1 second',
+          },
+          {
+            task1: '#2 first',
+            task2: 'all second',
+          },
+          {
+            task1: 'all first',
+            task2: 'all second',
+          },
+        ],
       });
     });
   });
@@ -879,7 +908,7 @@ function processOutput(elm) {
           return r;
         });
       }
-      elm.broker.getQueue('format-run-q').queueMessage({routingKey: 'run.format.end'}, {output});
+      elm.broker.getQueue('format-run-q').queueMessage({ routingKey: 'run.format.end' }, { output });
     });
   }
 }

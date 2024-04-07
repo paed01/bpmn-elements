@@ -1,6 +1,6 @@
 import Activity from '../activity/Activity.js';
 import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution.js';
-import {cloneContent} from '../messageHelper.js';
+import { cloneContent } from '../messageHelper.js';
 
 const kExecution = Symbol.for('execution');
 
@@ -38,9 +38,13 @@ IntermediateCatchEventBehaviour.prototype._onApiMessage = function onApiMessage(
     case 'signal': {
       const broker = this.broker;
       broker.cancel('_api-behaviour-execution');
-      return broker.publish('execution', 'execute.completed', cloneContent(executeMessage.content, {
-        output: message.content.message,
-      }));
+      return broker.publish(
+        'execution',
+        'execute.completed',
+        cloneContent(executeMessage.content, {
+          output: message.content.message,
+        }),
+      );
     }
     case 'discard': {
       const broker = this.broker;

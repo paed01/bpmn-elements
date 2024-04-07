@@ -1,4 +1,4 @@
-import {Script} from 'vm';
+import { Script } from 'vm';
 
 export function Scripts(enableDummy = true) {
   const scripts = {};
@@ -9,7 +9,7 @@ export function Scripts(enableDummy = true) {
     compile,
   };
 
-  function register({id, type, behaviour, logger, environment}) {
+  function register({ id, type, behaviour, logger, environment }) {
     let scriptBody, language;
 
     switch (type) {
@@ -42,24 +42,24 @@ export function Scripts(enableDummy = true) {
   }
 
   function compile(language, filename, scriptBody) {
-    return new Script(scriptBody, {filename});
+    return new Script(scriptBody, { filename });
   }
 
-  function getScript(language, {id}) {
+  function getScript(language, { id }) {
     return scripts[id];
   }
 }
 
 function JavaScript(language, filename, scriptBody, environment) {
   this.id = filename;
-  this.script = new Script(scriptBody, {filename});
+  this.script = new Script(scriptBody, { filename });
   this.language = language;
   this.environment = environment;
 }
 
 JavaScript.prototype.execute = function execute(executionContext, callback) {
   const timers = this.environment.timers.register(executionContext);
-  return this.script.runInNewContext({...executionContext, ...timers, next: callback, console});
+  return this.script.runInNewContext({ ...executionContext, ...timers, next: callback, console });
 };
 
 function DummyScript(language, filename, logger) {
@@ -70,7 +70,7 @@ function DummyScript(language, filename, logger) {
 }
 
 DummyScript.prototype.execute = function execute(executionContext, callback) {
-  const {id, executionId} = executionContext.content;
+  const { id, executionId } = executionContext.content;
   this.logger.debug(`<${executionId} (${id})> passthrough dummy script ${this.language || 'esperanto'}`);
   callback();
 };

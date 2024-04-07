@@ -1,10 +1,10 @@
 import Environment from '../../src/Environment.js';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
-import {ActivityError} from '../../src/error/Errors.js';
-import {Definition} from '../../src/definition/Definition.js';
-import {format} from 'util';
-import {Scripts as JavaScripts} from '../helpers/JavaScripts.js';
+import { ActivityError } from '../../src/error/Errors.js';
+import { Definition } from '../../src/definition/Definition.js';
+import { format } from 'util';
+import { Scripts as JavaScripts } from '../helpers/JavaScripts.js';
 
 const lanesSource = factory.resource('lanes.bpmn');
 
@@ -61,26 +61,29 @@ describe('Definition', () => {
     it('takes environment override options as second argument', () => {
       const scripts = JavaScripts();
       const environment = new Environment({ Logger: testHelpers.Logger, scripts });
-      const definition = new Definition({
-        id: 'Def_1',
-        environment,
-        getProcesses() {},
-        getExecutableProcesses() {},
-        clone(newEnvironment) {
-          return {
-            environment: newEnvironment,
-          };
+      const definition = new Definition(
+        {
+          id: 'Def_1',
+          environment,
+          getProcesses() {},
+          getExecutableProcesses() {},
+          clone(newEnvironment) {
+            return {
+              environment: newEnvironment,
+            };
+          },
         },
-      }, {
-        services: {
-          myService() {},
+        {
+          services: {
+            myService() {},
+          },
+          variables: {
+            input: 1,
+          },
         },
-        variables: {
-          input: 1,
-        },
-      });
+      );
 
-      expect(definition.environment.variables).to.eql({input: 1});
+      expect(definition.environment.variables).to.eql({ input: 1 });
       expect(definition.environment.services).to.have.property('myService').that.is.a('function');
       expect(definition.environment.scripts).to.equal(scripts);
       expect(definition.environment.Logger).to.equal(environment.Logger);
@@ -244,7 +247,7 @@ describe('Definition', () => {
 
     it('calls optional callback when completed', (done) => {
       testHelpers.context(factory.valid(), {}, (_, moddleContext) => {
-        const def = new Definition(moddleContext, {scripts: JavaScripts()});
+        const def = new Definition(moddleContext, { scripts: JavaScripts() });
         def.run((err) => {
           if (err) return done(err);
           done();
@@ -254,7 +257,7 @@ describe('Definition', () => {
 
     it('calls callback if stopped', (done) => {
       testHelpers.context(factory.userTask(), {}, (_, moddleContext) => {
-        const def = new Definition(moddleContext, {scripts: JavaScripts()});
+        const def = new Definition(moddleContext, { scripts: JavaScripts() });
         def.run((err) => {
           if (err) return done(err);
           done();
@@ -266,7 +269,7 @@ describe('Definition', () => {
 
     it('calls second callback when ran and completed again', (done) => {
       testHelpers.context(factory.valid(), {}, (_, moddleContext) => {
-        const def = new Definition(moddleContext, {scripts: JavaScripts()});
+        const def = new Definition(moddleContext, { scripts: JavaScripts() });
         def.run((errRun1) => {
           if (errRun1) return done(errRun1);
 
@@ -616,7 +619,7 @@ describe('Definition', () => {
     it('signal with id of running user task completes task', () => {
       const definition = new Definition(context);
       definition.run();
-      definition.signal({id: 'userTask'});
+      definition.signal({ id: 'userTask' });
 
       expect(definition.getActivityById('userTask').counters).to.have.property('taken', 1);
     });
@@ -632,7 +635,7 @@ describe('Definition', () => {
     it('signal with unknown id is ignored', () => {
       const definition = new Definition(context);
       definition.run();
-      definition.signal({id: 'hittepa'});
+      definition.signal({ id: 'hittepa' });
 
       expect(definition.getActivityById('userTask').counters).to.have.property('taken', 0);
     });
@@ -683,7 +686,7 @@ describe('Definition', () => {
 
       const definition = new Definition(context);
       definition.run();
-      definition.sendMessage({id: 'signal_0'});
+      definition.sendMessage({ id: 'signal_0' });
 
       expect(definition.getActivityById('start').counters).to.have.property('taken', 1);
     });
@@ -717,7 +720,7 @@ describe('Definition', () => {
 
       const definition = new Definition(context);
       definition.run();
-      definition.sendMessage({id: 'message_0'});
+      definition.sendMessage({ id: 'message_0' });
 
       expect(definition.getActivityById('start').counters).to.have.property('taken', 1);
     });
@@ -756,7 +759,7 @@ describe('Definition', () => {
       const definition = new Definition(context);
 
       definition.recover({
-        environment: {...definition.environment.getState(), output: {recovered: 1}},
+        environment: { ...definition.environment.getState(), output: { recovered: 1 } },
       });
 
       expect(definition.environment).to.have.property('output').with.property('recovered', 1);
@@ -1145,9 +1148,14 @@ describe('Definition', () => {
       definition.stop();
 
       const messages = [];
-      definition.broker.subscribeTmp('event', 'definition.resume', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'definition.resume',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.resume();
 
@@ -1165,9 +1173,14 @@ describe('Definition', () => {
       definition.recover(state);
 
       const messages = [];
-      definition.broker.subscribeTmp('event', 'definition.resume', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'definition.resume',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.resume();
 
@@ -1179,9 +1192,14 @@ describe('Definition', () => {
       definition.run();
       definition.stop();
 
-      definition.broker.subscribeTmp('event', 'definition.resume', () => {
-        definition.stop();
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'definition.resume',
+        () => {
+          definition.stop();
+        },
+        { noAck: true },
+      );
 
       definition.resume();
 
@@ -1310,11 +1328,16 @@ describe('Definition', () => {
 
     it('returns api on each event', () => {
       const definition = new Definition(context.clone());
-      definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
-        const api = definition.getApi(message);
-        expect(api, `api ${routingKey} ${message.content.id}`).to.be.ok;
-        expect(message.content.type).to.equal(api.content.type);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        '#',
+        (routingKey, message) => {
+          const api = definition.getApi(message);
+          expect(api, `api ${routingKey} ${message.content.id}`).to.be.ok;
+          expect(message.content.type).to.equal(api.content.type);
+        },
+        { noAck: true },
+      );
 
       definition.run();
     });
@@ -1323,12 +1346,17 @@ describe('Definition', () => {
       const definition = new Definition(context.clone());
 
       let api = false;
-      definition.broker.subscribeTmp('event', 'activity.#', (routingKey, message) => {
-        if (message.content.id === 'task3') {
-          message.content.parent.path = [];
-          api = definition.getApi(message);
-        }
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.#',
+        (routingKey, message) => {
+          if (message.content.id === 'task3') {
+            message.content.parent.path = [];
+            api = definition.getApi(message);
+          }
+        },
+        { noAck: true },
+      );
 
       definition.run();
 
@@ -1344,20 +1372,22 @@ describe('Definition', () => {
     it('with unknown id return nothing', () => {
       const definition = new Definition(context.clone());
       definition.run();
-      expect(definition.getApi({content: {id: 'who?'}})).to.not.be.ok;
+      expect(definition.getApi({ content: { id: 'who?' } })).to.not.be.ok;
     });
 
     it('with unknown parent id return nothing', () => {
       const definition = new Definition(context.clone());
       definition.run();
-      expect(definition.getApi({
-        content: {
-          id: 'who?',
-          parent: {
-            id: 'me?',
+      expect(
+        definition.getApi({
+          content: {
+            id: 'who?',
+            parent: {
+              id: 'me?',
+            },
           },
-        },
-      })).to.not.be.ok;
+        }),
+      ).to.not.be.ok;
     });
   });
 
@@ -1406,7 +1436,7 @@ describe('Definition', () => {
       const definition = new Definition(context.clone());
       definition.run();
 
-      const waitingTask = definition.getPostponed().find(({id}) => id === 'task1');
+      const waitingTask = definition.getPostponed().find(({ id }) => id === 'task1');
       waitingTask.signal();
 
       const running = definition.getRunningProcesses();
@@ -1543,8 +1573,8 @@ describe('Definition', () => {
       const leave = definition.waitFor('leave');
 
       definition.once('activity.wait', () => {
-        definition.broker.publish('event', 'definition.fatal', {}, {mandatory: true, type: 'ignore'});
-        definition.signal({id: 'task'});
+        definition.broker.publish('event', 'definition.fatal', {}, { mandatory: true, type: 'ignore' });
+        definition.signal({ id: 'task' });
       });
 
       definition.run();
@@ -1619,7 +1649,9 @@ describe('Definition', () => {
 
         definition.run();
 
-        expect(error).to.be.instanceof(ActivityError).and.match(/did not resolve to a function/i);
+        expect(error)
+          .to.be.instanceof(ActivityError)
+          .and.match(/did not resolve to a function/i);
       });
     });
   });
@@ -1640,7 +1672,7 @@ describe('Definition', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, {Logger});
+      const context = await testHelpers.context(source, { Logger });
       const definition = new Definition(context);
 
       definition.run();
@@ -1658,7 +1690,7 @@ describe('Definition', () => {
         };
 
         function debug(...args) {
-          const msgs = log[scope] = [];
+          const msgs = (log[scope] = []);
           msgs.push(format(scope, ...args));
         }
       }
@@ -1698,7 +1730,7 @@ describe('Definition', () => {
         const definition = new Definition(context);
 
         definition.once('wait', () => {
-          definition.broker.publish('execution', 'execution.error', {error: new Error('unstable')}, {mandatory: true, type: 'error'});
+          definition.broker.publish('execution', 'execution.error', { error: new Error('unstable') }, { mandatory: true, type: 'error' });
         });
 
         definition.waitFor('leave').catch((err) => {
@@ -1791,15 +1823,30 @@ describe('Definition', () => {
       const definition = new Definition(context);
 
       const messages = [];
-      definition.broker.subscribeTmp('event', 'process.start', (_, message) => {
-        messages.push(message);
-      }, {noAck: true});
-      definition.broker.subscribeTmp('event', 'activity.start', (_, message) => {
-        messages.push(message);
-      }, {noAck: true});
-      definition.broker.subscribeTmp('event', 'activity.wait', (_, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'process.start',
+        (_, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.start',
+        (_, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.wait',
+        (_, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
       definition.run();
 
@@ -1969,7 +2016,10 @@ describe('Definition', () => {
       expect(bps.length).to.equal(4);
 
       let postponed = definition.getPostponed();
-      expect(postponed.length, postponed.map(({id}) => id)).to.equal(4);
+      expect(
+        postponed.length,
+        postponed.map(({ id }) => id),
+      ).to.equal(4);
 
       for (const task of postponed) {
         if (task.type === 'bpmn:UserTask') task.signal();
@@ -2067,11 +2117,11 @@ describe('Definition', () => {
 
       expect(definition.getRunningProcesses().length).to.equal(4);
 
-      definition.signal({id: 'Signal_1'});
+      definition.signal({ id: 'Signal_1' });
 
       expect(definition.getRunningProcesses().length).to.equal(4);
 
-      definition.signal({id: 'Signal_0'});
+      definition.signal({ id: 'Signal_0' });
 
       return leave;
     });

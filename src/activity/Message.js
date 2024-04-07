@@ -1,7 +1,7 @@
 export default function Message(messageDef, context) {
-  const {id, type, name, parent: originalParent} = messageDef;
-  const {environment} = context;
-  const parent = {...originalParent};
+  const { id, type, name, parent: originalParent } = messageDef;
+  const { environment } = context;
+  const parent = { ...originalParent };
 
   return {
     id,
@@ -16,8 +16,8 @@ export default function Message(messageDef, context) {
       id,
       type,
       messageType: 'message',
-      ...(name && {name: environment.resolveExpression(name, executionMessage)}),
-      parent: {...parent},
+      ...(name && { name: environment.resolveExpression(name, executionMessage) }),
+      parent: { ...parent },
     };
   }
 }

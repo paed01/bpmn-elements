@@ -1,5 +1,5 @@
-export default function EnvironmentDataObject(dataObjectDef, {environment}) {
-  const {id, type, name, behaviour, parent} = dataObjectDef;
+export default function EnvironmentDataObject(dataObjectDef, { environment }) {
+  const { id, type, name, behaviour, parent } = dataObjectDef;
   this.id = id;
   this.type = type;
   this.name = name;
@@ -9,7 +9,6 @@ export default function EnvironmentDataObject(dataObjectDef, {environment}) {
 }
 
 EnvironmentDataObject.prototype.read = function read(broker, exchange, routingKeyPrefix, messageProperties) {
-
   const environment = this.environment;
   const value = environment.variables._data && environment.variables._data[this.id];
   const content = this._createContent(value);

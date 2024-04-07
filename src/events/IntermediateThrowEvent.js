@@ -1,11 +1,11 @@
 import Activity from '../activity/Activity.js';
 import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution.js';
-import {cloneContent} from '../messageHelper.js';
+import { cloneContent } from '../messageHelper.js';
 
 const kExecution = Symbol.for('execution');
 
 export default function IntermediateThrowEvent(activityDef, context) {
-  return new Activity(IntermediateThrowEventBehaviour, {...activityDef, isThrowing: true}, context);
+  return new Activity(IntermediateThrowEventBehaviour, { ...activityDef, isThrowing: true }, context);
 }
 
 export function IntermediateThrowEventBehaviour(activity) {

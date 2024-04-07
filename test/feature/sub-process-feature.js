@@ -21,7 +21,7 @@ Feature('Sub-process', () => {
         </process>
       </definitions>`;
       context = await testHelpers.context(source, {
-        extensions: {js},
+        extensions: { js },
         services: {
           serviceFn(ctx, next) {
             process.nextTick(next, null, ctx.environment.variables.content.item);
@@ -37,7 +37,7 @@ Feature('Sub-process', () => {
           batchSize: 50,
         },
         variables: {
-          list: new Array(101).fill().map((_, idx) => ({idx})),
+          list: new Array(101).fill().map((_, idx) => ({ idx })),
         },
       });
 
@@ -93,7 +93,7 @@ Feature('Sub-process', () => {
         </process>
       </definitions>`;
       context = await testHelpers.context(source, {
-        extensions: {js},
+        extensions: { js },
         services: {
           serviceFn(ctx, next) {
             process.nextTick(next, null, ctx.environment.variables.content.item);
@@ -106,7 +106,7 @@ Feature('Sub-process', () => {
     When('run definition with 101 items', () => {
       definition = new Definition(context, {
         variables: {
-          list: new Array(101).fill().map((_, idx) => ({idx})),
+          list: new Array(101).fill().map((_, idx) => ({ idx })),
         },
       });
 
@@ -243,7 +243,7 @@ Feature('Sub-process', () => {
 
       let subExecution;
       And('stopped when iteration has started', () => {
-        const [ sub ] = definition.getPostponed();
+        const [sub] = definition.getPostponed();
 
         subExecution = sub.owner.execution.source;
         expect(sub.getExecuting(), 'running iterations').to.have.length(10);
@@ -308,7 +308,7 @@ Feature('Sub-process', () => {
 
       let subExecution;
       And('one iteration fails', () => {
-        const [ sub ] = definition.getPostponed();
+        const [sub] = definition.getPostponed();
 
         subExecution = sub.owner.execution.source;
         expect(sub.getExecuting(), 'running iterations').to.have.length(10);
@@ -352,7 +352,7 @@ Feature('Sub-process', () => {
 
       let subExecution;
       And('one iteration is discarded', () => {
-        const [ sub ] = definition.getPostponed();
+        const [sub] = definition.getPostponed();
 
         subExecution = sub.owner.execution.source;
         const iterations = sub.getExecuting();
@@ -401,7 +401,7 @@ Feature('Sub-process', () => {
 
       let subExecution;
       And('sub process is discarded', () => {
-        const [ sub ] = definition.getPostponed();
+        const [sub] = definition.getPostponed();
 
         subExecution = sub.owner.execution.source;
         const iterations = sub.getExecuting();

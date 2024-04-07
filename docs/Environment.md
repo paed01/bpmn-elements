@@ -1,11 +1,11 @@
-Environment
-===========
+# Environment
 
 Shared environment.
 
 ## `new Environment([options])`
 
 Arguments:
+
 - `options`: optional options
   - `variables`: optional variables object
   - `output`: optional output object
@@ -23,6 +23,7 @@ Arguments:
   - `extensions`: [extensions](/docs/Extension.md) object
 
 Properties:
+
 - `options`: initial options
 - `extensions`: extensions
 - `output`: output object
@@ -34,20 +35,27 @@ Properties:
 - `Logger`: passed logger initiator
 
 ### `addService(name, serviceFn)`
+
 ### `assignVariables(vars)`
+
 ### `clone([overrideOptions])`
+
 ### `getScript(scriptType, activity)`
+
 ### `getServiceByName(name)`
 
 Get service by name
 
 ### `getState()`
+
 ### `registerScript(activity)`
+
 ### `resolveExpression(expression[, message = {}, expressionFnContext])`
 
 Resolve expression.
 
 Arguments:
+
 - `expression`: expression string
 - `message`: optional object from where to resolve expressions, the environment instance is added by default
 - `expressionFnContext`: optional call context (this)

@@ -3,7 +3,7 @@ import Definition from '../../src/definition/Definition.js';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 import camunda from '../resources/extensions/CamundaExtension.js';
-import {BpmnError} from '../../src/error/Errors.js';
+import { BpmnError } from '../../src/error/Errors.js';
 
 const waitingSource = factory.resource('wait-activities.bpmn');
 const escalationSource = factory.resource('escalation.bpmn');
@@ -30,7 +30,7 @@ Feature('Activity status', () => {
     };
 
     Given('a source with activities waiting for input', async () => {
-      const context = await testHelpers.context(waitingSource, {extensions: {camunda}});
+      const context = await testHelpers.context(waitingSource, { extensions: { camunda } });
       definition = new Definition(context, options);
     });
 
@@ -185,7 +185,10 @@ Feature('Activity status', () => {
 
     Then('definition is running event based gateway and subsequent timer and signal event', () => {
       postponed = definition.getPostponed();
-      expect(postponed, postponed.map(({id}) => id)).to.have.length(3);
+      expect(
+        postponed,
+        postponed.map(({ id }) => id),
+      ).to.have.length(3);
       expect(postponed[0].content).to.have.property('id', 'eventgateway');
       expect(postponed[1].content).to.have.property('id', 'tevent');
       expect(postponed[2].content).to.have.property('id', 'sevent');
@@ -202,7 +205,10 @@ Feature('Activity status', () => {
 
     Then('definition is running parallel user tasks', () => {
       postponed = definition.getPostponed();
-      expect(postponed.length, postponed.map(({id}) => id)).to.be.above(1);
+      expect(
+        postponed.length,
+        postponed.map(({ id }) => id),
+      ).to.be.above(1);
       expect(postponed[0].content).to.have.property('id', 'utask4');
       expect(postponed[1].content).to.have.property('id', 'utask5');
     });
@@ -218,7 +224,10 @@ Feature('Activity status', () => {
 
     Then('definition is running second user task and parallel join', () => {
       postponed = definition.getPostponed();
-      expect(postponed.length, postponed.map(({id}) => id)).to.be.above(0);
+      expect(
+        postponed.length,
+        postponed.map(({ id }) => id),
+      ).to.be.above(0);
       expect(postponed[0].content).to.have.property('id', 'utask4');
     });
 
@@ -233,12 +242,18 @@ Feature('Activity status', () => {
 
     Then('definition is running sub process with monitor escalation and subsequent manual task', () => {
       postponed = definition.getPostponed();
-      expect(postponed.length, postponed.map(({id}) => id)).to.be.above(0);
+      expect(
+        postponed.length,
+        postponed.map(({ id }) => id),
+      ).to.be.above(0);
       expect(postponed[0].content).to.have.property('id', 'tell');
       expect(postponed[1].content).to.have.property('id', 'sub');
 
       postponed = postponed[1].getPostponed();
-      expect(postponed.length, postponed.map(({id}) => id)).to.be.above(0);
+      expect(
+        postponed.length,
+        postponed.map(({ id }) => id),
+      ).to.be.above(0);
       expect(postponed[1].content).to.have.property('id', 'mtask');
     });
 
@@ -296,7 +311,7 @@ Feature('Activity status', () => {
         </process>
       </definitions>`;
 
-      context = await testHelpers.context(source, {extensions: {camunda}});
+      context = await testHelpers.context(source, { extensions: { camunda } });
       definition = new Definition(context, options);
     });
 
@@ -309,7 +324,10 @@ Feature('Activity status', () => {
       expect(definition.activityStatus).to.equal('executing');
 
       postponed = definition.getPostponed();
-      expect(postponed.length, postponed.map(({id}) => id)).to.equal(2);
+      expect(
+        postponed.length,
+        postponed.map(({ id }) => id),
+      ).to.equal(2);
       expect(postponed[0].content).to.have.property('id', 'service1');
       expect(postponed[1].content).to.have.property('id', 'utask1');
     });
@@ -327,7 +345,10 @@ Feature('Activity status', () => {
       expect(definition.activityStatus).to.equal('timer');
 
       postponed = definition.getPostponed();
-      expect(postponed.length, postponed.map(({id}) => id)).to.equal(2);
+      expect(
+        postponed.length,
+        postponed.map(({ id }) => id),
+      ).to.equal(2);
       expect(postponed[0].content).to.have.property('id', 'timer');
       expect(postponed[1].content).to.have.property('id', 'utask1');
     });
@@ -345,7 +366,10 @@ Feature('Activity status', () => {
       expect(definition.activityStatus).to.equal('executing');
 
       postponed = definition.getPostponed();
-      expect(postponed.length, postponed.map(({id}) => id)).to.equal(2);
+      expect(
+        postponed.length,
+        postponed.map(({ id }) => id),
+      ).to.equal(2);
       expect(postponed[0].content).to.have.property('id', 'timer');
       expect(postponed[1].content).to.have.property('id', 'service2');
     });
@@ -363,7 +387,10 @@ Feature('Activity status', () => {
       expect(definition.activityStatus).to.equal('timer');
 
       postponed = definition.getPostponed();
-      expect(postponed.length, postponed.map(({id}) => id)).to.equal(1);
+      expect(
+        postponed.length,
+        postponed.map(({ id }) => id),
+      ).to.equal(1);
       expect(postponed[0].content).to.have.property('id', 'timer');
     });
 
@@ -505,7 +532,7 @@ Feature('Activity status', () => {
     });
 
     When('user task is signaled', () => {
-      definition.signal({id: 'utask1'});
+      definition.signal({ id: 'utask1' });
     });
 
     And('succeeding service task completes', () => {
@@ -569,7 +596,7 @@ Feature('Activity status', () => {
         </process>
       </definitions>`;
 
-      context = await testHelpers.context(source, {extensions: {camunda}});
+      context = await testHelpers.context(source, { extensions: { camunda } });
       definition = new Definition(context, options);
     });
 
@@ -593,7 +620,7 @@ Feature('Activity status', () => {
     });
 
     When('first multi-instance user task is signaled', () => {
-      definition.signal({id: 'utask1'});
+      definition.signal({ id: 'utask1' });
     });
 
     Then('second sequential multi-instance process is still waiting for user task', () => {
@@ -602,7 +629,7 @@ Feature('Activity status', () => {
     });
 
     When('second multi-instance user task is signaled', () => {
-      definition.signal({id: 'utask1'});
+      definition.signal({ id: 'utask1' });
     });
 
     Then('second sequential multi-instance process is still waiting for user task', () => {
@@ -611,7 +638,7 @@ Feature('Activity status', () => {
     });
 
     When('third and last multi-instance user task is signaled', () => {
-      definition.signal({id: 'utask1'});
+      definition.signal({ id: 'utask1' });
     });
 
     let postponed;
@@ -681,7 +708,7 @@ Feature('Activity status', () => {
     Given('a transaction with compensation and a cancel boundary event', async () => {
       context = await testHelpers.context(transactionSource);
       definition = new Definition(context, {
-        settings: {enableDummyService: false},
+        settings: { enableDummyService: false },
         services: {
           compare(answer, str) {
             return answer.message === str;
@@ -691,10 +718,15 @@ Feature('Activity status', () => {
           },
         },
         extensions: {
-          me({broker, environment}) {
-            broker.subscribeTmp('event', 'activity.end', (_, {content}) => {
-              if ('output' in content) environment.output[content.id] = content.output;
-            }, {noAck: true, consumerTag: 'save-output-tag'});
+          me({ broker, environment }) {
+            broker.subscribeTmp(
+              'event',
+              'activity.end',
+              (_, { content }) => {
+                if ('output' in content) environment.output[content.id] = content.output;
+              },
+              { noAck: true, consumerTag: 'save-output-tag' },
+            );
           },
         },
       });
@@ -719,10 +751,10 @@ Feature('Activity status', () => {
       expect(transaction.content).to.have.property('isTransaction', true);
 
       expect(userTask).to.have.property('id', 'areUSure');
-      userTask.signal({message: 'No'});
+      userTask.signal({ message: 'No' });
 
       await new Promise((resolve) => process.nextTick(resolve));
-      definition.signal({id: 'areUSure', message: 'No'});
+      definition.signal({ id: 'areUSure', message: 'No' });
     });
 
     Then('compensation service is waiting for callback', () => {
@@ -787,7 +819,7 @@ Feature('Activity status', () => {
     let end;
     When('first start event is messaged', () => {
       end = definition.waitFor('end');
-      definition.signal({id: 'Message1'});
+      definition.signal({ id: 'Message1' });
     });
 
     Then('run completes and activity status is idle', async () => {
@@ -902,7 +934,7 @@ Feature('Activity status', () => {
 
     let errored;
     When('definition is ran without service function', () => {
-      definition = new Definition(context.clone(), {settings: {enableDummyService: false}});
+      definition = new Definition(context.clone(), { settings: { enableDummyService: false } });
       errored = definition.waitFor('error');
       definition.run();
     });
@@ -915,7 +947,7 @@ Feature('Activity status', () => {
     const serviceCalls = [];
     When('definition is ran strict with service function', () => {
       definition = new Definition(context.clone(), {
-        settings: {strict: true},
+        settings: { strict: true },
         services: {
           tjanst(...args) {
             serviceCalls.push(args);
@@ -941,7 +973,7 @@ Feature('Activity status', () => {
 
     When('definition is ran non-strict', () => {
       definition = new Definition(context.clone(), {
-        settings: {strict: false},
+        settings: { strict: false },
         services: {
           tjanst(...args) {
             serviceCalls.push(args);
@@ -958,9 +990,11 @@ Feature('Activity status', () => {
     let end;
     When('service calls callback with error', () => {
       end = definition.waitFor('end');
-      serviceCalls.pop().pop()(new BpmnError('Not found', {
-        errorCode: 404,
-      }));
+      serviceCalls.pop().pop()(
+        new BpmnError('Not found', {
+          errorCode: 404,
+        }),
+      );
     });
 
     Then('definition completes since error was caught', async () => {

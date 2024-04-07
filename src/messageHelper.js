@@ -1,14 +1,7 @@
-export {
-  cloneContent,
-  cloneMessage,
-  cloneParent,
-  shiftParent,
-  unshiftParent,
-  pushParent,
-};
+export { cloneContent, cloneMessage, cloneParent, shiftParent, unshiftParent, pushParent };
 
 function cloneContent(content, extend) {
-  const {discardSequence, inbound, outbound, parent, sequence} = content;
+  const { discardSequence, inbound, outbound, parent, sequence } = content;
 
   const clone = {
     ...content,
@@ -36,26 +29,26 @@ function cloneContent(content, extend) {
 
 function cloneMessage(message, overrideContent) {
   return {
-    fields: {...message.fields},
+    fields: { ...message.fields },
     content: cloneContent(message.content, overrideContent),
-    properties: {...message.properties},
+    properties: { ...message.properties },
   };
 }
 
 function cloneParent(parent) {
-  const {path} = parent;
-  const clone = {...parent};
+  const { path } = parent;
+  const clone = { ...parent };
   if (!path) return clone;
 
   clone.path = path.map((p) => {
-    return {...p};
+    return { ...p };
   });
 
   return clone;
 }
 
 function unshiftParent(parent, adoptingParent) {
-  const {id, type, executionId} = adoptingParent;
+  const { id, type, executionId } = adoptingParent;
   if (!parent) {
     return {
       id,
@@ -65,13 +58,13 @@ function unshiftParent(parent, adoptingParent) {
   }
 
   const clone = cloneParent(parent);
-  const {id: parentId, type: parentType, executionId: parentExecutionId} = parent;
+  const { id: parentId, type: parentType, executionId: parentExecutionId } = parent;
   clone.id = id;
   clone.executionId = executionId;
   clone.type = type;
 
-  const path = clone.path = clone.path || [];
-  path.unshift({id: parentId, type: parentType, executionId: parentExecutionId});
+  const path = (clone.path = clone.path || []);
+  path.unshift({ id: parentId, type: parentType, executionId: parentExecutionId });
 
   return clone;
 }
@@ -81,7 +74,7 @@ function shiftParent(parent) {
   if (!parent.path || !parent.path.length) return;
 
   const clone = cloneParent(parent);
-  const {id, executionId, type} = clone.path.shift();
+  const { id, executionId, type } = clone.path.shift();
   clone.id = id;
   clone.executionId = executionId;
   clone.type = type;
@@ -90,15 +83,15 @@ function shiftParent(parent) {
 }
 
 function pushParent(parent, ancestor) {
-  const {id, type, executionId} = ancestor;
-  if (!parent) return {id, type, executionId};
+  const { id, type, executionId } = ancestor;
+  if (!parent) return { id, type, executionId };
 
   const clone = cloneParent(parent);
   if (clone.id === id) {
     if (executionId) clone.executionId = executionId;
     return clone;
   }
-  const path = clone.path = clone.path || [];
+  const path = (clone.path = clone.path || []);
 
   for (const p of path) {
     if (p.id === id) {
@@ -107,6 +100,6 @@ function pushParent(parent, ancestor) {
     }
   }
 
-  path.push({id, type, executionId});
+  path.push({ id, type, executionId });
   return clone;
 }

@@ -2,8 +2,8 @@ import testHelpers from '../helpers/testHelpers.js';
 import Environment from '../../src/Environment.js';
 import ErrorEventDefinition from '../../src/eventDefinitions/ErrorEventDefinition.js';
 import MessageEventDefinition from '../../src/eventDefinitions/MessageEventDefinition.js';
-import {ActivityBroker} from '../../src/EventBroker.js';
-import {BoundaryEventBehaviour} from '../../src/events/BoundaryEvent.js';
+import { ActivityBroker } from '../../src/EventBroker.js';
+import { BoundaryEventBehaviour } from '../../src/events/BoundaryEvent.js';
 
 describe('BoundaryEvent', () => {
   describe('behaviour', () => {
@@ -29,7 +29,7 @@ describe('BoundaryEvent', () => {
         const behaviour = new BoundaryEventBehaviour({
           broker: ActivityBroker(this).broker,
           attachedTo,
-          behaviour: {cancelActivity: false},
+          behaviour: { cancelActivity: false },
         });
 
         expect(behaviour).to.have.property('cancelActivity', false);
@@ -42,13 +42,16 @@ describe('BoundaryEvent', () => {
           id: 'task',
           broker: ActivityBroker(this).broker,
         };
-        const behaviour = new BoundaryEventBehaviour({
-          id: 'event',
-          broker: ActivityBroker(this).broker,
-          attachedTo,
-        }, {
-          getOutboundAssociations() {},
-        });
+        const behaviour = new BoundaryEventBehaviour(
+          {
+            id: 'event',
+            broker: ActivityBroker(this).broker,
+            attachedTo,
+          },
+          {
+            getOutboundAssociations() {},
+          },
+        );
 
         expect(attachedTo.broker.getExchange('event')).to.have.property('bindingCount', 0);
 
@@ -70,13 +73,16 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
-        const behaviour = new BoundaryEventBehaviour({
-          id: 'event',
-          broker,
-          attachedTo,
-        }, {
-          getOutboundAssociations() {},
-        });
+        const behaviour = new BoundaryEventBehaviour(
+          {
+            id: 'event',
+            broker,
+            attachedTo,
+          },
+          {
+            getOutboundAssociations() {},
+          },
+        );
 
         expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
 
@@ -98,13 +104,16 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
-        const behaviour = new BoundaryEventBehaviour({
-          id: 'event',
-          broker,
-          attachedTo,
-        }, {
-          getOutboundAssociations() {},
-        });
+        const behaviour = new BoundaryEventBehaviour(
+          {
+            id: 'event',
+            broker,
+            attachedTo,
+          },
+          {
+            getOutboundAssociations() {},
+          },
+        );
 
         behaviour.execute({
           fields: {},
@@ -119,7 +128,7 @@ describe('BoundaryEvent', () => {
         broker.subscribeOnce('execution', 'execute.#', (_, msg) => {
           message = msg;
         });
-        attachedTo.broker.publish('event', 'activity.leave', {id: attachedTo.id});
+        attachedTo.broker.publish('event', 'activity.leave', { id: attachedTo.id });
 
         expect(message).to.be.ok;
         expect(message).to.have.property('fields').with.property('routingKey', 'execute.discard');
@@ -136,13 +145,16 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
-        const behaviour = new BoundaryEventBehaviour({
-          id: 'event',
-          broker,
-          attachedTo,
-        }, {
-          getOutboundAssociations() {},
-        });
+        const behaviour = new BoundaryEventBehaviour(
+          {
+            id: 'event',
+            broker,
+            attachedTo,
+          },
+          {
+            getOutboundAssociations() {},
+          },
+        );
 
         behaviour.execute({
           fields: {},
@@ -157,7 +169,7 @@ describe('BoundaryEvent', () => {
         broker.subscribeOnce('execution', 'execute.#', (_, msg) => {
           message = msg;
         });
-        attachedTo.broker.publish('event', 'activity.leave', {id: attachedTo.id});
+        attachedTo.broker.publish('event', 'activity.leave', { id: attachedTo.id });
 
         expect(message).to.be.ok;
         expect(message).to.have.property('fields').with.property('routingKey', 'execute.discard');
@@ -173,13 +185,16 @@ describe('BoundaryEvent', () => {
         };
 
         const broker = ActivityBroker().broker;
-        const behaviour = new BoundaryEventBehaviour({
-          id: 'event',
-          broker,
-          attachedTo,
-        }, {
-          getOutboundAssociations() {},
-        });
+        const behaviour = new BoundaryEventBehaviour(
+          {
+            id: 'event',
+            broker,
+            attachedTo,
+          },
+          {
+            getOutboundAssociations() {},
+          },
+        );
 
         behaviour.execute({
           fields: {},
@@ -190,7 +205,7 @@ describe('BoundaryEvent', () => {
           },
         });
 
-        broker.publish('api', 'activity.stop.event_1', {}, {type: 'stop'});
+        broker.publish('api', 'activity.stop.event_1', {}, { type: 'stop' });
 
         expect(attachedTo.broker.getExchange('execution')).to.have.property('bindingCount', 1);
         expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
@@ -204,7 +219,7 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
 
-        attachedTo.getApi = ({content}) => {
+        attachedTo.getApi = ({ content }) => {
           return {
             discard() {
               discarded++;
@@ -214,18 +229,21 @@ describe('BoundaryEvent', () => {
         };
 
         const broker = ActivityBroker().broker;
-        const behaviour = new BoundaryEventBehaviour({
-          id: 'event',
-          broker,
-          attachedTo,
-          behaviour: {
-            cancelActivity: true,
+        const behaviour = new BoundaryEventBehaviour(
+          {
+            id: 'event',
+            broker,
+            attachedTo,
+            behaviour: {
+              cancelActivity: true,
+            },
+            environment: new Environment(),
+            logger: testHelpers.Logger('boundaryevent'),
           },
-          environment: new Environment(),
-          logger: testHelpers.Logger('boundaryevent'),
-        }, {
-          getOutboundAssociations() {},
-        });
+          {
+            getOutboundAssociations() {},
+          },
+        );
 
         behaviour.execute({
           fields: {},
@@ -233,14 +251,16 @@ describe('BoundaryEvent', () => {
             id: 'event',
             executionId: 'event_1',
             isRootScope: true,
-            inbound: [{
-              executionId: 'activity_1',
-            }],
+            inbound: [
+              {
+                executionId: 'activity_1',
+              },
+            ],
           },
         });
 
         attachedTo.broker.subscribeOnce('api', 'activity.discard.activity_1', () => {
-          attachedTo.broker.publish('event', 'activity.leave', {id: attachedTo.id});
+          attachedTo.broker.publish('event', 'activity.leave', { id: attachedTo.id });
         });
 
         broker.publish('execution', 'execute.bound.completed', {});
@@ -259,7 +279,7 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
-        const environment = new Environment({Logger: testHelpers.Logger});
+        const environment = new Environment({ Logger: testHelpers.Logger });
         const activity = {
           id: 'event',
           broker,
@@ -299,21 +319,26 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
-        const environment = new Environment({Logger: testHelpers.Logger});
-        const behaviour = new BoundaryEventBehaviour({
-          id: 'event',
-          broker,
-          environment,
-          logger: environment.Logger('boundaryevent'),
-          attachedTo,
-          behaviour: {
-            eventDefinitions: [{
-              Behaviour: ErrorEventDefinition,
-            }],
+        const environment = new Environment({ Logger: testHelpers.Logger });
+        const behaviour = new BoundaryEventBehaviour(
+          {
+            id: 'event',
+            broker,
+            environment,
+            logger: environment.Logger('boundaryevent'),
+            attachedTo,
+            behaviour: {
+              eventDefinitions: [
+                {
+                  Behaviour: ErrorEventDefinition,
+                },
+              ],
+            },
           },
-        }, {
-          getOutboundAssociations() {},
-        });
+          {
+            getOutboundAssociations() {},
+          },
+        );
 
         behaviour.execute({
           fields: {},
@@ -331,7 +356,7 @@ describe('BoundaryEvent', () => {
         broker.subscribeOnce('execution', 'execute.#', (_, msg) => {
           message = msg;
         });
-        attachedTo.broker.publish('event', 'activity.leave', {id: attachedTo.id});
+        attachedTo.broker.publish('event', 'activity.leave', { id: attachedTo.id });
 
         expect(message).to.be.ok;
         expect(message).to.have.property('fields').with.property('routingKey', 'execute.discard');
@@ -346,21 +371,26 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
-        const environment = new Environment({Logger: testHelpers.Logger});
-        const behaviour = new BoundaryEventBehaviour({
-          id: 'event',
-          broker,
-          environment,
-          logger: environment.Logger('boundaryevent'),
-          attachedTo,
-          behaviour: {
-            eventDefinitions: [{
-              Behaviour: MessageEventDefinition,
-            }],
+        const environment = new Environment({ Logger: testHelpers.Logger });
+        const behaviour = new BoundaryEventBehaviour(
+          {
+            id: 'event',
+            broker,
+            environment,
+            logger: environment.Logger('boundaryevent'),
+            attachedTo,
+            behaviour: {
+              eventDefinitions: [
+                {
+                  Behaviour: MessageEventDefinition,
+                },
+              ],
+            },
           },
-        }, {
-          getOutboundAssociations() {},
-        });
+          {
+            getOutboundAssociations() {},
+          },
+        );
 
         behaviour.execute({
           fields: {},
@@ -378,7 +408,7 @@ describe('BoundaryEvent', () => {
         broker.subscribeOnce('execution', 'execute.#', (_, msg) => {
           message = msg;
         });
-        attachedTo.broker.publish('event', 'activity.leave', {id: attachedTo.id});
+        attachedTo.broker.publish('event', 'activity.leave', { id: attachedTo.id });
 
         expect(message).to.be.ok;
         expect(message).to.have.property('fields').with.property('routingKey', 'execute.discard');
@@ -393,21 +423,26 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
-        const environment = new Environment({Logger: testHelpers.Logger});
-        const behaviour = new BoundaryEventBehaviour({
-          id: 'event',
-          broker,
-          environment,
-          logger: environment.Logger('boundaryevent'),
-          attachedTo,
-          behaviour: {
-            eventDefinitions: [{
-              Behaviour: ErrorEventDefinition,
-            }],
+        const environment = new Environment({ Logger: testHelpers.Logger });
+        const behaviour = new BoundaryEventBehaviour(
+          {
+            id: 'event',
+            broker,
+            environment,
+            logger: environment.Logger('boundaryevent'),
+            attachedTo,
+            behaviour: {
+              eventDefinitions: [
+                {
+                  Behaviour: ErrorEventDefinition,
+                },
+              ],
+            },
           },
-        }, {
-          getOutboundAssociations() {},
-        });
+          {
+            getOutboundAssociations() {},
+          },
+        );
 
         behaviour.execute({
           fields: {},
@@ -421,7 +456,7 @@ describe('BoundaryEvent', () => {
           },
         });
 
-        broker.publish('api', 'activity.stop.event_1', {}, {type: 'stop'});
+        broker.publish('api', 'activity.stop.event_1', {}, { type: 'stop' });
 
         expect(attachedTo.broker.getExchange('execution')).to.have.property('bindingCount', 1);
         expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
@@ -436,22 +471,27 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         broker = ActivityBroker().broker;
-        const environment = new Environment({Logger: testHelpers.Logger});
-        behaviour = new BoundaryEventBehaviour({
-          id: 'event',
-          broker,
-          environment,
-          logger: environment.Logger('boundaryevent'),
-          attachedTo,
-          behaviour: {
-            eventDefinitions: [{
-              Behaviour: ErrorEventDefinition,
-            }],
+        const environment = new Environment({ Logger: testHelpers.Logger });
+        behaviour = new BoundaryEventBehaviour(
+          {
+            id: 'event',
+            broker,
+            environment,
+            logger: environment.Logger('boundaryevent'),
+            attachedTo,
+            behaviour: {
+              eventDefinitions: [
+                {
+                  Behaviour: ErrorEventDefinition,
+                },
+              ],
+            },
+            removeInboundListeners() {},
           },
-          removeInboundListeners() {},
-        }, {
-          getOutboundAssociations() {},
-        });
+          {
+            getOutboundAssociations() {},
+          },
+        );
       });
 
       it('clears listeners if stopped', () => {
@@ -473,9 +513,14 @@ describe('BoundaryEvent', () => {
           sourcePattern: '#',
           executionId: 'event_0_1',
         });
-        broker.publish('api', 'activity.stop.event_1', {}, {
-          type: 'stop',
-        });
+        broker.publish(
+          'api',
+          'activity.stop.event_1',
+          {},
+          {
+            type: 'stop',
+          },
+        );
 
         expect(broker).to.have.property('consumerCount', 0);
         expect(behaviour.attachedTo.broker).to.have.property('consumerCount', 0);
@@ -499,7 +544,7 @@ describe('BoundaryEvent', () => {
           bindExchange: 'execution',
           sourcePattern: '#',
         });
-        broker.publish('api', 'activity.discard.event_1', {}, {type: 'discard'});
+        broker.publish('api', 'activity.discard.event_1', {}, { type: 'discard' });
 
         expect(behaviour.attachedTo.broker).to.have.property('consumerCount', 0);
         expect(broker).to.have.property('consumerCount', 0);
@@ -582,9 +627,14 @@ describe('BoundaryEvent', () => {
         const event = context.getActivityById('event');
 
         const messages = [];
-        event.broker.subscribeTmp('execution', 'execute.*', (routingKey, message) => {
-          messages.push(message);
-        }, {noAck: true});
+        event.broker.subscribeTmp(
+          'execution',
+          'execute.*',
+          (routingKey, message) => {
+            messages.push(message);
+          },
+          { noAck: true },
+        );
 
         const wait = task.waitFor('wait');
         const leave = event.waitFor('leave');
@@ -597,9 +647,13 @@ describe('BoundaryEvent', () => {
 
         await leave;
 
-        const discarded = messages.filter(({fields}) => fields.routingKey === 'execute.discard');
+        const discarded = messages.filter(({ fields }) => fields.routingKey === 'execute.discard');
         expect(discarded).to.have.length(3);
-        expect(discarded.map(({content}) => content.type)).to.have.same.members(['bpmn:BoundaryEvent', 'bpmn:ErrorEventDefinition', 'bpmn:TimerEventDefinition']);
+        expect(discarded.map(({ content }) => content.type)).to.have.same.members([
+          'bpmn:BoundaryEvent',
+          'bpmn:ErrorEventDefinition',
+          'bpmn:TimerEventDefinition',
+        ]);
       });
 
       it('discards incomplete event definitions if event completes', async () => {
@@ -609,9 +663,14 @@ describe('BoundaryEvent', () => {
         const event = context.getActivityById('event');
 
         const messages = [];
-        event.broker.subscribeTmp('execution', 'execute.*', (routingKey, message) => {
-          messages.push(message);
-        }, {noAck: true});
+        event.broker.subscribeTmp(
+          'execution',
+          'execute.*',
+          (routingKey, message) => {
+            messages.push(message);
+          },
+          { noAck: true },
+        );
 
         const leave = event.waitFor('leave');
 
@@ -620,9 +679,9 @@ describe('BoundaryEvent', () => {
 
         await leave;
 
-        const discarded = messages.filter(({fields}) => fields.routingKey === 'execute.discard');
+        const discarded = messages.filter(({ fields }) => fields.routingKey === 'execute.discard');
         expect(discarded).to.have.length(1);
-        expect(discarded.map(({content}) => content.type)).to.have.same.members(['bpmn:ErrorEventDefinition']);
+        expect(discarded.map(({ content }) => content.type)).to.have.same.members(['bpmn:ErrorEventDefinition']);
       });
 
       it('discards all if attached activity is discarded while executing', async () => {
@@ -630,9 +689,14 @@ describe('BoundaryEvent', () => {
         const event = context.getActivityById('event');
 
         const messages = [];
-        event.broker.subscribeTmp('execution', 'execute.*', (routingKey, message) => {
-          messages.push(message);
-        }, {noAck: true});
+        event.broker.subscribeTmp(
+          'execution',
+          'execute.*',
+          (routingKey, message) => {
+            messages.push(message);
+          },
+          { noAck: true },
+        );
 
         const wait = task.waitFor('wait');
         const leave = event.waitFor('leave');
@@ -645,9 +709,13 @@ describe('BoundaryEvent', () => {
 
         await leave;
 
-        const discarded = messages.filter(({fields}) => fields.routingKey === 'execute.discard');
+        const discarded = messages.filter(({ fields }) => fields.routingKey === 'execute.discard');
         expect(discarded).to.have.length(3);
-        expect(discarded.map(({content}) => content.type)).to.have.same.members(['bpmn:BoundaryEvent', 'bpmn:ErrorEventDefinition', 'bpmn:TimerEventDefinition']);
+        expect(discarded.map(({ content }) => content.type)).to.have.same.members([
+          'bpmn:BoundaryEvent',
+          'bpmn:ErrorEventDefinition',
+          'bpmn:TimerEventDefinition',
+        ]);
       });
     });
 
@@ -810,7 +878,7 @@ describe('BoundaryEvent', () => {
 
         event.activate();
         task.activate();
-        task.inbound[0].discard({discardSequence: ['hittepa-1']});
+        task.inbound[0].discard({ discardSequence: ['hittepa-1'] });
 
         await leave;
 
@@ -1143,7 +1211,7 @@ describe('BoundaryEvent', () => {
         event.activate();
         task.run();
 
-        serviceComplete(null, {conditionMet: true});
+        serviceComplete(null, { conditionMet: true });
 
         await leave;
 
@@ -1165,7 +1233,7 @@ describe('BoundaryEvent', () => {
         event.activate();
         task.run();
 
-        serviceComplete(null, {conditionMet: false});
+        serviceComplete(null, { conditionMet: false });
 
         await leave;
 
@@ -1255,7 +1323,7 @@ describe('BoundaryEvent', () => {
         event.activate();
         task.run();
 
-        serviceComplete(null, {conditionMet: true});
+        serviceComplete(null, { conditionMet: true });
 
         await leave;
 
@@ -1277,7 +1345,7 @@ describe('BoundaryEvent', () => {
         event.activate();
         task.run();
 
-        serviceComplete(null, {conditionMet: false});
+        serviceComplete(null, { conditionMet: false });
 
         await leave;
 

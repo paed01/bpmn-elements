@@ -7,13 +7,13 @@ export default function Properties(activity, propertiesDef, context) {
   this.activity = activity;
   this.broker = activity.broker;
 
-  const props = this[kProperties] = {
+  const props = (this[kProperties] = {
     properties: [],
     dataInputObjects: [],
     dataOutputObjects: [],
-  };
+  });
 
-  for (const {id, ...def} of propertiesDef.values) {
+  for (const { id, ...def } of propertiesDef.values) {
     const source = {
       id,
       type: def.type,
@@ -28,28 +28,28 @@ export default function Properties(activity, propertiesDef, context) {
 
     if (inputDataObjectId) {
       const reference = context.getDataObjectById(inputDataObjectId);
-      props.dataInputObjects.push({id, reference});
+      props.dataInputObjects.push({ id, reference });
       source.input = {
         reference,
       };
     }
     if (outputDataObjectId) {
       const reference = context.getDataObjectById(outputDataObjectId);
-      props.dataOutputObjects.push({id, reference: reference});
+      props.dataOutputObjects.push({ id, reference: reference });
       source.output = {
         reference,
       };
     }
     if (inputDataStoreId) {
       const reference = context.getDataStoreById(inputDataStoreId);
-      props.dataInputObjects.push({id, reference});
+      props.dataInputObjects.push({ id, reference });
       source.input = {
         reference,
       };
     }
     if (outputDataStoreId) {
       const reference = context.getDataStoreById(outputDataStoreId);
-      props.dataOutputObjects.push({id, reference});
+      props.dataOutputObjects.push({ id, reference });
       source.output = {
         reference,
       };
@@ -67,7 +67,7 @@ Properties.prototype.activate = function activate(message) {
     this._onActivityEvent('activity.extension.resume', message);
   }
 
-  this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {noAck: true});
+  this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), { noAck: true });
 };
 
 Properties.prototype.deactivate = function deactivate() {
@@ -90,16 +90,22 @@ Properties.prototype._formatOnEnter = function formatOnEnter(message) {
   const dataInputObjects = this[kProperties].dataInputObjects;
   const broker = this.broker;
   if (!dataInputObjects.length) {
-    return broker.getQueue('format-run-q').queueMessage({routingKey: startRoutingKey}, {
-      properties: this._getProperties(message),
-    });
+    return broker.getQueue('format-run-q').queueMessage(
+      { routingKey: startRoutingKey },
+      {
+        properties: this._getProperties(message),
+      },
+    );
   }
 
   const endRoutingKey = 'run.enter.bpmn-properties.end';
-  broker.getQueue('format-run-q').queueMessage({routingKey: startRoutingKey}, {
-    endRoutingKey,
-    properties: this._getProperties(message),
-  });
+  broker.getQueue('format-run-q').queueMessage(
+    { routingKey: startRoutingKey },
+    {
+      endRoutingKey,
+      properties: this._getProperties(message),
+    },
+  );
 
   return read(broker, dataInputObjects, (_, responses) => {
     broker.publish('format', endRoutingKey, {
@@ -117,16 +123,22 @@ Properties.prototype._formatOnComplete = function formatOnComplete(message) {
   const dataOutputObjects = this[kProperties].dataOutputObjects;
   const broker = this.broker;
   if (!dataOutputObjects.length) {
-    return broker.getQueue('format-run-q').queueMessage({routingKey: startRoutingKey}, {
-      properties: outputProperties,
-    });
+    return broker.getQueue('format-run-q').queueMessage(
+      { routingKey: startRoutingKey },
+      {
+        properties: outputProperties,
+      },
+    );
   }
 
   const endRoutingKey = 'run.end.bpmn-properties.end';
-  broker.getQueue('format-run-q').queueMessage({routingKey: startRoutingKey}, {
-    endRoutingKey,
-    properties: outputProperties,
-  });
+  broker.getQueue('format-run-q').queueMessage(
+    { routingKey: startRoutingKey },
+    {
+      endRoutingKey,
+      properties: outputProperties,
+    },
+  );
 
   return write(broker, dataOutputObjects, outputProperties, (_, responses) => {
     broker.publish('format', endRoutingKey, {
@@ -139,12 +151,12 @@ Properties.prototype._getProperties = function getProperties(message, values) {
   let response = {};
 
   if (message.content.properties) {
-    response = {...message.content.properties};
+    response = { ...message.content.properties };
   }
 
-  for (const {id, type, name} of this[kProperties].properties) {
+  for (const { id, type, name } of this[kProperties].properties) {
     if (!(id in response)) {
-      response[id] = {id, type, name};
+      response[id] = { id, type, name };
     }
 
     if (!values || !(id in values)) continue;
@@ -158,14 +170,14 @@ function read(broker, dataReferences, callback) {
   const responses = {};
   let count = 0;
 
-  const dataReadConsumer = broker.subscribeTmp('data', 'data.read.#', onDataReadResponse, {noAck: true});
+  const dataReadConsumer = broker.subscribeTmp('data', 'data.read.#', onDataReadResponse, { noAck: true });
 
-  for (const {id: propertyId, reference} of dataReferences) {
-    reference.read(broker, 'data', 'data.read.', {correlationId: propertyId});
+  for (const { id: propertyId, reference } of dataReferences) {
+    reference.read(broker, 'data', 'data.read.', { correlationId: propertyId });
   }
 
   function onDataReadResponse(routingKey, message) {
-    responses[message.properties.correlationId] = {...message.content};
+    responses[message.properties.correlationId] = { ...message.content };
 
     if (++count < dataReferences.length) return;
 
@@ -177,15 +189,15 @@ function read(broker, dataReferences, callback) {
 function write(broker, dataReferences, properties, callback) {
   const responses = [];
   let count = 0;
-  const dataWriteConsumer = broker.subscribeTmp('data', 'data.write.#', onDataWriteResponse, {noAck: true});
+  const dataWriteConsumer = broker.subscribeTmp('data', 'data.write.#', onDataWriteResponse, { noAck: true });
 
-  for (const {id: propertyId, reference} of dataReferences) {
+  for (const { id: propertyId, reference } of dataReferences) {
     const value = propertyId in properties ? properties[propertyId].value : undefined;
-    reference.write(broker, 'data', 'data.write.', value, {correlationId: propertyId});
+    reference.write(broker, 'data', 'data.write.', value, { correlationId: propertyId });
   }
 
   function onDataWriteResponse(routingKey, message) {
-    responses[message.properties.correlationId] = {...message.content};
+    responses[message.properties.correlationId] = { ...message.content };
 
     if (++count < dataReferences.length) return;
 

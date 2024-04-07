@@ -1,4 +1,4 @@
-import {Definition, Process, Activity, Lane} from '../../src/index.js';
+import { Definition, Process, Activity, Lane } from '../../src/index.js';
 import testHelpers from '../helpers/testHelpers.js';
 import factory from '../helpers/factory.js';
 
@@ -25,7 +25,7 @@ Feature('Swim lanes', () => {
       expect(task.lane).to.have.property('id', 'customer-lane');
       expect(task.lane).to.have.property('type', 'bpmn:Lane');
       expect(task.lane).to.have.property('name', 'Customer');
-      expect(task.lane).to.have.property('parent').that.deep.equal({id: 'Process_1', type: 'bpmn:Process'});
+      expect(task.lane).to.have.property('parent').that.deep.equal({ id: 'Process_1', type: 'bpmn:Process' });
       expect(task.lane).to.have.property('behaviour').with.property('documentation');
       expect(task.lane).to.have.property('broker', parentProcess.broker);
       expect(task.lane).to.have.property('environment', parentProcess.environment);
@@ -115,7 +115,7 @@ Feature('Swim lanes', () => {
     });
 
     When('task is signaled', () => {
-      definition.signal({id: taskApi.id});
+      definition.signal({ id: taskApi.id });
     });
 
     Then('run waits for next user task belonging to second lane', () => {
@@ -125,7 +125,7 @@ Feature('Swim lanes', () => {
     });
 
     When('second lane task is signaled', () => {
-      definition.signal({id: taskApi.id});
+      definition.signal({ id: taskApi.id });
     });
 
     Then('run waits for sub process task belonging to second lane', () => {
@@ -148,7 +148,7 @@ Feature('Swim lanes', () => {
     });
 
     When('sub process task task is signaled', () => {
-      definition.signal({id: subtask.id});
+      definition.signal({ id: subtask.id });
     });
 
     Then('run completes', () => {

@@ -89,7 +89,7 @@ describe('Context', () => {
       };
     }
 
-    it('return process but doesn\'t add it to instance list', () => {
+    it('return process but doesn`t add it to instance list', () => {
       const ctx = Context({
         id: 'newDef',
         name: 'New def',

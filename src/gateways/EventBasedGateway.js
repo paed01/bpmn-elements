@@ -1,5 +1,5 @@
 import Activity from '../activity/Activity.js';
-import {cloneContent} from '../messageHelper.js';
+import { cloneContent } from '../messageHelper.js';
 
 const kCompleted = Symbol.for('completed');
 const kTargets = Symbol.for('targets');
@@ -19,14 +19,14 @@ export function EventBasedGatewayBehaviour(activity, context) {
 
 EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
-  const {executionId, outbound = [], outboundTaken} = executeContent;
+  const { executionId, outbound = [], outboundTaken } = executeContent;
 
   const targets = this[kTargets];
   this[kCompleted] = false;
   if (!targets.length) return this._complete(executeContent);
 
   for (const flow of this.activity.outbound) {
-    outbound.push({id: flow.id, action: 'take'});
+    outbound.push({ id: flow.id, action: 'take' });
   }
 
   if (!this[kCompleted] && outboundTaken) return;
@@ -35,7 +35,7 @@ EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) 
 
   const onTargetCompleted = this._onTargetCompleted.bind(this, executeMessage);
   for (const target of this[kTargets]) {
-    target.broker.subscribeOnce('event', 'activity.end', onTargetCompleted, {consumerTag: targetConsumerTag});
+    target.broker.subscribeOnce('event', 'activity.end', onTargetCompleted, { consumerTag: targetConsumerTag });
   }
 
   const broker = this.activity.broker;
@@ -44,11 +44,12 @@ EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) 
   });
 
   this[kCompleted] = false;
-  if (!executeMessage.fields.redelivered) return broker.publish('execution', 'execute.outbound.take', cloneContent(executeContent, {outboundTaken: true}));
+  if (!executeMessage.fields.redelivered)
+    return broker.publish('execution', 'execute.outbound.take', cloneContent(executeContent, { outboundTaken: true }));
 };
 
 EventBasedGatewayBehaviour.prototype._onTargetCompleted = function onTargetCompleted(executeMessage, _, message, owner) {
-  const {id: targetId, executionId: targetExecutionId} = message.content;
+  const { id: targetId, executionId: targetExecutionId } = message.content;
   const executeContent = executeMessage.content;
   const executionId = executeContent.executionId;
   this.activity.logger.debug(`<${executionId} (${this.id})> <${targetExecutionId}> completed run, discarding the rest`);

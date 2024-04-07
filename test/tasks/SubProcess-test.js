@@ -3,18 +3,18 @@ import JsExtension from '../resources/extensions/JsExtension.js';
 import SignalTask from '../../src/tasks/SignalTask.js';
 import SubProcess from '../../src/tasks/SubProcess.js';
 import testHelpers from '../helpers/testHelpers.js';
-import {BpmnError} from '../../src/error/Errors.js';
+import { BpmnError } from '../../src/error/Errors.js';
 
 const subProcessSource = factory.resource('sub-process.bpmn');
 
 describe('SubProcess', () => {
   it('decorates activity with isSubProcess', () => {
-    const subProcess = SubProcess({id: 'sub-process', parent: {id: 'process1'}}, testHelpers.emptyContext());
+    const subProcess = SubProcess({ id: 'sub-process', parent: { id: 'process1' } }, testHelpers.emptyContext());
     expect(subProcess).to.have.property('isSubProcess', true);
   });
 
   it('runs process execution on separate exchange', () => {
-    const subProcess = SubProcess({id: 'sub-process', parent: {id: 'process1'}}, testHelpers.emptyContext());
+    const subProcess = SubProcess({ id: 'sub-process', parent: { id: 'process1' } }, testHelpers.emptyContext());
     subProcess.run();
     expect(subProcess.broker.getExchange('subprocess-execution')).to.be.ok;
   });
@@ -77,9 +77,14 @@ describe('SubProcess', () => {
 
       const messages = [];
       const assertMessage = AssertMessage(subProcess, messages);
-      subProcess.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      subProcess.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
       const completed = subProcess.waitFor('leave', (_, a) => a.content.id === 'subProcess');
 
@@ -118,9 +123,14 @@ describe('SubProcess', () => {
 
       const messages = [];
       const assertMessage = AssertMessage(subProcess, messages);
-      subProcess.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      subProcess.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
       const completed = subProcess.waitFor('leave', (_, a) => a.content.id === 'subProcess');
       subProcess.once('wait', (activityApi) => {
@@ -190,7 +200,9 @@ describe('SubProcess', () => {
 
       expect(childApi.content.type).to.equal('bpmn:UserTask');
       expect(childApi.content.parent).to.have.property('id', 'subProcess');
-      expect(childApi.content.parent).to.have.property('executionId').that.match(/^subProcess_.+/);
+      expect(childApi.content.parent)
+        .to.have.property('executionId')
+        .that.match(/^subProcess_.+/);
 
       childApi.signal();
       return leave;
@@ -199,11 +211,14 @@ describe('SubProcess', () => {
 
   describe('stop()', () => {
     it('stops process execution and closes broker', () => {
-      const subProcess = SubProcess({id: 'sub-process', parent: {id: 'process1'}}, testHelpers.emptyContext({
-        getActivities() {
-          return [{id: 'subTask', Behaviour: SignalTask}];
-        },
-      }));
+      const subProcess = SubProcess(
+        { id: 'sub-process', parent: { id: 'process1' } },
+        testHelpers.emptyContext({
+          getActivities() {
+            return [{ id: 'subTask', Behaviour: SignalTask }];
+          },
+        }),
+      );
 
       subProcess.run();
       subProcess.stop();
@@ -369,9 +384,14 @@ describe('SubProcess', () => {
       const activity = context.getActivityById('subProcess');
 
       const messages = [];
-      activity.broker.subscribeTmp('event', 'flow.*', (_, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      activity.broker.subscribeTmp(
+        'event',
+        'flow.*',
+        (_, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
       activity.run();
 
@@ -485,9 +505,14 @@ describe('SubProcess', () => {
 
       const messages = [];
       const assertMessage = AssertMessage(subProcess, messages, false);
-      subProcess.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      subProcess.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
       const completed = subProcess.waitFor('leave').catch(() => {});
 
@@ -515,7 +540,7 @@ describe('SubProcess', () => {
 
       const context = await testHelpers.context(source);
       context.environment.addService('throw', (_, next) => {
-        next(new BpmnError('Expected', {errorCode: '503'}));
+        next(new BpmnError('Expected', { errorCode: '503' }));
       });
 
       const subProcess = context.getActivityById('subProcess');
@@ -523,9 +548,14 @@ describe('SubProcess', () => {
 
       const messages = [];
       const assertMessage = AssertMessage(subProcess, messages, false);
-      subProcess.broker.subscribeTmp('event', 'activity.#', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      subProcess.broker.subscribeTmp(
+        'event',
+        'activity.#',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
 
       const completed = subProcess.waitFor('leave');
 
@@ -576,7 +606,7 @@ describe('SubProcess', () => {
         const leave = task.waitFor('leave', (_, msg) => msg.content.id === task.id);
         const end = task.waitFor('end', (_, msg) => msg.content.id === task.id);
 
-        task.run({data: 1});
+        task.run({ data: 1 });
 
         let taskApi = await waiting;
 
@@ -595,7 +625,11 @@ describe('SubProcess', () => {
         state = task.getState();
 
         expect(state.execution.executions).to.have.length(1);
-        expect(state.execution.executions[0]).to.have.property('environment').with.property('variables').with.property('content').with.property('index', 1);
+        expect(state.execution.executions[0])
+          .to.have.property('environment')
+          .with.property('variables')
+          .with.property('content')
+          .with.property('index', 1);
 
         taskApi = await waiting;
 
@@ -605,7 +639,11 @@ describe('SubProcess', () => {
         state = task.getState();
 
         expect(state.execution.executions).to.have.length(1);
-        expect(state.execution.executions[0]).to.have.property('environment').with.property('variables').with.property('content').with.property('index', 2);
+        expect(state.execution.executions[0])
+          .to.have.property('environment')
+          .with.property('variables')
+          .with.property('content')
+          .with.property('index', 2);
 
         taskApi = await waiting;
 
@@ -616,7 +654,9 @@ describe('SubProcess', () => {
         expect(state.execution.executions).to.have.length(0);
 
         const endmsg = await end;
-        expect(endmsg.content).to.have.property('output').that.deep.equal([ { labour: 1 }, { archiving: 2 }, { shopping: 3 } ]);
+        expect(endmsg.content)
+          .to.have.property('output')
+          .that.deep.equal([{ labour: 1 }, { archiving: 2 }, { shopping: 3 }]);
 
         await leave;
       });
@@ -663,13 +703,19 @@ describe('SubProcess', () => {
 
         waitConsumer.cancel();
 
-        expect(left.content).to.have.property('output').that.eql([{
-          labour: 1,
-        }, {
-          archiving: 2,
-        }, {
-          shopping: 3,
-        }]);
+        expect(left.content)
+          .to.have.property('output')
+          .that.eql([
+            {
+              labour: 1,
+            },
+            {
+              archiving: 2,
+            },
+            {
+              shopping: 3,
+            },
+          ]);
       });
 
       it('stop closes all consumers except shake', async () => {
@@ -721,13 +767,17 @@ describe('SubProcess', () => {
         const left = await leave;
         waitConsumer.cancel();
 
-        expect(left.content.output).to.eql([{
-          labour: 1,
-        }, {
-          archiving: 1,
-        }, {
-          shopping: 1,
-        }]);
+        expect(left.content.output).to.eql([
+          {
+            labour: 1,
+          },
+          {
+            archiving: 1,
+          },
+          {
+            shopping: 1,
+          },
+        ]);
       });
 
       it('recoveres iteration', async () => {
@@ -763,13 +813,17 @@ describe('SubProcess', () => {
         const left = await leave;
         waitConsumer.cancel();
 
-        expect(left.content.output).to.eql([{
-          labour: 1,
-        }, {
-          archiving: 1,
-        }, {
-          shopping: 1,
-        }]);
+        expect(left.content.output).to.eql([
+          {
+            labour: 1,
+          },
+          {
+            archiving: 1,
+          },
+          {
+            shopping: 1,
+          },
+        ]);
       });
     });
 
@@ -848,7 +902,7 @@ describe('SubProcess', () => {
 
         waitConsumer.cancel();
 
-        expect(left.content.output).to.eql([{labour: 1}, {archiving: 2}, {shopping: 3}]);
+        expect(left.content.output).to.eql([{ labour: 1 }, { archiving: 2 }, { shopping: 3 }]);
       });
 
       it('completes when last iteration completes', async () => {
@@ -856,9 +910,14 @@ describe('SubProcess', () => {
         const leave = task.waitFor('leave', (_, msg) => msg.content.id === task.id);
 
         const waiting = [];
-        task.broker.subscribeTmp('event', 'activity.wait', (_, msg) => {
-          waiting.push(msg);
-        }, {noAck: true});
+        task.broker.subscribeTmp(
+          'event',
+          'activity.wait',
+          (_, msg) => {
+            waiting.push(msg);
+          },
+          { noAck: true },
+        );
 
         task.run();
 
@@ -908,7 +967,7 @@ describe('SubProcess', () => {
         const end = task.waitFor('end', (_, msg) => msg.content.id === task.id);
         const leave = task.waitFor('leave', (_, msg) => msg.content.id === task.id);
 
-        task.run({data: 1});
+        task.run({ data: 1 });
 
         let state = task.getState();
 
@@ -947,7 +1006,9 @@ describe('SubProcess', () => {
         await leave;
 
         const endmsg = await end;
-        expect(endmsg.content).to.have.property('output').that.deep.equal([ { labour: 1 }, { archiving: 2 }, { shopping: 3 } ]);
+        expect(endmsg.content)
+          .to.have.property('output')
+          .that.deep.equal([{ labour: 1 }, { archiving: 2 }, { shopping: 3 }]);
       });
 
       it('resumes from last completed', async () => {
@@ -975,13 +1036,17 @@ describe('SubProcess', () => {
         const left = await leave;
         waitConsumer.cancel();
 
-        expect(left.content.output).to.eql([{
-          labour: 1,
-        }, {
-          archiving: 1,
-        }, {
-          shopping: 1,
-        }]);
+        expect(left.content.output).to.eql([
+          {
+            labour: 1,
+          },
+          {
+            archiving: 1,
+          },
+          {
+            shopping: 1,
+          },
+        ]);
       });
 
       it('recover initiates executions with children', async () => {
@@ -990,7 +1055,9 @@ describe('SubProcess', () => {
         const stop = task.waitFor('stop', (_, msg) => msg.content.id === task.id);
 
         task.once('wait', (api) => {
-          api.signal(`${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.item}')}`);
+          api.signal(
+            `${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.item}')}`,
+          );
           task.stop();
         });
 
@@ -1012,7 +1079,7 @@ describe('SubProcess', () => {
         expect(executions[0].environment.variables).to.have.property('content').with.property('executionId');
         expect(executions[0].environment.variables).to.have.property('fields').with.property('routingKey');
         expect(executions[0].environment.variables.content).to.have.property('item', 'labour');
-        expect(executions[0]).to.have.property('environment').with.property('output').that.eql({labour: 'sub labour'});
+        expect(executions[0]).to.have.property('environment').with.property('output').that.eql({ labour: 'sub labour' });
 
         expect(executions[0].getActivities()).to.have.length(1);
         expect(executions[0].getActivities()[0].environment === executions[0].environment, 'child environment').to.be.true;
@@ -1024,7 +1091,9 @@ describe('SubProcess', () => {
         const stop = task.waitFor('stop', (_, msg) => msg.content.id === task.id);
 
         task.once('wait', (api) => {
-          api.signal(`${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.index}')}`);
+          api.signal(
+            `${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.index}')}`,
+          );
           task.stop();
         });
 
@@ -1043,7 +1112,9 @@ describe('SubProcess', () => {
         const leave = recoveredTask.waitFor('leave', (_, msg) => msg.content.id === task.id);
 
         const waitConsumer = recoveredTask.on('wait', (api) => {
-          api.signal(`${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.index}')}`);
+          api.signal(
+            `${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.index}')}`,
+          );
         });
 
         recoveredTask.resume();
@@ -1052,13 +1123,17 @@ describe('SubProcess', () => {
 
         waitConsumer.cancel();
 
-        expect(left.content.output).to.eql([{
-          labour: 'sub 0',
-        }, {
-          archiving: 'recovered 1',
-        }, {
-          shopping: 'recovered 2',
-        }]);
+        expect(left.content.output).to.eql([
+          {
+            labour: 'sub 0',
+          },
+          {
+            archiving: 'recovered 1',
+          },
+          {
+            shopping: 'recovered 2',
+          },
+        ]);
       });
     });
   });
@@ -1108,7 +1183,7 @@ function AssertMessage(processContext, messages, inSequence = true) {
 
     if (!compareState) return message;
 
-    const {source, context, id} = message.content;
+    const { source, context, id } = message.content;
     const activity = processContext.getActivityById(id);
     const activityApi = activity.getApi(source, context);
 

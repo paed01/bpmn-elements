@@ -2,7 +2,7 @@ import Environment from '../../src/Environment.js';
 import factory from '../helpers/factory.js';
 import MessageFlow from '../../src/flows/MessageFlow.js';
 import testHelpers from '../helpers/testHelpers.js';
-import {ActivityBroker} from '../../src/EventBroker.js';
+import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('MessageFlow', () => {
   it('requires target, source, and context with environment and getActivityById', () => {
@@ -13,16 +13,19 @@ describe('MessageFlow', () => {
         return activity;
       },
     };
-    const flow = new MessageFlow({
-      id: 'message',
-      parent: {},
-      source: {
-        id: 'task',
+    const flow = new MessageFlow(
+      {
+        id: 'message',
+        parent: {},
+        source: {
+          id: 'task',
+        },
+        target: {
+          id: 'task1',
+        },
       },
-      target: {
-        id: 'task1',
-      },
-    }, context);
+      context,
+    );
 
     expect(flow).to.have.property('type', 'messageflow');
   });
@@ -35,17 +38,20 @@ describe('MessageFlow', () => {
         return activity;
       },
     };
-    const flow = new MessageFlow({
-      id: 'message',
-      type: 'messageflow',
-      parent: {},
-      source: {
-        id: 'task',
+    const flow = new MessageFlow(
+      {
+        id: 'message',
+        type: 'messageflow',
+        parent: {},
+        source: {
+          id: 'task',
+        },
+        target: {
+          id: 'task1',
+        },
       },
-      target: {
-        id: 'task1',
-      },
-    }, context);
+      context,
+    );
 
     flow.activate();
 
@@ -56,7 +62,7 @@ describe('MessageFlow', () => {
     const context = await testHelpers.context(factory.resource('lanes.bpmn').toString());
     const activity = context.getActivityById('task1');
     activity.once('activity.execution.completed', () => {
-      activity.broker.publish('format', 'run.end', {message: {id: 'message_1'}});
+      activity.broker.publish('format', 'run.end', { message: { id: 'message_1' } });
     });
 
     const [flow] = context.getMessageFlows('mainProcess');
@@ -64,9 +70,14 @@ describe('MessageFlow', () => {
     flow.activate();
 
     const messages = [];
-    flow.broker.subscribeTmp('event', 'message.outbound', (_, msg) => {
-      messages.push(msg);
-    }, {noAck: true});
+    flow.broker.subscribeTmp(
+      'event',
+      'message.outbound',
+      (_, msg) => {
+        messages.push(msg);
+      },
+      { noAck: true },
+    );
 
     activity.run();
 
@@ -89,7 +100,7 @@ describe('MessageFlow', () => {
     const context = await testHelpers.context(factory.resource('lanes.bpmn').toString());
     const activity = context.getActivityById('task1');
     activity.once('activity.execution.completed', () => {
-      activity.broker.publish('format', 'run.end', {message: {id: 'message_1'}});
+      activity.broker.publish('format', 'run.end', { message: { id: 'message_1' } });
     });
 
     const [flow] = context.getMessageFlows('mainProcess');
@@ -112,17 +123,20 @@ describe('MessageFlow', () => {
       },
     };
 
-    const flow = new MessageFlow({
-      id: 'message',
-      type: 'messageflow',
-      parent: {},
-      source: {
-        id: 'task',
+    const flow = new MessageFlow(
+      {
+        id: 'message',
+        type: 'messageflow',
+        parent: {},
+        source: {
+          id: 'task',
+        },
+        target: {
+          id: 'task1',
+        },
       },
-      target: {
-        id: 'task1',
-      },
-    }, context);
+      context,
+    );
 
     const api = flow.getApi();
     expect(api).to.have.property('id', 'message');
@@ -137,19 +151,22 @@ describe('MessageFlow', () => {
       },
     };
 
-    const flow = new MessageFlow({
-      id: 'message',
-      type: 'messageflow',
-      parent: {},
-      source: {
-        id: 'task',
+    const flow = new MessageFlow(
+      {
+        id: 'message',
+        type: 'messageflow',
+        parent: {},
+        source: {
+          id: 'task',
+        },
+        target: {
+          id: 'task1',
+        },
       },
-      target: {
-        id: 'task1',
-      },
-    }, context);
+      context,
+    );
 
-    const api = flow.getApi({ content: {id: 'foo'} });
+    const api = flow.getApi({ content: { id: 'foo' } });
     expect(api).to.have.property('id', 'foo');
   });
 });

@@ -2,9 +2,9 @@ import js from '@eslint/js';
 import globals from 'globals';
 
 const rules = {
-  'dot-notation': [2, { 'allowKeywords': true }],
+  'dot-notation': [2, { allowKeywords: true }],
   'eol-last': 2,
-  'eqeqeq': 2,
+  eqeqeq: 2,
   'linebreak-style': ['error', 'unix'],
   'no-alert': 2,
   'no-array-constructor': 2,
@@ -23,7 +23,7 @@ const rules = {
   'no-loop-func': 2,
   'no-multi-spaces': 2,
   'no-multi-str': 2,
-  'no-multiple-empty-lines': [ 'error', { 'max': 1, 'maxEOF': 0, 'maxBOF': 0 } ],
+  'no-multiple-empty-lines': ['error', { max: 1, maxEOF: 0, maxBOF: 0 }],
   'no-new-func': 2,
   'no-new-object': 2,
   'no-new-wrappers': 2,
@@ -46,18 +46,17 @@ const rules = {
   'no-use-before-define': 0,
   'no-var': 2,
   'no-with': 2,
-  'prefer-const': ['error', {'destructuring': 'all'}],
-  'quotes': [2, 'single'],
+  'prefer-const': ['error', { destructuring: 'all' }],
   'require-atomic-updates': 0,
   'require-await': 2,
-  'semi-spacing': [2, { 'before': false, 'after': true }],
-  'semi': [2, 'always'],
+  'semi-spacing': [2, { before: false, after: true }],
+  semi: [2, 'always'],
   'space-before-blocks': 2,
-  'space-before-function-paren': [2, { 'anonymous': 'never', 'named': 'never' }],
+  'space-before-function-paren': [2, { anonymous: 'never', named: 'never' }],
   'space-infix-ops': 2,
-  'space-unary-ops': [2, { 'words': true, 'nonwords': false }],
+  'space-unary-ops': [2, { words: true, nonwords: false }],
   'unicode-bom': ['error', 'never'],
-  'yoda': [2, 'never'],
+  yoda: [2, 'never'],
 };
 
 export default [
@@ -105,11 +104,6 @@ export default [
     },
   },
   {
-    ignores: [
-      'coverage/**/*',
-      'node_modules/**/*',
-      'tmp/*',
-      'dist/*',
-    ],
+    ignores: ['coverage/**/*', 'node_modules/**/*', 'tmp/*', 'dist/*'],
   },
 ];

@@ -1,15 +1,15 @@
 import Environment from '../../src/Environment.js';
 import Escalation from '../../src/activity/Escalation.js';
 import EscalationEventDefinition from '../../src/eventDefinitions/EscalationEventDefinition.js';
-import {ActivityBroker} from '../../src/EventBroker.js';
-import {Logger} from '../helpers/testHelpers.js';
+import { ActivityBroker } from '../../src/EventBroker.js';
+import { Logger } from '../helpers/testHelpers.js';
 
 describe('EscalationEventDefinition', () => {
   let event;
   beforeEach(() => {
     event = {
       id: 'event',
-      environment: new Environment({Logger}),
+      environment: new Environment({ Logger }),
       broker: ActivityBroker(this).broker,
     };
   });
@@ -21,9 +21,14 @@ describe('EscalationEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       catchSignal.execute({
         fields: {},
@@ -33,10 +38,12 @@ describe('EscalationEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -54,9 +61,14 @@ describe('EscalationEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       catchSignal.execute({
         fields: {},
@@ -66,10 +78,12 @@ describe('EscalationEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -90,9 +104,14 @@ describe('EscalationEventDefinition', () => {
       event.broker.publish('api', 'activity.escalate.event_1', {});
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       catchSignal.execute({
         fields: {},
@@ -102,10 +121,12 @@ describe('EscalationEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -118,27 +139,38 @@ describe('EscalationEventDefinition', () => {
     });
 
     it('completes on escalate message element id match', () => {
-      const catchSignal = new EscalationEventDefinition({
-        ...event,
-        getActivityById() {
-          return new Escalation({
-            id: 'Escalate_0',
-            name: 'Awake King',
-          }, {environment: new Environment()});
-        },
-      }, {
-        type: 'bpmn:EscalationEventDefinition',
-        behaviour: {
-          escalationRef: {
-            id: 'Escalate_0',
+      const catchSignal = new EscalationEventDefinition(
+        {
+          ...event,
+          getActivityById() {
+            return new Escalation(
+              {
+                id: 'Escalate_0',
+                name: 'Awake King',
+              },
+              { environment: new Environment() },
+            );
           },
         },
-      });
+        {
+          type: 'bpmn:EscalationEventDefinition',
+          behaviour: {
+            escalationRef: {
+              id: 'Escalate_0',
+            },
+          },
+        },
+      );
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       catchSignal.execute({
         fields: {},
@@ -148,10 +180,12 @@ describe('EscalationEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -170,27 +204,38 @@ describe('EscalationEventDefinition', () => {
     });
 
     it('ignores api message if escalate message element id mismatch', () => {
-      const catchSignal = new EscalationEventDefinition({
-        ...event,
-        getActivityById() {
-          return new Escalation({
-            id: 'Escalate_0',
-            name: 'Awake King',
-          }, {environment: new Environment()});
-        },
-      }, {
-        type: 'bpmn:EscalationEventDefinition',
-        behaviour: {
-          escalationRef: {
-            id: 'Escalate_0',
+      const catchSignal = new EscalationEventDefinition(
+        {
+          ...event,
+          getActivityById() {
+            return new Escalation(
+              {
+                id: 'Escalate_0',
+                name: 'Awake King',
+              },
+              { environment: new Environment() },
+            );
           },
         },
-      });
+        {
+          type: 'bpmn:EscalationEventDefinition',
+          behaviour: {
+            escalationRef: {
+              id: 'Escalate_0',
+            },
+          },
+        },
+      );
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       event.broker.publish('api', 'activity.escalate.event_1', {
         message: {
@@ -206,10 +251,12 @@ describe('EscalationEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -227,9 +274,14 @@ describe('EscalationEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.discard', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.discard',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       catchSignal.execute({
         fields: {},
@@ -239,15 +291,17 @@ describe('EscalationEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
 
-      event.broker.publish('api', 'activity.discard.event_1_0', {}, {type: 'discard'});
+      event.broker.publish('api', 'activity.discard.event_1_0', {}, { type: 'discard' });
 
       event.broker.cancel('_test-tag');
 
@@ -269,15 +323,17 @@ describe('EscalationEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
 
-      event.broker.publish('api', 'activity.stop.event_1_0', {}, {type: 'stop'});
+      event.broker.publish('api', 'activity.stop.event_1_0', {}, { type: 'stop' });
 
       event.broker.cancel('_test-tag');
 
@@ -290,9 +346,14 @@ describe('EscalationEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -302,15 +363,17 @@ describe('EscalationEventDefinition', () => {
           parent: {
             id: 'event',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
 
-      event.broker.publish('api', 'activity.sometype.event_1_0', {}, {type: 'escalate'});
+      event.broker.publish('api', 'activity.sometype.event_1_0', {}, { type: 'escalate' });
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'execute.completed');
@@ -329,9 +392,14 @@ describe('EscalationEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -341,10 +409,12 @@ describe('EscalationEventDefinition', () => {
           parent: {
             id: 'intermediate',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });

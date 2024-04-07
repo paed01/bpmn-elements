@@ -1,5 +1,4 @@
-StartEvent
-==========
+# StartEvent
 
 Start event behaviour.
 
@@ -11,9 +10,9 @@ If a form property is available when start event is executed, the event will wai
 import * as elements from 'bpmn-elements';
 import BpmnModdle from 'bpmn-moddle';
 
-import {default as serialize, TypeResolver} from 'moddle-context-serializer';
+import { default as serialize, TypeResolver } from 'moddle-context-serializer';
 
-const {Context, Definition} = elements;
+const { Context, Definition } = elements;
 const typeResolver = TypeResolver(elements);
 
 const source = `
@@ -25,27 +24,28 @@ const source = `
 </definitions>`;
 
 const moddleOptions = {
-  "js": {
-    "name": "Node bpmn-engine",
-    "uri": "http://paed01.github.io/bpmn-engine/schema/2020/08/bpmn",
-    "prefix": "js",
-    "xml": {
-      "tagAlias": "lowerCase"
+  js: {
+    name: 'Node bpmn-engine',
+    uri: 'http://paed01.github.io/bpmn-engine/schema/2020/08/bpmn',
+    prefix: 'js',
+    xml: {
+      tagAlias: 'lowerCase',
     },
-    "types": [{
-      "name": "FormSupported",
-      "isAbstract": true,
-      "extends": [
-        "bpmn:StartEvent",
-        "bpmn:UserTask"
-      ],
-      "properties": [{
-        "name": "formKey",
-        "type": "String",
-        "isAttr": true
-      }]
-    }]
-  }
+    types: [
+      {
+        name: 'FormSupported',
+        isAbstract: true,
+        extends: ['bpmn:StartEvent', 'bpmn:UserTask'],
+        properties: [
+          {
+            name: 'formKey',
+            type: 'String',
+            isAttr: true,
+          },
+        ],
+      },
+    ],
+  },
 };
 
 async function run() {
@@ -69,15 +69,20 @@ async function run() {
   definition.run();
 
   function addFormExtension(activity) {
-    const {formKey} = activity.behaviour;
+    const { formKey } = activity.behaviour;
     if (!formKey) return;
 
-    const {broker} = activity;
-    const form = formKey === 'whatsYourName' ? {givenName: {type: 'string'}} : {age: {type: 'int'}};
+    const { broker } = activity;
+    const form = formKey === 'whatsYourName' ? { givenName: { type: 'string' } } : { age: { type: 'int' } };
 
-    broker.subscribeTmp('event', 'activity.enter', () => {
-      broker.publish('format', 'run.input', { form });
-    }, {noAck: true});
+    broker.subscribeTmp(
+      'event',
+      'activity.enter',
+      () => {
+        broker.publish('format', 'run.input', { form });
+      },
+      { noAck: true },
+    );
   }
 }
 

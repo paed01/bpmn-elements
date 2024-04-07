@@ -1,5 +1,4 @@
-SignalTask
-===========
+# SignalTask
 
 Signal-/User-/Manual task behaviour.
 
@@ -8,9 +7,9 @@ import * as elements from 'bpmn-elements';
 
 import BpmnModdle from 'bpmn-moddle';
 
-import {default as serialize, TypeResolver} from 'moddle-context-serializer';
+import { default as serialize, TypeResolver } from 'moddle-context-serializer';
 
-const {Context, Definition} = elements;
+const { Context, Definition } = elements;
 const typeResolver = TypeResolver(elements);
 
 const source = `

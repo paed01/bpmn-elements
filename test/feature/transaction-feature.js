@@ -18,15 +18,20 @@ Feature('Transaction', () => {
         },
       },
       extensions: {
-        me({broker, environment}) {
-          broker.subscribeTmp('event', 'activity.#', (routingKey, {content}) => {
-            switch (routingKey) {
-              case 'activity.end': {
-                if ('output' in content) environment.output[content.id] = content.output;
-                break;
+        me({ broker, environment }) {
+          broker.subscribeTmp(
+            'event',
+            'activity.#',
+            (routingKey, { content }) => {
+              switch (routingKey) {
+                case 'activity.end': {
+                  if ('output' in content) environment.output[content.id] = content.output;
+                  break;
+                }
               }
-            }
-          }, {noAck: true, consumerTag: 'save-output-tag'});
+            },
+            { noAck: true, consumerTag: 'save-output-tag' },
+          );
         },
       },
     };
@@ -250,15 +255,20 @@ Feature('Transaction', () => {
         },
       },
       extensions: {
-        me({broker}, {environment}) {
-          broker.subscribeTmp('event', 'activity.#', (routingKey, {content}) => {
-            switch (routingKey) {
-              case 'activity.end': {
-                if ('output' in content) environment.output[content.id] = content.output;
-                break;
+        me({ broker }, { environment }) {
+          broker.subscribeTmp(
+            'event',
+            'activity.#',
+            (routingKey, { content }) => {
+              switch (routingKey) {
+                case 'activity.end': {
+                  if ('output' in content) environment.output[content.id] = content.output;
+                  break;
+                }
               }
-            }
-          }, {noAck: true, consumerTag: 'save-output-tag'});
+            },
+            { noAck: true, consumerTag: 'save-output-tag' },
+          );
         },
       },
     };
@@ -517,7 +527,7 @@ Feature('Transaction', () => {
       transaction = definition.getPostponed((e) => e.id === 'atomic')[0];
       expect(transaction).to.have.property('id', 'atomic');
 
-      [,, userTask, cancelTask] = transaction.getPostponed();
+      [, , userTask, cancelTask] = transaction.getPostponed();
 
       expect(transaction.content).to.have.property('isTransaction', true);
 
@@ -556,14 +566,14 @@ Feature('Transaction', () => {
 
       transaction = definition.getPostponed((e) => e.id === 'atomic')[0];
       expect(transaction).to.have.property('id', 'atomic');
-      [,, userTask, cancelTask] = transaction.getPostponed();
+      [, , userTask, cancelTask] = transaction.getPostponed();
 
       expect(userTask).to.have.property('id', 'task');
       expect(cancelTask).to.have.property('id', 'cancelTask');
     });
 
     When('transaction is cancelled', () => {
-      userTask.signal({me: true});
+      userTask.signal({ me: true });
       cancelTask.signal();
     });
 
@@ -653,7 +663,7 @@ Feature('Transaction', () => {
     });
 
     When('user task is signaled via definition', () => {
-      definition.signal({id: 'wait'});
+      definition.signal({ id: 'wait' });
     });
 
     And('succeeding service task completes', () => {
@@ -700,7 +710,7 @@ Feature('Transaction', () => {
     });
 
     When('user task is signaled', () => {
-      definition.signal({id: 'wait'});
+      definition.signal({ id: 'wait' });
     });
 
     And('succeeding service task fails with error', () => {
@@ -896,7 +906,7 @@ Feature('Transaction', () => {
     });
 
     And('user task is signaled via definition', () => {
-      definition.signal({id: 'areUSure'});
+      definition.signal({ id: 'areUSure' });
     });
 
     Then('compensation is triggered', () => {

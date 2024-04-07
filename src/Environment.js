@@ -1,21 +1,11 @@
 import Expressions from './Expressions.js';
-import {Scripts as IScripts} from './Scripts.js';
-import {Timers} from './Timers.js';
+import { Scripts as IScripts } from './Scripts.js';
+import { Timers } from './Timers.js';
 
 const kServices = Symbol.for('services');
 const kVariables = Symbol.for('variables');
 
-const defaultOptions = [
-  'expressions',
-  'extensions',
-  'Logger',
-  'output',
-  'scripts',
-  'services',
-  'settings',
-  'timers',
-  'variables',
-];
+const defaultOptions = ['expressions', 'extensions', 'Logger', 'output', 'scripts', 'services', 'settings', 'timers', 'variables'];
 
 export default function Environment(options = {}) {
   this.options = validateOptions(options);
@@ -25,7 +15,7 @@ export default function Environment(options = {}) {
   this.output = options.output || {};
   this.scripts = options.scripts || IScripts();
   this.timers = options.timers || new Timers();
-  this.settings = {...options.settings};
+  this.settings = { ...options.settings };
   this.Logger = options.Logger || DummyLogger;
   this[kServices] = options.services || {};
   this[kVariables] = options.variables || {};
@@ -53,9 +43,9 @@ Object.defineProperties(Environment.prototype, {
 
 Environment.prototype.getState = function getState() {
   return {
-    settings: {...this.settings},
-    variables: {...this[kVariables]},
-    output: {...this.output},
+    settings: { ...this.settings },
+    variables: { ...this[kVariables] },
+    output: { ...this.output },
   };
 };
 
@@ -72,8 +62,8 @@ Environment.prototype.recover = function recover(state) {
 Environment.prototype.clone = function clone(overrideOptions = {}) {
   const services = this[kServices];
   const newOptions = {
-    settings: {...this.settings},
-    variables: {...this[kVariables]},
+    settings: { ...this.settings },
+    variables: { ...this[kVariables] },
     Logger: this.Logger,
     extensions: this.extensions,
     scripts: this.scripts,
@@ -84,7 +74,7 @@ Environment.prototype.clone = function clone(overrideOptions = {}) {
     services,
   };
 
-  if (overrideOptions.services) newOptions.services = {...services, ...overrideOptions.services};
+  if (overrideOptions.services) newOptions.services = { ...services, ...overrideOptions.services };
 
   return new this.constructor(newOptions);
 };

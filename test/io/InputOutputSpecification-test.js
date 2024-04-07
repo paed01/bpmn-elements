@@ -1,6 +1,6 @@
 import InputOutputSpecification from '../../src/io/InputOutputSpecification.js';
 import testHelpers from '../helpers/testHelpers.js';
-import {ActivityBroker} from '../../src/EventBroker.js';
+import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('InputOutputSpecification', () => {
   it('listens on parent activity when activated', () => {
@@ -41,7 +41,7 @@ describe('InputOutputSpecification', () => {
     expect(activity.broker.getQueue('format-run-q').peek().fields.routingKey).to.equal('run.onstart.bpmn_inputoutputspecification');
   });
 
-  it('doesn\'t send start message if no dataInputs', () => {
+  it("doesn't send start message if no dataInputs", () => {
     const activity = ActivityBroker();
     new InputOutputSpecification(activity, {
       type: 'bpmn:InputOutputSpecification',
@@ -70,35 +70,41 @@ describe('InputOutputSpecification', () => {
 
   it('fetches input data object value', () => {
     const activity = ActivityBroker();
-    new InputOutputSpecification(activity, {
-      type: 'bpmn:InputOutputSpecification',
-      behaviour: {
-        dataInputs: [{
-          id: 'userInput',
-          type: 'iospecdatainput',
-          name: 'Input from user',
-          behaviour: {
-            association: {
-              source: {
-                dataObject: {
-                  id: 'dataInput',
+    new InputOutputSpecification(
+      activity,
+      {
+        type: 'bpmn:InputOutputSpecification',
+        behaviour: {
+          dataInputs: [
+            {
+              id: 'userInput',
+              type: 'iospecdatainput',
+              name: 'Input from user',
+              behaviour: {
+                association: {
+                  source: {
+                    dataObject: {
+                      id: 'dataInput',
+                    },
+                  },
                 },
               },
             },
-          },
-        }],
+          ],
+        },
       },
-    }, {
-      getDataObjectById(id) {
-        if (id !== 'dataInput') return;
-        return {
-          id: 'dataInput',
-          read(broker, exchange, routingKeyPrefix) {
-            return broker.publish(exchange, `${routingKeyPrefix}result`, {id: 'dataInput', value: 'global data'});
-          },
-        };
+      {
+        getDataObjectById(id) {
+          if (id !== 'dataInput') return;
+          return {
+            id: 'dataInput',
+            read(broker, exchange, routingKeyPrefix) {
+              return broker.publish(exchange, `${routingKeyPrefix}result`, { id: 'dataInput', value: 'global data' });
+            },
+          };
+        },
       },
-    }).activate();
+    ).activate();
 
     activity.broker.publish('event', 'activity.enter');
 
@@ -107,11 +113,15 @@ describe('InputOutputSpecification', () => {
 
     expect(formatStartMsg.content).to.have.property('endRoutingKey', 'run.onstart.bpmn_inputoutputspecification.end');
     expect(formatStartMsg.content).to.have.property('ioSpecification');
-    expect(formatStartMsg.content.ioSpecification).to.have.property('dataInputs').that.eql([{
-      id: 'userInput',
-      type: 'iospecdatainput',
-      name: 'Input from user',
-    }]);
+    expect(formatStartMsg.content.ioSpecification)
+      .to.have.property('dataInputs')
+      .that.eql([
+        {
+          id: 'userInput',
+          type: 'iospecdatainput',
+          name: 'Input from user',
+        },
+      ]);
 
     formatStartMsg.ack();
 
@@ -120,115 +130,149 @@ describe('InputOutputSpecification', () => {
 
     expect(formatEndMsg.content).to.not.have.property('endRoutingKey');
     expect(formatEndMsg.content).to.have.property('ioSpecification');
-    expect(formatEndMsg.content.ioSpecification).to.have.property('dataInputs').that.eql([{
-      id: 'userInput',
-      type: 'iospecdatainput',
-      name: 'Input from user',
-      value: 'global data',
-    }]);
+    expect(formatEndMsg.content.ioSpecification)
+      .to.have.property('dataInputs')
+      .that.eql([
+        {
+          id: 'userInput',
+          type: 'iospecdatainput',
+          name: 'Input from user',
+          value: 'global data',
+        },
+      ]);
 
     formatEndMsg.ack();
   });
 
   it('publishes input without data object value if not found', () => {
     const activity = ActivityBroker();
-    new InputOutputSpecification(activity, {
-      type: 'bpmn:InputOutputSpecification',
-      behaviour: {
-        dataInputs: [{
-          id: 'userInput',
-          type: 'iospecdatainput',
-          name: 'Input from user',
-          behaviour: {
-            association: {
-              source: {
-                dataObject: {
-                  id: 'myInput',
+    new InputOutputSpecification(
+      activity,
+      {
+        type: 'bpmn:InputOutputSpecification',
+        behaviour: {
+          dataInputs: [
+            {
+              id: 'userInput',
+              type: 'iospecdatainput',
+              name: 'Input from user',
+              behaviour: {
+                association: {
+                  source: {
+                    dataObject: {
+                      id: 'myInput',
+                    },
+                  },
                 },
               },
             },
-          },
-        }],
+          ],
+        },
       },
-    }, {
-      getDataObjectById() {},
-    }).activate();
+      {
+        getDataObjectById() {},
+      },
+    ).activate();
 
     activity.broker.publish('event', 'activity.enter');
 
     const formatMsg = activity.broker.getQueue('format-run-q').peek();
 
     expect(formatMsg.content).to.have.property('ioSpecification');
-    expect(formatMsg.content.ioSpecification).to.have.property('dataInputs').that.eql([{
-      id: 'userInput',
-      type: 'iospecdatainput',
-      name: 'Input from user',
-    }]);
+    expect(formatMsg.content.ioSpecification)
+      .to.have.property('dataInputs')
+      .that.eql([
+        {
+          id: 'userInput',
+          type: 'iospecdatainput',
+          name: 'Input from user',
+        },
+      ]);
   });
 
   it('publishes input without data object if unreferenced', () => {
     const activity = ActivityBroker();
-    new InputOutputSpecification(activity, {
-      type: 'bpmn:InputOutputSpecification',
-      behaviour: {
-        dataInputs: [{
-          id: 'userInput',
-          type: 'iospecdatainput',
-          name: 'Input from user',
-          behaviour: {},
-        }],
+    new InputOutputSpecification(
+      activity,
+      {
+        type: 'bpmn:InputOutputSpecification',
+        behaviour: {
+          dataInputs: [
+            {
+              id: 'userInput',
+              type: 'iospecdatainput',
+              name: 'Input from user',
+              behaviour: {},
+            },
+          ],
+        },
       },
-    }, {
-      getDataObjectById() {},
-    }).activate();
+      {
+        getDataObjectById() {},
+      },
+    ).activate();
 
     activity.broker.publish('event', 'activity.enter');
 
     const formatMsg = activity.broker.getQueue('format-run-q').peek();
 
     expect(formatMsg.content).to.have.property('ioSpecification');
-    expect(formatMsg.content.ioSpecification).to.have.property('dataInputs').that.eql([{
-      id: 'userInput',
-      type: 'iospecdatainput',
-      name: 'Input from user',
-    }]);
+    expect(formatMsg.content.ioSpecification)
+      .to.have.property('dataInputs')
+      .that.eql([
+        {
+          id: 'userInput',
+          type: 'iospecdatainput',
+          name: 'Input from user',
+        },
+      ]);
   });
 
   it('publishes output without value if data object if unreferenced', () => {
     const activity = ActivityBroker();
-    new InputOutputSpecification(activity, {
-      type: 'bpmn:InputOutputSpecification',
-      behaviour: {
-        dataOutputs: [{
-          id: 'userOutput',
-          type: 'iospecdataoutput',
-          name: 'Output from user',
-          behaviour: {
-            association: {
-              target: {
-                dataObject: {
-                  id: 'missing',
+    new InputOutputSpecification(
+      activity,
+      {
+        type: 'bpmn:InputOutputSpecification',
+        behaviour: {
+          dataOutputs: [
+            {
+              id: 'userOutput',
+              type: 'iospecdataoutput',
+              name: 'Output from user',
+              behaviour: {
+                association: {
+                  target: {
+                    dataObject: {
+                      id: 'missing',
+                    },
+                  },
                 },
               },
             },
-          },
-        }],
+          ],
+        },
       },
-    }, {
-      getDataObjectById() {},
-    }).activate();
+      {
+        getDataObjectById() {},
+      },
+    ).activate();
 
     activity.broker.publish('event', 'activity.execution.completed');
 
     const formatMsg = activity.broker.getQueue('format-run-q').peek();
 
     expect(formatMsg.content).to.have.property('ioSpecification');
-    expect(formatMsg.content.ioSpecification).to.have.property('dataOutputs').that.deep.equal([{
-      id: 'userOutput',
-      type: 'iospecdataoutput',
-      name: 'Output from user',
-      value: undefined,
-    }]);
+    expect(formatMsg.content.ioSpecification)
+      .to.have.property('dataOutputs')
+      .that.deep.equal([
+        {
+          id: 'userOutput',
+          type: 'iospecdataoutput',
+          name: 'Output from user',
+          value: undefined,
+        },
+      ]);
   });
 
   it('formats message before run execute and after run complete', async () => {
@@ -271,22 +315,27 @@ describe('InputOutputSpecification', () => {
 
     expect(api.content).to.deep.include({
       ioSpecification: {
-        dataInputs: [{
-          id: 'userInput',
-          type: 'bpmn:DataInput',
-          name: 'input',
-          value: 1,
-        }, {
-          id: 'userInfo',
-          type: 'bpmn:DataInput',
-          name: 'info',
-          value: 'we value your input',
-        }],
-        dataOutputs: [{
-          id: 'userOutput',
-          type: 'bpmn:DataOutput',
-          name: 'input',
-        }],
+        dataInputs: [
+          {
+            id: 'userInput',
+            type: 'bpmn:DataInput',
+            name: 'input',
+            value: 1,
+          },
+          {
+            id: 'userInfo',
+            type: 'bpmn:DataInput',
+            name: 'info',
+            value: 'we value your input',
+          },
+        ],
+        dataOutputs: [
+          {
+            id: 'userOutput',
+            type: 'bpmn:DataOutput',
+            name: 'input',
+          },
+        ],
       },
     });
 
@@ -294,10 +343,12 @@ describe('InputOutputSpecification', () => {
 
     api.signal({
       ioSpecification: {
-        dataOutputs: [{
-          id: 'userOutput',
-          value: 2,
-        }],
+        dataOutputs: [
+          {
+            id: 'userOutput',
+            value: 2,
+          },
+        ],
       },
     });
 
@@ -305,10 +356,12 @@ describe('InputOutputSpecification', () => {
 
     expect(api.content.output).to.deep.include({
       ioSpecification: {
-        dataOutputs: [{
-          id: 'userOutput',
-          value: 2,
-        }],
+        dataOutputs: [
+          {
+            id: 'userOutput',
+            value: 2,
+          },
+        ],
       },
     });
 
@@ -417,10 +470,12 @@ describe('InputOutputSpecification', () => {
 
     api.signal({
       ioSpecification: {
-        dataOutputs: [{
-          id: 'userInput',
-          value: 'von Rosen',
-        }],
+        dataOutputs: [
+          {
+            id: 'userInput',
+            value: 'von Rosen',
+          },
+        ],
       },
     });
 
@@ -590,7 +645,7 @@ describe('InputOutputSpecification', () => {
     });
 
     it('inputSet is available to activity', async () => {
-      context.environment.variables._data = {input: 'START'};
+      context.environment.variables._data = { input: 'START' };
 
       const task = context.getActivityById('task1');
 
@@ -618,10 +673,12 @@ describe('InputOutputSpecification', () => {
 
       api.signal({
         ioSpecification: {
-          dataOutputs: [{
-            id: 'surnameInput',
-            value: 'von Rosen',
-          }],
+          dataOutputs: [
+            {
+              id: 'surnameInput',
+              value: 'von Rosen',
+            },
+          ],
         },
       });
 
@@ -632,7 +689,7 @@ describe('InputOutputSpecification', () => {
 
     it('environment variables are set on end', async () => {
       const instance = context.getProcessById('theProcess');
-      instance.environment.variables._data = {input: 42};
+      instance.environment.variables._data = { input: 42 };
 
       const leave = instance.waitFor('leave');
       let wait = instance.waitFor('wait');
@@ -645,10 +702,12 @@ describe('InputOutputSpecification', () => {
       wait = instance.waitFor('wait');
       api.signal({
         ioSpecification: {
-          dataOutputs: [{
-            id: 'surnameInput',
-            value: 'von Rosen',
-          }],
+          dataOutputs: [
+            {
+              id: 'surnameInput',
+              value: 'von Rosen',
+            },
+          ],
         },
       });
 
@@ -661,13 +720,16 @@ describe('InputOutputSpecification', () => {
 
       api.signal({
         ioSpecification: {
-          dataOutputs: [{
-            id: 'givenNameField',
-            value: ['Martin', 'Pål'],
-          }, {
-            id: 'ageField',
-            value: 43,
-          }],
+          dataOutputs: [
+            {
+              id: 'givenNameField',
+              value: ['Martin', 'Pål'],
+            },
+            {
+              id: 'ageField',
+              value: 43,
+            },
+          ],
         },
       });
 

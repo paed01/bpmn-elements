@@ -46,11 +46,11 @@ declare module 'bpmn-elements' {
 
   type parsedTimer = {
     /** Expires at date time */
-    expireAt?: Date,
+    expireAt?: Date;
     /** Repeat number of times */
-    repeat?: number,
+    repeat?: number;
     /** Delay in milliseconds */
-    delay?: number,
+    delay?: number;
   };
 
   export class TimerEventDefinition extends EventDefinition {
@@ -69,7 +69,7 @@ declare module 'bpmn-elements' {
   export var ISODuration: ISODurationApi;
 }
 
-declare module "bpmn-elements/events" {
+declare module 'bpmn-elements/events' {
   export var BoundaryEventBehaviour: IActivityBehaviour;
   export var EndEventBehaviour: IActivityBehaviour;
   export var IntermediateCatchEventBehaviour: IActivityBehaviour;
@@ -77,14 +77,14 @@ declare module "bpmn-elements/events" {
   export var StartEventBehaviour: IActivityBehaviour;
 }
 
-declare module "bpmn-elements/gateways" {
+declare module 'bpmn-elements/gateways' {
   export var EventBasedGatewayBehaviour: IActivityBehaviour;
   export var ExclusiveGatewayBehaviour: IActivityBehaviour;
   export var InclusiveGatewayBehaviour: IActivityBehaviour;
   export var ParallelGatewayBehaviour: IActivityBehaviour;
 }
 
-declare module "bpmn-elements/tasks" {
+declare module 'bpmn-elements/tasks' {
   export var CallActivityBehaviour: IActivityBehaviour;
   export var ReceiveTaskBehaviour: IActivityBehaviour;
   export var ScriptTaskBehaviour: IActivityBehaviour;

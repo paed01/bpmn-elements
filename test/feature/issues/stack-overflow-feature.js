@@ -1,4 +1,4 @@
-import {Definition} from '../../../src/index.js';
+import { Definition } from '../../../src/index.js';
 import got from 'got';
 import JsExtension from '../../resources/extensions/JsExtension.js';
 import nock from 'nock';
@@ -73,24 +73,24 @@ Feature('Attempt to provoke a stack overflow', () => {
   Scenario('a sequential multi-instance with loop back flow', () => {
     let services, items;
     Given('service return 301 items', () => {
-      items = new Array(301).fill().map((_, idx) => ({id: idx}));
+      items = new Array(301).fill().map((_, idx) => ({ id: idx }));
       nock('http://example.local')
         .get('/')
-        .query({pageSize: 300})
+        .query({ pageSize: 300 })
         .reply(200, {
           records: items.slice(0, 300),
           next: '/?pageSize=1',
         })
         .get('/')
-        .query({pageSize: 1})
+        .query({ pageSize: 1 })
         .reply(200, { records: items.slice(300) })
         .get(/^\/\d+/)
         .times(301)
-        .reply(200, {data: {}});
+        .reply(200, { data: {} });
 
       async function makeRequest(path, _, next) {
         try {
-          const {body} = await got(new URL(path, 'http://example.local'), {responseType: 'json', retry: { limit: 0 }});
+          const { body } = await got(new URL(path, 'http://example.local'), { responseType: 'json', retry: { limit: 0 } });
           return next(null, body);
         } catch (err) {
           next(err);
@@ -129,17 +129,17 @@ Feature('Attempt to provoke a stack overflow', () => {
     When('definition is ran again stopping in the middle of multi-instance', () => {
       nock('http://example.local')
         .get('/')
-        .query({pageSize: 300})
+        .query({ pageSize: 300 })
         .reply(200, {
           records: items.slice(0, 300),
           next: '/?pageSize=1',
         })
         .get('/')
-        .query({pageSize: 1})
+        .query({ pageSize: 1 })
         .reply(200, { records: items.slice(300) })
         .get(/^\/\d+/)
         .times(302)
-        .reply(200, {data: {}});
+        .reply(200, { data: {} });
 
       definition = new Definition(context.clone(), {
         services,
@@ -149,9 +149,14 @@ Feature('Attempt to provoke a stack overflow', () => {
       });
 
       const peritem = definition.getActivityById('peritem');
-      peritem.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
-        if (msg.content.index > 150) definition.stop();
-      }, {noAck: true});
+      peritem.broker.subscribeTmp(
+        'execution',
+        'execute.start',
+        (_, msg) => {
+          if (msg.content.index > 150) definition.stop();
+        },
+        { noAck: true },
+      );
 
       stopped = definition.waitFor('stop');
       definition.run();
@@ -183,24 +188,24 @@ Feature('Attempt to provoke a stack overflow', () => {
   Scenario('a service task that throws in extension when completed and then is resumed', () => {
     let options, items;
     Given('service returning items', () => {
-      items = new Array(11).fill().map((_, idx) => ({id: idx}));
+      items = new Array(11).fill().map((_, idx) => ({ id: idx }));
       nock('http://example.local')
         .get('/')
-        .query({pageSize: 10})
+        .query({ pageSize: 10 })
         .reply(200, {
           records: items.slice(0, 10),
           next: '/?pageSize=1',
         })
         .get('/')
-        .query({pageSize: 1})
+        .query({ pageSize: 1 })
         .reply(200, { records: items.slice(10) })
         .get(/^\/\d+/)
         .times(11)
-        .reply(200, {data: {}});
+        .reply(200, { data: {} });
 
       async function makeRequest(path, _, next) {
         try {
-          const {body} = await got(new URL(path, 'http://example.local'), {responseType: 'json', retry: { limit: 0 }});
+          const { body } = await got(new URL(path, 'http://example.local'), { responseType: 'json', retry: { limit: 0 } });
           return next(null, body);
         } catch (err) {
           next(err);
@@ -220,12 +225,17 @@ Feature('Attempt to provoke a stack overflow', () => {
             const broker = activity.broker;
             return {
               activate() {
-                broker.subscribeOnce('event', 'activity.execution.completed', () => {
-                  broker.publish('format', 'run.end.format', {endRoutingKey: 'run.end.complete'});
-                  process.nextTick(() => {
-                    broker.publish('format', 'run.end.error', {error: new Error('Shaky')});
-                  });
-                }, {consumerTag: 'shaky'});
+                broker.subscribeOnce(
+                  'event',
+                  'activity.execution.completed',
+                  () => {
+                    broker.publish('format', 'run.end.format', { endRoutingKey: 'run.end.complete' });
+                    process.nextTick(() => {
+                      broker.publish('format', 'run.end.error', { error: new Error('Shaky') });
+                    });
+                  },
+                  { consumerTag: 'shaky' },
+                );
               },
               deactivate() {
                 broker.cancel('shaky');
@@ -263,17 +273,17 @@ Feature('Attempt to provoke a stack overflow', () => {
     When('definition is ran again stopping in the middle of multi-instance', () => {
       nock('http://example.local')
         .get('/')
-        .query({pageSize: 10})
+        .query({ pageSize: 10 })
         .reply(200, {
           records: items.slice(0, 10),
           next: '/?pageSize=1',
         })
         .get('/')
-        .query({pageSize: 1})
+        .query({ pageSize: 1 })
         .reply(200, { records: items.slice(10) })
         .get(/^\/\d+/)
         .times(12)
-        .reply(200, {data: {}});
+        .reply(200, { data: {} });
 
       definition = new Definition(context.clone(), {
         ...options,
@@ -283,9 +293,14 @@ Feature('Attempt to provoke a stack overflow', () => {
       });
 
       const peritem = definition.getActivityById('peritem');
-      peritem.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
-        if (msg.content.index > 5) definition.stop();
-      }, {noAck: true});
+      peritem.broker.subscribeTmp(
+        'execution',
+        'execute.start',
+        (_, msg) => {
+          if (msg.content.index > 5) definition.stop();
+        },
+        { noAck: true },
+      );
 
       stopped = definition.waitFor('stop');
       definition.run();
@@ -317,17 +332,17 @@ Feature('Attempt to provoke a stack overflow', () => {
     When('definition is ran again saving state on format error', () => {
       nock('http://example.local')
         .get('/')
-        .query({pageSize: 10})
+        .query({ pageSize: 10 })
         .reply(200, {
           records: items.slice(0, 10),
           next: '/?pageSize=1',
         })
         .get('/')
-        .query({pageSize: 1})
+        .query({ pageSize: 1 })
         .reply(200, { records: items.slice(10) })
         .get(/^\/\d+/)
         .times(12)
-        .reply(200, {data: {}});
+        .reply(200, { data: {} });
 
       definition = new Definition(context.clone(), {
         ...options,
@@ -336,10 +351,15 @@ Feature('Attempt to provoke a stack overflow', () => {
         },
       });
 
-      definition.broker.subscribeTmp('event', 'activity.error', () => {
-        state = definition.getState();
-        definition.stop();
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.error',
+        () => {
+          state = definition.getState();
+          definition.stop();
+        },
+        { noAck: true },
+      );
 
       stopped = definition.waitFor('stop');
       definition.run();

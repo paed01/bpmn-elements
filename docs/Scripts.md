@@ -1,5 +1,4 @@
-Scripts
-=======
+# Scripts
 
 Inline scripts handler interface.
 
@@ -13,6 +12,7 @@ Inline scripts handler interface.
 Register script. Called from activity behaviour.
 
 Arguments:
+
 - `activity`: [activity](/docs/Activity.md) instance
 
 ## `getScript(scriptType, activity)`
@@ -20,6 +20,7 @@ Arguments:
 Get registered script. Called from activity behaviour when executing.
 
 Arguments:
+
 - `scriptType`: script type from definition
 - `activity`: [activity](/docs/Activity.md) with script
 
@@ -30,7 +31,7 @@ The execute function will receive an [execution context](/docs/ExecutionScope.md
 ## Example implementation for nodejs
 
 ```js
-import {Script} from 'vm';
+import { Script } from 'vm';
 
 export function Scripts() {
   const scripts = {};
@@ -40,7 +41,7 @@ export function Scripts() {
     register,
   };
 
-  function register({id, type, behaviour, environment}) {
+  function register({ id, type, behaviour, environment }) {
     let scriptBody, language;
 
     switch (type) {
@@ -65,20 +66,20 @@ export function Scripts() {
     return script;
   }
 
-  function getScript(language, {id}) {
+  function getScript(language, { id }) {
     return scripts[id];
   }
 }
 
 function JavaScript(language, filename, scriptBody, environment) {
   this.id = filename;
-  this.script = new Script(scriptBody, {filename});
+  this.script = new Script(scriptBody, { filename });
   this.language = language;
   this.environment = environment;
 }
 
 JavaScript.prototype.execute = function execute(executionContext, callback) {
   const timers = this.environment.timers.register(executionContext);
-  return this.script.runInNewContext({...executionContext, ...timers, next: callback});
+  return this.script.runInNewContext({ ...executionContext, ...timers, next: callback });
 };
 ```

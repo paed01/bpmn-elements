@@ -3,10 +3,13 @@ import Environment from '../../src/Environment.js';
 
 describe('BpmnError', () => {
   it('returns BpmnError instanceof from error', () => {
-    const bpmnError = BpmnErrorActivity({
-      id: 'Error_0',
-      name: 'TestError',
-    }, {environment: new Environment()});
+    const bpmnError = BpmnErrorActivity(
+      {
+        id: 'Error_0',
+        name: 'TestError',
+      },
+      { environment: new Environment() },
+    );
 
     const err = bpmnError.resolve({}, new Error('Men'));
 
@@ -15,19 +18,25 @@ describe('BpmnError', () => {
   });
 
   it('resolves errorCode expression', () => {
-    const bpmnError = BpmnErrorActivity({
-      id: 'Error_0',
-      name: 'TestError',
-      behaviour: {
-        errorCode: 'EMES',
+    const bpmnError = BpmnErrorActivity(
+      {
+        id: 'Error_0',
+        name: 'TestError',
+        behaviour: {
+          errorCode: 'EMES',
+        },
       },
-    }, {environment: new Environment()});
+      { environment: new Environment() },
+    );
 
-    const err = bpmnError.resolve({
-      resolveExpression(errorCode) {
-        return errorCode;
+    const err = bpmnError.resolve(
+      {
+        resolveExpression(errorCode) {
+          return errorCode;
+        },
       },
-    }, new Error('Men'));
+      new Error('Men'),
+    );
 
     expect(err).to.have.property('code', 'EMES');
   });

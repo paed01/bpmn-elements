@@ -30,9 +30,14 @@ Feature('Definition', () => {
     });
 
     And('the definition is subscribed to', () => {
-      definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        '#',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed;
@@ -74,7 +79,7 @@ Feature('Definition', () => {
     let definition, assertMessage;
     const messages = [];
     Given('a definition with lanes and extensions', async () => {
-      const context = await testHelpers.context(factory.resource('lanes.bpmn'), {extensions});
+      const context = await testHelpers.context(factory.resource('lanes.bpmn'), { extensions });
       definition = new Definition(context, {
         Logger: testHelpers.Logger,
       });
@@ -82,9 +87,14 @@ Feature('Definition', () => {
     });
 
     And('the definition is subscribed to', () => {
-      definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
-        messages.push(message);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        '#',
+        (routingKey, message) => {
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed;
@@ -194,7 +204,7 @@ Feature('Definition', () => {
     const messages = [];
 
     Given('a definition', async () => {
-      const context = await testHelpers.context(bigSource, {extensions});
+      const context = await testHelpers.context(bigSource, { extensions });
       definition = new Definition(context, {
         Logger: testHelpers.Logger,
       });
@@ -203,14 +213,19 @@ Feature('Definition', () => {
 
     let looped = 0;
     And('the definition is subscribed to', () => {
-      definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
-        if (message.content.id === 'userTask1' && routingKey === 'activity.discard') {
-          ++looped;
-          if (looped > 2) throw new Error('Inifinty loop');
-        }
+      definition.broker.subscribeTmp(
+        'event',
+        '#',
+        (routingKey, message) => {
+          if (message.content.id === 'userTask1' && routingKey === 'activity.discard') {
+            ++looped;
+            if (looped > 2) throw new Error('Inifinty loop');
+          }
 
-        messages.push(message);
-      }, {noAck: true});
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     When('run', () => {
@@ -309,7 +324,7 @@ Feature('Definition', () => {
   Scenario('Recover definition', () => {
     let definition;
     Given('a definition with user task, timer event, and loop', async () => {
-      const context = await testHelpers.context(bigSource, {extensions});
+      const context = await testHelpers.context(bigSource, { extensions });
       definition = new Definition(context, {
         Logger: testHelpers.Logger,
         extensions: {
@@ -339,7 +354,7 @@ Feature('Definition', () => {
 
     let recoveredDefinition;
     Then('new definition can be recovered', async () => {
-      const newContext = await testHelpers.context(bigSource, {extensions});
+      const newContext = await testHelpers.context(bigSource, { extensions });
       recoveredDefinition = new Definition(newContext).recover(state);
     });
 
@@ -416,20 +431,20 @@ Feature('Definition', () => {
       const [userTask] = definition.getPostponed();
       expect(userTask).to.have.property('id', 'userTask1');
 
-      wait = definition.waitFor('wait', (_, {content}) => {
+      wait = definition.waitFor('wait', (_, { content }) => {
         return content.type === 'bpmn:UserTask';
       });
 
-      userTask.signal({data: 1});
+      userTask.signal({ data: 1 });
     });
 
     And('sub user task is signaled with input', async () => {
       const userTask = await wait;
       expect(userTask).to.have.property('id', 'subUserTask1');
 
-      wait = definition.waitFor('wait', (_, {content}) => content.type === 'bpmn:UserTask');
+      wait = definition.waitFor('wait', (_, { content }) => content.type === 'bpmn:UserTask');
 
-      userTask.signal({subdata: 1});
+      userTask.signal({ subdata: 1 });
     });
 
     Then('user task postponed', async () => {
@@ -439,7 +454,7 @@ Feature('Definition', () => {
     });
 
     Then('new definition can be recovered', async () => {
-      const newContext = await testHelpers.context(bigSource, {extensions});
+      const newContext = await testHelpers.context(bigSource, { extensions });
       recoveredDefinition = new Definition(newContext, {
         myOption: true,
         extensions: {
@@ -449,7 +464,7 @@ Feature('Definition', () => {
     });
 
     When('resumed', () => {
-      wait = recoveredDefinition.waitFor('wait', (_, {content}) => content.type === 'bpmn:UserTask');
+      wait = recoveredDefinition.waitFor('wait', (_, { content }) => content.type === 'bpmn:UserTask');
       leave = recoveredDefinition.waitFor('leave');
       recoveredDefinition.resume();
     });
@@ -460,16 +475,16 @@ Feature('Definition', () => {
 
       expect(userTask.environment.options, 'environment option').to.have.property('myOption', true);
       expect(userTask.environment.variables, 'environment variable').to.have.property('stopLoop', true);
-      expect(userTask.environment.output, 'environment output').to.have.property('userTask1').that.eql({data: 1});
+      expect(userTask.environment.output, 'environment output').to.have.property('userTask1').that.eql({ data: 1 });
 
-      wait = recoveredDefinition.waitFor('wait', (_, {content}) => content.type === 'bpmn:UserTask');
-      userTask.signal({data: 2});
+      wait = recoveredDefinition.waitFor('wait', (_, { content }) => content.type === 'bpmn:UserTask');
+      userTask.signal({ data: 2 });
     });
 
     When('sub user task is signaled', async () => {
       const userTask = await wait;
       expect(userTask).to.have.property('id', 'subUserTask1');
-      userTask.signal({subdata: 1});
+      userTask.signal({ subdata: 1 });
     });
 
     Then('definition completes', () => {
@@ -481,16 +496,21 @@ Feature('Definition', () => {
     let assertMessage, definition;
     const messages = [];
     Given('a definition with user task, timer event, and loop', async () => {
-      const context = await testHelpers.context(factory.resource('two-executable-processes.bpmn'), {extensions});
+      const context = await testHelpers.context(factory.resource('two-executable-processes.bpmn'), { extensions });
       definition = new Definition(context);
       assertMessage = AssertMessage(definition, messages, true);
     });
 
     And('the definition is subscribed to', () => {
-      definition.broker.subscribeTmp('event', '#', (routingKey, message) => {
-        if (routingKey.indexOf('flow') === 0) return;
-        messages.push(message);
-      }, {noAck: true});
+      definition.broker.subscribeTmp(
+        'event',
+        '#',
+        (routingKey, message) => {
+          if (routingKey.indexOf('flow') === 0) return;
+          messages.push(message);
+        },
+        { noAck: true },
+      );
     });
 
     let completed;
@@ -660,7 +680,7 @@ Feature('Definition', () => {
   });
 });
 
-function saveAllOutputToEnvironmentExtension(activity, {environment}) {
+function saveAllOutputToEnvironmentExtension(activity, { environment }) {
   activity.on('end', (api) => {
     if (api.content.output) environment.output[api.id] = api.content.output;
   });

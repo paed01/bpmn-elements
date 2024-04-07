@@ -551,9 +551,7 @@
                         "id": "toFinal",
                         "isDefault": true,
                         "sequenceId": "toFinal_discard_ec26319258",
-                        "discardSequence": [
-                          "decision"
-                        ],
+                        "discardSequence": ["decision"],
                         "type": "bpmn:SequenceFlow",
                         "sourceId": "decision",
                         "targetId": "theEnd",
@@ -564,9 +562,7 @@
                         }
                       }
                     ],
-                    "discardSequence": [
-                      "decision"
-                    ],
+                    "discardSequence": ["decision"],
                     "executionId": "theEnd_4e05bc37cb",
                     "id": "theEnd",
                     "type": "bpmn:EndEvent",
@@ -680,10 +676,7 @@
                         "action": "discard",
                         "id": "toJoin2",
                         "sequenceId": "toJoin2_discard_a4838c9d87",
-                        "discardSequence": [
-                          "manyDecisions",
-                          "defaultTask"
-                        ],
+                        "discardSequence": ["manyDecisions", "defaultTask"],
                         "type": "bpmn:SequenceFlow",
                         "sourceId": "defaultTask",
                         "targetId": "join",
@@ -733,9 +726,7 @@
                         "id": "toPickMe2",
                         "isDefault": true,
                         "sequenceId": "toPickMe2_discard_2a5a4eefdd",
-                        "discardSequence": [
-                          "manyDecisions"
-                        ],
+                        "discardSequence": ["manyDecisions"],
                         "type": "bpmn:SequenceFlow",
                         "sourceId": "manyDecisions",
                         "targetId": "defaultTask",
@@ -746,9 +737,7 @@
                         }
                       }
                     ],
-                    "discardSequence": [
-                      "manyDecisions"
-                    ],
+                    "discardSequence": ["manyDecisions"],
                     "executionId": "defaultTask_2e4a0ddc84",
                     "id": "defaultTask",
                     "type": "bpmn:Task",

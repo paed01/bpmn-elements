@@ -1,15 +1,21 @@
 import Environment from '../src/Environment.js';
-import {Timers} from '../src/Timers.js';
+import { Timers } from '../src/Timers.js';
 
 describe('Environment', () => {
   describe('ctor', () => {
     it('sets settings', () => {
       expect(new Environment()).to.have.property('settings').that.eql({});
-      expect(new Environment({settings: {
-        test: 1,
-      }})).to.have.property('settings').that.eql({
-        test: 1,
-      });
+      expect(
+        new Environment({
+          settings: {
+            test: 1,
+          },
+        }),
+      )
+        .to.have.property('settings')
+        .that.eql({
+          test: 1,
+        });
     });
 
     it('shallow clones settings', () => {
@@ -17,7 +23,7 @@ describe('Environment', () => {
         test: 1,
       };
 
-      const environment = new Environment({settings});
+      const environment = new Environment({ settings });
 
       settings.test = 2;
 
@@ -34,17 +40,17 @@ describe('Environment', () => {
       }).to.throw(/scripts.register is not a function/);
       expect(() => {
         new Environment({
-          scripts: {register: {}},
+          scripts: { register: {} },
         });
       }).to.throw(/scripts.register is not a function/);
       expect(() => {
         new Environment({
-          scripts: {register() {}},
+          scripts: { register() {} },
         });
       }).to.throw(/scripts.getScript is not a function/);
       expect(() => {
         new Environment({
-          scripts: {register() {}, getScript: 1},
+          scripts: { register() {}, getScript: 1 },
         });
       }).to.throw(/scripts.getScript is not a function/);
     });
@@ -140,7 +146,7 @@ describe('Environment', () => {
     });
 
     it('keeps extensions', () => {
-      const extensions = {extendo() {}};
+      const extensions = { extendo() {} };
       let environment = new Environment({
         extensions,
         settings: {
@@ -197,7 +203,7 @@ describe('Environment', () => {
       });
 
       environment = environment.recover({
-        variables: {beforeState: false},
+        variables: { beforeState: false },
       });
 
       expect(environment.variables).to.have.property('beforeState', false);
@@ -223,7 +229,7 @@ describe('Environment', () => {
 
   describe('assignVariables()', () => {
     it('assigns new variables', () => {
-      const environment = new Environment({variables: {before: true, init: 0}});
+      const environment = new Environment({ variables: { before: true, init: 0 } });
 
       environment.assignVariables({
         init: 1,
@@ -234,21 +240,21 @@ describe('Environment', () => {
     });
 
     it('ignored if non-object is passed', () => {
-      const environment = new Environment({variables: {before: true}});
+      const environment = new Environment({ variables: { before: true } });
       environment.assignVariables();
-      expect(environment.variables).to.eql({before: true});
+      expect(environment.variables).to.eql({ before: true });
       environment.assignVariables(null);
-      expect(environment.variables).to.eql({before: true});
+      expect(environment.variables).to.eql({ before: true });
       environment.assignVariables('null');
-      expect(environment.variables).to.eql({before: true});
+      expect(environment.variables).to.eql({ before: true });
       environment.assignVariables(1);
-      expect(environment.variables).to.eql({before: true});
+      expect(environment.variables).to.eql({ before: true });
     });
   });
 
   describe('assignSettings()', () => {
     it('assigns new settings', () => {
-      const environment = new Environment({settings: {before: true, init: 0}});
+      const environment = new Environment({ settings: { before: true, init: 0 } });
 
       environment.assignSettings({
         init: 1,
@@ -259,15 +265,15 @@ describe('Environment', () => {
     });
 
     it('ignored if non-object is passed', () => {
-      const environment = new Environment({settings: {before: true}});
+      const environment = new Environment({ settings: { before: true } });
       environment.assignSettings();
-      expect(environment.settings).to.eql({before: true});
+      expect(environment.settings).to.eql({ before: true });
       environment.assignSettings(null);
-      expect(environment.settings).to.eql({before: true});
+      expect(environment.settings).to.eql({ before: true });
       environment.assignSettings('null');
-      expect(environment.settings).to.eql({before: true});
+      expect(environment.settings).to.eql({ before: true });
       environment.assignSettings(1);
-      expect(environment.settings).to.eql({before: true});
+      expect(environment.settings).to.eql({ before: true });
     });
   });
 
@@ -340,7 +346,7 @@ describe('Environment', () => {
       });
 
       expect(environment.options).to.have.property('listener');
-      const clone = environment.clone({myOption: 1});
+      const clone = environment.clone({ myOption: 1 });
       expect(clone.options).to.have.property('listener');
       expect(clone.options).to.have.property('myOption', 1);
     });
@@ -375,7 +381,7 @@ describe('Environment', () => {
         register() {},
         getScript() {},
       };
-      const clone = environment.clone({scripts: myScripts});
+      const clone = environment.clone({ scripts: myScripts });
 
       expect(clone.scripts).to.be.ok.and.an('object').that.equal(myScripts);
     });
@@ -387,14 +393,14 @@ describe('Environment', () => {
       });
 
       const newExpressions = {};
-      const clone = environment.clone({expressions: newExpressions});
+      const clone = environment.clone({ expressions: newExpressions });
 
       expect(clone.expressions).to.be.ok.and.an('object').that.equal(newExpressions);
     });
 
     it('extends services', () => {
       const environment = new Environment({
-        variables: {init: true},
+        variables: { init: true },
         output: {},
         services: {
           initSvc1() {},
@@ -472,7 +478,7 @@ describe('Environment', () => {
 
       expect(environment.resolveExpression('${environment.settings.init}')).to.eql([
         '${environment.settings.init}',
-        {environment},
+        { environment },
         undefined,
       ]);
     });
@@ -480,7 +486,7 @@ describe('Environment', () => {
 
   describe('timers', () => {
     it('timers.setTimeout adds timer to executing', () => {
-      const {timers} = new Environment({
+      const { timers } = new Environment({
         timers: new Timers({
           setTimeout() {},
         }),
@@ -495,7 +501,7 @@ describe('Environment', () => {
 
     it('removes timer from executing when timed out', () => {
       let onTimeout;
-      const {timers} = new Environment({
+      const { timers } = new Environment({
         timers: new Timers({
           setTimeout(callback) {
             onTimeout = callback;
@@ -514,7 +520,7 @@ describe('Environment', () => {
 
     it('callback called twice is ignored', () => {
       let onTimeout;
-      const {timers} = new Environment({
+      const { timers } = new Environment({
         timers: new Timers({
           setTimeout(callback) {
             onTimeout = callback;
@@ -533,7 +539,7 @@ describe('Environment', () => {
     });
 
     it('timers.clearTimeout removes timer from executing', () => {
-      const {timers} = new Environment({
+      const { timers } = new Environment({
         timers: new Timers({
           setTimeout() {},
           clearTimeout() {},
@@ -550,7 +556,7 @@ describe('Environment', () => {
     });
 
     it('timers.clearTimeout can be called twice', () => {
-      const {timers} = new Environment({
+      const { timers } = new Environment({
         timers: new Timers({
           setTimeout() {},
           clearTimeout() {},
@@ -571,7 +577,7 @@ describe('Environment', () => {
       it('.register(owner) returns timers', () => {
         const environment = new Environment();
 
-        const timer = environment.timers.register({id: 'a'});
+        const timer = environment.timers.register({ id: 'a' });
 
         expect(timer).to.have.property('setTimeout').that.is.a('function');
         expect(timer).to.have.property('clearTimeout').that.is.a('function');
@@ -587,13 +593,13 @@ describe('Environment', () => {
       });
 
       it('setTimeout adds timer to executing', () => {
-        const {timers} = new Environment({
+        const { timers } = new Environment({
           timers: new Timers({
             setTimeout() {},
           }),
         });
 
-        const owner = {id: 'a'};
+        const owner = { id: 'a' };
         const timer = timers.register(owner);
 
         timer.setTimeout(() => {}, 10);
@@ -604,13 +610,13 @@ describe('Environment', () => {
       });
 
       it('setTimeout adds timer to executing', () => {
-        const {timers} = new Environment({
+        const { timers } = new Environment({
           timers: new Timers({
             setTimeout() {},
           }),
         });
 
-        const owner = {id: 'a'};
+        const owner = { id: 'a' };
         const timer = timers.register(owner);
 
         timer.setTimeout(() => {}, 10);
@@ -621,13 +627,13 @@ describe('Environment', () => {
       });
 
       it('multiple setTimeout adds timers to executing', () => {
-        const {timers} = new Environment({
+        const { timers } = new Environment({
           timers: new Timers({
             setTimeout() {},
           }),
         });
 
-        const owner = {id: 'a'};
+        const owner = { id: 'a' };
         const timer = timers.register(owner);
 
         timer.setTimeout(() => {}, 20);
@@ -644,14 +650,14 @@ describe('Environment', () => {
       });
 
       it('clearTimeout removes timer from executing', () => {
-        const {timers} = new Environment({
+        const { timers } = new Environment({
           timers: new Timers({
             setTimeout() {},
             clearTimeout() {},
           }),
         });
 
-        const owner = {id: 'a'};
+        const owner = { id: 'a' };
         const timer = timers.register(owner);
         const ref = timer.setTimeout(() => {}, 12);
 
@@ -663,13 +669,13 @@ describe('Environment', () => {
       });
 
       it('clearTimeout removes only ref from executing', () => {
-        const {timers} = new Environment({
+        const { timers } = new Environment({
           timers: new Timers({
             setTimeout() {},
           }),
         });
 
-        const owner = {id: 'a'};
+        const owner = { id: 'a' };
         const timer = timers.register(owner);
 
         timer.setTimeout(() => {}, 20);
@@ -684,14 +690,14 @@ describe('Environment', () => {
       });
 
       it('timers.clearTimeout removes registered timer from executing', () => {
-        const {timers} = new Environment({
+        const { timers } = new Environment({
           timers: new Timers({
             setTimeout() {},
             clearTimeout() {},
           }),
         });
 
-        const owner = {id: 'a'};
+        const owner = { id: 'a' };
         const timer = timers.register(owner);
         const ref = timer.setTimeout(() => {}, 12);
 
@@ -703,14 +709,14 @@ describe('Environment', () => {
       });
 
       it('clearTimeout can be called twice', () => {
-        const {timers} = new Environment({
+        const { timers } = new Environment({
           timers: new Timers({
             setTimeout() {},
             clearTimeout() {},
           }),
         });
 
-        const owner = {id: 'a'};
+        const owner = { id: 'a' };
         const timer = timers.register(owner);
         const ref = timer.setTimeout(() => {}, 12);
 
@@ -723,14 +729,14 @@ describe('Environment', () => {
       });
 
       it('clearTimeout can be called with unknown ref', () => {
-        const {timers} = new Environment({
+        const { timers } = new Environment({
           timers: new Timers({
             setTimeout() {},
             clearTimeout() {},
           }),
         });
 
-        const owner = {id: 'a'};
+        const owner = { id: 'a' };
         const timer = timers.register(owner);
         timer.setTimeout(() => {}, 12);
 
@@ -745,11 +751,11 @@ describe('Environment', () => {
     describe('custom timer', () => {
       it('throws if interface not met', () => {
         expect(() => {
-          new Environment({timers: {}});
+          new Environment({ timers: {} });
         }).to.throw(/register is not a function/);
 
         expect(() => {
-          new Environment({timers: {register: 1}});
+          new Environment({ timers: { register: 1 } });
         }).to.throw(/register is not a function/);
 
         expect(() => {

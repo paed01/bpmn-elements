@@ -1,12 +1,12 @@
-import {cloneContent, shiftParent} from '../messageHelper.js';
-import {ActivityError} from '../error/Errors.js';
+import { cloneContent, shiftParent } from '../messageHelper.js';
+import { ActivityError } from '../error/Errors.js';
 
 const kExecuteMessage = Symbol.for('executeMessage');
 
 export default function ConditionalEventDefinition(activity, eventDefinition) {
-  const {id, broker, environment, attachedTo} = activity;
+  const { id, broker, environment, attachedTo } = activity;
 
-  const {type = 'ConditionalEventDefinition', behaviour = {}} = eventDefinition;
+  const { type = 'ConditionalEventDefinition', behaviour = {} } = eventDefinition;
 
   this.id = id;
   this.type = type;
@@ -32,7 +32,7 @@ ConditionalEventDefinition.prototype.execute = function execute(executeMessage) 
 
 ConditionalEventDefinition.prototype.executeWait = function executeWait(executeMessage) {
   const executeContent = executeMessage.content;
-  const {executionId, parent} = executeContent;
+  const { executionId, parent } = executeContent;
   const parentExecutionId = parent.executionId;
 
   if (this._evaluateWait(executeMessage)) return;
@@ -59,7 +59,7 @@ ConditionalEventDefinition.prototype.executeWait = function executeWait(executeM
 
 ConditionalEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   const executeContent = executeMessage.content;
-  const {executionId, index, parent} = executeContent;
+  const { executionId, index, parent } = executeContent;
   const parentExecutionId = parent.executionId;
 
   const broker = this.broker;
@@ -68,7 +68,7 @@ ConditionalEventDefinition.prototype.executeCatch = function executeCatch(execut
     consumerTag: `_api-${executionId}_${index}`,
   });
 
-  const {id: attachedToId, broker: attachedToBroker} = this.activity.attachedTo;
+  const { id: attachedToId, broker: attachedToBroker } = this.activity.attachedTo;
 
   this._debug(`listen for execute completed from <${attachedToId}>`);
 
@@ -95,7 +95,7 @@ ConditionalEventDefinition.prototype._onWaitApiMessage = function onWaitApiMessa
     }
     case 'discard': {
       this._stopWait();
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content, {state: 'discard'}));
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content, { state: 'discard' }));
     }
     case 'stop': {
       return this._stopWait();
@@ -105,27 +105,37 @@ ConditionalEventDefinition.prototype._onWaitApiMessage = function onWaitApiMessa
 
 ConditionalEventDefinition.prototype._evaluateWait = function evaluate(message) {
   const executeMessage = this[kExecuteMessage];
-  const broker = this.broker, executeContent = executeMessage.content;
+  const broker = this.broker,
+    executeContent = executeMessage.content;
 
   try {
     var output = this.environment.resolveExpression(this.condition, message); // eslint-disable-line no-var
   } catch (err) {
-    return broker.publish('execution', 'execute.error', cloneContent(executeContent, {error: new ActivityError(err.message, executeMessage, err)}, {mandatory: true}));
+    return broker.publish(
+      'execution',
+      'execute.error',
+      cloneContent(executeContent, { error: new ActivityError(err.message, executeMessage, err) }, { mandatory: true }),
+    );
   }
 
   this._debug(`condition evaluated to ${!!output}`);
 
-  broker.publish('event', 'activity.condition', cloneContent(executeContent, {
-    conditionResult: output,
-  }));
+  broker.publish(
+    'event',
+    'activity.condition',
+    cloneContent(executeContent, {
+      conditionResult: output,
+    }),
+  );
 
   if (!output) return;
   this._stopWait();
-  return broker.publish('execution', 'execute.completed', cloneContent(executeContent, {output}));
+  return broker.publish('execution', 'execute.completed', cloneContent(executeContent, { output }));
 };
 
 ConditionalEventDefinition.prototype._stopWait = function stopWait() {
-  const broker = this.broker, executionId = this.executionId;
+  const broker = this.broker,
+    executionId = this.executionId;
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_parent-signal-${executionId}`);
 };
@@ -134,21 +144,30 @@ ConditionalEventDefinition.prototype._onAttachedCompleted = function onAttachedC
   this._stopCatch();
 
   const executeMessage = this[kExecuteMessage];
-  const broker = this.broker, executeContent = executeMessage.content;
+  const broker = this.broker,
+    executeContent = executeMessage.content;
   try {
     var output = this.environment.resolveExpression(this.condition, message); // eslint-disable-line no-var
   } catch (err) {
-    return broker.publish('execution', 'execute.error', cloneContent(executeContent, {error: new ActivityError(err.message, executeMessage, err)}, {mandatory: true}));
+    return broker.publish(
+      'execution',
+      'execute.error',
+      cloneContent(executeContent, { error: new ActivityError(err.message, executeMessage, err) }, { mandatory: true }),
+    );
   }
 
   this._debug(`condition from <${message.content.executionId}> evaluated to ${!!output}`);
 
-  broker.publish('event', 'activity.condition', cloneContent(executeContent, {
-    conditionResult: output,
-  }));
+  broker.publish(
+    'event',
+    'activity.condition',
+    cloneContent(executeContent, {
+      conditionResult: output,
+    }),
+  );
 
   if (output) {
-    broker.publish('execution', 'execute.completed', cloneContent(executeContent, {output}));
+    broker.publish('execution', 'execute.completed', cloneContent(executeContent, { output }));
   }
 };
 
@@ -158,7 +177,7 @@ ConditionalEventDefinition.prototype._onCatchApiMessage = function onCatchApiMes
     case 'discard': {
       this._stopCatch();
       this._debug('discarded');
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content, {state: 'discard'}));
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content, { state: 'discard' }));
     }
     case 'stop': {
       this._stopCatch();
@@ -168,7 +187,7 @@ ConditionalEventDefinition.prototype._onCatchApiMessage = function onCatchApiMes
 };
 
 ConditionalEventDefinition.prototype._stopCatch = function stopCatch() {
-  const {executionId, index} = this[kExecuteMessage].content;
+  const { executionId, index } = this[kExecuteMessage].content;
   this.activity.attachedTo.broker.cancel(`_onend-${executionId}_${index}`);
   this.broker.cancel(`_api-${executionId}_${index}`);
 };

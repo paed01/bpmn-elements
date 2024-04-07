@@ -1,12 +1,12 @@
-import {cloneParent} from '../messageHelper.js';
-import {EventBroker} from '../EventBroker.js';
-import {Api} from '../Api.js';
-import {getUniqueId} from '../shared.js';
+import { cloneParent } from '../messageHelper.js';
+import { EventBroker } from '../EventBroker.js';
+import { Api } from '../Api.js';
+import { getUniqueId } from '../shared.js';
 
 const kCounters = Symbol.for('counters');
 
-export default function Association(associationDef, {environment}) {
-  const {id, type = 'association', name, parent, targetId, sourceId, behaviour = {}} = associationDef;
+export default function Association(associationDef, { environment }) {
+  const { id, type = 'association', name, parent, targetId, sourceId, behaviour = {} } = associationDef;
 
   this.id = id;
   this.type = type;
@@ -17,14 +17,14 @@ export default function Association(associationDef, {environment}) {
   this.targetId = targetId;
   this.isAssociation = true;
   this.environment = environment;
-  const logger = this.logger = environment.Logger(type.toLowerCase());
+  const logger = (this.logger = environment.Logger(type.toLowerCase()));
 
   this[kCounters] = {
     take: 0,
     discard: 0,
   };
 
-  const {broker, on, once, waitFor} = new EventBroker(this, {prefix: 'association', durable: true, autoDelete: false});
+  const { broker, on, once, waitFor } = new EventBroker(this, { prefix: 'association', durable: true, autoDelete: false });
   this.broker = broker;
   this.on = on;
   this.once = once;
@@ -35,7 +35,7 @@ export default function Association(associationDef, {environment}) {
 
 Object.defineProperty(Association.prototype, 'counters', {
   get() {
-    return {...this[kCounters]};
+    return { ...this[kCounters] };
   },
 });
 
@@ -75,7 +75,7 @@ Association.prototype.recover = function recover(state) {
 };
 
 Association.prototype.getApi = function getApi(message) {
-  return new Api('association', this.broker, message || {content: this._createMessageContent()});
+  return new Api('association', this.broker, message || { content: this._createMessageContent() });
 };
 
 Association.prototype.stop = function stop() {
@@ -89,7 +89,7 @@ Association.prototype._publishEvent = function publishEvent(action, content) {
     sequenceId: getUniqueId(this.id),
   });
 
-  this.broker.publish('event', `association.${action}`, eventContent, {type: action});
+  this.broker.publish('event', `association.${action}`, eventContent, { type: action });
 };
 
 Association.prototype._createMessageContent = function createMessageContent(override) {

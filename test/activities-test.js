@@ -3,16 +3,9 @@ import testHelpers from './helpers/testHelpers.js';
 
 const moddle = new BpmnModdle();
 
-const eventActivities = [
-  'bpmn:StartEvent',
-  'bpmn:EndEvent',
-  'bpmn:IntermediateCatchEvent',
-];
+const eventActivities = ['bpmn:StartEvent', 'bpmn:EndEvent', 'bpmn:IntermediateCatchEvent'];
 
-const decisionGateways = [
-  'bpmn:ExclusiveGateway',
-  'bpmn:InclusiveGateway',
-];
+const decisionGateways = ['bpmn:ExclusiveGateway', 'bpmn:InclusiveGateway'];
 
 const gateways = ['bpmn:ParallelGateway'].concat(decisionGateways);
 
@@ -28,769 +21,934 @@ const taskActivities = [
 ];
 
 describe('activity', () => {
-  eventActivities.concat(gateways).concat(taskActivities).forEach((activityType) => {
-    describe(activityType, () => {
-      let simpleDefinition, singleFlowDefinition;
-      before(async () => {
-        simpleDefinition = await SimpleDefinition(activityType);
-        singleFlowDefinition = await SingleFlowDefinition(activityType);
-      });
-
-      it('run() publish messages in the expected sequence', async () => {
-        const processContext = await testHelpers.context(simpleDefinition);
-        const activity = processContext.getActivityById('activity');
-
-        const messages = [], assertMessage = AssertMessage(processContext, messages);
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') {
-            return api.signal();
-          }
-          messages.push(message);
-        }, {noAck: true});
-
-        const completed = activity.waitFor('leave');
-        activity.activate();
-        activity.run();
-        await completed;
-
-        expect(activity).to.have.property('isRunning', false);
-
-        assertMessage('activity.enter');
-        assertMessage('activity.start');
-        assertMessage('activity.end');
-        assertMessage('activity.leave');
-      });
-
-      it('run() after run() resets messages', async () => {
-        const processContext = await testHelpers.context(simpleDefinition);
-        const activity = processContext.getActivityById('activity');
-
-        const messages = [], assertMessage = AssertMessage(processContext, messages);
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') {
-            return api.signal();
-          }
-          messages.push(message);
-        }, {noAck: true});
-
-        const start = activity.waitFor('start');
-        activity.run();
-
-        await start;
-
-        const leave = activity.waitFor('leave');
-        activity.run();
-
-        await leave;
-
-        assertMessage('activity.enter');
-        assertMessage('activity.start');
-        assertMessage('activity.enter');
-        assertMessage('activity.start');
-        assertMessage('activity.end');
-        assertMessage('activity.leave');
-      });
-
-      it('discard() on enter discards outbound', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
-        expect(activity.outbound.length).to.equal(2);
-
-        const messages = [], assertMessage = AssertMessage(context, messages, true);
-
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          messages.push(message);
-          assertApi(activity, message);
-        }, {noAck: true});
-
-        activity.broker.subscribeOnce('event', 'activity.enter', (_, message) => {
-          assertApi(activity, message).discard();
+  eventActivities
+    .concat(gateways)
+    .concat(taskActivities)
+    .forEach((activityType) => {
+      describe(activityType, () => {
+        let simpleDefinition, singleFlowDefinition;
+        before(async () => {
+          simpleDefinition = await SimpleDefinition(activityType);
+          singleFlowDefinition = await SingleFlowDefinition(activityType);
         });
 
-        const completed = activity.waitFor('leave');
-        activity.activate();
-        activity.run();
+        it('run() publish messages in the expected sequence', async () => {
+          const processContext = await testHelpers.context(simpleDefinition);
+          const activity = processContext.getActivityById('activity');
 
-        await completed;
+          const messages = [],
+            assertMessage = AssertMessage(processContext, messages);
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') {
+                return api.signal();
+              }
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
-        assertMessage('activity.enter');
-        assertMessage('activity.discard');
-        assertMessage('activity.leave');
+          const completed = activity.waitFor('leave');
+          activity.activate();
+          activity.run();
+          await completed;
 
-        expect(activity.outbound.every((flow) => flow.counters.discard)).to.be.ok;
-      });
+          expect(activity).to.have.property('isRunning', false);
 
-      it('discard() on start discards outbound', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
-
-        const messages = [], assertMessage = AssertMessage(context, messages, true);
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          messages.push(message);
-          assertApi(activity, message);
-        }, {noAck: true});
-
-        activity.broker.subscribeOnce('event', 'activity.start', (_, message) => {
-          assertApi(activity, message).discard();
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.end');
+          assertMessage('activity.leave');
         });
 
-        const completed = activity.waitFor('leave');
-        activity.activate();
-        activity.run();
-        await completed;
+        it('run() after run() resets messages', async () => {
+          const processContext = await testHelpers.context(simpleDefinition);
+          const activity = processContext.getActivityById('activity');
 
-        assertMessage('activity.enter');
-        assertMessage('activity.start');
-        assertMessage('activity.discard');
-        assertMessage('activity.leave');
+          const messages = [],
+            assertMessage = AssertMessage(processContext, messages);
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') {
+                return api.signal();
+              }
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
-        expect(activity.outbound.length).to.equal(2);
-        expect(activity.outbound.every((flow) => flow.counters.discard)).to.be.ok;
-      });
+          const start = activity.waitFor('start');
+          activity.run();
 
-      it('discard() on discard is ignored', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
+          await start;
 
-        const messages = [], assertMessage = AssertMessage(context, messages, true);
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true});
+          const leave = activity.waitFor('leave');
+          activity.run();
 
-        activity.broker.subscribeOnce('event', 'activity.start', (_, message) => {
-          assertApi(activity, message).discard();
-        }, {noAck: true});
+          await leave;
 
-        activity.broker.subscribeOnce('event', 'activity.discard', (_, message) => {
-          assertApi(activity, message).discard();
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.end');
+          assertMessage('activity.leave');
         });
 
-        const completed = activity.waitFor('leave');
-        activity.activate();
-        activity.run();
-        await completed;
+        it('discard() on enter discards outbound', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
+          expect(activity.outbound.length).to.equal(2);
 
-        assertMessage('activity.enter');
-        assertMessage('activity.start');
-        assertMessage('activity.discard');
-        assertMessage('activity.leave');
+          const messages = [],
+            assertMessage = AssertMessage(context, messages, true);
 
-        expect(activity.outbound.length).to.equal(2);
-        expect(activity.outbound.every((flow) => flow.counters.discard)).to.be.ok;
-      });
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              messages.push(message);
+              assertApi(activity, message);
+            },
+            { noAck: true },
+          );
 
-      it('discard() on end discards outbound', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
+          activity.broker.subscribeOnce('event', 'activity.enter', (_, message) => {
+            assertApi(activity, message).discard();
+          });
 
-        const messages = [], assertMessage = AssertMessage(context, messages, true);
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true});
+          const completed = activity.waitFor('leave');
+          activity.activate();
+          activity.run();
 
-        activity.broker.subscribeOnce('event', 'activity.end', (_, message) => {
-          assertApi(activity, message).discard();
-        }, {noAck: true});
+          await completed;
 
-        const completed = activity.waitFor('leave');
-        activity.activate();
-        activity.run();
-        await completed;
+          assertMessage('activity.enter');
+          assertMessage('activity.discard');
+          assertMessage('activity.leave');
 
-        assertMessage('activity.enter');
-        assertMessage('activity.start');
-        assertMessage('activity.end');
-        assertMessage('activity.discard');
-        assertMessage('activity.leave');
-
-        expect(activity.outbound.length).to.equal(2);
-        expect(activity.outbound.every((flow) => flow.counters.discard)).to.be.ok;
-      });
-
-      it('discard() on leave is ignored', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
-
-        const messages = [], assertMessage = AssertMessage(context, messages, true);
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true});
-
-        activity.broker.subscribeOnce('event', 'activity.leave', (routingKey, message) => {
-          assertApi(activity, message).discard();
-        }, {noAck: true});
-
-        const completed = activity.waitFor('leave');
-        activity.activate();
-        activity.run();
-        await completed;
-
-        expect(activity).to.have.property('isRunning', false);
-
-        assertMessage('activity.enter');
-        assertMessage('activity.start');
-        assertMessage('activity.end');
-        assertMessage('activity.leave');
-
-        expect(activity.outbound.length).to.equal(2);
-        expect(activity.outbound.every((flow) => flow.counters.discard)).to.not.be.ok;
-      });
-
-      it('stop() on enter stops execution', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
-
-        const messages = [];
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          messages.push(message);
-        }, {noAck: true});
-
-        activity.broker.subscribeTmp('event', 'activity.enter', () => {
-          activity.stop();
+          expect(activity.outbound.every((flow) => flow.counters.discard)).to.be.ok;
         });
 
-        const stopped = activity.waitFor('stop');
-        activity.activate();
-        activity.run();
-        await stopped;
+        it('discard() on start discards outbound', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
 
-        expect(activity).to.have.property('isRunning', false);
+          const messages = [],
+            assertMessage = AssertMessage(context, messages, true);
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              messages.push(message);
+              assertApi(activity, message);
+            },
+            { noAck: true },
+          );
 
-        const assertMessage = AssertMessage(context, messages, true);
-        assertMessage('activity.enter');
-        assertMessage('activity.stop');
-        expect(messages).to.have.length(0);
-      });
+          activity.broker.subscribeOnce('event', 'activity.start', (_, message) => {
+            assertApi(activity, message).discard();
+          });
 
-      it('stop() on start stops execution', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
+          const completed = activity.waitFor('leave');
+          activity.activate();
+          activity.run();
+          await completed;
 
-        const messages = [];
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          messages.push(message);
-        }, {noAck: true});
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.discard');
+          assertMessage('activity.leave');
 
-        activity.broker.subscribeTmp('event', 'activity.start', () => {
-          activity.stop();
+          expect(activity.outbound.length).to.equal(2);
+          expect(activity.outbound.every((flow) => flow.counters.discard)).to.be.ok;
         });
 
-        const stopped = activity.waitFor('stop');
-        activity.activate();
-        activity.run();
-        await stopped;
+        it('discard() on discard is ignored', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
 
-        expect(activity).to.have.property('isRunning', false);
+          const messages = [],
+            assertMessage = AssertMessage(context, messages, true);
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
-        const assertMessage = AssertMessage(context, messages, true);
-        assertMessage('activity.enter');
-        assertMessage('activity.start');
-        assertMessage('activity.stop');
-        expect(messages, 'no more messages').to.have.length(0);
-      });
+          activity.broker.subscribeOnce(
+            'event',
+            'activity.start',
+            (_, message) => {
+              assertApi(activity, message).discard();
+            },
+            { noAck: true },
+          );
 
-      it('resume stopped on enter continuous execution', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
+          activity.broker.subscribeOnce('event', 'activity.discard', (_, message) => {
+            assertApi(activity, message).discard();
+          });
 
-        const messages = [];
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true});
+          const completed = activity.waitFor('leave');
+          activity.activate();
+          activity.run();
+          await completed;
 
-        activity.broker.subscribeOnce('event', 'activity.enter', () => {
-          activity.stop();
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.discard');
+          assertMessage('activity.leave');
+
+          expect(activity.outbound.length).to.equal(2);
+          expect(activity.outbound.every((flow) => flow.counters.discard)).to.be.ok;
         });
 
-        const stopped = activity.waitFor('stop');
-        activity.run();
+        it('discard() on end discards outbound', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
 
-        await stopped;
+          const messages = [],
+            assertMessage = AssertMessage(context, messages, true);
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
-        const assertMessage = AssertMessage(context, messages, true);
-        assertMessage('activity.enter');
-        assertMessage('activity.stop');
-        expect(messages, 'no more messages').to.have.length(0);
+          activity.broker.subscribeOnce(
+            'event',
+            'activity.end',
+            (_, message) => {
+              assertApi(activity, message).discard();
+            },
+            { noAck: true },
+          );
 
-        const leave = activity.waitFor('leave');
-        activity.resume();
-        await leave;
+          const completed = activity.waitFor('leave');
+          activity.activate();
+          activity.run();
+          await completed;
 
-        assertMessage('activity.start');
-        assertMessage('activity.end');
-        assertMessage('activity.leave');
-        expect(messages, 'no more messages').to.have.length(0);
-      });
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.end');
+          assertMessage('activity.discard');
+          assertMessage('activity.leave');
 
-      it('resume recovered on enter continuous execution', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
-
-        const messages = [];
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true});
-
-        activity.broker.subscribeOnce('event', 'activity.enter', () => {
-          activity.stop();
+          expect(activity.outbound.length).to.equal(2);
+          expect(activity.outbound.every((flow) => flow.counters.discard)).to.be.ok;
         });
 
-        const stopped = activity.waitFor('stop');
-        activity.run();
+        it('discard() on leave is ignored', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
 
-        await stopped;
+          const messages = [],
+            assertMessage = AssertMessage(context, messages, true);
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
-        const state = activity.getState();
-        expect(activity).to.have.property('stopped', true);
-        expect(activity).to.have.property('isRunning', false);
-        expect(state).to.have.property('stopped', true);
+          activity.broker.subscribeOnce(
+            'event',
+            'activity.leave',
+            (routingKey, message) => {
+              assertApi(activity, message).discard();
+            },
+            { noAck: true },
+          );
 
-        const assertMessage = AssertMessage(context, messages, true);
-        assertMessage('activity.enter');
-        assertMessage('activity.stop');
-        expect(messages, 'no more messages').to.have.length(0);
+          const completed = activity.waitFor('leave');
+          activity.activate();
+          activity.run();
+          await completed;
 
-        activity.recover(state);
+          expect(activity).to.have.property('isRunning', false);
 
-        const leave = activity.waitFor('leave');
-        activity.resume();
-        await leave;
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.end');
+          assertMessage('activity.leave');
 
-        assertMessage('activity.start');
-        assertMessage('activity.end');
-        assertMessage('activity.leave');
-        expect(messages, 'no more messages').to.have.length(0);
-      });
-
-      it('resume recovered new instance on enter continuous execution', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        let activity = context.getActivityById('activity');
-
-        const messages = [];
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true});
-
-        activity.broker.subscribeOnce('event', 'activity.enter', () => {
-          activity.stop();
+          expect(activity.outbound.length).to.equal(2);
+          expect(activity.outbound.every((flow) => flow.counters.discard)).to.not.be.ok;
         });
 
-        const stopped = activity.waitFor('stop');
-        activity.run();
+        it('stop() on enter stops execution', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
 
-        await stopped;
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
-        const state = activity.getState();
-        expect(activity).to.have.property('stopped', true);
-        expect(activity).to.have.property('isRunning', false);
-        expect(state).to.have.property('stopped', true);
+          activity.broker.subscribeTmp('event', 'activity.enter', () => {
+            activity.stop();
+          });
 
-        const assertMessage = AssertMessage(context, messages, true);
-        assertMessage('activity.enter');
-        assertMessage('activity.stop');
-        expect(messages, 'no more messages').to.have.length(0);
+          const stopped = activity.waitFor('stop');
+          activity.activate();
+          activity.run();
+          await stopped;
 
-        activity = context.clone().getActivityById('activity');
+          expect(activity).to.have.property('isRunning', false);
 
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true});
-
-        activity.recover(state);
-
-        const leave = activity.waitFor('leave');
-        activity.resume();
-        await leave;
-
-        assertMessage('activity.start');
-        assertMessage('activity.end');
-        assertMessage('activity.leave');
-        expect(messages, 'no more messages').to.have.length(0);
-      });
-
-      it('resume stopped on start continuous execution', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
-
-        const messages = [];
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true});
-
-        activity.broker.subscribeTmp('event', 'activity.start', function stop() {
-          activity.broker.unsubscribe('activity.start', stop);
-          activity.stop();
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.enter');
+          assertMessage('activity.stop');
+          expect(messages).to.have.length(0);
         });
 
-        const stopped = activity.waitFor('stop');
-        activity.activate();
-        activity.run();
-        await stopped;
+        it('stop() on start stops execution', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
 
-        const assertMessage = AssertMessage(context, messages, true);
-        assertMessage('activity.enter');
-        assertMessage('activity.start');
-        assertMessage('activity.stop');
-        expect(messages, 'no more messages').to.have.length(0);
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
-        const left = activity.waitFor('leave');
+          activity.broker.subscribeTmp('event', 'activity.start', () => {
+            activity.stop();
+          });
 
-        activity.resume();
+          const stopped = activity.waitFor('stop');
+          activity.activate();
+          activity.run();
+          await stopped;
 
-        await left;
+          expect(activity).to.have.property('isRunning', false);
 
-        assertMessage('activity.end');
-        assertMessage('activity.leave');
-        expect(messages, 'no more messages').to.have.length(0);
-      });
-
-      it('resume recovered on start continuous execution', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
-
-        const messages = [];
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true});
-
-        activity.broker.subscribeTmp('event', 'activity.start', function stop() {
-          activity.broker.unsubscribe('activity.start', stop);
-          activity.stop();
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.stop');
+          expect(messages, 'no more messages').to.have.length(0);
         });
 
-        const stopped = activity.waitFor('stop');
-        activity.activate();
-        activity.run();
-        await stopped;
+        it('resume stopped on enter continuous execution', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
 
-        const state = activity.getState();
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
-        const assertMessage = AssertMessage(context, messages, true);
-        assertMessage('activity.enter');
-        assertMessage('activity.start');
-        assertMessage('activity.stop');
-        expect(messages, 'no more messages').to.have.length(0);
+          activity.broker.subscribeOnce('event', 'activity.enter', () => {
+            activity.stop();
+          });
 
-        const left = activity.waitFor('leave');
+          const stopped = activity.waitFor('stop');
+          activity.run();
 
-        activity.recover(state);
-        activity.resume();
+          await stopped;
 
-        await left;
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.enter');
+          assertMessage('activity.stop');
+          expect(messages, 'no more messages').to.have.length(0);
 
-        assertMessage('activity.end');
-        assertMessage('activity.leave');
-        expect(messages, 'no more messages').to.have.length(0);
-      });
+          const leave = activity.waitFor('leave');
+          activity.resume();
+          await leave;
 
-      it('resume recovered new instance on start continuous execution', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        let activity = context.getActivityById('activity');
-
-        const messages = [];
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true});
-
-        activity.broker.subscribeTmp('event', 'activity.start', function stop() {
-          activity.broker.unsubscribe('activity.start', stop);
-          activity.stop();
+          assertMessage('activity.start');
+          assertMessage('activity.end');
+          assertMessage('activity.leave');
+          expect(messages, 'no more messages').to.have.length(0);
         });
 
-        const stopped = activity.waitFor('stop');
-        activity.activate();
-        activity.run();
-        await stopped;
+        it('resume recovered on enter continuous execution', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
 
-        const state = activity.getState();
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
-        const assertMessage = AssertMessage(context, messages, true);
-        assertMessage('activity.enter');
-        assertMessage('activity.start');
-        assertMessage('activity.stop');
-        expect(messages, 'no more messages').to.have.length(0);
+          activity.broker.subscribeOnce('event', 'activity.enter', () => {
+            activity.stop();
+          });
 
-        activity = context.clone().getActivityById('activity');
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true});
+          const stopped = activity.waitFor('stop');
+          activity.run();
 
-        const left = activity.waitFor('leave');
-        activity.recover(state);
-        activity.resume();
+          await stopped;
 
-        await left;
+          const state = activity.getState();
+          expect(activity).to.have.property('stopped', true);
+          expect(activity).to.have.property('isRunning', false);
+          expect(state).to.have.property('stopped', true);
 
-        assertMessage('activity.end');
-        assertMessage('activity.leave');
-        expect(messages, 'no more messages').to.have.length(0);
-      });
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.enter');
+          assertMessage('activity.stop');
+          expect(messages, 'no more messages').to.have.length(0);
 
-      it('resume stopped on end leaves activity', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
+          activity.recover(state);
 
-        const messages = [];
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true, importance: 10});
+          const leave = activity.waitFor('leave');
+          activity.resume();
+          await leave;
 
-        activity.broker.subscribeOnce('event', 'activity.end', () => {
-          activity.stop();
-        }, {importance: 1});
-
-        const stopped = activity.waitFor('stop');
-        activity.activate();
-        activity.run();
-        await stopped;
-
-        const assertMessage = AssertMessage(context, messages, true);
-        assertMessage('activity.enter');
-        assertMessage('activity.start');
-        assertMessage('activity.end');
-        assertMessage('activity.stop');
-        expect(messages, 'no more messages').to.have.length(0);
-
-        const left = activity.waitFor('leave');
-
-        activity.resume();
-
-        await left;
-
-        assertMessage('activity.leave');
-
-        expect(messages, 'no more messages').to.have.length(0);
-      });
-
-      it('resume stopped on end leaves activity', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
-
-        const messages = [];
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true, importance: 10});
-
-        activity.broker.subscribeOnce('event', 'activity.end', () => {
-          activity.stop();
-        }, {importance: 1});
-
-        const stopped = activity.waitFor('stop');
-        activity.activate();
-        activity.run();
-        await stopped;
-
-        const assertMessage = AssertMessage(context, messages, true);
-        assertMessage('activity.enter');
-        assertMessage('activity.start');
-        assertMessage('activity.end');
-        assertMessage('activity.stop');
-        expect(messages, 'no more messages').to.have.length(0);
-
-        const left = activity.waitFor('leave');
-
-        activity.resume();
-
-        await left;
-
-        assertMessage('activity.leave');
-
-        expect(messages, 'no more messages').to.have.length(0);
-      });
-
-      it('resume recovered on end leaves activity', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
-
-        const messages = [];
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true, importance: 10});
-
-        activity.broker.subscribeOnce('event', 'activity.end', () => {
-          activity.stop();
-        }, {importance: 1});
-
-        const stopped = activity.waitFor('stop');
-        activity.activate();
-        activity.run();
-        await stopped;
-
-        const state = activity.getState();
-
-        const assertMessage = AssertMessage(context, messages, true);
-        assertMessage('activity.enter');
-        assertMessage('activity.start');
-        assertMessage('activity.end');
-        assertMessage('activity.stop');
-        expect(messages, 'no more messages').to.have.length(0);
-
-        const left = activity.waitFor('leave');
-
-        activity.recover(state);
-        activity.resume();
-
-        await left;
-
-        assertMessage('activity.leave');
-
-        expect(messages, 'no more messages').to.have.length(0);
-      });
-
-      it('resume recovered new instance on end leaves activity', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        let activity = context.getActivityById('activity');
-
-        const messages = [];
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true, importance: 10});
-
-        activity.broker.subscribeOnce('event', 'activity.end', () => {
-          activity.stop();
-        }, {importance: 1});
-
-        const stopped = activity.waitFor('stop');
-        activity.activate();
-        activity.run();
-        await stopped;
-
-        const state = activity.getState();
-
-        const assertMessage = AssertMessage(context, messages, true);
-        assertMessage('activity.enter');
-        assertMessage('activity.start');
-        assertMessage('activity.end');
-        assertMessage('activity.stop');
-        expect(messages, 'no more messages').to.have.length(0);
-
-        activity = context.clone().getActivityById('activity');
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          const api = assertApi(activity, message);
-          if (routingKey === 'activity.wait') return api.signal();
-          messages.push(message);
-        }, {noAck: true, importance: 10});
-
-        const left = activity.waitFor('leave');
-
-        activity.recover(state);
-        activity.resume();
-
-        await left;
-
-        assertMessage('activity.leave');
-
-        expect(messages, 'no more messages').to.have.length(0);
-      });
-
-      it('resume stopped while discarded leaves activity', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
-
-        const messages = [];
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          messages.push(message);
-          if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
-        }, {noAck: true});
-
-        activity.broker.subscribeOnce('event', 'activity.discard', () => {
-          activity.stop();
+          assertMessage('activity.start');
+          assertMessage('activity.end');
+          assertMessage('activity.leave');
+          expect(messages, 'no more messages').to.have.length(0);
         });
 
-        const stopped = activity.waitFor('stop');
-        activity.activate();
-        activity.inbound[0].discard();
+        it('resume recovered new instance on enter continuous execution', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          let activity = context.getActivityById('activity');
 
-        await stopped;
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
-        const assertMessage = AssertMessage(context, messages, true);
-        assertMessage('activity.discard');
-        assertMessage('activity.stop');
-        expect(messages, 'no more messages').to.have.length(0);
+          activity.broker.subscribeOnce('event', 'activity.enter', () => {
+            activity.stop();
+          });
 
-        const left = activity.waitFor('leave');
+          const stopped = activity.waitFor('stop');
+          activity.run();
 
-        activity.resume();
+          await stopped;
 
-        await left;
+          const state = activity.getState();
+          expect(activity).to.have.property('stopped', true);
+          expect(activity).to.have.property('isRunning', false);
+          expect(state).to.have.property('stopped', true);
 
-        assertMessage('activity.leave');
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.enter');
+          assertMessage('activity.stop');
+          expect(messages, 'no more messages').to.have.length(0);
 
-        expect(messages, 'no more messages').to.have.length(0);
-      });
+          activity = context.clone().getActivityById('activity');
 
-      it('resume recovered while discarded leaves activity', async () => {
-        const context = await testHelpers.context(singleFlowDefinition);
-        const activity = context.getActivityById('activity');
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
-        const messages = [];
-        activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-          messages.push(message);
-          if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
-        }, {noAck: true});
+          activity.recover(state);
 
-        activity.broker.subscribeOnce('event', 'activity.discard', () => {
-          activity.stop();
+          const leave = activity.waitFor('leave');
+          activity.resume();
+          await leave;
+
+          assertMessage('activity.start');
+          assertMessage('activity.end');
+          assertMessage('activity.leave');
+          expect(messages, 'no more messages').to.have.length(0);
         });
 
-        const stopped = activity.waitFor('stop');
-        activity.activate();
-        activity.inbound[0].discard();
+        it('resume stopped on start continuous execution', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
 
-        await stopped;
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
-        const state = activity.getState();
+          activity.broker.subscribeTmp('event', 'activity.start', function stop() {
+            activity.broker.unsubscribe('activity.start', stop);
+            activity.stop();
+          });
 
-        const assertMessage = AssertMessage(context, messages, true);
-        assertMessage('activity.discard');
-        assertMessage('activity.stop');
-        expect(messages, 'no more messages').to.have.length(0);
+          const stopped = activity.waitFor('stop');
+          activity.activate();
+          activity.run();
+          await stopped;
 
-        const left = activity.waitFor('leave');
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.stop');
+          expect(messages, 'no more messages').to.have.length(0);
 
-        activity.recover(state);
-        activity.resume();
+          const left = activity.waitFor('leave');
 
-        await left;
+          activity.resume();
 
-        assertMessage('activity.leave');
+          await left;
 
-        expect(messages, 'no more messages').to.have.length(0);
+          assertMessage('activity.end');
+          assertMessage('activity.leave');
+          expect(messages, 'no more messages').to.have.length(0);
+        });
+
+        it('resume recovered on start continuous execution', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
+
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true },
+          );
+
+          activity.broker.subscribeTmp('event', 'activity.start', function stop() {
+            activity.broker.unsubscribe('activity.start', stop);
+            activity.stop();
+          });
+
+          const stopped = activity.waitFor('stop');
+          activity.activate();
+          activity.run();
+          await stopped;
+
+          const state = activity.getState();
+
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.stop');
+          expect(messages, 'no more messages').to.have.length(0);
+
+          const left = activity.waitFor('leave');
+
+          activity.recover(state);
+          activity.resume();
+
+          await left;
+
+          assertMessage('activity.end');
+          assertMessage('activity.leave');
+          expect(messages, 'no more messages').to.have.length(0);
+        });
+
+        it('resume recovered new instance on start continuous execution', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          let activity = context.getActivityById('activity');
+
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true },
+          );
+
+          activity.broker.subscribeTmp('event', 'activity.start', function stop() {
+            activity.broker.unsubscribe('activity.start', stop);
+            activity.stop();
+          });
+
+          const stopped = activity.waitFor('stop');
+          activity.activate();
+          activity.run();
+          await stopped;
+
+          const state = activity.getState();
+
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.stop');
+          expect(messages, 'no more messages').to.have.length(0);
+
+          activity = context.clone().getActivityById('activity');
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true },
+          );
+
+          const left = activity.waitFor('leave');
+          activity.recover(state);
+          activity.resume();
+
+          await left;
+
+          assertMessage('activity.end');
+          assertMessage('activity.leave');
+          expect(messages, 'no more messages').to.have.length(0);
+        });
+
+        it('resume stopped on end leaves activity', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
+
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true, importance: 10 },
+          );
+
+          activity.broker.subscribeOnce(
+            'event',
+            'activity.end',
+            () => {
+              activity.stop();
+            },
+            { importance: 1 },
+          );
+
+          const stopped = activity.waitFor('stop');
+          activity.activate();
+          activity.run();
+          await stopped;
+
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.end');
+          assertMessage('activity.stop');
+          expect(messages, 'no more messages').to.have.length(0);
+
+          const left = activity.waitFor('leave');
+
+          activity.resume();
+
+          await left;
+
+          assertMessage('activity.leave');
+
+          expect(messages, 'no more messages').to.have.length(0);
+        });
+
+        it('resume stopped on end leaves activity', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
+
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true, importance: 10 },
+          );
+
+          activity.broker.subscribeOnce(
+            'event',
+            'activity.end',
+            () => {
+              activity.stop();
+            },
+            { importance: 1 },
+          );
+
+          const stopped = activity.waitFor('stop');
+          activity.activate();
+          activity.run();
+          await stopped;
+
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.end');
+          assertMessage('activity.stop');
+          expect(messages, 'no more messages').to.have.length(0);
+
+          const left = activity.waitFor('leave');
+
+          activity.resume();
+
+          await left;
+
+          assertMessage('activity.leave');
+
+          expect(messages, 'no more messages').to.have.length(0);
+        });
+
+        it('resume recovered on end leaves activity', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
+
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true, importance: 10 },
+          );
+
+          activity.broker.subscribeOnce(
+            'event',
+            'activity.end',
+            () => {
+              activity.stop();
+            },
+            { importance: 1 },
+          );
+
+          const stopped = activity.waitFor('stop');
+          activity.activate();
+          activity.run();
+          await stopped;
+
+          const state = activity.getState();
+
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.end');
+          assertMessage('activity.stop');
+          expect(messages, 'no more messages').to.have.length(0);
+
+          const left = activity.waitFor('leave');
+
+          activity.recover(state);
+          activity.resume();
+
+          await left;
+
+          assertMessage('activity.leave');
+
+          expect(messages, 'no more messages').to.have.length(0);
+        });
+
+        it('resume recovered new instance on end leaves activity', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          let activity = context.getActivityById('activity');
+
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true, importance: 10 },
+          );
+
+          activity.broker.subscribeOnce(
+            'event',
+            'activity.end',
+            () => {
+              activity.stop();
+            },
+            { importance: 1 },
+          );
+
+          const stopped = activity.waitFor('stop');
+          activity.activate();
+          activity.run();
+          await stopped;
+
+          const state = activity.getState();
+
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.end');
+          assertMessage('activity.stop');
+          expect(messages, 'no more messages').to.have.length(0);
+
+          activity = context.clone().getActivityById('activity');
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true, importance: 10 },
+          );
+
+          const left = activity.waitFor('leave');
+
+          activity.recover(state);
+          activity.resume();
+
+          await left;
+
+          assertMessage('activity.leave');
+
+          expect(messages, 'no more messages').to.have.length(0);
+        });
+
+        it('resume stopped while discarded leaves activity', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
+
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              messages.push(message);
+              if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
+            },
+            { noAck: true },
+          );
+
+          activity.broker.subscribeOnce('event', 'activity.discard', () => {
+            activity.stop();
+          });
+
+          const stopped = activity.waitFor('stop');
+          activity.activate();
+          activity.inbound[0].discard();
+
+          await stopped;
+
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.discard');
+          assertMessage('activity.stop');
+          expect(messages, 'no more messages').to.have.length(0);
+
+          const left = activity.waitFor('leave');
+
+          activity.resume();
+
+          await left;
+
+          assertMessage('activity.leave');
+
+          expect(messages, 'no more messages').to.have.length(0);
+        });
+
+        it('resume recovered while discarded leaves activity', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          const activity = context.getActivityById('activity');
+
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              messages.push(message);
+              if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
+            },
+            { noAck: true },
+          );
+
+          activity.broker.subscribeOnce('event', 'activity.discard', () => {
+            activity.stop();
+          });
+
+          const stopped = activity.waitFor('stop');
+          activity.activate();
+          activity.inbound[0].discard();
+
+          await stopped;
+
+          const state = activity.getState();
+
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.discard');
+          assertMessage('activity.stop');
+          expect(messages, 'no more messages').to.have.length(0);
+
+          const left = activity.waitFor('leave');
+
+          activity.recover(state);
+          activity.resume();
+
+          await left;
+
+          assertMessage('activity.leave');
+
+          expect(messages, 'no more messages').to.have.length(0);
+        });
       });
     });
-  });
 
   describe('on single inbound', () => {
     taskActivities.concat(gateways).forEach((activityType) => {
@@ -804,10 +962,15 @@ describe('activity', () => {
 
         it('executes on inbound taken', async () => {
           const messages = [];
-          activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-            if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
-            messages.push(message);
-          }, {noAck: true});
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
           const completed = activity.waitFor('leave');
 
@@ -826,10 +989,15 @@ describe('activity', () => {
 
         it('discards if inbound discarded', async () => {
           const messages = [];
-          activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-            if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
-            messages.push(message);
-          }, {noAck: true});
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
           const completed = activity.waitFor('leave');
 
@@ -848,58 +1016,71 @@ describe('activity', () => {
   });
 
   describe('on multiple inbound', () => {
-    eventActivities.concat(taskActivities).concat(decisionGateways).forEach((activityType) => {
-      describe(activityType, () => {
-        let activity, context;
-        beforeEach(async () => {
-          const source = await MultipleFlowDefinition(activityType);
-          context = await testHelpers.context(source);
-          activity = context.getActivityById('activity');
-        });
+    eventActivities
+      .concat(taskActivities)
+      .concat(decisionGateways)
+      .forEach((activityType) => {
+        describe(activityType, () => {
+          let activity, context;
+          beforeEach(async () => {
+            const source = await MultipleFlowDefinition(activityType);
+            context = await testHelpers.context(source);
+            activity = context.getActivityById('activity');
+          });
 
-        it('executes on first inbound taken', async () => {
-          const messages = [];
-          activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-            if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
-            messages.push(message);
-          }, {noAck: true});
+          it('executes on first inbound taken', async () => {
+            const messages = [];
+            activity.broker.subscribeTmp(
+              'event',
+              'activity.*',
+              (routingKey, message) => {
+                if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
+                messages.push(message);
+              },
+              { noAck: true },
+            );
 
-          const completed = activity.waitFor('leave');
+            const completed = activity.waitFor('leave');
 
-          activity.activate();
-          activity.inbound[0].take();
+            activity.activate();
+            activity.inbound[0].take();
 
-          await completed;
+            await completed;
 
-          const assertMessage = AssertMessage(context, messages, true);
-          assertMessage('activity.enter');
-          assertMessage('activity.start');
-          assertMessage('activity.end');
-          assertMessage('activity.leave');
-          expect(messages, 'no more messages').to.have.length(0);
-        });
+            const assertMessage = AssertMessage(context, messages, true);
+            assertMessage('activity.enter');
+            assertMessage('activity.start');
+            assertMessage('activity.end');
+            assertMessage('activity.leave');
+            expect(messages, 'no more messages').to.have.length(0);
+          });
 
-        it('discards if first inbound discarded', async () => {
-          const messages = [];
-          activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-            messages.push(message);
-            if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
-          }, {noAck: true});
+          it('discards if first inbound discarded', async () => {
+            const messages = [];
+            activity.broker.subscribeTmp(
+              'event',
+              'activity.*',
+              (routingKey, message) => {
+                messages.push(message);
+                if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
+              },
+              { noAck: true },
+            );
 
-          const completed = activity.waitFor('leave');
+            const completed = activity.waitFor('leave');
 
-          activity.activate();
-          activity.inbound[0].discard();
+            activity.activate();
+            activity.inbound[0].discard();
 
-          await completed;
+            await completed;
 
-          const assertMessage = AssertMessage(context, messages, true);
-          assertMessage('activity.discard');
-          assertMessage('activity.leave');
-          expect(messages, 'no more messages').to.have.length(0);
+            const assertMessage = AssertMessage(context, messages, true);
+            assertMessage('activity.discard');
+            assertMessage('activity.leave');
+            expect(messages, 'no more messages').to.have.length(0);
+          });
         });
       });
-    });
   });
 
   describe('multi instance loop', () => {
@@ -916,20 +1097,30 @@ describe('activity', () => {
           const activity = context.getActivityById('activity');
 
           const messages = [];
-          activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-            if (routingKey !== 'activity.wait') return messages.push(message);
-            assertApi(activity, message).signal();
-          }, {noAck: true});
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              if (routingKey !== 'activity.wait') return messages.push(message);
+              assertApi(activity, message).signal();
+            },
+            { noAck: true },
+          );
 
           let executeCount = 0;
-          activity.broker.subscribeTmp('execution', 'execute.#', (routingKey, message) => {
-            executeCount++;
-            if (executeCount > 20) throw new Error(`Circuitbreaker ${routingKey}`);
+          activity.broker.subscribeTmp(
+            'execution',
+            'execute.#',
+            (routingKey, message) => {
+              executeCount++;
+              if (executeCount > 20) throw new Error(`Circuitbreaker ${routingKey}`);
 
-            if (['execute.wait', 'execute.signal'].includes(routingKey)) return;
+              if (['execute.wait', 'execute.signal'].includes(routingKey)) return;
 
-            messages.push(message);
-          }, {noAck: true});
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
           const completed = activity.waitFor('leave');
           activity.activate();
@@ -967,16 +1158,26 @@ describe('activity', () => {
           const activity = context.getActivityById('activity');
 
           const messages = [];
-          activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-            assertApi(activity, message);
-            if (routingKey !== 'activity.wait') return messages.push(message);
-            assertApi(activity, message).signal();
-          }, {noAck: true});
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              assertApi(activity, message);
+              if (routingKey !== 'activity.wait') return messages.push(message);
+              assertApi(activity, message).signal();
+            },
+            { noAck: true },
+          );
 
-          activity.broker.subscribeTmp('execution', 'execute.#', (routingKey, message) => {
-            assertApi(activity, message);
-            messages.push(message);
-          }, {noAck: true});
+          activity.broker.subscribeTmp(
+            'execution',
+            'execute.#',
+            (routingKey, message) => {
+              assertApi(activity, message);
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
           const completed = activity.waitFor('leave');
           activity.activate();
@@ -990,20 +1191,30 @@ describe('activity', () => {
           const activity = context.getActivityById('activity');
 
           const messages = [];
-          activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-            if (routingKey !== 'activity.wait') return messages.push(message);
-            assertApi(activity, message).signal();
-          }, {noAck: true});
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              if (routingKey !== 'activity.wait') return messages.push(message);
+              assertApi(activity, message).signal();
+            },
+            { noAck: true },
+          );
 
           let executeCount = 0;
-          activity.broker.subscribeTmp('execution', 'execute.#', (routingKey, message) => {
-            if (['execute.wait', 'execute.signal'].includes(routingKey)) return;
+          activity.broker.subscribeTmp(
+            'execution',
+            'execute.#',
+            (routingKey, message) => {
+              if (['execute.wait', 'execute.signal'].includes(routingKey)) return;
 
-            executeCount++;
-            if (executeCount > 20) throw new Error(`Circuitbreaker ${routingKey}`);
+              executeCount++;
+              if (executeCount > 20) throw new Error(`Circuitbreaker ${routingKey}`);
 
-            messages.push(message);
-          }, {noAck: true});
+              messages.push(message);
+            },
+            { noAck: true },
+          );
 
           const completed = activity.waitFor('leave');
           activity.activate();
@@ -1027,16 +1238,21 @@ describe('activity', () => {
           const activity = context.getActivityById('activity');
 
           const messages = [];
-          activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-            const api = assertApi(activity, message);
-            if (routingKey === 'activity.start') {
-              messages.push(message);
-              return api.discard();
-            }
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.start') {
+                messages.push(message);
+                return api.discard();
+              }
 
-            if (routingKey !== 'activity.wait') return messages.push(message);
-            api.signal();
-          }, {noAck: true});
+              if (routingKey !== 'activity.wait') return messages.push(message);
+              api.signal();
+            },
+            { noAck: true },
+          );
 
           const completed = activity.waitFor('leave');
           activity.activate();
@@ -1072,22 +1288,37 @@ describe('activity', () => {
             const activity = context.getActivityById('activity');
 
             const messages = [];
-            activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-              if (routingKey !== 'activity.wait') return messages.push(message);
-              assertApi(activity, message).signal();
-            }, {noAck: true});
+            activity.broker.subscribeTmp(
+              'event',
+              'activity.*',
+              (routingKey, message) => {
+                if (routingKey !== 'activity.wait') return messages.push(message);
+                assertApi(activity, message).signal();
+              },
+              { noAck: true },
+            );
 
             let executeCount = 0;
-            activity.broker.subscribeTmp('execution', 'execute.#', (routingKey, message) => {
-              executeCount++;
-              if (executeCount > 20) throw new Error(`Circuitbreaker ${routingKey}`);
-              if (['execute.wait', 'execute.signal'].includes(routingKey)) return;
-              messages.push(message);
-            }, {noAck: true});
+            activity.broker.subscribeTmp(
+              'execution',
+              'execute.#',
+              (routingKey, message) => {
+                executeCount++;
+                if (executeCount > 20) throw new Error(`Circuitbreaker ${routingKey}`);
+                if (['execute.wait', 'execute.signal'].includes(routingKey)) return;
+                messages.push(message);
+              },
+              { noAck: true },
+            );
 
-            activity.broker.subscribeOnce('event', 'activity.start', () => {
-              activity.stop();
-            }, {noAck: true});
+            activity.broker.subscribeOnce(
+              'event',
+              'activity.start',
+              () => {
+                activity.stop();
+              },
+              { noAck: true },
+            );
 
             const stopped = activity.waitFor('stop');
             activity.activate();
@@ -1119,22 +1350,37 @@ describe('activity', () => {
             const activity = context.getActivityById('activity');
 
             const messages = [];
-            activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-              if (routingKey !== 'activity.wait') return messages.push(message);
-              assertApi(activity, message).signal();
-            }, {noAck: true});
+            activity.broker.subscribeTmp(
+              'event',
+              'activity.*',
+              (routingKey, message) => {
+                if (routingKey !== 'activity.wait') return messages.push(message);
+                assertApi(activity, message).signal();
+              },
+              { noAck: true },
+            );
 
             let executeCount = 0;
-            activity.broker.subscribeTmp('execution', 'execute.#', (routingKey, message) => {
-              executeCount++;
-              if (executeCount > 20) throw new Error(`Circuitbreaker ${routingKey}`);
-              if (['execute.wait', 'execute.signal'].includes(routingKey)) return;
-              messages.push(message);
-            }, {noAck: true});
+            activity.broker.subscribeTmp(
+              'execution',
+              'execute.#',
+              (routingKey, message) => {
+                executeCount++;
+                if (executeCount > 20) throw new Error(`Circuitbreaker ${routingKey}`);
+                if (['execute.wait', 'execute.signal'].includes(routingKey)) return;
+                messages.push(message);
+              },
+              { noAck: true },
+            );
 
-            activity.broker.subscribeOnce('event', 'activity.start', () => {
-              activity.stop();
-            }, {noAck: true});
+            activity.broker.subscribeOnce(
+              'event',
+              'activity.start',
+              () => {
+                activity.stop();
+              },
+              { noAck: true },
+            );
 
             const stopped = activity.waitFor('stop');
             activity.activate();
@@ -1169,14 +1415,19 @@ describe('activity', () => {
             let activity = context.getActivityById('activity');
 
             const messages = [];
-            activity.broker.subscribeTmp('event', 'activity.*', onActivityEvent, {noAck: true});
+            activity.broker.subscribeTmp('event', 'activity.*', onActivityEvent, { noAck: true });
 
             let executeCount = 0;
-            activity.broker.subscribeTmp('execution', 'execute.#', onExecuteMsg, {noAck: true});
+            activity.broker.subscribeTmp('execution', 'execute.#', onExecuteMsg, { noAck: true });
 
-            activity.broker.subscribeOnce('event', 'activity.start', () => {
-              activity.stop();
-            }, {noAck: true});
+            activity.broker.subscribeOnce(
+              'event',
+              'activity.start',
+              () => {
+                activity.stop();
+              },
+              { noAck: true },
+            );
 
             const stopped = activity.waitFor('stop');
             activity.activate();
@@ -1193,8 +1444,8 @@ describe('activity', () => {
             expect(messages).to.have.length(0);
 
             activity = context.clone().getActivityById('activity');
-            activity.broker.subscribeTmp('event', 'activity.*', onActivityEvent, {noAck: true});
-            activity.broker.subscribeTmp('execution', 'execute.#', onExecuteMsg, {noAck: true});
+            activity.broker.subscribeTmp('event', 'activity.*', onActivityEvent, { noAck: true });
+            activity.broker.subscribeTmp('execution', 'execute.#', onExecuteMsg, { noAck: true });
             const left = activity.waitFor('leave');
 
             activity.recover(state);
@@ -1226,28 +1477,43 @@ describe('activity', () => {
             const activity = context.getActivityById('activity');
 
             const messages = [];
-            activity.broker.subscribeTmp('event', 'activity.*', (routingKey, message) => {
-              if (routingKey === 'activity.wait') {
-                const api = assertApi(activity, message);
-                return api.signal();
-              }
+            activity.broker.subscribeTmp(
+              'event',
+              'activity.*',
+              (routingKey, message) => {
+                if (routingKey === 'activity.wait') {
+                  const api = assertApi(activity, message);
+                  return api.signal();
+                }
 
-              messages.push(message);
-            }, {noAck: true});
+                messages.push(message);
+              },
+              { noAck: true },
+            );
 
             let executeCount = 0;
-            activity.broker.subscribeTmp('execution', 'execute.#', (routingKey, message) => {
-              executeCount++;
-              if (executeCount > 20) throw new Error(`Circuitbreaker ${routingKey}`);
-              if (['execute.wait', 'execute.signal'].includes(routingKey)) return;
-              messages.push(message);
-            }, {noAck: true});
+            activity.broker.subscribeTmp(
+              'execution',
+              'execute.#',
+              (routingKey, message) => {
+                executeCount++;
+                if (executeCount > 20) throw new Error(`Circuitbreaker ${routingKey}`);
+                if (['execute.wait', 'execute.signal'].includes(routingKey)) return;
+                messages.push(message);
+              },
+              { noAck: true },
+            );
 
             let state;
-            activity.broker.subscribeOnce('event', 'activity.end', () => {
-              activity.stop();
-              state = activity.getState();
-            }, {noAck: true});
+            activity.broker.subscribeOnce(
+              'event',
+              'activity.end',
+              () => {
+                activity.stop();
+                state = activity.getState();
+              },
+              { noAck: true },
+            );
 
             const stopped = activity.waitFor('stop');
             activity.activate();
@@ -1288,12 +1554,12 @@ async function SimpleDefinition(activityType) {
   <definitions id="task-definitions" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
   </definitions>`;
 
-  const {definitions} = await fromXML(source);
+  const { definitions } = await fromXML(source);
   const dataObject = moddle.create('bpmn:DataObject', { id: 'myData' });
   const dataObjectRef = moddle.create('bpmn:DataObjectReference', { id: 'myDataRef', dataObjectRef: dataObject });
 
-  const activityInput = moddle.create('bpmn:DataInput', {id: 'activityInput'});
-  const activityOutput = moddle.create('bpmn:DataOutput', {id: 'activityOutput'});
+  const activityInput = moddle.create('bpmn:DataInput', { id: 'activityInput' });
+  const activityOutput = moddle.create('bpmn:DataOutput', { id: 'activityOutput' });
 
   const inputRef = moddle.create('bpmn:DataInputAssociation', {
     id: 'dataInputAssociation',
@@ -1333,21 +1599,21 @@ async function SingleFlowDefinition(activityType) {
   <bpmn2:definitions id="task-definitions" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
   </bpmn2:definitions>`;
 
-  const {definitions} = await fromXML(source);
+  const { definitions } = await fromXML(source);
 
   const flowElements = [
-    moddle.create('bpmn:StartEvent', {id: 'start'}),
+    moddle.create('bpmn:StartEvent', { id: 'start' }),
     moddle.create(activityType, { id: 'activity' }),
-    moddle.create('bpmn:EndEvent', {id: 'end1'}),
-    moddle.create('bpmn:EndEvent', {id: 'end2'}),
+    moddle.create('bpmn:EndEvent', { id: 'end1' }),
+    moddle.create('bpmn:EndEvent', { id: 'end2' }),
   ];
 
   const [start, activity, end1, end2] = flowElements;
 
   const flows = [
-    moddle.create('bpmn:SequenceFlow', {id: 'flow1', sourceRef: start, targetRef: activity}),
-    moddle.create('bpmn:SequenceFlow', {id: 'flow2', sourceRef: activity, targetRef: end1}),
-    moddle.create('bpmn:SequenceFlow', {id: 'flow3', sourceRef: activity, targetRef: end2}),
+    moddle.create('bpmn:SequenceFlow', { id: 'flow1', sourceRef: start, targetRef: activity }),
+    moddle.create('bpmn:SequenceFlow', { id: 'flow2', sourceRef: activity, targetRef: end1 }),
+    moddle.create('bpmn:SequenceFlow', { id: 'flow3', sourceRef: activity, targetRef: end2 }),
   ];
   const [, flow2, flow3] = flows;
 
@@ -1376,24 +1642,24 @@ async function MultipleFlowDefinition(activityType) {
   <bpmn2:definitions id="task-definitions" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
   </bpmn2:definitions>`;
 
-  const {definitions} = await fromXML(source);
+  const { definitions } = await fromXML(source);
 
   const flowElements = [
-    moddle.create('bpmn:StartEvent', {id: 'start'}),
-    moddle.create('bpmn:ExclusiveGateway', {id: 'decision'}),
+    moddle.create('bpmn:StartEvent', { id: 'start' }),
+    moddle.create('bpmn:ExclusiveGateway', { id: 'decision' }),
     moddle.create(activityType, { id: 'activity' }),
-    moddle.create('bpmn:EndEvent', {id: 'end1'}),
-    moddle.create('bpmn:EndEvent', {id: 'end2'}),
+    moddle.create('bpmn:EndEvent', { id: 'end1' }),
+    moddle.create('bpmn:EndEvent', { id: 'end2' }),
   ];
 
   const [start, decision, activity, end1, end2] = flowElements;
 
   const flows = [
-    moddle.create('bpmn:SequenceFlow', {id: 'flow1', sourceRef: start, targetRef: decision}),
-    moddle.create('bpmn:SequenceFlow', {id: 'flow2', sourceRef: decision, targetRef: activity}),
-    moddle.create('bpmn:SequenceFlow', {id: 'flow3', sourceRef: decision, targetRef: activity}),
-    moddle.create('bpmn:SequenceFlow', {id: 'flow4', sourceRef: activity, targetRef: end1}),
-    moddle.create('bpmn:SequenceFlow', {id: 'flow5', sourceRef: activity, targetRef: end2}),
+    moddle.create('bpmn:SequenceFlow', { id: 'flow1', sourceRef: start, targetRef: decision }),
+    moddle.create('bpmn:SequenceFlow', { id: 'flow2', sourceRef: decision, targetRef: activity }),
+    moddle.create('bpmn:SequenceFlow', { id: 'flow3', sourceRef: decision, targetRef: activity }),
+    moddle.create('bpmn:SequenceFlow', { id: 'flow4', sourceRef: activity, targetRef: end1 }),
+    moddle.create('bpmn:SequenceFlow', { id: 'flow5', sourceRef: activity, targetRef: end2 }),
   ];
   const [, flow2, flow3, flow4, flow5] = flows;
 
@@ -1428,7 +1694,7 @@ async function LoopDefinition(activityType, isSequential) {
   <bpmn2:definitions id="task-definitions" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
   </bpmn2:definitions>`;
 
-  const {definitions} = await fromXML(source);
+  const { definitions } = await fromXML(source);
 
   const loopCharacteristics = moddle.create('bpmn:MultiInstanceLoopCharacteristics', {
     isSequential,
@@ -1436,19 +1702,19 @@ async function LoopDefinition(activityType, isSequential) {
   });
 
   const flowElements = [
-    moddle.create('bpmn:StartEvent', {id: 'start'}),
+    moddle.create('bpmn:StartEvent', { id: 'start' }),
     moddle.create(activityType, {
       id: 'activity',
       loopCharacteristics,
     }),
-    moddle.create('bpmn:EndEvent', {id: 'end'}),
+    moddle.create('bpmn:EndEvent', { id: 'end' }),
   ];
 
   const [start, activity, end] = flowElements;
 
   const flows = [
-    moddle.create('bpmn:SequenceFlow', {id: 'flow1', sourceRef: start, targetRef: activity}),
-    moddle.create('bpmn:SequenceFlow', {id: 'flow2', sourceRef: activity, targetRef: end}),
+    moddle.create('bpmn:SequenceFlow', { id: 'flow1', sourceRef: start, targetRef: activity }),
+    moddle.create('bpmn:SequenceFlow', { id: 'flow2', sourceRef: activity, targetRef: end }),
   ];
 
   const bpmnProcess = moddle.create('bpmn:Process', {
@@ -1471,17 +1737,19 @@ async function fromXML(source) {
 }
 
 async function toXml(definitions) {
-  const {xml} = await moddle.toXML(definitions);
+  const { xml } = await moddle.toXML(definitions);
   return xml;
 }
 
 function assertApi(activity, message, compareState) {
-  const {content, fields} = message;
-  const {routingKey} = fields;
+  const { content, fields } = message;
+  const { routingKey } = fields;
   const activityApi = activity.getApi(message);
 
   if (content && content.isLoopContext) {
-    expect(activityApi).to.have.property('id').that.match(/^activity(_.+|$)/);
+    expect(activityApi)
+      .to.have.property('id')
+      .that.match(/^activity(_.+|$)/);
   } else {
     expect(activityApi).to.have.property('id', 'activity');
   }
@@ -1517,7 +1785,7 @@ function AssertMessage(processContext, messages, inSequence) {
 
     if (!compareState) return message;
 
-    const {source, context, id} = message.content;
+    const { source, context, id } = message.content;
     const activity = processContext.getActivityById(id);
     const activityApi = activity.getApi(source, context);
 

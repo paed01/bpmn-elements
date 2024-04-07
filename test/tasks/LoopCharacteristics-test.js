@@ -1,15 +1,15 @@
 import Environment from '../../src/Environment.js';
 import LoopCharacteristics from '../../src/tasks/LoopCharacteristics.js';
-import {ActivityBroker} from '../../src/EventBroker.js';
-import {Logger} from '../helpers/testHelpers.js';
-import {ActivityError} from '../../src/error/Errors.js';
+import { ActivityBroker } from '../../src/EventBroker.js';
+import { Logger } from '../helpers/testHelpers.js';
+import { ActivityError } from '../../src/error/Errors.js';
 
 describe('LoopCharacteristics', () => {
   let task;
   beforeEach(() => {
     task = ActivityBroker();
     task.id = 'task';
-    task.environment = new Environment({Logger});
+    task.environment = new Environment({ Logger });
     task.broker.assertQueue('execute-q');
     task.broker.bindQueue('execute-q', 'execution', '#');
   });
@@ -67,9 +67,14 @@ describe('LoopCharacteristics', () => {
   describe('sequential (isSequential = true)', () => {
     it('updates start message with loop characteristics when loop is started', () => {
       const messages = [];
-      task.broker.subscribeTmp('execution', '#', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      task.broker.subscribeTmp(
+        'execution',
+        '#',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       const loop = new LoopCharacteristics(task, {
         behaviour: {
@@ -103,9 +108,14 @@ describe('LoopCharacteristics', () => {
 
     it('instructs execution to not complete when completed sub execution message is received', () => {
       const messages = [];
-      task.broker.subscribeTmp('execution', '#', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      task.broker.subscribeTmp(
+        'execution',
+        '#',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       const loop = new LoopCharacteristics(task, {
         behaviour: {
@@ -130,9 +140,14 @@ describe('LoopCharacteristics', () => {
 
     it('publishes start messages for first multi-instance execution with unique execution id', () => {
       const messages = [];
-      task.broker.subscribeTmp('execution', '#', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      task.broker.subscribeTmp(
+        'execution',
+        '#',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       const loop = new LoopCharacteristics(task, {
         behaviour: {
@@ -162,23 +177,32 @@ describe('LoopCharacteristics', () => {
       expect(messages[1].content).to.have.property('executionId').that.is.not.equal('parent-execution-id');
       expect(messages[1].content.isRootScope).to.be.undefined;
       expect(messages[1].content).to.have.property('index', 0);
-      expect(messages[1].content).to.have.property('parent').that.eql({
-        id: 'task',
-        type: 'bpmn:Task',
-        executionId: 'parent-execution-id',
-        path: [{
-          id: 'process1',
-          executionId: 'process1_1',
-          type: 'bpmn:Process',
-        }],
-      });
+      expect(messages[1].content)
+        .to.have.property('parent')
+        .that.eql({
+          id: 'task',
+          type: 'bpmn:Task',
+          executionId: 'parent-execution-id',
+          path: [
+            {
+              id: 'process1',
+              executionId: 'process1_1',
+              type: 'bpmn:Process',
+            },
+          ],
+        });
     });
 
     it('starts next and updates start message output when first has completed', () => {
       const messages = [];
-      task.broker.subscribeTmp('execution', '#', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      task.broker.subscribeTmp(
+        'execution',
+        '#',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       const loop = new LoopCharacteristics(task, {
         behaviour: {
@@ -197,7 +221,7 @@ describe('LoopCharacteristics', () => {
 
       expect(messages).to.have.length(2);
 
-      task.broker.publish('execution', 'execute.completed', {...messages.slice(-1)[0].content, output: 0});
+      task.broker.publish('execution', 'execute.completed', { ...messages.slice(-1)[0].content, output: 0 });
 
       expect(messages).to.have.length(6);
 
@@ -224,9 +248,14 @@ describe('LoopCharacteristics', () => {
 
     it('publishes complete message when all have completed', () => {
       const messages = [];
-      task.broker.subscribeTmp('execution', '#', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      task.broker.subscribeTmp(
+        'execution',
+        '#',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       const loop = new LoopCharacteristics(task, {
         behaviour: {
@@ -244,11 +273,11 @@ describe('LoopCharacteristics', () => {
       });
 
       expect(messages).to.have.length(2);
-      task.broker.publish('execution', 'execute.completed', {...messages.slice(-1)[0].content, output: 0});
+      task.broker.publish('execution', 'execute.completed', { ...messages.slice(-1)[0].content, output: 0 });
       expect(messages).to.have.length(6);
-      task.broker.publish('execution', 'execute.completed', {...messages.slice(-1)[0].content, output: 1});
+      task.broker.publish('execution', 'execute.completed', { ...messages.slice(-1)[0].content, output: 1 });
       expect(messages).to.have.length(10);
-      task.broker.publish('execution', 'execute.completed', {...messages.slice(-1)[0].content, output: 2});
+      task.broker.publish('execution', 'execute.completed', { ...messages.slice(-1)[0].content, output: 2 });
       expect(messages).to.have.length(13);
 
       expect(messages[12].fields).to.have.property('routingKey', 'execute.completed');
@@ -262,13 +291,23 @@ describe('LoopCharacteristics', () => {
 
     it('completes when iteration completes synchronously', () => {
       const messages = [];
-      task.broker.subscribeTmp('execution', '#', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      task.broker.subscribeTmp(
+        'execution',
+        '#',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
-      task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
-        task.broker.publish('execution', 'execute.completed', {...msg.content});
-      }, {noAck: true});
+      task.broker.subscribeTmp(
+        'execution',
+        'execute.start',
+        (_, msg) => {
+          task.broker.publish('execution', 'execute.completed', { ...msg.content });
+        },
+        { noAck: true },
+      );
 
       const loop = new LoopCharacteristics(task, {
         behaviour: {
@@ -296,17 +335,27 @@ describe('LoopCharacteristics', () => {
     });
 
     it('leaves no lingering consumers when completed', () => {
-      const startConsumer = task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
-        task.broker.publish('execution', 'execute.completed', {...msg.content});
-      }, {noAck: true});
+      const startConsumer = task.broker.subscribeTmp(
+        'execution',
+        'execute.start',
+        (_, msg) => {
+          task.broker.publish('execution', 'execute.completed', { ...msg.content });
+        },
+        { noAck: true },
+      );
 
       let completeMsg;
-      task.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        if (msg.content.isRootScope) {
-          completeMsg = msg;
-          task.broker.cancel('completed-consumer');
-        }
-      }, {noAck: true, consumerTag: 'completed-consumer'});
+      task.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        (_, msg) => {
+          if (msg.content.isRootScope) {
+            completeMsg = msg;
+            task.broker.cancel('completed-consumer');
+          }
+        },
+        { noAck: true, consumerTag: 'completed-consumer' },
+      );
 
       const loop = new LoopCharacteristics(task, {
         behaviour: {
@@ -332,10 +381,15 @@ describe('LoopCharacteristics', () => {
 
     it('publishes start message for all items in collection', () => {
       const messages = [];
-      task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
-        messages.push(msg);
-        task.broker.publish('execution', 'execute.completed', {...msg.content});
-      }, {noAck: true});
+      task.broker.subscribeTmp(
+        'execution',
+        'execute.start',
+        (_, msg) => {
+          messages.push(msg);
+          task.broker.publish('execution', 'execute.completed', { ...msg.content });
+        },
+        { noAck: true },
+      );
 
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
@@ -380,12 +434,17 @@ describe('LoopCharacteristics', () => {
 
     it('executes next until completion condition is met', () => {
       const messages = [];
-      task.broker.subscribeTmp('execution', '#', (routingKey, msg) => {
-        messages.push(msg);
-        if (routingKey === 'execute.start' && !msg.content.isRootScope) {
-          task.broker.publish('execution', 'execute.completed', {...msg.content, output: {stopLoop: msg.content.index === 1}});
-        }
-      }, {noAck: true});
+      task.broker.subscribeTmp(
+        'execution',
+        '#',
+        (routingKey, msg) => {
+          messages.push(msg);
+          if (routingKey === 'execute.start' && !msg.content.isRootScope) {
+            task.broker.publish('execution', 'execute.completed', { ...msg.content, output: { stopLoop: msg.content.index === 1 } });
+          }
+        },
+        { noAck: true },
+      );
 
       const loop = new LoopCharacteristics(task, {
         behaviour: {
@@ -411,7 +470,9 @@ describe('LoopCharacteristics', () => {
       expect(messages[8].content).to.have.property('loopCardinality', 3);
       expect(messages[8].content).to.have.property('isSequential', true);
       expect(messages[8].content).to.have.property('index', 1);
-      expect(messages[8].content).to.have.property('output').that.eql([{stopLoop: false}, {stopLoop: true}]);
+      expect(messages[8].content)
+        .to.have.property('output')
+        .that.eql([{ stopLoop: false }, { stopLoop: true }]);
     });
 
     it('root api stop message drops consumers', () => {
@@ -432,7 +493,7 @@ describe('LoopCharacteristics', () => {
         },
       });
 
-      task.broker.publish('api', 'activity.stop.parent-execution-id', {}, {type: 'stop'});
+      task.broker.publish('api', 'activity.stop.parent-execution-id', {}, { type: 'stop' });
 
       expect(task.broker.consumerCount).to.equal(0);
     });
@@ -440,9 +501,14 @@ describe('LoopCharacteristics', () => {
     describe('recovered', () => {
       it('recovered execute start message triggers start iteration', () => {
         const messages = [];
-        task.broker.subscribeTmp('execution', '#', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
+        task.broker.subscribeTmp(
+          'execution',
+          '#',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true },
+        );
 
         const loop = new LoopCharacteristics(task, {
           behaviour: {
@@ -479,9 +545,14 @@ describe('LoopCharacteristics', () => {
 
       it('recovered root iteration placeholder message triggers start iteration', () => {
         const messages = [];
-        task.broker.subscribeTmp('execution', '#', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
+        task.broker.subscribeTmp(
+          'execution',
+          '#',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true },
+        );
 
         const loop = new LoopCharacteristics(task, {
           behaviour: {
@@ -517,9 +588,14 @@ describe('LoopCharacteristics', () => {
 
       it('resume loop message instructs execution to ignore message if executing', () => {
         const messages = [];
-        task.broker.subscribeTmp('execution', '#', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
+        task.broker.subscribeTmp(
+          'execution',
+          '#',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true },
+        );
 
         const loop = new LoopCharacteristics(task, {
           behaviour: {
@@ -553,9 +629,14 @@ describe('LoopCharacteristics', () => {
 
       it('resumes execution when iteration execution completes', () => {
         const messages = [];
-        task.broker.subscribeTmp('execution', '#', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
+        task.broker.subscribeTmp(
+          'execution',
+          '#',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true },
+        );
 
         const loop = new LoopCharacteristics(task, {
           behaviour: {
@@ -613,9 +694,14 @@ describe('LoopCharacteristics', () => {
   describe('parallel (isSequential = false)', () => {
     it('publishes start messages for all multi-instance executions with unique execution ids', () => {
       const messages = [];
-      task.broker.subscribeTmp('execution', '#', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      task.broker.subscribeTmp(
+        'execution',
+        '#',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       const loop = new LoopCharacteristics(task, {
         behaviour: {
@@ -657,53 +743,70 @@ describe('LoopCharacteristics', () => {
       expect(message.fields).to.have.property('routingKey', 'execute.start');
       expect(message.content).to.have.property('executionId', 'parent-execution-id_0');
       expect(message.content).to.have.property('index', 0);
-      expect(message.content).to.have.property('parent').that.eql({
-        id: 'task',
-        type: 'bpmn:Task',
-        executionId: 'parent-execution-id',
-        path: [{
-          id: 'process1',
-          executionId: 'process1_1',
-          type: 'bpmn:Process',
-        }],
-      });
+      expect(message.content)
+        .to.have.property('parent')
+        .that.eql({
+          id: 'task',
+          type: 'bpmn:Task',
+          executionId: 'parent-execution-id',
+          path: [
+            {
+              id: 'process1',
+              executionId: 'process1_1',
+              type: 'bpmn:Process',
+            },
+          ],
+        });
 
       message = messages.shift();
       expect(message.fields).to.have.property('routingKey', 'execute.start');
       expect(message.content).to.have.property('executionId').that.is.not.equal('parent-execution-id');
       expect(message.content).to.have.property('index', 1);
-      expect(message.content).to.have.property('parent').that.eql({
-        id: 'task',
-        type: 'bpmn:Task',
-        executionId: 'parent-execution-id',
-        path: [{
-          id: 'process1',
-          executionId: 'process1_1',
-          type: 'bpmn:Process',
-        }],
-      });
+      expect(message.content)
+        .to.have.property('parent')
+        .that.eql({
+          id: 'task',
+          type: 'bpmn:Task',
+          executionId: 'parent-execution-id',
+          path: [
+            {
+              id: 'process1',
+              executionId: 'process1_1',
+              type: 'bpmn:Process',
+            },
+          ],
+        });
 
       message = messages.shift();
       expect(message.fields).to.have.property('routingKey', 'execute.start');
       expect(message.content).to.have.property('executionId').that.is.not.equal('parent-execution-id');
       expect(message.content).to.have.property('index', 2);
-      expect(message.content).to.have.property('parent').that.eql({
-        id: 'task',
-        type: 'bpmn:Task',
-        executionId: 'parent-execution-id',
-        path: [{
-          id: 'process1',
-          executionId: 'process1_1',
-          type: 'bpmn:Process',
-        }],
-      });
+      expect(message.content)
+        .to.have.property('parent')
+        .that.eql({
+          id: 'task',
+          type: 'bpmn:Task',
+          executionId: 'parent-execution-id',
+          path: [
+            {
+              id: 'process1',
+              executionId: 'process1_1',
+              type: 'bpmn:Process',
+            },
+          ],
+        });
     });
 
     it('publishes start messages for all items in collection', () => {
       const messages = [];
-      task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      task.broker.subscribeTmp(
+        'execution',
+        'execute.start',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
@@ -746,9 +849,14 @@ describe('LoopCharacteristics', () => {
 
     it('instructs execution to to not complete when iteration completes', () => {
       const messages = [];
-      task.broker.subscribeTmp('execution', 'execute.iteration.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      task.broker.subscribeTmp(
+        'execution',
+        'execute.iteration.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       const loop = new LoopCharacteristics(task, {
         behaviour: {
@@ -779,9 +887,14 @@ describe('LoopCharacteristics', () => {
 
     it('updates start message output when first has completed', () => {
       const messages = [];
-      task.broker.subscribeTmp('execution', '#', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      task.broker.subscribeTmp(
+        'execution',
+        '#',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       const loop = new LoopCharacteristics(task, {
         behaviour: {
@@ -799,7 +912,7 @@ describe('LoopCharacteristics', () => {
 
       expect(messages).to.have.length(4);
 
-      task.broker.publish('execution', 'execute.completed', {...messages[1].content, output: 0});
+      task.broker.publish('execution', 'execute.completed', { ...messages[1].content, output: 0 });
 
       expect(messages).to.have.length(6);
 
@@ -813,13 +926,24 @@ describe('LoopCharacteristics', () => {
     });
 
     it('executes until completion condition is met', () => {
-      const startMessages = [], messages = [];
-      task.broker.subscribeTmp('execution', '#', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
-      task.broker.subscribeTmp('execution', 'execute.start', (_, msg) => {
-        startMessages.push(msg);
-      }, {noAck: true});
+      const startMessages = [],
+        messages = [];
+      task.broker.subscribeTmp(
+        'execution',
+        '#',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
+      task.broker.subscribeTmp(
+        'execution',
+        'execute.start',
+        (_, msg) => {
+          startMessages.push(msg);
+        },
+        { noAck: true },
+      );
 
       const loop = new LoopCharacteristics(task, {
         behaviour: {
@@ -836,15 +960,17 @@ describe('LoopCharacteristics', () => {
         },
       });
 
-      task.broker.publish('execution', 'execute.completed', {...startMessages[1].content, output: 2});
-      task.broker.publish('execution', 'execute.completed', {...startMessages[0].content, output: {stopLoop: true}});
+      task.broker.publish('execution', 'execute.completed', { ...startMessages[1].content, output: 2 });
+      task.broker.publish('execution', 'execute.completed', { ...startMessages[0].content, output: { stopLoop: true } });
 
       const lastMessage = messages.pop();
 
       expect(lastMessage.fields).to.have.property('routingKey', 'execute.completed');
       expect(lastMessage.content).to.have.property('executionId', 'parent-execution-id');
       expect(lastMessage.content).to.have.property('index', 0);
-      expect(lastMessage.content).to.have.property('output').that.eql([{stopLoop: true}, 2]);
+      expect(lastMessage.content)
+        .to.have.property('output')
+        .that.eql([{ stopLoop: true }, 2]);
     });
 
     it('root api stop message drops consumers', () => {
@@ -864,7 +990,7 @@ describe('LoopCharacteristics', () => {
         },
       });
 
-      task.broker.publish('api', 'activity.stop.parent-execution-id', {}, {type: 'stop'});
+      task.broker.publish('api', 'activity.stop.parent-execution-id', {}, { type: 'stop' });
 
       expect(task.broker.consumerCount).to.equal(0);
     });
@@ -872,9 +998,14 @@ describe('LoopCharacteristics', () => {
     describe('recovered', () => {
       it('recovered root start message only adds consumers', () => {
         const messages = [];
-        task.broker.subscribeTmp('execution', '#', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
+        task.broker.subscribeTmp(
+          'execution',
+          '#',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true },
+        );
 
         const loop = new LoopCharacteristics(task, {
           behaviour: {
@@ -900,9 +1031,14 @@ describe('LoopCharacteristics', () => {
 
       it('recovered root iteration completed message only adds consumers', () => {
         const messages = [];
-        task.broker.subscribeTmp('execution', '#', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
+        task.broker.subscribeTmp(
+          'execution',
+          '#',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true },
+        );
 
         const loop = new LoopCharacteristics(task, {
           behaviour: {
@@ -929,9 +1065,14 @@ describe('LoopCharacteristics', () => {
 
       it('recovered iteration from index 0 and iteration completed message adds to output', () => {
         const messages = [];
-        task.broker.subscribeTmp('execution', 'execute.iteration.*', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
+        task.broker.subscribeTmp(
+          'execution',
+          'execute.iteration.*',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true },
+        );
 
         const loop = new LoopCharacteristics(task, {
           behaviour: {
@@ -951,7 +1092,12 @@ describe('LoopCharacteristics', () => {
           },
         });
 
-        task.broker.publish('execution', 'execute.completed', {executionId: 'parent-execution-id_0', isMultiInstance: true, index: 1, output: 2});
+        task.broker.publish('execution', 'execute.completed', {
+          executionId: 'parent-execution-id_0',
+          isMultiInstance: true,
+          index: 1,
+          output: 2,
+        });
 
         expect(messages).to.have.length(2);
 

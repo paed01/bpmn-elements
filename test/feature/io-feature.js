@@ -8,13 +8,13 @@ Feature('IO', () => {
     let definition;
     Given('two tasks associated with a data store reference only', async () => {
       const context = await testHelpers.context(factory.resource('signals.bpmn'), {
-        extensions: {camunda},
+        extensions: { camunda },
       });
 
       definition = new Definition(context, {
         settings: {
           dataStores: new DataStores({
-            SpotPriceDb: {price: 100},
+            SpotPriceDb: { price: 100 },
           }),
         },
         services: {
@@ -36,7 +36,7 @@ Feature('IO', () => {
             if (activity.behaviour.dataOutputAssociations) {
               activity.on('end', (api) => {
                 const db = activity.behaviour.dataOutputAssociations[0].behaviour.targetRef.id;
-                activity.environment.settings.dataStores.setDataStore(db, {...api.content.output});
+                activity.environment.settings.dataStores.setDataStore(db, { ...api.content.output });
               });
             }
           },

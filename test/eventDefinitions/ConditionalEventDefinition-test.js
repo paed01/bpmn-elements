@@ -1,8 +1,8 @@
 import ConditionalEventDefinition from '../../src/eventDefinitions/ConditionalEventDefinition.js';
 import Environment from '../../src/Environment.js';
 import testHelpers from '../helpers/testHelpers.js';
-import {ActivityBroker} from '../../src/EventBroker.js';
-import {ActivityApi} from '../../src/Api.js';
+import { ActivityBroker } from '../../src/EventBroker.js';
+import { ActivityApi } from '../../src/Api.js';
 
 describe('ConditionalEventDefinition', () => {
   let event, task;
@@ -34,9 +34,14 @@ describe('ConditionalEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       condition.execute({
         fields: {},
@@ -46,10 +51,12 @@ describe('ConditionalEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -74,7 +81,7 @@ describe('ConditionalEventDefinition', () => {
       });
 
       event.broker.subscribeOnce('execution', '#', () => {
-        throw new Error('Shouldn\'t publish on execution exchange');
+        throw new Error("Shouldn't publish on execution exchange");
       });
 
       condition.execute({
@@ -89,7 +96,7 @@ describe('ConditionalEventDefinition', () => {
         },
       });
 
-      task.broker.publish('execution', 'execute.completed', {id: 'task', executionId: 'task_0'});
+      task.broker.publish('execution', 'execute.completed', { id: 'task', executionId: 'task_0' });
 
       expect(message).to.be.ok;
       expect(message).to.have.property('content').with.property('conditionResult').to.be.undefined;
@@ -132,17 +139,17 @@ describe('ConditionalEventDefinition', () => {
         id: 'task',
         executionId: 'task_0',
         output: {
-          value: {data: 1},
+          value: { data: 1 },
         },
       });
 
       expect(conditionMessage).to.be.ok;
-      expect(conditionMessage).to.have.property('content').with.property('conditionResult').that.eql({data: 1});
+      expect(conditionMessage).to.have.property('content').with.property('conditionResult').that.eql({ data: 1 });
       expect(conditionMessage.content).to.have.property('index', 0);
 
       expect(completedMessage).to.be.ok;
       expect(completedMessage).to.have.property('fields').with.property('routingKey', 'execute.completed');
-      expect(completedMessage).to.have.property('content').with.property('output').that.eql({data: 1});
+      expect(completedMessage).to.have.property('content').with.property('output').that.eql({ data: 1 });
       expect(completedMessage.content).to.have.property('index', 0);
     });
 
@@ -180,7 +187,7 @@ describe('ConditionalEventDefinition', () => {
         id: 'task',
         executionId: 'task_0',
         output: {
-          value: {data: 1},
+          value: { data: 1 },
         },
       });
 
@@ -220,7 +227,7 @@ describe('ConditionalEventDefinition', () => {
 
       condition.execute(executeMessage);
 
-      ActivityApi(event.broker, executeMessage, event.environment).signal({value: {data: 1}});
+      ActivityApi(event.broker, executeMessage, event.environment).signal({ value: { data: 1 } });
 
       expect(message).to.be.ok;
       expect(message).to.have.property('content').with.property('conditionResult').to.be.undefined;
@@ -236,9 +243,14 @@ describe('ConditionalEventDefinition', () => {
       });
 
       const conditionMessages = [];
-      event.broker.subscribeTmp('event', 'activity.condition', (_, msg) => {
-        conditionMessages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.condition',
+        (_, msg) => {
+          conditionMessages.push(msg);
+        },
+        { noAck: true },
+      );
 
       let completedMessage;
       event.broker.subscribeOnce('execution', '#', (_, msg) => {
@@ -262,15 +274,15 @@ describe('ConditionalEventDefinition', () => {
       expect(conditionMessages.length).to.equal(1);
       expect(conditionMessages[0]).to.have.property('content').with.property('conditionResult').that.is.undefined;
 
-      ActivityApi(event.broker, executeMessage, event.environment).signal({value: {data: 1}});
+      ActivityApi(event.broker, executeMessage, event.environment).signal({ value: { data: 1 } });
 
       expect(conditionMessages.length).to.equal(2);
       expect(conditionMessages[1].content).to.have.property('index', 0);
-      expect(conditionMessages[1]).to.have.property('content').with.property('conditionResult').that.eql({data: 1});
+      expect(conditionMessages[1]).to.have.property('content').with.property('conditionResult').that.eql({ data: 1 });
 
       expect(completedMessage).to.be.ok;
       expect(completedMessage).to.have.property('fields').with.property('routingKey', 'execute.completed');
-      expect(completedMessage).to.have.property('content').with.property('output').that.eql({data: 1});
+      expect(completedMessage).to.have.property('content').with.property('output').that.eql({ data: 1 });
       expect(completedMessage.content).to.have.property('index', 0);
     });
 
@@ -342,7 +354,7 @@ describe('ConditionalEventDefinition', () => {
 
       expect(event.broker.getExchange('api').bindingCount).to.equal(2);
 
-      ActivityApi(event.broker, executeMessage, event.environment).signal({value: true});
+      ActivityApi(event.broker, executeMessage, event.environment).signal({ value: true });
 
       expect(event.broker.getExchange('api').bindingCount).to.equal(0);
     });
@@ -381,7 +393,7 @@ describe('ConditionalEventDefinition', () => {
         id: 'task',
         executionId: 'task_0',
         output: {
-          value: {data: 1},
+          value: { data: 1 },
         },
       });
 

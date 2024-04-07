@@ -1,15 +1,15 @@
-import {cloneContent, shiftParent} from '../messageHelper.js';
+import { cloneContent, shiftParent } from '../messageHelper.js';
 
 const kCompleted = Symbol.for('completed');
 const kExecuteMessage = Symbol.for('executeMessage');
 
 export default function CancelEventDefinition(activity, eventDefinition) {
-  const {id, broker, environment, isThrowing} = activity;
+  const { id, broker, environment, isThrowing } = activity;
   const type = eventDefinition.type;
 
   this.id = id;
   this.type = type;
-  this.reference = {referenceType: 'cancel'};
+  this.reference = { referenceType: 'cancel' };
   this.isThrowing = isThrowing;
   this.activity = activity;
   this.environment = environment;
@@ -33,7 +33,7 @@ CancelEventDefinition.prototype.executeCatch = function executeCatch(executeMess
   this[kCompleted] = false;
 
   const executeContent = executeMessage.content;
-  const {executionId, parent} = executeContent;
+  const { executionId, parent } = executeContent;
   const parentExecutionId = parent.executionId;
 
   const broker = this.broker;
@@ -50,11 +50,15 @@ CancelEventDefinition.prototype.executeCatch = function executeCatch(executeMess
     consumerTag: `_onattached-cancel-${executionId}`,
   });
 
-  broker.publish('execution', 'execute.expect', cloneContent(executeContent, {
-    pattern: 'activity.execution.cancel',
-    exchange: 'execution',
-    expectRoutingKey,
-  }));
+  broker.publish(
+    'execution',
+    'execute.expect',
+    cloneContent(executeContent, {
+      pattern: 'activity.execution.cancel',
+      exchange: 'execution',
+      expectRoutingKey,
+    }),
+  );
 
   const waitContent = cloneContent(executeContent, {
     executionId: parentExecutionId,
@@ -68,7 +72,7 @@ CancelEventDefinition.prototype.executeCatch = function executeCatch(executeMess
 
 CancelEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
-  const {executionId, parent} = executeContent;
+  const { executionId, parent } = executeContent;
 
   this.logger.debug(`<${executionId} (${this.activity.id})> throw cancel`);
 
@@ -117,7 +121,8 @@ CancelEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey
 };
 
 CancelEventDefinition.prototype._stop = function stop() {
-  const broker = this.broker, executionId = this.executionId;
+  const broker = this.broker,
+    executionId = this.executionId;
   broker.cancel(`_onattached-cancel-${executionId}`);
   broker.cancel(`_api-${executionId}`);
 };

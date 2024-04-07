@@ -1,15 +1,16 @@
-Activity execution
-==================
+# Activity execution
 
 Shared activity execution.
 
 ## `new ActivityExecution(activity, context)`
 
 Arguments:
+
 - `activity`: parent [activity](/docs/Activity.md) function
 - `context`: [shared context](/docs/Context.md)
 
 Properties:
+
 - `completed`: has execution completed
 - `source`: instance of activity [behaviour](/docs/Extend.md)
 

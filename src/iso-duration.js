@@ -7,15 +7,7 @@ const timePattern = 'T('.concat(fractionalNumbers, 'H)?(').concat(fractionalNumb
 
 const rPattern = '(?:R('.concat(numbers).concat(')/)?');
 const iso8601 = rPattern.concat('P(?:').concat(datePattern, '(?:').concat(timePattern, ')?)');
-const objMap = [
-  'years',
-  'months',
-  'weeks',
-  'days',
-  'hours',
-  'minutes',
-  'seconds',
-];
+const objMap = ['years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds'];
 const defaultDuration = Object.freeze({
   years: 0,
   months: 0,
@@ -44,10 +36,14 @@ export function parse(durationString) {
     throw new RangeError('invalid duration: ' + durationString);
   }
   // Check only one fraction is used
-  if (slicedMatches.filter((v) => {
-    return /\./.test(v || '');
-  }).length > 1) {
-    throw new RangeError('Fractions are allowed on the smallest unit in the string, e.g. P0.5D or PT1.0001S but not PT0.5M0.1S: ' + durationString);
+  if (
+    slicedMatches.filter((v) => {
+      return /\./.test(v || '');
+    }).length > 1
+  ) {
+    throw new RangeError(
+      'Fractions are allowed on the smallest unit in the string, e.g. P0.5D or PT1.0001S but not PT0.5M0.1S: ' + durationString,
+    );
   }
 
   const result = {};

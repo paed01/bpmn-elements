@@ -47,10 +47,10 @@ describe('ManualTask', () => {
     task.run();
 
     const taskApi = await waiting;
-    taskApi.signal({data: 1});
+    taskApi.signal({ data: 1 });
 
     const api = await leave;
 
-    expect(api.content.output).to.eql({data: 1});
+    expect(api.content.output).to.eql({ data: 1 });
   });
 });

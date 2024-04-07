@@ -1,5 +1,5 @@
-export default function EnvironmentDataStore(dataStoreDef, {environment}) {
-  const {id, type, name, behaviour, parent} = dataStoreDef;
+export default function EnvironmentDataStore(dataStoreDef, { environment }) {
+  const { id, type, name, behaviour, parent } = dataStoreDef;
   this.id = id;
   this.type = type;
   this.name = name;

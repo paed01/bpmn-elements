@@ -3,7 +3,7 @@ import testHelpers from '../helpers/testHelpers.js';
 
 describe('Transaction', () => {
   it('decorates activity with isTransaction', () => {
-    const transaction = Transaction({id: 'sub-process', parent: {id: 'atomic'}}, testHelpers.emptyContext());
+    const transaction = Transaction({ id: 'sub-process', parent: { id: 'atomic' } }, testHelpers.emptyContext());
     expect(transaction).to.have.property('isTransaction', true);
   });
 
@@ -40,9 +40,9 @@ describe('Transaction', () => {
 
       expect(transaction.isRunning).to.be.false;
 
-      expect(monitor.owner.counters, 'compensate event definition').to.deep.equal({taken: 1, discarded: 0});
-      expect(userTask.owner.counters, 'user task').to.deep.equal({taken: 0, discarded: 1});
-      expect(api.owner.counters, 'transaction').to.deep.equal({taken: 0, discarded: 1});
+      expect(monitor.owner.counters, 'compensate event definition').to.deep.equal({ taken: 1, discarded: 0 });
+      expect(userTask.owner.counters, 'user task').to.deep.equal({ taken: 0, discarded: 1 });
+      expect(api.owner.counters, 'transaction').to.deep.equal({ taken: 0, discarded: 1 });
     });
 
     it('compensate event definition is discarded when transaction completes', () => {
@@ -59,8 +59,8 @@ describe('Transaction', () => {
 
       expect(transaction.isRunning).to.be.false;
 
-      expect(monitor.owner.counters, 'compensate event definition').to.deep.equal({taken: 0, discarded: 1});
-      expect(userTask.owner.counters, 'user task').to.deep.equal({taken: 1, discarded: 0});
+      expect(monitor.owner.counters, 'compensate event definition').to.deep.equal({ taken: 0, discarded: 1 });
+      expect(userTask.owner.counters, 'user task').to.deep.equal({ taken: 1, discarded: 0 });
     });
   });
 
@@ -90,14 +90,14 @@ describe('Transaction', () => {
       expect(bp.execution.completed).to.be.true;
 
       const transaction = bp.execution.getActivityById('atomic');
-      expect(transaction.counters, 'transaction').to.deep.equal({taken: 0, discarded: 1});
+      expect(transaction.counters, 'transaction').to.deep.equal({ taken: 0, discarded: 1 });
       expect(transaction.execution.completed, 'transaction').to.be.true;
 
       const monitor = transaction.execution.source.execution.getActivityById('monitor');
-      expect(monitor.counters, 'compensate event definition').to.deep.equal({taken: 1, discarded: 0});
+      expect(monitor.counters, 'compensate event definition').to.deep.equal({ taken: 1, discarded: 0 });
 
       const end = transaction.execution.source.execution.getActivityById('cancel');
-      expect(end.counters, 'end event').to.deep.equal({taken: 1, discarded: 0});
+      expect(end.counters, 'end event').to.deep.equal({ taken: 1, discarded: 0 });
     });
 
     it('compensating task completes when transactions is cancelled', async () => {
@@ -127,14 +127,14 @@ describe('Transaction', () => {
       expect(bp.execution.completed).to.be.true;
 
       const transaction = bp.execution.getActivityById('atomic');
-      expect(transaction.counters, 'transaction').to.deep.equal({taken: 0, discarded: 1});
+      expect(transaction.counters, 'transaction').to.deep.equal({ taken: 0, discarded: 1 });
       expect(transaction.execution.completed, 'transaction').to.be.true;
 
       const monitor = transaction.execution.source.execution.getActivityById('monitor');
-      expect(monitor.counters, 'compensate event definition').to.deep.equal({taken: 1, discarded: 0});
+      expect(monitor.counters, 'compensate event definition').to.deep.equal({ taken: 1, discarded: 0 });
 
       const compensate = transaction.execution.source.execution.getActivityById('compensate');
-      expect(compensate.counters, 'compensate task').to.deep.equal({taken: 1, discarded: 0});
+      expect(compensate.counters, 'compensate task').to.deep.equal({ taken: 1, discarded: 0 });
     });
 
     it('multi-instance monitored compensating task completes when transactions is cancelled', async () => {
@@ -177,14 +177,14 @@ describe('Transaction', () => {
       expect(bp.execution.completed).to.be.true;
 
       const transaction = bp.execution.getActivityById('atomic');
-      expect(transaction.counters, 'transaction').to.deep.equal({taken: 0, discarded: 1});
+      expect(transaction.counters, 'transaction').to.deep.equal({ taken: 0, discarded: 1 });
       expect(transaction.execution.completed, 'transaction').to.be.true;
 
       const monitor = transaction.execution.source.execution.getActivityById('monitor');
-      expect(monitor.counters, 'compensate event definition').to.deep.equal({taken: 1, discarded: 0});
+      expect(monitor.counters, 'compensate event definition').to.deep.equal({ taken: 1, discarded: 0 });
 
       const compensate = transaction.execution.source.execution.getActivityById('compensate');
-      expect(compensate.counters, 'compensate task taken').to.deep.equal({taken: 4, discarded: 0});
+      expect(compensate.counters, 'compensate task taken').to.deep.equal({ taken: 4, discarded: 0 });
     });
 
     it('transaction completes when compensation has completed', async () => {
@@ -226,14 +226,14 @@ describe('Transaction', () => {
       expect(bp.execution.completed).to.be.true;
 
       const transaction = bp.execution.getActivityById('atomic');
-      expect(transaction.counters, 'transaction').to.deep.equal({taken: 0, discarded: 1});
+      expect(transaction.counters, 'transaction').to.deep.equal({ taken: 0, discarded: 1 });
       expect(transaction.execution.completed, 'transaction').to.be.true;
 
       const monitor = transaction.execution.source.execution.getActivityById('monitor');
-      expect(monitor.counters, 'compensate event definition').to.deep.equal({taken: 1, discarded: 0});
+      expect(monitor.counters, 'compensate event definition').to.deep.equal({ taken: 1, discarded: 0 });
 
       const compensate = transaction.execution.source.execution.getActivityById('compensate');
-      expect(compensate.counters, 'compensate task taken').to.deep.equal({taken: 1, discarded: 0});
+      expect(compensate.counters, 'compensate task taken').to.deep.equal({ taken: 1, discarded: 0 });
     });
   });
 
@@ -269,10 +269,10 @@ describe('Transaction', () => {
       expect(bp.execution.completed).to.be.true;
 
       const cancelled = bp.getActivityById('cancelled');
-      expect(cancelled.counters, 'cancelled boundary event').to.deep.equal({taken: 1, discarded: 0});
+      expect(cancelled.counters, 'cancelled boundary event').to.deep.equal({ taken: 1, discarded: 0 });
 
       const transaction = bp.execution.getActivityById('atomic');
-      expect(transaction.counters, 'transaction').to.deep.equal({taken: 0, discarded: 1});
+      expect(transaction.counters, 'transaction').to.deep.equal({ taken: 0, discarded: 1 });
       expect(transaction.execution.completed, 'transaction').to.be.true;
     });
 
@@ -320,16 +320,16 @@ describe('Transaction', () => {
       const transaction = bp.execution.getActivityById('atomic');
 
       const monitor = transaction.execution.source.execution.getActivityById('monitor');
-      expect(monitor.counters, 'compensate event definition').to.deep.equal({taken: 1, discarded: 0});
+      expect(monitor.counters, 'compensate event definition').to.deep.equal({ taken: 1, discarded: 0 });
 
       const compensate = transaction.execution.source.execution.getActivityById('compensate');
-      expect(compensate.counters, 'compensate task taken').to.deep.equal({taken: 1, discarded: 0});
+      expect(compensate.counters, 'compensate task taken').to.deep.equal({ taken: 1, discarded: 0 });
 
-      expect(transaction.counters, 'transaction').to.deep.equal({taken: 0, discarded: 1});
+      expect(transaction.counters, 'transaction').to.deep.equal({ taken: 0, discarded: 1 });
       expect(transaction.execution.completed, 'transaction').to.be.true;
 
       const cancelled = bp.getActivityById('cancelled');
-      expect(cancelled.counters, 'cancelled boundary event').to.deep.equal({taken: 1, discarded: 0});
+      expect(cancelled.counters, 'cancelled boundary event').to.deep.equal({ taken: 1, discarded: 0 });
     });
 
     it('transaction cancel listener is discarded when transaction completes', async () => {
@@ -370,16 +370,16 @@ describe('Transaction', () => {
       const transaction = bp.execution.getActivityById('atomic');
 
       const monitor = transaction.execution.source.execution.getActivityById('monitor');
-      expect(monitor.counters, 'compensate event definition').to.deep.equal({taken: 0, discarded: 1});
+      expect(monitor.counters, 'compensate event definition').to.deep.equal({ taken: 0, discarded: 1 });
 
       const compensate = transaction.execution.source.execution.getActivityById('compensate');
-      expect(compensate.counters, 'compensate task ignored').to.deep.equal({taken: 0, discarded: 0});
+      expect(compensate.counters, 'compensate task ignored').to.deep.equal({ taken: 0, discarded: 0 });
 
-      expect(transaction.counters, 'transaction').to.deep.equal({taken: 1, discarded: 0});
+      expect(transaction.counters, 'transaction').to.deep.equal({ taken: 1, discarded: 0 });
       expect(transaction.execution.completed, 'transaction').to.be.true;
 
       const cancelled = bp.getActivityById('cancelled');
-      expect(cancelled.counters, 'cancelled boundary event').to.deep.equal({taken: 0, discarded: 1});
+      expect(cancelled.counters, 'cancelled boundary event').to.deep.equal({ taken: 0, discarded: 1 });
     });
   });
 
@@ -408,10 +408,10 @@ describe('Transaction', () => {
       expect(bp.execution.completed).to.be.true;
 
       const errored = bp.getActivityById('errored');
-      expect(errored.counters, 'error boundary event').to.deep.equal({taken: 1, discarded: 0});
+      expect(errored.counters, 'error boundary event').to.deep.equal({ taken: 1, discarded: 0 });
 
       const transaction = bp.execution.getActivityById('atomic');
-      expect(transaction.counters, 'transaction').to.deep.equal({taken: 0, discarded: 1});
+      expect(transaction.counters, 'transaction').to.deep.equal({ taken: 0, discarded: 1 });
       expect(transaction.execution.completed, 'transaction').to.be.true;
     });
 
@@ -442,14 +442,14 @@ describe('Transaction', () => {
       expect(bp.execution.completed).to.be.true;
 
       const transaction = bp.execution.getActivityById('atomic');
-      expect(transaction.counters, 'transaction').to.deep.equal({taken: 0, discarded: 1});
+      expect(transaction.counters, 'transaction').to.deep.equal({ taken: 0, discarded: 1 });
       expect(transaction.execution.completed, 'transaction').to.be.true;
 
       const errored = bp.getActivityById('errored');
-      expect(errored.counters, 'error boundary event').to.deep.equal({taken: 1, discarded: 0});
+      expect(errored.counters, 'error boundary event').to.deep.equal({ taken: 1, discarded: 0 });
 
       const cancelled = bp.getActivityById('cancelled');
-      expect(cancelled.counters, 'cancel boundary event').to.deep.equal({taken: 0, discarded: 1});
+      expect(cancelled.counters, 'cancel boundary event').to.deep.equal({ taken: 0, discarded: 1 });
     });
 
     it('error listener and cancel listener discards when transactions completes', async () => {
@@ -477,14 +477,14 @@ describe('Transaction', () => {
       expect(bp.execution.completed).to.be.true;
 
       const transaction = bp.execution.getActivityById('atomic');
-      expect(transaction.counters, 'transaction').to.deep.equal({taken: 1, discarded: 0});
+      expect(transaction.counters, 'transaction').to.deep.equal({ taken: 1, discarded: 0 });
       expect(transaction.execution.completed, 'transaction').to.be.true;
 
       const errored = bp.getActivityById('errored');
-      expect(errored.counters, 'error boundary event').to.deep.equal({taken: 0, discarded: 1});
+      expect(errored.counters, 'error boundary event').to.deep.equal({ taken: 0, discarded: 1 });
 
       const cancelled = bp.getActivityById('cancelled');
-      expect(cancelled.counters, 'cancel boundary event').to.deep.equal({taken: 0, discarded: 1});
+      expect(cancelled.counters, 'cancel boundary event').to.deep.equal({ taken: 0, discarded: 1 });
     });
 
     it('compensate listener is discarded when transactions is errored', async () => {
@@ -518,17 +518,17 @@ describe('Transaction', () => {
       expect(bp.execution.completed).to.be.true;
 
       const errored = bp.getActivityById('errored');
-      expect(errored.counters, 'error boundary event').to.deep.equal({taken: 1, discarded: 0});
+      expect(errored.counters, 'error boundary event').to.deep.equal({ taken: 1, discarded: 0 });
 
       const transaction = bp.execution.getActivityById('atomic');
-      expect(transaction.counters, 'transaction').to.deep.equal({taken: 0, discarded: 1});
+      expect(transaction.counters, 'transaction').to.deep.equal({ taken: 0, discarded: 1 });
       expect(transaction.execution.completed, 'transaction').to.be.true;
 
       const monitor = transaction.execution.source.execution.getActivityById('monitor');
-      expect(monitor.counters, 'monitor ignored').to.deep.equal({taken: 0, discarded: 0});
+      expect(monitor.counters, 'monitor ignored').to.deep.equal({ taken: 0, discarded: 0 });
 
       const compensate = transaction.execution.source.execution.getActivityById('compensate');
-      expect(compensate.counters, 'compensate service ignored').to.deep.equal({taken: 0, discarded: 0});
+      expect(compensate.counters, 'compensate service ignored').to.deep.equal({ taken: 0, discarded: 0 });
     });
   });
 
@@ -567,17 +567,17 @@ describe('Transaction', () => {
       expect(bp.execution.completed).to.be.true;
 
       const transaction = bp.execution.getActivityById('atomic');
-      expect(transaction.counters, 'transaction').to.deep.equal({taken: 1, discarded: 0});
+      expect(transaction.counters, 'transaction').to.deep.equal({ taken: 1, discarded: 0 });
       expect(transaction.execution.completed, 'transaction').to.be.true;
 
       const end = transaction.execution.source.execution.getActivityById('error');
-      expect(end.counters, 'error end event').to.deep.equal({taken: 1, discarded: 0});
+      expect(end.counters, 'error end event').to.deep.equal({ taken: 1, discarded: 0 });
 
       const monitor = transaction.execution.source.execution.getActivityById('monitor');
-      expect(monitor.counters, 'monitor discarded').to.deep.equal({taken: 0, discarded: 1});
+      expect(monitor.counters, 'monitor discarded').to.deep.equal({ taken: 0, discarded: 1 });
 
       const compensate = transaction.execution.source.execution.getActivityById('compensate');
-      expect(compensate.counters, 'compensate service ignored').to.deep.equal({taken: 0, discarded: 0});
+      expect(compensate.counters, 'compensate service ignored').to.deep.equal({ taken: 0, discarded: 0 });
     });
   });
 
@@ -616,17 +616,17 @@ describe('Transaction', () => {
       expect(bp.execution.completed).to.be.true;
 
       const transaction = bp.execution.getActivityById('atomic');
-      expect(transaction.counters, 'transaction').to.deep.equal({taken: 1, discarded: 0});
+      expect(transaction.counters, 'transaction').to.deep.equal({ taken: 1, discarded: 0 });
       expect(transaction.execution.completed, 'transaction').to.be.true;
 
       const end = transaction.execution.source.execution.getActivityById('error');
-      expect(end.counters, 'terminate end event').to.deep.equal({taken: 1, discarded: 0});
+      expect(end.counters, 'terminate end event').to.deep.equal({ taken: 1, discarded: 0 });
 
       const monitor = transaction.execution.source.execution.getActivityById('monitor');
-      expect(monitor.counters, 'monitor ignored').to.deep.equal({taken: 0, discarded: 0});
+      expect(monitor.counters, 'monitor ignored').to.deep.equal({ taken: 0, discarded: 0 });
 
       const compensate = transaction.execution.source.execution.getActivityById('compensate');
-      expect(compensate.counters, 'compensate service ignored').to.deep.equal({taken: 0, discarded: 0});
+      expect(compensate.counters, 'compensate service ignored').to.deep.equal({ taken: 0, discarded: 0 });
     });
   });
 });

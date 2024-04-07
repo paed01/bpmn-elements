@@ -1,17 +1,18 @@
 import Activity from '../activity/Activity.js';
-import {ActivityError} from '../error/Errors.js';
-import {cloneContent} from '../messageHelper.js';
+import { ActivityError } from '../error/Errors.js';
+import { cloneContent } from '../messageHelper.js';
 
 export default function SignalTask(activityDef, context) {
   return new Activity(SignalTaskBehaviour, activityDef, context);
 }
 
 export function SignalTaskBehaviour(activity) {
-  const {id, type, behaviour} = activity;
+  const { id, type, behaviour } = activity;
 
   this.id = id;
   this.type = type;
-  this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+  this.loopCharacteristics =
+    behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
   this.broker = activity.broker;
 }
@@ -34,56 +35,74 @@ SignalTaskBehaviour.prototype.execute = function execute(executeMessage) {
     noAck: true,
     consumerTag: `_api-delegated-${executionId}`,
   });
-  broker.publish('event', 'activity.wait', cloneContent(executeContent, {state: 'wait'}));
+  broker.publish('event', 'activity.wait', cloneContent(executeContent, { state: 'wait' }));
 };
 
 SignalTaskBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMessage(executeMessage, routingKey, message) {
   if (!message.properties.delegate) return;
 
-  const {content: delegateContent} = message;
+  const { content: delegateContent } = message;
   if (!delegateContent || !delegateContent.message) return;
 
   const executeContent = executeMessage.content;
-  const {id: signalId, executionId: signalExecutionId} = delegateContent.message;
+  const { id: signalId, executionId: signalExecutionId } = delegateContent.message;
   if (this.loopCharacteristics && signalExecutionId !== executeContent.executionId) return;
   if (signalId !== this.id && signalExecutionId !== executeContent.executionId) return;
 
-  const {type: messageType, correlationId} = message.properties;
-  this.broker.publish('event', 'activity.consumed', cloneContent(executeContent, {
-    message: { ...delegateContent.message},
-  }), {
-    correlationId,
-    type: messageType,
-  });
+  const { type: messageType, correlationId } = message.properties;
+  this.broker.publish(
+    'event',
+    'activity.consumed',
+    cloneContent(executeContent, {
+      message: { ...delegateContent.message },
+    }),
+    {
+      correlationId,
+      type: messageType,
+    },
+  );
 
   return this._onApiMessage(executeMessage, routingKey, message);
 };
 
 SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, routingKey, message) {
-  const {type: messageType, correlationId} = message.properties;
+  const { type: messageType, correlationId } = message.properties;
   const executeContent = executeMessage.content;
   switch (messageType) {
     case 'stop':
       return this._stop(executeContent.executionId);
     case 'signal':
       this._stop(executeContent.executionId);
-      return this.broker.publish('execution', 'execute.completed', cloneContent(executeContent, {
-        output: message.content.message,
-        state: 'signal',
-      }), {
-        correlationId,
-      });
+      return this.broker.publish(
+        'execution',
+        'execute.completed',
+        cloneContent(executeContent, {
+          output: message.content.message,
+          state: 'signal',
+        }),
+        {
+          correlationId,
+        },
+      );
     case 'error':
       this._stop(executeContent.executionId);
-      return this.broker.publish('execution', 'execute.error', cloneContent(executeContent, {
-        error: new ActivityError(message.content.message, executeMessage, message.content),
-      }, {
-        mandatory: true,
-        correlationId,
-      }));
+      return this.broker.publish(
+        'execution',
+        'execute.error',
+        cloneContent(
+          executeContent,
+          {
+            error: new ActivityError(message.content.message, executeMessage, message.content),
+          },
+          {
+            mandatory: true,
+            correlationId,
+          },
+        ),
+      );
     case 'discard':
       this._stop(executeContent.executionId);
-      return this.broker.publish('execution', 'execute.discard', cloneContent(executeContent), {correlationId});
+      return this.broker.publish('execution', 'execute.discard', cloneContent(executeContent), { correlationId });
   }
 };
 

@@ -438,9 +438,9 @@ Feature('Outbound flows', () => {
     Then('run completes and boundary catch was taken', async () => {
       await end;
       const caugth = definition.getActivityById('catch');
-      expect(caugth.counters).to.deep.equal({taken: 1, discarded: 0});
+      expect(caugth.counters).to.deep.equal({ taken: 1, discarded: 0 });
       const faultyEnd = definition.getActivityById('faulty');
-      expect(faultyEnd.counters).to.deep.equal({taken: 1, discarded: 0});
+      expect(faultyEnd.counters).to.deep.equal({ taken: 1, discarded: 0 });
     });
 
     Given('a subprocess with a sequence flow that return error in next', async () => {
@@ -486,9 +486,9 @@ Feature('Outbound flows', () => {
     Then('run completes and boundary catch was taken', async () => {
       await end;
       const caugth = definition.getActivityById('catch');
-      expect(caugth.counters).to.deep.equal({taken: 1, discarded: 0});
+      expect(caugth.counters).to.deep.equal({ taken: 1, discarded: 0 });
       const faultyEnd = definition.getActivityById('faulty');
-      expect(faultyEnd.counters).to.deep.equal({taken: 1, discarded: 0});
+      expect(faultyEnd.counters).to.deep.equal({ taken: 1, discarded: 0 });
     });
   });
 });

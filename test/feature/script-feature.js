@@ -2,7 +2,7 @@ import Definition from '../../src/definition/Definition.js';
 import testHelpers from '../helpers/testHelpers.js';
 
 class Scripts {
-  register({behaviour}) {
+  register({ behaviour }) {
     if (!/^(javascript|js)$/i.test(behaviour.scriptFormat)) return;
   }
   compile() {}
@@ -32,7 +32,7 @@ Feature('Script', () => {
 
     let err;
     When('definition run', () => {
-      definition = new Definition(context, {scripts: new Scripts()});
+      definition = new Definition(context, { scripts: new Scripts() });
       try {
         definition.run();
       } catch (e) {
@@ -46,12 +46,14 @@ Feature('Script', () => {
     });
 
     Given('async formatting is added', () => {
-      definition = new Definition(context, {scripts: new Scripts()});
+      definition = new Definition(context, { scripts: new Scripts() });
       const task = definition.getActivityById('task');
       task.on('enter', () => {
-        task.broker.getQueue('format-run-q').queueMessage({routingKey: 'run.enter.format'}, {endRoutingKey: 'run.enter.complete'}, {persistent: false});
+        task.broker
+          .getQueue('format-run-q')
+          .queueMessage({ routingKey: 'run.enter.format' }, { endRoutingKey: 'run.enter.complete' }, { persistent: false });
         setImmediate(() => {
-          task.broker.publish('format', 'run.enter.complete', {data: 1}, {persistent: false});
+          task.broker.publish('format', 'run.enter.complete', { data: 1 }, { persistent: false });
         });
       });
     });

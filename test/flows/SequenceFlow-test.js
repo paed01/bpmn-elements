@@ -3,8 +3,8 @@ import factory from '../helpers/factory.js';
 import js from '../resources/extensions/JsExtension.js';
 import testHelpers from '../helpers/testHelpers.js';
 import SequenceFlow from '../../src/flows/SequenceFlow.js';
-import {resolveExpression} from '@aircall/expression-parser';
-import {Scripts} from '../helpers/JavaScripts.js';
+import { resolveExpression } from '@aircall/expression-parser';
+import { Scripts } from '../helpers/JavaScripts.js';
 
 const extensions = {
   js,
@@ -43,7 +43,7 @@ describe('SequenceFlow', () => {
         message = msg;
       });
 
-      flow.discard({discardSequence: ['decision-1']});
+      flow.discard({ discardSequence: ['decision-1'] });
 
       expect(message.fields).to.have.property('routingKey', 'flow.looped');
       expect(flow.counters).to.have.property('looped', 1);
@@ -111,7 +111,7 @@ describe('SequenceFlow', () => {
         </process>
       </definitions>`;
 
-      const ctx = await testHelpers.context(source, {scripts: TestScripts()});
+      const ctx = await testHelpers.context(source, { scripts: TestScripts() });
       ctx.environment.variables.isOk = true;
 
       const activity = ctx.getActivityById('decision');
@@ -138,7 +138,7 @@ describe('SequenceFlow', () => {
         const scripts = {};
 
         return {
-          register({id, type, behaviour}) {
+          register({ id, type, behaviour }) {
             if (!behaviour.conditionExpression) return;
 
             const scriptBody = behaviour.conditionExpression.body;
@@ -155,10 +155,10 @@ describe('SequenceFlow', () => {
               },
             });
 
-            scripts[id] = {sync, registered};
+            scripts[id] = { sync, registered };
           },
-          getScript(language, {id}) {
-            const {sync, registered} = scripts[id];
+          getScript(language, { id }) {
+            const { sync, registered } = scripts[id];
             return {
               execute,
             };
@@ -168,7 +168,7 @@ describe('SequenceFlow', () => {
                 const result = registered.script.runInNewContext(executionContext);
                 return callback(null, result);
               }
-              return registered.script.runInNewContext({...executionContext, next: callback});
+              return registered.script.runInNewContext({ ...executionContext, next: callback });
             }
           },
         };
@@ -227,9 +227,8 @@ describe('SequenceFlow', () => {
       const ctx = await testHelpers.context(source, {
         extensions,
         scripts: {
-          register() {
-          },
-          getScript(_, {id, behaviour}) {
+          register() {},
+          getScript(_, { id, behaviour }) {
             if (id !== 'flow3withExternalResource') return;
             if (behaviour.conditionExpression.resource !== './external.js') return;
             return {
@@ -267,14 +266,17 @@ describe('SequenceFlow', () => {
       const flow = context.getSequenceFlowById('flow3');
 
       const res = await new Promise((resolve, reject) => {
-        flow.getCondition().execute({
-          content: {
-            parent: {},
+        flow.getCondition().execute(
+          {
+            content: {
+              parent: {},
+            },
           },
-        }, (err, result) => {
-          if (err) return reject(err);
-          return resolve(result);
-        });
+          (err, result) => {
+            if (err) return reject(err);
+            return resolve(result);
+          },
+        );
       });
 
       expect(res).to.equal(true);
@@ -322,14 +324,17 @@ describe('SequenceFlow', () => {
       }).to.throw(/scripterror/i);
 
       const res = await new Promise((resolve, reject) => {
-        flow.getCondition().execute({
-          content: {
-            parent: {},
+        flow.getCondition().execute(
+          {
+            content: {
+              parent: {},
+            },
           },
-        }, (err) => {
-          if (err) return resolve(err);
-          return reject(new Error('Wut?'));
-        });
+          (err) => {
+            if (err) return resolve(err);
+            return reject(new Error('Wut?'));
+          },
+        );
       });
 
       expect(res).to.match(/scripterror/);
@@ -353,23 +358,28 @@ describe('SequenceFlow', () => {
       const context = await testHelpers.context(source);
       const flow = context.getSequenceFlowById('flowWithExpression');
 
-      expect(flow.getCondition().execute({
-        content: {
-          isOk: 1,
-          parent: {},
-        },
-      })).to.equal(1);
-
-      const res = await new Promise((resolve, reject) => {
+      expect(
         flow.getCondition().execute({
           content: {
-            isOk: 2,
+            isOk: 1,
             parent: {},
           },
-        }, (err, result) => {
-          if (err) return reject(err);
-          return resolve(result);
-        });
+        }),
+      ).to.equal(1);
+
+      const res = await new Promise((resolve, reject) => {
+        flow.getCondition().execute(
+          {
+            content: {
+              isOk: 2,
+              parent: {},
+            },
+          },
+          (err, result) => {
+            if (err) return reject(err);
+            return resolve(result);
+          },
+        );
       });
 
       expect(res).to.equal(2);
@@ -391,7 +401,7 @@ describe('SequenceFlow', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source, {
-        expressions: {resolveExpression},
+        expressions: { resolveExpression },
       });
       const flow = context.getSequenceFlowById('flowWithExpression');
 
@@ -405,15 +415,18 @@ describe('SequenceFlow', () => {
       }).to.throw(/Unterminated string literal/i);
 
       const res = await new Promise((resolve, reject) => {
-        flow.getCondition().execute({
-          content: {
-            isOk: 2,
-            parent: {},
+        flow.getCondition().execute(
+          {
+            content: {
+              isOk: 2,
+              parent: {},
+            },
           },
-        }, (err) => {
-          if (err) return resolve(err);
-          return reject(new Error('Ehhhh'));
-        });
+          (err) => {
+            if (err) return resolve(err);
+            return reject(new Error('Ehhhh'));
+          },
+        );
       });
 
       expect(res).to.match(/Unterminated string literal/i);
@@ -452,7 +465,7 @@ describe('SequenceFlow', () => {
         },
       };
 
-      const flow = new SequenceFlow(flowDef, {environment: new Environment()});
+      const flow = new SequenceFlow(flowDef, { environment: new Environment() });
 
       expect(() => {
         flow.getCondition().execute({
@@ -475,7 +488,7 @@ describe('SequenceFlow', () => {
         },
       };
 
-      const flow = new SequenceFlow(flowDef, {environment: new Environment()});
+      const flow = new SequenceFlow(flowDef, { environment: new Environment() });
 
       expect(() => {
         flow.getCondition().execute({
@@ -631,14 +644,16 @@ describe('SequenceFlow', () => {
         message = msg;
       });
 
-      flow.shake({content: {}});
+      flow.shake({ content: {} });
 
-      expect(message.content.sequence).to.deep.equal([{
-        id: flow.id,
-        isSequenceFlow: true,
-        targetId: 'decision-1',
-        type: 'bpmn:SequenceFlow',
-      }]);
+      expect(message.content.sequence).to.deep.equal([
+        {
+          id: flow.id,
+          isSequenceFlow: true,
+          targetId: 'decision-1',
+          type: 'bpmn:SequenceFlow',
+        },
+      ]);
     });
   });
 });

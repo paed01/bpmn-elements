@@ -2,7 +2,7 @@ import CamundaExtension from '../resources/extensions/CamundaExtension.js';
 import Definition from '../../src/definition/Definition.js';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
-import {ActivityError, BpmnError} from '../../src/error/Errors.js';
+import { ActivityError, BpmnError } from '../../src/error/Errors.js';
 
 const bpmnErrorSource = factory.resource('bpmn-error.bpmn');
 
@@ -396,9 +396,11 @@ Feature('Errors', () => {
     });
 
     And('service encounters error with error code that match known error', () => {
-      serviceCallback(new BpmnError('Not found', {
-        errorCode: 404,
-      }));
+      serviceCallback(
+        new BpmnError('Not found', {
+          errorCode: 404,
+        }),
+      );
     });
 
     Then('service was discarded', () => {
@@ -424,9 +426,11 @@ Feature('Errors', () => {
     });
 
     And('service encounters error with unknown error code', () => {
-      serviceCallback(new BpmnError('Unauthorized', {
-        errorCode: 401,
-      }));
+      serviceCallback(
+        new BpmnError('Unauthorized', {
+          errorCode: 401,
+        }),
+      );
     });
 
     let errApi;
@@ -458,9 +462,11 @@ Feature('Errors', () => {
     });
 
     And('service encounters error with error code that match known error', () => {
-      serviceCallback(new BpmnError('Not found', {
-        errorCode: 404,
-      }));
+      serviceCallback(
+        new BpmnError('Not found', {
+          errorCode: 404,
+        }),
+      );
     });
 
     And('definition completes', () => {
@@ -501,9 +507,11 @@ Feature('Errors', () => {
     });
 
     And('recovered service encounters error with error code that match known error', () => {
-      serviceCallback(new BpmnError('Not found', {
-        errorCode: 404,
-      }));
+      serviceCallback(
+        new BpmnError('Not found', {
+          errorCode: 404,
+        }),
+      );
     });
 
     And('recovered definition completes', () => {
@@ -530,9 +538,11 @@ Feature('Errors', () => {
     });
 
     When('service call fails again uncaught error code', () => {
-      serviceCallback(new BpmnError('Unauthorized', {
-        errorCode: 401,
-      }));
+      serviceCallback(
+        new BpmnError('Unauthorized', {
+          errorCode: 401,
+        }),
+      );
     });
 
     Then('state is saved', () => {
@@ -629,16 +639,18 @@ Feature('Errors', () => {
       const endSignal = await signal;
       expect(endSignal.owner.counters).to.have.property('taken', 1);
       expect(endSignal.owner.counters).to.have.property('discarded', 0);
-      expect(endSignal.content).to.have.property('message').that.eql({
-        id: 'EscalatedSignal',
-        type: 'bpmn:Signal',
-        messageType: 'signal',
-        name: 'Too big signal',
-        parent: {
-          id: 'Definition_0',
-          type: 'bpmn:Definitions',
-        },
-      });
+      expect(endSignal.content)
+        .to.have.property('message')
+        .that.eql({
+          id: 'EscalatedSignal',
+          type: 'bpmn:Signal',
+          messageType: 'signal',
+          name: 'Too big signal',
+          parent: {
+            id: 'Definition_0',
+            type: 'bpmn:Definitions',
+          },
+        });
     });
 
     And('run is completed', () => {
@@ -726,7 +738,7 @@ Feature('Errors', () => {
     When('run without listener', () => {
       end = definition.waitFor('end');
       execution = definition.run();
-      execution.signal({id: 'task-a'});
+      execution.signal({ id: 'task-a' });
     });
 
     Then('run completes', () => {
@@ -752,7 +764,7 @@ Feature('Errors', () => {
     And('listener for task that will throw error', () => {
       definition.on('activity.wait', (elementApi) => {
         if (elementApi.id !== 'task-a') return;
-        elementApi.owner.emitFatal({id: 'Error_1'}, {id: elementApi.id});
+        elementApi.owner.emitFatal({ id: 'Error_1' }, { id: elementApi.id });
       });
     });
 
@@ -821,10 +833,7 @@ Feature('Errors', () => {
 
     Then('run is errored', async () => {
       const err = await errored;
-      expect(err.content.error)
-        .to.have.property('source')
-        .with.property('content')
-        .with.property('id', 'service');
+      expect(err.content.error).to.have.property('source').with.property('content').with.property('id', 'service');
     });
 
     And('error was not caught', () => {

@@ -91,7 +91,7 @@ Feature('Issues', () => {
       saveAllOutputToEnvironmentExtension,
     };
 
-    function saveAllOutputToEnvironmentExtension(activity, {environment}) {
+    function saveAllOutputToEnvironmentExtension(activity, { environment }) {
       activity.on('end', (api) => {
         environment.output[api.id] = api.content.output;
       });
@@ -100,13 +100,13 @@ Feature('Issues', () => {
     function onWaitHandler(def) {
       return function onWait(api) {
         if (api.owner.counters.taken === 0) {
-          api.signal({isIterationOne: true});
+          api.signal({ isIterationOne: true });
         } else if (api.owner.counters.taken === 1) {
           if (!api.content.isRecovered) {
             state = def.getState();
             def.stop();
           } else {
-            api.signal({isIterationTwo: true});
+            api.signal({ isIterationTwo: true });
           }
         } else if (api.owner.counters.taken === 2) {
           api.signal();
@@ -116,7 +116,7 @@ Feature('Issues', () => {
 
     Given('an usertask ending up in decision with two loopback flows each taken once and an end event', async () => {
       context = await testHelpers.context(factory.resource('engine-issue-73_2.bpmn'));
-      definition = new Definition(context, {extensions});
+      definition = new Definition(context, { extensions });
     });
 
     let stopped;
@@ -132,7 +132,7 @@ Feature('Issues', () => {
 
     let recovered, completed;
     When('resumed', () => {
-      recovered = new Definition(context.clone(), {extensions}).recover(state);
+      recovered = new Definition(context.clone(), { extensions }).recover(state);
       completed = recovered.waitFor('leave');
       stopped = recovered.waitFor('stop');
       recovered.on('wait', onWaitHandler(recovered));
@@ -338,7 +338,7 @@ Feature('Issues', () => {
       });
 
       When('definition is recovered with state from first run user task wait', () => {
-        definition = new Definition(context.clone(), {...options});
+        definition = new Definition(context.clone(), { ...options });
         definition.recover(JSON.parse(states[0]));
       });
 
@@ -347,13 +347,18 @@ Feature('Issues', () => {
         wait = definition.waitFor('wait');
 
         let count = 0;
-        definition.broker.subscribeTmp('event', 'activity.discard', (_, msg) => {
-          if (msg.content.id === 'UserTask') {
-            if (count++ > 3) {
-              throw new Error('Into infinity');
+        definition.broker.subscribeTmp(
+          'event',
+          'activity.discard',
+          (_, msg) => {
+            if (msg.content.id === 'UserTask') {
+              if (count++ > 3) {
+                throw new Error('Into infinity');
+              }
             }
-          }
-        }, {noAck: true});
+          },
+          { noAck: true },
+        );
 
         definition.resume();
       });
@@ -461,13 +466,18 @@ Feature('Issues', () => {
         wait = definition.waitFor('wait');
 
         let count = 0;
-        definition.broker.subscribeTmp('event', 'activity.discard', (_, msg) => {
-          if (msg.content.id === 'UserTask') {
-            if (count++ > 3) {
-              throw new Error('Into infinity');
+        definition.broker.subscribeTmp(
+          'event',
+          'activity.discard',
+          (_, msg) => {
+            if (msg.content.id === 'UserTask') {
+              if (count++ > 3) {
+                throw new Error('Into infinity');
+              }
             }
-          }
-        }, {noAck: true});
+          },
+          { noAck: true },
+        );
 
         definition.resume();
       });
@@ -616,7 +626,7 @@ Feature('Issues', () => {
       });
 
       When('definition is recovered with state from first run user task wait', () => {
-        definition = new Definition(context.clone(), {...options});
+        definition = new Definition(context.clone(), { ...options });
         definition.recover(JSON.parse(states[0]));
       });
 
@@ -625,13 +635,18 @@ Feature('Issues', () => {
         wait = definition.waitFor('wait');
 
         let count = 0;
-        definition.broker.subscribeTmp('event', 'activity.discard', (_, msg) => {
-          if (msg.content.id === 'UserTask') {
-            if (count++ > 3) {
-              throw new Error('Into infinity');
+        definition.broker.subscribeTmp(
+          'event',
+          'activity.discard',
+          (_, msg) => {
+            if (msg.content.id === 'UserTask') {
+              if (count++ > 3) {
+                throw new Error('Into infinity');
+              }
             }
-          }
-        }, {noAck: true});
+          },
+          { noAck: true },
+        );
 
         definition.resume();
       });
@@ -662,7 +677,7 @@ Feature('Issues', () => {
 
       Given('definition is ran again', () => {
         states.splice(0);
-        definition = new Definition(context.clone(), {...options, variables: {passTask2: 1}});
+        definition = new Definition(context.clone(), { ...options, variables: { passTask2: 1 } });
         wait = definition.waitFor('wait');
         definition.run();
       });
@@ -678,16 +693,19 @@ Feature('Issues', () => {
       });
 
       And('end event was not discarded yet', () => {
-        expect(state.execution.processes[0].execution.children.find(({id}) => id === 'End').counters).to.deep.equal({taken: 0, discarded: 0});
+        expect(state.execution.processes[0].execution.children.find(({ id }) => id === 'End').counters).to.deep.equal({
+          taken: 0,
+          discarded: 0,
+        });
       });
 
       When('definition is recovered with state', () => {
-        definition = new Definition(context.clone(), {...options});
+        definition = new Definition(context.clone(), { ...options });
         definition.recover(state);
       });
 
       Then('end event is still not discarded', () => {
-        expect(definition.getActivityById('End').counters).to.deep.equal({taken: 0, discarded: 0});
+        expect(definition.getActivityById('End').counters).to.deep.equal({ taken: 0, discarded: 0 });
       });
 
       When('definition is resumed', () => {
@@ -695,7 +713,7 @@ Feature('Issues', () => {
       });
 
       Then('end event is discarded once', () => {
-        expect(definition.getActivityById('End').counters).to.deep.equal({taken: 0, discarded: 1});
+        expect(definition.getActivityById('End').counters).to.deep.equal({ taken: 0, discarded: 1 });
       });
     });
   });
@@ -753,7 +771,7 @@ Feature('Issues', () => {
     });
 
     When('first user task is signaled', () => {
-      definition.signal({id: 'A'});
+      definition.signal({ id: 'A' });
     });
 
     And('run is stopped', () => {
@@ -763,7 +781,7 @@ Feature('Issues', () => {
 
     Then('second user task is waiting', () => {
       const postponed = definition.getPostponed();
-      expect(postponed.find(({id}) => id === 'B')).to.be.ok;
+      expect(postponed.find(({ id }) => id === 'B')).to.be.ok;
     });
 
     When('recovered and resumed', () => {
@@ -774,11 +792,11 @@ Feature('Issues', () => {
 
     Then('second user task is still waiting', () => {
       const postponed = definition.getPostponed();
-      expect(postponed.find(({id}) => id === 'B')).to.be.ok;
+      expect(postponed.find(({ id }) => id === 'B')).to.be.ok;
     });
 
     When('second user task is signaled', () => {
-      definition.signal({id: 'B'});
+      definition.signal({ id: 'B' });
     });
 
     Then('run completes', () => {
@@ -836,7 +854,7 @@ Feature('Issues', () => {
         </process>
       </definitions>`;
       context = await testHelpers.context(source, {
-        extensions: {js},
+        extensions: { js },
       });
     });
 
@@ -899,7 +917,7 @@ Feature('Issues', () => {
         </process>
       </definitions>`;
       context = await testHelpers.context(source, {
-        extensions: {js},
+        extensions: { js },
       });
     });
 
@@ -954,9 +972,14 @@ Feature('Issues', () => {
 
       const max = n || 0;
       let iter = 0;
-      def.getActivityById('loop').broker.subscribeTmp('execution', 'execute.completed', () => {
-        if (iter++ > max) throw new Error('Inifinty');
-      }, {noAck: true});
+      def.getActivityById('loop').broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        () => {
+          if (iter++ > max) throw new Error('Inifinty');
+        },
+        { noAck: true },
+      );
 
       const leave = def.waitFor('leave');
       def.run();
@@ -999,7 +1022,7 @@ Feature('Issues', () => {
     let definition, state;
     When('run', () => {
       definition = new Definition(context, {
-        extensions: {AsyncFormatting},
+        extensions: { AsyncFormatting },
       });
       definition.waitFor('activity.wait', () => {
         state = definition.getState();
@@ -1022,7 +1045,7 @@ Feature('Issues', () => {
 
     When('recovered and resumed', () => {
       definition = new Definition(context.clone(), {
-        extensions: {AsyncFormatting},
+        extensions: { AsyncFormatting },
       }).recover(state);
       definition.resume();
     });
@@ -1055,7 +1078,7 @@ Feature('Issues', () => {
     const recoveredTimers = [];
     When('recovered and resumed', () => {
       definition = new Definition(context.clone(), {
-        extensions: {AsyncFormatting},
+        extensions: { AsyncFormatting },
       }).recover(state);
 
       definition.broker.subscribeTmp('event', 'activity.timer', (_, msg) => {
@@ -1089,7 +1112,7 @@ Feature('Issues', () => {
 
     Given('ran again', () => {
       definition = new Definition(context.clone(), {
-        extensions: {AsyncFormatting},
+        extensions: { AsyncFormatting },
       });
       definition.waitFor('activity.wait', () => {
         state = definition.getState();
@@ -1103,7 +1126,7 @@ Feature('Issues', () => {
 
     And('recovered and resumed', () => {
       definition = new Definition(context.clone(), {
-        extensions: {AsyncFormatting},
+        extensions: { AsyncFormatting },
       }).recover(state);
       definition.resume();
     });
@@ -1120,7 +1143,7 @@ Feature('Issues', () => {
       definition.resume();
 
       end = definition.waitFor('end');
-      definition.signal({id: 'timers-task'});
+      definition.signal({ id: 'timers-task' });
     });
 
     Then('run completes', () => {
@@ -1129,7 +1152,7 @@ Feature('Issues', () => {
 
     Given('ran again', () => {
       definition = new Definition(context.clone(), {
-        extensions: {AsyncFormatting},
+        extensions: { AsyncFormatting },
       });
       definition.waitFor('activity.wait', () => {
         state = definition.getState();
@@ -1143,14 +1166,14 @@ Feature('Issues', () => {
 
     And('recovered and resumed', () => {
       definition = new Definition(context.clone(), {
-        extensions: {AsyncFormatting},
+        extensions: { AsyncFormatting },
       }).recover(state);
       definition.resume();
     });
 
     When('user task is signaled', () => {
       end = definition.waitFor('end');
-      definition.signal({id: 'timers-task'});
+      definition.signal({ id: 'timers-task' });
     });
 
     Then('run completes', () => {
@@ -1180,11 +1203,20 @@ Feature('Issues', () => {
               if (!activity.behaviour.formKey) return;
               return {
                 activate() {
-                  activity.on('activity.start', () => {
-                    activity.broker.publish('format', 'run.enter.format', {
-                      form: { key: activity.behaviour.formKey },
-                    }, {persistant: false});
-                  }, {consumerTag: 'format_form_key'});
+                  activity.on(
+                    'activity.start',
+                    () => {
+                      activity.broker.publish(
+                        'format',
+                        'run.enter.format',
+                        {
+                          form: { key: activity.behaviour.formKey },
+                        },
+                        { persistant: false },
+                      );
+                    },
+                    { consumerTag: 'format_form_key' },
+                  );
                 },
                 deactivate() {
                   activity.broker.cancel('format_form_key');
@@ -1221,30 +1253,38 @@ function AsyncFormatting(element) {
   return {
     type: 'async:extension',
     activate(msg) {
-      element.on('enter', (elementApi) => {
-        if (!elementApi.fields.redelivered && !elementApi.fields.isRecovered) {
-          formatQ.queueMessage({routingKey: 'run.enter.format'}, {endRoutingKey: 'run.enter.complete'});
-        }
-        setImmediate(() => {
-          broker.publish('format', 'run.enter.complete', {enter_formatted: true});
-          elementApi.environment.output[element.id] = ['enter_formatted'];
-        });
-      }, {consumerTag: '_async-extension-on-enter'});
+      element.on(
+        'enter',
+        (elementApi) => {
+          if (!elementApi.fields.redelivered && !elementApi.fields.isRecovered) {
+            formatQ.queueMessage({ routingKey: 'run.enter.format' }, { endRoutingKey: 'run.enter.complete' });
+          }
+          setImmediate(() => {
+            broker.publish('format', 'run.enter.complete', { enter_formatted: true });
+            elementApi.environment.output[element.id] = ['enter_formatted'];
+          });
+        },
+        { consumerTag: '_async-extension-on-enter' },
+      );
 
-      element.on('activity.execution.completed', (elementApi) => {
-        if (!elementApi.fields.redelivered && !elementApi.fields.isRecovered) {
-          formatQ.queueMessage({routingKey: 'run.end.format'}, {endRoutingKey: 'run.end.complete'});
-        }
+      element.on(
+        'activity.execution.completed',
+        (elementApi) => {
+          if (!elementApi.fields.redelivered && !elementApi.fields.isRecovered) {
+            formatQ.queueMessage({ routingKey: 'run.end.format' }, { endRoutingKey: 'run.end.complete' });
+          }
 
-        if (msg.fields.redelivered && msg.fields.routingKey === 'run.execute') {
-          elementApi.environment.output[element.id] = elementApi.environment.output[element.id] || ['enter_formatted'];
-        }
+          if (msg.fields.redelivered && msg.fields.routingKey === 'run.execute') {
+            elementApi.environment.output[element.id] = elementApi.environment.output[element.id] || ['enter_formatted'];
+          }
 
-        setImmediate(() => {
-          broker.publish('format', 'run.end.complete', {end_formatted: true});
-          elementApi.environment.output[element.id].push('end_formatted');
-        });
-      }, {consumerTag: '_async-extension-on-executed'});
+          setImmediate(() => {
+            broker.publish('format', 'run.end.complete', { end_formatted: true });
+            elementApi.environment.output[element.id].push('end_formatted');
+          });
+        },
+        { consumerTag: '_async-extension-on-executed' },
+      );
     },
     deactivate() {
       broker.cancel('_async-extension-on-enter');

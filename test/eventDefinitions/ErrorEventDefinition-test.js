@@ -2,7 +2,7 @@ import BpmnError from '../../src/error/BpmnError.js';
 import Environment from '../../src/Environment.js';
 import ErrorEventDefinition from '../../src/eventDefinitions/ErrorEventDefinition.js';
 import testHelpers from '../helpers/testHelpers.js';
-import {ActivityBroker} from '../../src/EventBroker.js';
+import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('ErrorEventDefinition', () => {
   describe('catching', () => {
@@ -18,14 +18,17 @@ describe('ErrorEventDefinition', () => {
         getActivityById(id) {
           if (id !== 'error_1') return;
 
-          return BpmnError({
-            id: 'error_1',
-            type: 'bpmn:Error',
-            name: 'CatchError',
-            behaviour: {
-              errorCode: 'ERR_MINE',
+          return BpmnError(
+            {
+              id: 'error_1',
+              type: 'bpmn:Error',
+              name: 'CatchError',
+              behaviour: {
+                errorCode: 'ERR_MINE',
+              },
             },
-          }, {environment});
+            { environment },
+          );
         },
       };
     });
@@ -36,9 +39,14 @@ describe('ErrorEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       catchError.execute({
         fields: {},
@@ -48,10 +56,12 @@ describe('ErrorEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -69,9 +79,14 @@ describe('ErrorEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       catchError.execute({
         fields: {},
@@ -81,10 +96,12 @@ describe('ErrorEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -106,9 +123,14 @@ describe('ErrorEventDefinition', () => {
       event.broker.publish('api', 'activity.throw.event_1', {});
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.completed',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       catchError.execute({
         fields: {},
@@ -118,10 +140,12 @@ describe('ErrorEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
@@ -139,9 +163,14 @@ describe('ErrorEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.discard', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.discard',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       catchError.execute({
         fields: {},
@@ -151,15 +180,17 @@ describe('ErrorEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
 
-      event.broker.publish('api', 'activity.discard.event_1_0', {}, {type: 'discard'});
+      event.broker.publish('api', 'activity.discard.event_1_0', {}, { type: 'discard' });
 
       event.broker.cancel('_test-tag');
 
@@ -174,9 +205,14 @@ describe('ErrorEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('execution', 'execute.discard', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true, consumerTag: '_test-tag'});
+      event.broker.subscribeTmp(
+        'execution',
+        'execute.discard',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true, consumerTag: '_test-tag' },
+      );
 
       catchError.execute({
         fields: {},
@@ -186,15 +222,17 @@ describe('ErrorEventDefinition', () => {
           parent: {
             id: 'bound',
             executionId: 'event_1',
-            path: [{
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            }],
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
         },
       });
 
-      event.broker.publish('api', 'activity.discard.event_1_0', {}, {type: 'discard'});
+      event.broker.publish('api', 'activity.discard.event_1_0', {}, { type: 'discard' });
 
       event.broker.cancel('_test-tag');
 
@@ -309,16 +347,22 @@ describe('ErrorEventDefinition', () => {
             parent: {
               id: 'bound',
               executionId: 'bound_1',
-              path: [{
-                id: 'process_1',
-              }],
+              path: [
+                {
+                  id: 'process_1',
+                },
+              ],
             },
           },
         });
 
-        event.broker.publish('execution', 'execute.throw.bound_1_0', {id: 'errorProne', executionId: 'errorProne_1', error: {
-          name: 'Always',
-        }});
+        event.broker.publish('execution', 'execute.throw.bound_1_0', {
+          id: 'errorProne',
+          executionId: 'errorProne_1',
+          error: {
+            name: 'Always',
+          },
+        });
 
         expect(message).to.be.ok;
 
@@ -336,9 +380,14 @@ describe('ErrorEventDefinition', () => {
         });
 
         const messages = [];
-        event.broker.subscribeTmp('event', 'activity.catch', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
+        event.broker.subscribeTmp(
+          'event',
+          'activity.catch',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true },
+        );
 
         definition.execute({
           fields: {},
@@ -352,7 +401,7 @@ describe('ErrorEventDefinition', () => {
           },
         });
 
-        event.broker.publish('execution', 'execute.throw.bound_1_0', {id: 'errorProne', executionId: 'errorProne_1', error: {}});
+        event.broker.publish('execution', 'execute.throw.bound_1_0', { id: 'errorProne', executionId: 'errorProne_1', error: {} });
 
         expect(messages).to.have.length(1);
       });
@@ -371,9 +420,14 @@ describe('ErrorEventDefinition', () => {
         });
 
         const messages = [];
-        event.broker.subscribeTmp('event', 'activity.catch', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
+        event.broker.subscribeTmp(
+          'event',
+          'activity.catch',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true },
+        );
 
         definition.execute({
           fields: {},
@@ -387,9 +441,13 @@ describe('ErrorEventDefinition', () => {
           },
         });
 
-        event.broker.publish('execution', 'execute.throw.bound_1_0', {id: 'errorProne', executionId: 'errorProne_1', error: {
-          code: 'ERR_MINE',
-        }});
+        event.broker.publish('execution', 'execute.throw.bound_1_0', {
+          id: 'errorProne',
+          executionId: 'errorProne_1',
+          error: {
+            code: 'ERR_MINE',
+          },
+        });
 
         expect(messages).to.have.length(1);
       });
@@ -405,9 +463,14 @@ describe('ErrorEventDefinition', () => {
         });
 
         const messages = [];
-        event.broker.subscribeTmp('event', 'activity.catch', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
+        event.broker.subscribeTmp(
+          'event',
+          'activity.catch',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true },
+        );
 
         definition.execute({
           fields: {},
@@ -421,9 +484,13 @@ describe('ErrorEventDefinition', () => {
           },
         });
 
-        event.broker.publish('execution', 'execute.error', {id: 'errorProne', executionId: 'errorProne_1', error: {
-          code: 'ERR-SOMETHINGELSE',
-        }});
+        event.broker.publish('execution', 'execute.error', {
+          id: 'errorProne',
+          executionId: 'errorProne_1',
+          error: {
+            code: 'ERR-SOMETHINGELSE',
+          },
+        });
 
         expect(messages).to.have.length(0);
       });
@@ -435,9 +502,14 @@ describe('ErrorEventDefinition', () => {
         });
 
         const messages = [];
-        event.broker.subscribeTmp('event', 'activity.catch', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
+        event.broker.subscribeTmp(
+          'event',
+          'activity.catch',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true },
+        );
 
         definition.execute({
           fields: {},
@@ -451,7 +523,7 @@ describe('ErrorEventDefinition', () => {
           },
         });
 
-        event.broker.publish('execution', 'execute.throw.bound_1_0', {id: 'errorProne', executionId: 'errorProne_1', error: {}});
+        event.broker.publish('execution', 'execute.throw.bound_1_0', { id: 'errorProne', executionId: 'errorProne_1', error: {} });
 
         expect(messages).to.have.length(1);
       });
@@ -467,9 +539,14 @@ describe('ErrorEventDefinition', () => {
         });
 
         const messages = [];
-        event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
+        event.broker.subscribeTmp(
+          'execution',
+          'execute.completed',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true },
+        );
 
         definition.execute({
           fields: {},
@@ -483,9 +560,13 @@ describe('ErrorEventDefinition', () => {
           },
         });
 
-        event.broker.publish('execution', 'execute.throw.bound_1_0', {id: 'errorProne', executionId: 'errorProne_1', error: {
-          code: 'ERR_MINE',
-        }});
+        event.broker.publish('execution', 'execute.throw.bound_1_0', {
+          id: 'errorProne',
+          executionId: 'errorProne_1',
+          error: {
+            code: 'ERR_MINE',
+          },
+        });
 
         expect(messages).to.have.length(1);
         expect(messages[0].fields).to.have.property('routingKey', 'execute.completed');
@@ -514,7 +595,7 @@ describe('ErrorEventDefinition', () => {
         });
         expect(event.broker.getExchange('execution')).to.have.property('bindingCount', 2);
 
-        event.broker.publish('execution', 'execute.throw.bound_1_0', {id: 'errorProne', executionId: 'errorProne_1', error: {}});
+        event.broker.publish('execution', 'execute.throw.bound_1_0', { id: 'errorProne', executionId: 'errorProne_1', error: {} });
 
         expect(event.broker.getExchange('execution')).to.have.property('bindingCount', 1);
       });
@@ -525,12 +606,22 @@ describe('ErrorEventDefinition', () => {
         });
 
         const messages = [];
-        event.broker.subscribeTmp('execution', 'execute.*', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
-        event.broker.subscribeTmp('event', '#', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true});
+        event.broker.subscribeTmp(
+          'execution',
+          'execute.*',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true },
+        );
+        event.broker.subscribeTmp(
+          'event',
+          '#',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true },
+        );
 
         definition.execute({
           fields: {},
@@ -544,11 +635,11 @@ describe('ErrorEventDefinition', () => {
           },
         });
 
-        event.broker.publish('execution', 'execute.throw.bound_1_0', {id: 'errorProne', executionId: 'errorProne_1', error: {}});
+        event.broker.publish('execution', 'execute.throw.bound_1_0', { id: 'errorProne', executionId: 'errorProne_1', error: {} });
 
         expect(messages).to.have.length(4);
 
-        event.broker.publish('execution', 'execute.throw.bound_1_0', {id: 'errorProne', executionId: 'errorProne_1', error: {}});
+        event.broker.publish('execution', 'execute.throw.bound_1_0', { id: 'errorProne', executionId: 'errorProne_1', error: {} });
 
         expect(messages).to.have.length(4);
       });
@@ -558,15 +649,25 @@ describe('ErrorEventDefinition', () => {
 
         const messages = [];
         event.broker.subscribeOnce('execution', 'execute.expect', (_, msg) => {
-          event.broker.publish('execution', msg.content.expectRoutingKey, {error: new Error('unstable')});
+          event.broker.publish('execution', msg.content.expectRoutingKey, { error: new Error('unstable') });
         });
 
-        event.broker.subscribeTmp('execution', 'execute.*', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true, consumerTag: '_test-tag-1'});
-        event.broker.subscribeTmp('event', '#', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true, consumerTag: '_test-tag-2'});
+        event.broker.subscribeTmp(
+          'execution',
+          'execute.*',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true, consumerTag: '_test-tag-1' },
+        );
+        event.broker.subscribeTmp(
+          'event',
+          '#',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true, consumerTag: '_test-tag-2' },
+        );
 
         definition.execute({
           fields: {},
@@ -602,12 +703,22 @@ describe('ErrorEventDefinition', () => {
           event.broker.publish('execution', msg.content.expectRoutingKey, {});
         });
 
-        event.broker.subscribeTmp('execution', 'execute.*', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true, consumerTag: '_test-tag-1'});
-        event.broker.subscribeTmp('event', '#', (_, msg) => {
-          messages.push(msg);
-        }, {noAck: true, consumerTag: '_test-tag-2'});
+        event.broker.subscribeTmp(
+          'execution',
+          'execute.*',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true, consumerTag: '_test-tag-1' },
+        );
+        event.broker.subscribeTmp(
+          'event',
+          '#',
+          (_, msg) => {
+            messages.push(msg);
+          },
+          { noAck: true, consumerTag: '_test-tag-2' },
+        );
 
         definition.execute({
           fields: {},
@@ -650,16 +761,22 @@ describe('ErrorEventDefinition', () => {
             parent: {
               id: 'bound',
               executionId: 'bound_1',
-              path: [{
-                id: 'process_1',
-              }],
+              path: [
+                {
+                  id: 'process_1',
+                },
+              ],
             },
           },
         });
 
-        event.broker.publish('api', 'activity.throw.errorProne_1', {id: 'errorProne', executionId: 'errorProne_1', message: {
-          name: 'Always',
-        }});
+        event.broker.publish('api', 'activity.throw.errorProne_1', {
+          id: 'errorProne',
+          executionId: 'errorProne_1',
+          message: {
+            name: 'Always',
+          },
+        });
 
         expect(message).to.be.ok;
 
@@ -695,16 +812,22 @@ describe('ErrorEventDefinition', () => {
             parent: {
               id: 'bound',
               executionId: 'bound_1',
-              path: [{
-                id: 'process_1',
-              }],
+              path: [
+                {
+                  id: 'process_1',
+                },
+              ],
             },
           },
         });
 
-        event.broker.publish('api', 'activity.throw.errorProne_1', {id: 'errorProne', executionId: 'errorProne_1', message: {
-          id: 'error_1',
-        }});
+        event.broker.publish('api', 'activity.throw.errorProne_1', {
+          id: 'errorProne',
+          executionId: 'errorProne_1',
+          message: {
+            id: 'error_1',
+          },
+        });
 
         expect(message).to.be.ok;
 
@@ -740,16 +863,22 @@ describe('ErrorEventDefinition', () => {
             parent: {
               id: 'bound',
               executionId: 'bound_1',
-              path: [{
-                id: 'process_1',
-              }],
+              path: [
+                {
+                  id: 'process_1',
+                },
+              ],
             },
           },
         });
 
-        event.broker.publish('api', 'activity.throw.errorProne_1', {id: 'errorProne', executionId: 'errorProne_1', error: {
-          id: 'error_2',
-        }});
+        event.broker.publish('api', 'activity.throw.errorProne_1', {
+          id: 'errorProne',
+          executionId: 'errorProne_1',
+          error: {
+            id: 'error_2',
+          },
+        });
 
         expect(message).to.not.be.ok;
       });
@@ -778,16 +907,22 @@ describe('ErrorEventDefinition', () => {
             parent: {
               id: 'bound',
               executionId: 'bound_1',
-              path: [{
-                id: 'process_1',
-              }],
+              path: [
+                {
+                  id: 'process_1',
+                },
+              ],
             },
           },
         });
 
-        event.broker.publish('api', 'activity.throw.errorProne_1', {id: 'errorProne', executionId: 'errorProne_1', error: {
-          name: 'Anonymous',
-        }});
+        event.broker.publish('api', 'activity.throw.errorProne_1', {
+          id: 'errorProne',
+          executionId: 'errorProne_1',
+          error: {
+            name: 'Anonymous',
+          },
+        });
 
         expect(message).to.not.be.ok;
       });
@@ -798,15 +933,18 @@ describe('ErrorEventDefinition', () => {
     let event, bpmnError;
     beforeEach(() => {
       const environment = new Environment();
-      bpmnError = BpmnError({
-        id: 'Error_0',
-        type: 'bpmn:Error',
-        name: 'KnownError',
-        behaviour: {
-          errorCode: '${environment.variables.errorCode}',
+      bpmnError = BpmnError(
+        {
+          id: 'Error_0',
+          type: 'bpmn:Error',
+          name: 'KnownError',
+          behaviour: {
+            errorCode: '${environment.variables.errorCode}',
+          },
+          debug() {},
         },
-        debug() {},
-      }, { environment });
+        { environment },
+      );
 
       event = {
         id: 'end',
@@ -833,9 +971,14 @@ describe('ErrorEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -863,9 +1006,14 @@ describe('ErrorEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},
@@ -895,9 +1043,14 @@ describe('ErrorEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp('event', 'activity.*', (_, msg) => {
-        messages.push(msg);
-      }, {noAck: true});
+      event.broker.subscribeTmp(
+        'event',
+        'activity.*',
+        (_, msg) => {
+          messages.push(msg);
+        },
+        { noAck: true },
+      );
 
       definition.execute({
         fields: {},

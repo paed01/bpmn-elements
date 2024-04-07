@@ -64,7 +64,7 @@ function splitArguments(args, base, fnScope) {
         argCompleted = true;
       } else if (charPos !== ' ') {
         arg += charPos;
-        if (charPos === '\'' || charPos === '"') {
+        if (charPos === "'" || charPos === '"') {
           insideString = true;
           delimiter = charPos;
         }

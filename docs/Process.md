@@ -1,13 +1,14 @@
-Process
-=======
+# Process
 
 ## `new Process(processDefinition, context)`
 
 Arguments:
+
 - `processDefinition`: process definition object from serializable context
 - `context`: [shared context](/docs/Context.md)
 
 Process properties:
+
 - `id`: process id
 - `type`: process type
 - `name`: process name
@@ -32,6 +33,7 @@ Process properties:
 Get process or activity api.
 
 Arguments:
+
 - `message`: process or activity broker message
 
 Returns [api](/docs/SharedApi.md).
@@ -65,6 +67,7 @@ Get process state.
 Listen for events.
 
 Arguments:
+
 - `eventName`: name of event
 - `handler`: required function called when events occur
   - `api`: activity or process [api](/docs/SharedApi.md)
@@ -75,6 +78,7 @@ Arguments:
 Listen for event.
 
 Arguments:
+
 - `eventName`: name of event
 - `handler`: required function called when event occur
   - `api`: activity or process [api](/docs/SharedApi.md)
@@ -105,6 +109,7 @@ Stop process run.
 Wait for event to occur as promised.
 
 Arguments:
+
 - `eventName`: name of event
 - `onMessage`: optional message callback for event filtering purposes. Return false if the promise should not resolve. Called with the following arguments
   - `routingKey`: broker message routing key

@@ -34,7 +34,7 @@ Feature('extensions', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, {extensions});
+      const context = await testHelpers.context(source, { extensions });
       definition = new Definition(context, {
         extensions: {
           executionListener,
@@ -47,7 +47,7 @@ Feature('extensions', () => {
         }
 
         function executionListeners() {
-          const {values} = elm.behaviour.extensionElements;
+          const { values } = elm.behaviour.extensionElements;
 
           values.forEach((extel) => {
             ExecutionListener(elm, extel);
@@ -55,13 +55,13 @@ Feature('extensions', () => {
         }
       }
 
-      function ExecutionListener({id, type, broker, environment}, {$type, event, script}) {
+      function ExecutionListener({ id, type, broker, environment }, { $type, event, script }) {
         if ($type !== 'camunda:ExecutionListener') return;
         const execScript = environment.scripts.compile(script.scriptFormat, `${type}/${id}/on${event}`, script.value);
-        broker.subscribeTmp('event', `process.${event}`, onEvent, {noAck: true, priority: 1000});
+        broker.subscribeTmp('event', `process.${event}`, onEvent, { noAck: true, priority: 1000 });
 
         function onEvent(_, message) {
-          execScript.runInNewContext({...message, environment});
+          execScript.runInNewContext({ ...message, environment });
         }
       }
     });
