@@ -378,8 +378,6 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
   }
   this._stateChangeMessage(message, true);
   switch (routingKey) {
-    case 'process.stop':
-      break;
     case 'process.enter':
       this[kStatus] = 'executing';
       break;
