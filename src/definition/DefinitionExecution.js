@@ -438,6 +438,8 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
           if (bp.id !== childId) bp.stop();
         }
 
+        Object.assign(this.environment.output, content.output);
+
         this._complete('error', { error: content.error });
       }
       break;

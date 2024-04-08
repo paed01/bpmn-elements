@@ -1,5 +1,11 @@
 # Changelog
 
+# 13.2.0
+
+- hoist process environment output to definition environment on process error
+- major update of eslint
+- use prettier for formatting rules, touched basically ALL files
+
 # 13.1.2
 
 - fix another lingering leave message. Now it was the definition execution that kept `process.leave` messages around for sentimental reasons

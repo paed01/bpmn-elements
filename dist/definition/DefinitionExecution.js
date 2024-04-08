@@ -378,6 +378,8 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
   }
   this._stateChangeMessage(message, true);
   switch (routingKey) {
+    case 'process.stop':
+      break;
     case 'process.enter':
       this[kStatus] = 'executing';
       break;
@@ -427,6 +429,7 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
           for (const bp of this[kProcesses].running.slice()) {
             if (bp.id !== childId) bp.stop();
           }
+          Object.assign(this.environment.output, content.output);
           this._complete('error', {
             error: content.error
           });
