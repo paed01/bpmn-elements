@@ -1,5 +1,19 @@
 # Changelog
 
+# 14.0.0
+
+Use [`@0dep/piso`](https://www.npmjs.com/package/@0dep/piso) to parse TimerEventDefinition duration and time date.
+
+## Breaking
+
+- previously a `TimerEventDefinition` timeDate date like `2024-04-22` was parsed with `Date.parse('2024-04-22')`, hence UTC. With piso a date without offset is considered a proper local date
+- invalid `TimerEventDefinition` type value throws and stops execution instead of stalling and await manual cancel
+- remove `ISODuration` export
+
+## Fix
+
+- an activity discarded on enter, e.g. discarded by a BoundaryEvent, continued running, that arrogant behavior was unacceptable and stops now
+
 # 13.2.0
 
 - hoist process environment output to definition environment on process error

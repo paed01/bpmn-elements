@@ -23,7 +23,12 @@ class ActivityError extends Error {
   }
 }
 exports.ActivityError = ActivityError;
-class RunError extends ActivityError {}
+class RunError extends ActivityError {
+  constructor(...args) {
+    super(...args);
+    this.type = 'RunError';
+  }
+}
 exports.RunError = RunError;
 class BpmnError extends Error {
   constructor(description, behaviour = {}, sourceMessage, inner) {

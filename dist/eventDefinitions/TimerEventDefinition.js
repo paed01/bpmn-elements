@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = TimerEventDefinition;
 var _messageHelper = require("../messageHelper.js");
-var _isoDuration = require("../iso-duration.js");
+var _piso = require("@0dep/piso");
 const kStopped = Symbol.for('stopped');
 const kTimerContent = Symbol.for('timerContent');
 const kTimer = Symbol.for('timer');
@@ -191,25 +191,21 @@ TimerEventDefinition.prototype._stop = function stop() {
 };
 TimerEventDefinition.prototype.parse = function parse(timerType, value) {
   let repeat, delay, expireAt;
+  const now = new Date();
   switch (timerType) {
     case 'timeCycle':
     case 'timeDuration':
       {
-        const parsed = (0, _isoDuration.parse)(value);
+        const parsed = new _piso.ISOInterval(value).parse();
         if (parsed.repeat) repeat = parsed.repeat;
-        delay = (0, _isoDuration.toSeconds)(parsed) * 1000;
-        expireAt = new Date(Date.now() + delay);
+        expireAt = parsed.getExpireAt(now, now);
+        delay = expireAt.getTime() - now.getTime();
         break;
       }
     case 'timeDate':
       {
-        const ms = Date.parse(value);
-        if (!isNaN(ms)) {
-          expireAt = new Date(ms);
-          delay = Date.now() - expireAt;
-        } else {
-          throw new TypeError(`invalid timeDate >${value}<`);
-        }
+        expireAt = (0, _piso.getDate)(value);
+        delay = now.getTime() - expireAt;
         break;
       }
   }

@@ -472,14 +472,16 @@ describe('TimerEventDefinition', () => {
             executionId: 'event_1',
           },
           input: {
-            date: new Date('1993-06-27'),
+            date: new Date(1993, 5, 27),
           },
         },
       });
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.timer');
-      expect(messages[0].content).to.have.property('timeDate').that.deep.equal(new Date('1993-06-27'));
+      expect(messages[0].content)
+        .to.have.property('timeDate')
+        .that.deep.equal(new Date(1993, 5, 27));
       expect(messages[0].content).to.have.property('timeout').that.is.above(0);
       expect(messages[0].content).to.have.property('state', 'timer');
       expect(messages[0].content).to.have.property('parent').with.property('id', 'bound');
@@ -646,7 +648,9 @@ describe('TimerEventDefinition', () => {
         });
 
         event.broker.subscribeOnce('event', 'activity.timer', (_, message) => {
-          expect(message.content).to.have.property('expireAt').that.deep.equal(new Date('1993-06-28'));
+          expect(message.content)
+            .to.have.property('expireAt')
+            .that.deep.equal(new Date(1993, 5, 28));
           done();
         });
 
@@ -678,7 +682,9 @@ describe('TimerEventDefinition', () => {
         });
 
         event.broker.subscribeOnce('event', 'activity.timer', (_, message) => {
-          expect(message.content).to.have.property('expireAt').that.deep.equal(new Date('1993-06-27'));
+          expect(message.content)
+            .to.have.property('expireAt')
+            .that.deep.equal(new Date(1993, 5, 27));
           done();
         });
 
@@ -1037,7 +1043,7 @@ describe('TimerEventDefinition', () => {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
           timeDuration: 'PT1M',
-          timeDate: '1993-06-27',
+          timeDate: '1993-06-27T00:00Z',
           timeCycle: 'R3/PT10H',
         },
       });
@@ -1068,9 +1074,9 @@ describe('TimerEventDefinition', () => {
 
       expect(messages[0].content).to.deep.include({
         timeDuration: 'PT1M',
-        timeDate: '1993-06-27',
+        timeDate: '1993-06-27T00:00Z',
         timeCycle: 'R3/PT10H',
-        expireAt: new Date('1993-06-27T00:00Z'),
+        expireAt: new Date(Date.UTC(1993, 5, 27)),
       });
 
       definition.stop();

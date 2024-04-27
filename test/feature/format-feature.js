@@ -32,7 +32,6 @@ Feature('Format', () => {
           saveStateOnEnd(activity) {
             if (activity.type === 'bpmn:Process') return;
 
-            // activity.on('activity.execution.completed', (api) => {
             activity.on('end', (api) => {
               if (api.fields.redelivered) return;
 
@@ -326,8 +325,6 @@ Feature('Format', () => {
                 if (api.fields.redelivered) return;
 
                 broker.getQueue('format-run-q').queueMessage({ routingKey: 'run.end.format' }, { leftAt: new Date() });
-
-                // broker.publish('format', 'run.end.format', {leftAt: new Date()});
               },
               { priority: 10000 },
             );

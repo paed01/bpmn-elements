@@ -16,7 +16,12 @@ class ActivityError extends Error {
   }
 }
 
-class RunError extends ActivityError {}
+class RunError extends ActivityError {
+  constructor(...args) {
+    super(...args);
+    this.type = 'RunError';
+  }
+}
 
 class BpmnError extends Error {
   constructor(description, behaviour = {}, sourceMessage, inner) {
@@ -38,12 +43,14 @@ export { ActivityError, BpmnError, RunError, makeErrorFromMessage };
 
 function makeErrorFromMessage(errorMessage) {
   const { content } = errorMessage;
+
   if (isKnownError(content)) return content;
 
   const { error } = content;
   if (!error) return new Error(`Malformatted error message with routing key ${errorMessage.fields && errorMessage.fields.routingKey}`);
 
   if (isKnownError(error)) return error;
+
   switch (error.type) {
     case 'ActivityError':
       return new ActivityError(

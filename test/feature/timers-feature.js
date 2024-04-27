@@ -81,7 +81,9 @@ Feature('Timers', () => {
     And('time date is executing', () => {
       const [execution] = activity.getExecuting();
       expect(execution.content).to.have.property('timeDate').to.equal('1993-06-26');
-      expect(execution.content).to.have.property('expireAt').to.deep.equal(new Date('1993-06-26'));
+      expect(execution.content)
+        .to.have.property('expireAt')
+        .to.deep.equal(new Date(1993, 5, 26));
     });
 
     When('throw event is cancelled', () => {
@@ -224,7 +226,9 @@ Feature('Timers', () => {
 
     Then('throw time date has timed out', () => {
       expect(timeoutMessage.content).to.have.property('timeDate').to.deep.equal('1993-06-26');
-      expect(timeoutMessage.content).to.have.property('expireAt').to.deep.equal(new Date('1993-06-26'));
+      expect(timeoutMessage.content)
+        .to.have.property('expireAt')
+        .to.deep.equal(new Date(1993, 5, 26));
     });
   });
 
@@ -302,7 +306,9 @@ Feature('Timers', () => {
     And('time date is executing', () => {
       const [execution] = activity.getExecuting();
       expect(execution.content).to.have.property('timeDate').to.equal('1993-06-26');
-      expect(execution.content).to.have.property('expireAt').to.deep.equal(new Date('1993-06-26'));
+      expect(execution.content)
+        .to.have.property('expireAt')
+        .to.deep.equal(new Date(1993, 5, 26));
     });
 
     When('throw event is cancelled', () => {
@@ -444,7 +450,9 @@ Feature('Timers', () => {
 
     Then('throw time date has timed out', () => {
       expect(timeoutMessage.content).to.have.property('timeDate').to.equal('1993-06-26');
-      expect(timeoutMessage.content).to.have.property('expireAt').to.deep.equal(new Date('1993-06-26'));
+      expect(timeoutMessage.content)
+        .to.have.property('expireAt')
+        .to.deep.equal(new Date(1993, 5, 26));
     });
   });
 
@@ -638,6 +646,215 @@ Feature('Timers', () => {
     });
 
     Then('run completes', () => {
+      return end;
+    });
+  });
+
+  Scenario('bound activity interrupting timer cycle with ISO8601 interval', () => {
+    let context;
+    /** @type {import('../../types/types.js').Definition} */
+    let definition;
+    after(() => {
+      ck.reset();
+      expect(definition?.environment.timers.executing).to.have.length(0);
+    });
+
+    Given('timer interval is declared on timer cycle', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        id="Definitions_1l30pnv" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="Process_0cn5rdh" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-task" sourceRef="start" targetRef="task" />
+          <manualTask id="task" />
+          <boundaryEvent id="bound-cycle" attachedToRef="task">
+            <timerEventDefinition>
+              <timeCycle xsi:type="tFormalExpression">\${environment.variables.interval}</timeCycle>
+            </timerEventDefinition>
+          </boundaryEvent>
+          <sequenceFlow id="to-cycle-end" sourceRef="bound-cycle" targetRef="cycle-end" />
+          <endEvent id="cycle-end" />
+          <sequenceFlow id="to-end" sourceRef="task" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    When('definition is ran with interval with indefinite repetitions', () => {
+      ck.travel(2024, 4, 23, 12, 0);
+
+      definition = new Definition(context);
+      definition.environment.variables.interval = 'R-1/PT1M';
+      definition.run();
+    });
+
+    let activity;
+    Then('the bound cycle event is waiting', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'bound-cycle');
+    });
+
+    And('time cycle is executing', () => {
+      const [execution] = activity.getExecuting();
+      expect(execution.content).to.have.property('timeCycle', 'R-1/PT1M');
+      expect(execution.content).to.have.property('timeout').that.is.at.least(50000);
+    });
+
+    let end;
+    When('cycle times out', () => {
+      end = definition.waitFor('leave');
+      definition.environment.timers.executing[0].callback();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    When('ran with interval with indefinite repetitions, start date, and duration', () => {
+      ck.freeze(2024, 4, 23, 12, 0);
+
+      definition = new Definition(context.clone());
+      definition.environment.variables.interval = 'R-1/2024-05-31T12:00/PT10M';
+      definition.run();
+    });
+
+    Then('the bound cycle event is waiting', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'bound-cycle');
+    });
+
+    let expireAt;
+    And('time cycle is executing', () => {
+      const [execution] = activity.getExecuting();
+      expect(execution.content).to.have.property('timeCycle', definition.environment.variables.interval);
+
+      expect(execution.content)
+        .to.have.property('expireAt')
+        .that.is.deep.equal(new Date(2024, 4, 31, 12, 10));
+
+      expireAt = execution.content.expireAt;
+
+      ck.travel();
+    });
+
+    Given('run is stopped', () => {
+      definition.stop();
+    });
+
+    When('run is resumed close to expire at', () => {
+      ck.travel(expireAt.getTime() - 30000);
+
+      definition.resume();
+    });
+
+    When('cycle times out', () => {
+      end = definition.waitFor('leave');
+      definition.environment.timers.executing[0].callback();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    When('ran with interval with start date and end date', () => {
+      definition = new Definition(context);
+      definition.environment.variables.interval = '2024-06-30T12:00/07-01T12:00';
+      definition.run();
+    });
+
+    Then('the bound cycle event is waiting', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'bound-cycle');
+    });
+
+    And('time cycle is executing with expire at', () => {
+      const [execution] = activity.getExecuting();
+      expect(execution.content).to.have.property('timeCycle', definition.environment.variables.interval);
+
+      expect(execution.content)
+        .to.have.property('expireAt')
+        .that.is.deep.equal(new Date(2024, 6, 1, 12, 0));
+
+      expireAt = execution.content.expireAt;
+
+      ck.travel();
+    });
+
+    Given('run is stopped', () => {
+      definition.stop();
+    });
+
+    When('run is resumed close to expire at', () => {
+      ck.travel(expireAt.getTime() - 30000);
+
+      definition.resume();
+    });
+
+    When('cycle times out', () => {
+      end = definition.waitFor('leave');
+      definition.environment.timers.executing[0].callback();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    When('ran with interval with indefinate repetitions, duration, and end date', () => {
+      ck.freeze();
+
+      definition = new Definition(context);
+      definition.environment.variables.interval = 'R-1/P1D/2024-07-12T10:00';
+      definition.run();
+    });
+
+    Then('the bound cycle event is waiting', () => {
+      [activity] = definition.getPostponed();
+      expect(activity).to.have.property('id', 'bound-cycle');
+    });
+
+    And('time cycle is executing with expire at', () => {
+      const [execution] = activity.getExecuting();
+      expect(execution.content).to.have.property('timeCycle', definition.environment.variables.interval);
+
+      expect(execution.content)
+        .to.have.property('expireAt')
+        .that.is.deep.equal(new Date(2024, 6, 2, 10, 0));
+
+      expireAt = execution.content.expireAt;
+
+      ck.travel();
+    });
+
+    Given('run is stopped', () => {
+      definition.stop();
+    });
+
+    When('run is resumed close to expire at', () => {
+      ck.travel(expireAt.getTime() - 30000);
+
+      definition.resume();
+    });
+
+    When('cycle times out', () => {
+      end = definition.waitFor('leave');
+      definition.environment.timers.executing[0].callback();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    When('ran again after end date', () => {
+      ck.travel(2024, 6, 12, 11, 0);
+
+      end = definition.waitFor('leave');
+      definition.run();
+    });
+
+    Then('run completes immediately', () => {
       return end;
     });
   });

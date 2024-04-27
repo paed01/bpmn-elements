@@ -214,12 +214,13 @@ describe('activity', () => {
           expect(activity.outbound.every((flow) => flow.counters.discard)).to.be.ok;
         });
 
-        it('discard() on end discards outbound', async () => {
+        it('discard() on end is ignored', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
-          const messages = [],
-            assertMessage = AssertMessage(context, messages, true);
+          const messages = [];
+          const assertMessage = AssertMessage(context, messages, true);
+
           activity.broker.subscribeTmp(
             'event',
             'activity.*',
@@ -248,11 +249,10 @@ describe('activity', () => {
           assertMessage('activity.enter');
           assertMessage('activity.start');
           assertMessage('activity.end');
-          assertMessage('activity.discard');
           assertMessage('activity.leave');
 
           expect(activity.outbound.length).to.equal(2);
-          expect(activity.outbound.every((flow) => flow.counters.discard)).to.be.ok;
+          expect(activity.outbound.some((flow) => flow.counters.take)).to.be.ok;
         });
 
         it('discard() on leave is ignored', async () => {

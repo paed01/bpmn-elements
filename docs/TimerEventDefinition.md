@@ -33,15 +33,21 @@ Object with `activity.timer` properties and some:
 
 Default support for ISO8601 duration. Will set a timer (`setTimeout`) for the duration and then complete when timed out. Invalid ISI8601 duration will stall the execution and wait for cancel.
 
+Uses [`@0dep/piso`](https://www.npmjs.com/package/@0dep/piso) to parse duration and repetitions. Consequently also [ISO8601 intervals](https://en.wikipedia.org/wiki/ISO_8601) are allowed.
+
 # `timeDate`
 
 Behaves the same as `timeDuration`. Due date will timeout immediately. An invalid date will stall the execution and wait for cancel.
+
+Uses [`@0dep/piso`](https://www.npmjs.com/package/@0dep/piso) to parse date according to [ISO8601](https://en.wikipedia.org/wiki/ISO_8601).
 
 # `timeCycle`
 
 Default support for ISO8601 repeating interval.
 
 If another format is used, e.g. cron, the event definition will wait until cancelled. There are several modules to handle time cycles and this project tries to keep the number of dependencies to a minimum.
+
+Time cycles are parsed with [`@0dep/piso`](https://www.npmjs.com/package/@0dep/piso) that also handles ISO8601 intervals.
 
 # Combined `timeDuration` and `timeDate`
 

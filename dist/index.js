@@ -9,6 +9,12 @@ Object.defineProperty(exports, "Activity", {
     return _Activity.default;
   }
 });
+Object.defineProperty(exports, "ActivityError", {
+  enumerable: true,
+  get: function () {
+    return _Errors.ActivityError;
+  }
+});
 Object.defineProperty(exports, "Association", {
   enumerable: true,
   get: function () {
@@ -147,7 +153,6 @@ Object.defineProperty(exports, "Group", {
     return _Dummy.default;
   }
 });
-exports.ISODuration = void 0;
 Object.defineProperty(exports, "InclusiveGateway", {
   enumerable: true,
   get: function () {
@@ -236,6 +241,12 @@ Object.defineProperty(exports, "ReceiveTask", {
   enumerable: true,
   get: function () {
     return _ReceiveTask.default;
+  }
+});
+Object.defineProperty(exports, "RunError", {
+  enumerable: true,
+  get: function () {
+    return _Errors.RunError;
   }
 });
 Object.defineProperty(exports, "ScriptTask", {
@@ -396,8 +407,5 @@ var _TerminateEventDefinition = _interopRequireDefault(require("./eventDefinitio
 var _TimerEventDefinition = _interopRequireDefault(require("./eventDefinitions/TimerEventDefinition.js"));
 var _Transaction = _interopRequireDefault(require("./tasks/Transaction.js"));
 var _Timers = require("./Timers.js");
-var ISODuration = _interopRequireWildcard(require("./iso-duration.js"));
-exports.ISODuration = ISODuration;
-function _getRequireWildcardCache(e) { if ("function" != typeof WeakMap) return null; var r = new WeakMap(), t = new WeakMap(); return (_getRequireWildcardCache = function (e) { return e ? t : r; })(e); }
-function _interopRequireWildcard(e, r) { if (!r && e && e.__esModule) return e; if (null === e || "object" != typeof e && "function" != typeof e) return { default: e }; var t = _getRequireWildcardCache(r); if (t && t.has(e)) return t.get(e); var n = { __proto__: null }, a = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var u in e) if ("default" !== u && {}.hasOwnProperty.call(e, u)) { var i = a ? Object.getOwnPropertyDescriptor(e, u) : null; i && (i.get || i.set) ? Object.defineProperty(n, u, i) : n[u] = e[u]; } return n.default = e, t && t.set(e, n), n; }
+var _Errors = require("./error/Errors.js");
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }

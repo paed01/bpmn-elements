@@ -1,5 +1,5 @@
 import { cloneContent } from '../messageHelper.js';
-import { toSeconds, parse as parseIsoDuration } from '../iso-duration.js';
+import { ISOInterval, getDate } from '@0dep/piso';
 
 const kStopped = Symbol.for('stopped');
 const kTimerContent = Symbol.for('timerContent');
@@ -188,23 +188,19 @@ TimerEventDefinition.prototype._stop = function stop() {
 
 TimerEventDefinition.prototype.parse = function parse(timerType, value) {
   let repeat, delay, expireAt;
+  const now = new Date();
   switch (timerType) {
     case 'timeCycle':
     case 'timeDuration': {
-      const parsed = parseIsoDuration(value);
+      const parsed = new ISOInterval(value).parse();
       if (parsed.repeat) repeat = parsed.repeat;
-      delay = toSeconds(parsed) * 1000;
-      expireAt = new Date(Date.now() + delay);
+      expireAt = parsed.getExpireAt(now, now);
+      delay = expireAt.getTime() - now.getTime();
       break;
     }
     case 'timeDate': {
-      const ms = Date.parse(value);
-      if (!isNaN(ms)) {
-        expireAt = new Date(ms);
-        delay = Date.now() - expireAt;
-      } else {
-        throw new TypeError(`invalid timeDate >${value}<`);
-      }
+      expireAt = getDate(value);
+      delay = now.getTime() - expireAt;
       break;
     }
   }

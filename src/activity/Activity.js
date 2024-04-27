@@ -8,6 +8,7 @@ import { makeErrorFromMessage, ActivityError } from '../error/Errors.js';
 
 const kActivityDef = Symbol.for('activityDefinition');
 const kConsuming = Symbol.for('consuming');
+const kConsumingRunQ = Symbol.for('run queue consumer');
 const kCounters = Symbol.for('counters');
 const kEventDefinitions = Symbol.for('eventDefinitions');
 const kExec = Symbol.for('exec');
@@ -100,6 +101,8 @@ function Activity(Behaviour, activityDef, context) {
 
   this[kEventDefinitions] = eventDefinitions && eventDefinitions.map((ed) => new ed.Behaviour(this, ed, this.context));
   this[kExtensions] = context.loadExtensions(this);
+  this[kConsuming] = false;
+  this[kConsumingRunQ] = undefined;
 }
 
 Object.defineProperties(Activity.prototype, {
@@ -267,6 +270,7 @@ Activity.prototype.run = function run(runContent) {
   broker.publish('run', 'run.enter', content);
   broker.publish('run', 'run.start', cloneContent(content));
 
+  this[kConsuming] = true;
   this._consumeRunQ();
 };
 
@@ -320,6 +324,8 @@ Activity.prototype.resume = function resume() {
 
   const content = this._createMessage();
   this.broker.publish('run', 'run.resume', content, { persistent: false });
+
+  this[kConsuming] = true;
   this._consumeRunQ();
 };
 
@@ -332,6 +338,7 @@ Activity.prototype.discard = function discard(discardContent) {
   const broker = this.broker;
   broker.getQueue('run-q').purge();
   broker.publish('run', 'run.discard', cloneContent(this[kStateMessage].content));
+  this[kConsuming] = true;
   this._consumeRunQ();
 };
 
@@ -398,6 +405,7 @@ Activity.prototype._runDiscard = function runDiscard(discardContent) {
   const content = this._createMessage({ ...discardContent, executionId });
   this.broker.publish('run', 'run.discard', content);
 
+  this[kConsuming] = true;
   this._consumeRunQ();
 };
 
@@ -409,6 +417,7 @@ Activity.prototype._discardRun = function discardRun() {
   if (execution && !execution.completed) return;
 
   switch (status) {
+    case 'end':
     case 'executing':
     case 'error':
     case 'discarded':
@@ -417,11 +426,13 @@ Activity.prototype._discardRun = function discardRun() {
 
   this._deactivateRunConsumers();
 
-  const message = this[kStateMessage];
-  if (this.extensions) this.extensions.deactivate(cloneMessage(message));
+  const stateMessage = this[kStateMessage];
+  if (this.extensions) this.extensions.deactivate(cloneMessage(stateMessage));
   const broker = this.broker;
   broker.getQueue('run-q').purge();
-  broker.publish('run', 'run.discard', cloneContent(message.content));
+
+  broker.publish('run', 'run.discard', cloneContent(stateMessage.content));
+  this[kConsuming] = true;
   this._consumeRunQ();
 };
 
@@ -444,12 +455,15 @@ Activity.prototype._consumeInbound = function consumeInbound() {
   if (!this[kActivated]) return;
 
   if (this.status) return;
+
   const inboundQ = this.broker.getQueue('inbound-q');
+  const onInbound = this[kMessageHandlers].onInbound;
+
   if (this[kFlags].isParallelJoin) {
-    return inboundQ.consume(this[kMessageHandlers].onInbound, { consumerTag: '_run-on-inbound', prefetch: 1000 });
+    return inboundQ.consume(onInbound, { consumerTag: '_run-on-inbound', prefetch: 1000 });
   }
 
-  return inboundQ.consume(this[kMessageHandlers].onInbound, { consumerTag: '_run-on-inbound' });
+  return inboundQ.consume(onInbound, { consumerTag: '_run-on-inbound' });
 };
 
 Activity.prototype._onInbound = function onInbound(routingKey, message) {
@@ -542,10 +556,15 @@ Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message
 };
 
 Activity.prototype._consumeRunQ = function consumeRunQ() {
-  if (this[kConsuming]) return;
-
-  this[kConsuming] = true;
+  this[kConsumingRunQ] = true;
   this.broker.getQueue('run-q').assertConsumer(this[kMessageHandlers].onRunMessage, { exclusive: true, consumerTag: '_activity-run' });
+};
+
+Activity.prototype._pauseRunQ = function pauseRunQ() {
+  if (!this[kConsumingRunQ]) return;
+
+  this[kConsumingRunQ] = false;
+  this.broker.cancel('_activity-run');
 };
 
 Activity.prototype._onRunMessage = function onRunMessage(routingKey, message, messageProperties) {
@@ -695,8 +714,9 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
       break;
     }
     case 'run.next':
-      this._consumeInbound();
-      break;
+      message.ack();
+      this._pauseRunQ();
+      return this._consumeInbound();
   }
 
   if (!step) message.ack();
@@ -868,14 +888,15 @@ Activity.prototype._onStop = function onStop(message) {
 
   this[kConsuming] = false;
   const broker = this.broker;
-  broker.cancel('_activity-run');
+  this._pauseRunQ();
   broker.cancel('_activity-api');
   broker.cancel('_activity-execution');
   broker.cancel('_run-on-inbound');
   broker.cancel('_format-consumer');
 
+  if (this.extensions) this.extensions.deactivate(cloneMessage(message));
+
   if (running) {
-    if (this.extensions) this.extensions.deactivate(cloneMessage(message));
     this._publishEvent('stop', this._createMessage());
   }
 };
@@ -933,7 +954,7 @@ Activity.prototype._getOutboundSequenceFlowById = function getOutboundSequenceFl
 Activity.prototype._deactivateRunConsumers = function _deactivateRunConsumers() {
   const broker = this.broker;
   broker.cancel('_activity-api');
-  broker.cancel('_activity-run');
+  this._pauseRunQ();
   broker.cancel('_activity-execution');
   this[kConsuming] = false;
 };

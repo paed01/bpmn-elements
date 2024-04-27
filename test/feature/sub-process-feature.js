@@ -173,7 +173,7 @@ Feature('Sub-process', () => {
       expect(sub.counters).to.have.property('taken', 2);
 
       expect(sub.execution).to.not.be.ok;
-      expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(4);
+      expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(3);
     });
 
     When('running definition again', () => {
@@ -190,7 +190,7 @@ Feature('Sub-process', () => {
       expect(sub.counters).to.have.property('taken', 4);
 
       expect(sub.execution).to.not.be.ok;
-      expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(4);
+      expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(3);
     });
   });
 
@@ -223,7 +223,7 @@ Feature('Sub-process', () => {
     And('sub process was taken twice', () => {
       const sub = definition.getActivityById('sub');
       expect(sub.counters).to.have.property('taken', 2);
-      expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(4);
+      expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(3);
     });
 
     describe('stopped and resumed', () => {
@@ -286,7 +286,7 @@ Feature('Sub-process', () => {
       });
 
       And('leaves no lingering references', () => {
-        expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(4);
+        expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(3);
         expect(subExecution.executions, 'sub process behaviour executions').to.have.length(0);
       });
     });
@@ -331,7 +331,7 @@ Feature('Sub-process', () => {
       });
 
       And('leaves no lingering references', () => {
-        expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(4);
+        expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(3);
         expect(subExecution.executions, 'sub process behaviour executions').to.have.length(0);
       });
     });
@@ -380,7 +380,7 @@ Feature('Sub-process', () => {
       });
 
       And('leaves no lingering references', () => {
-        expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(4);
+        expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(3);
         expect(subExecution.executions, 'sub process behaviour executions').to.have.length(0);
       });
     });
@@ -422,7 +422,7 @@ Feature('Sub-process', () => {
       });
 
       And('leaves no lingering references', () => {
-        expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(4);
+        expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(3);
         expect(subExecution.executions, 'sub process behaviour executions').to.have.length(0);
       });
     });

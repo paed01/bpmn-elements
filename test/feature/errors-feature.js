@@ -864,6 +864,55 @@ Feature('Errors', () => {
       expect(catchError.counters).to.have.property('discarded', 1);
     });
   });
+
+  Scenario('loop characterics is invalid', () => {
+    const source = `<?xml version="1.0" encoding="UTF-8"?>
+    <definitions id="Definitions_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+      targetNamespace="http://bpmn.io/schema/bpmn">
+      <process id="Process_0" isExecutable="true">
+        <startEvent id="start" />
+        <sequenceFlow id="to-task" sourceRef="start" targetRef="task" />
+        <manualTask id="task">
+          <multiInstanceLoopCharacteristics>
+            <loopCardinality xsi:type="tFormalExpression">notanumber</loopCardinality>
+          </multiInstanceLoopCharacteristics>
+        </manualTask>
+        <sequenceFlow id="to-end" sourceRef="task" targetRef="end" />
+        <endEvent id="end" />
+      </process>
+    </definitions>`;
+
+    let context, definition;
+    Given('process matching scenario', async () => {
+      context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let error, state;
+    When('run and subscribe to activity error', () => {
+      definition.broker.subscribeOnce('event', 'activity.error', () => {
+        state = definition.getState();
+      });
+
+      error = definition.waitFor('error');
+      definition.run();
+    });
+
+    Then('run fails', () => {
+      return error;
+    });
+
+    When('definition is resumed on error state', () => {
+      definition = new Definition(context.clone()).recover(state);
+      error = definition.waitFor('error');
+      definition.resume();
+    });
+
+    Then('run fails again', () => {
+      return error;
+    });
+  });
 });
 
 async function prepareSource() {

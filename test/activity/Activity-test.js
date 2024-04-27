@@ -528,6 +528,45 @@ describe('Activity', () => {
       expect(activity.broker.cancel('_run-on-inbound'), 'run on inbound trigger active').to.be.false;
     });
 
+    it('cancels run queue consumer when completed with flow take', () => {
+      const sequenceFlows = [];
+      const context = getContext({
+        getInboundSequenceFlows() {
+          return sequenceFlows;
+        },
+      });
+
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      sequenceFlows.push(sequenceFlow);
+
+      const activity = new Activity(
+        behaviours.CompleteBehaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
+        },
+        context,
+      );
+
+      activity.activate();
+
+      activity.broker.subscribeOnce('event', 'activity.leave', () => {
+        activity.deactivate();
+      });
+
+      sequenceFlow.take();
+
+      expect(activity.counters).to.have.property('taken', 1);
+
+      const runQ = activity.broker.getQueue('run-q');
+
+      expect(runQ, 'run queue messages').to.have.property('messageCount', 0);
+      expect(runQ, 'run queue consumer active').to.have.property('consumerCount', 0);
+    });
+
     describe('parallel gateway join', () => {
       it('publishes activity enter with taken flows', () => {
         const sequenceFlows = [];
@@ -909,6 +948,40 @@ describe('Activity', () => {
       expect(leaveApi.content).to.have.property('output', 1);
     });
 
+    it('cancels run consumer when completed', async () => {
+      const sequenceFlows = [];
+      const context = getContext({
+        getInboundSequenceFlows() {
+          return sequenceFlows;
+        },
+      });
+
+      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      sequenceFlows.push(sequenceFlow);
+
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
+        },
+        context,
+      );
+
+      const leave = activity.waitFor('leave');
+
+      activity.run();
+
+      activity.broker.publish('execution', 'execution.completed', {});
+
+      await leave;
+
+      expect(activity.broker.getQueue('run-q')).to.have.property('consumerCount', 0);
+    });
+
     it('throws if called when already running', () => {
       const activity = getActivity(undefined, behaviours.Behaviour);
 
@@ -1059,6 +1132,11 @@ describe('Activity', () => {
       await leave;
 
       expect(sequenceFlow.counters).to.have.property('discard', 1);
+
+      const runQ = activity.broker.getQueue('run-q');
+
+      expect(runQ).to.have.property('messageCount', 0);
+      expect(runQ).to.have.property('consumerCount', 0);
     });
 
     it('discards on end', async () => {
