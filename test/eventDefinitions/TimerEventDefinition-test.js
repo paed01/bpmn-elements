@@ -144,7 +144,7 @@ describe('TimerEventDefinition', () => {
       });
     });
 
-    it('invalid ISO duration executes stalls execution', () => {
+    it('invalid ISO duration executes throws', () => {
       const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
@@ -161,26 +161,19 @@ describe('TimerEventDefinition', () => {
         { noAck: true },
       );
 
-      event.broker.subscribeTmp(
-        'execution',
-        'execute.error',
-        () => {
-          throw new Error('Should not throw');
-        },
-        { noAck: true },
-      );
-
-      definition.execute({
-        fields: {},
-        content: {
-          executionId: 'event_1_0',
-          index: 0,
-          parent: {
-            id: 'bound',
-            executionId: 'event_1',
+      expect(() => {
+        definition.execute({
+          fields: {},
+          content: {
+            executionId: 'event_1_0',
+            index: 0,
+            parent: {
+              id: 'bound',
+              executionId: 'event_1',
+            },
           },
-        },
-      });
+        });
+      }).to.throw(RangeError);
 
       expect(event.environment.timers.executing).to.be.empty;
     });
@@ -587,7 +580,7 @@ describe('TimerEventDefinition', () => {
       expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
     });
 
-    it('invalid date stalls', () => {
+    it('invalid date throws', () => {
       const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
@@ -614,26 +607,19 @@ describe('TimerEventDefinition', () => {
         { noAck: true },
       );
 
-      event.broker.subscribeTmp(
-        'execution',
-        'execute.error',
-        () => {
-          throw new Error('Should not throw');
-        },
-        { noAck: true },
-      );
-
-      definition.execute({
-        fields: {},
-        content: {
-          executionId: 'event_1_0',
-          index: 0,
-          parent: {
-            id: 'bound',
-            executionId: 'event_1',
+      expect(() => {
+        definition.execute({
+          fields: {},
+          content: {
+            executionId: 'event_1_0',
+            index: 0,
+            parent: {
+              id: 'bound',
+              executionId: 'event_1',
+            },
           },
-        },
-      });
+        });
+      }).to.throw(RangeError);
 
       expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
     });
@@ -778,17 +764,19 @@ describe('TimerEventDefinition', () => {
           { noAck: true },
         );
 
-        definition.execute({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
+        expect(() => {
+          definition.execute({
+            fields: {},
+            content: {
+              executionId: 'event_1_0',
+              index: 0,
+              parent: {
+                id: 'bound',
+                executionId: 'event_1',
+              },
             },
-          },
-        });
+          });
+        }).to.throw(RangeError);
 
         expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
       });
@@ -1699,7 +1687,7 @@ describe('TimerEventDefinition', () => {
       const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
-          timeCycle: '* * * * * * 5',
+          timeCycle: 'P1Y',
         },
       });
 
@@ -1730,7 +1718,7 @@ describe('TimerEventDefinition', () => {
       const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
-          timeCycle: '0 0/5 * 1/1 * ? *',
+          timeCycle: '2024-01-01/P1Y',
         },
       });
 

@@ -5,6 +5,8 @@ const kStopped = Symbol.for('stopped');
 const kTimerContent = Symbol.for('timerContent');
 const kTimer = Symbol.for('timer');
 
+const timerTypes = ['timeDuration', 'timeDate', 'timeCycle'];
+
 export default function TimerEventDefinition(activity, eventDefinition) {
   const type = (this.type = eventDefinition.type || 'TimerEventDefinition');
   this.activity = activity;
@@ -80,7 +82,6 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
 
   if (this.stopped) return;
 
-  if (timerContent.timeout === undefined) return this._debug(`waiting for ${timerContent.timerType || 'signal'}`);
   if (timerContent.timeout <= 0) return this._completed();
 
   const timers = this.environment.timers.register(timerContent);
@@ -219,29 +220,23 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
     ...('expireAt' in content && { expireAt: new Date(content.expireAt) }),
   };
 
-  let parseErr;
-  for (const t of ['timeDuration', 'timeDate', 'timeCycle']) {
-    if (t in content) result[t] = content[t];
-    else if (t in this) result[t] = this.environment.resolveExpression(this[t], executeMessage);
+  for (const timerType of timerTypes) {
+    if (timerType in content) result[timerType] = content[timerType];
+    else if (timerType in this) result[timerType] = this.environment.resolveExpression(this[timerType], executeMessage);
     else continue;
 
     let expireAtDate, repeat;
-    const timerStr = result[t];
+    const timerStr = result[timerType];
     if (timerStr) {
-      try {
-        const { repeat: parsedRepeat, expireAt: parsedExpireAt } = this.parse(t, timerStr);
-        repeat = parsedRepeat;
-        expireAtDate = parsedExpireAt;
-      } catch (err) {
-        parseErr = err;
-      }
+      const { repeat: parsedRepeat, expireAt: parsedExpireAt } = this.parse(timerType, timerStr);
+      repeat = parsedRepeat;
+      expireAtDate = parsedExpireAt;
     } else {
       expireAtDate = new Date();
     }
 
-    if (!expireAtDate) continue;
     if (!('expireAt' in result) || result.expireAt > expireAtDate) {
-      result.timerType = t;
+      result.timerType = timerType;
       result.expireAt = expireAtDate;
       result.repeat = repeat;
     }
@@ -253,10 +248,6 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
     result.timeout = content.timeout;
   } else if (!Object.keys(result).length) {
     result.timeout = 0;
-  }
-
-  if (!('timeout' in result) && parseErr) {
-    this.logger.warn(`<${this.activity.id}> failed to parse timer: ${parseErr.message}`);
   }
 
   if (content.inbound && 'repeat' in content.inbound[0]) {

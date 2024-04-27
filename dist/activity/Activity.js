@@ -242,6 +242,7 @@ Object.defineProperties(Activity.prototype, {
   }
 });
 Activity.prototype.activate = function activate() {
+  if (this[kActivated]) return;
   this[kActivated] = true;
   this.addInboundListeners();
   return this._consumeInbound();
@@ -892,8 +893,7 @@ Activity.prototype._publishEvent = function publishEvent(state, content, propert
   }), {
     ...properties,
     type: state,
-    mandatory: state === 'error',
-    persistent: 'persistent' in properties ? properties.persistent : state !== 'stop'
+    mandatory: state === 'error'
   });
 };
 Activity.prototype._onStop = function onStop(message) {
@@ -908,7 +908,9 @@ Activity.prototype._onStop = function onStop(message) {
   broker.cancel('_format-consumer');
   if (this.extensions) this.extensions.deactivate((0, _messageHelper.cloneMessage)(message));
   if (running) {
-    this._publishEvent('stop', this._createMessage());
+    this._publishEvent('stop', this._createMessage(), {
+      persistent: false
+    });
   }
 };
 Activity.prototype._consumeApi = function consumeApi() {

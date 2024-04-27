@@ -2853,6 +2853,21 @@ describe('Activity', () => {
       recovered.getApi().signal();
       expect(recovered.counters).to.have.property('taken', 2);
     });
+
+    it('resume if not running activates activity', () => {
+      const activity = getActivity(undefined, SignalTaskBehaviour);
+      activity.resume();
+
+      expect(activity.isRunning).to.be.false;
+    });
+
+    it('resume on resume if not running activates activity once', () => {
+      const activity = getActivity(undefined, SignalTaskBehaviour);
+      activity.resume();
+      activity.resume();
+
+      expect(activity.isRunning).to.be.false;
+    });
   });
 
   describe('evaluateOutbound()', () => {
