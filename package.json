@@ -41,7 +41,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/paed01/bpmn-elements"
+    "url": "git://github.com/paed01/bpmn-elements.git"
   },
   "author": {
     "name": "Pål Edman",
