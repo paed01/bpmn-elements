@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1atneot" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.22.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.21.0">
+  <bpmn:process id="Process_0" isExecutable="true">
+    <bpmn:startEvent id="start">
+      <bpmn:outgoing>to-loopback-join</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="loopback-join">
+      <bpmn:incoming>to-loopback-join</bpmn:incoming>
+      <bpmn:incoming>backto-loopback-join</bpmn:incoming>
+      <bpmn:outgoing>to-script</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="to-loopback-join" sourceRef="start" targetRef="loopback-join" />
+    <bpmn:sequenceFlow id="to-script" sourceRef="loopback-join" targetRef="script" />
+    <bpmn:exclusiveGateway id="split" default="to-task2">
+      <bpmn:incoming>to-split</bpmn:incoming>
+      <bpmn:outgoing>to-task1</bpmn:outgoing>
+      <bpmn:outgoing>to-task2</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="to-split" sourceRef="script" targetRef="split" />
+    <bpmn:task id="task1">
+      <bpmn:incoming>to-task1</bpmn:incoming>
+      <bpmn:outgoing>from-task1</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="to-task1" sourceRef="split" targetRef="task1">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${environment.output.count}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:task id="task2">
+      <bpmn:incoming>to-task2</bpmn:incoming>
+      <bpmn:outgoing>loopback-from-task2</bpmn:outgoing>
+      <bpmn:outgoing>from-task2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="to-task2" sourceRef="split" targetRef="task2" />
+    <bpmn:sequenceFlow id="loopback-from-task2" sourceRef="task2" targetRef="in-loopback" />
+    <bpmn:endEvent id="end">
+      <bpmn:incoming>to-end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="from-task1" sourceRef="task1" targetRef="join" />
+    <bpmn:sequenceFlow id="from-task2" sourceRef="task2" targetRef="join" />
+    <bpmn:exclusiveGateway id="join">
+      <bpmn:incoming>from-task2</bpmn:incoming>
+      <bpmn:incoming>from-task1</bpmn:incoming>
+      <bpmn:outgoing>to-end</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="to-end" sourceRef="join" targetRef="end" />
+    <bpmn:scriptTask id="script" scriptFormat="js">
+      <bpmn:incoming>to-script</bpmn:incoming>
+      <bpmn:outgoing>to-split</bpmn:outgoing>
+      <bpmn:script>if ('count' in environment.output) environment.output.count++;
+else environment.output.count = 0;
+next();</bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:exclusiveGateway id="in-loopback" default="Flow_1r5vvbn">
+      <bpmn:incoming>loopback-from-task2</bpmn:incoming>
+      <bpmn:outgoing>backto-loopback-join</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1r5vvbn</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="backto-loopback-join" sourceRef="in-loopback" targetRef="loopback-join">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${true}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="loopback-end">
+      <bpmn:incoming>Flow_1r5vvbn</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1r5vvbn" sourceRef="in-loopback" targetRef="loopback-end" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_0">
+      <bpmndi:BPMNShape id="Gateway_07b81e1_di" bpmnElement="loopback-join" isMarkerVisible="true">
+        <dc:Bounds x="325" y="92" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1svld5l_di" bpmnElement="split" isMarkerVisible="true">
+        <dc:Bounds x="585" y="92" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_01u2r2j_di" bpmnElement="task1">
+        <dc:Bounds x="690" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0unvbji_di" bpmnElement="task2">
+        <dc:Bounds x="690" y="190" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1stxyq7_di" bpmnElement="end">
+        <dc:Bounds x="992" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0af8y15_di" bpmnElement="join" isMarkerVisible="true">
+        <dc:Bounds x="865" y="92" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1hbm5md_di" bpmnElement="script">
+        <dc:Bounds x="430" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_007bgfb_di" bpmnElement="in-loopback" isMarkerVisible="true">
+        <dc:Bounds x="505" y="365" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="start">
+        <dc:Bounds x="152" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0wkz699_di" bpmnElement="loopback-end">
+        <dc:Bounds x="512" y="502" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1j7azfa_di" bpmnElement="to-loopback-join">
+        <di:waypoint x="188" y="117" />
+        <di:waypoint x="325" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1023i2v_di" bpmnElement="backto-loopback-join">
+        <di:waypoint x="505" y="390" />
+        <di:waypoint x="350" y="390" />
+        <di:waypoint x="350" y="142" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_05qn7i0_di" bpmnElement="to-script">
+        <di:waypoint x="375" y="117" />
+        <di:waypoint x="430" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0rnndnw_di" bpmnElement="to-split">
+        <di:waypoint x="530" y="117" />
+        <di:waypoint x="585" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0zuhkpl_di" bpmnElement="to-task1">
+        <di:waypoint x="635" y="117" />
+        <di:waypoint x="690" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0zqh3es_di" bpmnElement="to-task2">
+        <di:waypoint x="610" y="142" />
+        <di:waypoint x="610" y="230" />
+        <di:waypoint x="690" y="230" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_128elis_di" bpmnElement="from-task1">
+        <di:waypoint x="790" y="117" />
+        <di:waypoint x="865" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1brfpu9_di" bpmnElement="loopback-from-task2">
+        <di:waypoint x="750" y="270" />
+        <di:waypoint x="750" y="390" />
+        <di:waypoint x="555" y="390" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_068rw3c_di" bpmnElement="from-task2">
+        <di:waypoint x="790" y="230" />
+        <di:waypoint x="890" y="230" />
+        <di:waypoint x="890" y="142" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1vpqge5_di" bpmnElement="to-end">
+        <di:waypoint x="915" y="117" />
+        <di:waypoint x="992" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1r5vvbn_di" bpmnElement="Flow_1r5vvbn">
+        <di:waypoint x="530" y="415" />
+        <di:waypoint x="530" y="502" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
