@@ -1,5 +1,6 @@
-import { cloneContent } from '../messageHelper.js';
 import { ISOInterval, getDate } from '@0dep/piso';
+import { cloneContent } from '../messageHelper.js';
+import { RunError } from '../error/Errors.js';
 
 const kStopped = Symbol.for('stopped');
 const kTimerContent = Symbol.for('timerContent');
@@ -58,7 +59,14 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
   const executionId = content.executionId;
   const startedAt = (this.startedAt = 'startedAt' in content ? new Date(content.startedAt) : new Date());
 
-  const resolvedTimer = this._getTimers(executeMessage);
+  try {
+    // eslint-disable-next-line no-var
+    var resolvedTimer = this._getTimers(executeMessage);
+  } catch (err) {
+    this.logger.error(`<${executionId} (${this.activity.id})> failed to get timeout delay: ${err}`);
+    throw new RunError(err.message, executeMessage, err);
+  }
+
   const timerContent = (this[kTimerContent] = cloneContent(content, {
     ...resolvedTimer,
     ...(isResumed && { isResumed }),
@@ -220,6 +228,8 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
     ...('expireAt' in content && { expireAt: new Date(content.expireAt) }),
   };
 
+  const now = new Date();
+
   for (const timerType of timerTypes) {
     if (timerType in content) result[timerType] = content[timerType];
     else if (timerType in this) result[timerType] = this.environment.resolveExpression(this[timerType], executeMessage);
@@ -230,9 +240,12 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
     if (timerStr) {
       const { repeat: parsedRepeat, expireAt: parsedExpireAt } = this.parse(timerType, timerStr);
       repeat = parsedRepeat;
+      if (!parsedExpireAt || !parsedExpireAt.getTime) {
+        throw new TypeError(`Parsed ${timerType} "${timerStr}" expireAt failed to resolve to a date`);
+      }
       expireAtDate = parsedExpireAt;
     } else {
-      expireAtDate = new Date();
+      expireAtDate = now;
     }
 
     if (!('expireAt' in result) || result.expireAt > expireAtDate) {
@@ -243,7 +256,7 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
   }
 
   if ('expireAt' in result) {
-    result.timeout = result.expireAt - Date.now();
+    result.timeout = result.expireAt - now.getTime();
   } else if ('timeout' in content) {
     result.timeout = content.timeout;
   } else if (!Object.keys(result).length) {

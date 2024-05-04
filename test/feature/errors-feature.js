@@ -913,6 +913,53 @@ Feature('Errors', () => {
       return error;
     });
   });
+
+  Scenario('outbound evaluation fails', () => {
+    let context;
+    let definition;
+    Given('a process with bad outbound condition', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="def_0" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="my-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-end" sourceRef="start" targetRef="end">
+            <conditionExpression xsi:type="tFormalExpression">"\${environment.services.propfn(environment.variables)}"</conditionExpression>
+          </sequenceFlow>
+          <endEvent id="end" />
+        </process>
+       </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    let fail;
+    When('ran', () => {
+      definition = new Definition(context, {
+        services: {
+          propfn(variables) {
+            const count = ++variables.count;
+            if (count > 2) throw new Error('Testing');
+            return true;
+          },
+        },
+        variables: {
+          count: 2,
+        },
+      });
+
+      fail = definition.waitFor('error');
+      definition.run();
+    });
+
+    Then('run fails', () => {
+      return fail;
+    });
+
+    And('sequence flow source activity is still running (unexpected?)', () => {
+      const sourceActivity = definition.getActivityById('start');
+      expect(sourceActivity.isRunning).to.be.true;
+    });
+  });
 });
 
 async function prepareSource() {

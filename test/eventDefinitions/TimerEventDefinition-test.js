@@ -5,6 +5,7 @@ import TimerEventDefinition from '../../src/eventDefinitions/TimerEventDefinitio
 import { ActivityApi, DefinitionApi } from '../../src/Api.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { Timers } from '../../src/Timers.js';
+import { RunError } from '../../src/error/Errors.js';
 
 describe('TimerEventDefinition', () => {
   let event;
@@ -173,7 +174,7 @@ describe('TimerEventDefinition', () => {
             },
           },
         });
-      }).to.throw(RangeError);
+      }).to.throw(RunError);
 
       expect(event.environment.timers.executing).to.be.empty;
     });
@@ -619,7 +620,7 @@ describe('TimerEventDefinition', () => {
             },
           },
         });
-      }).to.throw(RangeError);
+      }).to.throw(RunError);
 
       expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
     });
@@ -776,7 +777,7 @@ describe('TimerEventDefinition', () => {
               },
             },
           });
-        }).to.throw(RangeError);
+        }).to.throw(RunError);
 
         expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
       });

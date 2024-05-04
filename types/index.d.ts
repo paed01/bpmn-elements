@@ -1,5 +1,5 @@
 export * from './types.js';
-import { IActivityBehaviour, ActivityBehaviour, EventDefinition, MessageElement, ISODurationApi } from './types.js';
+import { IActivityBehaviour, ActivityBehaviour, EventDefinition, MessageElement } from './types.js';
 
 declare module 'bpmn-elements' {
   export var BoundaryEvent: typeof ActivityBehaviour;
@@ -65,8 +65,6 @@ declare module 'bpmn-elements' {
   export class Message extends MessageElement {}
   export class Signal extends MessageElement {}
   export class Escalation extends MessageElement {}
-
-  export var ISODuration: ISODurationApi;
 }
 
 declare module 'bpmn-elements/events' {

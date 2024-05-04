@@ -4,6 +4,8 @@ import testHelpers from '../helpers/testHelpers.js';
 import factory from '../helpers/factory.js';
 import CamundaExtension from '../resources/extensions/CamundaExtension.js';
 import { resolveExpression } from '@aircall/expression-parser';
+import { RunError } from '../../src/error/Errors.js';
+import TimerEventDefinition from '../../src/eventDefinitions/TimerEventDefinition.js';
 
 const extensions = {
   camunda: CamundaExtension,
@@ -1178,17 +1180,17 @@ Feature('Timers', () => {
 
       Given('a source with a faulty timer expression', async () => {
         const source = `<?xml version="1.0" encoding="UTF-8"?>
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
-        <process id="Process_0" isExecutable="true">
-          <startEvent id="start-cycle">
-            <timerEventDefinition>
-              <timeCycle xsi:type="tFormalExpression">\${environment.variables.timer}</timeCycle>
-            </timerEventDefinition>
-          </startEvent>
-        </process>
-      </definitions>`;
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+          <process id="Process_0" isExecutable="true">
+            <startEvent id="start-cycle">
+              <timerEventDefinition>
+                <timeCycle xsi:type="tFormalExpression">\${environment.variables.timer}</timeCycle>
+              </timerEventDefinition>
+            </startEvent>
+          </process>
+        </definitions>`;
 
         context = await testHelpers.context(source);
         definition = new Definition(context, {
@@ -1203,8 +1205,10 @@ Feature('Timers', () => {
       });
 
       Then('run fails', async () => {
-        const err = await errored;
-        expect(err.content.error).to.be.instanceof(RangeError);
+        const err = (await errored).content.error;
+        expect(err).to.be.instanceof(RunError);
+        expect(err.inner).to.be.instanceof(RangeError);
+        expect(err.source.content).to.have.property('id', 'start-cycle');
       });
     });
   });
@@ -1266,6 +1270,52 @@ Feature('Timers', () => {
 
     Then('run completes', () => {
       return end;
+    });
+  });
+
+  [null, 'foo', { expireAt: 'bar' }].forEach((parseResult) => {
+    Scenario(`override TimerEventDefinition parse function and return unaccepted >${JSON.stringify(parseResult)}<`, () => {
+      class ExtendedTimerEventDefinition extends TimerEventDefinition {
+        parse() {
+          return parseResult;
+        }
+      }
+
+      let context, definition;
+      Given('a source with a start event time cycle', async () => {
+        const source = `<?xml version="1.0" encoding="UTF-8"?>
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          id="Definitions_1" targetNamespace="http://bpmn.io/schema/bpmn">
+          <process id="Process_0" isExecutable="true">
+            <startEvent id="start-cycle">
+              <timerEventDefinition>
+                <timeCycle xsi:type="tFormalExpression">P1Y</timeCycle>
+              </timerEventDefinition>
+            </startEvent>
+          </process>
+        </definitions>`;
+
+        context = await testHelpers.context(source, {
+          types: {
+            TimerEventDefinition: ExtendedTimerEventDefinition,
+          },
+        });
+        definition = new Definition(context);
+      });
+
+      let errored;
+      When('definition is ran', () => {
+        errored = definition.waitFor('error');
+        definition.run();
+      });
+
+      Then('run fails', async () => {
+        const err = (await errored).content.error;
+        expect(err).to.be.instanceof(RunError);
+        expect(err.inner).to.be.instanceof(TypeError);
+        expect(err.source.content).to.have.property('id', 'start-cycle');
+      });
     });
   });
 });

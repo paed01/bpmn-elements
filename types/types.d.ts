@@ -697,26 +697,6 @@ declare class ActivityError extends Error {
   constructor(description: string, sourceMessage: MessageMessage, inner?: Error);
 }
 
-declare interface Duration {
-  years?: number;
-  months?: number;
-  weeks?: number;
-  days?: number;
-  hours?: number;
-  minutes?: number;
-  seconds?: number;
-  repeat?: number;
-}
-
-declare type ISODurationApi = {
-  /** Parse PnYnMnDTnHnMnS format to object */
-  parse: (durationString: string) => Duration;
-  /** Convert ISO8601 duration object to an end Date. */
-  end: (durationInput: Duration, startDate?: Date) => Date;
-  /** Convert ISO8601 duration object to seconds */
-  toSeconds: (durationInput: Duration, startDate?: Date) => number;
-};
-
 /**
  * Evaluate flow callback
  * @callback evaluateCallback

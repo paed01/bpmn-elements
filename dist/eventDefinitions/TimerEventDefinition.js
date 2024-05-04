@@ -4,8 +4,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = TimerEventDefinition;
-var _messageHelper = require("../messageHelper.js");
 var _piso = require("@0dep/piso");
+var _messageHelper = require("../messageHelper.js");
+var _Errors = require("../error/Errors.js");
 const kStopped = Symbol.for('stopped');
 const kTimerContent = Symbol.for('timerContent');
 const kTimer = Symbol.for('timer');
@@ -60,7 +61,13 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
   const content = executeMessage.content;
   const executionId = content.executionId;
   const startedAt = this.startedAt = 'startedAt' in content ? new Date(content.startedAt) : new Date();
-  const resolvedTimer = this._getTimers(executeMessage);
+  try {
+    // eslint-disable-next-line no-var
+    var resolvedTimer = this._getTimers(executeMessage);
+  } catch (err) {
+    this.logger.error(`<${executionId} (${this.activity.id})> failed to get timeout delay: ${err}`);
+    throw new _Errors.RunError(err.message, executeMessage, err);
+  }
   const timerContent = this[kTimerContent] = (0, _messageHelper.cloneContent)(content, {
     ...resolvedTimer,
     ...(isResumed && {
@@ -222,6 +229,7 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
       expireAt: new Date(content.expireAt)
     })
   };
+  const now = new Date();
   for (const timerType of timerTypes) {
     if (timerType in content) result[timerType] = content[timerType];else if (timerType in this) result[timerType] = this.environment.resolveExpression(this[timerType], executeMessage);else continue;
     let expireAtDate, repeat;
@@ -232,9 +240,12 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
         expireAt: parsedExpireAt
       } = this.parse(timerType, timerStr);
       repeat = parsedRepeat;
+      if (!parsedExpireAt || !parsedExpireAt.getTime) {
+        throw new TypeError(`Parsed ${timerType} "${timerStr}" expireAt failed to resolve to a date`);
+      }
       expireAtDate = parsedExpireAt;
     } else {
-      expireAtDate = new Date();
+      expireAtDate = now;
     }
     if (!('expireAt' in result) || result.expireAt > expireAtDate) {
       result.timerType = timerType;
@@ -243,7 +254,7 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
     }
   }
   if ('expireAt' in result) {
-    result.timeout = result.expireAt - Date.now();
+    result.timeout = result.expireAt - now.getTime();
   } else if ('timeout' in content) {
     result.timeout = content.timeout;
   } else if (!Object.keys(result).length) {

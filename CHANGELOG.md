@@ -1,5 +1,9 @@
 # Changelog
 
+# 14.0.1
+
+- throw `RunError` if `TimerEventDefinition` timer value parsing fails, referencing the complaining activity in the error source property
+
 # 14.0.0
 
 Use [`@0dep/piso`](https://www.npmjs.com/package/@0dep/piso) to parse TimerEventDefinition duration and time date.
