@@ -6,7 +6,7 @@ Start event behaviour.
 
 If a form property is available when start event is executed, the event will wait until signaled. But! event definitions have precedence.
 
-```js
+```javascript
 import * as elements from 'bpmn-elements';
 import BpmnModdle from 'bpmn-moddle';
 

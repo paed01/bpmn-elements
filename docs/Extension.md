@@ -33,40 +33,100 @@ In some cases it may be required to add some extra data when an activity execute
 
 The basic flow is to publish a formatting message on the activity format queue.
 
-```js
-import { Definition } from 'bpmn-elements';
+```javascript
+import * as elements from 'bpmn-elements';
+import BpmnModdle from 'bpmn-moddle';
 
-const definition = new Definition(context, {
-  variables: {
-    remoteFormUrl: 'https://exmple.com',
-  },
-  extensions: {
-    addFormExtension,
-  },
-});
+import { default as serialize, TypeResolver } from 'moddle-context-serializer';
 
-definition.once('activity.start', (api) => {
-  console.log(api.content.form);
-});
+const { Context, Definition } = elements;
+const typeResolver = TypeResolver(elements);
 
-definition.run();
+const source = `
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:js="http://paed01.github.io/bpmn-engine/schema/2020/08/bpmn">
+  <process id="theProcess" isExecutable="true">
+    <startEvent id="start" js:formKey="whatsYourName" />
+  </process>
+</definitions>`;
 
-function addFormExtension(activity) {
-  const { formKey } = activity.behaviour;
-  if (!formKey) return;
-
-  const { broker } = activity;
-  const form = formKey === 'whatsYourName' ? { givenName: { type: 'string' } } : { age: { type: 'int' } };
-
-  broker.subscribeTmp(
-    'event',
-    'activity.enter',
-    () => {
-      broker.publish('format', 'run.input', { form });
+const moddleOptions = {
+  js: {
+    name: 'Node bpmn-engine',
+    uri: 'http://paed01.github.io/bpmn-engine/schema/2020/08/bpmn',
+    prefix: 'js',
+    xml: {
+      tagAlias: 'lowerCase',
     },
-    { noAck: true },
-  );
+    types: [
+      {
+        name: 'FormSupported',
+        isAbstract: true,
+        extends: ['bpmn:StartEvent', 'bpmn:UserTask'],
+        properties: [
+          {
+            name: 'formKey',
+            type: 'String',
+            isAttr: true,
+          },
+        ],
+      },
+    ],
+  },
+};
+
+async function run() {
+  const moddleContext = await getModdleContext(source);
+
+  const context = new Context(serialize(moddleContext, typeResolver));
+  const definition = new Definition(context, {
+    Logger,
+    variables: {
+      remoteFormUrl: 'https://exmple.com',
+    },
+    extensions: {
+      addFormExtension,
+    },
+  });
+
+  definition.once('activity.wait', (api) => {
+    api.owner.logger.debug(api.id, 'waiting for form', api.content.form);
+  });
+
+  definition.run();
+
+  function addFormExtension(activity) {
+    const { formKey } = activity.behaviour;
+    if (!formKey) return;
+
+    const { broker } = activity;
+    const form = formKey === 'whatsYourName' ? { givenName: { type: 'string' } } : { age: { type: 'int' } };
+
+    broker.subscribeTmp(
+      'event',
+      'activity.enter',
+      () => {
+        broker.publish('format', 'run.input', { form });
+      },
+      { noAck: true },
+    );
+  }
 }
+
+function getModdleContext(sourceXml) {
+  const bpmnModdle = new BpmnModdle(moddleOptions);
+  return bpmnModdle.fromXML(sourceXml.trim());
+}
+
+function Logger(scope) {
+  return {
+    debug: console.debug.bind(console, 'bpmn-elements:' + scope),
+    error: console.error.bind(console, 'bpmn-elements:' + scope),
+    warn: console.warn.bind(console, 'bpmn-elements:' + scope),
+  };
+}
+
+run();
 ```
 
 If an asynchronous operation is required pass an end routing key to formatting message. When the call is completed publish the end routing key.
