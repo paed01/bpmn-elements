@@ -2,6 +2,8 @@ import testHelpers from '../helpers/testHelpers.js';
 import Definition from '../../src/definition/Definition.js';
 import factory from '../helpers/factory.js';
 
+const motherOfAll = factory.resource('mother-of-all.bpmn');
+
 const extensions = {
   camunda: {
     moddleOptions: testHelpers.camundaBpmnModdle,
@@ -109,7 +111,7 @@ Feature('Recover resume', () => {
   Scenario('recover and resume mother-of-all with state setting off', () => {
     let context, definition;
     Given('a mother of all process with user task, timer, and loop', async () => {
-      context = await testHelpers.context(factory.resource('mother-of-all.bpmn'), { extensions });
+      context = await testHelpers.context(motherOfAll, { extensions });
       definition = new Definition(context, { settings: { disableTrackState: true } });
     });
 
@@ -232,7 +234,7 @@ Feature('Recover resume', () => {
     });
   });
 
-  Scenario('catch error and disable track', () => {
+  Scenario('catch error and disable track state', () => {
     const source = `
     <?xml version="1.0" encoding="UTF-8"?>
     <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -291,6 +293,50 @@ Feature('Recover resume', () => {
       const brokerMessages = state.execution.processes[0].broker.queues[1].messages;
       expect(brokerMessages).to.have.length(1);
       expect(brokerMessages[0].content.id).to.equal('task');
+    });
+  });
+
+  Scenario('recover resume with another diagram', () => {
+    let context, definition;
+    Given('a definition lots of processes and events', async () => {
+      context = await testHelpers.context(motherOfAll);
+      definition = new Definition(context);
+    });
+
+    When('ran', () => {
+      definition.run();
+    });
+
+    let postponed, state;
+    And('state is saved', () => {
+      postponed = definition.getPostponed();
+      state = definition.getState();
+      definition.stop();
+    });
+
+    When('recovered and resumed with a skeleton version', async () => {
+      const skeletonSource = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="${postponed[0].content.parent.id}" isExecutable="true">
+          <userTask id="${postponed[0].id}" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(skeletonSource);
+
+      definition = new Definition(context).recover(state);
+
+      definition.resume();
+    });
+
+    let leave;
+    And('waiting task is signalled', () => {
+      leave = definition.waitFor('leave');
+      definition.signal({ id: postponed[0].id });
+    });
+
+    Then('resumed run completes', () => {
+      return leave;
     });
   });
 });

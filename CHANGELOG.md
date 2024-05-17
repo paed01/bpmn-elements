@@ -1,5 +1,10 @@
 # Changelog
 
+# 14.1.0
+
+- delegate Signal within a process
+- make sure message flow targeting process works as expected, successful but was not tested
+
 # 14.0.1
 
 - throw `RunError` if `TimerEventDefinition` timer value parsing fails, referencing the complaining activity in the error source property

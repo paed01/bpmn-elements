@@ -454,4 +454,66 @@ describe('Context', () => {
       expect(context.getDataStoreById('non-existing')).to.be.undefined;
     });
   });
+
+  describe('extensions', () => {
+    it('activate() on activate() is ignored', async () => {
+      let activateCount = 0;
+
+      const context = await testHelpers.context(motherOfAllSource, {
+        extensions: {
+          coverage: {
+            extension() {
+              return {
+                activate() {
+                  ++activateCount;
+                },
+                deactivate() {
+                  --activateCount;
+                },
+              };
+            },
+          },
+        },
+      });
+
+      const extensions = context.loadExtensions(context.getActivities()[0]);
+
+      extensions.activate();
+      extensions.activate();
+
+      expect(activateCount).to.equal(1);
+    });
+
+    it('deactivate() on deactivate() is ignored', async () => {
+      let activateCount = 0;
+
+      const context = await testHelpers.context(motherOfAllSource, {
+        extensions: {
+          coverage: {
+            extension() {
+              return {
+                activate() {
+                  ++activateCount;
+                },
+                deactivate() {
+                  --activateCount;
+                },
+              };
+            },
+          },
+        },
+      });
+
+      const extensions = context.loadExtensions(context.getActivities()[0]);
+
+      extensions.activate();
+
+      expect(activateCount).to.equal(1);
+
+      extensions.deactivate();
+      extensions.deactivate();
+
+      expect(activateCount).to.equal(0);
+    });
+  });
 });

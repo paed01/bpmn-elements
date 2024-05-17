@@ -1,5 +1,6 @@
 import Definition from '../../src/definition/Definition.js';
 import testHelpers from '../helpers/testHelpers.js';
+import factory from '../helpers/factory.js';
 
 Feature('Messaging', () => {
   Scenario('A process that expects message to start', () => {
@@ -865,6 +866,32 @@ Feature('Messaging', () => {
       expect(definition.getActivityById('end2').counters).to.have.property('taken', 1);
       expect(definition.getActivityById('start2').counters).to.have.property('taken', 1);
       expect(definition.getActivityById('end2').counters).to.have.property('taken', 1);
+    });
+  });
+
+  Scenario('message flow targets another process', () => {
+    const source = factory.resource('messageflow-target-process.bpmn');
+
+    let definition;
+    Given('a intermediate throw event with signal, two participant processes that starts with same signal', async () => {
+      const context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let end;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('both processes has completed', () => {
+      const processes = definition.getProcesses();
+      expect(processes[1].counters).to.deep.equal({ completed: 1, discarded: 0 });
+      expect(processes[0].counters).to.deep.equal({ completed: 1, discarded: 0 });
     });
   });
 });

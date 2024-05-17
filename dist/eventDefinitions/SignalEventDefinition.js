@@ -120,7 +120,8 @@ SignalEventDefinition.prototype.executeThrow = function executeThrow(executeMess
   throwContent.parent = (0, _messageHelper.shiftParent)(parent);
   const broker = this.broker;
   broker.publish('event', 'activity.signal', throwContent, {
-    type: 'signal'
+    type: 'signal',
+    delegate: true
   });
   return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
