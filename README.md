@@ -76,7 +76,3 @@ The following elements are tested and supported.
 - Transaction
 
 All activities share the same [base](/docs/Activity.md) and and [api](/docs/SharedApi.md).
-
-# Acknowledgments
-
-ISO 8601 duration parser [iso8601-duration](https://www.npmjs.com/package/iso8601-duration) source is copied and extended with repeat pattern. License [MIT @ tolu](https://tolu.mit-license.org/)
