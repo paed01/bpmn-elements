@@ -8,7 +8,7 @@ exports.default = SubProcess;
 var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
 var _ProcessExecution = _interopRequireDefault(require("../process/ProcessExecution.js"));
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kExecutions = Symbol.for('executions');
 const kMessageHandlers = Symbol.for('messageHandlers');
 function SubProcess(activityDef, context) {

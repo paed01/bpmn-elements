@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Expressions;
 var _getPropertyValue = _interopRequireDefault(require("./getPropertyValue.js"));
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const isExpressionPattern = /^\${(.+?)}$/;
 const expressionPattern = /\${(.+?)}/;
 function Expressions() {

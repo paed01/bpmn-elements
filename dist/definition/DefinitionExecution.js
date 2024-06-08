@@ -8,7 +8,7 @@ var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue.js")
 var _Api = require("../Api.js");
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kActivated = Symbol.for('activated');
 const kProcessesQ = Symbol.for('processesQ');
 const kCompleted = Symbol.for('completed');

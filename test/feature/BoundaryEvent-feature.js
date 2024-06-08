@@ -715,4 +715,104 @@ Feature('BoundaryEvent', () => {
       return end;
     });
   });
+
+  Scenario('user task with multiple boundary events', () => {
+    let bp;
+    Given('a process matching scenario', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-task" sourceRef="start" targetRef="task" />
+          <userTask id="task" />
+          <boundaryEvent id="bound1" attachedToRef="task" cancelActivity="true">
+            <messageEventDefinition />
+          </boundaryEvent>
+          <boundaryEvent id="bound2" attachedToRef="task" cancelActivity="true">
+            <messageEventDefinition />
+          </boundaryEvent>
+          <boundaryEvent id="bound3" attachedToRef="task" cancelActivity="true">
+            <messageEventDefinition />
+          </boundaryEvent>
+          <sequenceFlow id="from-task" sourceRef="task" targetRef="join" />
+          <sequenceFlow id="from-bound1" sourceRef="bound1" targetRef="join" />
+          <sequenceFlow id="from-bound2" sourceRef="bound2" targetRef="join" />
+          <sequenceFlow id="from-bound3" sourceRef="bound3" targetRef="join" />
+          <parallelGateway id="join" />
+          <sequenceFlow id="to-end" sourceRef="join" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      [bp] = context.getProcesses();
+    });
+
+    let end;
+    When('ran', () => {
+      end = bp.waitFor('end');
+      bp.run();
+    });
+
+    let postponed;
+    Then('all boundary events are started', () => {
+      postponed = bp.getPostponed();
+      expect(postponed).to.have.length(4);
+    });
+
+    let bound;
+    When('first boundary event is taken', () => {
+      bound = postponed.find((e) => e.id === 'bound1');
+      bound.signal();
+    });
+
+    Then('process completes', () => {
+      return end;
+    });
+
+    And('bound was taken', () => {
+      expect(bound.owner.counters).to.have.property('taken', 1);
+    });
+
+    And('user task was discarded', () => {
+      expect(bp.getActivityById('task').counters).to.have.property('discarded', 1);
+    });
+
+    And('join was taken', () => {
+      expect(bp.getActivityById('join').counters).to.have.property('taken', 1);
+    });
+
+    And('end was taken', () => {
+      expect(bp.getActivityById('end').counters).to.have.property('taken', 1);
+    });
+
+    Given('process is ran again', () => {
+      end = bp.waitFor('end');
+      bp.run();
+    });
+
+    let task;
+    When('task is taken', () => {
+      [task] = bp.getPostponed((e) => e.id === 'task');
+      task.signal();
+    });
+
+    And('bound was discarded', () => {
+      expect(bound.owner.counters).to.have.property('taken', 1);
+      expect(bound.owner.counters).to.have.property('discarded', 1);
+    });
+
+    And('user task was taken', () => {
+      expect(bp.getActivityById('task').counters).to.have.property('discarded', 1);
+      expect(bp.getActivityById('task').counters).to.have.property('taken', 1);
+    });
+
+    And('join was taken', () => {
+      expect(bp.getActivityById('join').counters).to.have.property('taken', 2);
+    });
+
+    And('end was taken', () => {
+      expect(bp.getActivityById('end').counters).to.have.property('taken', 2);
+    });
+  });
 });

@@ -9,7 +9,7 @@ var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
 var _EventDefinitionExecution = _interopRequireDefault(require("../eventDefinitions/EventDefinitionExecution.js"));
 var _messageHelper = require("../messageHelper.js");
 var _shared = require("../shared.js");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kAttachedTags = Symbol.for('attachedConsumers');
 const kCompleteContent = Symbol.for('completeContent');
 const kExecuteMessage = Symbol.for('executeMessage');

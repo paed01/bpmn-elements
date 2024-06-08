@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = ServiceImplementation;
 var _ExecutionScope = _interopRequireDefault(require("../activity/ExecutionScope.js"));
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ServiceImplementation(activity) {
   this.type = `${activity.type}:implementation`;
   this.implementation = activity.behaviour.implementation;

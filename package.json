@@ -85,7 +85,7 @@
     "moddle-context-serializer": "^4.1.2",
     "nock": "^13.5.3",
     "prettier": "^3.2.5",
-    "texample": "^0.0.2"
+    "texample": "^0.0.5"
   },
   "dependencies": {
     "@0dep/piso": "^0.1.3",

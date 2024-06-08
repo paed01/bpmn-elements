@@ -7,7 +7,7 @@ exports.ParallelGatewayBehaviour = ParallelGatewayBehaviour;
 exports.default = ParallelGateway;
 var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ParallelGateway(activityDef, context) {
   return new _Activity.default(ParallelGatewayBehaviour, {
     ...activityDef,

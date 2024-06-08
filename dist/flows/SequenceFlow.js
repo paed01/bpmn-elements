@@ -9,7 +9,7 @@ var _messageHelper = require("../messageHelper.js");
 var _shared = require("../shared.js");
 var _EventBroker = require("../EventBroker.js");
 var _Api = require("../Api.js");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kCounters = Symbol.for('counters');
 var _default = exports.default = SequenceFlow;
 function SequenceFlow(flowDef, {

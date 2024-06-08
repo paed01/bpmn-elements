@@ -408,4 +408,4 @@ var _TimerEventDefinition = _interopRequireDefault(require("./eventDefinitions/T
 var _Transaction = _interopRequireDefault(require("./tasks/Transaction.js"));
 var _Timers = require("./Timers.js");
 var _Errors = require("./error/Errors.js");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }

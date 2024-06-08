@@ -20,17 +20,17 @@ function ContextInstance(definitionContext, environment, owner) {
   this.definitionContext = definitionContext;
   this.environment = environment;
   this.extensionsMapper = new ExtensionsMapper(this);
-  this.refs = {
-    activityRefs: {},
-    associationRefs: [],
-    dataObjectRefs: {},
-    dataStoreRefs: {},
-    messageFlows: [],
-    processes: [],
-    processRefs: {},
-    sequenceFlowRefs: {},
-    sequenceFlows: [],
-  };
+  this.refs = new Map([
+    ['activityRefs', new Map()],
+    ['sequenceFlows', []],
+    ['sequenceFlowRefs', {}],
+    ['processes', []],
+    ['associationRefs', []],
+    ['dataObjectRefs', {}],
+    ['dataStoreRefs', {}],
+    ['messageFlows', []],
+    ['processRefs', {}],
+  ]);
   this[kOwner] = owner;
 }
 
@@ -41,7 +41,7 @@ Object.defineProperty(ContextInstance.prototype, 'owner', {
 });
 
 ContextInstance.prototype.getActivityById = function getActivityById(activityId) {
-  const activityInstance = this.refs.activityRefs[activityId];
+  const activityInstance = this.refs.get('activityRefs').get(activityId);
   if (activityInstance) return activityInstance;
   const activity = this.definitionContext.getActivityById(activityId);
   if (!activity) return null;
@@ -49,16 +49,17 @@ ContextInstance.prototype.getActivityById = function getActivityById(activityId)
 };
 
 ContextInstance.prototype.upsertActivity = function upsertActivity(activityDef) {
-  let activityInstance = this.refs.activityRefs[activityDef.id];
+  let activityInstance = this.refs.get('activityRefs').get(activityDef.id);
   if (activityInstance) return activityInstance;
 
-  activityInstance = this.refs.activityRefs[activityDef.id] = new activityDef.Behaviour(activityDef, this);
+  activityInstance = new activityDef.Behaviour(activityDef, this);
+  this.refs.get('activityRefs').set(activityDef.id, activityInstance);
 
   return activityInstance;
 };
 
 ContextInstance.prototype.getSequenceFlowById = function getSequenceFlowById(sequenceFlowId) {
-  const flowInstance = this.refs.sequenceFlowRefs[sequenceFlowId];
+  const flowInstance = this.refs.get('sequenceFlowRefs')[sequenceFlowId];
   if (flowInstance) return flowInstance;
 
   const flowDef = this.definitionContext.getSequenceFlowById(sequenceFlowId);
@@ -91,12 +92,12 @@ ContextInstance.prototype.getSequenceFlows = function getSequenceFlows(scopeId) 
 };
 
 ContextInstance.prototype.upsertSequenceFlow = function upsertSequenceFlow(flowDefinition) {
-  const refs = this.refs.sequenceFlowRefs;
+  const refs = this.refs.get('sequenceFlowRefs');
   let flowInstance = refs[flowDefinition.id];
   if (flowInstance) return flowInstance;
 
   flowInstance = refs[flowDefinition.id] = new flowDefinition.Behaviour(flowDefinition, this);
-  this.refs.sequenceFlows.push(flowInstance);
+  this.refs.get('sequenceFlows').push(flowInstance);
 
   return flowInstance;
 };
@@ -106,7 +107,7 @@ ContextInstance.prototype.getAssociations = function getAssociations(scopeId) {
 };
 
 ContextInstance.prototype.upsertAssociation = function upsertAssociation(associationDefinition) {
-  const refs = this.refs.associationRefs;
+  const refs = this.refs.get('associationRefs');
   let instance = refs[associationDefinition.id];
   if (instance) return instance;
 
@@ -120,8 +121,8 @@ ContextInstance.prototype.clone = function clone(newEnvironment, newOwner) {
 };
 
 ContextInstance.prototype.getProcessById = function getProcessById(processId) {
-  const refs = this.refs.processRefs;
-  let bp = this.refs.processRefs[processId];
+  const refs = this.refs.get('processRefs');
+  let bp = this.refs.get('processRefs')[processId];
   if (bp) return bp;
 
   const processDefinition = this.definitionContext.getProcessById(processId);
@@ -131,7 +132,7 @@ ContextInstance.prototype.getProcessById = function getProcessById(processId) {
   bp = refs[processId] = new processDefinition.Behaviour(processDefinition, bpContext);
   bpContext[kOwner] = bp;
 
-  this.refs.processes.push(bp);
+  this.refs.get('processes').push(bp);
 
   return bp;
 };
@@ -156,35 +157,35 @@ ContextInstance.prototype.getExecutableProcesses = function getExecutableProcess
 };
 
 ContextInstance.prototype.getMessageFlows = function getMessageFlows(sourceId) {
-  if (!this.refs.messageFlows.length) {
+  if (!this.refs.get('messageFlows').length) {
     const flows = this.definitionContext.getMessageFlows() || [];
-    this.refs.messageFlows.push(...flows.map((flow) => new flow.Behaviour(flow, this)));
+    this.refs.get('messageFlows').push(...flows.map((flow) => new flow.Behaviour(flow, this)));
   }
 
-  return this.refs.messageFlows.filter((flow) => flow.source.processId === sourceId);
+  return this.refs.get('messageFlows').filter((flow) => flow.source.processId === sourceId);
 };
 
 ContextInstance.prototype.getDataObjectById = function getDataObjectById(referenceId) {
   let dataObject;
-  if ((dataObject = this.refs.dataObjectRefs[referenceId])) return dataObject;
+  if ((dataObject = this.refs.get('dataObjectRefs')[referenceId])) return dataObject;
 
   const dataObjectDef = this.definitionContext.getDataObjectById(referenceId);
   if (!dataObjectDef) return;
 
-  dataObject = this.refs.dataObjectRefs[dataObjectDef.id] = new dataObjectDef.Behaviour(dataObjectDef, this);
+  dataObject = this.refs.get('dataObjectRefs')[dataObjectDef.id] = new dataObjectDef.Behaviour(dataObjectDef, this);
 
   return dataObject;
 };
 
 ContextInstance.prototype.getDataStoreById = function getDataStoreById(referenceId) {
   let dataStore;
-  if ((dataStore = this.refs.dataStoreRefs[referenceId])) return dataStore;
+  if ((dataStore = this.refs.get('dataStoreRefs')[referenceId])) return dataStore;
 
   const dataStoreDef =
     this.definitionContext.getDataStoreById(referenceId) || this.definitionContext.getDataStoreReferenceById(referenceId);
   if (!dataStoreDef) return;
 
-  dataStore = this.refs.dataStoreRefs[dataStoreDef.id] = new dataStoreDef.Behaviour(dataStoreDef, this);
+  dataStore = this.refs.get('dataStoreRefs')[dataStoreDef.id] = new dataStoreDef.Behaviour(dataStoreDef, this);
 
   return dataStore;
 };

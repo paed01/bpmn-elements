@@ -8,7 +8,7 @@ exports.default = ServiceTask;
 var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
 var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ServiceTask(activityDef, context) {
   return new _Activity.default(ServiceTaskBehaviour, activityDef, context);
 }

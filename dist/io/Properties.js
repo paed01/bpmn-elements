@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = Properties;
 var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue.js"));
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kProperties = Symbol.for('properties');
 const kConsuming = Symbol.for('consuming');
 function Properties(activity, propertiesDef, context) {

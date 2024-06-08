@@ -8,7 +8,7 @@ exports.default = StartEvent;
 var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
 var _EventDefinitionExecution = _interopRequireDefault(require("../eventDefinitions/EventDefinitionExecution.js"));
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kExecuteMessage = Symbol.for('executeMessage');
 const kExecution = Symbol.for('execution');
 function StartEvent(activityDef, context) {

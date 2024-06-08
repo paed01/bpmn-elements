@@ -347,11 +347,13 @@ Activity.prototype.addInboundListeners = function addInboundListeners() {
   const onInboundEvent = this._onInboundEvent.bind(this);
   const triggerConsumerTag = `_inbound-${this.id}`;
   for (const trigger of this[kFlows].inboundTriggers) {
-    if (trigger.isSequenceFlow)
+    if (trigger.isSequenceFlow) {
       trigger.broker.subscribeTmp('event', 'flow.#', onInboundEvent, { noAck: true, consumerTag: triggerConsumerTag });
-    else if (this.isForCompensation)
+    } else if (this.isForCompensation) {
       trigger.broker.subscribeTmp('event', 'association.#', onInboundEvent, { noAck: true, consumerTag: triggerConsumerTag });
-    else trigger.broker.subscribeTmp('event', 'activity.#', onInboundEvent, { noAck: true, consumerTag: triggerConsumerTag });
+    } else {
+      trigger.broker.subscribeTmp('event', 'activity.#', onInboundEvent, { noAck: true, consumerTag: triggerConsumerTag });
+    }
   }
 };
 

@@ -7,7 +7,7 @@ exports.EventBasedGatewayBehaviour = EventBasedGatewayBehaviour;
 exports.default = EventBasedGateway;
 var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kCompleted = Symbol.for('completed');
 const kTargets = Symbol.for('targets');
 function EventBasedGateway(activityDef, context) {

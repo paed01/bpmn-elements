@@ -7,7 +7,7 @@ exports.default = Environment;
 var _Expressions = _interopRequireDefault(require("./Expressions.js"));
 var _Scripts = require("./Scripts.js");
 var _Timers = require("./Timers.js");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kServices = Symbol.for('services');
 const kVariables = Symbol.for('variables');
 const defaultOptions = ['expressions', 'extensions', 'Logger', 'output', 'scripts', 'services', 'settings', 'timers', 'variables'];

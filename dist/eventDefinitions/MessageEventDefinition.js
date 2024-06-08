@@ -7,7 +7,7 @@ exports.default = MessageEventDefinition;
 var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue.js"));
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kCompleted = Symbol.for('completed');
 const kMessageQ = Symbol.for('messageQ');
 const kExecuteMessage = Symbol.for('executeMessage');

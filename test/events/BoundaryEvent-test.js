@@ -2,8 +2,9 @@ import testHelpers from '../helpers/testHelpers.js';
 import Environment from '../../src/Environment.js';
 import ErrorEventDefinition from '../../src/eventDefinitions/ErrorEventDefinition.js';
 import MessageEventDefinition from '../../src/eventDefinitions/MessageEventDefinition.js';
+import SignalTask from '../../src/tasks/SignalTask.js';
+import BoundaryEvent, { BoundaryEventBehaviour } from '../../src/events/BoundaryEvent.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
-import { BoundaryEventBehaviour } from '../../src/events/BoundaryEvent.js';
 
 describe('BoundaryEvent', () => {
   describe('behaviour', () => {
@@ -549,6 +550,76 @@ describe('BoundaryEvent', () => {
         expect(behaviour.attachedTo.broker).to.have.property('consumerCount', 0);
         expect(broker).to.have.property('consumerCount', 0);
       });
+    });
+  });
+
+  describe('multiple boundary events attached to same task', () => {
+    it('listens to the same task broker exchange', () => {
+      const context = testHelpers.emptyContext({
+        getActivityById(id) {
+          return {
+            id,
+            parent: {
+              id: 'theProcess',
+            },
+            ...(id !== 'task'
+              ? {
+                  type: 'boundaryevent',
+                  Behaviour: BoundaryEvent,
+                  behaviour: {
+                    attachedTo: { id: 'task' },
+                    eventDefinitions: [
+                      {
+                        type: 'messageeventdefinition',
+                        Behaviour: MessageEventDefinition,
+                      },
+                    ],
+                  },
+                }
+              : {
+                  type: 'task',
+                  Behaviour: SignalTask,
+                }),
+          };
+        },
+      });
+
+      const attachedTo = context.getActivityById('task');
+      expect(attachedTo.broker.getExchange('event').bindingCount).to.equal(0);
+
+      const events = [context.getActivityById('bound1'), context.getActivityById('bound2'), context.getActivityById('bound3')];
+
+      expect(events[0].broker.getQueue('inbound-q')).to.be.ok;
+      expect(events[1].broker.getQueue('inbound-q')).to.not.equal(events[0].broker.getQueue('inbound-q'));
+
+      for (const event of events) {
+        expect(event.attachedTo, event.id + ' attached to').to.equal(attachedTo);
+
+        event.activate();
+
+        const inboundQ = event.broker.getQueue('inbound-q');
+        expect(inboundQ.consumerCount, event.id + ' inbound-q consumer count').to.be.ok;
+      }
+
+      expect(attachedTo.broker.getExchange('event').bindingCount).to.equal(3);
+
+      let enterMessage;
+      attachedTo.broker.subscribeTmp(
+        'event',
+        'activity.enter',
+        (_, msg) => {
+          enterMessage = msg;
+        },
+        { noAck: true, priority: 10000 },
+      );
+
+      attachedTo.broker.publish('event', 'activity.enter', { id: 'task' });
+
+      expect(enterMessage, 'enter message published').to.be.ok;
+
+      for (const event of events) {
+        expect(event.status, event.id).to.equal('executing');
+      }
     });
   });
 

@@ -5,7 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = StandardLoopCharacteristics;
 var _LoopCharacteristics = _interopRequireDefault(require("./LoopCharacteristics.js"));
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function StandardLoopCharacteristics(activity, loopCharacteristics) {
   let {
     behaviour

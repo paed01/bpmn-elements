@@ -11,7 +11,7 @@ var _EventBroker = require("../EventBroker.js");
 var _MessageFormatter = require("../MessageFormatter.js");
 var _messageHelper = require("../messageHelper.js");
 var _Errors = require("../error/Errors.js");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kActivityDef = Symbol.for('activityDefinition');
 const kConsuming = Symbol.for('consuming');
 const kConsumingRunQ = Symbol.for('run queue consumer');
@@ -345,16 +345,22 @@ Activity.prototype.addInboundListeners = function addInboundListeners() {
   const onInboundEvent = this._onInboundEvent.bind(this);
   const triggerConsumerTag = `_inbound-${this.id}`;
   for (const trigger of this[kFlows].inboundTriggers) {
-    if (trigger.isSequenceFlow) trigger.broker.subscribeTmp('event', 'flow.#', onInboundEvent, {
-      noAck: true,
-      consumerTag: triggerConsumerTag
-    });else if (this.isForCompensation) trigger.broker.subscribeTmp('event', 'association.#', onInboundEvent, {
-      noAck: true,
-      consumerTag: triggerConsumerTag
-    });else trigger.broker.subscribeTmp('event', 'activity.#', onInboundEvent, {
-      noAck: true,
-      consumerTag: triggerConsumerTag
-    });
+    if (trigger.isSequenceFlow) {
+      trigger.broker.subscribeTmp('event', 'flow.#', onInboundEvent, {
+        noAck: true,
+        consumerTag: triggerConsumerTag
+      });
+    } else if (this.isForCompensation) {
+      trigger.broker.subscribeTmp('event', 'association.#', onInboundEvent, {
+        noAck: true,
+        consumerTag: triggerConsumerTag
+      });
+    } else {
+      trigger.broker.subscribeTmp('event', 'activity.#', onInboundEvent, {
+        noAck: true,
+        consumerTag: triggerConsumerTag
+      });
+    }
   }
 };
 Activity.prototype.removeInboundListeners = function removeInboundListeners() {

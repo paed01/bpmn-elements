@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = IoSpecification;
 var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue.js"));
 var _shared = require("../shared.js");
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kConsuming = Symbol.for('consuming');
 function IoSpecification(activity, ioSpecificationDef, context) {
   const {
