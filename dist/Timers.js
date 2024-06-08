@@ -14,13 +14,13 @@ function Timers(options) {
     clearTimeout,
     ...options
   };
-  this[kExecuting] = [];
+  this[kExecuting] = new Set();
   this.setTimeout = this.setTimeout.bind(this);
   this.clearTimeout = this.clearTimeout.bind(this);
 }
 Object.defineProperty(Timers.prototype, 'executing', {
   get() {
-    return this[kExecuting].slice();
+    return [...this[kExecuting]];
   }
 });
 Timers.prototype.register = function register(owner) {
@@ -30,10 +30,7 @@ Timers.prototype.setTimeout = function wrappedSetTimeout(callback, delay, ...arg
   return this._setTimeout(null, callback, delay, ...args);
 };
 Timers.prototype.clearTimeout = function wrappedClearTimeout(ref) {
-  const executing = this[kExecuting];
-  const idx = executing.indexOf(ref);
-  if (idx > -1) {
-    executing.splice(idx, 1);
+  if (this[kExecuting].delete(ref)) {
     ref.timerRef = this.options.clearTimeout(ref.timerRef);
     return;
   }
@@ -42,14 +39,13 @@ Timers.prototype.clearTimeout = function wrappedClearTimeout(ref) {
 Timers.prototype._setTimeout = function setTimeout(owner, callback, delay, ...args) {
   const executing = this[kExecuting];
   const ref = this._getReference(owner, callback, delay, args);
-  executing.push(ref);
+  executing.add(ref);
   if (delay < MAX_DELAY) {
     ref.timerRef = this.options.setTimeout(onTimeout, ref.delay, ...ref.args);
   }
   return ref;
   function onTimeout(...rargs) {
-    const idx = executing.indexOf(ref);
-    if (idx > -1) executing.splice(idx, 1);
+    executing.delete(ref);
     return callback(...rargs);
   }
 };
