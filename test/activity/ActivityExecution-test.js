@@ -343,7 +343,7 @@ describe('ActivityExecution', () => {
       activity.broker.publish('execution', 'execute.timer', { ...startMessages[0].content, state: 'timer' });
 
       expect(execution.getPostponed()).to.have.length(2);
-      expect(execution.getPostponed()[0]).to.have.property('content').with.property('state', 'timer');
+      expect(execution.getPostponed().pop()).to.have.property('content').with.property('state', 'timer');
 
       expect(activity.broker.getQueue('execute-q')).to.have.property('messageCount', 2);
     });
@@ -1037,15 +1037,17 @@ describe('ActivityExecution', () => {
 
       const executeQ = activity.broker.getQueue('execute-q');
 
-      expect(execution.getPostponed()).to.have.length(3);
-      expect(execution.getPostponed()[1]).to.have.property('content').with.property('keep', true);
-      expect(execution.getPostponed()[2]).to.have.property('content').with.property('keep', true);
+      let postponed = execution.getPostponed();
+      expect(postponed).to.have.length(3);
+      expect(postponed[1]).to.have.property('content').with.property('keep', true);
+      expect(postponed[2]).to.have.property('content').with.property('keep', true);
 
       activity.broker.publish('execution', 'execute.wait', execution.getPostponed()[1].content);
 
-      expect(execution.getPostponed()).to.have.length(3);
-      expect(execution.getPostponed()[1]).to.have.property('fields').with.property('routingKey', 'execute.wait');
-      expect(execution.getPostponed()[1]).to.have.property('content').with.property('executionId', 'activity_2');
+      postponed = execution.getPostponed();
+      expect(postponed).to.have.length(3);
+      expect(postponed[2]).to.have.property('fields').with.property('routingKey', 'execute.wait');
+      expect(postponed[2]).to.have.property('content').with.property('executionId', 'activity_2');
 
       activity.broker.publish('execution', 'execute.completed', execution.getPostponed()[1].content);
 
