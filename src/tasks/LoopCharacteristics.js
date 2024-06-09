@@ -146,12 +146,12 @@ ParallelLoopCharacteristics.prototype.execute = function execute(executeMessage)
 ParallelLoopCharacteristics.prototype._startBatch = function startBatch() {
   const chr = this.characteristics;
   const cardinality = chr.cardinality;
-  const batch = [];
+  const batch = new Set();
 
   let startContent = chr.next(this.index);
   do {
     chr.debug(`start parallel iteration index ${this.index}`);
-    batch.push(startContent);
+    batch.add(startContent);
     this.running++;
     this.index++;
 

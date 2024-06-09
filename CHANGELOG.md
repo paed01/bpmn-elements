@@ -1,5 +1,9 @@
 # Changelog
 
+# 15.0.0
+
+- Use Set and Map where feasible to increase performance
+
 # 14.1.0
 
 - delegate Signal within a process

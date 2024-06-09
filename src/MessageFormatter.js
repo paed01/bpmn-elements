@@ -14,9 +14,6 @@ function Formatter(element, formatQ) {
   this.broker = broker;
   this.logger = logger;
   this.formatQ = formatQ;
-
-  this.pendingFormats = [];
-
   this[kOnMessage] = this._onMessage.bind(this);
 }
 

@@ -297,6 +297,19 @@ describe('SubProcess', () => {
     });
   });
 
+  describe('recover', () => {
+    let context;
+    beforeEach(async () => {
+      context = await testHelpers.context(subProcessSource);
+    });
+
+    it('without state is ok', () => {
+      const subProcess = context.getActivityById('subProcess');
+      subProcess.recover();
+      expect(subProcess.id).to.be.ok;
+    });
+  });
+
   describe('resume', () => {
     let context;
     beforeEach(async () => {

@@ -38,7 +38,7 @@ export function SubProcessBehaviour(activity, context) {
   this.broker = activity.broker;
   this.executionId = undefined;
 
-  this[kExecutions] = [];
+  this[kExecutions] = new Set();
   this[kMessageHandlers] = {
     onExecutionCompleted: this._onExecutionCompleted.bind(this),
   };
@@ -47,12 +47,12 @@ export function SubProcessBehaviour(activity, context) {
 Object.defineProperties(SubProcessBehaviour.prototype, {
   execution: {
     get() {
-      return this[kExecutions][0];
+      return [...this[kExecutions]][0];
     },
   },
   executions: {
     get() {
-      return this[kExecutions].slice();
+      return [...this[kExecutions]];
     },
   },
 });
@@ -74,22 +74,20 @@ SubProcessBehaviour.prototype.execute = function execute(executeMessage) {
 };
 
 SubProcessBehaviour.prototype.getState = function getState() {
+  const states = [];
+  for (const pe of this[kExecutions]) {
+    const state = pe.getState();
+    state.environment = pe.environment.getState();
+    states.push(state);
+  }
+
   if (this.loopCharacteristics) {
     return {
-      executions: this[kExecutions].map((pe) => {
-        const state = pe.getState();
-        state.environment = pe.environment.getState();
-        return state;
-      }),
+      executions: states,
     };
   }
 
-  const execution = this.execution;
-  if (execution) {
-    const state = execution.getState();
-    state.environment = execution.environment.getState();
-    return state;
-  }
+  return states[0];
 };
 
 SubProcessBehaviour.prototype.recover = function recover(state) {
@@ -99,7 +97,7 @@ SubProcessBehaviour.prototype.recover = function recover(state) {
 
   const loopCharacteristics = this.loopCharacteristics;
   if (loopCharacteristics && state.executions) {
-    executions.splice(0);
+    executions.clear();
     for (const se of state.executions) {
       this.recover(se);
     }
@@ -107,7 +105,7 @@ SubProcessBehaviour.prototype.recover = function recover(state) {
   }
 
   if (!loopCharacteristics) {
-    executions.splice(0);
+    executions.clear();
   }
 
   const subEnvironment = this.environment.clone().recover(state.environment);
@@ -115,15 +113,16 @@ SubProcessBehaviour.prototype.recover = function recover(state) {
 
   const execution = new ProcessExecution(this.activity, subContext).recover(state);
 
-  executions.push(execution);
+  executions.add(execution);
   return execution;
 };
 
 SubProcessBehaviour.prototype.getPostponed = function getPostponed() {
-  return this[kExecutions].reduce((result, pe) => {
-    result = result.concat(pe.getPostponed());
-    return result;
-  }, []);
+  let postponed = [];
+  for (const pe of this[kExecutions]) {
+    postponed = postponed.concat(pe.getPostponed());
+  }
+  return postponed;
 };
 
 SubProcessBehaviour.prototype._upsertExecution = function upsertExecution(executeMessage) {
@@ -140,7 +139,7 @@ SubProcessBehaviour.prototype._upsertExecution = function upsertExecution(execut
   const subContext = this.context.clone(subEnvironment, this.activity);
 
   execution = new ProcessExecution(this.activity, subContext);
-  this[kExecutions].push(execution);
+  this[kExecutions].add(execution);
 
   this._addListeners(executionId);
 
@@ -184,10 +183,9 @@ SubProcessBehaviour.prototype._onExecutionCompleted = function onExecutionComple
 
 SubProcessBehaviour.prototype._completeExecution = function completeExecution(completeRoutingKey, content) {
   if (this.loopCharacteristics) {
-    const executions = this[kExecutions];
-    const executionIdx = executions.findIndex((pe) => pe.executionId === content.executionId);
-    if (executionIdx < 0) return;
-    executions.splice(executionIdx, 1);
+    const execution = this._getExecutionById(content.executionId);
+    if (!execution) return;
+    this[kExecutions].delete(execution);
   }
 
   this.broker.publish('execution', completeRoutingKey, cloneContent(content));
@@ -209,5 +207,7 @@ SubProcessBehaviour.prototype.getApi = function getApi(apiMessage) {
 };
 
 SubProcessBehaviour.prototype._getExecutionById = function getExecutionById(executionId) {
-  return this[kExecutions].find((pe) => pe.executionId === executionId);
+  for (const pe of this[kExecutions]) {
+    if (pe.executionId === executionId) return pe;
+  }
 };

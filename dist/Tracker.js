@@ -7,17 +7,17 @@ exports.ActivityTracker = ActivityTracker;
 function ActivityTracker(parentId) {
   this.id = parentId;
   this.status = {
-    wait: [],
-    execute: [],
-    timer: []
+    wait: new Set(),
+    execute: new Set(),
+    timer: new Set()
   };
 }
 Object.defineProperty(ActivityTracker.prototype, 'activityStatus', {
   get() {
     const status = this.status;
-    if (status.execute.length) return 'executing';
-    if (status.timer.length) return 'timer';
-    return status.wait.length ? 'wait' : 'idle';
+    if (status.execute.size) return 'executing';
+    if (status.timer.size) return 'timer';
+    return status.wait.size ? 'wait' : 'idle';
   }
 });
 ActivityTracker.prototype.track = function track(routingKey, message) {
@@ -55,27 +55,24 @@ ActivityTracker.prototype._executing = function executing(id) {
     wait,
     execute
   } = this.status;
-  if (execute.indexOf(id) === -1) execute.push(id);
-  let idx;
-  if ((idx = wait.indexOf(id)) !== -1) wait.splice(idx, 1);
+  wait.delete(id);
+  execute.add(id);
 };
 ActivityTracker.prototype._waiting = function waiting(id) {
   const {
     wait,
     execute
   } = this.status;
-  if (wait.indexOf(id) === -1) wait.push(id);
-  let idx;
-  if ((idx = execute.indexOf(id)) !== -1) execute.splice(idx, 1);
+  execute.delete(id);
+  wait.add(id);
 };
 ActivityTracker.prototype._timer = function timerFn(id) {
   const {
     timer,
     execute
   } = this.status;
-  if (timer.indexOf(id) === -1) timer.push(id);
-  let idx;
-  if ((idx = execute.indexOf(id)) !== -1) execute.splice(idx, 1);
+  execute.delete(id);
+  timer.add(id);
 };
 ActivityTracker.prototype._leave = function leave(id) {
   const {
@@ -83,8 +80,7 @@ ActivityTracker.prototype._leave = function leave(id) {
     execute,
     timer
   } = this.status;
-  let idx;
-  if ((idx = wait.indexOf(id)) !== -1) wait.splice(idx, 1);
-  if ((idx = execute.indexOf(id)) !== -1) execute.splice(idx, 1);
-  if ((idx = timer.indexOf(id)) !== -1) timer.splice(idx, 1);
+  execute.delete(id);
+  timer.delete(id);
+  wait.delete(id);
 };
