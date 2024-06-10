@@ -2,7 +2,8 @@
 
 # 15.0.0
 
-- Use Set and Map where feasible to increase performance
+- use Set and Map where feasible to increase performance
+- bump [smqp@9](https://github.com/paed01/smqp/blob/default/CHANGELOG.md)
 
 # 14.1.0
 

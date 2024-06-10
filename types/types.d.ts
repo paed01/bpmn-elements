@@ -220,7 +220,7 @@ declare interface DefinitionExecution {
   getProcessByExecutionId(processExecutionId: string): Process;
   getRunningProcesses(): Process[];
   getExecutableProcesses(): Process[];
-  getPostponed(filterFn: filterPostponed): Api<ElementBase>[];
+  getPostponed(filterFn?: filterPostponed): Api<ElementBase>[];
 }
 
 declare interface ActivityExecution {
