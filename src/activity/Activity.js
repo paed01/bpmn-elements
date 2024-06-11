@@ -90,7 +90,7 @@ function Activity(Behaviour, activityDef, context) {
     isThrowing: activityDef.isThrowing,
     lane: activityDef.lane && activityDef.lane.id,
   };
-  this[kExec] = {};
+  this[kExec] = new Map();
 
   this[kMessageHandlers] = {
     onInbound: isParallelJoin ? this._onJoinInbound.bind(this) : this._onInbound.bind(this),
@@ -113,12 +113,12 @@ Object.defineProperties(Activity.prototype, {
   },
   execution: {
     get() {
-      return this[kExec].execution;
+      return this[kExec].get('execution');
     },
   },
   executionId: {
     get() {
-      return this[kExec].executionId;
+      return this[kExec].get('executionId');
     },
   },
   extensions: {
@@ -250,7 +250,8 @@ Activity.prototype.deactivate = function deactivate() {
 Activity.prototype.init = function init(initContent) {
   const id = this.id;
   const exec = this[kExec];
-  const executionId = (exec.initExecutionId = exec.initExecutionId || getUniqueId(id));
+  const executionId = exec.has('initExecutionId') ? exec.get('initExecutionId') : getUniqueId(id);
+  exec.set('initExecutionId', executionId);
   this.logger.debug(`<${id}> initialized with executionId <${executionId}>`);
   this._publishEvent('init', this._createMessage({ ...initContent, executionId }));
 };
@@ -260,8 +261,9 @@ Activity.prototype.run = function run(runContent) {
   if (this.isRunning) throw new Error(`activity <${id}> is already running`);
 
   const exec = this[kExec];
-  const executionId = (exec.executionId = exec.initExecutionId || getUniqueId(id));
-  exec.initExecutionId = null;
+  const executionId = exec.get('initExecutionId') || getUniqueId(id);
+  exec.set('executionId', executionId);
+  exec.delete('initExecutionId');
 
   this._consumeApi();
 
@@ -278,6 +280,8 @@ Activity.prototype.run = function run(runContent) {
 Activity.prototype.getState = function getState() {
   const status = this.status;
   const exec = this[kExec];
+  const execution = exec.get('execution');
+  const executionId = exec.get('executionId');
   const brokerState = this.broker.getState(true);
   if (!brokerState && this.environment.settings.disableTrackState) return;
 
@@ -285,11 +289,11 @@ Activity.prototype.getState = function getState() {
     id: this.id,
     type: this.type,
     ...(status && { status }),
-    executionId: exec.executionId,
+    executionId,
     stopped: this.stopped,
     counters: this.counters,
     broker: brokerState,
-    execution: exec.execution && exec.execution.getState(),
+    ...(execution && { execution: execution.getState() }),
   };
 };
 
@@ -300,12 +304,12 @@ Activity.prototype.recover = function recover(state) {
   this.stopped = state.stopped;
   this.status = state.status;
   const exec = this[kExec];
-  exec.executionId = state.executionId;
+  exec.set('executionId', state.executionId);
 
   this[kCounters] = { ...this[kCounters], ...state.counters };
 
   if (state.execution) {
-    exec.execution = new ActivityExecution(this, this.context).recover(state.execution);
+    exec.set('execution', new ActivityExecution(this, this.context).recover(state.execution));
   }
 
   this.broker.recover(state.broker);
@@ -332,7 +336,7 @@ Activity.prototype.resume = function resume() {
 
 Activity.prototype.discard = function discard(discardContent) {
   if (!this.status) return this._runDiscard(discardContent);
-  const execution = this[kExec].execution;
+  const execution = this[kExec].get('execution');
   if (execution && !execution.completed) return execution.discard();
 
   this._deactivateRunConsumers();
@@ -389,7 +393,7 @@ Activity.prototype.evaluateOutbound = function evaluateOutbound(fromMessage, dis
 };
 
 Activity.prototype.getApi = function getApi(message) {
-  const execution = this[kExec].execution;
+  const execution = this[kExec].get('execution');
   if (execution && !execution.completed) return execution.getApi(message);
   return ActivityApi(this.broker, message || this[kStateMessage]);
 };
@@ -400,8 +404,9 @@ Activity.prototype.getActivityById = function getActivityById(elementId) {
 
 Activity.prototype._runDiscard = function runDiscard(discardContent) {
   const exec = this[kExec];
-  const executionId = (exec.executionId = exec.initExecutionId || getUniqueId(this.id));
-  exec.initExecutionId = null;
+  const executionId = exec.get('initExecutionId') || getUniqueId(this.id);
+  exec.set('executionId', executionId);
+  exec.delete('initExecutionId');
 
   this._consumeApi();
 
@@ -416,7 +421,7 @@ Activity.prototype._discardRun = function discardRun() {
   const status = this.status;
   if (!status) return;
 
-  const execution = this[kExec].execution;
+  const execution = this[kExec].get('execution');
   if (execution && !execution.completed) return;
 
   switch (status) {
@@ -606,7 +611,7 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
 
       this.status = 'entered';
       if (!isRedelivered) {
-        this[kExec].execution = null;
+        this[kExec].delete('execution');
         if (this.extensions) this.extensions.activate(cloneMessage(message));
         this._publishEvent('enter', content, { correlationId });
       }
@@ -616,7 +621,7 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
       this.logger.debug(`<${id}> discard`, isRedelivered ? 'redelivered' : '');
 
       this.status = 'discard';
-      this[kExec].execution = null;
+      this[kExec].delete('execution');
 
       if (this.extensions) this.extensions.activate(cloneMessage(message));
 
@@ -649,11 +654,11 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
 
       const exec = this[kExec];
       if (isRedelivered && this.extensions) this.extensions.activate(cloneMessage(message));
-      if (!exec.execution) exec.execution = new ActivityExecution(this, this.context);
+      if (!exec.has('execution')) exec.set('execution', new ActivityExecution(this, this.context));
       this.broker
         .getQueue('execution-q')
         .assertConsumer(this[kMessageHandlers].onExecutionMessage, { exclusive: true, consumerTag: '_activity-execution' });
-      return exec.execution.execute(message);
+      return exec.get('execution').execute(message);
     }
     case 'run.end': {
       this.logger.debug(`<${id}> end`, isRedelivered ? 'redelivered' : '');
@@ -904,7 +909,7 @@ Activity.prototype._onStop = function onStop(message) {
 };
 
 Activity.prototype._consumeApi = function consumeApi() {
-  const executionId = this[kExec].executionId;
+  const executionId = this[kExec].get('executionId');
   if (!executionId) return;
   const broker = this.broker;
   broker.cancel('_activity-api');
