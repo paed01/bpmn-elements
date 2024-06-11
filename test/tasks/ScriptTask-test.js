@@ -115,7 +115,7 @@ describe('ScriptTask', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, { extensions, scripts: Scripts(true) });
+      const context = await testHelpers.context(source, { extensions, scripts: new Scripts(false) });
       const task = context.getActivityById('task');
       const leave = task.waitFor('leave');
       task.run();
@@ -136,7 +136,7 @@ describe('ScriptTask', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, { extensions, scripts: Scripts(false) });
+      const context = await testHelpers.context(source, { extensions, scripts: new Scripts() });
       const task = context.getActivityById('task');
 
       const fail = task.waitFor('leave').catch((err) => err);

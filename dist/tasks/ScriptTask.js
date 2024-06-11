@@ -33,8 +33,8 @@ ScriptTaskBehaviour.prototype.execute = function execute(executeMessage) {
   if (loopCharacteristics && executeContent.isRootScope) {
     return loopCharacteristics.execute(executeMessage);
   }
-  const activity = this.activity,
-    scriptFormat = this.scriptFormat;
+  const activity = this.activity;
+  const scriptFormat = this.scriptFormat;
   const script = this.environment.getScript(scriptFormat, activity, (0, _messageHelper.cloneMessage)(executeMessage));
   if (!script) {
     return activity.emitFatal(new _Errors.ActivityError(`Script format ${scriptFormat} is unsupported or was not registered for <${activity.id}>`, executeMessage), executeContent);

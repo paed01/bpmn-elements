@@ -1,54 +1,50 @@
 import { Script } from 'vm';
 
-export function Scripts(enableDummy = true) {
-  const scripts = {};
+export function Scripts(enableDummy = false) {
+  this.scripts = new Map();
+  this.enableDummy = enableDummy;
+}
 
-  return {
-    getScript,
-    register,
-    compile,
-  };
+Scripts.prototype.register = function register({ id, type, behaviour, logger, environment }) {
+  let scriptBody, language;
 
-  function register({ id, type, behaviour, logger, environment }) {
-    let scriptBody, language;
-
-    switch (type) {
-      case 'bpmn:SequenceFlow': {
-        if (!behaviour.conditionExpression) return;
-        language = behaviour.conditionExpression.language;
-        if (!language) return;
-        scriptBody = behaviour.conditionExpression.body;
-        break;
-      }
-      default: {
-        language = behaviour.scriptFormat;
-        scriptBody = behaviour.script;
-      }
+  switch (type) {
+    case 'bpmn:SequenceFlow': {
+      if (!behaviour.conditionExpression) return;
+      language = behaviour.conditionExpression.language;
+      if (!language) return;
+      scriptBody = behaviour.conditionExpression.body;
+      break;
     }
-
-    if (!language || !scriptBody) {
-      if (!enableDummy) return;
-      const script = new DummyScript(language, `${type}/${id}`, logger);
-      scripts[id] = script;
-      return script;
+    default: {
+      language = behaviour.scriptFormat;
+      scriptBody = behaviour.script;
     }
+  }
 
-    if (!/^javascript$/i.test(language) && language !== 'js') return;
-
-    const script = new JavaScript(language, `${type}/${id}`, scriptBody, environment);
-    scripts[id] = script;
-
+  const filename = `${type}/${id}`;
+  if (!language || !scriptBody) {
+    if (this.enableDummy) return;
+    const script = new DummyScript(language, filename, logger);
+    this.scripts.set(id, script);
     return script;
   }
 
-  function compile(language, filename, scriptBody) {
-    return new Script(scriptBody, { filename });
-  }
+  if (!/^(javascript|js)$/i.test(language)) return;
 
-  function getScript(language, { id }) {
-    return scripts[id];
-  }
-}
+  const script = new JavaScript(language, filename, scriptBody, environment);
+  this.scripts.set(id, script);
+
+  return script;
+};
+
+Scripts.prototype.getScript = function getScript(language, { id }) {
+  return this.scripts.get(id);
+};
+
+Scripts.prototype.compile = function compile(language, filename, scriptBody) {
+  return new Script(scriptBody, { filename });
+};
 
 function JavaScript(language, filename, scriptBody, environment) {
   this.id = filename;

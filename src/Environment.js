@@ -1,5 +1,5 @@
 import Expressions from './Expressions.js';
-import { Scripts as IScripts } from './Scripts.js';
+import { Scripts } from './Scripts.js';
 import { Timers } from './Timers.js';
 
 const kServices = Symbol.for('services');
@@ -13,7 +13,7 @@ export default function Environment(options = {}) {
   this.expressions = options.expressions || Expressions();
   this.extensions = options.extensions;
   this.output = options.output || {};
-  this.scripts = options.scripts || IScripts();
+  this.scripts = options.scripts || new Scripts();
   this.timers = options.timers || new Timers();
   this.settings = { ...options.settings };
   this.Logger = options.Logger || DummyLogger;

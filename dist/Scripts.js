@@ -4,11 +4,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.Scripts = Scripts;
-function Scripts() {
-  return {
-    getScript,
-    register
-  };
-  function getScript( /*scriptType, activity*/) {}
-  function register( /*activity*/) {}
-}
+function Scripts() {}
+Scripts.prototype.getScript = function getScript( /*scriptType, activity*/) {};
+Scripts.prototype.register = function register( /*activity*/) {};

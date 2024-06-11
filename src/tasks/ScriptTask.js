@@ -29,8 +29,8 @@ ScriptTaskBehaviour.prototype.execute = function execute(executeMessage) {
     return loopCharacteristics.execute(executeMessage);
   }
 
-  const activity = this.activity,
-    scriptFormat = this.scriptFormat;
+  const activity = this.activity;
+  const scriptFormat = this.scriptFormat;
   const script = this.environment.getScript(scriptFormat, activity, cloneMessage(executeMessage));
   if (!script) {
     return activity.emitFatal(

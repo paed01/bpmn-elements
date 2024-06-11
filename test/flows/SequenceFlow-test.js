@@ -111,7 +111,7 @@ describe('SequenceFlow', () => {
         </process>
       </definitions>`;
 
-      const ctx = await testHelpers.context(source, { scripts: TestScripts() });
+      const ctx = await testHelpers.context(source, { scripts: new TestScripts() });
       ctx.environment.variables.isOk = true;
 
       const activity = ctx.getActivityById('decision');
@@ -132,47 +132,6 @@ describe('SequenceFlow', () => {
       expect(activity.outbound[3]).to.have.property('id', 'flowWithoutCondition');
       expect(activity.outbound[3].counters).to.have.property('discard', 0);
       expect(activity.outbound[3].counters).to.have.property('take', 1);
-
-      function TestScripts() {
-        const javaScripts = Scripts();
-        const scripts = {};
-
-        return {
-          register({ id, type, behaviour }) {
-            if (!behaviour.conditionExpression) return;
-
-            const scriptBody = behaviour.conditionExpression.body;
-            const sync = !/next\(/.test(scriptBody);
-
-            const registered = javaScripts.register({
-              id,
-              type,
-              behaviour: {
-                conditionExpression: {
-                  ...behaviour.conditionExpression,
-                  language: 'javascript',
-                },
-              },
-            });
-
-            scripts[id] = { sync, registered };
-          },
-          getScript(language, { id }) {
-            const { sync, registered } = scripts[id];
-            return {
-              execute,
-            };
-
-            function execute(executionContext, callback) {
-              if (sync) {
-                const result = registered.script.runInNewContext(executionContext);
-                return callback(null, result);
-              }
-              return registered.script.runInNewContext({ ...executionContext, next: callback });
-            }
-          },
-        };
-      }
     });
 
     it('executes service expression', async () => {
@@ -657,3 +616,43 @@ describe('SequenceFlow', () => {
     });
   });
 });
+
+class TestScripts {
+  constructor() {
+    this.javaScripts = new Scripts();
+    this.scripts = new Map();
+  }
+  register({ id, type, behaviour }) {
+    if (!behaviour.conditionExpression) return;
+
+    const scriptBody = behaviour.conditionExpression.body;
+    const sync = !/next\(/.test(scriptBody);
+
+    const registered = this.javaScripts.register({
+      id,
+      type,
+      behaviour: {
+        conditionExpression: {
+          ...behaviour.conditionExpression,
+          language: 'javascript',
+        },
+      },
+    });
+
+    this.scripts.set(id, { sync, registered });
+  }
+  getScript(language, { id }) {
+    const { sync, registered } = this.scripts.get(id);
+    return {
+      execute,
+    };
+
+    function execute(executionContext, callback) {
+      if (sync) {
+        const result = registered.script.runInNewContext(executionContext);
+        return callback(null, result);
+      }
+      return registered.script.runInNewContext({ ...executionContext, next: callback });
+    }
+  }
+}

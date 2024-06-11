@@ -59,7 +59,7 @@ describe('Definition', () => {
     });
 
     it('takes environment override options as second argument', () => {
-      const scripts = JavaScripts();
+      const scripts = new JavaScripts();
       const environment = new Environment({ Logger: testHelpers.Logger, scripts });
       const definition = new Definition(
         {
@@ -247,7 +247,7 @@ describe('Definition', () => {
 
     it('calls optional callback when completed', (done) => {
       testHelpers.context(factory.valid(), {}, (_, moddleContext) => {
-        const def = new Definition(moddleContext, { scripts: JavaScripts() });
+        const def = new Definition(moddleContext, { scripts: new JavaScripts() });
         def.run((err) => {
           if (err) return done(err);
           done();
@@ -257,7 +257,7 @@ describe('Definition', () => {
 
     it('calls callback if stopped', (done) => {
       testHelpers.context(factory.userTask(), {}, (_, moddleContext) => {
-        const def = new Definition(moddleContext, { scripts: JavaScripts() });
+        const def = new Definition(moddleContext, { scripts: new JavaScripts() });
         def.run((err) => {
           if (err) return done(err);
           done();
@@ -269,7 +269,7 @@ describe('Definition', () => {
 
     it('calls second callback when ran and completed again', (done) => {
       testHelpers.context(factory.valid(), {}, (_, moddleContext) => {
-        const def = new Definition(moddleContext, { scripts: JavaScripts() });
+        const def = new Definition(moddleContext, { scripts: new JavaScripts() });
         def.run((errRun1) => {
           if (errRun1) return done(errRun1);
 
@@ -1544,7 +1544,7 @@ describe('Definition', () => {
 
       const context = await testHelpers.context(source);
       const definition = new Definition(context, {
-        scripts: JavaScripts(false),
+        scripts: new JavaScripts(false),
       });
 
       let error;

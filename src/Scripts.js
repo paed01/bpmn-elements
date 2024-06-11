@@ -1,9 +1,4 @@
-export function Scripts() {
-  return {
-    getScript,
-    register,
-  };
+export function Scripts() {}
 
-  function getScript(/*scriptType, activity*/) {}
-  function register(/*activity*/) {}
-}
+Scripts.prototype.getScript = function getScript(/*scriptType, activity*/) {};
+Scripts.prototype.register = function register(/*activity*/) {};

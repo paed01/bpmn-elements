@@ -49,7 +49,7 @@ describe('ReceiveTask', () => {
     expect(messages[0].content.message).to.have.property('name', 'My Message task');
   });
 
-  it('ignores message and keeps listeners if message id doesn´t match', () => {
+  it("ignores message and keeps listeners if message id doesn't match", () => {
     const messages = [];
     task.behaviour.messageRef = { id: 'message_1' };
 
