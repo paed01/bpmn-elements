@@ -36,7 +36,7 @@ export function Process(processDef, context) {
     discarded: 0,
   };
   this[kConsuming] = false;
-  this[kExec] = {};
+  this[kExec] = new Map();
   this[kStatus] = undefined;
   this[kStopped] = false;
 
@@ -90,13 +90,13 @@ Object.defineProperties(Process.prototype, {
   },
   executionId: {
     get() {
-      const { executionId, initExecutionId } = this[kExec];
-      return executionId || initExecutionId;
+      const exec = this[kExec];
+      return exec.get('executionId') || exec.get('initExecutionId');
     },
   },
   execution: {
     get() {
-      return this[kExec].execution;
+      return this[kExec].get('execution');
     },
   },
   status: {
@@ -106,14 +106,16 @@ Object.defineProperties(Process.prototype, {
   },
   activityStatus: {
     get() {
-      return (this[kExec].execution && this[kExec].execution.activityStatus) || 'idle';
+      const execution = this[kExec].get('execution');
+      return (execution && execution.activityStatus) || 'idle';
     },
   },
 });
 
 Process.prototype.init = function init(useAsExecutionId) {
-  const exec = this[kExec];
-  const initExecutionId = (exec.initExecutionId = useAsExecutionId || getUniqueId(this.id));
+  const initExecutionId = useAsExecutionId || getUniqueId(this.id);
+  this[kExec].set('initExecutionId', initExecutionId);
+
   this._debug(`initialized with executionId <${initExecutionId}>`);
   this._publishEvent('init', this._createMessage({ executionId: initExecutionId }));
 };
@@ -122,8 +124,9 @@ Process.prototype.run = function run(runContent) {
   if (this.isRunning) throw new Error(`process <${this.id}> is already running`);
 
   const exec = this[kExec];
-  const executionId = (exec.executionId = exec.initExecutionId || getUniqueId(this.id));
-  exec.initExecutionId = undefined;
+  const executionId = exec.get('initExecutionId') || getUniqueId(this.id);
+  exec.delete('initExecutionId');
+  exec.set('executionId', executionId);
 
   const content = this._createMessage({ ...runContent, executionId });
 
@@ -168,12 +171,12 @@ Process.prototype.recover = function recover(state) {
   this[kStopped] = !!state.stopped;
   this[kStatus] = state.status;
   const exec = this[kExec];
-  exec.executionId = state.executionId;
+  exec.set('executionId', state.executionId);
   this[kCounters] = { ...this[kCounters], ...state.counters };
   this.environment.recover(state.environment);
 
   if (state.execution) {
-    exec.execution = new ProcessExecution(this, this.context).recover(state.execution);
+    exec.set('execution', new ProcessExecution(this, this.context).recover(state.execution));
   }
 
   this.broker.recover(state.broker);
@@ -228,7 +231,6 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
     return this._onResumeMessage(message);
   }
 
-  const exec = this[kExec];
   this[kStateMessage] = message;
 
   switch (routingKey) {
@@ -238,7 +240,7 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
       this[kStatus] = 'entered';
       if (fields.redelivered) break;
 
-      exec.execution = undefined;
+      this[kExec].delete('execution');
       this._publishEvent('enter', content);
 
       break;
@@ -250,9 +252,11 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
       break;
     }
     case 'run.execute': {
+      const exec = this[kExec];
       this[kStatus] = 'executing';
       const executeMessage = cloneMessage(message);
-      if (fields.redelivered && !exec.execution) {
+      let execution = exec.get('execution');
+      if (fields.redelivered && !execution) {
         executeMessage.fields.redelivered = undefined;
       }
       this[kExecuteMessage] = message;
@@ -262,7 +266,8 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
         consumerTag: '_process-execution',
       });
 
-      const execution = (exec.execution = exec.execution || new ProcessExecution(this, this.context));
+      execution = execution || new ProcessExecution(this, this.context);
+      exec.set('execution', execution);
       return execution.execute(executeMessage);
     }
     case 'run.error': {

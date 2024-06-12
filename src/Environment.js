@@ -5,7 +5,7 @@ import { Timers } from './Timers.js';
 const kServices = Symbol.for('services');
 const kVariables = Symbol.for('variables');
 
-const defaultOptions = ['expressions', 'extensions', 'Logger', 'output', 'scripts', 'services', 'settings', 'timers', 'variables'];
+const defaultOptions = new Set(['expressions', 'extensions', 'Logger', 'output', 'scripts', 'services', 'settings', 'timers', 'variables']);
 
 export default function Environment(options = {}) {
   this.options = validateOptions(options);
@@ -125,7 +125,7 @@ Environment.prototype.addService = function addService(name, fn) {
 function validateOptions(input) {
   const options = {};
   for (const key in input) {
-    if (defaultOptions.indexOf(key) === -1) {
+    if (!defaultOptions.has(key)) {
       options[key] = input[key];
     }
   }

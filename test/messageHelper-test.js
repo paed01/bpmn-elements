@@ -1,5 +1,3 @@
-import { filterUndefined } from '../src/shared.js';
-
 import { shiftParent, unshiftParent, pushParent } from '../src/messageHelper.js';
 
 describe('message helper', () => {
@@ -342,3 +340,11 @@ describe('message helper', () => {
     });
   });
 });
+
+function filterUndefined(obj) {
+  return Object.keys(obj).reduce((filtered, key) => {
+    const objValue = obj[key];
+    if (objValue !== undefined) filtered[key] = objValue;
+    return filtered;
+  }, {});
+}

@@ -41,7 +41,7 @@ export function Definition(context, options) {
   };
 
   this[kStopped] = false;
-  this[kExec] = {};
+  this[kExec] = new Map();
 
   const onBrokerReturn = this._onBrokerReturnFn.bind(this);
   this[kMessageHandlers] = {
@@ -71,12 +71,12 @@ Object.defineProperties(Definition.prototype, {
   },
   execution: {
     get() {
-      return this[kExec].execution;
+      return this[kExec].get('execution');
     },
   },
   executionId: {
     get() {
-      return this[kExec].executionId;
+      return this[kExec].get('executionId');
     },
   },
   isRunning: {
@@ -97,7 +97,8 @@ Object.defineProperties(Definition.prototype, {
   },
   activityStatus: {
     get() {
-      return (this[kExec].execution && this[kExec].execution.activityStatus) || 'idle';
+      const execution = this[kExec].get('execution');
+      return (execution && execution.activityStatus) || 'idle';
     },
   },
 });
@@ -115,7 +116,8 @@ Definition.prototype.run = function run(optionsOrCallback, optionalCallback) {
   }
 
   const exec = this[kExec];
-  exec.executionId = getUniqueId(this.id);
+  const executionId = getUniqueId(this.id);
+  exec.set('executionId', executionId);
   const content = this._createMessage({ ...runOptions });
 
   const broker = this.broker;
@@ -123,7 +125,7 @@ Definition.prototype.run = function run(optionsOrCallback, optionalCallback) {
   broker.publish('run', 'run.start', cloneContent(content));
   broker.publish('run', 'run.execute', cloneContent(content));
 
-  this.logger.debug(`<${this.executionId} (${this.id})> run`);
+  this.logger.debug(`<${executionId} (${this.id})> run`);
 
   this._activateRunConsumers();
 
@@ -171,7 +173,7 @@ Definition.prototype.recover = function recover(state) {
   this[kStatus] = state.status;
 
   const exec = this[kExec];
-  exec.executionId = state.executionId;
+  exec.set('executionId', state.executionId);
   if (state.counters) {
     this[kCounters] = { ...this[kCounters], ...state.counters };
   }
@@ -179,7 +181,7 @@ Definition.prototype.recover = function recover(state) {
   this.environment.recover(state.environment);
 
   if (state.execution) {
-    exec.execution = new DefinitionExecution(this, this.context).recover(state.execution);
+    exec.set('execution', new DefinitionExecution(this, this.context).recover(state.execution));
   }
 
   this.broker.recover(state.broker);
@@ -350,7 +352,7 @@ Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) 
       this[kStatus] = 'entered';
       if (fields.redelivered) break;
 
-      exec.execution = undefined;
+      exec.delete('execution');
       this._publishEvent('enter', content);
       break;
     }
@@ -363,7 +365,8 @@ Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) 
     case 'run.execute': {
       this[kStatus] = 'executing';
       const executeMessage = cloneMessage(message);
-      if (fields.redelivered && !exec.execution) {
+      let execution = exec.get('execution');
+      if (fields.redelivered && !execution) {
         executeMessage.fields.redelivered = undefined;
       }
       this[kExecuteMessage] = message;
@@ -372,13 +375,16 @@ Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) 
         consumerTag: '_definition-execution',
       });
 
-      exec.execution = exec.execution || new DefinitionExecution(this, this.context);
+      if (!execution) {
+        execution = new DefinitionExecution(this, this.context);
+        exec.set('execution', execution);
+      }
 
       if (executeMessage.fields.redelivered) {
         this._publishEvent('resume', content);
       }
 
-      return exec.execution.execute(executeMessage);
+      return execution.execute(executeMessage);
     }
     case 'run.end': {
       if (this[kStatus] === 'end') break;
@@ -502,7 +508,7 @@ Definition.prototype._onBrokerReturnFn = function onBrokerReturn(message) {
 };
 
 Definition.prototype._reset = function reset() {
-  this[kExec].executionId = undefined;
+  this[kExec].delete('executionId');
   this._deactivateRunConsumers();
   this.broker.purgeQueue('run-q');
   this.broker.purgeQueue('execution-q');

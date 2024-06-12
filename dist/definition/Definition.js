@@ -45,7 +45,7 @@ function Definition(context, options) {
     discarded: 0
   };
   this[kStopped] = false;
-  this[kExec] = {};
+  this[kExec] = new Map();
   const onBrokerReturn = this._onBrokerReturnFn.bind(this);
   this[kMessageHandlers] = {
     onBrokerReturn,
@@ -79,12 +79,12 @@ Object.defineProperties(Definition.prototype, {
   },
   execution: {
     get() {
-      return this[kExec].execution;
+      return this[kExec].get('execution');
     }
   },
   executionId: {
     get() {
-      return this[kExec].executionId;
+      return this[kExec].get('executionId');
     }
   },
   isRunning: {
@@ -105,7 +105,8 @@ Object.defineProperties(Definition.prototype, {
   },
   activityStatus: {
     get() {
-      return this[kExec].execution && this[kExec].execution.activityStatus || 'idle';
+      const execution = this[kExec].get('execution');
+      return execution && execution.activityStatus || 'idle';
     }
   }
 });
@@ -120,7 +121,8 @@ Definition.prototype.run = function run(optionsOrCallback, optionalCallback) {
     addConsumerCallbacks(this, callback);
   }
   const exec = this[kExec];
-  exec.executionId = (0, _shared.getUniqueId)(this.id);
+  const executionId = (0, _shared.getUniqueId)(this.id);
+  exec.set('executionId', executionId);
   const content = this._createMessage({
     ...runOptions
   });
@@ -128,7 +130,7 @@ Definition.prototype.run = function run(optionsOrCallback, optionalCallback) {
   broker.publish('run', 'run.enter', content);
   broker.publish('run', 'run.start', (0, _messageHelper.cloneContent)(content));
   broker.publish('run', 'run.execute', (0, _messageHelper.cloneContent)(content));
-  this.logger.debug(`<${this.executionId} (${this.id})> run`);
+  this.logger.debug(`<${executionId} (${this.id})> run`);
   this._activateRunConsumers();
   return this;
 };
@@ -167,7 +169,7 @@ Definition.prototype.recover = function recover(state) {
   this[kStopped] = !!state.stopped;
   this[kStatus] = state.status;
   const exec = this[kExec];
-  exec.executionId = state.executionId;
+  exec.set('executionId', state.executionId);
   if (state.counters) {
     this[kCounters] = {
       ...this[kCounters],
@@ -176,7 +178,7 @@ Definition.prototype.recover = function recover(state) {
   }
   this.environment.recover(state.environment);
   if (state.execution) {
-    exec.execution = new _DefinitionExecution.default(this, this.context).recover(state.execution);
+    exec.set('execution', new _DefinitionExecution.default(this, this.context).recover(state.execution));
   }
   this.broker.recover(state.broker);
   return this;
@@ -337,7 +339,7 @@ Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) 
         this.logger.debug(`<${this.executionId} (${this.id})> enter`);
         this[kStatus] = 'entered';
         if (fields.redelivered) break;
-        exec.execution = undefined;
+        exec.delete('execution');
         this._publishEvent('enter', content);
         break;
       }
@@ -352,7 +354,8 @@ Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) 
       {
         this[kStatus] = 'executing';
         const executeMessage = (0, _messageHelper.cloneMessage)(message);
-        if (fields.redelivered && !exec.execution) {
+        let execution = exec.get('execution');
+        if (fields.redelivered && !execution) {
           executeMessage.fields.redelivered = undefined;
         }
         this[kExecuteMessage] = message;
@@ -360,11 +363,14 @@ Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) 
           exclusive: true,
           consumerTag: '_definition-execution'
         });
-        exec.execution = exec.execution || new _DefinitionExecution.default(this, this.context);
+        if (!execution) {
+          execution = new _DefinitionExecution.default(this, this.context);
+          exec.set('execution', execution);
+        }
         if (executeMessage.fields.redelivered) {
           this._publishEvent('resume', content);
         }
-        return exec.execution.execute(executeMessage);
+        return execution.execute(executeMessage);
       }
     case 'run.end':
       {
@@ -475,7 +481,7 @@ Definition.prototype._onBrokerReturnFn = function onBrokerReturn(message) {
   }
 };
 Definition.prototype._reset = function reset() {
-  this[kExec].executionId = undefined;
+  this[kExec].delete('executionId');
   this._deactivateRunConsumers();
   this.broker.purgeQueue('run-q');
   this.broker.purgeQueue('execution-q');

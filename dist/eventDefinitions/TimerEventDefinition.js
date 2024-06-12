@@ -10,7 +10,7 @@ var _Errors = require("../error/Errors.js");
 const kStopped = Symbol.for('stopped');
 const kTimerContent = Symbol.for('timerContent');
 const kTimer = Symbol.for('timer');
-const timerTypes = ['timeDuration', 'timeDate', 'timeCycle'];
+const timerTypes = new Set(['timeDuration', 'timeDate', 'timeCycle']);
 function TimerEventDefinition(activity, eventDefinition) {
   const type = this.type = eventDefinition.type || 'TimerEventDefinition';
   this.activity = activity;

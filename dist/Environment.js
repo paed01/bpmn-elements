@@ -10,7 +10,7 @@ var _Timers = require("./Timers.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kServices = Symbol.for('services');
 const kVariables = Symbol.for('variables');
-const defaultOptions = ['expressions', 'extensions', 'Logger', 'output', 'scripts', 'services', 'settings', 'timers', 'variables'];
+const defaultOptions = new Set(['expressions', 'extensions', 'Logger', 'output', 'scripts', 'services', 'settings', 'timers', 'variables']);
 function Environment(options = {}) {
   this.options = validateOptions(options);
   this.expressions = options.expressions || (0, _Expressions.default)();
@@ -124,7 +124,7 @@ Environment.prototype.addService = function addService(name, fn) {
 function validateOptions(input) {
   const options = {};
   for (const key in input) {
-    if (defaultOptions.indexOf(key) === -1) {
+    if (!defaultOptions.has(key)) {
       options[key] = input[key];
     }
   }
