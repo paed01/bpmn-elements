@@ -2,7 +2,8 @@
 
 # Unreleased
 
-- refactor testing-script
+- fix parallel join inbound triggers not behaving as expected if inbound flow is taken more than once
+- refactor testing JavaScript source
 
 # 15.0.0
 

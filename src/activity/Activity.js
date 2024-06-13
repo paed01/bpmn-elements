@@ -71,7 +71,7 @@ function Activity(Behaviour, activityDef, context) {
   const flows = (this[kFlows] = {
     inboundSequenceFlows,
     inboundAssociations,
-    inboundJoinFlows: [],
+    inboundJoinFlows: new Set(),
     inboundTriggers,
     outboundSequenceFlows,
     outboundEvaluator: new OutboundEvaluator(this, outboundSequenceFlows),
@@ -502,42 +502,50 @@ Activity.prototype._onInbound = function onInbound(routingKey, message) {
 
 Activity.prototype._onJoinInbound = function onJoinInbound(routingKey, message) {
   const { content } = message;
-  const { inboundSequenceFlows, inboundJoinFlows, inboundTriggers } = this[kFlows];
-  const idx = inboundJoinFlows.findIndex((msg) => msg.content.id === content.id);
+  const { inboundJoinFlows, inboundTriggers } = this[kFlows];
+  let alreadyTouched = false;
 
-  inboundJoinFlows.push(message);
+  const touched = new Set();
 
-  if (idx > -1) return;
+  let taken;
+  for (const msg of inboundJoinFlows) {
+    const flowId = msg.content.id;
+    touched.add(flowId);
+    if (flowId === content.id) {
+      alreadyTouched = true;
+    }
+  }
 
-  const allTouched = inboundJoinFlows.length >= inboundTriggers.length;
-  if (!allTouched) {
-    const remaining = inboundSequenceFlows.filter((inb, i, list) => list.indexOf(inb) === i).length - inboundJoinFlows.length;
+  inboundJoinFlows.add(message);
+
+  if (alreadyTouched) return;
+
+  const remaining = inboundTriggers.length - touched.size - 1;
+  if (remaining) {
     return this.logger.debug(`<${this.id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
   }
 
-  const evaluatedInbound = inboundJoinFlows.splice(0);
-
-  let taken;
-  const inbound = evaluatedInbound.map((im) => {
+  const inbound = [];
+  for (const im of inboundJoinFlows) {
     if (im.fields.routingKey === 'flow.take') taken = true;
     im.ack();
-    return cloneContent(im.content);
-  });
+    inbound.push(cloneContent(im.content));
+  }
 
-  let discardSequence;
+  const discardSequence = new Set();
   if (!taken) {
-    discardSequence = [];
-    for (const im of evaluatedInbound) {
+    for (const im of inboundJoinFlows) {
       if (!im.content.discardSequence) continue;
       for (const sourceId of im.content.discardSequence) {
-        if (discardSequence.indexOf(sourceId) === -1) discardSequence.push(sourceId);
+        discardSequence.add(sourceId);
       }
     }
   }
 
+  inboundJoinFlows.clear();
   this.broker.cancel('_run-on-inbound');
 
-  if (!taken) return this._runDiscard({ inbound, discardSequence });
+  if (!taken) return this._runDiscard({ inbound, discardSequence: [...discardSequence] });
   return this.run({ inbound });
 };
 
