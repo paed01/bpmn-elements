@@ -2,8 +2,11 @@
 
 # Unreleased
 
-- fix parallel join inbound triggers not behaving as expected if inbound flow is taken more than once
-- refactor testing JavaScript source
+# 15.0.1
+
+- fix parallel join inbound triggers not behaving as expected if inbound flow is taken more than once, unfortunately only for synchronous tasks
+- bump [smqp@9.0.2](https://github.com/paed01/smqp/blob/default/CHANGELOG.md)
+- add an image for activity execution documentation
 
 # 15.0.0
 

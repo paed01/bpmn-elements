@@ -303,9 +303,10 @@ describe('SubProcess', () => {
       context = await testHelpers.context(subProcessSource);
     });
 
-    it('without state is ok', () => {
+    it('recover behaviour without state is ok', () => {
       const subProcess = context.getActivityById('subProcess');
-      subProcess.recover();
+      const behaviour = new subProcess.Behaviour(subProcess, context);
+      behaviour.recover();
       expect(subProcess.id).to.be.ok;
     });
   });
@@ -415,7 +416,8 @@ describe('SubProcess', () => {
   });
 
   describe('getApi()', () => {
-    it('returns child api', async () => {
+    let context;
+    beforeEach(async () => {
       const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="theProcess" isExecutable="true">
@@ -424,8 +426,10 @@ describe('SubProcess', () => {
           </subProcess>
         </process>
       </definitions>`;
+      context = await testHelpers.context(source);
+    });
 
-      const context = await testHelpers.context(source);
+    it('returns child api', () => {
       const subProcess = context.getActivityById('subProcess');
 
       let message;
@@ -443,17 +447,7 @@ describe('SubProcess', () => {
       expect(api.content).to.have.property('id', 'task');
     });
 
-    it('child api resolves expression from process execution environment', async () => {
-      const source = `
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-        <process id="theProcess" isExecutable="true">
-          <subProcess id="subProcess">
-            <userTask id="task" />
-          </subProcess>
-        </process>
-      </definitions>`;
-
-      const context = await testHelpers.context(source);
+    it('child api resolves expression from process execution environment', () => {
       context.environment.variables.input = 1;
       const subProcess = context.getActivityById('subProcess');
 
@@ -466,6 +460,39 @@ describe('SubProcess', () => {
 
       const api = subProcess.execution.source.getApi(message);
       expect(api.resolveExpression('${environment.variables.content.id}')).to.equal('subProcess');
+    });
+
+    it('returns nothing if api message parent execution id is not found within executions', () => {
+      context.environment.variables.input = 1;
+      const subProcess = context.getActivityById('subProcess');
+
+      let message;
+      subProcess.broker.subscribeOnce('event', 'activity.wait', (_, msg) => {
+        message = msg;
+      });
+
+      subProcess.run();
+
+      message.content.parent.executionId = 'foo_1';
+
+      expect(subProcess.execution.source.getApi(message)).to.not.be.ok;
+    });
+
+    it('returns nothing if api message parent path execution id is not found within executions', () => {
+      context.environment.variables.input = 1;
+      const subProcess = context.getActivityById('subProcess');
+
+      let message;
+      subProcess.broker.subscribeOnce('event', 'activity.wait', (_, msg) => {
+        message = msg;
+      });
+
+      subProcess.run();
+
+      message.content.parent.executionId = 'foo_1';
+      message.content.parent.path = [{ executionId: 'foo_2' }];
+
+      expect(subProcess.execution.source.getApi(message)).to.not.be.ok;
     });
   });
 

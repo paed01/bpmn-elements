@@ -10,7 +10,7 @@ var _ProcessExecution = _interopRequireDefault(require("../process/ProcessExecut
 var _messageHelper = require("../messageHelper.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kExecutions = Symbol.for('executions');
-const kMessageHandlers = Symbol.for('messageHandlers');
+const kOnExecutionCompleted = Symbol.for('execution completed handler');
 function SubProcess(activityDef, context) {
   const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
   const subProcess = new _Activity.default(SubProcessBehaviour, {
@@ -55,9 +55,7 @@ function SubProcessBehaviour(activity, context) {
   this.broker = activity.broker;
   this.executionId = undefined;
   this[kExecutions] = new Set();
-  this[kMessageHandlers] = {
-    onExecutionCompleted: this._onExecutionCompleted.bind(this)
-  };
+  this[kOnExecutionCompleted] = this._onExecutionCompleted.bind(this);
 }
 Object.defineProperties(SubProcessBehaviour.prototype, {
   execution: {
@@ -143,7 +141,7 @@ SubProcessBehaviour.prototype._upsertExecution = function upsertExecution(execut
   return execution;
 };
 SubProcessBehaviour.prototype._addListeners = function addListeners(executionId) {
-  this.broker.subscribeTmp('subprocess-execution', `execution.#.${executionId}`, this[kMessageHandlers].onExecutionCompleted, {
+  this.broker.subscribeTmp('subprocess-execution', `execution.#.${executionId}`, this[kOnExecutionCompleted], {
     noAck: true,
     consumerTag: `_sub-process-execution-${executionId}`
   });
@@ -179,7 +177,6 @@ SubProcessBehaviour.prototype._onExecutionCompleted = function onExecutionComple
 SubProcessBehaviour.prototype._completeExecution = function completeExecution(completeRoutingKey, content) {
   if (this.loopCharacteristics) {
     const execution = this._getExecutionById(content.executionId);
-    if (!execution) return;
     this[kExecutions].delete(execution);
   }
   this.broker.publish('execution', completeRoutingKey, (0, _messageHelper.cloneContent)(content));
@@ -191,6 +188,7 @@ SubProcessBehaviour.prototype.getApi = function getApi(apiMessage) {
   if (execution = this._getExecutionById(content.parent.executionId)) {
     return execution.getApi(apiMessage);
   }
+  if (!content.parent.path) return;
   for (const pp of content.parent.path) {
     if (execution = this._getExecutionById(pp.executionId)) return execution.getApi(apiMessage);
   }

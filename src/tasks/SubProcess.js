@@ -3,7 +3,7 @@ import ProcessExecution from '../process/ProcessExecution.js';
 import { cloneContent } from '../messageHelper.js';
 
 const kExecutions = Symbol.for('executions');
-const kMessageHandlers = Symbol.for('messageHandlers');
+const kOnExecutionCompleted = Symbol.for('execution completed handler');
 
 export default function SubProcess(activityDef, context) {
   const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
@@ -39,9 +39,7 @@ export function SubProcessBehaviour(activity, context) {
   this.executionId = undefined;
 
   this[kExecutions] = new Set();
-  this[kMessageHandlers] = {
-    onExecutionCompleted: this._onExecutionCompleted.bind(this),
-  };
+  this[kOnExecutionCompleted] = this._onExecutionCompleted.bind(this);
 }
 
 Object.defineProperties(SubProcessBehaviour.prototype, {
@@ -147,7 +145,7 @@ SubProcessBehaviour.prototype._upsertExecution = function upsertExecution(execut
 };
 
 SubProcessBehaviour.prototype._addListeners = function addListeners(executionId) {
-  this.broker.subscribeTmp('subprocess-execution', `execution.#.${executionId}`, this[kMessageHandlers].onExecutionCompleted, {
+  this.broker.subscribeTmp('subprocess-execution', `execution.#.${executionId}`, this[kOnExecutionCompleted], {
     noAck: true,
     consumerTag: `_sub-process-execution-${executionId}`,
   });
@@ -184,7 +182,6 @@ SubProcessBehaviour.prototype._onExecutionCompleted = function onExecutionComple
 SubProcessBehaviour.prototype._completeExecution = function completeExecution(completeRoutingKey, content) {
   if (this.loopCharacteristics) {
     const execution = this._getExecutionById(content.executionId);
-    if (!execution) return;
     this[kExecutions].delete(execution);
   }
 
@@ -200,6 +197,8 @@ SubProcessBehaviour.prototype.getApi = function getApi(apiMessage) {
   if ((execution = this._getExecutionById(content.parent.executionId))) {
     return execution.getApi(apiMessage);
   }
+
+  if (!content.parent.path) return;
 
   for (const pp of content.parent.path) {
     if ((execution = this._getExecutionById(pp.executionId))) return execution.getApi(apiMessage);

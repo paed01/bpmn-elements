@@ -89,6 +89,6 @@
   },
   "dependencies": {
     "@0dep/piso": "^0.1.3",
-    "smqp": "^9.0.1"
+    "smqp": "^9.0.2"
   }
 }
