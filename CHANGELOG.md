@@ -2,6 +2,10 @@
 
 # Unreleased
 
+# 15.0.2
+
+- bump [@0dep/piso@1](https://www.npmjs.com/package/@0dep/piso)
+
 # 15.0.1
 
 - fix parallel join inbound triggers not behaving as expected if inbound flow is taken more than once, unfortunately only for synchronous tasks
