@@ -2,6 +2,10 @@
 
 # Unreleased
 
+# 15.0.3
+
+- bump [@0dep/piso@2](https://www.npmjs.com/package/@0dep/piso) who totally forgot about applying declared offset before returning date
+
 # 15.0.2
 
 - bump [@0dep/piso@1](https://www.npmjs.com/package/@0dep/piso)

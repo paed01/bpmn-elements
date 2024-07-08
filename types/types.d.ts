@@ -258,6 +258,7 @@ declare interface Api<T> extends ElementBrokerMessage {
   sendApiMessage(action: string, content?: signalMessage, options?: any): void;
   getPostponed(...args: any[]): any[];
   createMessage(content?: Record<string, any>): any;
+  getExecuting(): Api<T>[];
 }
 
 interface ExecutionScope {
