@@ -37,7 +37,7 @@ declare interface ElementBrokerMessage extends MessageMessage {
 }
 
 declare class EventDefinition {
-  constructor(activity: Activity, eventDefinitionElement: SerializableElement);
+  constructor(activity: Activity, eventDefinitionElement: SerializableElement, context?: ContextInstance, index?: number);
   get id(): string;
   get type(): string;
   get executionId(): string;

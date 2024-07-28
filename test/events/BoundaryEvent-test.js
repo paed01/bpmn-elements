@@ -1252,7 +1252,7 @@ describe('BoundaryEvent', () => {
           <serviceTask id="service" implementation="\${environment.services.test}" />
           <boundaryEvent id="conditionalEvent" attachedToRef="service" cancelActivity="false">
             <conditionalEventDefinition>
-              <condition xsi:type="tFormalExpression">\${content.output[0].conditionMet}</condition>
+              <condition xsi:type="tFormalExpression">\${content.message.conditionMet}</condition>
             </conditionalEventDefinition>
           </boundaryEvent>
           <endEvent id="end" />
@@ -1269,11 +1269,6 @@ describe('BoundaryEvent', () => {
       });
 
       it('completes if condition is met', async () => {
-        let serviceComplete;
-        context.environment.addService('test', (arg, next) => {
-          serviceComplete = next;
-        });
-
         const task = context.getActivityById('service');
         const event = context.getActivityById('conditionalEvent');
 
@@ -1282,34 +1277,29 @@ describe('BoundaryEvent', () => {
         event.activate();
         task.run();
 
-        serviceComplete(null, { conditionMet: true });
+        event.getApi().signal({ conditionMet: true });
 
         await leave;
 
         expect(event.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('taken', 1);
+        expect(task.counters).to.have.property('taken', 0);
       });
 
-      it('discards if condition is not met', async () => {
-        let serviceComplete;
-        context.environment.addService('test', (arg, next) => {
-          serviceComplete = next;
-        });
-
+      it('ignored if condition is not met', async () => {
         const task = context.getActivityById('service');
         const event = context.getActivityById('conditionalEvent');
 
-        const leave = event.waitFor('leave');
+        const condtion = event.waitFor('activity.condition');
 
         event.activate();
         task.run();
 
-        serviceComplete(null, { conditionMet: false });
+        event.getApi().signal({ conditionMet: false });
 
-        await leave;
+        await condtion;
 
-        expect(event.counters).to.have.property('discarded', 1);
-        expect(task.counters).to.have.property('taken', 1);
+        expect(event.counters).to.have.property('discarded', 0);
+        expect(task.counters).to.have.property('taken', 0);
       });
 
       it('is discarded when attached is discarded', async () => {
@@ -1364,7 +1354,7 @@ describe('BoundaryEvent', () => {
           <serviceTask id="service" implementation="\${environment.services.test}" />
           <boundaryEvent id="conditionalEvent" attachedToRef="service" cancelActivity="true">
             <conditionalEventDefinition>
-              <condition xsi:type="tFormalExpression">\${content.output[0].conditionMet}</condition>
+              <condition xsi:type="tFormalExpression">\${content.message.conditionMet}</condition>
             </conditionalEventDefinition>
           </boundaryEvent>
           <endEvent id="end" />
@@ -1381,11 +1371,6 @@ describe('BoundaryEvent', () => {
       });
 
       it('completes if condition is met and discard attached', async () => {
-        let serviceComplete;
-        context.environment.addService('test', (arg, next) => {
-          serviceComplete = next;
-        });
-
         const task = context.getActivityById('service');
         const event = context.getActivityById('conditionalEvent');
 
@@ -1394,7 +1379,7 @@ describe('BoundaryEvent', () => {
         event.activate();
         task.run();
 
-        serviceComplete(null, { conditionMet: true });
+        event.getApi().signal({ conditionMet: true });
 
         await leave;
 

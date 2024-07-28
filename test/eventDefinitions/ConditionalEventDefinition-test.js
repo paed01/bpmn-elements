@@ -49,7 +49,7 @@ describe('ConditionalEventDefinition', () => {
           executionId: 'event_1_0',
           index: 0,
           parent: {
-            id: 'bound',
+            id: 'event',
             executionId: 'event_1',
             path: [
               {
@@ -61,14 +61,20 @@ describe('ConditionalEventDefinition', () => {
         },
       });
 
-      expect(messages).to.have.length(1);
-      expect(messages[0].fields).to.have.property('routingKey', 'activity.wait');
-      expect(messages[0].content).to.have.property('executionId', 'event_1');
-      expect(messages[0].content.parent).to.have.property('id', 'theProcess');
-      expect(messages[0].content.parent).to.have.property('executionId', 'theProcess_0');
+      expect(messages).to.have.length(2);
+      expect(messages[0].fields).to.have.property('routingKey', 'activity.condition');
+      expect(messages[0].content).to.have.property('executionId', 'event_1_0');
+      expect(messages[0].content.parent).to.have.property('id', 'event');
+      expect(messages[0].content.parent).to.have.property('executionId', 'event_1');
+      expect(messages[0].content).to.have.property('conditionResult', undefined);
+
+      expect(messages[1].fields).to.have.property('routingKey', 'activity.wait');
+      expect(messages[1].content).to.have.property('executionId', 'event_1');
+      expect(messages[1].content.parent).to.have.property('id', 'theProcess');
+      expect(messages[1].content.parent).to.have.property('executionId', 'theProcess_0');
     });
 
-    it('publishes condition message with undefined result if expression is empty', () => {
+    it('ignores condition if expression is empty', () => {
       event.attachedTo = task;
 
       const condition = new ConditionalEventDefinition(event, {
@@ -96,11 +102,11 @@ describe('ConditionalEventDefinition', () => {
         },
       });
 
-      task.broker.publish('execution', 'execute.completed', { id: 'task', executionId: 'task_0' });
+      event.broker.publish('api', 'activity.signal.event_0_0', {}, { type: 'signal' });
 
-      expect(message).to.be.ok;
-      expect(message).to.have.property('content').with.property('conditionResult').to.be.undefined;
-      expect(message.content).to.have.property('index', 0);
+      expect(message).to.not.be.ok;
+      // expect(message).to.have.property('content').with.property('conditionResult').to.be.undefined;
+      // expect(message.content).to.have.property('index', 0);
     });
 
     it('publishes condition message with condition result as output if condition is met', () => {
@@ -109,21 +115,26 @@ describe('ConditionalEventDefinition', () => {
       const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
-          expression: '${content.output.value}',
+          expression: '${content.message}',
         },
       });
 
       let conditionMessage;
-      event.broker.subscribeOnce('event', 'activity.condition', (_, msg) => {
-        conditionMessage = msg;
-      });
+      event.broker.subscribeTmp(
+        'event',
+        'activity.condition',
+        (_, msg) => {
+          conditionMessage = msg;
+        },
+        { noAck: true },
+      );
 
       let completedMessage;
       event.broker.subscribeOnce('execution', '#', (_, msg) => {
         completedMessage = msg;
       });
 
-      condition.execute({
+      const executeMessage = {
         fields: {},
         content: {
           executionId: 'event_0_0',
@@ -133,18 +144,14 @@ describe('ConditionalEventDefinition', () => {
             executionId: 'event_0',
           },
         },
-      });
+      };
 
-      task.broker.publish('execution', 'execute.completed', {
-        id: 'task',
-        executionId: 'task_0',
-        output: {
-          value: { data: 1 },
-        },
-      });
+      condition.execute(executeMessage);
+
+      ActivityApi(event.broker, executeMessage, event.environment).signal({ data: 1 });
 
       expect(conditionMessage).to.be.ok;
-      expect(conditionMessage).to.have.property('content').with.property('conditionResult').that.eql({ data: 1 });
+      expect(conditionMessage).to.have.property('content').with.property('conditionResult').that.deep.equal({ data: 1 });
       expect(conditionMessage.content).to.have.property('index', 0);
 
       expect(completedMessage).to.be.ok;
@@ -183,13 +190,16 @@ describe('ConditionalEventDefinition', () => {
         },
       });
 
-      task.broker.publish('execution', 'execute.completed', {
-        id: 'task',
-        executionId: 'task_0',
-        output: {
-          value: { data: 1 },
+      event.broker.publish(
+        'api',
+        'activity.condtion.event_0_0',
+        {
+          output: {
+            value: { data: 1 },
+          },
         },
-      });
+        { type: 'signal' },
+      );
 
       expect(message).to.be.ok;
       expect(message).to.have.property('content').with.property('error').that.is.ok;
@@ -197,8 +207,8 @@ describe('ConditionalEventDefinition', () => {
     });
   });
 
-  describe('wait', () => {
-    it('publishes condition message with undefined result if expression is empty', () => {
+  describe('intermediate catch event', () => {
+    it('ignores condition if expression is empty', () => {
       const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {},
@@ -210,7 +220,7 @@ describe('ConditionalEventDefinition', () => {
       });
 
       event.broker.subscribeOnce('execution', '#', () => {
-        throw new Error('Shouldn´t publish on execution exchange');
+        throw new Error("Shouldn't publish on execution exchange");
       });
 
       const executeMessage = {
@@ -229,9 +239,7 @@ describe('ConditionalEventDefinition', () => {
 
       ActivityApi(event.broker, executeMessage, event.environment).signal({ value: { data: 1 } });
 
-      expect(message).to.be.ok;
-      expect(message).to.have.property('content').with.property('conditionResult').to.be.undefined;
-      expect(message.content).to.have.property('index', 0);
+      expect(message).to.not.be.ok;
     });
 
     it('publishes condition message with condition result as output if condition is met', () => {
@@ -278,9 +286,10 @@ describe('ConditionalEventDefinition', () => {
 
       expect(conditionMessages.length).to.equal(2);
       expect(conditionMessages[1].content).to.have.property('index', 0);
-      expect(conditionMessages[1]).to.have.property('content').with.property('conditionResult').that.eql({ data: 1 });
+      expect(conditionMessages[1]).to.have.property('content').with.property('conditionResult').that.deep.equal({ data: 1 });
 
       expect(completedMessage).to.be.ok;
+
       expect(completedMessage).to.have.property('fields').with.property('routingKey', 'execute.completed');
       expect(completedMessage).to.have.property('content').with.property('output').that.eql({ data: 1 });
       expect(completedMessage.content).to.have.property('index', 0);
@@ -310,7 +319,7 @@ describe('ConditionalEventDefinition', () => {
 
       condition.execute(executeMessage);
 
-      expect(event.broker.getExchange('api').bindingCount).to.equal(2);
+      expect(event.broker.getExchange('api').bindingCount).to.equal(3);
 
       let discardMessage;
       event.broker.subscribeOnce('execution', '#', (_, msg) => {
@@ -352,7 +361,7 @@ describe('ConditionalEventDefinition', () => {
 
       condition.execute(executeMessage);
 
-      expect(event.broker.getExchange('api').bindingCount).to.equal(2);
+      expect(event.broker.getExchange('api').bindingCount).to.equal(3);
 
       ActivityApi(event.broker, executeMessage, event.environment).signal({ value: true });
 
@@ -365,7 +374,7 @@ describe('ConditionalEventDefinition', () => {
       const condition = new ConditionalEventDefinition(event, {
         type: 'bpmn:ConditionalEventDefinition',
         behaviour: {
-          expression: '${content.output.value}',
+          expression: '${content.message.output.value}',
         },
       });
 
@@ -386,16 +395,22 @@ describe('ConditionalEventDefinition', () => {
 
       condition.execute(executeMessage);
 
-      expect(task.broker.getExchange('execution').bindingCount).to.equal(2);
-      expect(event.broker.getExchange('api').bindingCount).to.equal(1);
+      expect(task.broker.getExchange('execution').bindingCount).to.equal(1);
+      expect(event.broker.getExchange('api').bindingCount).to.equal(3);
 
-      task.broker.publish('execution', 'execute.completed', {
-        id: 'task',
-        executionId: 'task_0',
+      ActivityApi(event.broker, executeMessage, event.environment).signal({
         output: {
-          value: { data: 1 },
+          value: true,
         },
       });
+
+      // task.broker.publish('execution', 'execute.completed', {
+      //   id: 'task',
+      //   executionId: 'task_0',
+      //   output: {
+      //     value: { data: 1 },
+      //   },
+      // });
 
       expect(task.broker.getExchange('execution').bindingCount).to.equal(1);
       expect(event.broker.getExchange('api').bindingCount).to.equal(0);
@@ -427,7 +442,7 @@ describe('ConditionalEventDefinition', () => {
 
       condition.execute(executeMessage);
 
-      expect(event.broker.getExchange('api').bindingCount).to.equal(2);
+      expect(event.broker.getExchange('api').bindingCount).to.equal(3);
 
       ActivityApi(event.broker, executeMessage, event.environment).stop();
 
@@ -461,8 +476,8 @@ describe('ConditionalEventDefinition', () => {
 
       condition.execute(executeMessage);
 
-      expect(task.broker.getExchange('execution').bindingCount).to.equal(2);
-      expect(event.broker.getExchange('api').bindingCount).to.equal(1);
+      expect(task.broker.getExchange('execution').bindingCount).to.equal(1);
+      expect(event.broker.getExchange('api').bindingCount).to.equal(3);
 
       ActivityApi(event.broker, executeMessage, event.environment).stop();
 
