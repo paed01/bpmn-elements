@@ -54,6 +54,57 @@ declare class EventDefinition {
   execute(executeMessage: ElementBrokerMessage): void;
 }
 
+declare const enum TimerType {
+  TimeCycle = 'timeCycle',
+  TimeDuration = 'timeDuration',
+  TimeDate = 'timeDate',
+}
+
+type parsedTimer = {
+  /** Expires at date time */
+  expireAt?: Date;
+  /** Repeat number of times */
+  repeat?: number;
+  /** Delay in milliseconds */
+  delay?: number;
+};
+
+declare class TimerEventDefinition extends EventDefinition {
+  /**
+   * Parse timer type
+   * @param timerType type of timer
+   * @param timerValue resolved expression timer string
+   */
+  parse(timerType: TimerType, timerValue: string): parsedTimer;
+}
+
+declare interface ICondition {
+  /** Condition type */
+  get type(): string;
+  [x: string]: any;
+  execute(message: ElementBrokerMessage, callback: CallableFunction): void;
+}
+
+declare class ConditionalEventDefinition extends EventDefinition {
+  /**
+   * Evaluate condition
+   * @param message
+   * @param callback
+   */
+  evaluate(message: ElementBrokerMessage, callback: CallableFunction): void;
+  /**
+   * Handle evaluate result or error
+   * @param {Error|null} err Condition evaluation error
+   * @param {any} result Result from evaluated condition, completes execution if truthy
+   */
+  evaluateCallback(err: Error | null, result?: unknown): void;
+  /**
+   * Get condition from behaviour
+   * @param index Event definition sequence number, used to name registered script
+   */
+  getCondition(index: number): ICondition | null;
+}
+
 declare abstract class ElementBase {
   get id(): string;
   get type(): string;

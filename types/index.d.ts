@@ -1,5 +1,12 @@
 export * from './types.js';
-import { IActivityBehaviour, ActivityBehaviour, EventDefinition, MessageElement } from './types.js';
+import {
+  IActivityBehaviour,
+  ActivityBehaviour,
+  EventDefinition,
+  MessageElement,
+  ConditionalEventDefinition,
+  TimerEventDefinition,
+} from './types.js';
 
 declare module 'bpmn-elements' {
   export var BoundaryEvent: typeof ActivityBehaviour;
@@ -37,30 +44,7 @@ declare module 'bpmn-elements' {
   export var MessageEventDefinition: EventDefinition;
   export var SignalEventDefinition: EventDefinition;
   export var TerminateEventDefinition: EventDefinition;
-
-  export const enum TimerType {
-    TimeCycle = 'timeCycle',
-    TimeDuration = 'timeDuration',
-    TimeDate = 'timeDate',
-  }
-
-  type parsedTimer = {
-    /** Expires at date time */
-    expireAt?: Date;
-    /** Repeat number of times */
-    repeat?: number;
-    /** Delay in milliseconds */
-    delay?: number;
-  };
-
-  export class TimerEventDefinition extends EventDefinition {
-    /**
-     * Parse timer type
-     * @param timerType type of timer
-     * @param timerValue resolved expression timer string
-     */
-    parse(timerType: TimerType, timerValue: string): parsedTimer;
-  }
+  export var TimerEventDefinition: TimerEventDefinition;
 
   export class Message extends MessageElement {}
   export class Signal extends MessageElement {}
@@ -73,6 +57,19 @@ declare module 'bpmn-elements/events' {
   export var IntermediateCatchEventBehaviour: IActivityBehaviour;
   export var IntermediateThrowEventBehaviour: IActivityBehaviour;
   export var StartEventBehaviour: IActivityBehaviour;
+}
+
+declare module 'bpmn-elements/eventDefinitions' {
+  export var CancelEventDefinition: EventDefinition;
+  export var CompensateEventDefinition: EventDefinition;
+  export var ConditionalEventDefinition: ConditionalEventDefinition;
+  export var ErrorEventDefinition: EventDefinition;
+  export var EscalationEventDefinition: EventDefinition;
+  export var LinkEventDefinition: EventDefinition;
+  export var MessageEventDefinition: EventDefinition;
+  export var SignalEventDefinition: EventDefinition;
+  export var TerminateEventDefinition: EventDefinition;
+  export var TimerEventDefinition: TimerEventDefinition;
 }
 
 declare module 'bpmn-elements/gateways' {

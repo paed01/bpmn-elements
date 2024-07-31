@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "15.0.3",
+  "version": "16.0.0",
   "description": "Executable workflow elements based on BPMN 2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -17,6 +17,11 @@
       "types": "./types/index.d.ts",
       "require": "./dist/events/index.js",
       "import": "./src/events/index.js"
+    },
+    "./eventDefinitions": {
+      "types": "./types/index.d.ts",
+      "require": "./dist/eventDefinitions/index.js",
+      "import": "./src/eventDefinitions/index.js"
     },
     "./gateways": {
       "types": "./types/index.d.ts",

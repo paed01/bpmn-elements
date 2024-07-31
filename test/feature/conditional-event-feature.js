@@ -296,11 +296,24 @@ Feature('Conditional event', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      context.environment.variables.count = 0;
       definition = new Definition(context);
     });
 
-    And('a bad condition function', () => {
+    let completed;
+    When('ran and condition is met', () => {
+      definition.environment.addService('conditionMet', () => {
+        return true;
+      });
+
+      completed = definition.waitFor('leave');
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return completed;
+    });
+
+    Given('a bad condition function', () => {
       definition.environment.addService('conditionMet', () => {
         if (count++ % 2) return false;
         throw new Error('Unexpected');
@@ -308,7 +321,7 @@ Feature('Conditional event', () => {
     });
 
     let errored;
-    When('ran', () => {
+    When('ran again', () => {
       errored = definition.waitFor('error');
       definition.run();
     });

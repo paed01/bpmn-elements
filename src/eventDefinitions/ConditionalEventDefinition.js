@@ -87,7 +87,7 @@ ConditionalEventDefinition.prototype.evaluate = function evaluate(message, callb
  * @param {Error|null} err Condition evaluation error
  * @param {any} result Result from evaluated condition, completes execution if truthy
  */
-ConditionalEventDefinition.prototype.evaluateCallback = function complete(err, result) {
+ConditionalEventDefinition.prototype.evaluateCallback = function evaluateCallback(err, result) {
   const broker = this.broker;
   const executeMessage = this[kExecuteMessage];
   const executeContent = executeMessage.content;

@@ -4,8 +4,7 @@ import Environment from '../../src/Environment.js';
 import SequenceFlow from '../../src/flows/SequenceFlow.js';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
-import { TaskBehaviour } from '../../src/tasks/Task.js';
-import { SignalTaskBehaviour } from '../../src/tasks/SignalTask.js';
+import { TaskBehaviour, SignalTaskBehaviour } from '../../src/tasks/index.js';
 
 function Behaviour() {
   return {
