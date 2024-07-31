@@ -24,7 +24,7 @@ Object.defineProperty(exports, "Association", {
 Object.defineProperty(exports, "BoundaryEvent", {
   enumerable: true,
   get: function () {
-    return _BoundaryEvent.default;
+    return _index.BoundaryEvent;
   }
 });
 Object.defineProperty(exports, "BpmnError", {
@@ -36,19 +36,19 @@ Object.defineProperty(exports, "BpmnError", {
 Object.defineProperty(exports, "BusinessRuleTask", {
   enumerable: true,
   get: function () {
-    return _ServiceTask.default;
+    return _index3.ServiceTask;
   }
 });
 Object.defineProperty(exports, "CallActivity", {
   enumerable: true,
   get: function () {
-    return _CallActivity.default;
+    return _index3.CallActivity;
   }
 });
 Object.defineProperty(exports, "CancelEventDefinition", {
   enumerable: true,
   get: function () {
-    return _CancelEventDefinition.default;
+    return _index4.CancelEventDefinition;
   }
 });
 Object.defineProperty(exports, "Category", {
@@ -60,13 +60,13 @@ Object.defineProperty(exports, "Category", {
 Object.defineProperty(exports, "CompensateEventDefinition", {
   enumerable: true,
   get: function () {
-    return _CompensateEventDefinition.default;
+    return _index4.CompensateEventDefinition;
   }
 });
 Object.defineProperty(exports, "ConditionalEventDefinition", {
   enumerable: true,
   get: function () {
-    return _ConditionalEventDefinition.default;
+    return _index4.ConditionalEventDefinition;
   }
 });
 Object.defineProperty(exports, "Context", {
@@ -108,7 +108,7 @@ Object.defineProperty(exports, "Dummy", {
 Object.defineProperty(exports, "EndEvent", {
   enumerable: true,
   get: function () {
-    return _EndEvent.default;
+    return _index.EndEvent;
   }
 });
 Object.defineProperty(exports, "Environment", {
@@ -120,7 +120,7 @@ Object.defineProperty(exports, "Environment", {
 Object.defineProperty(exports, "ErrorEventDefinition", {
   enumerable: true,
   get: function () {
-    return _ErrorEventDefinition.default;
+    return _index4.ErrorEventDefinition;
   }
 });
 Object.defineProperty(exports, "Escalation", {
@@ -132,19 +132,19 @@ Object.defineProperty(exports, "Escalation", {
 Object.defineProperty(exports, "EscalationEventDefinition", {
   enumerable: true,
   get: function () {
-    return _EscalationEventDefinition.default;
+    return _index4.EscalationEventDefinition;
   }
 });
 Object.defineProperty(exports, "EventBasedGateway", {
   enumerable: true,
   get: function () {
-    return _EventBasedGateway.default;
+    return _index2.EventBasedGateway;
   }
 });
 Object.defineProperty(exports, "ExclusiveGateway", {
   enumerable: true,
   get: function () {
-    return _ExclusiveGateway.default;
+    return _index2.ExclusiveGateway;
   }
 });
 Object.defineProperty(exports, "Group", {
@@ -156,7 +156,7 @@ Object.defineProperty(exports, "Group", {
 Object.defineProperty(exports, "InclusiveGateway", {
   enumerable: true,
   get: function () {
-    return _InclusiveGateway.default;
+    return _index2.InclusiveGateway;
   }
 });
 Object.defineProperty(exports, "InputOutputSpecification", {
@@ -168,13 +168,13 @@ Object.defineProperty(exports, "InputOutputSpecification", {
 Object.defineProperty(exports, "IntermediateCatchEvent", {
   enumerable: true,
   get: function () {
-    return _IntermediateCatchEvent.default;
+    return _index.IntermediateCatchEvent;
   }
 });
 Object.defineProperty(exports, "IntermediateThrowEvent", {
   enumerable: true,
   get: function () {
-    return _IntermediateThrowEvent.default;
+    return _index.IntermediateThrowEvent;
   }
 });
 Object.defineProperty(exports, "Lane", {
@@ -186,13 +186,13 @@ Object.defineProperty(exports, "Lane", {
 Object.defineProperty(exports, "LinkEventDefinition", {
   enumerable: true,
   get: function () {
-    return _LinkEventDefinition.default;
+    return _index4.LinkEventDefinition;
   }
 });
 Object.defineProperty(exports, "ManualTask", {
   enumerable: true,
   get: function () {
-    return _SignalTask.default;
+    return _index3.SignalTask;
   }
 });
 Object.defineProperty(exports, "Message", {
@@ -204,7 +204,7 @@ Object.defineProperty(exports, "Message", {
 Object.defineProperty(exports, "MessageEventDefinition", {
   enumerable: true,
   get: function () {
-    return _MessageEventDefinition.default;
+    return _index4.MessageEventDefinition;
   }
 });
 Object.defineProperty(exports, "MessageFlow", {
@@ -222,7 +222,7 @@ Object.defineProperty(exports, "MultiInstanceLoopCharacteristics", {
 Object.defineProperty(exports, "ParallelGateway", {
   enumerable: true,
   get: function () {
-    return _ParallelGateway.default;
+    return _index2.ParallelGateway;
   }
 });
 Object.defineProperty(exports, "Process", {
@@ -240,7 +240,7 @@ Object.defineProperty(exports, "Properties", {
 Object.defineProperty(exports, "ReceiveTask", {
   enumerable: true,
   get: function () {
-    return _ReceiveTask.default;
+    return _index3.ReceiveTask;
   }
 });
 Object.defineProperty(exports, "RunError", {
@@ -252,13 +252,13 @@ Object.defineProperty(exports, "RunError", {
 Object.defineProperty(exports, "ScriptTask", {
   enumerable: true,
   get: function () {
-    return _ScriptTask.default;
+    return _index3.ScriptTask;
   }
 });
 Object.defineProperty(exports, "SendTask", {
   enumerable: true,
   get: function () {
-    return _ServiceTask.default;
+    return _index3.ServiceTask;
   }
 });
 Object.defineProperty(exports, "SequenceFlow", {
@@ -276,7 +276,7 @@ Object.defineProperty(exports, "ServiceImplementation", {
 Object.defineProperty(exports, "ServiceTask", {
   enumerable: true,
   get: function () {
-    return _ServiceTask.default;
+    return _index3.ServiceTask;
   }
 });
 Object.defineProperty(exports, "Signal", {
@@ -288,13 +288,13 @@ Object.defineProperty(exports, "Signal", {
 Object.defineProperty(exports, "SignalEventDefinition", {
   enumerable: true,
   get: function () {
-    return _SignalEventDefinition.default;
+    return _index4.SignalEventDefinition;
   }
 });
 Object.defineProperty(exports, "SignalTask", {
   enumerable: true,
   get: function () {
-    return _SignalTask.default;
+    return _index3.SignalTask;
   }
 });
 Object.defineProperty(exports, "StandardLoopCharacteristics", {
@@ -306,25 +306,25 @@ Object.defineProperty(exports, "StandardLoopCharacteristics", {
 Object.defineProperty(exports, "StartEvent", {
   enumerable: true,
   get: function () {
-    return _StartEvent.default;
+    return _index.StartEvent;
   }
 });
 Object.defineProperty(exports, "SubProcess", {
   enumerable: true,
   get: function () {
-    return _SubProcess.default;
+    return _index3.SubProcess;
   }
 });
 Object.defineProperty(exports, "Task", {
   enumerable: true,
   get: function () {
-    return _Task.default;
+    return _index3.Task;
   }
 });
 Object.defineProperty(exports, "TerminateEventDefinition", {
   enumerable: true,
   get: function () {
-    return _TerminateEventDefinition.default;
+    return _index4.TerminateEventDefinition;
   }
 });
 Object.defineProperty(exports, "TextAnnotation", {
@@ -336,7 +336,7 @@ Object.defineProperty(exports, "TextAnnotation", {
 Object.defineProperty(exports, "TimerEventDefinition", {
   enumerable: true,
   get: function () {
-    return _TimerEventDefinition.default;
+    return _index4.TimerEventDefinition;
   }
 });
 Object.defineProperty(exports, "Timers", {
@@ -348,64 +348,41 @@ Object.defineProperty(exports, "Timers", {
 Object.defineProperty(exports, "Transaction", {
   enumerable: true,
   get: function () {
-    return _Transaction.default;
+    return _index3.Transaction;
   }
 });
 Object.defineProperty(exports, "UserTask", {
   enumerable: true,
   get: function () {
-    return _SignalTask.default;
+    return _index3.SignalTask;
   }
 });
 var _Activity = _interopRequireDefault(require("./activity/Activity.js"));
 var _Association = _interopRequireDefault(require("./flows/Association.js"));
-var _BoundaryEvent = _interopRequireDefault(require("./events/BoundaryEvent.js"));
 var _BpmnError = _interopRequireDefault(require("./error/BpmnError.js"));
-var _CallActivity = _interopRequireDefault(require("./tasks/CallActivity.js"));
-var _CancelEventDefinition = _interopRequireDefault(require("./eventDefinitions/CancelEventDefinition.js"));
-var _CompensateEventDefinition = _interopRequireDefault(require("./eventDefinitions/CompensateEventDefinition.js"));
-var _ConditionalEventDefinition = _interopRequireDefault(require("./eventDefinitions/ConditionalEventDefinition.js"));
 var _Context = _interopRequireDefault(require("./Context.js"));
 var _EnvironmentDataObject = _interopRequireDefault(require("./io/EnvironmentDataObject.js"));
 var _EnvironmentDataStore = _interopRequireDefault(require("./io/EnvironmentDataStore.js"));
 var _EnvironmentDataStoreReference = _interopRequireDefault(require("./io/EnvironmentDataStoreReference.js"));
 var _Definition = _interopRequireDefault(require("./definition/Definition.js"));
 var _Dummy = _interopRequireDefault(require("./activity/Dummy.js"));
-var _EndEvent = _interopRequireDefault(require("./events/EndEvent.js"));
 var _Environment = _interopRequireDefault(require("./Environment.js"));
-var _ErrorEventDefinition = _interopRequireDefault(require("./eventDefinitions/ErrorEventDefinition.js"));
 var _Escalation = _interopRequireDefault(require("./activity/Escalation.js"));
-var _EscalationEventDefinition = _interopRequireDefault(require("./eventDefinitions/EscalationEventDefinition.js"));
-var _EventBasedGateway = _interopRequireDefault(require("./gateways/EventBasedGateway.js"));
-var _ExclusiveGateway = _interopRequireDefault(require("./gateways/ExclusiveGateway.js"));
-var _InclusiveGateway = _interopRequireDefault(require("./gateways/InclusiveGateway.js"));
 var _InputOutputSpecification = _interopRequireDefault(require("./io/InputOutputSpecification.js"));
-var _IntermediateCatchEvent = _interopRequireDefault(require("./events/IntermediateCatchEvent.js"));
-var _IntermediateThrowEvent = _interopRequireDefault(require("./events/IntermediateThrowEvent.js"));
 var _Lane = _interopRequireDefault(require("./process/Lane.js"));
-var _LinkEventDefinition = _interopRequireDefault(require("./eventDefinitions/LinkEventDefinition.js"));
 var _LoopCharacteristics = _interopRequireDefault(require("./tasks/LoopCharacteristics.js"));
 var _Message = _interopRequireDefault(require("./activity/Message.js"));
-var _MessageEventDefinition = _interopRequireDefault(require("./eventDefinitions/MessageEventDefinition.js"));
 var _MessageFlow = _interopRequireDefault(require("./flows/MessageFlow.js"));
-var _ParallelGateway = _interopRequireDefault(require("./gateways/ParallelGateway.js"));
 var _Process = _interopRequireDefault(require("./process/Process.js"));
 var _Properties = _interopRequireDefault(require("./io/Properties.js"));
-var _ReceiveTask = _interopRequireDefault(require("./tasks/ReceiveTask.js"));
-var _ScriptTask = _interopRequireDefault(require("./tasks/ScriptTask.js"));
 var _SequenceFlow = _interopRequireDefault(require("./flows/SequenceFlow.js"));
 var _ServiceImplementation = _interopRequireDefault(require("./tasks/ServiceImplementation.js"));
-var _ServiceTask = _interopRequireDefault(require("./tasks/ServiceTask.js"));
 var _Signal = _interopRequireDefault(require("./activity/Signal.js"));
-var _SignalEventDefinition = _interopRequireDefault(require("./eventDefinitions/SignalEventDefinition.js"));
-var _SignalTask = _interopRequireDefault(require("./tasks/SignalTask.js"));
 var _StandardLoopCharacteristics = _interopRequireDefault(require("./tasks/StandardLoopCharacteristics.js"));
-var _StartEvent = _interopRequireDefault(require("./events/StartEvent.js"));
-var _SubProcess = _interopRequireDefault(require("./tasks/SubProcess.js"));
-var _Task = _interopRequireDefault(require("./tasks/Task.js"));
-var _TerminateEventDefinition = _interopRequireDefault(require("./eventDefinitions/TerminateEventDefinition.js"));
-var _TimerEventDefinition = _interopRequireDefault(require("./eventDefinitions/TimerEventDefinition.js"));
-var _Transaction = _interopRequireDefault(require("./tasks/Transaction.js"));
+var _index = require("./events/index.js");
+var _index2 = require("./gateways/index.js");
+var _index3 = require("./tasks/index.js");
+var _index4 = require("./eventDefinitions/index.js");
 var _Timers = require("./Timers.js");
 var _Errors = require("./error/Errors.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
