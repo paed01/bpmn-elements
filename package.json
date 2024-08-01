@@ -23,6 +23,11 @@
       "require": "./dist/eventDefinitions/index.js",
       "import": "./src/eventDefinitions/index.js"
     },
+    "./flows": {
+      "types": "./types/index.d.ts",
+      "require": "./dist/flows/index.js",
+      "import": "./src/flows/index.js"
+    },
     "./gateways": {
       "types": "./types/index.d.ts",
       "require": "./dist/gateways/index.js",
@@ -64,8 +69,8 @@
   ],
   "files": [
     "dist",
-    "types",
     "src",
+    "types",
     "*.d.ts"
   ],
   "devDependencies": {
