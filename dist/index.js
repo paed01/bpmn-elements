@@ -18,13 +18,13 @@ Object.defineProperty(exports, "ActivityError", {
 Object.defineProperty(exports, "Association", {
   enumerable: true,
   get: function () {
-    return _Association.default;
+    return _index.Association;
   }
 });
 Object.defineProperty(exports, "BoundaryEvent", {
   enumerable: true,
   get: function () {
-    return _index.BoundaryEvent;
+    return _index2.BoundaryEvent;
   }
 });
 Object.defineProperty(exports, "BpmnError", {
@@ -36,19 +36,19 @@ Object.defineProperty(exports, "BpmnError", {
 Object.defineProperty(exports, "BusinessRuleTask", {
   enumerable: true,
   get: function () {
-    return _index3.ServiceTask;
+    return _index4.ServiceTask;
   }
 });
 Object.defineProperty(exports, "CallActivity", {
   enumerable: true,
   get: function () {
-    return _index3.CallActivity;
+    return _index4.CallActivity;
   }
 });
 Object.defineProperty(exports, "CancelEventDefinition", {
   enumerable: true,
   get: function () {
-    return _index4.CancelEventDefinition;
+    return _index5.CancelEventDefinition;
   }
 });
 Object.defineProperty(exports, "Category", {
@@ -60,13 +60,13 @@ Object.defineProperty(exports, "Category", {
 Object.defineProperty(exports, "CompensateEventDefinition", {
   enumerable: true,
   get: function () {
-    return _index4.CompensateEventDefinition;
+    return _index5.CompensateEventDefinition;
   }
 });
 Object.defineProperty(exports, "ConditionalEventDefinition", {
   enumerable: true,
   get: function () {
-    return _index4.ConditionalEventDefinition;
+    return _index5.ConditionalEventDefinition;
   }
 });
 Object.defineProperty(exports, "Context", {
@@ -108,7 +108,7 @@ Object.defineProperty(exports, "Dummy", {
 Object.defineProperty(exports, "EndEvent", {
   enumerable: true,
   get: function () {
-    return _index.EndEvent;
+    return _index2.EndEvent;
   }
 });
 Object.defineProperty(exports, "Environment", {
@@ -120,7 +120,7 @@ Object.defineProperty(exports, "Environment", {
 Object.defineProperty(exports, "ErrorEventDefinition", {
   enumerable: true,
   get: function () {
-    return _index4.ErrorEventDefinition;
+    return _index5.ErrorEventDefinition;
   }
 });
 Object.defineProperty(exports, "Escalation", {
@@ -132,19 +132,19 @@ Object.defineProperty(exports, "Escalation", {
 Object.defineProperty(exports, "EscalationEventDefinition", {
   enumerable: true,
   get: function () {
-    return _index4.EscalationEventDefinition;
+    return _index5.EscalationEventDefinition;
   }
 });
 Object.defineProperty(exports, "EventBasedGateway", {
   enumerable: true,
   get: function () {
-    return _index2.EventBasedGateway;
+    return _index3.EventBasedGateway;
   }
 });
 Object.defineProperty(exports, "ExclusiveGateway", {
   enumerable: true,
   get: function () {
-    return _index2.ExclusiveGateway;
+    return _index3.ExclusiveGateway;
   }
 });
 Object.defineProperty(exports, "Group", {
@@ -156,7 +156,7 @@ Object.defineProperty(exports, "Group", {
 Object.defineProperty(exports, "InclusiveGateway", {
   enumerable: true,
   get: function () {
-    return _index2.InclusiveGateway;
+    return _index3.InclusiveGateway;
   }
 });
 Object.defineProperty(exports, "InputOutputSpecification", {
@@ -168,13 +168,13 @@ Object.defineProperty(exports, "InputOutputSpecification", {
 Object.defineProperty(exports, "IntermediateCatchEvent", {
   enumerable: true,
   get: function () {
-    return _index.IntermediateCatchEvent;
+    return _index2.IntermediateCatchEvent;
   }
 });
 Object.defineProperty(exports, "IntermediateThrowEvent", {
   enumerable: true,
   get: function () {
-    return _index.IntermediateThrowEvent;
+    return _index2.IntermediateThrowEvent;
   }
 });
 Object.defineProperty(exports, "Lane", {
@@ -186,13 +186,13 @@ Object.defineProperty(exports, "Lane", {
 Object.defineProperty(exports, "LinkEventDefinition", {
   enumerable: true,
   get: function () {
-    return _index4.LinkEventDefinition;
+    return _index5.LinkEventDefinition;
   }
 });
 Object.defineProperty(exports, "ManualTask", {
   enumerable: true,
   get: function () {
-    return _index3.SignalTask;
+    return _index4.SignalTask;
   }
 });
 Object.defineProperty(exports, "Message", {
@@ -204,13 +204,13 @@ Object.defineProperty(exports, "Message", {
 Object.defineProperty(exports, "MessageEventDefinition", {
   enumerable: true,
   get: function () {
-    return _index4.MessageEventDefinition;
+    return _index5.MessageEventDefinition;
   }
 });
 Object.defineProperty(exports, "MessageFlow", {
   enumerable: true,
   get: function () {
-    return _MessageFlow.default;
+    return _index.MessageFlow;
   }
 });
 Object.defineProperty(exports, "MultiInstanceLoopCharacteristics", {
@@ -222,7 +222,7 @@ Object.defineProperty(exports, "MultiInstanceLoopCharacteristics", {
 Object.defineProperty(exports, "ParallelGateway", {
   enumerable: true,
   get: function () {
-    return _index2.ParallelGateway;
+    return _index3.ParallelGateway;
   }
 });
 Object.defineProperty(exports, "Process", {
@@ -240,7 +240,7 @@ Object.defineProperty(exports, "Properties", {
 Object.defineProperty(exports, "ReceiveTask", {
   enumerable: true,
   get: function () {
-    return _index3.ReceiveTask;
+    return _index4.ReceiveTask;
   }
 });
 Object.defineProperty(exports, "RunError", {
@@ -252,19 +252,19 @@ Object.defineProperty(exports, "RunError", {
 Object.defineProperty(exports, "ScriptTask", {
   enumerable: true,
   get: function () {
-    return _index3.ScriptTask;
+    return _index4.ScriptTask;
   }
 });
 Object.defineProperty(exports, "SendTask", {
   enumerable: true,
   get: function () {
-    return _index3.ServiceTask;
+    return _index4.ServiceTask;
   }
 });
 Object.defineProperty(exports, "SequenceFlow", {
   enumerable: true,
   get: function () {
-    return _SequenceFlow.default;
+    return _index.SequenceFlow;
   }
 });
 Object.defineProperty(exports, "ServiceImplementation", {
@@ -276,7 +276,7 @@ Object.defineProperty(exports, "ServiceImplementation", {
 Object.defineProperty(exports, "ServiceTask", {
   enumerable: true,
   get: function () {
-    return _index3.ServiceTask;
+    return _index4.ServiceTask;
   }
 });
 Object.defineProperty(exports, "Signal", {
@@ -288,13 +288,13 @@ Object.defineProperty(exports, "Signal", {
 Object.defineProperty(exports, "SignalEventDefinition", {
   enumerable: true,
   get: function () {
-    return _index4.SignalEventDefinition;
+    return _index5.SignalEventDefinition;
   }
 });
 Object.defineProperty(exports, "SignalTask", {
   enumerable: true,
   get: function () {
-    return _index3.SignalTask;
+    return _index4.SignalTask;
   }
 });
 Object.defineProperty(exports, "StandardLoopCharacteristics", {
@@ -306,25 +306,25 @@ Object.defineProperty(exports, "StandardLoopCharacteristics", {
 Object.defineProperty(exports, "StartEvent", {
   enumerable: true,
   get: function () {
-    return _index.StartEvent;
+    return _index2.StartEvent;
   }
 });
 Object.defineProperty(exports, "SubProcess", {
   enumerable: true,
   get: function () {
-    return _index3.SubProcess;
+    return _index4.SubProcess;
   }
 });
 Object.defineProperty(exports, "Task", {
   enumerable: true,
   get: function () {
-    return _index3.Task;
+    return _index4.Task;
   }
 });
 Object.defineProperty(exports, "TerminateEventDefinition", {
   enumerable: true,
   get: function () {
-    return _index4.TerminateEventDefinition;
+    return _index5.TerminateEventDefinition;
   }
 });
 Object.defineProperty(exports, "TextAnnotation", {
@@ -336,7 +336,7 @@ Object.defineProperty(exports, "TextAnnotation", {
 Object.defineProperty(exports, "TimerEventDefinition", {
   enumerable: true,
   get: function () {
-    return _index4.TimerEventDefinition;
+    return _index5.TimerEventDefinition;
   }
 });
 Object.defineProperty(exports, "Timers", {
@@ -348,17 +348,16 @@ Object.defineProperty(exports, "Timers", {
 Object.defineProperty(exports, "Transaction", {
   enumerable: true,
   get: function () {
-    return _index3.Transaction;
+    return _index4.Transaction;
   }
 });
 Object.defineProperty(exports, "UserTask", {
   enumerable: true,
   get: function () {
-    return _index3.SignalTask;
+    return _index4.SignalTask;
   }
 });
 var _Activity = _interopRequireDefault(require("./activity/Activity.js"));
-var _Association = _interopRequireDefault(require("./flows/Association.js"));
 var _BpmnError = _interopRequireDefault(require("./error/BpmnError.js"));
 var _Context = _interopRequireDefault(require("./Context.js"));
 var _EnvironmentDataObject = _interopRequireDefault(require("./io/EnvironmentDataObject.js"));
@@ -372,17 +371,16 @@ var _InputOutputSpecification = _interopRequireDefault(require("./io/InputOutput
 var _Lane = _interopRequireDefault(require("./process/Lane.js"));
 var _LoopCharacteristics = _interopRequireDefault(require("./tasks/LoopCharacteristics.js"));
 var _Message = _interopRequireDefault(require("./activity/Message.js"));
-var _MessageFlow = _interopRequireDefault(require("./flows/MessageFlow.js"));
 var _Process = _interopRequireDefault(require("./process/Process.js"));
 var _Properties = _interopRequireDefault(require("./io/Properties.js"));
-var _SequenceFlow = _interopRequireDefault(require("./flows/SequenceFlow.js"));
 var _ServiceImplementation = _interopRequireDefault(require("./tasks/ServiceImplementation.js"));
 var _Signal = _interopRequireDefault(require("./activity/Signal.js"));
 var _StandardLoopCharacteristics = _interopRequireDefault(require("./tasks/StandardLoopCharacteristics.js"));
-var _index = require("./events/index.js");
-var _index2 = require("./gateways/index.js");
-var _index3 = require("./tasks/index.js");
-var _index4 = require("./eventDefinitions/index.js");
+var _index = require("./flows/index.js");
+var _index2 = require("./events/index.js");
+var _index3 = require("./gateways/index.js");
+var _index4 = require("./tasks/index.js");
+var _index5 = require("./eventDefinitions/index.js");
 var _Timers = require("./Timers.js");
 var _Errors = require("./error/Errors.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }

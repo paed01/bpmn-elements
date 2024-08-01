@@ -105,8 +105,6 @@ describe('ConditionalEventDefinition', () => {
       event.broker.publish('api', 'activity.signal.event_0_0', {}, { type: 'signal' });
 
       expect(message).to.not.be.ok;
-      // expect(message).to.have.property('content').with.property('conditionResult').to.be.undefined;
-      // expect(message.content).to.have.property('index', 0);
     });
 
     it('publishes condition message with condition result as output if condition is met', () => {
@@ -336,6 +334,16 @@ describe('ConditionalEventDefinition', () => {
     });
   });
 
+  describe('evaluate', () => {
+    it('calls callback if condition is missing', (done) => {
+      const condition = new ConditionalEventDefinition(event, {
+        type: 'bpmn:ConditionalEventDefinition',
+      });
+
+      condition.evaluate({}, done);
+    });
+  });
+
   describe('condition met', () => {
     it('wait condition closes consumers', () => {
       const condition = new ConditionalEventDefinition(event, {
@@ -403,14 +411,6 @@ describe('ConditionalEventDefinition', () => {
           value: true,
         },
       });
-
-      // task.broker.publish('execution', 'execute.completed', {
-      //   id: 'task',
-      //   executionId: 'task_0',
-      //   output: {
-      //     value: { data: 1 },
-      //   },
-      // });
 
       expect(task.broker.getExchange('execution').bindingCount).to.equal(1);
       expect(event.broker.getExchange('api').bindingCount).to.equal(0);

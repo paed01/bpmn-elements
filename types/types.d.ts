@@ -94,10 +94,10 @@ declare class ConditionalEventDefinition extends EventDefinition {
   evaluate(message: ElementBrokerMessage, callback: CallableFunction): void;
   /**
    * Handle evaluate result or error
-   * @param {Error|null} err Condition evaluation error
-   * @param {any} result Result from evaluated condition, completes execution if truthy
+   * @param err Condition evaluation error
+   * @param result Result from evaluated condition, completes execution if truthy
    */
-  evaluateCallback(err: Error | null, result?: unknown): void;
+  evaluateCallback(err: Error | null, result?: any): void;
   /**
    * Get condition from behaviour
    * @param index Event definition sequence number, used to name registered script

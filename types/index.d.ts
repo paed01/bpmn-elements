@@ -1,5 +1,8 @@
 export * from './types.js';
 import {
+  Association,
+  MessageFlow,
+  SequenceFlow,
   IActivityBehaviour,
   ActivityBehaviour,
   EventDefinition,
@@ -70,6 +73,12 @@ declare module 'bpmn-elements/eventDefinitions' {
   export var SignalEventDefinition: EventDefinition;
   export var TerminateEventDefinition: EventDefinition;
   export var TimerEventDefinition: TimerEventDefinition;
+}
+
+declare module 'bpmn-elements/flows' {
+  export var Association: Association;
+  export var SequenceFlow: SequenceFlow;
+  export var MessageFlow: MessageFlow;
 }
 
 declare module 'bpmn-elements/gateways' {

@@ -60,6 +60,13 @@ describe('package exports', () => {
     });
   });
 
+  describe('flows', () => {
+    it('exports expected', async () => {
+      const modules = await import(resolve(cwd, pkg.exports['./flows'].import));
+      expect(Object.keys(modules)).to.deep.equal(['Association', 'MessageFlow', 'SequenceFlow']);
+    });
+  });
+
   describe('gateways', () => {
     it('exports expected', async () => {
       const modules = await import(resolve(cwd, pkg.exports['./gateways'].import));
