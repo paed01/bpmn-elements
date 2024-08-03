@@ -45,7 +45,7 @@
     "posttest": "npm run lint && npm run dist",
     "lint": "eslint . --cache && prettier . --check --cache",
     "prepack": "npm run dist",
-    "test:md": "texample ./docs/Examples.md,./docs/StartEvent.md,./docs/Extension.md",
+    "test:md": "texample ./docs/Examples.md,./docs/StartEvent.md,./docs/Extension.md,./docs/ConditionalEventDefinition.md",
     "cov:html": "c8 -r html -r text mocha -R @bonniernews/hot-bev -p -t 3000",
     "test:lcov": "c8 -r lcov mocha && npm run lint",
     "dist": "babel src -d dist/"
@@ -73,6 +73,11 @@
     "types",
     "*.d.ts"
   ],
+  "c8": {
+    "include": [
+      "src/**/*"
+    ]
+  },
   "devDependencies": {
     "@aircall/expression-parser": "^1.0.4",
     "@babel/cli": "^7.24.1",
@@ -92,7 +97,7 @@
     "got": "^14.2.1",
     "mocha": "^10.4.0",
     "mocha-cakes-2": "^3.3.0",
-    "moddle-context-serializer": "^4.1.2",
+    "moddle-context-serializer": "^4.2.1",
     "nock": "^13.5.3",
     "prettier": "^3.2.5",
     "texample": "^0.0.6"
