@@ -6,7 +6,8 @@
 
 ### Breaking
 
-- Refactor bound conditional event definition to take signal and stop listening for attached task events
+- Bound conditional event definition expects signal to check condition
+- Bound conditional event definition is **no** longer checking condition on attached task events
 
 ### Addition
 

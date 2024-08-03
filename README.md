@@ -18,7 +18,7 @@ The following elements are tested and supported.
 - BoundaryEvent
 - [CallActivity](/docs/CallActivity.md)
 - CancelEventDefinition
-- ConditionalEventDefinition
+- [ConditionalEventDefinition](/docs/ConditionalEventDefinition.md)
 - CompensateEventDefinition
   - compensate by outbound Association
 - [DataObject](/docs/BpmnIO.md)
