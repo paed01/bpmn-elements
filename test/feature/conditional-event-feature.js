@@ -103,7 +103,7 @@ Feature('Conditional event', () => {
       definition.signal({ id: 'conditionalEvent' });
     });
 
-    Then('run is errored', async () => {
+    Then('run fails', async () => {
       const err = await errored;
       expect(err.content.error).to.have.property('source').with.property('content').with.property('id', 'conditionalEvent');
     });
@@ -512,7 +512,7 @@ Feature('Conditional event', () => {
       definition.run();
     });
 
-    Then('run is errored', async () => {
+    Then('run fails', async () => {
       const err = await errored;
       expect(err.content.error).to.have.property('source').with.property('content').with.property('id', 'start');
     });
@@ -532,7 +532,7 @@ Feature('Conditional event', () => {
       event.signal();
     });
 
-    Then('run is errored', async () => {
+    Then('run fails', async () => {
       const err = await errored;
       expect(err.content.error).to.have.property('source').with.property('content').with.property('id', 'start');
     });
@@ -598,6 +598,62 @@ Feature('Conditional event', () => {
 
     Then('run completes', () => {
       return completed;
+    });
+  });
+
+  Scenario('condition script is slow', () => {
+    let context, definition;
+    Given('a process with bound javascript condition', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <serviceTask id="service" implementation="\${environment.services.test}" />
+          <boundaryEvent id="cond" attachedToRef="service" cancelActivity="true">
+            <conditionalEventDefinition>
+              <condition xsi:type="tFormalExpression" language="js">
+                environment.services.conditionMet(properties.type, next);
+              </condition>
+            </conditionalEventDefinition>
+          </boundaryEvent>
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+
+      definition = new Definition(context);
+    });
+
+    And('service function completes immediately', () => {
+      definition.environment.addService('test', (...args) => args.pop()());
+    });
+
+    let nextFunction;
+    And('a slow condition function', () => {
+      definition.environment.addService('conditionMet', (_type, next) => {
+        nextFunction = next;
+      });
+    });
+
+    let completed;
+    When('run', () => {
+      completed = definition.waitFor('leave');
+      definition.run();
+    });
+
+    Then('run completes since service completed', () => {
+      return completed;
+    });
+
+    But('condition still waits', () => {
+      expect(nextFunction).to.be.ok;
+    });
+
+    When('condition completes', () => {
+      nextFunction(null, true);
+    });
+
+    Then('it is ignored', () => {
+      expect(definition.getActivityById('cond').counters).to.deep.equal({ taken: 0, discarded: 1 });
     });
   });
 });

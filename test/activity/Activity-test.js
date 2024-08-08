@@ -146,6 +146,22 @@ describe('Activity', () => {
 
       expect(activity).to.have.property('isForCompensation', true);
     });
+
+    it('attachedTo return null if not boundary event', () => {
+      const activity = new Activity(
+        behaviours.Behaviour,
+        {
+          id: 'activity',
+          type: 'bpmn:Task',
+          parent: {
+            id: 'process1',
+          },
+        },
+        testHelpers.emptyContext(),
+      );
+
+      expect(activity).to.have.property('attachedTo', null);
+    });
   });
 
   describe('run on inbound', () => {
