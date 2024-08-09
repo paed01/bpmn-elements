@@ -1,8 +1,8 @@
-import ExecutionScope from '../activity/ExecutionScope.js';
 import { cloneParent, cloneContent } from '../messageHelper.js';
 import { getUniqueId } from '../shared.js';
 import { EventBroker } from '../EventBroker.js';
 import { FlowApi } from '../Api.js';
+import { ScriptCondition, ExpressionCondition } from '../condition.js';
 
 const kCounters = Symbol.for('counters');
 
@@ -29,13 +29,14 @@ function SequenceFlow(flowDef, { environment }) {
     discard: 0,
   };
 
-  environment.registerScript(this);
   const { broker, on, once, waitFor, emitFatal } = new EventBroker(this, { prefix: 'flow', durable: true, autoDelete: false });
   this.broker = broker;
   this.on = on;
   this.once = once;
   this.waitFor = waitFor;
   this.emitFatal = emitFatal;
+
+  environment.registerScript(this);
 
   logger.debug(`<${id}> init, <${sourceId}> -> <${targetId}>`);
 }
@@ -166,40 +167,4 @@ SequenceFlow.prototype._publishEvent = function publishEvent(action, content) {
   });
 
   this.broker.publish('event', `flow.${action}`, eventContent, { type: action });
-};
-
-function ScriptCondition(owner, script, language) {
-  this.type = 'script';
-  this.language = language;
-  this._owner = owner;
-  this._script = script;
-}
-
-ScriptCondition.prototype.execute = function execute(message, callback) {
-  const owner = this._owner;
-  try {
-    return this._script.execute(ExecutionScope(owner, message), callback);
-  } catch (err) {
-    if (!callback) throw err;
-    owner.logger.error(`<${owner.id}>`, err);
-    callback(err);
-  }
-};
-
-function ExpressionCondition(owner, expression) {
-  this.type = 'expression';
-  this.expression = expression;
-  this._owner = owner;
-}
-
-ExpressionCondition.prototype.execute = function execute(message, callback) {
-  const owner = this._owner;
-  try {
-    const result = owner.environment.resolveExpression(this.expression, owner.createMessage(message));
-    if (callback) return callback(null, result);
-    return result;
-  } catch (err) {
-    if (callback) return callback(err);
-    throw err;
-  }
 };

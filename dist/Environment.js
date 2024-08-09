@@ -95,7 +95,7 @@ Environment.prototype.assignVariables = function assignVariables(newVars) {
     ...newVars
   };
 };
-Environment.prototype.assignSettings = function assignVariables(newSettings) {
+Environment.prototype.assignSettings = function assignSettings(newSettings) {
   if (!newSettings || typeof newSettings !== 'object') return;
   this.settings = {
     ...this.settings,

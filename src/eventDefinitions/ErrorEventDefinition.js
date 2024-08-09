@@ -200,8 +200,8 @@ ErrorEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey,
 };
 
 ErrorEventDefinition.prototype._stop = function stop() {
-  const broker = this.broker,
-    executionId = this.executionId;
+  const broker = this.broker;
+  const executionId = this.executionId;
   broker.cancel(`_onthrow-${executionId}`);
   broker.cancel(`_onerror-${executionId}`);
   broker.cancel(`_api-${executionId}`);

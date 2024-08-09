@@ -99,7 +99,7 @@ function Activity(Behaviour, activityDef, context) {
     onExecutionMessage: this._onExecutionMessage.bind(this),
   };
 
-  this[kEventDefinitions] = eventDefinitions && eventDefinitions.map((ed) => new ed.Behaviour(this, ed, this.context));
+  this[kEventDefinitions] = eventDefinitions && eventDefinitions.map((ed, idx) => new ed.Behaviour(this, ed, context, idx));
   this[kExtensions] = context.loadExtensions(this);
   this[kConsuming] = false;
   this[kConsumingRunQ] = undefined;

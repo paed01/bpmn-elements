@@ -311,13 +311,14 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
     case 'run.leave':
       {
         this[kStatus] = undefined;
-        this.broker.cancel('_process-api');
+        message.ack();
+        this._deactivateRunConsumers();
         const {
           output,
           ...rest
         } = content; // eslint-disable-line no-unused-vars
         this._publishEvent('leave', rest);
-        break;
+        return;
       }
   }
   message.ack();

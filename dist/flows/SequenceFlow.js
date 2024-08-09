@@ -4,12 +4,11 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-var _ExecutionScope = _interopRequireDefault(require("../activity/ExecutionScope.js"));
 var _messageHelper = require("../messageHelper.js");
 var _shared = require("../shared.js");
 var _EventBroker = require("../EventBroker.js");
 var _Api = require("../Api.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+var _condition = require("../condition.js");
 const kCounters = Symbol.for('counters');
 var _default = exports.default = SequenceFlow;
 function SequenceFlow(flowDef, {
@@ -41,7 +40,6 @@ function SequenceFlow(flowDef, {
     take: 0,
     discard: 0
   };
-  environment.registerScript(this);
   const {
     broker,
     on,
@@ -58,6 +56,7 @@ function SequenceFlow(flowDef, {
   this.once = once;
   this.waitFor = waitFor;
   this.emitFatal = emitFatal;
+  environment.registerScript(this);
   logger.debug(`<${id}> init, <${sourceId}> -> <${targetId}>`);
 }
 Object.defineProperty(SequenceFlow.prototype, 'counters', {
@@ -145,13 +144,13 @@ SequenceFlow.prototype.getCondition = function getCondition() {
   } = conditionExpression;
   const script = this.environment.getScript(language, this);
   if (script) {
-    return new ScriptCondition(this, script, language);
+    return new _condition.ScriptCondition(this, script, language);
   }
   if (!conditionExpression.body) {
     const msg = language ? `Condition expression script ${language} is unsupported or was not registered` : 'Condition expression without body is unsupported';
     return this.emitFatal(new Error(msg), this.createMessage());
   }
-  return new ExpressionCondition(this, conditionExpression.body);
+  return new _condition.ExpressionCondition(this, conditionExpression.body);
 };
 SequenceFlow.prototype.createMessage = function createMessage(override) {
   return {
@@ -184,36 +183,4 @@ SequenceFlow.prototype._publishEvent = function publishEvent(action, content) {
   this.broker.publish('event', `flow.${action}`, eventContent, {
     type: action
   });
-};
-function ScriptCondition(owner, script, language) {
-  this.type = 'script';
-  this.language = language;
-  this._owner = owner;
-  this._script = script;
-}
-ScriptCondition.prototype.execute = function execute(message, callback) {
-  const owner = this._owner;
-  try {
-    return this._script.execute((0, _ExecutionScope.default)(owner, message), callback);
-  } catch (err) {
-    if (!callback) throw err;
-    owner.logger.error(`<${owner.id}>`, err);
-    callback(err);
-  }
-};
-function ExpressionCondition(owner, expression) {
-  this.type = 'expression';
-  this.expression = expression;
-  this._owner = owner;
-}
-ExpressionCondition.prototype.execute = function execute(message, callback) {
-  const owner = this._owner;
-  try {
-    const result = owner.environment.resolveExpression(this.expression, owner.createMessage(message));
-    if (callback) return callback(null, result);
-    return result;
-  } catch (err) {
-    if (callback) return callback(err);
-    throw err;
-  }
 };
