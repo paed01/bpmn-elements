@@ -72,7 +72,9 @@ BoundaryEventBehaviour.prototype.execute = function execute(executeMessage) {
     });
     broker.bindQueue(execQ.name, 'execution', 'execute.detach');
     broker.bindQueue(execQ.name, 'execution', 'execute.bound.completed');
-    broker.bindQueue(execQ.name, 'execution', 'execute.repeat');
+    if (!this.cancelActivity) {
+      broker.bindQueue(execQ.name, 'execution', 'execute.repeat');
+    }
     if (eventDefinitionExecution && !this.environment.settings.strict) {
       broker.bindQueue(execQ.name, 'execution', 'execute.expect');
     }

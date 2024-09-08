@@ -1,4 +1,5 @@
 import testHelpers from '../helpers/testHelpers.js';
+import Definition from '../../src/definition/Definition.js';
 
 Feature('BoundaryEvent', () => {
   Scenario('task with boundary event followed by a join', () => {
@@ -813,6 +814,172 @@ Feature('BoundaryEvent', () => {
 
     And('end was taken', () => {
       expect(bp.getActivityById('end').counters).to.have.property('taken', 2);
+    });
+  });
+
+  Scenario('non-interrupting repeated timer boundary event', () => {
+    let context, definition;
+    Given('a process matching scenario', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-task" sourceRef="start" targetRef="task" />
+          <userTask id="task" />
+          <boundaryEvent id="bound" attachedToRef="task" cancelActivity="false">
+            <timerEventDefinition>
+              <timeCycle xsi:type="tFormalExpression">R/PT1M</timeCycle>
+            </timerEventDefinition>
+          </boundaryEvent>
+          <sequenceFlow id="to-timer-end" sourceRef="bound" targetRef="timer-end" />
+          <sequenceFlow id="to-end" sourceRef="task" targetRef="end" />
+          <endEvent id="timer-end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+
+      definition = new Definition(context);
+    });
+
+    let timer;
+    When('ran', () => {
+      timer = definition.waitFor('activity.timer');
+      definition.run();
+    });
+
+    Then('timer is waiting', async () => {
+      await timer;
+    });
+
+    new Array(100).fill(0).forEach((_, idx) => {
+      When(`timer times out (#${idx + 1})`, () => {
+        timer = definition.waitFor('activity.timer');
+        definition.environment.timers.executing[0].callback();
+      });
+
+      Then('timer is waiting', async () => {
+        const api = await timer;
+        expect(api.content).to.have.property('repeat', -1);
+      });
+    });
+
+    let end;
+    When('task is completed', () => {
+      definition.waitFor('leave');
+      definition.signal({ id: 'task' });
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('bound timer was taken expected number of times', () => {
+      expect(definition.getActivityById('bound').counters).to.deep.equal({ taken: 100, discarded: 1 });
+    });
+
+    When('ran again', () => {
+      timer = definition.waitFor('activity.timer');
+      definition.run();
+    });
+
+    Then('timer is waiting', async () => {
+      const api = await timer;
+      expect(api.content).to.have.property('repeat', -1);
+    });
+
+    let state;
+    When('stopped and state is saved', () => {
+      definition.stop();
+      state = definition.getState();
+    });
+
+    Then('no timers are running', () => {
+      expect(definition.environment.timers.executing).to.have.length(0);
+    });
+
+    When('recovered and resumed', () => {
+      definition = new Definition(context.clone()).recover(state);
+
+      timer = definition.waitFor('activity.timer');
+
+      definition.resume();
+    });
+
+    Then('recovered timer is waiting', async () => {
+      const api = await timer;
+      expect(api.content).to.have.property('repeat', -1);
+    });
+
+    When('resumed timer times out', () => {
+      timer = definition.waitFor('activity.timer');
+      definition.environment.timers.executing[0].callback();
+    });
+
+    Then('resumed timer is waiting again', async () => {
+      const api = await timer;
+      expect(api.content).to.have.property('repeat', -1);
+    });
+
+    When('recovered task is completed', () => {
+      definition.waitFor('leave');
+      definition.signal({ id: 'task' });
+    });
+
+    Then('resumed run completes', () => {
+      return end;
+    });
+  });
+
+  Scenario('repeated timer in interrupting boundary event', () => {
+    let context, definition;
+    Given('a process matching scenario', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-task" sourceRef="start" targetRef="task" />
+          <userTask id="task" />
+          <boundaryEvent id="bound" attachedToRef="task">
+            <timerEventDefinition>
+              <timeCycle xsi:type="tFormalExpression">R/PT1M</timeCycle>
+            </timerEventDefinition>
+          </boundaryEvent>
+          <sequenceFlow id="to-timer-end" sourceRef="bound" targetRef="timer-end" />
+          <sequenceFlow id="to-end" sourceRef="task" targetRef="end" />
+          <endEvent id="timer-end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+
+      definition = new Definition(context);
+    });
+
+    let timer;
+    When('ran', () => {
+      timer = definition.waitFor('activity.timer');
+      definition.run();
+    });
+
+    Then('timer is waiting', async () => {
+      await timer;
+    });
+
+    let end;
+    When('timer times out', () => {
+      end = definition.waitFor('leave');
+      definition.environment.timers.executing[0].callback();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('no timers are running', () => {
+      expect(definition.environment.timers.executing).to.have.length(0);
     });
   });
 });
