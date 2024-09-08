@@ -69,7 +69,11 @@ BoundaryEventBehaviour.prototype.execute = function execute(executeMessage) {
     const execQ = broker.assertQueue(`_bound-execution-${executionId}`, { durable: false, autoDelete: true });
     broker.bindQueue(execQ.name, 'execution', 'execute.detach');
     broker.bindQueue(execQ.name, 'execution', 'execute.bound.completed');
-    broker.bindQueue(execQ.name, 'execution', 'execute.repeat');
+
+    if (!this.cancelActivity) {
+      broker.bindQueue(execQ.name, 'execution', 'execute.repeat');
+    }
+
     if (eventDefinitionExecution && !this.environment.settings.strict) {
       broker.bindQueue(execQ.name, 'execution', 'execute.expect');
     }
@@ -226,7 +230,6 @@ BoundaryEventBehaviour.prototype._onApiMessage = function onApiMessage(_, messag
 };
 
 BoundaryEventBehaviour.prototype._onRepeatMessage = function onRepeatMessage(_, message) {
-  if (this.cancelActivity) return;
   const executeMessage = this[kExecuteMessage];
   const repeat = message.content.repeat;
   this.broker

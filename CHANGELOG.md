@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 16.1.0
+
+- support ISO8601 interval timers with unbounded number of repetitions, e.g `R/PT1M` or `R-1/PT1M`
+
 ## 16.0.0
 
 ### Breaking

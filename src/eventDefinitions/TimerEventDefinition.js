@@ -125,6 +125,8 @@ TimerEventDefinition.prototype._completed = function completed(completeContent, 
   if (timerContent.repeat > 1) {
     const repeat = timerContent.repeat - 1;
     broker.publish('execution', 'execute.repeat', cloneContent(timerContent, { ...content, repeat }), options);
+  } else if (timerContent.repeat === -1) {
+    broker.publish('execution', 'execute.repeat', cloneContent(timerContent, content), options);
   }
 
   broker.publish('execution', 'execute.completed', cloneContent(timerContent, content), options);

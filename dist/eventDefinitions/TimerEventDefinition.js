@@ -124,6 +124,8 @@ TimerEventDefinition.prototype._completed = function completed(completeContent, 
       ...content,
       repeat
     }), options);
+  } else if (timerContent.repeat === -1) {
+    broker.publish('execution', 'execute.repeat', (0, _messageHelper.cloneContent)(timerContent, content), options);
   }
   broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(timerContent, content), options);
 };

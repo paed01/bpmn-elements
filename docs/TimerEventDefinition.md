@@ -18,6 +18,7 @@ Object with properties. A subset:
   - [`timeCycle`](#timecycle): the resolved time cycle if any
   - `startedAt`: timer started at date
   - `expireAt`: timer expires at date
+  - `repeat`: repeated timer number of repetitions, -1 means unbounded number of repetitions. NB! Only viable when used in non-interrupting BoundaryEvent
 
 ### `activity.timeout`
 
