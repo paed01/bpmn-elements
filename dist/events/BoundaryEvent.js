@@ -220,7 +220,6 @@ BoundaryEventBehaviour.prototype._onApiMessage = function onApiMessage(_, messag
   }
 };
 BoundaryEventBehaviour.prototype._onRepeatMessage = function onRepeatMessage(_, message) {
-  if (this.cancelActivity) return;
   const executeMessage = this[kExecuteMessage];
   const repeat = message.content.repeat;
   this.broker.getQueue('inbound-q').queueMessage({

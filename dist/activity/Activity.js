@@ -11,6 +11,7 @@ var _EventBroker = require("../EventBroker.js");
 var _MessageFormatter = require("../MessageFormatter.js");
 var _messageHelper = require("../messageHelper.js");
 var _Errors = require("../error/Errors.js");
+var _outboundEvaluator = require("./outbound-evaluator.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kActivityDef = Symbol.for('activityDefinition');
 const kConsuming = Symbol.for('consuming');
@@ -84,15 +85,20 @@ function Activity(Behaviour, activityDef, context) {
     inboundTriggers = inboundSequenceFlows.slice();
   }
   const outboundSequenceFlows = context.getOutboundSequenceFlows(id);
+  const isParallelJoin = activityDef.isParallelGateway && inboundSequenceFlows.length > 1;
   const flows = this[kFlows] = {
     inboundSequenceFlows,
     inboundAssociations,
-    inboundJoinFlows: new Set(),
     inboundTriggers,
     outboundSequenceFlows,
-    outboundEvaluator: new OutboundEvaluator(this, outboundSequenceFlows)
+    outboundEvaluator: new _outboundEvaluator.OutboundEvaluator(this, outboundSequenceFlows),
+    ...(isParallelJoin && {
+      inboundJoinFlows: new Set(),
+      inboundSourceIds: new Set(inboundSequenceFlows.map(({
+        sourceId
+      }) => sourceId))
+    })
   };
-  const isParallelJoin = activityDef.isParallelGateway && flows.inboundSequenceFlows.length > 1;
   this[kFlags] = {
     isEnd: flows.outboundSequenceFlows.length === 0,
     isStart: flows.inboundSequenceFlows.length === 0 && !attachedTo && !behaviour.triggeredByEvent && !isForCompensation,
@@ -508,21 +514,21 @@ Activity.prototype._onJoinInbound = function onJoinInbound(routingKey, message) 
   } = message;
   const {
     inboundJoinFlows,
-    inboundTriggers
+    inboundSourceIds
   } = this[kFlows];
   let alreadyTouched = false;
   const touched = new Set();
   let taken;
   for (const msg of inboundJoinFlows) {
-    const flowId = msg.content.id;
-    touched.add(flowId);
-    if (flowId === content.id) {
+    const sourceId = msg.content.sourceId;
+    touched.add(sourceId);
+    if (sourceId === content.sourceId) {
       alreadyTouched = true;
     }
   }
   inboundJoinFlows.add(message);
   if (alreadyTouched) return;
-  const remaining = inboundTriggers.length - touched.size - 1;
+  const remaining = inboundSourceIds.size - touched.size - 1;
   if (remaining) {
     return this.logger.debug(`<${this.id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
   }
@@ -851,11 +857,11 @@ Activity.prototype._doOutbound = function doOutbound(fromMessage, isDiscarded, c
   }
   let outboundFlows;
   if (isDiscarded) {
-    outboundFlows = outboundSequenceFlows.map(flow => formatFlowAction(flow, {
+    outboundFlows = outboundSequenceFlows.map(flow => (0, _outboundEvaluator.formatFlowAction)(flow, {
       action: 'discard'
     }));
   } else if (fromContent.outbound && fromContent.outbound.length) {
-    outboundFlows = outboundSequenceFlows.map(flow => formatFlowAction(flow, fromContent.outbound.filter(f => f.id === flow.id).pop()));
+    outboundFlows = outboundSequenceFlows.map(flow => (0, _outboundEvaluator.formatFlowAction)(flow, fromContent.outbound.filter(f => f.id === flow.id).pop()));
   }
   if (outboundFlows) {
     this._doRunOutbound(outboundFlows, fromContent, discardSequence);
@@ -868,24 +874,40 @@ Activity.prototype._doOutbound = function doOutbound(fromMessage, isDiscarded, c
   });
 };
 Activity.prototype._doRunOutbound = function doRunOutbound(outboundList, content, discardSequence) {
-  for (const outboundFlow of outboundList) {
-    const {
-      id: flowId,
-      action,
-      result
-    } = outboundFlow;
-    this.broker.publish('run', 'run.outbound.' + action, (0, _messageHelper.cloneContent)(content, {
-      flow: {
-        ...(result && typeof result === 'object' && result),
-        ...outboundFlow,
-        sequenceId: (0, _shared.getUniqueId)(`${flowId}_${action}`),
-        ...(discardSequence && {
-          discardSequence: discardSequence.slice()
-        })
+  if (outboundList.length === 1) {
+    this._publishRunOutbound(outboundList[0], content, discardSequence);
+  } else {
+    const targets = new Map();
+    for (const outboundFlow of outboundList) {
+      const prevTarget = targets.get(outboundFlow.targetId);
+      if (!prevTarget) {
+        targets.set(outboundFlow.targetId, outboundFlow);
+      } else if (outboundFlow.action === 'take' && outboundFlow.action !== prevTarget.action) {
+        targets.set(outboundFlow.targetId, outboundFlow);
       }
-    }));
+    }
+    for (const outboundFlow of targets.values()) {
+      this._publishRunOutbound(outboundFlow, content, discardSequence);
+    }
   }
   return outboundList;
+};
+Activity.prototype._publishRunOutbound = function publishRunOutbound(outboundFlow, content, discardSequence) {
+  const {
+    id: flowId,
+    action,
+    result
+  } = outboundFlow;
+  this.broker.publish('run', 'run.outbound.' + action, (0, _messageHelper.cloneContent)(content, {
+    flow: {
+      ...(result && typeof result === 'object' && result),
+      ...outboundFlow,
+      sequenceId: (0, _shared.getUniqueId)(`${flowId}_${action}`),
+      ...(discardSequence && {
+        discardSequence: discardSequence.slice()
+      })
+    }
+  }));
 };
 Activity.prototype._onResumeMessage = function onResumeMessage(message) {
   message.ack();
@@ -992,127 +1014,3 @@ Activity.prototype._deactivateRunConsumers = function _deactivateRunConsumers() 
   broker.cancel('_activity-execution');
   this[kConsuming] = false;
 };
-function OutboundEvaluator(activity, outboundFlows) {
-  this.activity = activity;
-  this.broker = activity.broker;
-  const flows = this.outboundFlows = outboundFlows.slice();
-  const defaultFlowIdx = flows.findIndex(({
-    isDefault
-  }) => isDefault);
-  if (defaultFlowIdx > -1) {
-    const [defaultFlow] = flows.splice(defaultFlowIdx, 1);
-    flows.push(defaultFlow);
-  }
-  this.defaultFlowIdx = outboundFlows.findIndex(({
-    isDefault
-  }) => isDefault);
-  this._onEvaluated = this.onEvaluated.bind(this);
-  this.evaluateArgs = {};
-}
-OutboundEvaluator.prototype.evaluate = function evaluate(fromMessage, discardRestAtTake, callback) {
-  const outboundFlows = this.outboundFlows;
-  const args = this.evaluateArgs = {
-    fromMessage,
-    evaluationId: fromMessage.content.executionId,
-    discardRestAtTake,
-    callback,
-    conditionMet: false,
-    result: {},
-    takenCount: 0
-  };
-  if (!outboundFlows.length) return this.completed();
-  const flows = args.flows = outboundFlows.slice();
-  this.broker.subscribeTmp('execution', 'evaluate.flow.#', this._onEvaluated, {
-    consumerTag: `_flow-evaluation-${args.evaluationId}`
-  });
-  return this.evaluateFlow(flows.shift());
-};
-OutboundEvaluator.prototype.onEvaluated = function onEvaluated(routingKey, message) {
-  const content = message.content;
-  const {
-    id: flowId,
-    action,
-    evaluationId
-  } = message.content;
-  const args = this.evaluateArgs;
-  if (action === 'take') {
-    args.takenCount++;
-    args.conditionMet = true;
-  }
-  args.result[flowId] = content;
-  if ('result' in content) {
-    this.activity.logger.debug(`<${evaluationId} (${this.activity.id})> flow <${flowId}> evaluated to: ${!!content.result}`);
-  }
-  let nextFlow = args.flows.shift();
-  if (!nextFlow) return this.completed();
-  if (args.discardRestAtTake && args.conditionMet) {
-    do {
-      args.result[nextFlow.id] = formatFlowAction(nextFlow, {
-        action: 'discard'
-      });
-    } while (nextFlow = args.flows.shift());
-    return this.completed();
-  }
-  if (args.conditionMet && nextFlow.isDefault) {
-    args.result[nextFlow.id] = formatFlowAction(nextFlow, {
-      action: 'discard'
-    });
-    return this.completed();
-  }
-  message.ack();
-  this.evaluateFlow(nextFlow);
-};
-OutboundEvaluator.prototype.evaluateFlow = function evaluateFlow(flow) {
-  const broker = this.broker;
-  const {
-    fromMessage,
-    evaluationId
-  } = this.evaluateArgs;
-  flow.evaluate((0, _messageHelper.cloneMessage)(fromMessage), (err, result) => {
-    if (err) return this.completed(err);
-    const action = result ? 'take' : 'discard';
-    return broker.publish('execution', 'evaluate.flow.' + action, formatFlowAction(flow, {
-      action,
-      result,
-      evaluationId
-    }), {
-      persistent: false
-    });
-  });
-};
-OutboundEvaluator.prototype.completed = function completed(err) {
-  const {
-    callback,
-    evaluationId,
-    fromMessage,
-    result,
-    takenCount
-  } = this.evaluateArgs;
-  this.broker.cancel(`_flow-evaluation-${evaluationId}`);
-  if (err) return callback(err);
-  if (!takenCount && this.outboundFlows.length) {
-    const nonTakenError = new _Errors.ActivityError(`<${this.activity.id}> no conditional flow taken`, fromMessage);
-    return callback(nonTakenError);
-  }
-  const message = fromMessage.content.message;
-  const evaluationResult = [];
-  for (const flow of Object.values(result)) {
-    evaluationResult.push({
-      ...flow,
-      ...(message !== undefined && {
-        message
-      })
-    });
-  }
-  return callback(null, evaluationResult);
-};
-function formatFlowAction(flow, options) {
-  return {
-    ...options,
-    id: flow.id,
-    action: options.action,
-    ...(flow.isDefault && {
-      isDefault: true
-    })
-  };
-}

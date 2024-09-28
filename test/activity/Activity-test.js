@@ -590,8 +590,8 @@ describe('Activity', () => {
             return sequenceFlows;
           },
         });
-        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
-        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
+        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', sourceId: 'task1', parent: { id: 'process1' } }, context);
+        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', sourceId: 'task2', parent: { id: 'process1' } }, context);
 
         sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
@@ -641,8 +641,8 @@ describe('Activity', () => {
             return sequenceFlows;
           },
         });
-        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
-        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
+        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', sourceId: 'task1', parent: { id: 'process1' } }, context);
+        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', sourceId: 'task2', parent: { id: 'process1' } }, context);
 
         sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
@@ -691,8 +691,8 @@ describe('Activity', () => {
             return sequenceFlows;
           },
         });
-        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
-        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
+        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', sourceId: 'task1', parent: { id: 'process1' } }, context);
+        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', sourceId: 'task2', parent: { id: 'process1' } }, context);
 
         sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
@@ -741,8 +741,8 @@ describe('Activity', () => {
             return sequenceFlows;
           },
         });
-        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
-        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
+        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', sourceId: 'task1', parent: { id: 'process1' } }, context);
+        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', sourceId: 'task2', parent: { id: 'process1' } }, context);
 
         sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
@@ -791,8 +791,8 @@ describe('Activity', () => {
             return sequenceFlows;
           },
         });
-        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
-        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
+        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', sourceId: 'task1', parent: { id: 'process1' } }, context);
+        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', sourceId: 'task2', parent: { id: 'process1' } }, context);
 
         sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
@@ -837,8 +837,14 @@ describe('Activity', () => {
             return sequenceFlows;
           },
         });
-        const sequenceFlow1 = new SequenceFlow({ id: 'flow1', targetId: 'activity', parent: { id: 'process1' } }, context);
-        const sequenceFlow2 = new SequenceFlow({ id: 'flow2', targetId: 'activity', parent: { id: 'process1' } }, context);
+        const sequenceFlow1 = new SequenceFlow(
+          { id: 'flow1', targetId: 'activity', sourceId: 'task1', parent: { id: 'process1' } },
+          context,
+        );
+        const sequenceFlow2 = new SequenceFlow(
+          { id: 'flow2', targetId: 'activity', sourceId: 'task2', parent: { id: 'process1' } },
+          context,
+        );
 
         sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
@@ -1663,8 +1669,14 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
-      const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
+      const sequenceFlow1 = new SequenceFlow(
+        { id: 'flow1', sourceId: 'source1', targetId: 'target1', parent: { id: 'process1' } },
+        context,
+      );
+      const sequenceFlow2 = new SequenceFlow(
+        { id: 'flow2', sourceId: 'source2', targetId: 'target2', parent: { id: 'process1' } },
+        context,
+      );
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
       const activity = new Activity(
@@ -1698,8 +1710,14 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
-      const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
+      const sequenceFlow1 = new SequenceFlow(
+        { id: 'flow1', sourceId: 'source1', targetId: 'target1', parent: { id: 'process1' } },
+        context,
+      );
+      const sequenceFlow2 = new SequenceFlow(
+        { id: 'flow2', sourceId: 'source2', targetId: 'target2', parent: { id: 'process1' } },
+        context,
+      );
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
       function SpecialBehaviour({ broker }) {
@@ -1785,8 +1803,14 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
-      const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
+      const sequenceFlow1 = new SequenceFlow(
+        { id: 'flow1', sourceId: 'source1', targetId: 'target1', parent: { id: 'process1' } },
+        context,
+      );
+      const sequenceFlow2 = new SequenceFlow(
+        { id: 'flow2', sourceId: 'source2', targetId: 'target2', parent: { id: 'process1' } },
+        context,
+      );
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
       function SpecialBehaviour({ broker }) {
@@ -1840,8 +1864,14 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow1 = new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, context);
-      const sequenceFlow2 = new SequenceFlow({ id: 'flow2', parent: { id: 'process1' } }, context);
+      const sequenceFlow1 = new SequenceFlow(
+        { id: 'flow1', sourceId: 'source1', targetId: 'target1', parent: { id: 'process1' } },
+        context,
+      );
+      const sequenceFlow2 = new SequenceFlow(
+        { id: 'flow2', sourceId: 'source2', targetId: 'target2', parent: { id: 'process1' } },
+        context,
+      );
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
       function SpecialBehaviour({ broker }) {
@@ -1899,8 +1929,15 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow1 = new SequenceFlow({ id: 'flow1', sourceId: 'activity', parent: { id: 'process1' } }, context);
-      const sequenceFlow2 = new SequenceFlow({ id: 'flow2', sourceId: 'activity', parent: { id: 'process1' } }, context);
+      const sequenceFlow1 = new SequenceFlow(
+        { id: 'flow1', sourceId: 'activity', targetId: 'target1', parent: { id: 'process1' } },
+        context,
+      );
+      const sequenceFlow2 = new SequenceFlow(
+        { id: 'flow2', sourceId: 'activity', targetId: 'target2', parent: { id: 'process1' } },
+        context,
+      );
+
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
       const messages = [];
@@ -1970,8 +2007,14 @@ describe('Activity', () => {
       const sequenceFlow0 = new SequenceFlow({ id: 'flow0', sourceId: 'start', targetId: 'activity', parent: { id: 'process1' } }, context);
       inboundFlows.push(sequenceFlow0);
 
-      const sequenceFlow1 = new SequenceFlow({ id: 'flow1', sourceId: 'activity', parent: { id: 'process1' } }, context);
-      const sequenceFlow2 = new SequenceFlow({ id: 'flow2', sourceId: 'activity', parent: { id: 'process1' } }, context);
+      const sequenceFlow1 = new SequenceFlow(
+        { id: 'flow1', sourceId: 'activity', targetId: 'target1', parent: { id: 'process1' } },
+        context,
+      );
+      const sequenceFlow2 = new SequenceFlow(
+        { id: 'flow2', sourceId: 'activity', targetId: 'target2', parent: { id: 'process1' } },
+        context,
+      );
       outboundFlows.push(sequenceFlow1, sequenceFlow2);
 
       const messages = [];
@@ -2023,8 +2066,14 @@ describe('Activity', () => {
 
       inboundFlows.push(sequenceFlow1, sequenceFlow2);
 
-      const sequenceFlow3 = new SequenceFlow({ id: 'flow3', sourceId: 'activity', parent: { id: 'process1' } }, context);
-      const sequenceFlow4 = new SequenceFlow({ id: 'flow4', sourceId: 'activity', parent: { id: 'process1' } }, context);
+      const sequenceFlow3 = new SequenceFlow(
+        { id: 'flow3', sourceId: 'activity', targetId: 'target1', parent: { id: 'process1' } },
+        context,
+      );
+      const sequenceFlow4 = new SequenceFlow(
+        { id: 'flow4', sourceId: 'activity', targetId: 'target2', parent: { id: 'process1' } },
+        context,
+      );
       outboundFlows.push(sequenceFlow3, sequenceFlow4);
 
       const messages = [];
@@ -2331,8 +2380,14 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow1 = new SequenceFlow({ id: 'flow1', sourceId: 'activity', parent: { id: 'process1' } }, context);
-      const sequenceFlow2 = new SequenceFlow({ id: 'flow2', sourceId: 'activity', parent: { id: 'process1' } }, context);
+      const sequenceFlow1 = new SequenceFlow(
+        { id: 'flow1', sourceId: 'activity', targetId: 'target1', parent: { id: 'process1' } },
+        context,
+      );
+      const sequenceFlow2 = new SequenceFlow(
+        { id: 'flow2', sourceId: 'activity', targetId: 'target2', parent: { id: 'process1' } },
+        context,
+      );
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
       const messages = [];
