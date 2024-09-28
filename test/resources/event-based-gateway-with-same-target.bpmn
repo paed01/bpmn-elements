@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="Definitions_0lp7ocg" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.27.0">
+  <bpmn:process id="Process_0" isExecutable="true">
+    <bpmn:startEvent id="start">
+      <bpmn:outgoing>toGateway</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="toGateway" sourceRef="start" targetRef="gateway" />
+    <bpmn:eventBasedGateway id="gateway">
+      <bpmn:incoming>toGateway</bpmn:incoming>
+      <bpmn:outgoing>from-gateway-2</bpmn:outgoing>
+      <bpmn:outgoing>from-gateway-1</bpmn:outgoing>
+      <bpmn:outgoing>to-timerEvent</bpmn:outgoing>
+    </bpmn:eventBasedGateway>
+    <bpmn:intermediateCatchEvent id="signalEvent">
+      <bpmn:incoming>from-gateway-2</bpmn:incoming>
+      <bpmn:incoming>from-gateway-1</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_0mgq2p1</bpmn:outgoing>
+      <bpmn:signalEventDefinition signalRef="Signal_13do99j" />
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="from-gateway-2" sourceRef="gateway" targetRef="signalEvent" />
+    <bpmn:sequenceFlow id="from-gateway-1" sourceRef="gateway" targetRef="signalEvent" />
+    <bpmn:task id="Task_1pfzr39">
+      <bpmn:incoming>SequenceFlow_0mgq2p1</bpmn:incoming>
+      <bpmn:incoming>Flow_1ufc3pc</bpmn:incoming>
+      <bpmn:outgoing>SequenceFlow_1b15xe6</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="SequenceFlow_0mgq2p1" sourceRef="signalEvent" targetRef="Task_1pfzr39" />
+    <bpmn:sequenceFlow id="SequenceFlow_1b15xe6" sourceRef="Task_1pfzr39" targetRef="end" />
+    <bpmn:endEvent id="end">
+      <bpmn:incoming>SequenceFlow_1b15xe6</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:intermediateCatchEvent id="timerEvent">
+      <bpmn:incoming>to-timerEvent</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ufc3pc</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_0i52y0p">
+        <bpmn:timeDuration xsi:type="bpmn:tFormalExpression">PT1H</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:intermediateCatchEvent>
+    <bpmn:sequenceFlow id="to-timerEvent" sourceRef="gateway" targetRef="timerEvent" />
+    <bpmn:sequenceFlow id="Flow_1ufc3pc" sourceRef="timerEvent" targetRef="Task_1pfzr39" />
+  </bpmn:process>
+  <bpmn:signal id="Signal_13do99j" name="signalEvent" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_0">
+      <bpmndi:BPMNShape id="signalEvent_di" bpmnElement="signalEvent">
+        <dc:Bounds x="363" y="142" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Task_1pfzr39_di" bpmnElement="Task_1pfzr39">
+        <dc:Bounds x="447" y="120" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_0j4upkh_di" bpmnElement="end">
+        <dc:Bounds x="592" y="142" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EventBasedGateway_0vwrcrz_di" bpmnElement="gateway">
+        <dc:Bounds x="265" y="135" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="start">
+        <dc:Bounds x="172" y="142" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1qndao1_di" bpmnElement="timerEvent">
+        <dc:Bounds x="363" y="252" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_14jqppo_di" bpmnElement="from-gateway-2">
+        <di:waypoint x="315" y="160" />
+        <di:waypoint x="363" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0l24uex_di" bpmnElement="from-gateway-1">
+        <di:waypoint x="290" y="135" />
+        <di:waypoint x="290" y="80" />
+        <di:waypoint x="381" y="80" />
+        <di:waypoint x="381" y="142" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_0mgq2p1_di" bpmnElement="SequenceFlow_0mgq2p1">
+        <di:waypoint x="399" y="160" />
+        <di:waypoint x="447" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_1b15xe6_di" bpmnElement="SequenceFlow_1b15xe6">
+        <di:waypoint x="547" y="160" />
+        <di:waypoint x="592" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="SequenceFlow_135kkwl_di" bpmnElement="toGateway">
+        <di:waypoint x="208" y="160" />
+        <di:waypoint x="265" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_034q08x_di" bpmnElement="to-timerEvent">
+        <di:waypoint x="290" y="185" />
+        <di:waypoint x="290" y="270" />
+        <di:waypoint x="363" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ufc3pc_di" bpmnElement="Flow_1ufc3pc">
+        <di:waypoint x="399" y="270" />
+        <di:waypoint x="497" y="270" />
+        <di:waypoint x="497" y="200" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

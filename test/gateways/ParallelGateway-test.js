@@ -56,105 +56,180 @@ describe('ParallelGateway', () => {
   });
 
   describe('join', () => {
-    const source = `
-    <?xml version="1.0" encoding="UTF-8"?>
-      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-      <process id="theProcess" isExecutable="true">
-        <startEvent id="start" />
-        <sequenceFlow id="flow1" sourceRef="start" targetRef="join" />
-        <sequenceFlow id="flow2" sourceRef="start" targetRef="join" />
-        <sequenceFlow id="flow3" sourceRef="start" targetRef="join" />
-        <parallelGateway id="join" />
-        <sequenceFlow id="flow4" sourceRef="join" targetRef="end" />
-        <endEvent id="end" />
-      </process>
-    </definitions>`;
+    describe('join from different source activities', () => {
+      const sourceSameSourceId = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-task1" sourceRef="start" targetRef="task1" />
+          <sequenceFlow id="to-task2" sourceRef="start" targetRef="task2" />
+          <sequenceFlow id="to-task3" sourceRef="start" targetRef="task3" />
+          <task id="task1" />
+          <task id="task2" />
+          <task id="task3" />
+          <sequenceFlow id="flow1" sourceRef="task1" targetRef="join" />
+          <sequenceFlow id="flow2" sourceRef="task2" targetRef="join" />
+          <sequenceFlow id="flow3" sourceRef="task3" targetRef="join" />
+          <parallelGateway id="join" />
+          <sequenceFlow id="flow4" sourceRef="join" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
 
-    let context;
-    beforeEach(async () => {
-      context = await testHelpers.context(source);
+      let context;
+      beforeEach(async () => {
+        context = await testHelpers.context(sourceSameSourceId);
+      });
+
+      it('waits for all inbound', async () => {
+        const activity = context.getActivityById('join');
+
+        activity.activate();
+
+        const leave = activity.waitFor('leave');
+        activity.inbound[0].take();
+        activity.inbound[1].take();
+        activity.inbound[2].take();
+
+        await leave;
+
+        const outboundFlow = activity.outbound[0];
+        expect(outboundFlow.counters).to.have.property('take', 1);
+        expect(outboundFlow.counters).to.have.property('discard', 0);
+      });
+
+      it('discards outbound if all inbound were discarded', async () => {
+        const activity = context.getActivityById('join');
+
+        activity.activate();
+
+        const leave = activity.waitFor('leave');
+        activity.inbound[0].discard();
+        activity.inbound[1].discard();
+        activity.inbound[2].discard();
+
+        await leave;
+
+        const outboundFlow = activity.outbound[0];
+        expect(outboundFlow.counters).to.have.property('discard', 1);
+        expect(outboundFlow.counters).to.have.property('take', 0);
+      });
+
+      it('takes outbound if one inbound is discarded', async () => {
+        const activity = context.getActivityById('join');
+
+        activity.activate();
+
+        const leave = activity.waitFor('leave');
+        activity.inbound[0].take();
+        activity.inbound[1].take();
+        activity.inbound[2].discard();
+
+        await leave;
+
+        expect(activity.outbound[0].counters).to.have.property('take', 1);
+        expect(activity.outbound[0].counters).to.have.property('discard', 0);
+      });
+
+      it('takes outbound if all but one inbound is discarded', async () => {
+        const activity = context.getActivityById('join');
+
+        activity.activate();
+
+        const leave = activity.waitFor('leave');
+        activity.inbound[0].take();
+        activity.inbound[1].discard();
+        activity.inbound[2].discard();
+
+        await leave;
+
+        expect(activity.outbound[0].counters).to.have.property('take', 1);
+        expect(activity.outbound[0].counters).to.have.property('discard', 0);
+      });
+
+      it('takes outbound if first inbound is discarded but the rest are taken', async () => {
+        const activity = context.getActivityById('join');
+
+        activity.activate();
+
+        const leave = activity.waitFor('leave');
+        activity.inbound[0].discard();
+        activity.inbound[1].take();
+        activity.inbound[2].take();
+
+        await leave;
+
+        expect(activity.outbound[0].counters).to.have.property('take', 1);
+        expect(activity.outbound[0].counters).to.have.property('discard', 0);
+      });
     });
 
-    it('waits for all inbound', async () => {
-      const activity = context.getActivityById('join');
+    describe('join from same source activity', () => {
+      const sourceSameSourceId = `
+      <?xml version="1.0" encoding="UTF-8"?>
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="flow1" sourceRef="start" targetRef="join" />
+          <sequenceFlow id="flow2" sourceRef="start" targetRef="join" />
+          <sequenceFlow id="flow3" sourceRef="start" targetRef="join" />
+          <parallelGateway id="join" />
+          <sequenceFlow id="flow4" sourceRef="join" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
 
-      activity.activate();
+      let context;
+      beforeEach(async () => {
+        context = await testHelpers.context(sourceSameSourceId);
+      });
 
-      const leave = activity.waitFor('leave');
-      activity.inbound[0].take();
-      activity.inbound[1].take();
-      activity.inbound[2].take();
+      it('waits for one inbound', async () => {
+        const activity = context.getActivityById('join');
 
-      await leave;
+        activity.activate();
 
-      const outboundFlow = activity.outbound[0];
-      expect(outboundFlow.counters).to.have.property('take', 1);
-      expect(outboundFlow.counters).to.have.property('discard', 0);
-    });
+        const leave = activity.waitFor('leave');
+        activity.inbound[0].take();
+        activity.inbound[1].take();
+        activity.inbound[2].take();
 
-    it('discards outbound if all inbound were discarded', async () => {
-      const activity = context.getActivityById('join');
+        await leave;
 
-      activity.activate();
+        const outboundFlow = activity.outbound[0];
+        expect(outboundFlow.counters).to.have.property('take', 3);
+        expect(outboundFlow.counters).to.have.property('discard', 0);
+      });
 
-      const leave = activity.waitFor('leave');
-      activity.inbound[0].discard();
-      activity.inbound[1].discard();
-      activity.inbound[2].discard();
+      it('discards outbound if one inbound were discarded', async () => {
+        const activity = context.getActivityById('join');
 
-      await leave;
+        activity.activate();
 
-      const outboundFlow = activity.outbound[0];
-      expect(outboundFlow.counters).to.have.property('discard', 1);
-      expect(outboundFlow.counters).to.have.property('take', 0);
-    });
+        const leave = activity.waitFor('leave');
+        activity.inbound[0].discard();
 
-    it('takes outbound if one inbound is discarded', async () => {
-      const activity = context.getActivityById('join');
+        await leave;
 
-      activity.activate();
+        const outboundFlow = activity.outbound[0];
+        expect(outboundFlow.counters).to.have.property('discard', 1);
+        expect(outboundFlow.counters).to.have.property('take', 0);
+      });
 
-      const leave = activity.waitFor('leave');
-      activity.inbound[0].take();
-      activity.inbound[1].take();
-      activity.inbound[2].discard();
+      it('takes outbound if one inbound is taken', async () => {
+        const activity = context.getActivityById('join');
 
-      await leave;
+        activity.activate();
 
-      expect(activity.outbound[0].counters).to.have.property('take', 1);
-      expect(activity.outbound[0].counters).to.have.property('discard', 0);
-    });
+        const leave = activity.waitFor('leave');
+        activity.inbound[0].take();
 
-    it('takes outbound if all but one inbound is discarded', async () => {
-      const activity = context.getActivityById('join');
+        await leave;
 
-      activity.activate();
-
-      const leave = activity.waitFor('leave');
-      activity.inbound[0].take();
-      activity.inbound[1].discard();
-      activity.inbound[2].discard();
-
-      await leave;
-
-      expect(activity.outbound[0].counters).to.have.property('take', 1);
-      expect(activity.outbound[0].counters).to.have.property('discard', 0);
-    });
-
-    it('takes outbound if first inbound is discarded but the rest are taken', async () => {
-      const activity = context.getActivityById('join');
-
-      activity.activate();
-
-      const leave = activity.waitFor('leave');
-      activity.inbound[0].discard();
-      activity.inbound[1].take();
-      activity.inbound[2].take();
-
-      await leave;
-
-      expect(activity.outbound[0].counters).to.have.property('take', 1);
-      expect(activity.outbound[0].counters).to.have.property('discard', 0);
+        expect(activity.outbound[0].counters).to.have.property('take', 1);
+        expect(activity.outbound[0].counters).to.have.property('discard', 0);
+      });
     });
   });
 

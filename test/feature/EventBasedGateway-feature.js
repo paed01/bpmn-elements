@@ -3,6 +3,7 @@ import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 
 const ebgSource = factory.resource('event-based-gateway.bpmn');
+const sameTargetSource = factory.resource('event-based-gateway-with-same-target.bpmn');
 
 Feature('EventBasedGateway', () => {
   Scenario('EventBasedGateway with attached intermediate timer and signal event', () => {
@@ -251,6 +252,57 @@ Feature('EventBasedGateway', () => {
 
     Then('definition completes run', () => {
       return end;
+    });
+  });
+
+  Scenario('an eventbased gateway two outbound flows with the same target and a second target', () => {
+    let definition;
+    let wait;
+    let end;
+    When('definition is ran', async () => {
+      const gatewayContext = await testHelpers.context(sameTargetSource);
+      definition = new Definition(gatewayContext);
+
+      end = definition.waitFor('leave');
+      wait = definition.waitFor('wait');
+
+      definition.run();
+    });
+
+    let targetApi;
+    Then('target is waiting for signal', async () => {
+      targetApi = await wait;
+    });
+
+    When('target is signalled', () => {
+      definition.signal({ id: targetApi.content.signal.id });
+    });
+
+    Then('execution completed', () => {
+      return end;
+    });
+
+    When('ran again', () => {
+      end = definition.waitFor('leave');
+      wait = definition.waitFor('wait');
+
+      definition.run();
+    });
+
+    Then('target is waiting for signal again', async () => {
+      targetApi = await wait;
+    });
+
+    When('second target completes', () => {
+      definition.environment.timers.executing.pop().callback();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('first target was discarded once', () => {
+      expect(definition.getActivityById(targetApi.id).counters).to.deep.equal({ taken: 1, discarded: 1 });
     });
   });
 });
