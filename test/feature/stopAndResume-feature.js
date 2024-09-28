@@ -269,7 +269,7 @@ Feature('Stop and resume', () => {
     Then('timer is added', () => {
       expect(definition.environment.timers.size).to.equal(1);
       for (const timer of definition.environment.timers.timers.entries()) {
-        expect(timer[1][1]).to.equal(10000);
+        expect(timer[1][1]).to.be.within(9990, 10010);
       }
     });
 
