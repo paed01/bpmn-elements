@@ -11,7 +11,6 @@ export function OutboundEvaluator(activity, outboundFlows) {
     flows.push(defaultFlow);
   }
 
-  this.defaultFlowIdx = outboundFlows.findIndex(({ isDefault }) => isDefault);
   this._onEvaluated = this.onEvaluated.bind(this);
   this.evaluateArgs = {};
 }
