@@ -18,9 +18,6 @@ function OutboundEvaluator(activity, outboundFlows) {
     const [defaultFlow] = flows.splice(defaultFlowIdx, 1);
     flows.push(defaultFlow);
   }
-  this.defaultFlowIdx = outboundFlows.findIndex(({
-    isDefault
-  }) => isDefault);
   this._onEvaluated = this.onEvaluated.bind(this);
   this.evaluateArgs = {};
 }
