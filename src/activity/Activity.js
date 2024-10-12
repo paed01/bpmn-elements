@@ -914,7 +914,7 @@ Activity.prototype._onResumeMessage = function onResumeMessage(message) {
   return this.broker.publish('run', fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
 };
 
-Activity.prototype._publishEvent = function publishEvent(state, content, properties = {}) {
+Activity.prototype._publishEvent = function publishEvent(state, content, properties) {
   this.broker.publish('event', `activity.${state}`, cloneContent(content, { state }), {
     ...properties,
     type: state,
@@ -969,9 +969,8 @@ Activity.prototype._onApiMessage = function onApiMessage(routingKey, message) {
 };
 
 Activity.prototype._createMessage = function createMessage(override) {
-  const name = this.name,
-    status = this.status,
-    parent = this.parent;
+  const { name, status, parent } = this;
+
   const result = {
     ...override,
     id: this.id,

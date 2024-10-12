@@ -959,6 +959,45 @@ Feature('Errors', () => {
       const sourceActivity = definition.getActivityById('start');
       expect(sourceActivity.isRunning).to.be.true;
     });
+
+    Given('another process with multiple flows to the same target one with bad outbound script condition', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="def_1" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="my-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-end-1" sourceRef="start" targetRef="end">
+            <conditionExpression xsi:type="tFormalExpression">"\${true}"</conditionExpression>
+          </sequenceFlow>
+          <sequenceFlow id="to-end-2" sourceRef="start" targetRef="end">
+            <conditionExpression xsi:type="tFormalExpression" language="javascript">next(null, { scripted: environment.variables.foo.bar })</conditionExpression>
+          </sequenceFlow>
+          <sequenceFlow id="to-end-3" sourceRef="start" targetRef="end">
+            <conditionExpression xsi:type="tFormalExpression">"\${false}"</conditionExpression>
+          </sequenceFlow>
+          <endEvent id="end" />
+        </process>
+       </definitions>`;
+
+      context = await testHelpers.context(source);
+    });
+
+    When('ran waiting for end with a catch', () => {
+      definition = new Definition(context);
+
+      fail = definition.waitFor('end').catch((e) => e);
+      definition.run();
+    });
+
+    let err;
+    Then('run fails', async () => {
+      err = await fail;
+    });
+
+    And('error indicates that start outbound evaluation failed', () => {
+      expect(err).to.be.instanceof(ActivityError);
+      expect(err.source.content.id).to.equal('start');
+      expect(err.inner.stack).to.match(/to-end-2/i);
+    });
   });
 });
 

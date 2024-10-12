@@ -686,6 +686,25 @@ Feature('Messaging', () => {
       expect(definition.getActivityById('end').counters).to.have.property('taken', 3);
       expect(definition.getActivityById('end').counters).to.have.property('discarded', 1);
     });
+
+    When('definition is ran again', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('definition is waiting for receive task to complete', () => {
+      expect(definition.isRunning).to.be.true;
+      [receive] = definition.getPostponed();
+      expect(receive).to.have.property('id', 'receive');
+    });
+
+    When('receive task is messaged directly', () => {
+      receive.sendApiMessage('message');
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
   });
 
   Scenario('Two processes with message start activities', () => {

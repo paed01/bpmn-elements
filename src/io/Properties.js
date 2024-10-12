@@ -8,9 +8,9 @@ export default function Properties(activity, propertiesDef, context) {
   this.broker = activity.broker;
 
   const props = (this[kProperties] = {
-    properties: [],
-    dataInputObjects: [],
-    dataOutputObjects: [],
+    properties: new Set(),
+    dataInputObjects: new Set(),
+    dataOutputObjects: new Set(),
   });
 
   for (const { id, ...def } of propertiesDef.values) {
@@ -19,7 +19,7 @@ export default function Properties(activity, propertiesDef, context) {
       type: def.type,
       name: def.behaviour && def.behaviour.name,
     };
-    props.properties.push(source);
+    props.properties.add(source);
 
     const inputDataObjectId = getPropertyValue(def, 'behaviour.dataInput.association.source.dataObject.id');
     const outputDataObjectId = getPropertyValue(def, 'behaviour.dataOutput.association.target.dataObject.id');
@@ -28,28 +28,28 @@ export default function Properties(activity, propertiesDef, context) {
 
     if (inputDataObjectId) {
       const reference = context.getDataObjectById(inputDataObjectId);
-      props.dataInputObjects.push({ id, reference });
+      props.dataInputObjects.add({ id, reference });
       source.input = {
         reference,
       };
     }
     if (outputDataObjectId) {
       const reference = context.getDataObjectById(outputDataObjectId);
-      props.dataOutputObjects.push({ id, reference: reference });
+      props.dataOutputObjects.add({ id, reference: reference });
       source.output = {
         reference,
       };
     }
     if (inputDataStoreId) {
       const reference = context.getDataStoreById(inputDataStoreId);
-      props.dataInputObjects.push({ id, reference });
+      props.dataInputObjects.add({ id, reference });
       source.input = {
         reference,
       };
     }
     if (outputDataStoreId) {
       const reference = context.getDataStoreById(outputDataStoreId);
-      props.dataOutputObjects.push({ id, reference });
+      props.dataOutputObjects.add({ id, reference });
       source.output = {
         reference,
       };
@@ -89,7 +89,7 @@ Properties.prototype._formatOnEnter = function formatOnEnter(message) {
 
   const dataInputObjects = this[kProperties].dataInputObjects;
   const broker = this.broker;
-  if (!dataInputObjects.length) {
+  if (!dataInputObjects.size) {
     return broker.getQueue('format-run-q').queueMessage(
       { routingKey: startRoutingKey },
       {
@@ -107,7 +107,7 @@ Properties.prototype._formatOnEnter = function formatOnEnter(message) {
     },
   );
 
-  return read(broker, dataInputObjects, (_, responses) => {
+  return read(broker, [...dataInputObjects], (_, responses) => {
     broker.publish('format', endRoutingKey, {
       properties: this._getProperties(message, responses),
     });
@@ -122,7 +122,7 @@ Properties.prototype._formatOnComplete = function formatOnComplete(message) {
 
   const dataOutputObjects = this[kProperties].dataOutputObjects;
   const broker = this.broker;
-  if (!dataOutputObjects.length) {
+  if (!dataOutputObjects.size) {
     return broker.getQueue('format-run-q').queueMessage(
       { routingKey: startRoutingKey },
       {
@@ -140,7 +140,7 @@ Properties.prototype._formatOnComplete = function formatOnComplete(message) {
     },
   );
 
-  return write(broker, dataOutputObjects, outputProperties, (_, responses) => {
+  return write(broker, [...dataOutputObjects], outputProperties, (_, responses) => {
     broker.publish('format', endRoutingKey, {
       properties: this._getProperties(message, responses),
     });
@@ -187,7 +187,7 @@ function read(broker, dataReferences, callback) {
 }
 
 function write(broker, dataReferences, properties, callback) {
-  const responses = [];
+  const responses = {};
   let count = 0;
   const dataWriteConsumer = broker.subscribeTmp('data', 'data.write.#', onDataWriteResponse, { noAck: true });
 
