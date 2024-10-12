@@ -928,7 +928,7 @@ Activity.prototype._onResumeMessage = function onResumeMessage(message) {
   this.logger.debug(`<${this.id}> resume from ${message.content.status}`);
   return this.broker.publish('run', fields.routingKey, (0, _messageHelper.cloneContent)(stateMessage.content), stateMessage.properties);
 };
-Activity.prototype._publishEvent = function publishEvent(state, content, properties = {}) {
+Activity.prototype._publishEvent = function publishEvent(state, content, properties) {
   this.broker.publish('event', `activity.${state}`, (0, _messageHelper.cloneContent)(content, {
     state
   }), {
@@ -982,9 +982,11 @@ Activity.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 Activity.prototype._createMessage = function createMessage(override) {
-  const name = this.name,
-    status = this.status,
-    parent = this.parent;
+  const {
+    name,
+    status,
+    parent
+  } = this;
   const result = {
     ...override,
     id: this.id,

@@ -41,8 +41,8 @@ function ProcessExecution(parentActivity, context) {
     associations: context.getAssociations(id),
     flows: context.getSequenceFlows(id),
     outboundMessageFlows: context.getMessageFlows(id),
-    startActivities: [],
-    triggeredByEvent: [],
+    startActivities: new Set(),
+    triggeredByEvent: new Set(),
     detachedActivities: new Set(),
     startSequences: {}
   };
@@ -127,7 +127,7 @@ ProcessExecution.prototype.resume = function resume() {
     detachedActivities,
     postponed
   } = this[kElements];
-  if (startActivities.length > 1) {
+  if (startActivities.size > 1) {
     for (const a of startActivities) a.shake();
   }
   postponed.clear();
@@ -349,7 +349,7 @@ ProcessExecution.prototype._start = function start() {
     postponed,
     detachedActivities
   } = this[kElements];
-  if (startActivities.length > 1) {
+  if (startActivities.size > 1) {
     for (const a of startActivities) a.shake();
   }
   for (const a of startActivities) a.init();
@@ -411,8 +411,8 @@ ProcessExecution.prototype._activate = function activate() {
       priority: 200
     });
   }
-  startActivities.splice(0);
-  triggeredByEvent.splice(0);
+  startActivities.clear();
+  triggeredByEvent.clear();
   for (const activity of children) {
     if (activity.placeholder) continue;
     activity.activate(this);
@@ -421,8 +421,8 @@ ProcessExecution.prototype._activate = function activate() {
       consumerTag: '_process-activity-consumer',
       priority: 200
     });
-    if (activity.isStart) startActivities.push(activity);
-    if (activity.triggeredByEvent) triggeredByEvent.push(activity);
+    if (activity.isStart) startActivities.add(activity);
+    if (activity.triggeredByEvent) triggeredByEvent.add(activity);
   }
   this[kActivated] = true;
 };
@@ -676,7 +676,7 @@ ProcessExecution.prototype._onChildCompleted = function onChildCompleted(message
       type: 'cancel'
     });
   }
-  if (isEnd && startActivities.length) {
+  if (isEnd && startActivities.size) {
     const startSequences = this[kElements].startSequences;
     for (const msg of postponed) {
       const postponedId = msg.content.id;
