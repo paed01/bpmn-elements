@@ -80,7 +80,7 @@ ServiceTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMess
         const executionId = executeMessage.content.executionId;
         broker.cancel(`_api-${executionId}`);
         const service = this.service;
-        if (service && service.stop) service.stop(message);
+        if (service?.stop) service.stop(message);
         return this.activity.logger.debug(`<${executionId} (${this.id})> stopped`);
       }
   }

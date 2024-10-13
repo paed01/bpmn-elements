@@ -66,19 +66,15 @@ Object.defineProperty(SequenceFlow.prototype, 'counters', {
     };
   }
 });
-SequenceFlow.prototype.take = function take(content = {}) {
-  const {
-    sequenceId
-  } = content;
+SequenceFlow.prototype.take = function take(content) {
+  const sequenceId = content?.sequenceId;
   this.logger.debug(`<${sequenceId} (${this.id})> take, target <${this.targetId}>`);
   ++this[kCounters].take;
   this._publishEvent('take', content);
   return true;
 };
 SequenceFlow.prototype.discard = function discard(content = {}) {
-  const {
-    sequenceId = (0, _shared.getUniqueId)(this.id)
-  } = content;
+  const sequenceId = content?.sequenceId ?? (0, _shared.getUniqueId)(this.id);
   const discardSequence = content.discardSequence = (content.discardSequence || []).slice();
   if (discardSequence.indexOf(this.targetId) > -1) {
     ++this[kCounters].looped;

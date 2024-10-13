@@ -51,8 +51,7 @@ function ErrorEventDefinition(activity, eventDefinition) {
 }
 Object.defineProperty(ErrorEventDefinition.prototype, 'executionId', {
   get() {
-    const message = this[kExecuteMessage];
-    return message && message.content.executionId;
+    return this[kExecuteMessage]?.content.executionId;
   }
 });
 ErrorEventDefinition.prototype.execute = function execute(executeMessage) {
@@ -66,7 +65,7 @@ ErrorEventDefinition.prototype.executeCatch = function executeCatch(executeMessa
     executionId,
     parent
   } = executeContent;
-  const parentExecutionId = parent && parent.executionId;
+  const parentExecutionId = parent?.executionId;
   const info = this[kReferenceInfo] = this._getReferenceInfo(executeMessage);
   this[kMessageQ].consume(this._onThrowApiMessage.bind(this), {
     noAck: true,
@@ -143,7 +142,7 @@ ErrorEventDefinition.prototype._onThrowApiMessage = function onThrowApiMessage(r
   const error = message.content.message;
   if (!this[kReferenceElement]) return this._catchError(routingKey, message, error);
   const info = this[kReferenceInfo];
-  if (info.message.id !== (error && error.id)) return;
+  if (info.message.id !== error?.id) return;
   return this._catchError(routingKey, message, error);
 };
 ErrorEventDefinition.prototype._catchError = function catchError(routingKey, message, error) {

@@ -78,7 +78,7 @@ EventBroker.prototype.on = function on(eventName, callback, eventOptions = { onc
   }
 };
 
-EventBroker.prototype.once = function once(eventName, callback, eventOptions = {}) {
+EventBroker.prototype.once = function once(eventName, callback, eventOptions) {
   return this.on(eventName, callback, { ...eventOptions, once: true });
 };
 

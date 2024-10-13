@@ -23,10 +23,10 @@ function IoSpecification(activity, ioSpecificationDef, context) {
 }
 IoSpecification.prototype.activate = function activate(message) {
   if (this[kConsuming]) return;
-  if (message && message.fields.redelivered && message.fields.routingKey === 'run.start') {
+  if (message?.fields.redelivered && message.fields.routingKey === 'run.start') {
     this._onFormatEnter();
   }
-  if (message && message.fields.redelivered && message.fields.routingKey === 'run.end') {
+  if (message?.fields.redelivered && message.fields.routingKey === 'run.end') {
     this._onFormatComplete(message);
   }
   this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {

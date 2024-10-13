@@ -64,7 +64,7 @@ Environment.prototype.recover = function recover(state) {
   if (state.output) Object.assign(this.output, state.output);
   return this;
 };
-Environment.prototype.clone = function clone(overrideOptions = {}) {
+Environment.prototype.clone = function clone(overrideOptions) {
   const services = this[kServices];
   const newOptions = {
     settings: {
@@ -82,7 +82,7 @@ Environment.prototype.clone = function clone(overrideOptions = {}) {
     ...overrideOptions,
     services
   };
-  if (overrideOptions.services) newOptions.services = {
+  if (overrideOptions?.services) newOptions.services = {
     ...services,
     ...overrideOptions.services
   };
@@ -111,7 +111,7 @@ Environment.prototype.registerScript = function registerScript(...args) {
 Environment.prototype.getServiceByName = function getServiceByName(serviceName) {
   return this[kServices][serviceName];
 };
-Environment.prototype.resolveExpression = function resolveExpression(expression, message = {}, expressionFnContext) {
+Environment.prototype.resolveExpression = function resolveExpression(expression, message, expressionFnContext) {
   const from = {
     environment: this,
     ...message

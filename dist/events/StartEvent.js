@@ -23,8 +23,7 @@ function StartEventBehaviour(activity) {
 }
 Object.defineProperty(StartEventBehaviour.prototype, 'executionId', {
   get() {
-    const message = this[kExecuteMessage];
-    return message && message.content.executionId;
+    return this[kExecuteMessage]?.content.executionId;
   }
 });
 StartEventBehaviour.prototype.execute = function execute(executeMessage) {

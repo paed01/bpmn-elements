@@ -165,10 +165,8 @@ ContextInstance.prototype.getDataStoreById = function getDataStoreById(reference
   return dataStore;
 };
 ContextInstance.prototype.getStartActivities = function getStartActivities(filterOptions, scopeId) {
-  const {
-    referenceId,
-    referenceType = 'unknown'
-  } = filterOptions || {};
+  const referenceId = filterOptions?.referenceId;
+  const referenceType = filterOptions?.referenceType || 'unknown';
   const result = [];
   for (const activity of this.getActivities()) {
     if (!activity.isStart) continue;

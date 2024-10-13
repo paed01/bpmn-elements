@@ -109,7 +109,7 @@ function Activity(Behaviour, activityDef, context) {
     isTransaction: activityDef.isTransaction,
     isParallelJoin,
     isThrowing: activityDef.isThrowing,
-    lane: activityDef.lane && activityDef.lane.id
+    lane: activityDef.lane?.id
   };
   this[kExec] = new Map();
   this[kMessageHandlers] = {
@@ -118,7 +118,7 @@ function Activity(Behaviour, activityDef, context) {
     onApiMessage: this._onApiMessage.bind(this),
     onExecutionMessage: this._onExecutionMessage.bind(this)
   };
-  this[kEventDefinitions] = eventDefinitions && eventDefinitions.map((ed, idx) => new ed.Behaviour(this, ed, context, idx));
+  this[kEventDefinitions] = eventDefinitions?.map((ed, idx) => new ed.Behaviour(this, ed, context, idx));
   this[kExtensions] = context.loadExtensions(this);
   this[kConsuming] = false;
   this[kConsumingRunQ] = undefined;
@@ -149,7 +149,7 @@ Object.defineProperties(Activity.prototype, {
   bpmnIo: {
     get() {
       const extensions = this[kExtensions];
-      return extensions && extensions.extensions.find(e => e.type === 'bpmnio');
+      return extensions?.extensions.find(e => e.type === 'bpmnio');
     }
   },
   formatter: {
@@ -666,7 +666,7 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
       }
     case 'run.execute.passthrough':
       {
-        const execution = this.execution;
+        const execution = this[kExec].get('execution');
         if (!isRedelivered && execution) {
           if (execution.completed) return message.ack();
           this[kExecuteMessage] = message;
@@ -677,14 +677,18 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
       {
         this.status = 'executing';
         this[kExecuteMessage] = message;
-        const exec = this[kExec];
         if (isRedelivered && this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(message));
-        if (!exec.has('execution')) exec.set('execution', new _ActivityExecution.default(this, this.context));
+        const exec = this[kExec];
+        let execution = exec.get('execution');
+        if (!execution) {
+          execution = new _ActivityExecution.default(this, this.context);
+          exec.set('execution', execution);
+        }
         this.broker.getQueue('execution-q').assertConsumer(this[kMessageHandlers].onExecutionMessage, {
           exclusive: true,
           consumerTag: '_activity-execution'
         });
-        return exec.get('execution').execute(message);
+        return execution.execute(message);
       }
     case 'run.end':
       {
@@ -852,7 +856,7 @@ Activity.prototype._doOutbound = function doOutbound(fromMessage, isDiscarded, c
   if (!outboundSequenceFlows.length) return callback(null, []);
   const fromContent = fromMessage.content;
   let discardSequence = fromContent.discardSequence;
-  if (isDiscarded && !discardSequence && this[kFlags].attachedTo && fromContent.inbound && fromContent.inbound[0]) {
+  if (isDiscarded && !discardSequence && this[kFlags].attachedTo && fromContent.inbound?.[0]) {
     discardSequence = [fromContent.inbound[0].id];
   }
   let outboundFlows;
@@ -860,7 +864,7 @@ Activity.prototype._doOutbound = function doOutbound(fromMessage, isDiscarded, c
     outboundFlows = outboundSequenceFlows.map(flow => (0, _outboundEvaluator.formatFlowAction)(flow, {
       action: 'discard'
     }));
-  } else if (fromContent.outbound && fromContent.outbound.length) {
+  } else if (fromContent.outbound?.length) {
     outboundFlows = outboundSequenceFlows.map(flow => (0, _outboundEvaluator.formatFlowAction)(flow, fromContent.outbound.filter(f => f.id === flow.id).pop()));
   }
   if (outboundFlows) {

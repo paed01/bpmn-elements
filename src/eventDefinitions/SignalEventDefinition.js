@@ -38,8 +38,7 @@ export default function SignalEventDefinition(activity, eventDefinition) {
 
 Object.defineProperty(SignalEventDefinition.prototype, 'executionId', {
   get() {
-    const message = this[kExecuteMessage];
-    return message && message.content.executionId;
+    return this[kExecuteMessage]?.content.executionId;
   },
 });
 
@@ -53,7 +52,7 @@ SignalEventDefinition.prototype.executeCatch = function executeCatch(executeMess
 
   const executeContent = executeMessage.content;
   const { executionId, parent } = executeContent;
-  const parentExecutionId = parent && parent.executionId;
+  const parentExecutionId = parent?.executionId;
 
   const info = (this[kReferenceInfo] = this._getReferenceInfo(executeMessage));
   const broker = this.broker;

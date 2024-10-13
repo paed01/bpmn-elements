@@ -39,7 +39,7 @@ Object.defineProperty(Association.prototype, 'counters', {
   },
 });
 
-Association.prototype.take = function take(content = {}) {
+Association.prototype.take = function take(content) {
   this.logger.debug(`<${this.id}> take target <${this.targetId}>`);
   ++this[kCounters].take;
 
@@ -48,7 +48,7 @@ Association.prototype.take = function take(content = {}) {
   return true;
 };
 
-Association.prototype.discard = function discard(content = {}) {
+Association.prototype.discard = function discard(content) {
   this.logger.debug(`<${this.id}> discard target <${this.targetId}>`);
   ++this[kCounters].discard;
 

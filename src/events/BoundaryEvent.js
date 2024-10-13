@@ -29,8 +29,7 @@ export function BoundaryEventBehaviour(activity) {
 Object.defineProperties(BoundaryEventBehaviour.prototype, {
   executionId: {
     get() {
-      const message = this[kExecuteMessage];
-      return message && message.content.executionId;
+      return this[kExecuteMessage]?.content.executionId;
     },
   },
   cancelActivity: {
@@ -113,7 +112,7 @@ BoundaryEventBehaviour.prototype._onCompleted = function onCompleted(_, { conten
   this[kCompleteContent] = content;
 
   const { inbound, executionId } = this[kExecuteMessage].content;
-  const attachedToContent = inbound && inbound[0];
+  const attachedToContent = inbound?.[0];
   const attachedTo = this.attachedTo;
 
   this.activity.logger.debug(

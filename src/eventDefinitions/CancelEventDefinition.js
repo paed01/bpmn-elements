@@ -19,8 +19,7 @@ export default function CancelEventDefinition(activity, eventDefinition) {
 
 Object.defineProperty(CancelEventDefinition.prototype, 'executionId', {
   get() {
-    const message = this[kExecuteMessage];
-    return message && message.content.executionId;
+    return this[kExecuteMessage]?.content.executionId;
   },
 });
 

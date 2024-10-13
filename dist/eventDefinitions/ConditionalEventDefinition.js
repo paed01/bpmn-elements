@@ -29,8 +29,7 @@ function ConditionalEventDefinition(activity, eventDefinition, _context, index) 
 }
 Object.defineProperty(ConditionalEventDefinition.prototype, 'executionId', {
   get() {
-    const message = this[kExecuteMessage];
-    return message && message.content.executionId;
+    return this[kExecuteMessage]?.content.executionId;
   }
 });
 ConditionalEventDefinition.prototype.execute = function execute(executeMessage) {
@@ -151,7 +150,7 @@ ConditionalEventDefinition.prototype.getCondition = function getCondition(index)
   }
 };
 ConditionalEventDefinition.prototype._onDelegateApiMessage = function onDelegateApiMessage(routingKey, message) {
-  if (message.content.message && message.content.message.id === this.id) {
+  if (message.content.message?.id === this.id) {
     this._onApiMessage(routingKey, message);
   }
 };

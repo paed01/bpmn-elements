@@ -51,8 +51,7 @@ function MessageEventDefinition(activity, eventDefinition) {
 }
 Object.defineProperty(MessageEventDefinition.prototype, 'executionId', {
   get() {
-    const message = this[kExecuteMessage];
-    return message && message.content.executionId;
+    return this[kExecuteMessage]?.content.executionId;
   }
 });
 MessageEventDefinition.prototype.execute = function execute(executeMessage) {
@@ -66,7 +65,7 @@ MessageEventDefinition.prototype.executeCatch = function executeCatch(executeMes
     executionId,
     parent
   } = executeContent;
-  const parentExecutionId = parent && parent.executionId;
+  const parentExecutionId = parent?.executionId;
   const info = this[kReferenceInfo] = this._getReferenceInfo(executeMessage);
   this._debug(`expect ${info.description}`);
   const broker = this.broker;

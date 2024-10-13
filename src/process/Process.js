@@ -68,8 +68,7 @@ Object.defineProperties(Process.prototype, {
   },
   lanes: {
     get() {
-      const lanes = this[kLanes];
-      return lanes && lanes.slice();
+      return this[kLanes]?.slice();
     },
   },
   extensions: {
@@ -106,8 +105,7 @@ Object.defineProperties(Process.prototype, {
   },
   activityStatus: {
     get() {
-      const execution = this[kExec].get('execution');
-      return (execution && execution.activityStatus) || 'idle';
+      return this[kExec].get('execution')?.activityStatus || 'idle';
     },
   },
 });
@@ -160,7 +158,7 @@ Process.prototype.getState = function getState() {
     stopped: this.stopped,
     counters: this.counters,
     broker: this.broker.getState(true),
-    execution: this.execution && this.execution.getState(),
+    execution: this.execution?.getState(),
   };
 };
 
@@ -372,11 +370,11 @@ Process.prototype._publishEvent = function publishEvent(state, content) {
 };
 
 Process.prototype.sendMessage = function sendMessage(message) {
-  const messageContent = message && message.content;
+  const messageContent = message?.content;
   if (!messageContent) return;
 
   let targetsFound = false;
-  if (messageContent.target && messageContent.target.id && this.getActivityById(messageContent.target.id)) {
+  if (messageContent.target?.id && this.getActivityById(messageContent.target.id)) {
     targetsFound = true;
   } else if (
     messageContent.message &&

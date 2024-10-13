@@ -185,7 +185,7 @@ ProcessExecution.prototype.getState = function getState() {
     }, []),
     ...(flows.length && { flows: flowStates }),
     ...(outboundMessageFlows.length && {
-      messageFlows: outboundMessageFlows.length && outboundMessageFlows.map((f) => f.getState()).filter(Boolean),
+      messageFlows: outboundMessageFlows.map((f) => f.getState()).filter(Boolean),
     }),
     ...(associations.length && { associations: associations.map((f) => f.getState()).filter(Boolean) }),
   };
@@ -483,14 +483,14 @@ ProcessExecution.prototype._onDelegateEvent = function onDelegateEvent(message) 
   let delegate = true;
 
   const content = message.content;
-  if (content.message && content.message.id) {
+  if (content.message?.id) {
     this._debug(`delegate ${eventType} event with id <${content.message.id}>`);
   } else {
     this._debug(`delegate ${eventType} anonymous event`);
   }
 
   for (const activity of this[kElements].triggeredByEvent) {
-    if (activity.getStartActivities({ referenceId: content.message && content.message.id, referenceType: eventType }).length) {
+    if (activity.getStartActivities({ referenceId: content.message?.id, referenceType: eventType }).length) {
       delegate = false;
       activity.run(content.message);
     }
@@ -607,7 +607,7 @@ ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey,
     case 'activity.error': {
       let eventCaughtBy;
       for (const msg of this[kElements].postponed) {
-        if (msg.fields.routingKey === 'activity.catch' && msg.content.source && msg.content.source.executionId === content.executionId) {
+        if (msg.fields.routingKey === 'activity.catch' && msg.content.source?.executionId === content.executionId) {
           eventCaughtBy = msg;
           break;
         }

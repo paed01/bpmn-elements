@@ -12,7 +12,7 @@ class ActivityError extends Error {
     this.type = 'ActivityError';
     this.name = this.constructor.name;
     this.description = description;
-    if (sourceMessage) this.source = (0, _messageHelper.cloneMessage)(sourceMessage, sourceMessage.content && sourceMessage.content.error && {
+    if (sourceMessage) this.source = (0, _messageHelper.cloneMessage)(sourceMessage, sourceMessage.content?.error && {
       error: undefined
     });
     if (inner) {
@@ -31,17 +31,14 @@ class RunError extends ActivityError {
 }
 exports.RunError = RunError;
 class BpmnError extends Error {
-  constructor(description, behaviour = {}, sourceMessage, inner) {
-    const {
-      errorCode
-    } = behaviour;
+  constructor(description, behaviour, sourceMessage, inner) {
     super(description);
     this.type = 'BpmnError';
-    this.name = behaviour.name || this.constructor.name;
+    this.name = behaviour?.name ?? this.constructor.name;
     this.description = description;
-    this.code = 'errorCode' in behaviour && errorCode && errorCode.toString() || behaviour.code;
-    this.id = behaviour.id;
-    if (sourceMessage) this.source = (0, _messageHelper.cloneMessage)(sourceMessage, sourceMessage.content && sourceMessage.content.error && {
+    this.code = behaviour?.errorCode?.toString() ?? behaviour?.code;
+    this.id = behaviour?.id;
+    if (sourceMessage) this.source = (0, _messageHelper.cloneMessage)(sourceMessage, sourceMessage.content?.error && {
       error: undefined
     });
     if (inner) this.inner = inner;
@@ -56,7 +53,7 @@ function makeErrorFromMessage(errorMessage) {
   const {
     error
   } = content;
-  if (!error) return new Error(`Malformatted error message with routing key ${errorMessage.fields && errorMessage.fields.routingKey}`);
+  if (!error) return new Error(`Malformatted error message with routing key ${errorMessage.fields?.routingKey}`);
   if (isKnownError(error)) return error;
   switch (error.type) {
     case 'ActivityError':

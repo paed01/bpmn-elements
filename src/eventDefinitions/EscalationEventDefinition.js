@@ -38,8 +38,7 @@ export default function EscalationEventDefinition(activity, eventDefinition) {
 
 Object.defineProperty(EscalationEventDefinition.prototype, 'executionId', {
   get() {
-    const message = this[kExecuteMessage];
-    return message && message.content.executionId;
+    return this[kExecuteMessage]?.content.executionId;
   },
 });
 

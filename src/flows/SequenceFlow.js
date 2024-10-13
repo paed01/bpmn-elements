@@ -47,8 +47,8 @@ Object.defineProperty(SequenceFlow.prototype, 'counters', {
   },
 });
 
-SequenceFlow.prototype.take = function take(content = {}) {
-  const { sequenceId } = content;
+SequenceFlow.prototype.take = function take(content) {
+  const sequenceId = content?.sequenceId;
 
   this.logger.debug(`<${sequenceId} (${this.id})> take, target <${this.targetId}>`);
   ++this[kCounters].take;
@@ -59,7 +59,7 @@ SequenceFlow.prototype.take = function take(content = {}) {
 };
 
 SequenceFlow.prototype.discard = function discard(content = {}) {
-  const { sequenceId = getUniqueId(this.id) } = content;
+  const sequenceId = content?.sequenceId ?? getUniqueId(this.id);
   const discardSequence = (content.discardSequence = (content.discardSequence || []).slice());
   if (discardSequence.indexOf(this.targetId) > -1) {
     ++this[kCounters].looped;
