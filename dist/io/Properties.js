@@ -23,7 +23,7 @@ function Properties(activity, propertiesDef, context) {
     const source = {
       id,
       type: def.type,
-      name: def.behaviour && def.behaviour.name
+      name: def.behaviour?.name
     };
     props.properties.add(source);
     const inputDataObjectId = (0, _getPropertyValue.default)(def, 'behaviour.dataInput.association.source.dataObject.id');
@@ -140,7 +140,7 @@ Properties.prototype._formatOnComplete = function formatOnComplete(message) {
     endRoutingKey,
     properties: outputProperties
   });
-  return write(broker, dataOutputObjects, outputProperties, (_, responses) => {
+  return write(broker, [...dataOutputObjects], outputProperties, (_, responses) => {
     broker.publish('format', endRoutingKey, {
       properties: this._getProperties(message, responses)
     });

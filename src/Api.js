@@ -71,7 +71,7 @@ Api.prototype.resolveExpression = function resolveExpression(expression) {
 };
 
 Api.prototype.sendApiMessage = function sendApiMessage(action, content, options) {
-  const correlationId = (options && options.correlationId) || getUniqueId(`${this.id || this.messagePrefix}_signal`);
+  const correlationId = options?.correlationId || getUniqueId(`${this.id || this.messagePrefix}_signal`);
   let key = `${this.messagePrefix}.${action}`;
   if (this.executionId) key += `.${this.executionId}`;
   this.broker.publish('api', key, this.createMessage(content), { ...options, correlationId, type: action });

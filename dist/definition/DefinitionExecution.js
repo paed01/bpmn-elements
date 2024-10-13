@@ -390,7 +390,7 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
       break;
     case 'process.discarded':
       {
-        if (inbound && inbound.length) {
+        if (inbound?.length) {
           const calledFrom = inbound[0];
           this._getProcessApi({
             content: calledFrom
@@ -402,7 +402,7 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
       }
     case 'process.end':
       {
-        if (inbound && inbound.length) {
+        if (inbound?.length) {
           const calledFrom = inbound[0];
           this._getProcessApi({
             content: calledFrom
@@ -419,7 +419,7 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
       }
     case 'process.error':
       {
-        if (inbound && inbound.length) {
+        if (inbound?.length) {
           const calledFrom = inbound[0];
           this._getProcessApi({
             content: calledFrom
@@ -467,7 +467,7 @@ DefinitionExecution.prototype._onProcessCompleted = function onProcessCompleted(
   } = message.content;
   message.ack();
   this._debug(`left <${executionId} (${id})> (${type}), pending runs ${this.postponedCount}`);
-  if (inbound && inbound.length) {
+  if (inbound?.length) {
     const bp = this._removeProcessByExecutionId(executionId);
     this._deactivateProcess(bp);
   }
@@ -627,7 +627,7 @@ DefinitionExecution.prototype._onDelegateMessage = function onDelegateMessage(ro
   const messageType = executeMessage.properties.type;
   const delegateMessage = executeMessage.content.message;
   const reference = this.context.getActivityById(delegateMessage.id);
-  const message = reference && reference.resolve(executeMessage);
+  const message = reference?.resolve(executeMessage);
   this._debug(`<${reference ? `${messageType} ${delegateMessage.id}>` : `anonymous ${messageType}`} event received from <${content.parent.id}.${content.id}>. Delegating.`);
   this.getApi().sendApiMessage(messageType, {
     source: {
@@ -674,7 +674,7 @@ DefinitionExecution.prototype._complete = function complete(completionType, cont
     ...options
   });
 };
-DefinitionExecution.prototype._createMessage = function createMessage(content = {}) {
+DefinitionExecution.prototype._createMessage = function createMessage(content) {
   return {
     id: this.id,
     type: this.type,

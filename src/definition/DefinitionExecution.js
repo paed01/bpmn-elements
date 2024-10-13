@@ -408,7 +408,7 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
       this[kStatus] = 'executing';
       break;
     case 'process.discarded': {
-      if (inbound && inbound.length) {
+      if (inbound?.length) {
         const calledFrom = inbound[0];
         this._getProcessApi({ content: calledFrom }).cancel({
           executionId: calledFrom.executionId,
@@ -417,7 +417,7 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
       break;
     }
     case 'process.end': {
-      if (inbound && inbound.length) {
+      if (inbound?.length) {
         const calledFrom = inbound[0];
 
         this._getProcessApi({ content: calledFrom }).signal({
@@ -430,7 +430,7 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
       break;
     }
     case 'process.error': {
-      if (inbound && inbound.length) {
+      if (inbound?.length) {
         const calledFrom = inbound[0];
 
         this._getProcessApi({ content: calledFrom }).sendApiMessage(
@@ -478,7 +478,7 @@ DefinitionExecution.prototype._onProcessCompleted = function onProcessCompleted(
   message.ack();
   this._debug(`left <${executionId} (${id})> (${type}), pending runs ${this.postponedCount}`);
 
-  if (inbound && inbound.length) {
+  if (inbound?.length) {
     const bp = this._removeProcessByExecutionId(executionId);
     this._deactivateProcess(bp);
   }
@@ -651,7 +651,7 @@ DefinitionExecution.prototype._onDelegateMessage = function onDelegateMessage(ro
   const delegateMessage = executeMessage.content.message;
 
   const reference = this.context.getActivityById(delegateMessage.id);
-  const message = reference && reference.resolve(executeMessage);
+  const message = reference?.resolve(executeMessage);
 
   this._debug(
     `<${reference ? `${messageType} ${delegateMessage.id}>` : `anonymous ${messageType}`} event received from <${content.parent.id}.${content.id}>. Delegating.`,
@@ -710,7 +710,7 @@ DefinitionExecution.prototype._complete = function complete(completionType, cont
   );
 };
 
-DefinitionExecution.prototype._createMessage = function createMessage(content = {}) {
+DefinitionExecution.prototype._createMessage = function createMessage(content) {
   return {
     id: this.id,
     type: this.type,

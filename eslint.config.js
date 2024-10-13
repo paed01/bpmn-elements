@@ -63,15 +63,21 @@ const rules = {
 export default [
   js.configs.recommended,
   {
+    languageOptions: {
+      parserOptions: {
+        sourceType: 'module',
+        ecmaVersion: 2020,
+      },
+      globals: {
+        ...globals['shared-node-browser'],
+        ...globals.es6,
+      },
+    },
     rules,
   },
   {
     files: ['src/**/*.js'],
     languageOptions: {
-      parserOptions: {
-        sourceType: 'module',
-        ecmaVersion: 2018,
-      },
       globals: {
         ...globals['shared-node-browser'],
         ...globals.es6,
@@ -81,9 +87,6 @@ export default [
   {
     files: ['test/**/*.js'],
     languageOptions: {
-      parserOptions: {
-        ecmaVersion: 2020,
-      },
       globals: {
         ...globals.node,
         ...globals.mocha,

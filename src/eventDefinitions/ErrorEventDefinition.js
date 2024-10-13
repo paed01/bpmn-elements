@@ -38,8 +38,7 @@ export default function ErrorEventDefinition(activity, eventDefinition) {
 
 Object.defineProperty(ErrorEventDefinition.prototype, 'executionId', {
   get() {
-    const message = this[kExecuteMessage];
-    return message && message.content.executionId;
+    return this[kExecuteMessage]?.content.executionId;
   },
 });
 
@@ -53,7 +52,7 @@ ErrorEventDefinition.prototype.executeCatch = function executeCatch(executeMessa
 
   const executeContent = executeMessage.content;
   const { executionId, parent } = executeContent;
-  const parentExecutionId = parent && parent.executionId;
+  const parentExecutionId = parent?.executionId;
 
   const info = (this[kReferenceInfo] = this._getReferenceInfo(executeMessage));
 
@@ -145,7 +144,7 @@ ErrorEventDefinition.prototype._onThrowApiMessage = function onThrowApiMessage(r
   if (!this[kReferenceElement]) return this._catchError(routingKey, message, error);
 
   const info = this[kReferenceInfo];
-  if (info.message.id !== (error && error.id)) return;
+  if (info.message.id !== error?.id) return;
   return this._catchError(routingKey, message, error);
 };
 

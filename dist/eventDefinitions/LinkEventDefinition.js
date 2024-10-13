@@ -51,8 +51,7 @@ function LinkEventDefinition(activity, eventDefinition) {
 }
 Object.defineProperty(LinkEventDefinition.prototype, 'executionId', {
   get() {
-    const message = this[kExecuteMessage];
-    return message && message.content.executionId;
+    return this[kExecuteMessage]?.content.executionId;
   }
 });
 LinkEventDefinition.prototype.execute = function execute(executeMessage) {

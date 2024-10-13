@@ -17,7 +17,7 @@ export default function Properties(activity, propertiesDef, context) {
     const source = {
       id,
       type: def.type,
-      name: def.behaviour && def.behaviour.name,
+      name: def.behaviour?.name,
     };
     props.properties.add(source);
 

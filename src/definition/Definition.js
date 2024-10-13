@@ -98,7 +98,7 @@ Object.defineProperties(Definition.prototype, {
   activityStatus: {
     get() {
       const execution = this[kExec].get('execution');
-      return (execution && execution.activityStatus) || 'idle';
+      return execution?.activityStatus || 'idle';
     },
   },
 });
@@ -160,7 +160,7 @@ Definition.prototype.getState = function getState() {
     stopped: this.stopped,
     counters: this.counters,
     environment: this.environment.getState(),
-    execution: this.execution && this.execution.getState(),
+    execution: this.execution?.getState(),
     broker: this.broker.getState(true),
   });
 };
@@ -289,8 +289,8 @@ Definition.prototype.cancelActivity = function cancelActivity(message) {
 Definition.prototype.sendMessage = function sendMessage(message) {
   const messageContent = { message };
   let messageType = 'message';
-  const reference = message && message.id && this.getElementById(message.id);
-  if (reference && reference.resolve) {
+  const reference = message?.id && this.getElementById(message.id);
+  if (reference?.resolve) {
     const resolvedReference = reference.resolve(this._createMessage({ message }));
     messageType = resolvedReference.messageType || messageType;
     messageContent.message = { ...message, ...resolvedReference };

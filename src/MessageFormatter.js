@@ -65,7 +65,7 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
     default: {
       message.ack();
 
-      const endRoutingKey = message.content && message.content.endRoutingKey;
+      const endRoutingKey = message.content?.endRoutingKey;
       if (endRoutingKey) {
         this._decorate(message.content);
         pending.push(message);
@@ -99,7 +99,7 @@ Formatter.prototype._complete = function complete(message, isError) {
   this.broker.cancel(message.fields.consumerTag);
 
   if (isError) {
-    const error = (message.content && message.content.error) || new Error('formatting failed');
+    const error = message.content?.error || new Error('formatting failed');
     const errMessage = error.message || 'formatting failed';
     this._debug(`formatting of ${formatKey} failed with ${message.fields.routingKey}: ${errMessage}`);
     return callback(new ActivityError(errMessage, cloneMessage(runMessage), error));

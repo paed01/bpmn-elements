@@ -29,8 +29,7 @@ export default function TimerEventDefinition(activity, eventDefinition) {
 Object.defineProperties(TimerEventDefinition.prototype, {
   executionId: {
     get() {
-      const content = this[kTimerContent];
-      return content && content.executionId;
+      return this[kTimerContent]?.executionId;
     },
   },
   stopped: {
@@ -265,7 +264,7 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
     result.timeout = 0;
   }
 
-  if (content.inbound && 'repeat' in content.inbound[0]) {
+  if (content.inbound?.[0] && 'repeat' in content.inbound[0]) {
     result.repeat = content.inbound[0].repeat;
   }
 

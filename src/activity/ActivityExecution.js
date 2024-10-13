@@ -32,7 +32,7 @@ Object.defineProperty(ActivityExecution.prototype, 'completed', {
 
 ActivityExecution.prototype.execute = function execute(executeMessage) {
   if (!executeMessage) throw new Error('Execution requires message');
-  const executionId = executeMessage.content && executeMessage.content.executionId;
+  const executionId = executeMessage.content?.executionId;
   if (!executionId) throw new Error('Execution requires execution id');
 
   this.executionId = executionId;
@@ -347,7 +347,7 @@ ActivityExecution.prototype._onParentApiMessage = function onParentApiMessage(ro
 };
 
 ActivityExecution.prototype._onStop = function onStop(message) {
-  const stoppedId = message && message.content && message.content.executionId;
+  const stoppedId = message?.content?.executionId;
   const running = this.getPostponed();
   for (const api of running) {
     if (stoppedId !== api.content.executionId) {

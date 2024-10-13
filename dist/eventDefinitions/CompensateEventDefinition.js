@@ -47,8 +47,7 @@ function CompensateEventDefinition(activity, eventDefinition, context) {
 }
 Object.defineProperty(CompensateEventDefinition.prototype, 'executionId', {
   get() {
-    const message = this[kExecuteMessage];
-    return message && message.content.executionId;
+    return this[kExecuteMessage]?.content.executionId;
   }
 });
 CompensateEventDefinition.prototype.execute = function execute(executeMessage) {
@@ -95,7 +94,7 @@ CompensateEventDefinition.prototype.executeThrow = function executeThrow(execute
   const {
     parent
   } = executeContent;
-  const parentExecutionId = parent && parent.executionId;
+  const parentExecutionId = parent?.executionId;
   this.logger.debug(`<${parentExecutionId} (${this.id})> throw compensate`);
   const broker = this.broker;
   const throwContent = (0, _messageHelper.cloneContent)(executeContent, {
