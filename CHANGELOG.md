@@ -4,10 +4,14 @@
 
 ## 16.2.1
 
+- fix call activities not represented with `activityStatus=wait`
+- bump [@0dep/piso@2.2](https://www.npmjs.com/package/@0dep/piso) with support for ISO week
 - use optional chaining (?) and nullish coalescing (??) where feasible since it's widely available, in nodejs since v14
 - replace arrays with set and remove unnessecary object assignments
 
 ## 16.2.0
+
+### Breaking
 
 - refactor outbound sequence flow evaluation in an attempt to mitigate nasty discard loops when multiple outbound flows have the same target. What happens now is that only one (1) flow will be touched triggering the targeted activity. E.g: all outbound are discarded - only the last discarded flow is discarded; all but one flow is discarded - only taken flow is touched; all flows taken - only the last taken flow is taken. What about conditional flows? No worries, all conditional flows conditions are still evaluated
 

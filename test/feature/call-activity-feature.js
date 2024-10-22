@@ -189,7 +189,11 @@ Feature('Call activity', () => {
       definition.run();
     });
 
-    And('call activity is cancelled', () => {
+    Then('activity status is waiting', () => {
+      expect(definition.activityStatus).to.equal('wait');
+    });
+
+    When('call activity is cancelled', () => {
       const callActivity = definition.getPostponed()[0];
       expect(callActivity.id).to.equal('no-call-activity');
       callActivity.cancel();
