@@ -30,6 +30,7 @@ ActivityTracker.prototype.track = function track(routingKey, message) {
       break;
     case 'activity.execution.outbound.take':
     case 'activity.detach':
+    case 'activity.call':
     case 'activity.wait': {
       if (content.isMultiInstance) this._waiting(content.parent.executionId);
       else this._waiting(executionId);
