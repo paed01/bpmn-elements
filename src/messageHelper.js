@@ -1,6 +1,4 @@
-export { cloneContent, cloneMessage, cloneParent, shiftParent, unshiftParent, pushParent };
-
-function cloneContent(content, extend) {
+export function cloneContent(content, extend) {
   const { discardSequence, inbound, outbound, parent, sequence } = content;
 
   const clone = {
@@ -27,7 +25,7 @@ function cloneContent(content, extend) {
   return clone;
 }
 
-function cloneMessage(message, overrideContent) {
+export function cloneMessage(message, overrideContent) {
   return {
     fields: { ...message.fields },
     content: cloneContent(message.content, overrideContent),
@@ -35,7 +33,7 @@ function cloneMessage(message, overrideContent) {
   };
 }
 
-function cloneParent(parent) {
+export function cloneParent(parent) {
   const { path } = parent;
   const clone = { ...parent };
   if (!path) return clone;
@@ -47,7 +45,7 @@ function cloneParent(parent) {
   return clone;
 }
 
-function unshiftParent(parent, adoptingParent) {
+export function unshiftParent(parent, adoptingParent) {
   const { id, type, executionId } = adoptingParent;
   if (!parent) {
     return {
@@ -69,7 +67,7 @@ function unshiftParent(parent, adoptingParent) {
   return clone;
 }
 
-function shiftParent(parent) {
+export function shiftParent(parent) {
   if (!parent) return;
   if (!parent.path || !parent.path.length) return;
 
@@ -82,7 +80,7 @@ function shiftParent(parent) {
   return clone;
 }
 
-function pushParent(parent, ancestor) {
+export function pushParent(parent, ancestor) {
   const { id, type, executionId } = ancestor;
   if (!parent) return { id, type, executionId };
 

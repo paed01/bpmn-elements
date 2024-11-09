@@ -6,9 +6,7 @@ import { getRoutingKeyPattern } from 'smqp';
 const kOnMessage = Symbol.for('onMessage');
 const kExecution = Symbol.for('execution');
 
-export { Formatter };
-
-function Formatter(element, formatQ) {
+export function Formatter(element, formatQ) {
   const { id, broker, logger } = element;
   this.id = id;
   this.broker = broker;

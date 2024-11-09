@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix old common exports
+
 ## 16.2.1
 
 - fix call activities not represented with `activityStatus=wait`

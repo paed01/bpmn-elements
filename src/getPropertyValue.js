@@ -3,9 +3,7 @@ const stringConstantPattern = /^(['"])(.*)\1$/;
 const numberConstantPattern = /^\W*-?\d+(.\d+)?\W*$/;
 const negativeIndexPattern = /^-\d+$/;
 
-export default getPropertyValue;
-
-function getPropertyValue(inputContext, propertyPath, fnScope) {
+export default function getPropertyValue(inputContext, propertyPath, fnScope) {
   if (!inputContext) return;
 
   let resultValue;

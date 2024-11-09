@@ -1,25 +1,23 @@
 import { cloneMessage } from './messageHelper.js';
 import { getUniqueId } from './shared.js';
 
-export { ActivityApi, DefinitionApi, ProcessApi, FlowApi, Api };
-
-function ActivityApi(broker, apiMessage, environment) {
+export function ActivityApi(broker, apiMessage, environment) {
   return new Api('activity', broker, apiMessage, environment);
 }
 
-function DefinitionApi(broker, apiMessage, environment) {
+export function DefinitionApi(broker, apiMessage, environment) {
   return new Api('definition', broker, apiMessage, environment);
 }
 
-function ProcessApi(broker, apiMessage, environment) {
+export function ProcessApi(broker, apiMessage, environment) {
   return new Api('process', broker, apiMessage, environment);
 }
 
-function FlowApi(broker, apiMessage, environment) {
+export function FlowApi(broker, apiMessage, environment) {
   return new Api('flow', broker, apiMessage, environment);
 }
 
-function Api(pfx, broker, sourceMessage, environment) {
+export function Api(pfx, broker, sourceMessage, environment) {
   if (!sourceMessage) throw new Error('Api requires message');
 
   const apiMessage = cloneMessage(sourceMessage);

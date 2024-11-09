@@ -1,25 +1,23 @@
 import { Broker } from 'smqp';
 import { makeErrorFromMessage } from './error/Errors.js';
 
-export { ActivityBroker, DefinitionBroker, MessageFlowBroker, ProcessBroker, EventBroker };
-
-function ActivityBroker(activity) {
+export function ActivityBroker(activity) {
   const executionBroker = ExecutionBroker(activity, 'activity');
   return executionBroker;
 }
 
-function ProcessBroker(owner) {
+export function ProcessBroker(owner) {
   const executionBroker = ExecutionBroker(owner, 'process');
   executionBroker.broker.assertQueue('api-q', { durable: false, autoDelete: false });
   executionBroker.broker.bindQueue('api-q', 'api', '#');
   return executionBroker;
 }
 
-function DefinitionBroker(owner, onBrokerReturn) {
+export function DefinitionBroker(owner, onBrokerReturn) {
   return ExecutionBroker(owner, 'definition', onBrokerReturn);
 }
 
-function MessageFlowBroker(owner) {
+export function MessageFlowBroker(owner) {
   const eventBroker = new EventBroker(owner, { prefix: 'messageflow', autoDelete: false, durable: false });
   const broker = eventBroker.broker;
 
@@ -51,7 +49,7 @@ function ExecutionBroker(brokerOwner, prefix, onBrokerReturn) {
   return eventBroker;
 }
 
-function EventBroker(brokerOwner, options, onBrokerReturn) {
+export function EventBroker(brokerOwner, options, onBrokerReturn) {
   this.options = options;
   this.eventPrefix = options.prefix;
 

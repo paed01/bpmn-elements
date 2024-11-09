@@ -1,6 +1,6 @@
 import { cloneMessage } from '../messageHelper.js';
 
-class ActivityError extends Error {
+export class ActivityError extends Error {
   constructor(description, sourceMessage, inner) {
     super(description);
     this.type = 'ActivityError';
@@ -15,14 +15,14 @@ class ActivityError extends Error {
   }
 }
 
-class RunError extends ActivityError {
+export class RunError extends ActivityError {
   constructor(...args) {
     super(...args);
     this.type = 'RunError';
   }
 }
 
-class BpmnError extends Error {
+export class BpmnError extends Error {
   constructor(description, behaviour, sourceMessage, inner) {
     super(description);
     this.type = 'BpmnError';
@@ -35,9 +35,7 @@ class BpmnError extends Error {
   }
 }
 
-export { ActivityError, BpmnError, RunError, makeErrorFromMessage };
-
-function makeErrorFromMessage(errorMessage) {
+export function makeErrorFromMessage(errorMessage) {
   const { content } = errorMessage;
 
   if (isKnownError(content)) return content;
