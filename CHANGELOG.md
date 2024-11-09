@@ -9,7 +9,7 @@
 - fix call activities not represented with `activityStatus=wait`
 - bump [@0dep/piso@2.2](https://www.npmjs.com/package/@0dep/piso) with support for ISO week
 - use optional chaining (?) and nullish coalescing (??) where feasible since it's widely available, in nodejs since v14
-- replace arrays with set and remove unnessecary object assignments
+- replace arrays with set and remove unnecessary object assignments
 
 ## 16.2.0
 
