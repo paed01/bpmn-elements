@@ -95,7 +95,7 @@
     "eslint": "^9.0.0",
     "globals": "^15.0.0",
     "got": "^14.2.1",
-    "mocha": "^10.4.0",
+    "mocha": "^11.0.1",
     "mocha-cakes-2": "^3.3.0",
     "moddle-context-serializer": "^4.2.1",
     "nock": "^13.5.3",
