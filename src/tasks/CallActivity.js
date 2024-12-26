@@ -8,7 +8,6 @@ export default function CallActivity(activityDef, context) {
 
 export function CallActivityBehaviour(activity) {
   const { id, type, behaviour = {} } = activity;
-
   this.id = id;
   this.type = type;
   this.calledElement = behaviour.calledElement;
@@ -60,7 +59,11 @@ CallActivityBehaviour.prototype.execute = function execute(executeMessage) {
   );
   broker.subscribeTmp('api', '#.signal.*', (...args) => this._onDelegatedApiMessage(calledElement, executeMessage, ...args), {
     noAck: true,
-    consumerTag: `_api-delegated-${executionId}`,
+    consumerTag: `_api-delegated-signal-${executionId}`,
+  });
+  broker.subscribeTmp('api', '#.cancel.*', (...args) => this._onDelegatedApiMessage(calledElement, executeMessage, ...args), {
+    noAck: true,
+    consumerTag: `_api-delegated-cancel-${executionId}`,
   });
 
   broker.publish(
@@ -176,5 +179,6 @@ CallActivityBehaviour.prototype._onApiMessage = function onApiMessage(calledElem
 CallActivityBehaviour.prototype._stop = function stop(executionId) {
   const broker = this.broker;
   broker.cancel(`_api-${executionId}`);
-  broker.cancel(`_api-delegated-${executionId}`);
+  broker.cancel(`_api-delegated-signal-${executionId}`);
+  broker.cancel(`_api-delegated-cancel-${executionId}`);
 };

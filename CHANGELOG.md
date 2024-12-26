@@ -4,6 +4,10 @@
 
 - fix old common exports
 
+## [16.2.2] - 2024-12-26
+
+- fix call activities ignoring delegated cancel api message
+
 ## 16.2.1
 
 - fix call activities not represented with `activityStatus=wait`
@@ -33,7 +37,7 @@
 - support conditional event definition condition script
 - export event definitions and flows
 
-## 15.0.3
+## [15.0.3] - 2024-07-08
 
 - bump [@0dep/piso@2](https://www.npmjs.com/package/@0dep/piso) who totally forgot about applying declared offset before returning date
 

@@ -27,6 +27,90 @@ Feature('Call activity', () => {
     And('call activity was taken', () => {
       expect(definition.getActivityById('call-activity').counters).to.have.property('taken', 1);
     });
+
+    /** @type {Definition} */
+    let signalDefinition;
+    Given('a process with a call activity referencing a process with a task awaiting signal', async () => {
+      const context = await testHelpers.context(factory.resource('call-activity-signal.bpmn'));
+      signalDefinition = new Definition(context);
+    });
+
+    When('ran', () => {
+      signalDefinition.run();
+    });
+
+    And('waiting task is signalled', () => {
+      end = signalDefinition.waitFor('end');
+      signalDefinition.signal({ id: 'task' });
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('call activity was taken', () => {
+      expect(signalDefinition.getActivityById('call-activity').counters).to.have.property('taken', 1);
+    });
+
+    describe('cancel', () => {
+      let state;
+      When('definition is ran again', () => {
+        signalDefinition.run();
+        state = signalDefinition.getState();
+      });
+
+      And('call activity is cancelled by call activity api', () => {
+        end = signalDefinition.waitFor('end');
+        signalDefinition.getActivityById('call-activity').getApi().cancel();
+      });
+
+      Then('run completes', () => {
+        return end;
+      });
+
+      And('call activity was taken', () => {
+        expect(signalDefinition.getActivityById('call-activity').counters).to.have.property('taken', 2);
+      });
+
+      And('left no lingering broker listeners', () => {
+        expect(signalDefinition.getActivityById('call-activity').broker.consumerCount).to.equal(2);
+      });
+
+      When('definition is ran again', () => {
+        signalDefinition.run();
+      });
+
+      And('call activity is cancelled by definition', () => {
+        end = signalDefinition.waitFor('end');
+        signalDefinition.cancelActivity({ id: 'call-activity' });
+      });
+
+      Then('run completes', () => {
+        return end;
+      });
+
+      And('call activity was taken', () => {
+        expect(signalDefinition.getActivityById('call-activity').counters).to.have.property('taken', 3);
+      });
+
+      When('definition is recovered and resumed from state', async () => {
+        const context = await testHelpers.context(factory.resource('call-activity-signal.bpmn'));
+        signalDefinition = new Definition(context).recover(state).resume();
+      });
+
+      And('recovered call activity is cancelled by definition', () => {
+        end = signalDefinition.waitFor('end');
+        signalDefinition.cancelActivity({ id: 'call-activity' });
+      });
+
+      Then('run completes', () => {
+        return end;
+      });
+
+      And('call activity was taken', () => {
+        expect(signalDefinition.getActivityById('call-activity').counters).to.have.property('taken', 2);
+      });
+    });
   });
 
   Scenario('called process throws', () => {
