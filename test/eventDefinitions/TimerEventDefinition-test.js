@@ -1716,6 +1716,8 @@ describe('TimerEventDefinition', () => {
     });
 
     it('delegated cancel message without message is ignored', () => {
+      ck.travel(2024, 5, 1);
+
       const definition = new TimerEventDefinition(event, {
         type: 'bpmn:TimerEventDefinition',
         behaviour: {
