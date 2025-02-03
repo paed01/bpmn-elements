@@ -44,7 +44,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       expect(activity).to.have.property('isEnd', true);
@@ -61,7 +61,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       expect(activity).to.have.property('isEnd', false);
@@ -84,7 +84,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       expect(activity).to.have.property('isMultiInstance', false);
@@ -101,7 +101,7 @@ describe('Activity', () => {
             loopCharacteristics: {},
           },
         },
-        context,
+        context
       );
 
       expect(activity).to.have.property('isMultiInstance', true);
@@ -124,7 +124,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       expect(activity).to.have.property('isForCompensation', false);
@@ -141,7 +141,7 @@ describe('Activity', () => {
             isForCompensation: true,
           },
         },
-        context,
+        context
       );
 
       expect(activity).to.have.property('isForCompensation', true);
@@ -157,7 +157,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       );
 
       expect(activity).to.have.property('attachedTo', null);
@@ -185,7 +185,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const enter = activity.waitFor('enter');
@@ -218,7 +218,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -260,7 +260,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -302,7 +302,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -334,7 +334,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -374,7 +374,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -419,7 +419,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -452,7 +452,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -496,7 +496,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -526,7 +526,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -563,7 +563,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -604,7 +604,7 @@ describe('Activity', () => {
               id: 'process1',
             },
           },
-          context,
+          context
         );
 
         activity.activate();
@@ -655,7 +655,7 @@ describe('Activity', () => {
               id: 'process1',
             },
           },
-          context,
+          context
         );
 
         activity.activate();
@@ -705,7 +705,7 @@ describe('Activity', () => {
               id: 'process1',
             },
           },
-          context,
+          context
         );
 
         activity.activate();
@@ -755,7 +755,7 @@ describe('Activity', () => {
               id: 'process1',
             },
           },
-          context,
+          context
         );
 
         activity.activate();
@@ -805,7 +805,7 @@ describe('Activity', () => {
               id: 'process1',
             },
           },
-          context,
+          context
         );
 
         activity.activate();
@@ -839,11 +839,11 @@ describe('Activity', () => {
         });
         const sequenceFlow1 = new SequenceFlow(
           { id: 'flow1', targetId: 'activity', sourceId: 'task1', parent: { id: 'process1' } },
-          context,
+          context
         );
         const sequenceFlow2 = new SequenceFlow(
           { id: 'flow2', targetId: 'activity', sourceId: 'task2', parent: { id: 'process1' } },
-          context,
+          context
         );
 
         sequenceFlows.push(sequenceFlow1, sequenceFlow2);
@@ -857,7 +857,7 @@ describe('Activity', () => {
               id: 'process1',
             },
           },
-          context,
+          context
         );
 
         activity.activate();
@@ -869,7 +869,7 @@ describe('Activity', () => {
           (_, msg) => {
             message = msg;
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         let leave = activity.waitFor('leave');
@@ -923,7 +923,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const leave = activity.waitFor('leave');
@@ -955,7 +955,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const leave = activity.waitFor('leave');
@@ -989,7 +989,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const leave = activity.waitFor('leave');
@@ -1032,7 +1032,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const leave = activity.waitFor('leave');
@@ -1072,7 +1072,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const leave = activity.waitFor('leave');
@@ -1109,7 +1109,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const leave = activity.waitFor('leave');
@@ -1140,7 +1140,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.broker.subscribeOnce('event', 'activity.enter', () => {
@@ -1180,7 +1180,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const end = activity.waitFor('end');
@@ -1416,7 +1416,7 @@ describe('Activity', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       activity.stop();
@@ -1437,7 +1437,7 @@ describe('Activity', () => {
         {
           id: 'start',
         },
-        behaviours.Behaviour,
+        behaviours.Behaviour
       );
 
       const initialized = activity.waitFor('init');
@@ -1470,7 +1470,7 @@ describe('Activity', () => {
         {
           id: 'start',
         },
-        behaviours.Behaviour,
+        behaviours.Behaviour
       );
 
       const messages = [];
@@ -1480,7 +1480,7 @@ describe('Activity', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       activity.init();
@@ -1532,7 +1532,7 @@ describe('Activity', () => {
               'event',
               'activity.error',
               { ...executeMessage.content, error: new Error('unstable') },
-              { type: 'error', mandatory: true },
+              { type: 'error', mandatory: true }
             );
           },
         };
@@ -1551,7 +1551,7 @@ describe('Activity', () => {
               'execution',
               'execute.error',
               { ...executeMessage.content, error: new Error('unstable') },
-              { type: 'error', mandatory: true },
+              { type: 'error', mandatory: true }
             );
           },
         };
@@ -1599,7 +1599,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const leave = activity.waitFor('leave');
@@ -1640,7 +1640,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       let takeMessage;
@@ -1671,11 +1671,11 @@ describe('Activity', () => {
 
       const sequenceFlow1 = new SequenceFlow(
         { id: 'flow1', sourceId: 'source1', targetId: 'target1', parent: { id: 'process1' } },
-        context,
+        context
       );
       const sequenceFlow2 = new SequenceFlow(
         { id: 'flow2', sourceId: 'source2', targetId: 'target2', parent: { id: 'process1' } },
-        context,
+        context
       );
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
@@ -1688,7 +1688,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const leave = activity.waitFor('leave');
@@ -1712,11 +1712,11 @@ describe('Activity', () => {
 
       const sequenceFlow1 = new SequenceFlow(
         { id: 'flow1', sourceId: 'source1', targetId: 'target1', parent: { id: 'process1' } },
-        context,
+        context
       );
       const sequenceFlow2 = new SequenceFlow(
         { id: 'flow2', sourceId: 'source2', targetId: 'target2', parent: { id: 'process1' } },
-        context,
+        context
       );
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
@@ -1749,7 +1749,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const leave = activity.waitFor('leave');
@@ -1783,7 +1783,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const leave = activity.waitFor('leave');
@@ -1805,11 +1805,11 @@ describe('Activity', () => {
 
       const sequenceFlow1 = new SequenceFlow(
         { id: 'flow1', sourceId: 'source1', targetId: 'target1', parent: { id: 'process1' } },
-        context,
+        context
       );
       const sequenceFlow2 = new SequenceFlow(
         { id: 'flow2', sourceId: 'source2', targetId: 'target2', parent: { id: 'process1' } },
-        context,
+        context
       );
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
@@ -1842,7 +1842,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const leave = activity.waitFor('leave');
@@ -1866,11 +1866,11 @@ describe('Activity', () => {
 
       const sequenceFlow1 = new SequenceFlow(
         { id: 'flow1', sourceId: 'source1', targetId: 'target1', parent: { id: 'process1' } },
-        context,
+        context
       );
       const sequenceFlow2 = new SequenceFlow(
         { id: 'flow2', sourceId: 'source2', targetId: 'target2', parent: { id: 'process1' } },
-        context,
+        context
       );
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
@@ -1907,7 +1907,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const leave = activity.waitFor('leave');
@@ -1931,11 +1931,11 @@ describe('Activity', () => {
 
       const sequenceFlow1 = new SequenceFlow(
         { id: 'flow1', sourceId: 'activity', targetId: 'target1', parent: { id: 'process1' } },
-        context,
+        context
       );
       const sequenceFlow2 = new SequenceFlow(
         { id: 'flow2', sourceId: 'activity', targetId: 'target2', parent: { id: 'process1' } },
-        context,
+        context
       );
 
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
@@ -1977,7 +1977,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const leave = activity.waitFor('leave');
@@ -2009,11 +2009,11 @@ describe('Activity', () => {
 
       const sequenceFlow1 = new SequenceFlow(
         { id: 'flow1', sourceId: 'activity', targetId: 'target1', parent: { id: 'process1' } },
-        context,
+        context
       );
       const sequenceFlow2 = new SequenceFlow(
         { id: 'flow2', sourceId: 'activity', targetId: 'target2', parent: { id: 'process1' } },
-        context,
+        context
       );
       outboundFlows.push(sequenceFlow1, sequenceFlow2);
 
@@ -2034,7 +2034,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const leave = activity.waitFor('leave');
@@ -2068,11 +2068,11 @@ describe('Activity', () => {
 
       const sequenceFlow3 = new SequenceFlow(
         { id: 'flow3', sourceId: 'activity', targetId: 'target1', parent: { id: 'process1' } },
-        context,
+        context
       );
       const sequenceFlow4 = new SequenceFlow(
         { id: 'flow4', sourceId: 'activity', targetId: 'target2', parent: { id: 'process1' } },
-        context,
+        context
       );
       outboundFlows.push(sequenceFlow3, sequenceFlow4);
 
@@ -2093,7 +2093,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       const leave = activity.waitFor('leave');
@@ -2135,7 +2135,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       expect(activity.extensions).to.be.ok;
@@ -2171,7 +2171,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.discard();
@@ -2206,7 +2206,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.run();
@@ -2249,7 +2249,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -2289,7 +2289,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -2339,7 +2339,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -2382,11 +2382,11 @@ describe('Activity', () => {
 
       const sequenceFlow1 = new SequenceFlow(
         { id: 'flow1', sourceId: 'activity', targetId: 'target1', parent: { id: 'process1' } },
-        context,
+        context
       );
       const sequenceFlow2 = new SequenceFlow(
         { id: 'flow2', sourceId: 'activity', targetId: 'target2', parent: { id: 'process1' } },
-        context,
+        context
       );
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
 
@@ -2412,7 +2412,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -2452,7 +2452,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -2492,7 +2492,7 @@ describe('Activity', () => {
               'event',
               'activity.error',
               { ...executeMessage.content, error: new Error('unstable') },
-              { type: 'error', mandatory: true },
+              { type: 'error', mandatory: true }
             );
           },
         };
@@ -2516,7 +2516,7 @@ describe('Activity', () => {
               'event',
               'activity.error',
               { ...executeMessage.content, error: new Error('unstable') },
-              { type: 'error', mandatory: true },
+              { type: 'error', mandatory: true }
             );
           },
         };
@@ -2957,7 +2957,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.evaluateOutbound(
@@ -2965,7 +2965,7 @@ describe('Activity', () => {
           content: {},
         },
         false,
-        done,
+        done
       );
     });
   });
@@ -2994,7 +2994,7 @@ describe('Activity', () => {
             isForCompensation: true,
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -3027,7 +3027,7 @@ describe('Activity', () => {
             isForCompensation: true,
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -3061,7 +3061,7 @@ describe('Activity', () => {
             isForCompensation: true,
           },
         },
-        context,
+        context
       );
 
       activity.activate();
@@ -3090,7 +3090,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        getContext(),
+        getContext()
       );
 
       activity.run();
@@ -3109,7 +3109,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.next();
@@ -3128,7 +3128,7 @@ describe('Activity', () => {
             id: 'process1',
           },
         },
-        context,
+        context
       );
 
       activity.run();
@@ -3156,7 +3156,7 @@ function getActivity(override = {}, OBehaviour = TaskBehaviour) {
       },
       ...override,
     },
-    getContext(),
+    getContext()
   );
   return activity;
 }

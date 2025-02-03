@@ -26,7 +26,7 @@ Feature('Parallel gateway', () => {
             startMsg = msg;
           }
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -96,7 +96,7 @@ Feature('Parallel gateway', () => {
                         broker.publish('format', 'run.format.onstart.end');
                       });
                     },
-                    { consumerTag, noAck: true },
+                    { consumerTag, noAck: true }
                   );
                 },
                 deactivate() {
@@ -122,7 +122,7 @@ Feature('Parallel gateway', () => {
               resolve(msg);
             }
           },
-          { noAck: true },
+          { noAck: true }
         );
       });
 

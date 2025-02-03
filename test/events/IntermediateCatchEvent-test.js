@@ -82,7 +82,7 @@ describe('IntermediateCatchEvent', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const wait = event.waitFor('wait');
@@ -110,7 +110,7 @@ describe('IntermediateCatchEvent', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const wait = event.waitFor('wait');

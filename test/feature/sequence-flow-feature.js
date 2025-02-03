@@ -215,7 +215,7 @@ Feature('Sequence flow', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       end = definition.waitFor('end');
@@ -266,7 +266,7 @@ Feature('Sequence flow', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       end = definition.waitFor('end');

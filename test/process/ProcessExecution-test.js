@@ -173,7 +173,7 @@ describe('Process execution', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -248,7 +248,7 @@ describe('Process execution', () => {
             },
           },
         },
-        bp.context,
+        bp.context
       );
 
       bp.context.getActivities = () => {
@@ -1473,7 +1473,7 @@ describe('Process execution', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
       bp.broker.subscribeTmp(
         'event',
@@ -1481,7 +1481,7 @@ describe('Process execution', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -1550,7 +1550,7 @@ describe('Process execution', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
       bp.broker.subscribeTmp(
         'event',
@@ -1558,7 +1558,7 @@ describe('Process execution', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -1614,7 +1614,7 @@ describe('Process execution', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -1630,7 +1630,7 @@ describe('Process execution', () => {
       expect(execution.getActivityById('subp').execution.source.getPostponed(), 'sub process postponed').to.have.length(1);
       expect(execution.getActivityById('subp').execution.source.getPostponed()[0], 'sub process postponed id').to.have.property(
         'id',
-        'subtask',
+        'subtask'
       );
 
       const childApi = execution.getApi(messages[0]);
@@ -1677,7 +1677,7 @@ describe('Process execution', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -1693,7 +1693,7 @@ describe('Process execution', () => {
       expect(execution.getActivityById('subp1').execution.source.getPostponed(), 'sub process postponed').to.have.length(1);
       expect(execution.getActivityById('subp1').execution.source.getPostponed()[0], 'sub process postponed id').to.have.property(
         'id',
-        'subp2',
+        'subp2'
       );
 
       const subp2 = execution.getActivityById('subp1').execution.source.getPostponed()[0].owner;
@@ -1784,7 +1784,7 @@ describe('Process execution', () => {
         () => {
           completed = true;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -1842,7 +1842,7 @@ function createProcess(override, step) {
       },
       ...override,
     },
-    { step },
+    { step }
   );
 
   return new Process(
@@ -1850,6 +1850,6 @@ function createProcess(override, step) {
       id: 'process1',
       type: 'bpmn:Process',
     },
-    context,
+    context
   );
 }

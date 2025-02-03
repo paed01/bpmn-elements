@@ -39,8 +39,8 @@ CallActivityBehaviour.prototype.execute = function execute(executeMessage) {
         },
         {
           mandatory: true,
-        },
-      ),
+        }
+      )
     );
   }
 
@@ -55,7 +55,7 @@ CallActivityBehaviour.prototype.execute = function execute(executeMessage) {
       noAck: true,
       consumerTag: `_api-${executionId}`,
       priority: 300,
-    },
+    }
   );
   broker.subscribeTmp('api', '#.signal.*', (...args) => this._onDelegatedApiMessage(calledElement, executeMessage, ...args), {
     noAck: true,
@@ -75,7 +75,7 @@ CallActivityBehaviour.prototype.execute = function execute(executeMessage) {
     }),
     {
       type: 'call',
-    },
+    }
   );
 };
 
@@ -83,7 +83,7 @@ CallActivityBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApi
   calledElement,
   executeMessage,
   routingKey,
-  message,
+  message
 ) {
   if (!message.properties.delegate) return;
   const { content: delegateContent } = message;
@@ -106,7 +106,7 @@ CallActivityBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApi
     {
       correlationId,
       type: messageType,
-    },
+    }
   );
 
   return this._onApiMessage(calledElement, executeMessage, routingKey, message);
@@ -129,7 +129,7 @@ CallActivityBehaviour.prototype._onApiMessage = function onApiMessage(calledElem
         }),
         {
           type: 'cancel',
-        },
+        }
       );
     }
     case 'signal':
@@ -143,7 +143,7 @@ CallActivityBehaviour.prototype._onApiMessage = function onApiMessage(calledElem
         }),
         {
           correlationId,
-        },
+        }
       );
     case 'error':
       this._stop(executeContent.executionId);
@@ -158,8 +158,8 @@ CallActivityBehaviour.prototype._onApiMessage = function onApiMessage(calledElem
           {
             mandatory: true,
             correlationId,
-          },
-        ),
+          }
+        )
       );
     case 'discard':
       return this.broker.publish(
@@ -171,7 +171,7 @@ CallActivityBehaviour.prototype._onApiMessage = function onApiMessage(calledElem
         }),
         {
           type: 'discard',
-        },
+        }
       );
   }
 };

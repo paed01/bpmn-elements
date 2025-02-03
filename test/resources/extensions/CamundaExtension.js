@@ -83,7 +83,7 @@ function Camunda(activity) {
         });
         broker.publish('format', 'run.form', { form });
       },
-      { noAck: true, consumerTag: '_camunda_form' },
+      { noAck: true, consumerTag: '_camunda_form' }
     );
   }
 
@@ -100,7 +100,7 @@ function Camunda(activity) {
           dueDate: new Date(dueDateMs),
         });
       },
-      { noAck: true, consumerTag: '_camunda_due_date' },
+      { noAck: true, consumerTag: '_camunda_due_date' }
     );
   }
 
@@ -116,7 +116,7 @@ function Camunda(activity) {
           }, {});
           broker.publish('format', 'run.input', { input });
         },
-        { noAck: true },
+        { noAck: true }
       );
     }
     if (ioData.outputParameters) {
@@ -133,7 +133,7 @@ function Camunda(activity) {
 
           broker.publish('format', 'run.output', { output });
         },
-        { noAck: true, consumerTag: '_camunda_io' },
+        { noAck: true, consumerTag: '_camunda_io' }
       );
     }
   }

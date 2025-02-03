@@ -36,7 +36,7 @@ Feature('Definition', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -93,7 +93,7 @@ Feature('Definition', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -224,7 +224,7 @@ Feature('Definition', () => {
 
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -509,7 +509,7 @@ Feature('Definition', () => {
           if (routingKey.indexOf('flow') === 0) return;
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 

@@ -95,7 +95,7 @@ ConditionalEventDefinition.prototype.evaluateCallback = function evaluateCallbac
     return broker.publish(
       'execution',
       'execute.error',
-      cloneContent(executeContent, { error: new ActivityError(err.message, executeMessage, err) }, { mandatory: true }),
+      cloneContent(executeContent, { error: new ActivityError(err.message, executeMessage, err) }, { mandatory: true })
     );
   }
 
@@ -106,7 +106,7 @@ ConditionalEventDefinition.prototype.evaluateCallback = function evaluateCallbac
     'activity.condition',
     cloneContent(this[kExecuteMessage].content, {
       conditionResult: result,
-    }),
+    })
   );
 
   if (!result) return;

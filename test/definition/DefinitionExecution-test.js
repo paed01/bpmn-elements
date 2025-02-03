@@ -140,7 +140,7 @@ describe('Definition execution', () => {
         () => {
           completed = true;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -250,7 +250,7 @@ describe('Definition execution', () => {
         () => {
           completed = true;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -284,7 +284,7 @@ describe('Definition execution', () => {
           environment: context.environment,
           broker: new DefinitionBroker(this).broker,
         },
-        context,
+        context
       );
 
       expect(execution === execution.recover()).to.be.true;
@@ -300,7 +300,7 @@ describe('Definition execution', () => {
           environment: context.environment,
           broker: new DefinitionBroker(this).broker,
         },
-        context,
+        context
       );
 
       expect(execution.activityStatus).to.equal('idle');

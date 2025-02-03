@@ -48,7 +48,7 @@ describe('activity', () => {
               }
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           const completed = activity.waitFor('leave');
@@ -80,7 +80,7 @@ describe('activity', () => {
               }
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           const start = activity.waitFor('start');
@@ -116,7 +116,7 @@ describe('activity', () => {
               messages.push(message);
               assertApi(activity, message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeOnce('event', 'activity.enter', (_, message) => {
@@ -149,7 +149,7 @@ describe('activity', () => {
               messages.push(message);
               assertApi(activity, message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeOnce('event', 'activity.start', (_, message) => {
@@ -184,7 +184,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeOnce(
@@ -193,7 +193,7 @@ describe('activity', () => {
             (_, message) => {
               assertApi(activity, message).discard();
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeOnce('event', 'activity.discard', (_, message) => {
@@ -229,7 +229,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeOnce(
@@ -238,7 +238,7 @@ describe('activity', () => {
             (_, message) => {
               assertApi(activity, message).discard();
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           const completed = activity.waitFor('leave');
@@ -269,7 +269,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeOnce(
@@ -278,7 +278,7 @@ describe('activity', () => {
             (routingKey, message) => {
               assertApi(activity, message).discard();
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           const completed = activity.waitFor('leave');
@@ -308,7 +308,7 @@ describe('activity', () => {
             (routingKey, message) => {
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeTmp('event', 'activity.enter', () => {
@@ -339,7 +339,7 @@ describe('activity', () => {
             (routingKey, message) => {
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeTmp('event', 'activity.start', () => {
@@ -373,7 +373,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeOnce('event', 'activity.enter', () => {
@@ -413,7 +413,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeOnce('event', 'activity.enter', () => {
@@ -460,7 +460,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeOnce('event', 'activity.enter', () => {
@@ -492,7 +492,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.recover(state);
@@ -520,7 +520,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeTmp('event', 'activity.start', function stop() {
@@ -563,7 +563,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeTmp('event', 'activity.start', function stop() {
@@ -609,7 +609,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeTmp('event', 'activity.start', function stop() {
@@ -639,7 +639,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           const left = activity.waitFor('leave');
@@ -666,7 +666,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true, importance: 10 },
+            { noAck: true, importance: 10 }
           );
 
           activity.broker.subscribeOnce(
@@ -675,7 +675,7 @@ describe('activity', () => {
             () => {
               activity.stop();
             },
-            { importance: 1 },
+            { importance: 1 }
           );
 
           const stopped = activity.waitFor('stop');
@@ -714,7 +714,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true, importance: 10 },
+            { noAck: true, importance: 10 }
           );
 
           activity.broker.subscribeOnce(
@@ -723,7 +723,7 @@ describe('activity', () => {
             () => {
               activity.stop();
             },
-            { importance: 1 },
+            { importance: 1 }
           );
 
           const stopped = activity.waitFor('stop');
@@ -762,7 +762,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true, importance: 10 },
+            { noAck: true, importance: 10 }
           );
 
           activity.broker.subscribeOnce(
@@ -771,7 +771,7 @@ describe('activity', () => {
             () => {
               activity.stop();
             },
-            { importance: 1 },
+            { importance: 1 }
           );
 
           const stopped = activity.waitFor('stop');
@@ -813,7 +813,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true, importance: 10 },
+            { noAck: true, importance: 10 }
           );
 
           activity.broker.subscribeOnce(
@@ -822,7 +822,7 @@ describe('activity', () => {
             () => {
               activity.stop();
             },
-            { importance: 1 },
+            { importance: 1 }
           );
 
           const stopped = activity.waitFor('stop');
@@ -848,7 +848,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return api.signal();
               messages.push(message);
             },
-            { noAck: true, importance: 10 },
+            { noAck: true, importance: 10 }
           );
 
           const left = activity.waitFor('leave');
@@ -875,7 +875,7 @@ describe('activity', () => {
               messages.push(message);
               if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeOnce('event', 'activity.discard', () => {
@@ -916,7 +916,7 @@ describe('activity', () => {
               messages.push(message);
               if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeOnce('event', 'activity.discard', () => {
@@ -969,7 +969,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           const completed = activity.waitFor('leave');
@@ -996,7 +996,7 @@ describe('activity', () => {
               if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           const completed = activity.waitFor('leave');
@@ -1037,7 +1037,7 @@ describe('activity', () => {
                 if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
                 messages.push(message);
               },
-              { noAck: true },
+              { noAck: true }
             );
 
             const completed = activity.waitFor('leave');
@@ -1064,7 +1064,7 @@ describe('activity', () => {
                 messages.push(message);
                 if (routingKey === 'activity.wait') return assertApi(activity, message).signal();
               },
-              { noAck: true },
+              { noAck: true }
             );
 
             const completed = activity.waitFor('leave');
@@ -1104,7 +1104,7 @@ describe('activity', () => {
               if (routingKey !== 'activity.wait') return messages.push(message);
               assertApi(activity, message).signal();
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           let executeCount = 0;
@@ -1119,7 +1119,7 @@ describe('activity', () => {
 
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           const completed = activity.waitFor('leave');
@@ -1166,7 +1166,7 @@ describe('activity', () => {
               if (routingKey !== 'activity.wait') return messages.push(message);
               assertApi(activity, message).signal();
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           activity.broker.subscribeTmp(
@@ -1176,7 +1176,7 @@ describe('activity', () => {
               assertApi(activity, message);
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           const completed = activity.waitFor('leave');
@@ -1198,7 +1198,7 @@ describe('activity', () => {
               if (routingKey !== 'activity.wait') return messages.push(message);
               assertApi(activity, message).signal();
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           let executeCount = 0;
@@ -1213,7 +1213,7 @@ describe('activity', () => {
 
               messages.push(message);
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           const completed = activity.waitFor('leave');
@@ -1251,7 +1251,7 @@ describe('activity', () => {
               if (routingKey !== 'activity.wait') return messages.push(message);
               api.signal();
             },
-            { noAck: true },
+            { noAck: true }
           );
 
           const completed = activity.waitFor('leave');
@@ -1295,7 +1295,7 @@ describe('activity', () => {
                 if (routingKey !== 'activity.wait') return messages.push(message);
                 assertApi(activity, message).signal();
               },
-              { noAck: true },
+              { noAck: true }
             );
 
             let executeCount = 0;
@@ -1308,7 +1308,7 @@ describe('activity', () => {
                 if (['execute.wait', 'execute.signal'].includes(routingKey)) return;
                 messages.push(message);
               },
-              { noAck: true },
+              { noAck: true }
             );
 
             activity.broker.subscribeOnce(
@@ -1317,7 +1317,7 @@ describe('activity', () => {
               () => {
                 activity.stop();
               },
-              { noAck: true },
+              { noAck: true }
             );
 
             const stopped = activity.waitFor('stop');
@@ -1357,7 +1357,7 @@ describe('activity', () => {
                 if (routingKey !== 'activity.wait') return messages.push(message);
                 assertApi(activity, message).signal();
               },
-              { noAck: true },
+              { noAck: true }
             );
 
             let executeCount = 0;
@@ -1370,7 +1370,7 @@ describe('activity', () => {
                 if (['execute.wait', 'execute.signal'].includes(routingKey)) return;
                 messages.push(message);
               },
-              { noAck: true },
+              { noAck: true }
             );
 
             activity.broker.subscribeOnce(
@@ -1379,7 +1379,7 @@ describe('activity', () => {
               () => {
                 activity.stop();
               },
-              { noAck: true },
+              { noAck: true }
             );
 
             const stopped = activity.waitFor('stop');
@@ -1426,7 +1426,7 @@ describe('activity', () => {
               () => {
                 activity.stop();
               },
-              { noAck: true },
+              { noAck: true }
             );
 
             const stopped = activity.waitFor('stop');
@@ -1488,7 +1488,7 @@ describe('activity', () => {
 
                 messages.push(message);
               },
-              { noAck: true },
+              { noAck: true }
             );
 
             let executeCount = 0;
@@ -1501,7 +1501,7 @@ describe('activity', () => {
                 if (['execute.wait', 'execute.signal'].includes(routingKey)) return;
                 messages.push(message);
               },
-              { noAck: true },
+              { noAck: true }
             );
 
             let state;
@@ -1512,7 +1512,7 @@ describe('activity', () => {
                 activity.stop();
                 state = activity.getState();
               },
-              { noAck: true },
+              { noAck: true }
             );
 
             const stopped = activity.waitFor('stop');

@@ -103,7 +103,7 @@ describe('InputOutputSpecification', () => {
             },
           };
         },
-      },
+      }
     ).activate();
 
     activity.broker.publish('event', 'activity.enter');
@@ -171,7 +171,7 @@ describe('InputOutputSpecification', () => {
       },
       {
         getDataObjectById() {},
-      },
+      }
     ).activate();
 
     activity.broker.publish('event', 'activity.enter');
@@ -209,7 +209,7 @@ describe('InputOutputSpecification', () => {
       },
       {
         getDataObjectById() {},
-      },
+      }
     ).activate();
 
     activity.broker.publish('event', 'activity.enter');
@@ -255,7 +255,7 @@ describe('InputOutputSpecification', () => {
       },
       {
         getDataObjectById() {},
-      },
+      }
     ).activate();
 
     activity.broker.publish('event', 'activity.execution.completed');

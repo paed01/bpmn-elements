@@ -55,7 +55,7 @@ describe('package exports', () => {
         'MessageEventDefinition',
         'SignalEventDefinition',
         'TerminateEventDefinition',
-        'TimerEventDefinition',
+        'TimerEventDefinition'
       );
     });
   });

@@ -439,7 +439,7 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
             executionId: calledFrom.executionId,
             error: content.error,
           },
-          { mandatory: true, type: 'error' },
+          { mandatory: true, type: 'error' }
         );
       } else {
         for (const bp of new Set(this[kProcesses].running)) {
@@ -502,7 +502,7 @@ DefinitionExecution.prototype._onStopped = function onStopped(message) {
     cloneContent(this[kExecuteMessage].content, {
       ...message.content,
     }),
-    { type: 'stopped', persistent: false },
+    { type: 'stopped', persistent: false }
   );
 };
 
@@ -563,7 +563,7 @@ DefinitionExecution.prototype._onMessageOutbound = function onMessageOutbound(ro
 
   this._debug(
     `conveying message from <${source.processId}.${source.id}> to`,
-    target.id ? `<${target.processId}.${target.id}>` : `<${target.processId}>`,
+    target.id ? `<${target.processId}.${target.id}>` : `<${target.processId}>`
   );
 
   const targetProcesses = this.getProcessesById(target.processId);
@@ -654,7 +654,7 @@ DefinitionExecution.prototype._onDelegateMessage = function onDelegateMessage(ro
   const message = reference?.resolve(executeMessage);
 
   this._debug(
-    `<${reference ? `${messageType} ${delegateMessage.id}>` : `anonymous ${messageType}`} event received from <${content.parent.id}.${content.id}>. Delegating.`,
+    `<${reference ? `${messageType} ${delegateMessage.id}>` : `anonymous ${messageType}`} event received from <${content.parent.id}.${content.id}>. Delegating.`
   );
 
   this.getApi().sendApiMessage(
@@ -669,7 +669,7 @@ DefinitionExecution.prototype._onDelegateMessage = function onDelegateMessage(ro
       message,
       originalMessage: content.message,
     },
-    { delegate: true, type: messageType },
+    { delegate: true, type: messageType }
   );
 
   this.broker.publish(
@@ -678,7 +678,7 @@ DefinitionExecution.prototype._onDelegateMessage = function onDelegateMessage(ro
     this._createMessage({
       message: message && cloneContent(message),
     }),
-    { type: messageType },
+    { type: messageType }
   );
 };
 
@@ -706,7 +706,7 @@ DefinitionExecution.prototype._complete = function complete(completionType, cont
       ...content,
       state: completionType,
     },
-    { type: completionType, mandatory: completionType === 'error', ...options },
+    { type: completionType, mandatory: completionType === 'error', ...options }
   );
 };
 

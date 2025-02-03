@@ -733,7 +733,7 @@ declare class Activity extends Element<Activity> {
   evaluateOutbound(
     fromMessage: ElementBrokerMessage,
     discardRestAtTake: boolean,
-    callback: (err: Error, evaluationResult: any) => void,
+    callback: (err: Error, evaluationResult: any) => void
   ): void;
   getState(): ActivityState | undefined;
 }

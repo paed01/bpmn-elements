@@ -53,7 +53,7 @@ describe('Errors', () => {
           content: {},
           properties: {},
         },
-        new BpmnError('Failed', { errorCode: '503' }),
+        new BpmnError('Failed', { errorCode: '503' })
       );
       expect(err).to.have.property('code', '503');
     });
@@ -66,7 +66,7 @@ describe('Errors', () => {
           content: {},
           properties: {},
         },
-        new BpmnError('Failed', { errorCode: '503' }),
+        new BpmnError('Failed', { errorCode: '503' })
       );
       expect(err).to.have.property('name', 'BpmnError');
     });
@@ -117,7 +117,7 @@ describe('Errors', () => {
           fields: {},
           content: {},
           properties: {},
-        },
+        }
       );
 
       expect(err).to.have.property('source').that.eql({
@@ -137,7 +137,7 @@ describe('Errors', () => {
             error: new Error('unstable'),
           },
           properties: {},
-        },
+        }
       );
       expect(err.source).to.have.property('content').that.eql({
         error: undefined,
@@ -166,7 +166,7 @@ describe('Errors', () => {
               type: 'ActivityError',
             },
           },
-        }),
+        })
       ).to.be.instanceof(ActivityError);
     });
 
@@ -179,7 +179,7 @@ describe('Errors', () => {
               message: 'Unexpected',
             },
           },
-        }),
+        })
       )
         .to.be.instanceof(ActivityError)
         .with.property('message', 'Unexpected');
@@ -194,7 +194,7 @@ describe('Errors', () => {
               description: 'Unexpected',
             },
           },
-        }),
+        })
       )
         .to.be.instanceof(ActivityError)
         .with.property('message', 'Unexpected');
@@ -213,7 +213,7 @@ describe('Errors', () => {
               },
             },
           },
-        }),
+        })
       )
         .to.be.instanceof(ActivityError)
         .and.have.property('source')
@@ -233,7 +233,7 @@ describe('Errors', () => {
               code: 'ERR_CODE',
             },
           },
-        }),
+        })
       )
         .to.be.instanceof(ActivityError)
         .and.have.property('code', 'ERR_CODE');
@@ -248,7 +248,7 @@ describe('Errors', () => {
               name: 'CustomError',
             },
           },
-        }),
+        })
       )
         .to.be.instanceof(ActivityError)
         .and.have.property('name', 'CustomError');
@@ -263,7 +263,7 @@ describe('Errors', () => {
               inner: { code: 'ERR_CODE' },
             },
           },
-        }),
+        })
       )
         .to.be.instanceof(ActivityError)
         .and.have.property('code', 'ERR_CODE');
@@ -278,7 +278,7 @@ describe('Errors', () => {
               inner: { name: 'CustomError' },
             },
           },
-        }),
+        })
       )
         .to.be.instanceof(ActivityError)
         .and.have.property('name', 'CustomError');
@@ -292,7 +292,7 @@ describe('Errors', () => {
               type: 'BpmnError',
             },
           },
-        }),
+        })
       ).to.be.instanceof(BpmnError);
     });
 
@@ -305,7 +305,7 @@ describe('Errors', () => {
               message: 'Unexpected',
             },
           },
-        }),
+        })
       )
         .to.be.instanceof(BpmnError)
         .with.property('message', 'Unexpected');
@@ -320,7 +320,7 @@ describe('Errors', () => {
               description: 'Unexpected',
             },
           },
-        }),
+        })
       )
         .to.be.instanceof(BpmnError)
         .with.property('message', 'Unexpected');
@@ -339,7 +339,7 @@ describe('Errors', () => {
               },
             },
           },
-        }),
+        })
       )
         .to.be.instanceof(BpmnError)
         .and.have.property('source')
@@ -359,7 +359,7 @@ describe('Errors', () => {
               code: 'ERR_CODE',
             },
           },
-        }),
+        })
       )
         .to.be.instanceof(BpmnError)
         .and.have.property('code', 'ERR_CODE');
@@ -374,7 +374,7 @@ describe('Errors', () => {
               name: 'CustomError',
             },
           },
-        }),
+        })
       )
         .to.be.instanceof(BpmnError)
         .and.have.property('name', 'CustomError');
@@ -389,7 +389,7 @@ describe('Errors', () => {
               name: 'MyError',
             },
           },
-        }),
+        })
       )
         .to.be.instanceof(BpmnError)
         .and.have.property('name', 'MyError');
@@ -400,7 +400,7 @@ describe('Errors', () => {
         makeErrorFromMessage({
           fields: { routingKey: 'my.error' },
           content: {},
-        }),
+        })
       )
         .to.be.instanceof(Error)
         .that.match(/my\.error/);
@@ -408,7 +408,7 @@ describe('Errors', () => {
       expect(
         makeErrorFromMessage({
           content: {},
-        }),
+        })
       )
         .to.be.instanceof(Error)
         .that.match(/malformatted/i);

@@ -53,7 +53,7 @@ async function context(source, ...args) {
 
   const ctx = Context(
     serializer,
-    new Environment({ Logger, scripts: new Scripts(), settings: { enableDummyService: true }, ...options, extensions }),
+    new Environment({ Logger, scripts: new Scripts(), settings: { enableDummyService: true }, ...options, extensions })
   );
   logger.debug('context complete');
   if (callback) {
@@ -114,7 +114,7 @@ function emptyContext(override, options) {
       },
       ...override,
     },
-    new Environment({ Logger, scripts: new Scripts(), settings: { enableDummyService: true }, ...options }),
+    new Environment({ Logger, scripts: new Scripts(), settings: { enableDummyService: true }, ...options })
   );
 }
 

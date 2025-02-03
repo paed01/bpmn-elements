@@ -27,7 +27,7 @@ describe('LinkEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       catchSignal.execute({
@@ -68,7 +68,7 @@ describe('LinkEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchSignal.execute({
@@ -112,7 +112,7 @@ describe('LinkEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchSignal.execute({
@@ -153,7 +153,7 @@ describe('LinkEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchSignal.execute({
@@ -196,7 +196,7 @@ describe('LinkEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchSignal.execute({
@@ -238,7 +238,7 @@ describe('LinkEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchSignal.execute({
@@ -285,7 +285,7 @@ describe('LinkEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({
@@ -328,7 +328,7 @@ describe('LinkEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       event.broker.publish('event', 'activity.discard', {

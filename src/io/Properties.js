@@ -94,7 +94,7 @@ Properties.prototype._formatOnEnter = function formatOnEnter(message) {
       { routingKey: startRoutingKey },
       {
         properties: this._getProperties(message),
-      },
+      }
     );
   }
 
@@ -104,7 +104,7 @@ Properties.prototype._formatOnEnter = function formatOnEnter(message) {
     {
       endRoutingKey,
       properties: this._getProperties(message),
-    },
+    }
   );
 
   return read(broker, [...dataInputObjects], (_, responses) => {
@@ -127,7 +127,7 @@ Properties.prototype._formatOnComplete = function formatOnComplete(message) {
       { routingKey: startRoutingKey },
       {
         properties: outputProperties,
-      },
+      }
     );
   }
 
@@ -137,7 +137,7 @@ Properties.prototype._formatOnComplete = function formatOnComplete(message) {
     {
       endRoutingKey,
       properties: outputProperties,
-    },
+    }
   );
 
   return write(broker, [...dataOutputObjects], outputProperties, (_, responses) => {

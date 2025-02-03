@@ -94,7 +94,7 @@ Feature('Messaging', () => {
 
         const context = await testHelpers.context(source);
         definition = new Definition(context);
-      },
+      }
     );
 
     let end;
@@ -257,7 +257,7 @@ Feature('Messaging', () => {
 
         const context = await testHelpers.context(source);
         definition = new Definition(context);
-      },
+      }
     );
 
     let end;
@@ -318,7 +318,7 @@ Feature('Messaging', () => {
 
         const context = await testHelpers.context(source);
         definition = new Definition(context);
-      },
+      }
     );
 
     let end;
@@ -379,7 +379,7 @@ Feature('Messaging', () => {
 
         const context = await testHelpers.context(source);
         definition = new Definition(context);
-      },
+      }
     );
 
     let end;
@@ -441,7 +441,7 @@ Feature('Messaging', () => {
 
         const context = await testHelpers.context(source);
         definition = new Definition(context);
-      },
+      }
     );
 
     let end;
@@ -505,7 +505,7 @@ Feature('Messaging', () => {
 
         const context = await testHelpers.context(source);
         definition = new Definition(context);
-      },
+      }
     );
 
     let end;

@@ -306,7 +306,7 @@ ActivityExecution.prototype._onExecutionDiscarded = function onExecutionDiscarde
 ActivityExecution.prototype._publishExecutionCompleted = function publishExecutionCompleted(
   completionType,
   completeContent,
-  correlationId,
+  correlationId
 ) {
   this[kCompleted] = true;
 
@@ -317,7 +317,7 @@ ActivityExecution.prototype._publishExecutionCompleted = function publishExecuti
       ...completeContent,
       state: completionType,
     },
-    { type: completionType, correlationId },
+    { type: completionType, correlationId }
   );
 };
 

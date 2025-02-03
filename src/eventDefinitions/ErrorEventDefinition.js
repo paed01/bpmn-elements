@@ -85,7 +85,7 @@ ErrorEventDefinition.prototype.executeCatch = function executeCatch(executeMessa
         exchange: 'execution',
         expectRoutingKey,
         expect: { ...info.message },
-      }),
+      })
     );
 
     if (this[kCompleted]) return this._stop();
@@ -123,7 +123,7 @@ ErrorEventDefinition.prototype.executeThrow = function executeThrow(executeMessa
     'execute.completed',
     cloneContent(executeContent, {
       message: { ...info.message },
-    }),
+    })
   );
 };
 
@@ -178,7 +178,7 @@ ErrorEventDefinition.prototype._catchError = function catchError(routingKey, mes
       output: error,
       cancelActivity: true,
       state: 'catch',
-    }),
+    })
   );
 };
 

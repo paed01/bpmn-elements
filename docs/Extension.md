@@ -108,7 +108,7 @@ async function run() {
       () => {
         broker.publish('format', 'run.input', { form });
       },
-      { noAck: true },
+      { noAck: true }
     );
   }
 }
@@ -177,7 +177,7 @@ function fetchAsyncFormExtension(activity, { environment }) {
           broker.publish('format', errorRoutingKey, { error });
         });
     },
-    { noAck: true },
+    { noAck: true }
   );
 
   function getFormData(formKey, id) {

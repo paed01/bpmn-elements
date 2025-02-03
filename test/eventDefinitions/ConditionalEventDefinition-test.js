@@ -40,7 +40,7 @@ describe('ConditionalEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       condition.execute({
@@ -124,7 +124,7 @@ describe('ConditionalEventDefinition', () => {
         (_, msg) => {
           conditionMessage = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let completedMessage;
@@ -196,7 +196,7 @@ describe('ConditionalEventDefinition', () => {
             value: { data: 1 },
           },
         },
-        { type: 'signal' },
+        { type: 'signal' }
       );
 
       expect(message).to.be.ok;
@@ -255,7 +255,7 @@ describe('ConditionalEventDefinition', () => {
         (_, msg) => {
           conditionMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let completedMessage;

@@ -24,7 +24,7 @@ describe('Association', () => {
           id: 'task1',
         },
       },
-      context,
+      context
     );
 
     expect(flow.broker.getExchange('event').stopped).to.be.false;
@@ -53,7 +53,7 @@ describe('Association', () => {
           id: 'task1',
         },
       },
-      context,
+      context
     );
 
     const api = flow.getApi();
@@ -81,7 +81,7 @@ describe('Association', () => {
           id: 'task1',
         },
       },
-      context,
+      context
     );
 
     const api = flow.getApi({ content: { id: 'foo' } });

@@ -28,7 +28,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       processInstance.broker.subscribeTmp(
@@ -37,7 +37,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -100,7 +100,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       processInstance.broker.subscribeTmp(
@@ -109,7 +109,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -168,7 +168,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       processInstance.broker.subscribeTmp(
@@ -177,7 +177,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -252,7 +252,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       processInstance.broker.subscribeTmp(
@@ -261,7 +261,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -508,7 +508,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       processInstance.broker.subscribeTmp(
@@ -517,7 +517,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -590,7 +590,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       processInstance.broker.subscribeTmp(
@@ -599,7 +599,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -683,7 +683,7 @@ Feature('Process', () => {
 
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -806,7 +806,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       processInstance.broker.subscribeTmp(
@@ -815,7 +815,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -902,7 +902,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -981,7 +981,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -1018,7 +1018,7 @@ Feature('Process', () => {
             id: 'receive',
           },
         },
-        { delegate: true },
+        { delegate: true }
       );
     });
 
@@ -1076,7 +1076,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -1206,7 +1206,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -1272,7 +1272,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -1407,7 +1407,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -1558,7 +1558,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -1681,7 +1681,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -1766,7 +1766,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -1798,7 +1798,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -1888,7 +1888,7 @@ Feature('Process', () => {
 
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -2049,7 +2049,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -2138,7 +2138,7 @@ Feature('Process', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -2226,7 +2226,7 @@ Feature('Process', () => {
 
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       processInstance.broker.subscribeTmp(
@@ -2235,7 +2235,7 @@ Feature('Process', () => {
         () => {
           throw new Error('Left too early');
         },
-        { noAck: true, consumerTag: 'too-early' },
+        { noAck: true, consumerTag: 'too-early' }
       );
     });
 
@@ -2334,7 +2334,7 @@ Feature('Process', () => {
         () => {
           throw new Error('Left too early');
         },
-        { noAck: true, consumerTag: 'too-early' },
+        { noAck: true, consumerTag: 'too-early' }
       );
 
       left = processInstance.waitFor('leave');
@@ -2368,7 +2368,7 @@ Feature('Process', () => {
 
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 

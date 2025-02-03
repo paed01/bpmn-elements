@@ -24,7 +24,7 @@ describe('MessageFlow', () => {
           id: 'task1',
         },
       },
-      context,
+      context
     );
 
     expect(flow).to.have.property('type', 'messageflow');
@@ -50,7 +50,7 @@ describe('MessageFlow', () => {
           id: 'task1',
         },
       },
-      context,
+      context
     );
 
     flow.activate();
@@ -76,7 +76,7 @@ describe('MessageFlow', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true },
+      { noAck: true }
     );
 
     activity.run();
@@ -135,7 +135,7 @@ describe('MessageFlow', () => {
           id: 'task1',
         },
       },
-      context,
+      context
     );
 
     const api = flow.getApi();
@@ -163,7 +163,7 @@ describe('MessageFlow', () => {
           id: 'task1',
         },
       },
-      context,
+      context
     );
 
     const api = flow.getApi({ content: { id: 'foo' } });

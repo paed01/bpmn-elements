@@ -13,9 +13,9 @@ describe('message helper', () => {
             },
             {
               id: 'child',
-            },
-          ),
-        ),
+            }
+          )
+        )
       ).to.eql({
         id: 'child',
         path: [
@@ -47,9 +47,9 @@ describe('message helper', () => {
               id: 'nephew',
               executionId: 'me_0',
               type: 'task',
-            },
-          ),
-        ),
+            }
+          )
+        )
       ).to.deep.include({
         id: 'nephew',
         executionId: 'me_0',
@@ -84,7 +84,7 @@ describe('message helper', () => {
           type: 'task',
           list: [],
           parent: {},
-        },
+        }
       );
       expect(newParent).to.eql({
         id: 2,
@@ -124,8 +124,8 @@ describe('message helper', () => {
           shiftParent({
             id: 'child',
             path: [{ id: 'parent' }],
-          }),
-        ),
+          })
+        )
       ).to.eql({
         id: 'parent',
       });
@@ -135,8 +135,8 @@ describe('message helper', () => {
           shiftParent({
             id: 'child',
             path: [{ id: 'parent' }, { id: 'grandpa' }],
-          }),
-        ),
+          })
+        )
       ).to.deep.include({
         id: 'parent',
         path: [{ id: 'grandpa' }],
@@ -170,9 +170,9 @@ describe('message helper', () => {
               id: 'process1',
               type: 'process',
               executionId: 'process1_0',
-            },
-          ),
-        ),
+            }
+          )
+        )
       ).to.eql({
         id: 'parent',
         executionId: 'parent_0',
@@ -203,9 +203,9 @@ describe('message helper', () => {
               id: 'process1',
               type: 'process',
               executionId: 'process1_0',
-            },
-          ),
-        ),
+            }
+          )
+        )
       ).to.deep.include({
         id: 'child',
         executionId: 'child_0',
@@ -234,9 +234,9 @@ describe('message helper', () => {
               id: 'process1',
               type: 'process',
               executionId: 'process1_0',
-            },
-          ),
-        ),
+            }
+          )
+        )
       ).to.eql({
         id: 'child',
         type: 'task',
@@ -265,9 +265,9 @@ describe('message helper', () => {
               id: 'process1',
               type: 'process',
               executionId: 'process1_0',
-            },
-          ),
-        ),
+            }
+          )
+        )
       ).to.eql({
         id: 'parent',
         executionId: 'parent_0',
@@ -292,9 +292,9 @@ describe('message helper', () => {
               id: 'process1',
               type: 'process',
               executionId: 'process1_0',
-            },
-          ),
-        ),
+            }
+          )
+        )
       ).to.eql({
         id: 'process1',
         executionId: 'process1_0',
@@ -308,8 +308,8 @@ describe('message helper', () => {
             id: 'process1',
             type: 'process',
             executionId: 'process1_0',
-          }),
-        ),
+          })
+        )
       ).to.eql({
         id: 'process1',
         type: 'process',
@@ -329,9 +329,9 @@ describe('message helper', () => {
               id: 'process1',
               type: 'process',
               executionId: 'process1_0',
-            },
-          ),
-        ),
+            }
+          )
+        )
       ).to.eql({
         id: 'process1',
         type: 'process',

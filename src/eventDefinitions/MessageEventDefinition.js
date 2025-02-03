@@ -124,7 +124,7 @@ MessageEventDefinition.prototype._onCatchMessage = function onCatchMessage(routi
     {
       correlationId,
       type,
-    },
+    }
   );
 
   this._complete('caught', message.content.message, { correlationId });
@@ -171,7 +171,7 @@ MessageEventDefinition.prototype._complete = function complete(verb, output, opt
       output,
       state: 'catch',
     }),
-    options,
+    options
   );
 };
 

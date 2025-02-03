@@ -13,7 +13,7 @@ Feature('Issue 31 - Error handling on save and resume', () => {
         description: 'Error happened',
         code: 'code000',
       },
-      null,
+      null
     );
   }
 

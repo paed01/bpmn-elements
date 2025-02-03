@@ -8,8 +8,8 @@ describe('getPropertyValue', () => {
           {
             a: 1,
           },
-          'a',
-        ),
+          'a'
+        )
       ).to.equal(1);
     });
 
@@ -21,8 +21,8 @@ describe('getPropertyValue', () => {
               b: [1],
             },
           },
-          'a.b[0]',
-        ),
+          'a.b[0]'
+        )
       ).to.equal(1);
     });
 
@@ -34,8 +34,8 @@ describe('getPropertyValue', () => {
               b: [1],
             },
           },
-          'a.b[1]',
-        ),
+          'a.b[1]'
+        )
       ).to.be.undefined;
     });
 
@@ -45,8 +45,8 @@ describe('getPropertyValue', () => {
           {
             a: 0,
           },
-          'a',
-        ),
+          'a'
+        )
       ).to.equal(0);
     });
 
@@ -58,8 +58,8 @@ describe('getPropertyValue', () => {
               b: [0],
             },
           },
-          'a.b[0]',
-        ),
+          'a.b[0]'
+        )
       ).to.equal(0);
     });
 
@@ -75,8 +75,8 @@ describe('getPropertyValue', () => {
               b: [1],
             },
           },
-          'a.b.length',
-        ),
+          'a.b.length'
+        )
       ).to.equal(1);
     });
 
@@ -88,8 +88,8 @@ describe('getPropertyValue', () => {
               'b-c': 1,
             },
           },
-          'a[b-c]',
-        ),
+          'a[b-c]'
+        )
       ).to.equal(1);
     });
 
@@ -101,8 +101,8 @@ describe('getPropertyValue', () => {
               b: 1,
             },
           },
-          '[a-c].b',
-        ),
+          '[a-c].b'
+        )
       ).to.equal(1);
     });
   });
@@ -116,8 +116,8 @@ describe('getPropertyValue', () => {
               b: [1, 2, 3],
             },
           },
-          'a.b[2]',
-        ),
+          'a.b[2]'
+        )
       ).to.equal(3);
       expect(getPropertyValue([1, 2, 3], '[2]')).to.equal(3);
     });
@@ -130,8 +130,8 @@ describe('getPropertyValue', () => {
               b: [1, 2, 3],
             },
           },
-          'a.b.length',
-        ),
+          'a.b.length'
+        )
       ).to.be.equal(3);
     });
 
@@ -145,8 +145,8 @@ describe('getPropertyValue', () => {
               b: list,
             },
           },
-          'a.b.arb',
-        ),
+          'a.b.arb'
+        )
       ).to.be.equal(10);
     });
 
@@ -159,8 +159,8 @@ describe('getPropertyValue', () => {
               b: list,
             },
           },
-          'a.b[0].c',
-        ),
+          'a.b[0].c'
+        )
       ).to.be.equal(1);
       expect(
         getPropertyValue(
@@ -169,8 +169,8 @@ describe('getPropertyValue', () => {
               b: list,
             },
           },
-          'a.b[-1].c',
-        ),
+          'a.b[-1].c'
+        )
       ).to.be.equal(3);
       expect(
         getPropertyValue(
@@ -179,8 +179,8 @@ describe('getPropertyValue', () => {
               b: list,
             },
           },
-          'a.b[42].c',
-        ),
+          'a.b[42].c'
+        )
       ).to.be.undefined;
     });
 
@@ -192,8 +192,8 @@ describe('getPropertyValue', () => {
               b: [1, 2, 3],
             },
           },
-          'a.b[4]',
-        ),
+          'a.b[4]'
+        )
       ).to.be.undefined;
     });
 
@@ -205,8 +205,8 @@ describe('getPropertyValue', () => {
               b: [1, 2, 3],
             },
           },
-          'a.b[-1]',
-        ),
+          'a.b[-1]'
+        )
       ).to.equal(3);
       expect(
         getPropertyValue(
@@ -215,8 +215,8 @@ describe('getPropertyValue', () => {
               b: [1, 2, 3],
             },
           },
-          'a.b[-2]',
-        ),
+          'a.b[-2]'
+        )
       ).to.equal(2);
       expect(
         getPropertyValue(
@@ -225,8 +225,8 @@ describe('getPropertyValue', () => {
               b: [1, 2, 3],
             },
           },
-          'a.b[-3]',
-        ),
+          'a.b[-3]'
+        )
       ).to.equal(1);
     });
 
@@ -238,8 +238,8 @@ describe('getPropertyValue', () => {
               b: [1, 2, 3],
             },
           },
-          'a.b[-0]',
-        ),
+          'a.b[-0]'
+        )
       ).to.equal(1);
     });
 
@@ -251,8 +251,8 @@ describe('getPropertyValue', () => {
               b: [1, 2, 3],
             },
           },
-          'a.b[-4]',
-        ),
+          'a.b[-4]'
+        )
       ).to.be.undefined;
     });
 
@@ -264,8 +264,8 @@ describe('getPropertyValue', () => {
               b: [1, 2, 3],
             },
           },
-          'a.b[-1 ]',
-        ),
+          'a.b[-1 ]'
+        )
       ).to.be.undefined;
     });
 
@@ -277,8 +277,8 @@ describe('getPropertyValue', () => {
               b: [1, 2, 3],
             },
           },
-          'a.b[ -1]',
-        ),
+          'a.b[ -1]'
+        )
       ).to.be.undefined;
     });
 
@@ -290,8 +290,8 @@ describe('getPropertyValue', () => {
               b: [1, 2, 3],
             },
           },
-          'a.b[- 1]',
-        ),
+          'a.b[- 1]'
+        )
       ).to.be.undefined;
     });
 
@@ -301,8 +301,8 @@ describe('getPropertyValue', () => {
           {
             a: [[1], [2], [3, 4]],
           },
-          'a[-1][0]',
-        ),
+          'a[-1][0]'
+        )
       ).to.equal(3);
     });
   });
@@ -316,8 +316,8 @@ describe('getPropertyValue', () => {
               return 3;
             },
           },
-          'f()',
-        ),
+          'f()'
+        )
       ).to.equal(3);
     });
 
@@ -330,8 +330,8 @@ describe('getPropertyValue', () => {
               return input;
             },
           },
-          'f(a)',
-        ),
+          'f(a)'
+        )
       ).to.equal(4);
     });
 
@@ -346,8 +346,8 @@ describe('getPropertyValue', () => {
               return input;
             },
           },
-          'f(a.b)',
-        ),
+          'f(a.b)'
+        )
       ).to.equal(5);
     });
 
@@ -362,8 +362,8 @@ describe('getPropertyValue', () => {
               return input + Number(n);
             },
           },
-          'f(a.b, 3)',
-        ),
+          'f(a.b, 3)'
+        )
       ).to.equal(8);
     });
 
@@ -379,8 +379,8 @@ describe('getPropertyValue', () => {
               return input + Number(n);
             },
           },
-          'f(a.b, a.c)',
-        ),
+          'f(a.b, a.c)'
+        )
       ).to.equal(11);
     });
 
@@ -395,8 +395,8 @@ describe('getPropertyValue', () => {
               return input + n;
             },
           },
-          'f("a.b",3)',
-        ),
+          'f("a.b",3)'
+        )
       ).to.equal('a.b3');
     });
 
@@ -408,8 +408,8 @@ describe('getPropertyValue', () => {
               return string.toUpperCase();
             },
           },
-          'f("this is a, string")',
-        ),
+          'f("this is a, string")'
+        )
       ).to.equal('THIS IS A, STRING');
     });
 
@@ -421,8 +421,8 @@ describe('getPropertyValue', () => {
               return string.toUpperCase();
             },
           },
-          "f('this is a, string')",
-        ),
+          "f('this is a, string')"
+        )
       ).to.equal('THIS IS A, STRING');
     });
 
@@ -434,8 +434,8 @@ describe('getPropertyValue', () => {
               return string.toUpperCase();
             },
           },
-          'f(\'this is "a" string\')',
-        ),
+          'f(\'this is "a" string\')'
+        )
       ).to.equal('THIS IS "A" STRING');
     });
 
@@ -447,8 +447,8 @@ describe('getPropertyValue', () => {
               return s1.toUpperCase() + ' ' + s2.toUpperCase();
             },
           },
-          "f('this is', '\"a\" string')",
-        ),
+          "f('this is', '\"a\" string')"
+        )
       ).to.equal('THIS IS "A" STRING');
     });
 
@@ -460,8 +460,8 @@ describe('getPropertyValue', () => {
               return s1.toUpperCase() + ' ' + s2.toUpperCase();
             },
           },
-          'f("this is", \'"a" string\')',
-        ),
+          'f("this is", \'"a" string\')'
+        )
       ).to.equal('THIS IS "A" STRING');
     });
 
@@ -473,8 +473,8 @@ describe('getPropertyValue', () => {
               return s1.toUpperCase() + ' ' + n + ' ' + s2.toUpperCase();
             },
           },
-          'f("this is", 3, "number")',
-        ),
+          'f("this is", 3, "number")'
+        )
       ).to.equal('THIS IS 3 NUMBER');
     });
 
@@ -489,8 +489,8 @@ describe('getPropertyValue', () => {
               return input === 5;
             },
           },
-          'f(a.b,3)',
-        ),
+          'f(a.b,3)'
+        )
       ).to.equal(true);
     });
 
@@ -505,8 +505,8 @@ describe('getPropertyValue', () => {
               return input === 4;
             },
           },
-          'f(a.b,3)',
-        ),
+          'f(a.b,3)'
+        )
       ).to.equal(false);
     });
 
@@ -518,8 +518,8 @@ describe('getPropertyValue', () => {
               return 3;
             },
           },
-          'fn()',
-        ),
+          'fn()'
+        )
       ).to.be.undefined;
     });
 
@@ -534,8 +534,8 @@ describe('getPropertyValue', () => {
               return context.a.b;
             },
           },
-          'f()',
-        ),
+          'f()'
+        )
       ).to.equal(3);
     });
 
@@ -550,8 +550,8 @@ describe('getPropertyValue', () => {
               return input;
             },
           },
-          'f(3)',
-        ),
+          'f(3)'
+        )
       ).to.equal(3);
     });
 
@@ -566,8 +566,8 @@ describe('getPropertyValue', () => {
               return input;
             },
           },
-          'f(3.1)',
-        ),
+          'f(3.1)'
+        )
       ).to.equal(3.1);
     });
 
@@ -580,8 +580,8 @@ describe('getPropertyValue', () => {
               return a;
             },
           },
-          'f(a)',
-        ),
+          'f(a)'
+        )
       ).to.equal(0);
     });
   });
@@ -599,8 +599,8 @@ describe('getPropertyValue', () => {
           'f()',
           {
             b: 2,
-          },
-        ),
+          }
+        )
       ).to.equal(2);
     });
   });

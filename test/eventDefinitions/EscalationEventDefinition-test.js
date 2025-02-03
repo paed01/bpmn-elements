@@ -27,7 +27,7 @@ describe('EscalationEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       catchSignal.execute({
@@ -67,7 +67,7 @@ describe('EscalationEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchSignal.execute({
@@ -110,7 +110,7 @@ describe('EscalationEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchSignal.execute({
@@ -148,7 +148,7 @@ describe('EscalationEventDefinition', () => {
                 id: 'Escalate_0',
                 name: 'Awake King',
               },
-              { environment: new Environment() },
+              { environment: new Environment() }
             );
           },
         },
@@ -159,7 +159,7 @@ describe('EscalationEventDefinition', () => {
               id: 'Escalate_0',
             },
           },
-        },
+        }
       );
 
       const messages = [];
@@ -169,7 +169,7 @@ describe('EscalationEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchSignal.execute({
@@ -213,7 +213,7 @@ describe('EscalationEventDefinition', () => {
                 id: 'Escalate_0',
                 name: 'Awake King',
               },
-              { environment: new Environment() },
+              { environment: new Environment() }
             );
           },
         },
@@ -224,7 +224,7 @@ describe('EscalationEventDefinition', () => {
               id: 'Escalate_0',
             },
           },
-        },
+        }
       );
 
       const messages = [];
@@ -234,7 +234,7 @@ describe('EscalationEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       event.broker.publish('api', 'activity.escalate.event_1', {
@@ -280,7 +280,7 @@ describe('EscalationEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchSignal.execute({
@@ -352,7 +352,7 @@ describe('EscalationEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({
@@ -398,7 +398,7 @@ describe('EscalationEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({

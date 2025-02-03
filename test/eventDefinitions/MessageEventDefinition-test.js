@@ -20,7 +20,7 @@ describe('MessageEventDefinition', () => {
             type: 'bpmn:Message',
             name: 'My Message ${content.id}',
           },
-          { environment },
+          { environment }
         );
       },
     };
@@ -45,7 +45,7 @@ describe('MessageEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       catchMessage.execute({
@@ -94,7 +94,7 @@ describe('MessageEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchMessage.execute({
@@ -147,7 +147,7 @@ describe('MessageEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag-1' },
+        { noAck: true, consumerTag: '_test-tag-1' }
       );
 
       event.broker.subscribeTmp(
@@ -156,7 +156,7 @@ describe('MessageEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag-2' },
+        { noAck: true, consumerTag: '_test-tag-2' }
       );
 
       catchMessage.execute({
@@ -215,7 +215,7 @@ describe('MessageEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchMessage.execute({
@@ -266,7 +266,7 @@ describe('MessageEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchMessage.execute({
@@ -306,7 +306,7 @@ describe('MessageEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchMessage.execute({
@@ -348,7 +348,7 @@ describe('MessageEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchMessage.execute({
@@ -418,7 +418,7 @@ describe('MessageEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({
@@ -458,7 +458,7 @@ describe('MessageEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({
@@ -509,7 +509,7 @@ describe('MessageEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({
@@ -560,7 +560,7 @@ describe('MessageEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({
@@ -607,7 +607,7 @@ describe('MessageEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({

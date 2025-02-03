@@ -10,7 +10,7 @@ describe('Environment', () => {
           settings: {
             test: 1,
           },
-        }),
+        })
       )
         .to.have.property('settings')
         .that.eql({

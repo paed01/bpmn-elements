@@ -21,7 +21,7 @@ describe('TerminateEventDefinition', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true },
+      { noAck: true }
     );
     event.broker.subscribeTmp(
       'execution',
@@ -29,7 +29,7 @@ describe('TerminateEventDefinition', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true },
+      { noAck: true }
     );
 
     terminateDefinition.execute({

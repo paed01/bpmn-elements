@@ -105,7 +105,7 @@ BoundaryEventBehaviour.prototype._onCompleted = function onCompleted(_, { conten
     return this.broker.publish(
       'execution',
       'execute.completed',
-      cloneContent(content, { isDefinitionScope: false, cancelActivity: false }),
+      cloneContent(content, { isDefinitionScope: false, cancelActivity: false })
     );
   }
 
@@ -116,7 +116,7 @@ BoundaryEventBehaviour.prototype._onCompleted = function onCompleted(_, { conten
   const attachedTo = this.attachedTo;
 
   this.activity.logger.debug(
-    `<${executionId} (${this.id})> cancel ${attachedTo.status} activity <${attachedToContent.executionId} (${attachedToContent.id})>`,
+    `<${executionId} (${this.id})> cancel ${attachedTo.status} activity <${attachedToContent.executionId} (${attachedToContent.id})>`
   );
 
   if (content.isRecovered && !attachedTo.isRunning) {
@@ -128,7 +128,7 @@ BoundaryEventBehaviour.prototype._onCompleted = function onCompleted(_, { conten
       () => {
         attachedTo.getApi({ content: attachedToContent }).discard();
       },
-      { consumerTag: attachedExecuteTag },
+      { consumerTag: attachedExecuteTag }
     );
   } else {
     attachedTo.getApi({ content: attachedToContent }).discard();
@@ -165,7 +165,7 @@ BoundaryEventBehaviour.prototype._onExpectMessage = function onExpectMessage(_, 
       noAck: true,
       consumerTag: errorConsumerTag,
       priority: 400,
-    },
+    }
   );
 };
 
@@ -195,7 +195,7 @@ BoundaryEventBehaviour.prototype._onDetachMessage = function onDetachMessage(_, 
     },
     {
       cloneMessage,
-    },
+    }
   );
 
   const detachContent = cloneContent(content, {
@@ -215,7 +215,7 @@ BoundaryEventBehaviour.prototype._onDetachMessage = function onDetachMessage(_, 
     },
     {
       consumerTag: `_execution-completed-${executionId}`,
-    },
+    }
   );
 };
 

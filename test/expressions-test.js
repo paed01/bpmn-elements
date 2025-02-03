@@ -14,7 +14,7 @@ describe('Expressions', () => {
               variables: {
                 input: 1,
               },
-            }),
+            })
           ).to.equal(1);
         });
 
@@ -24,7 +24,7 @@ describe('Expressions', () => {
               variables: {
                 output: 1,
               },
-            }),
+            })
           ).to.be.undefined;
         });
 
@@ -34,7 +34,7 @@ describe('Expressions', () => {
               variables: {
                 input: 1,
               },
-            }),
+            })
           ).to.be.undefined;
         });
 
@@ -44,7 +44,7 @@ describe('Expressions', () => {
               variables: {
                 input: [0, 1],
               },
-            }),
+            })
           ).to.equal(1);
         });
 
@@ -55,7 +55,7 @@ describe('Expressions', () => {
                 variables: {
                   input: 0.1,
                 },
-              }),
+              })
             ).to.equal('PT0.1S');
           });
 
@@ -66,7 +66,7 @@ describe('Expressions', () => {
                   host: 'example.com',
                   pathname: '/api/v1',
                 },
-              }),
+              })
             ).to.equal('http://example.com/api/v1');
           });
         });
@@ -81,7 +81,7 @@ describe('Expressions', () => {
                   return 'PT0.1S';
                 },
               },
-            })(),
+            })()
           ).to.equal('PT0.1S');
         });
 
@@ -96,7 +96,7 @@ describe('Expressions', () => {
                   return message.variables.timeout;
                 },
               },
-            }),
+            })
           ).to.equal('PT0.1S');
         });
 
@@ -108,7 +108,7 @@ describe('Expressions', () => {
                   return statusCode;
                 },
               },
-            }),
+            })
           ).to.equal(200);
         });
 
@@ -120,7 +120,7 @@ describe('Expressions', () => {
                   return '200';
                 },
               },
-            }),
+            })
           ).to.equal('200');
         });
 
@@ -135,7 +135,7 @@ describe('Expressions', () => {
                   return input;
                 },
               },
-            }),
+            })
           ).to.equal(200);
         });
 
@@ -151,7 +151,7 @@ describe('Expressions', () => {
                   return input + add;
                 },
               },
-            }),
+            })
           ).to.equal(201);
         });
 
@@ -163,7 +163,7 @@ describe('Expressions', () => {
                   return args.toString();
                 },
               },
-            }),
+            })
           ).to.equal('foo,bar');
 
           expect(
@@ -173,7 +173,7 @@ describe('Expressions', () => {
                   return args.toString();
                 },
               },
-            }),
+            })
           ).to.equal('foo,bar');
 
           expect(
@@ -183,7 +183,7 @@ describe('Expressions', () => {
                   return args.toString();
                 },
               },
-            }),
+            })
           ).to.equal('foo,bar');
 
           expect(
@@ -193,7 +193,7 @@ describe('Expressions', () => {
                   return args;
                 },
               },
-            }),
+            })
           ).to.deep.equal([true, 'bar']);
 
           expect(
@@ -203,7 +203,7 @@ describe('Expressions', () => {
                   return args;
                 },
               },
-            }),
+            })
           ).to.deep.equal([false, 'bar']);
 
           expect(
@@ -213,7 +213,7 @@ describe('Expressions', () => {
                   return args;
                 },
               },
-            }),
+            })
           ).to.deep.equal([null, 'bar']);
         });
       });
@@ -246,7 +246,7 @@ describe('Expressions', () => {
           variables: {
             input: [0, 1],
           },
-        }),
+        })
       ).to.be.undefined;
     });
 
@@ -258,7 +258,7 @@ describe('Expressions', () => {
               '#complexName': 1,
             },
           },
-        }),
+        })
       ).to.equal(1);
     });
 
@@ -272,7 +272,7 @@ describe('Expressions', () => {
               },
             },
           },
-        }),
+        })
       ).to.equal(1);
     });
 
@@ -283,7 +283,7 @@ describe('Expressions', () => {
             host: 'example.com',
             pathname: undefined,
           },
-        }),
+        })
       ).to.equal('http://example.com');
     });
 
@@ -300,7 +300,7 @@ describe('Expressions', () => {
             input: 0.1,
             property: 'input',
           },
-        }),
+        })
       ).to.equal('PT]}S');
     });
   });

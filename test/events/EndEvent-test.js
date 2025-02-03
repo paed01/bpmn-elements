@@ -142,7 +142,7 @@ describe('EndEvent', () => {
           id: 'end',
           parent,
         },
-        context,
+        context
       );
 
       event.activate();
@@ -154,7 +154,7 @@ describe('EndEvent', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
       event.broker.subscribeTmp(
         'event',
@@ -162,7 +162,7 @@ describe('EndEvent', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       context.getInboundSequenceFlows()[0].discard();

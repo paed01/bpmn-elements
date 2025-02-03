@@ -59,7 +59,7 @@ SignalTaskBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMe
     {
       correlationId,
       type: messageType,
-    },
+    }
   );
 
   return this._onApiMessage(executeMessage, routingKey, message);
@@ -82,7 +82,7 @@ SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessa
         }),
         {
           correlationId,
-        },
+        }
       );
     case 'error':
       this._stop(executeContent.executionId);
@@ -97,8 +97,8 @@ SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessa
           {
             mandatory: true,
             correlationId,
-          },
-        ),
+          }
+        )
       );
     case 'discard':
       this._stop(executeContent.executionId);

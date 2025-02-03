@@ -51,7 +51,7 @@ describe('BoundaryEvent', () => {
           },
           {
             getOutboundAssociations() {},
-          },
+          }
         );
 
         expect(attachedTo.broker.getExchange('event')).to.have.property('bindingCount', 0);
@@ -82,7 +82,7 @@ describe('BoundaryEvent', () => {
           },
           {
             getOutboundAssociations() {},
-          },
+          }
         );
 
         expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
@@ -113,7 +113,7 @@ describe('BoundaryEvent', () => {
           },
           {
             getOutboundAssociations() {},
-          },
+          }
         );
 
         behaviour.execute({
@@ -154,7 +154,7 @@ describe('BoundaryEvent', () => {
           },
           {
             getOutboundAssociations() {},
-          },
+          }
         );
 
         behaviour.execute({
@@ -194,7 +194,7 @@ describe('BoundaryEvent', () => {
           },
           {
             getOutboundAssociations() {},
-          },
+          }
         );
 
         behaviour.execute({
@@ -243,7 +243,7 @@ describe('BoundaryEvent', () => {
           },
           {
             getOutboundAssociations() {},
-          },
+          }
         );
 
         behaviour.execute({
@@ -338,7 +338,7 @@ describe('BoundaryEvent', () => {
           },
           {
             getOutboundAssociations() {},
-          },
+          }
         );
 
         behaviour.execute({
@@ -390,7 +390,7 @@ describe('BoundaryEvent', () => {
           },
           {
             getOutboundAssociations() {},
-          },
+          }
         );
 
         behaviour.execute({
@@ -442,7 +442,7 @@ describe('BoundaryEvent', () => {
           },
           {
             getOutboundAssociations() {},
-          },
+          }
         );
 
         behaviour.execute({
@@ -491,7 +491,7 @@ describe('BoundaryEvent', () => {
           },
           {
             getOutboundAssociations() {},
-          },
+          }
         );
       });
 
@@ -520,7 +520,7 @@ describe('BoundaryEvent', () => {
           {},
           {
             type: 'stop',
-          },
+          }
         );
 
         expect(broker).to.have.property('consumerCount', 0);
@@ -610,7 +610,7 @@ describe('BoundaryEvent', () => {
         (_, msg) => {
           enterMessage = msg;
         },
-        { noAck: true, priority: 10000 },
+        { noAck: true, priority: 10000 }
       );
 
       attachedTo.broker.publish('event', 'activity.enter', { id: 'task' });
@@ -704,7 +704,7 @@ describe('BoundaryEvent', () => {
           (routingKey, message) => {
             messages.push(message);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         const wait = task.waitFor('wait');
@@ -740,7 +740,7 @@ describe('BoundaryEvent', () => {
           (routingKey, message) => {
             messages.push(message);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         const leave = event.waitFor('leave');
@@ -766,7 +766,7 @@ describe('BoundaryEvent', () => {
           (routingKey, message) => {
             messages.push(message);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         const wait = task.waitFor('wait');

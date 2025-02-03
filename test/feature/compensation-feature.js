@@ -861,7 +861,7 @@ Feature('Compensation', () => {
             definition.broker.cancel(message.fields.consumerTag);
           }
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 

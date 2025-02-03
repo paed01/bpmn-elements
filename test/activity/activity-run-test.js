@@ -246,7 +246,7 @@ describe('activity run', () => {
         formatting.push(routingKey);
         activity.broker.publish('format', `run.${routingKey}`, { formatting });
       },
-      { noAck: true },
+      { noAck: true }
     );
 
     const leave = activity.waitFor('leave');
@@ -283,7 +283,7 @@ describe('activity run', () => {
           formatting,
         });
       },
-      { noAck: true },
+      { noAck: true }
     );
 
     const leave = activity.waitFor('leave');
@@ -326,7 +326,7 @@ describe('activity run', () => {
               },
             };
           },
-        }),
+        })
       );
 
       const activityEvents = [];
@@ -362,7 +362,7 @@ describe('activity run', () => {
               },
             };
           },
-        }),
+        })
       );
 
       const activityEvents = [];
@@ -398,7 +398,7 @@ describe('activity run', () => {
               },
             };
           },
-        }),
+        })
       );
 
       const activityEvents = [];
@@ -437,7 +437,7 @@ describe('activity run', () => {
               },
             };
           },
-        }),
+        })
       );
 
       const activityEvents = [];
@@ -478,7 +478,7 @@ describe('activity run', () => {
               },
             };
           },
-        }),
+        })
       );
 
       const activityEvents = [];
@@ -518,7 +518,7 @@ describe('activity run', () => {
               deactivate() {},
             };
           },
-        }),
+        })
       );
 
       const runMessages = [];
@@ -529,7 +529,7 @@ describe('activity run', () => {
         (_, message) => {
           runMessages.push({ ...message });
         },
-        { noAck: true, consumerTag: '_run_test' },
+        { noAck: true, consumerTag: '_run_test' }
       );
 
       activity.run();
@@ -571,7 +571,7 @@ function createActivity(step = true) {
       getOutboundSequenceFlows() {
         return [new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, { environment })];
       },
-    }),
+    })
   );
 }
 

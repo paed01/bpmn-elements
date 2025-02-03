@@ -32,7 +32,7 @@ describe('SignalEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       catchSignal.execute({
@@ -72,7 +72,7 @@ describe('SignalEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchSignal.execute({
@@ -106,7 +106,7 @@ describe('SignalEventDefinition', () => {
         { ...event, isStart: true },
         {
           type: 'bpmn:SignalEventDefinition',
-        },
+        }
       );
 
       event.broker.publish('api', 'activity.signal.event_1', {});
@@ -118,7 +118,7 @@ describe('SignalEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchSignal.execute({
@@ -158,7 +158,7 @@ describe('SignalEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchSignal.execute({
@@ -230,7 +230,7 @@ describe('SignalEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({
@@ -276,7 +276,7 @@ describe('SignalEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({
@@ -323,7 +323,7 @@ describe('SignalEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({
@@ -369,7 +369,7 @@ describe('SignalEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({
@@ -420,7 +420,7 @@ describe('SignalEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({

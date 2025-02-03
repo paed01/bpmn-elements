@@ -109,7 +109,7 @@ export default function EscalateEventDefinition(activity, eventDefinition = {}) 
       'event',
       'activity.escalate',
       { ...executeMessage.content, escalateTo: { ...behaviour.escalateTo } },
-      { type: 'escalate' },
+      { type: 'escalate' }
     );
     broker.publish('execution', 'execute.completed', executeMessage.content);
   }

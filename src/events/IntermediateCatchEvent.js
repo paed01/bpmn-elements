@@ -43,7 +43,7 @@ IntermediateCatchEventBehaviour.prototype._onApiMessage = function onApiMessage(
         'execute.completed',
         cloneContent(executeMessage.content, {
           output: message.content.message,
-        }),
+        })
       );
     }
     case 'discard': {

@@ -326,7 +326,7 @@ Characteristics.prototype.subscribe = function subscribe(onIterationCompleteMess
     `activity.*.${this.parentExecutionId}`,
     this.onApiMessage,
     { noAck: true, consumerTag: '_api-multi-instance-tag' },
-    { priority: 400 },
+    { priority: 400 }
   );
   this.broker.subscribeTmp('execution', 'execute.*', onComplete, {
     noAck: true,

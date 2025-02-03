@@ -27,7 +27,7 @@ Feature('Activity IO', () => {
         (_, msg) => {
           if (msg.content.id === 'Activity_0ksziuo') taskMessage = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -102,7 +102,7 @@ Feature('Activity IO', () => {
         (_, msg) => {
           if (msg.content.id === 'task') taskMessage = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -181,7 +181,7 @@ Feature('Activity IO', () => {
         (_, msg) => {
           if (msg.content.id === 'task') taskMessage = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -263,7 +263,7 @@ Feature('Activity IO', () => {
         (_, msg) => {
           if (msg.content.id === 'task') taskMessage = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -383,7 +383,7 @@ Feature('Activity IO', () => {
           if (msg.content.id === 'task1') taskMessage1 = msg;
           if (msg.content.id === 'task2') taskMessage2 = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -442,7 +442,7 @@ Feature('Activity IO', () => {
           if (msg.content.id === 'task1') resumedTaskMessage1 = msg;
           if (msg.content.id === 'task2') taskMessage2 = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.resume();
@@ -549,7 +549,7 @@ Feature('Activity IO', () => {
           if (msg.content.id === 'task1') taskMessage1 = msg;
           if (msg.content.id === 'task2') taskMessage2 = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -608,7 +608,7 @@ Feature('Activity IO', () => {
           if (msg.content.id === 'task1') resumedTaskMessage1 = msg;
           if (msg.content.id === 'task2') taskMessage2 = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.resume();

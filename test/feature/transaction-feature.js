@@ -30,7 +30,7 @@ Feature('Transaction', () => {
                 }
               }
             },
-            { noAck: true, consumerTag: 'save-output-tag' },
+            { noAck: true, consumerTag: 'save-output-tag' }
           );
         },
       },
@@ -267,7 +267,7 @@ Feature('Transaction', () => {
                 }
               }
             },
-            { noAck: true, consumerTag: 'save-output-tag' },
+            { noAck: true, consumerTag: 'save-output-tag' }
           );
         },
       },

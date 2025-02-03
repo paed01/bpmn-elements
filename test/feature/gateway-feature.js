@@ -218,7 +218,7 @@ Feature('Gateway', () => {
           },
           {
             'content-type': 'application/json',
-          },
+          }
         )
         .persist();
     });
@@ -268,7 +268,7 @@ Feature('Gateway', () => {
               }, {}),
             });
           },
-          { noAck: true },
+          { noAck: true }
         );
       }
 
@@ -291,7 +291,7 @@ Feature('Gateway', () => {
           (_, { content }) => {
             environment.output.amount = content.output.amount;
           },
-          { noAck: true },
+          { noAck: true }
         );
       }
     });

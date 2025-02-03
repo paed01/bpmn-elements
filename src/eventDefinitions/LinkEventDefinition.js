@@ -168,7 +168,7 @@ LinkEventDefinition.prototype._onDiscard = function onDiscard(_, message) {
       message: { ...this.reference },
       state: 'discard',
     }),
-    { type: 'link', delegate: true },
+    { type: 'link', delegate: true }
   );
 };
 

@@ -219,7 +219,7 @@ Definition.prototype._shakeProcess = function shakeProcess(shakeBp, startId) {
       {
         broker: this.broker,
         exchange: 'event',
-      },
+      }
     );
   }
 
@@ -404,7 +404,7 @@ Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) 
           ...content,
           error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
         },
-        { mandatory: true },
+        { mandatory: true }
       );
       break;
     }

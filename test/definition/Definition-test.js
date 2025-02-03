@@ -80,7 +80,7 @@ describe('Definition', () => {
           variables: {
             input: 1,
           },
-        },
+        }
       );
 
       expect(definition.environment.variables).to.eql({ input: 1 });
@@ -1154,7 +1154,7 @@ describe('Definition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.resume();
@@ -1179,7 +1179,7 @@ describe('Definition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.resume();
@@ -1198,7 +1198,7 @@ describe('Definition', () => {
         () => {
           definition.stop();
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.resume();
@@ -1336,7 +1336,7 @@ describe('Definition', () => {
           expect(api, `api ${routingKey} ${message.content.id}`).to.be.ok;
           expect(message.content.type).to.equal(api.content.type);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -1355,7 +1355,7 @@ describe('Definition', () => {
             api = definition.getApi(message);
           }
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -1386,7 +1386,7 @@ describe('Definition', () => {
               id: 'me?',
             },
           },
-        }),
+        })
       ).to.not.be.ok;
     });
   });
@@ -1829,7 +1829,7 @@ describe('Definition', () => {
         (_, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
       definition.broker.subscribeTmp(
         'event',
@@ -1837,7 +1837,7 @@ describe('Definition', () => {
         (_, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
       definition.broker.subscribeTmp(
         'event',
@@ -1845,7 +1845,7 @@ describe('Definition', () => {
         (_, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -2018,7 +2018,7 @@ describe('Definition', () => {
       let postponed = definition.getPostponed();
       expect(
         postponed.length,
-        postponed.map(({ id }) => id),
+        postponed.map(({ id }) => id)
       ).to.equal(4);
 
       for (const task of postponed) {

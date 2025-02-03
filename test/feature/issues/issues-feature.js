@@ -357,7 +357,7 @@ Feature('Issues', () => {
               }
             }
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         definition.resume();
@@ -476,7 +476,7 @@ Feature('Issues', () => {
               }
             }
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         definition.resume();
@@ -645,7 +645,7 @@ Feature('Issues', () => {
               }
             }
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         definition.resume();
@@ -978,7 +978,7 @@ Feature('Issues', () => {
         () => {
           if (iter++ > max) throw new Error('Inifinty');
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const leave = def.waitFor('leave');
@@ -1212,10 +1212,10 @@ Feature('Issues', () => {
                         {
                           form: { key: activity.behaviour.formKey },
                         },
-                        { persistant: false },
+                        { persistant: false }
                       );
                     },
-                    { consumerTag: 'format_form_key' },
+                    { consumerTag: 'format_form_key' }
                   );
                 },
                 deactivate() {
@@ -1264,7 +1264,7 @@ function AsyncFormatting(element) {
             elementApi.environment.output[element.id] = ['enter_formatted'];
           });
         },
-        { consumerTag: '_async-extension-on-enter' },
+        { consumerTag: '_async-extension-on-enter' }
       );
 
       element.on(
@@ -1283,7 +1283,7 @@ function AsyncFormatting(element) {
             elementApi.environment.output[element.id].push('end_formatted');
           });
         },
-        { consumerTag: '_async-extension-on-executed' },
+        { consumerTag: '_async-extension-on-executed' }
       );
     },
     deactivate() {

@@ -220,7 +220,7 @@ Feature('Timers', () => {
         (_, msg) => {
           timeoutMessage = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.resume();
@@ -444,7 +444,7 @@ Feature('Timers', () => {
         (_, msg) => {
           timeoutMessage = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.resume();

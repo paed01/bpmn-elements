@@ -56,7 +56,7 @@ CancelEventDefinition.prototype.executeCatch = function executeCatch(executeMess
       pattern: 'activity.execution.cancel',
       exchange: 'execution',
       expectRoutingKey,
-    }),
+    })
   );
 
   const waitContent = cloneContent(executeContent, {

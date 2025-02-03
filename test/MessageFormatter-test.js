@@ -5,15 +5,19 @@ import { Logger } from './helpers/testHelpers.js';
 
 describe('MessageFormatter', () => {
   let formatter;
+  /** @type {import('smqp').Broker} */
+  let broker;
   beforeEach(() => {
-    const { broker } = new ActivityBroker({ id: 'element' });
+    const activityBroker = new ActivityBroker({ id: 'element' });
+    broker = activityBroker.broker;
+
     formatter = new Formatter(
       {
         id: 'element',
-        broker: broker,
+        broker,
         logger: Logger('format'),
       },
-      broker.getQueue('format-run-q'),
+      broker.getQueue('format-run-q')
     );
   });
 
@@ -25,11 +29,11 @@ describe('MessageFormatter', () => {
         },
         content: {},
       },
-      (err, message, formatted) => {
+      (err, _message, formatted) => {
         if (err) return done(err);
         expect(formatted).to.be.false;
         done();
-      },
+      }
     );
   });
 
@@ -57,7 +61,7 @@ describe('MessageFormatter', () => {
           expect(formatQ.messageCount, 'messageCount').to.equal(0);
           expect(formatQ.consumerCount, 'consumerCount').to.equal(0);
           done();
-        },
+        }
       );
     });
 
@@ -118,7 +122,7 @@ describe('MessageFormatter', () => {
           });
           expect(formatQ.messageCount, 'messageCount').to.equal(0);
           done();
-        },
+        }
       );
     });
 
@@ -144,7 +148,7 @@ describe('MessageFormatter', () => {
           });
           expect(formatQ.messageCount, 'messageCount').to.equal(0);
           done();
-        },
+        }
       );
     });
 
@@ -170,7 +174,7 @@ describe('MessageFormatter', () => {
           });
           expect(formatQ.messageCount, 'messageCount').to.equal(0);
           done();
-        },
+        }
       );
     });
   });
@@ -200,7 +204,7 @@ describe('MessageFormatter', () => {
           expect(formatQ.messageCount, 'messageCount').to.equal(0);
           expect(formatQ.consumerCount, 'consumerCount').to.equal(0);
           done();
-        },
+        }
       );
 
       formatQ.queueMessage({ routingKey: 'run.format.end' }, { me: 1 });
@@ -328,7 +332,7 @@ describe('MessageFormatter', () => {
             foo: 'bar',
           });
           done();
-        },
+        }
       );
 
       formatQ.queueMessage({ routingKey: 'my.format.end.3' }, { me: 1 });
@@ -358,7 +362,7 @@ describe('MessageFormatter', () => {
           });
           expect(formatQ.messageCount, 'messageCount').to.equal(0);
           done();
-        },
+        }
       );
 
       formatQ.queueMessage({ routingKey: 'run.format.end' }, {});
@@ -395,7 +399,7 @@ describe('MessageFormatter', () => {
 
           expect(formatQ.consumerCount, 'consumerCount').to.equal(0);
           done();
-        },
+        }
       );
 
       formatQ.queueMessage({ routingKey: 'run.format.error' }, {});
@@ -432,7 +436,7 @@ describe('MessageFormatter', () => {
 
           expect(formatQ.consumerCount, 'consumerCount').to.equal(0);
           done();
-        },
+        }
       );
 
       formatQ.queueMessage({ routingKey: 'run.format.error' }, { error: new Error() });
@@ -470,7 +474,7 @@ describe('MessageFormatter', () => {
           });
 
           done();
-        },
+        }
       );
 
       formatQ.queueMessage({ routingKey: 'my.format.end.error' }, { error: new Error('Timeout') });
@@ -514,7 +518,65 @@ describe('MessageFormatter', () => {
   });
 
   describe('combined', () => {
-    it('multiple formatting calls callback when complete', async () => {
+    it('multiple formatting using format exchange calls callback when complete', async () => {
+      broker.publish('format', 'run.format.1', { me: 1 });
+      broker.publish('format', 'run.format.start.2', { endRoutingKey: 'run.format.end.2' });
+      broker.publish('format', 'run.format.start.3', { endRoutingKey: '*.format.end.3' });
+
+      setImmediate(() => {
+        broker.publish('format', 'run.format.2', { you: 1 });
+        broker.publish('format', 'run.format.end.3', { me: 3 });
+        broker.publish('format', 'run.format.end.2', { foo: 'bar' });
+      });
+
+      const content = await awaitCallback(formatter, {
+        fields: {
+          routingKey: 'run.end',
+        },
+        content: {
+          id: 'element',
+        },
+      });
+
+      expect(content).to.deep.equal({
+        id: 'element',
+        me: 3,
+        you: 1,
+        foo: 'bar',
+      });
+    });
+
+    it('init asynchronous formatting before formatting using format exchange calls callback when complete', async () => {
+      broker.publish('format', 'run.format.1', { me: 1 });
+      broker.publish('format', 'run.format.start.2', { endRoutingKey: 'run.format.end.2' });
+      broker.publish('format', 'run.format.start.3', { endRoutingKey: '*.format.end.3' });
+
+      const promisedContent = awaitCallback(formatter, {
+        fields: {
+          routingKey: 'run.end',
+        },
+        content: {
+          id: 'element',
+        },
+      });
+
+      setImmediate(() => {
+        broker.publish('format', 'run.format.2', { you: 1 });
+        broker.publish('format', 'run.format.end.3', { me: 3 });
+        broker.publish('format', 'run.format.end.2', { foo: 'bar' });
+      });
+
+      const content = await promisedContent;
+
+      expect(content).to.deep.equal({
+        id: 'element',
+        me: 3,
+        you: 1,
+        foo: 'bar',
+      });
+    });
+
+    it('multiple formatting using queue message calls callback when complete', async () => {
       const formatQ = formatter.formatQ;
 
       formatQ.queueMessage({ routingKey: 'run.format.1' }, { me: 1 });

@@ -274,7 +274,7 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
         'error',
         cloneContent(content, {
           error: fields.redelivered ? makeErrorFromMessage(message) : content.error,
-        }),
+        })
       );
       break;
     }

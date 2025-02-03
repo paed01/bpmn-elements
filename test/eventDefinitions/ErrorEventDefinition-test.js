@@ -27,7 +27,7 @@ describe('ErrorEventDefinition', () => {
                 errorCode: 'ERR_MINE',
               },
             },
-            { environment },
+            { environment }
           );
         },
       };
@@ -45,7 +45,7 @@ describe('ErrorEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       catchError.execute({
@@ -85,7 +85,7 @@ describe('ErrorEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchError.execute({
@@ -129,7 +129,7 @@ describe('ErrorEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchError.execute({
@@ -169,7 +169,7 @@ describe('ErrorEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchError.execute({
@@ -211,7 +211,7 @@ describe('ErrorEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       catchError.execute({
@@ -386,7 +386,7 @@ describe('ErrorEventDefinition', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         definition.execute({
@@ -426,7 +426,7 @@ describe('ErrorEventDefinition', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         definition.execute({
@@ -469,7 +469,7 @@ describe('ErrorEventDefinition', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         definition.execute({
@@ -508,7 +508,7 @@ describe('ErrorEventDefinition', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         definition.execute({
@@ -545,7 +545,7 @@ describe('ErrorEventDefinition', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         definition.execute({
@@ -612,7 +612,7 @@ describe('ErrorEventDefinition', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
         event.broker.subscribeTmp(
           'event',
@@ -620,7 +620,7 @@ describe('ErrorEventDefinition', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         definition.execute({
@@ -658,7 +658,7 @@ describe('ErrorEventDefinition', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true, consumerTag: '_test-tag-1' },
+          { noAck: true, consumerTag: '_test-tag-1' }
         );
         event.broker.subscribeTmp(
           'event',
@@ -666,7 +666,7 @@ describe('ErrorEventDefinition', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true, consumerTag: '_test-tag-2' },
+          { noAck: true, consumerTag: '_test-tag-2' }
         );
 
         definition.execute({
@@ -709,7 +709,7 @@ describe('ErrorEventDefinition', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true, consumerTag: '_test-tag-1' },
+          { noAck: true, consumerTag: '_test-tag-1' }
         );
         event.broker.subscribeTmp(
           'event',
@@ -717,7 +717,7 @@ describe('ErrorEventDefinition', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true, consumerTag: '_test-tag-2' },
+          { noAck: true, consumerTag: '_test-tag-2' }
         );
 
         definition.execute({
@@ -943,7 +943,7 @@ describe('ErrorEventDefinition', () => {
           },
           debug() {},
         },
-        { environment },
+        { environment }
       );
 
       event = {
@@ -977,7 +977,7 @@ describe('ErrorEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({
@@ -1012,7 +1012,7 @@ describe('ErrorEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({
@@ -1049,7 +1049,7 @@ describe('ErrorEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({

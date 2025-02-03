@@ -100,7 +100,7 @@ describe('ServiceTask', () => {
             },
           },
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       );
 
       task.run();
@@ -130,7 +130,7 @@ describe('ServiceTask', () => {
             },
           },
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       );
 
       task.run();
@@ -156,7 +156,7 @@ describe('ServiceTask', () => {
             },
           },
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       );
 
       task.run();
@@ -179,7 +179,7 @@ describe('ServiceTask', () => {
             },
           },
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       );
 
       task.run();
@@ -199,7 +199,7 @@ describe('ServiceTask', () => {
             },
           },
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       );
 
       task.run();
@@ -219,7 +219,7 @@ describe('ServiceTask', () => {
             },
           },
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       ).recover(JSON.parse(JSON.stringify(state)));
 
       recovered.resume();
@@ -242,7 +242,7 @@ describe('ServiceTask', () => {
             },
           },
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       );
 
       task.run();
@@ -260,7 +260,7 @@ describe('ServiceTask', () => {
             },
           },
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       ).recover(state);
 
       recovered.resume();
@@ -605,7 +605,7 @@ describe('ServiceTask', () => {
                 idx: index,
               });
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         const leave = task.waitFor('leave');
@@ -688,7 +688,7 @@ describe('ServiceTask', () => {
                 idx: index,
               });
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         const leave = task.waitFor('leave');

@@ -34,7 +34,7 @@ Feature('Shaking', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -107,7 +107,7 @@ Feature('Shaking', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.broker.subscribeTmp(
@@ -116,7 +116,7 @@ Feature('Shaking', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -223,7 +223,7 @@ Feature('Shaking', () => {
             (routingKey) => {
               messages.push(routingKey);
             },
-            { noAck: true },
+            { noAck: true }
           );
         });
 
@@ -603,7 +603,7 @@ Feature('Shaking', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
       });
 

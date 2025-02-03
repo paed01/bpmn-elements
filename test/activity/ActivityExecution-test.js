@@ -180,7 +180,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let discardMessage;
@@ -225,7 +225,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let discardMessage;
@@ -270,7 +270,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -312,7 +312,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -359,7 +359,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -379,7 +379,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           errorMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       activity.broker.publish('execution', 'execute.error', { ...startMessages[0].content, error: { message: 'Err' } });
@@ -401,7 +401,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -428,7 +428,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           errorMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       activity.broker.publish('execution', 'execute.error', { ...startMessages[1].content, error: { message: 'Err' } });
@@ -450,7 +450,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -476,7 +476,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           errorMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       activity.broker.publish('execution', 'execute.error', { ...startMessages[1].content, error: { message: 'Err' } });
@@ -535,7 +535,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           discardApiMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -577,7 +577,7 @@ describe('ActivityExecution', () => {
         () => {
           throw new Error('Shouldn´t happen');
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.discard();
@@ -593,7 +593,7 @@ describe('ActivityExecution', () => {
         () => {
           throw new Error('Shouldn´t happen');
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -629,7 +629,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           discardMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const completedMessages = [];
@@ -639,7 +639,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           completedMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -669,7 +669,7 @@ describe('ActivityExecution', () => {
               () => {
                 broker.publish('execution', 'execute.discard', { ...executeMessage.content, discardedByBehaviour: true });
               },
-              { priority: 1000 },
+              { priority: 1000 }
             );
           },
         };
@@ -756,7 +756,7 @@ describe('ActivityExecution', () => {
         () => {
           throw new Error('Shouldn´t happen');
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -878,7 +878,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -924,7 +924,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -962,7 +962,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const eventMessages = [];
@@ -972,7 +972,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           eventMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -1012,7 +1012,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const eventMessages = [];
@@ -1022,7 +1022,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           eventMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -1299,7 +1299,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let completeMsg;
@@ -1358,7 +1358,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let completeMsg;
@@ -1368,7 +1368,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           completeMsg = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -1416,7 +1416,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let completeMsg;
@@ -1470,7 +1470,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let completeMsg;
@@ -1480,7 +1480,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           completeMsg = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -1533,7 +1533,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let completeMsg;
@@ -1593,7 +1593,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const discardMessages = [];
@@ -1603,7 +1603,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           discardMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let errorMsg;
@@ -1669,7 +1669,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const discardMessages = [];
@@ -1679,7 +1679,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           discardMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let discardMsg;
@@ -1735,7 +1735,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let completeMsg;
@@ -1894,7 +1894,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let completeMsg;
@@ -1904,7 +1904,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           completeMsg = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -1959,7 +1959,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let completeMsg;
@@ -1969,7 +1969,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           completeMsg = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -2031,7 +2031,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let completeMsg;
@@ -2041,7 +2041,7 @@ describe('ActivityExecution', () => {
         (_, msg) => {
           completeMsg = msg;
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       execution.execute({
@@ -2145,7 +2145,7 @@ describe('ActivityExecution', () => {
           content: {
             executionId: 'activity_2',
           },
-        }).content,
+        }).content
       ).to.eql({
         executionId: 'activity_2',
       });
@@ -2163,7 +2163,7 @@ describe('ActivityExecution', () => {
           (_, msg) => {
             startMessages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         execution.execute({
@@ -2219,7 +2219,7 @@ function createActivity(Behaviour) {
       },
       loadExtensions() {},
       getInboundAssociations() {},
-    },
+    }
   );
 
   function ActivityBehaviour({ broker }) {

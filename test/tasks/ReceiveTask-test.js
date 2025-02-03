@@ -22,7 +22,7 @@ describe('ReceiveTask', () => {
             Behaviour: Message,
           };
         },
-      }),
+      })
     );
   });
 
@@ -36,7 +36,7 @@ describe('ReceiveTask', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true },
+      { noAck: true }
     );
 
     task.run();
@@ -59,7 +59,7 @@ describe('ReceiveTask', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true, consumerTag: '_test-tag' },
+      { noAck: true, consumerTag: '_test-tag' }
     );
 
     task.run();
@@ -88,7 +88,7 @@ describe('ReceiveTask', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true, consumerTag: '_test-tag-1' },
+      { noAck: true, consumerTag: '_test-tag-1' }
     );
 
     task.broker.subscribeTmp(
@@ -97,7 +97,7 @@ describe('ReceiveTask', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true, consumerTag: '_test-tag-2' },
+      { noAck: true, consumerTag: '_test-tag-2' }
     );
 
     task.run();
@@ -136,7 +136,7 @@ describe('ReceiveTask', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true, consumerTag: '_test-tag' },
+      { noAck: true, consumerTag: '_test-tag' }
     );
 
     task.run();
@@ -163,7 +163,7 @@ describe('ReceiveTask', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true, consumerTag: '_test-tag' },
+      { noAck: true, consumerTag: '_test-tag' }
     );
 
     task.run();
@@ -183,7 +183,7 @@ describe('ReceiveTask', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true, consumerTag: '_test-tag' },
+      { noAck: true, consumerTag: '_test-tag' }
     );
 
     task.run();
@@ -201,7 +201,7 @@ describe('ReceiveTask', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true, consumerTag: '_test-tag' },
+      { noAck: true, consumerTag: '_test-tag' }
     );
 
     task.run();
@@ -219,7 +219,7 @@ describe('ReceiveTask', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true, consumerTag: '_test-tag' },
+      { noAck: true, consumerTag: '_test-tag' }
     );
 
     task.run();

@@ -420,7 +420,7 @@ Feature('Call activity', () => {
         .forEach((bpExecId) => {
           expect(
             called.filter(({ executionId }) => executionId === bpExecId),
-            bpExecId + ' reused',
+            bpExecId + ' reused'
           ).to.have.length(1);
         });
     });

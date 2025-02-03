@@ -88,7 +88,7 @@ OutboundEvaluator.prototype.evaluateFlow = function evaluateFlow(flow) {
         result,
         evaluationId,
       }),
-      { persistent: false },
+      { persistent: false }
     );
   });
 };

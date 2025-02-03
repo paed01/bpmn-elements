@@ -43,7 +43,7 @@ Feature('Task loop', () => {
       expect(iterations).to.have.length(4);
       expect(
         iterations.every(({ fields }) => fields.routingKey === 'execute.completed'),
-        'at completed',
+        'at completed'
       ).to.be.true;
     });
   });

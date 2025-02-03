@@ -160,7 +160,7 @@ Feature('Format', () => {
         (_, msg) => {
           leaveMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -175,6 +175,247 @@ Feature('Format', () => {
       const [msg] = leaveMessages;
       expect(msg.content).to.have.property('enteredAt');
       expect(msg.content).to.have.property('leftAt');
+    });
+  });
+
+  Scenario('Synchronous formatting on start and end event', () => {
+    let definition;
+    Given('a process with a start event', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="formatProcess" isExecutable="true">
+          <startEvent id="start" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = new Definition(context, {
+        extensions: {
+          formatSomethingOnEnterAndEnd(activity) {
+            if (activity.type !== 'bpmn:StartEvent') return;
+
+            const { broker } = activity;
+
+            activity.on('start', (api) => {
+              if (api.fields.redelivered) return;
+              broker.publish('format', 'run.start.format', { startedAt: new Date() });
+            });
+
+            activity.on('end', (api) => {
+              if (api.fields.redelivered) return;
+              broker.publish('format', 'run.end.format', { leftAt: new Date() });
+            });
+          },
+        },
+      });
+    });
+
+    let end;
+    const leaveMessages = [];
+    When('ran', () => {
+      end = definition.waitFor('end');
+
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.leave',
+        (_, msg) => {
+          leaveMessages.push(msg);
+        },
+        { noAck: true }
+      );
+
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('leave message is formatted', () => {
+      expect(leaveMessages).to.have.length(1);
+      const [msg] = leaveMessages;
+      expect(msg.content).to.have.property('startedAt');
+      expect(msg.content).to.have.property('leftAt');
+    });
+  });
+
+  Scenario('Start event with asynchronous formatting via format exchange on multiple events', () => {
+    let definition;
+    Given('a process with a start event', async () => {
+      const source = `
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <process id="formatProcess" isExecutable="true">
+            <startEvent id="start" />
+          </process>
+        </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = new Definition(context, {
+        extensions: {
+          formatSomething(activity) {
+            if (activity.type === 'bpmn:Process') return;
+
+            /** @type {import('smqp').Broker} */
+            const broker = activity.broker;
+
+            activity.on('enter', (api) => {
+              if (api.fields.redelivered) return;
+
+              broker.publish('format', 'run.enter.format', { endRoutingKey: 'run.enter.format.completed' });
+
+              process.nextTick(() => {
+                broker.publish('format', 'run.enter.format.completed', { enter: 1 });
+              });
+            });
+
+            activity.on('start', (api) => {
+              if (api.fields.redelivered) return;
+
+              broker.publish('format', 'run.start.format', { endRoutingKey: 'run.start.format.completed' });
+
+              process.nextTick(() => {
+                broker.publish('format', 'run.start.format.completed', { start: 2 });
+              });
+            });
+
+            activity.on('activity.execution.completed', (api) => {
+              if (api.fields.redelivered) return;
+
+              broker.publish('format', 'run.end.format', { endRoutingKey: 'run.end.format.completed' });
+              process.nextTick(() => {
+                broker.publish('format', 'run.end.format.completed', { end: 3 });
+              });
+            });
+          },
+        },
+      });
+    });
+
+    let end;
+    const leaveMessages = [];
+    When('ran', () => {
+      end = definition.waitFor('end');
+
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.leave',
+        (_, msg) => {
+          leaveMessages.push(msg);
+        },
+        { noAck: true }
+      );
+
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('formatting broker entities are emptied', () => {
+      const activity = definition.getActivityById('start');
+      console.log(activity.getState().broker.queues[0].messages);
+    });
+
+    And('leave message is formatted', () => {
+      expect(leaveMessages).to.have.length(1);
+      const [msg] = leaveMessages;
+      expect(msg.content).to.deep.include({ enter: 1, start: 2 });
+    });
+  });
+
+  Scenario('Service task with async callback and asynchronous formatting via format exchange on multiple events', () => {
+    let definition;
+    Given('a process with a start event', async () => {
+      const source = `
+        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <process id="formatProcess" isExecutable="true">
+            <serviceTask id="start" implementation="\${environment.services.foo}" />
+          </process>
+        </definitions>`;
+
+      const context = await testHelpers.context(source, {
+        services: {
+          foo(...args) {
+            setImmediate(args.pop());
+          },
+        },
+      });
+      definition = new Definition(context, {
+        extensions: {
+          formatSomething(activity) {
+            if (activity.type === 'bpmn:Process') return;
+
+            /** @type {import('smqp').Broker} */
+            const broker = activity.broker;
+
+            activity.on('enter', (api) => {
+              if (api.fields.redelivered) return;
+
+              broker.publish('format', 'run.enter.format', { endRoutingKey: 'run.enter.format.completed' });
+
+              process.nextTick(() => {
+                broker.publish('format', 'run.enter.format.completed', { enter: 1 });
+              });
+            });
+
+            activity.on('start', (api) => {
+              if (api.fields.redelivered) return;
+
+              broker.publish('format', 'run.start.format', { endRoutingKey: 'run.start.format.completed' });
+
+              process.nextTick(() => {
+                broker.publish('format', 'run.start.format.completed', { start: 2 });
+              });
+            });
+
+            activity.on('activity.execution.completed', (api) => {
+              if (api.fields.redelivered) return;
+
+              broker.publish('format', 'run.end.format', { endRoutingKey: 'run.end.format.completed' });
+
+              process.nextTick(() => {
+                broker.publish('format', 'run.end.format.completed', { end: 3 });
+              });
+            });
+          },
+        },
+      });
+    });
+
+    let end;
+    const leaveMessages = [];
+    When('ran', () => {
+      end = definition.waitFor('end');
+
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.leave',
+        (_, msg) => {
+          leaveMessages.push(msg);
+        },
+        { noAck: true }
+      );
+
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('formatting broker entities are emptied', () => {
+      const activity = definition.getActivityById('start');
+      expect(activity.getState().broker?.queues).to.not.be.ok;
+    });
+
+    And('leave message is formatted', () => {
+      expect(leaveMessages).to.have.length(1);
+      const [msg] = leaveMessages;
+      expect(msg.content).to.deep.include({ enter: 1, start: 2 });
     });
   });
 
@@ -226,7 +467,7 @@ Feature('Format', () => {
         (_, msg) => {
           leaveMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -261,8 +502,8 @@ Feature('Format', () => {
                 process.nextTick(() => {
                   resolve({ leftAt: new Date() });
                 });
-              }).then((format) => {
-                broker.publish('format', 'run.end.complete', format);
+              }).then((enrich) => {
+                broker.publish('format', 'run.end.complete', enrich);
               });
             });
           },
@@ -279,7 +520,7 @@ Feature('Format', () => {
         (_, msg) => {
           leaveMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -314,8 +555,8 @@ Feature('Format', () => {
                 process.nextTick(() => {
                   resolve({ enteredAt: new Date() });
                 });
-              }).then((format) => {
-                broker.publish('format', 'run.enter.complete', format);
+              }).then((enrich) => {
+                broker.publish('format', 'run.enter.complete', enrich);
               });
             });
 
@@ -326,7 +567,7 @@ Feature('Format', () => {
 
                 broker.getQueue('format-run-q').queueMessage({ routingKey: 'run.end.format' }, { leftAt: new Date() });
               },
-              { priority: 10000 },
+              { priority: 10000 }
             );
           },
         },
@@ -342,7 +583,7 @@ Feature('Format', () => {
         (_, msg) => {
           leaveMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -411,7 +652,7 @@ Feature('Format', () => {
         (_, msg) => {
           leaveMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.run();
@@ -670,7 +911,7 @@ Feature('Format', () => {
             () => {
               formatQ.queueMessage({ routingKey: 'run.enter.format' }, { endRoutingKey: 'run.enter.complete' }, { persistent: false });
             },
-            { consumerTag: '_extension-on-enter' },
+            { consumerTag: '_extension-on-enter' }
           );
 
           activity.on(
@@ -678,7 +919,7 @@ Feature('Format', () => {
             () => {
               formatQ.queueMessage({ routingKey: 'run.end.format' }, { endRoutingKey: 'run.end.complete' }, { persistent: false });
             },
-            { consumerTag: '_extension-on-end' },
+            { consumerTag: '_extension-on-end' }
           );
         },
         deactivate() {
@@ -900,7 +1141,7 @@ Feature('Format', () => {
                 () => {
                   formatQ.queueMessage({ routingKey: 'run.end.format' }, { endRoutingKey: 'run.end.complete' }, { persistent: false });
                 },
-                { consumerTag: '_extension-on-end' },
+                { consumerTag: '_extension-on-end' }
               );
             }
           }
@@ -911,7 +1152,7 @@ Feature('Format', () => {
               formatQ.queueMessage({ routingKey: 'run.enter.format' }, { endRoutingKey: 'run.enter.complete' }, { persistent: false });
               api.environment.services.saveState(api);
             },
-            { consumerTag: '_extension-on-enter' },
+            { consumerTag: '_extension-on-enter' }
           );
 
           activity.on(
@@ -920,7 +1161,7 @@ Feature('Format', () => {
               formatQ.queueMessage({ routingKey: 'run.end.format' }, { endRoutingKey: 'run.end.complete' }, { persistent: false });
               api.environment.services.saveState(api);
             },
-            { consumerTag: '_extension-on-end' },
+            { consumerTag: '_extension-on-end' }
           );
         },
         deactivate() {

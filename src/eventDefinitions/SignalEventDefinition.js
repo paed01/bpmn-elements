@@ -128,7 +128,7 @@ SignalEventDefinition.prototype._onCatchMessage = function onCatchMessage(routin
     {
       correlationId,
       type,
-    },
+    }
   );
 
   return this._complete(message.content.message, message.properties);
@@ -164,7 +164,7 @@ SignalEventDefinition.prototype._complete = function complete(output, options) {
       output,
       state: 'signal',
     }),
-    options,
+    options
   );
 };
 

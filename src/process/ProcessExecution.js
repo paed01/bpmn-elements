@@ -266,7 +266,7 @@ ProcessExecution.prototype.shake = function shake(fromId) {
         }
       }
     },
-    { noAck: true, consumerTag: `_shaker-${this.executionId}` },
+    { noAck: true, consumerTag: `_shaker-${this.executionId}` }
   );
 
   for (const a of toShake) a.shake();
@@ -301,7 +301,7 @@ ProcessExecution.prototype.discard = function discard() {
       type: this.type,
       executionId: this.executionId,
     },
-    { type: 'discard' },
+    { type: 'discard' }
   );
 };
 
@@ -313,7 +313,7 @@ ProcessExecution.prototype.cancel = function discard() {
       type: this.type,
       executionId: this.executionId,
     },
-    { type: 'cancel' },
+    { type: 'cancel' }
   );
 };
 
@@ -689,7 +689,7 @@ ProcessExecution.prototype._onChildCompleted = function onChildCompleted(message
         type: this.type,
         executionId: this.executionId,
       },
-      { type: 'cancel' },
+      { type: 'cancel' }
     );
   }
 
@@ -722,7 +722,7 @@ ProcessExecution.prototype._stopExecution = function stopExecution(message) {
       ...this[kExecuteMessage].content,
       ...(message && message.content),
     },
-    { type: 'stopped', persistent: false },
+    { type: 'stopped', persistent: false }
   );
 };
 
@@ -760,7 +760,7 @@ ProcessExecution.prototype._onCancel = function onCancel() {
       'transaction.cancel',
       cloneMessage(this[kExecuteMessage], {
         state: 'cancel',
-      }),
+      })
     );
 
     for (const msg of running) {
@@ -817,7 +817,7 @@ ProcessExecution.prototype._delegateApiMessage = function delegateApiMessage(rou
         this._debug(`delegated api message was consumed by ${msg.content ? msg.content.executionId : 'unknown'}`);
       }
     },
-    { consumerTag: `_ct-delegate-${correlationId}`, noAck: true },
+    { consumerTag: `_ct-delegate-${correlationId}`, noAck: true }
   );
 
   for (const child of this[kElements].children) {
@@ -858,7 +858,7 @@ ProcessExecution.prototype._complete = function complete(completionType, content
       ...content,
       state: completionType,
     }),
-    { type: completionType, mandatory: completionType === 'error' },
+    { type: completionType, mandatory: completionType === 'error' }
   );
 };
 

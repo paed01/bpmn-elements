@@ -163,7 +163,7 @@ ReceiveTaskExecution.prototype._setupMessageHandling = function setupMessageHand
     },
     {
       noAck: true,
-    },
+    }
   );
   broker.subscribeTmp('api', `activity.stop.${executionId}`, this._onStopApiMessage.bind(this), {
     noAck: true,
@@ -180,7 +180,7 @@ ReceiveTaskExecution.prototype._setupMessageHandling = function setupMessageHand
     },
     {
       noAck: true,
-    },
+    }
   );
 };
 

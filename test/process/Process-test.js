@@ -751,7 +751,7 @@ describe('Process', () => {
       postponed = bp.getPostponed();
       expect(
         postponed,
-        postponed.map((a) => a.id),
+        postponed.map((a) => a.id)
       ).to.have.length(2);
       expect(postponed[0].id).to.equal('task2');
       expect(postponed[1].id).to.equal('subProcess');
@@ -761,7 +761,7 @@ describe('Process', () => {
       postponed = bp.getPostponed();
       expect(
         postponed,
-        postponed.map((a) => a.id),
+        postponed.map((a) => a.id)
       ).to.have.length(1);
       expect(postponed[0].id).to.equal('subProcess');
       expect(postponed[0].content).to.have.property('isSubProcess', true);
@@ -934,7 +934,7 @@ describe('Process', () => {
           expect(api, `api ${routingKey} ${message.content.id}`).to.be.ok;
           expect(message.content.type).to.equal(api.content.type);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       bp.run();
@@ -953,7 +953,7 @@ describe('Process', () => {
             api = bp.getApi(message);
           }
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       bp.run();
@@ -984,7 +984,7 @@ describe('Process', () => {
               id: 'me?',
             },
           },
-        }),
+        })
       ).to.not.be.ok;
     });
   });
@@ -1238,7 +1238,7 @@ describe('Process', () => {
             bp.stop();
           }
         },
-        { consumerTag: '_test-tag' },
+        { consumerTag: '_test-tag' }
       );
 
       bp.run();
@@ -1288,7 +1288,7 @@ describe('Process', () => {
             bp.stop();
           }
         },
-        { consumerTag: '_test-tag' },
+        { consumerTag: '_test-tag' }
       );
 
       bp.run();
@@ -1726,7 +1726,7 @@ describe('Process', () => {
         () => {
           bp.stop();
         },
-        { priority: 1000 },
+        { priority: 1000 }
       );
 
       bp.run();
@@ -1759,7 +1759,7 @@ describe('Process', () => {
         () => {
           bp.stop();
         },
-        { priority: 1000 },
+        { priority: 1000 }
       );
 
       bp.run();
@@ -1861,7 +1861,7 @@ function Context() {
               id: 'theProcess',
             },
           },
-          context,
+          context
         ),
       ])
     );

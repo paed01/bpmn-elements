@@ -50,13 +50,13 @@ export function makeErrorFromMessage(errorMessage) {
       return new ActivityError(
         error.message || error.description,
         error.source,
-        error.inner ? error.inner : { code: error.code, name: error.name },
+        error.inner ? error.inner : { code: error.code, name: error.name }
       );
     case 'RunError':
       return new RunError(
         error.message || error.description,
         error.source,
-        error.inner ? error.inner : { code: error.code, name: error.name },
+        error.inner ? error.inner : { code: error.code, name: error.name }
       );
     case 'BpmnError':
       return new BpmnError(error.message || error.description, error, error.source);

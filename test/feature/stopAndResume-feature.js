@@ -383,7 +383,7 @@ Feature('Stop and resume', () => {
           definition.broker.cancel(msg.fields.consumerTag);
           setImmediate(() => definition.stop());
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.once('stop', () => {
@@ -414,7 +414,7 @@ Feature('Stop and resume', () => {
           definition.broker.cancel(msg.fields.consumerTag);
           setImmediate(() => definition.stop());
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.once('stop', () => {
@@ -451,7 +451,7 @@ Feature('Stop and resume', () => {
           definition.broker.cancel(msg.fields.consumerTag);
           definition.stop();
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.once('stop', () => {

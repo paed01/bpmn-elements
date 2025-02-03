@@ -73,7 +73,7 @@ describe('LoopCharacteristics', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const loop = new LoopCharacteristics(task, {
@@ -114,7 +114,7 @@ describe('LoopCharacteristics', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const loop = new LoopCharacteristics(task, {
@@ -146,7 +146,7 @@ describe('LoopCharacteristics', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const loop = new LoopCharacteristics(task, {
@@ -201,7 +201,7 @@ describe('LoopCharacteristics', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const loop = new LoopCharacteristics(task, {
@@ -254,7 +254,7 @@ describe('LoopCharacteristics', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const loop = new LoopCharacteristics(task, {
@@ -297,7 +297,7 @@ describe('LoopCharacteristics', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       task.broker.subscribeTmp(
@@ -306,7 +306,7 @@ describe('LoopCharacteristics', () => {
         (_, msg) => {
           task.broker.publish('execution', 'execute.completed', { ...msg.content });
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const loop = new LoopCharacteristics(task, {
@@ -341,7 +341,7 @@ describe('LoopCharacteristics', () => {
         (_, msg) => {
           task.broker.publish('execution', 'execute.completed', { ...msg.content });
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       let completeMsg;
@@ -354,7 +354,7 @@ describe('LoopCharacteristics', () => {
             task.broker.cancel('completed-consumer');
           }
         },
-        { noAck: true, consumerTag: 'completed-consumer' },
+        { noAck: true, consumerTag: 'completed-consumer' }
       );
 
       const loop = new LoopCharacteristics(task, {
@@ -388,7 +388,7 @@ describe('LoopCharacteristics', () => {
           messages.push(msg);
           task.broker.publish('execution', 'execute.completed', { ...msg.content });
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
@@ -443,7 +443,7 @@ describe('LoopCharacteristics', () => {
             task.broker.publish('execution', 'execute.completed', { ...msg.content, output: { stopLoop: msg.content.index === 1 } });
           }
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const loop = new LoopCharacteristics(task, {
@@ -507,7 +507,7 @@ describe('LoopCharacteristics', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         const loop = new LoopCharacteristics(task, {
@@ -551,7 +551,7 @@ describe('LoopCharacteristics', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         const loop = new LoopCharacteristics(task, {
@@ -594,7 +594,7 @@ describe('LoopCharacteristics', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         const loop = new LoopCharacteristics(task, {
@@ -635,7 +635,7 @@ describe('LoopCharacteristics', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         const loop = new LoopCharacteristics(task, {
@@ -700,7 +700,7 @@ describe('LoopCharacteristics', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const loop = new LoopCharacteristics(task, {
@@ -805,7 +805,7 @@ describe('LoopCharacteristics', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
@@ -855,7 +855,7 @@ describe('LoopCharacteristics', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const loop = new LoopCharacteristics(task, {
@@ -893,7 +893,7 @@ describe('LoopCharacteristics', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const loop = new LoopCharacteristics(task, {
@@ -934,7 +934,7 @@ describe('LoopCharacteristics', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
       task.broker.subscribeTmp(
         'execution',
@@ -942,7 +942,7 @@ describe('LoopCharacteristics', () => {
         (_, msg) => {
           startMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const loop = new LoopCharacteristics(task, {
@@ -1004,7 +1004,7 @@ describe('LoopCharacteristics', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         const loop = new LoopCharacteristics(task, {
@@ -1037,7 +1037,7 @@ describe('LoopCharacteristics', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         const loop = new LoopCharacteristics(task, {
@@ -1071,7 +1071,7 @@ describe('LoopCharacteristics', () => {
           (_, msg) => {
             messages.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         const loop = new LoopCharacteristics(task, {

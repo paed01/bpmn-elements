@@ -95,7 +95,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '__test-subscr' },
+        { noAck: true, consumerTag: '__test-subscr' }
       );
 
       event.broker.publish('api', 'activity.sometype.event_1_0', {}, { type: 'compensate' });
@@ -138,7 +138,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '__test-subscr' },
+        { noAck: true, consumerTag: '__test-subscr' }
       );
 
       event.broker.publish('api', 'activity.sometype.event_1', {}, { type: 'compensate' });
@@ -167,7 +167,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '__test-subscr' },
+        { noAck: true, consumerTag: '__test-subscr' }
       );
 
       event.run();
@@ -270,7 +270,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({
@@ -306,7 +306,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       event.run();
@@ -327,7 +327,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       definition.execute({
@@ -363,7 +363,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({
@@ -401,7 +401,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       definition.execute({
@@ -463,7 +463,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       event.activate();
@@ -490,7 +490,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       event.run();
@@ -515,7 +515,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       recoveredEvent.resume();
@@ -555,7 +555,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       event.activate();
@@ -576,7 +576,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true, consumerTag: '_test-tag' },
+        { noAck: true, consumerTag: '_test-tag' }
       );
 
       event.activate();
@@ -637,7 +637,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       definition.execute({
@@ -674,7 +674,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       event.run();
@@ -709,7 +709,7 @@ describe('CompensateEventDefinition', () => {
         (_, msg) => {
           messages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       endEvent.run();

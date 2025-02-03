@@ -13,7 +13,7 @@ describe('Properties', () => {
       },
       {
         values: [],
-      },
+      }
     );
     props.activate({
       fields: {},
@@ -35,7 +35,7 @@ describe('Properties', () => {
       },
       {
         values: [],
-      },
+      }
     );
     props.activate({
       fields: {},

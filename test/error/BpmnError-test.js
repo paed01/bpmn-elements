@@ -8,7 +8,7 @@ describe('BpmnError', () => {
         id: 'Error_0',
         name: 'TestError',
       },
-      { environment: new Environment() },
+      { environment: new Environment() }
     );
 
     const err = bpmnError.resolve({}, new Error('Men'));
@@ -26,7 +26,7 @@ describe('BpmnError', () => {
           errorCode: 'EMES',
         },
       },
-      { environment: new Environment() },
+      { environment: new Environment() }
     );
 
     const err = bpmnError.resolve(
@@ -35,7 +35,7 @@ describe('BpmnError', () => {
           return errorCode;
         },
       },
-      new Error('Men'),
+      new Error('Men')
     );
 
     expect(err).to.have.property('code', 'EMES');

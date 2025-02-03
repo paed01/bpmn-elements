@@ -64,7 +64,7 @@ Api.prototype.resolveExpression = function resolveExpression(expression) {
       content: this.content,
       properties: this.messageProperties,
     },
-    this.owner,
+    this.owner
   );
 };
 

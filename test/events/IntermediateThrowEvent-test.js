@@ -46,7 +46,7 @@ describe('IntermediateThrowEvent', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const signaling = event.waitFor('signal');

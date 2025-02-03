@@ -187,7 +187,7 @@ Feature('Activity status', () => {
       postponed = definition.getPostponed();
       expect(
         postponed,
-        postponed.map(({ id }) => id),
+        postponed.map(({ id }) => id)
       ).to.have.length(3);
       expect(postponed[0].content).to.have.property('id', 'eventgateway');
       expect(postponed[1].content).to.have.property('id', 'tevent');
@@ -207,7 +207,7 @@ Feature('Activity status', () => {
       postponed = definition.getPostponed();
       expect(
         postponed.length,
-        postponed.map(({ id }) => id),
+        postponed.map(({ id }) => id)
       ).to.be.above(1);
       expect(postponed[0].content).to.have.property('id', 'utask4');
       expect(postponed[1].content).to.have.property('id', 'utask5');
@@ -226,7 +226,7 @@ Feature('Activity status', () => {
       postponed = definition.getPostponed();
       expect(
         postponed.length,
-        postponed.map(({ id }) => id),
+        postponed.map(({ id }) => id)
       ).to.be.above(0);
       expect(postponed[0].content).to.have.property('id', 'utask4');
     });
@@ -244,7 +244,7 @@ Feature('Activity status', () => {
       postponed = definition.getPostponed();
       expect(
         postponed.length,
-        postponed.map(({ id }) => id),
+        postponed.map(({ id }) => id)
       ).to.be.above(0);
       expect(postponed[0].content).to.have.property('id', 'tell');
       expect(postponed[1].content).to.have.property('id', 'sub');
@@ -252,7 +252,7 @@ Feature('Activity status', () => {
       postponed = postponed[1].getPostponed();
       expect(
         postponed.length,
-        postponed.map(({ id }) => id),
+        postponed.map(({ id }) => id)
       ).to.be.above(0);
       expect(postponed[1].content).to.have.property('id', 'mtask');
     });
@@ -326,7 +326,7 @@ Feature('Activity status', () => {
       postponed = definition.getPostponed();
       expect(
         postponed.length,
-        postponed.map(({ id }) => id),
+        postponed.map(({ id }) => id)
       ).to.equal(2);
       expect(postponed[0].content).to.have.property('id', 'service1');
       expect(postponed[1].content).to.have.property('id', 'utask1');
@@ -347,7 +347,7 @@ Feature('Activity status', () => {
       postponed = definition.getPostponed();
       expect(
         postponed.length,
-        postponed.map(({ id }) => id),
+        postponed.map(({ id }) => id)
       ).to.equal(2);
       expect(postponed[0].content).to.have.property('id', 'timer');
       expect(postponed[1].content).to.have.property('id', 'utask1');
@@ -368,7 +368,7 @@ Feature('Activity status', () => {
       postponed = definition.getPostponed();
       expect(
         postponed.length,
-        postponed.map(({ id }) => id),
+        postponed.map(({ id }) => id)
       ).to.equal(2);
       expect(postponed[0].content).to.have.property('id', 'timer');
       expect(postponed[1].content).to.have.property('id', 'service2');
@@ -389,7 +389,7 @@ Feature('Activity status', () => {
       postponed = definition.getPostponed();
       expect(
         postponed.length,
-        postponed.map(({ id }) => id),
+        postponed.map(({ id }) => id)
       ).to.equal(1);
       expect(postponed[0].content).to.have.property('id', 'timer');
     });
@@ -725,7 +725,7 @@ Feature('Activity status', () => {
               (_, { content }) => {
                 if ('output' in content) environment.output[content.id] = content.output;
               },
-              { noAck: true, consumerTag: 'save-output-tag' },
+              { noAck: true, consumerTag: 'save-output-tag' }
             );
           },
         },
@@ -993,7 +993,7 @@ Feature('Activity status', () => {
       serviceCalls.pop().pop()(
         new BpmnError('Not found', {
           errorCode: 404,
-        }),
+        })
       );
     });
 

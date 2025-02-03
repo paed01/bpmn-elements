@@ -33,7 +33,7 @@ describe('isForCompensation task', () => {
           },
         },
       },
-      context,
+      context
     );
 
     task.activate();
@@ -72,7 +72,7 @@ describe('isForCompensation task', () => {
           },
         },
       },
-      context,
+      context
     );
 
     task.activate();
@@ -115,7 +115,7 @@ describe('isForCompensation task', () => {
           },
         },
       },
-      context,
+      context
     );
 
     task.activate();
@@ -176,7 +176,7 @@ describe('isForCompensation task', () => {
           },
         },
       },
-      context,
+      context
     );
 
     task.activate();
@@ -217,7 +217,7 @@ describe('isForCompensation task', () => {
           },
         },
       },
-      context,
+      context
     );
 
     task.activate();
@@ -256,7 +256,7 @@ describe('isForCompensation task', () => {
           },
         },
       },
-      context,
+      context
     );
 
     task.activate();
@@ -301,7 +301,7 @@ describe('isForCompensation task', () => {
           },
         },
       },
-      context,
+      context
     );
 
     task.activate();
@@ -348,7 +348,7 @@ describe('isForCompensation task', () => {
           },
         },
       },
-      context,
+      context
     );
 
     task.activate();

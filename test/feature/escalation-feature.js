@@ -181,7 +181,7 @@ Feature('Escalate', () => {
 
         const context = await testHelpers.context(source);
         definition = new Definition(context);
-      },
+      }
     );
 
     let end, caught;

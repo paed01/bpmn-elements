@@ -215,7 +215,7 @@ describe('ScriptTask', () => {
         },
         {
           'content-type': 'application/json',
-        },
+        }
       );
 
       const context = await testHelpers.context(source);

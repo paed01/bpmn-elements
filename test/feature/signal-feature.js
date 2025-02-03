@@ -435,7 +435,7 @@ Feature('Signals', () => {
 
         const context = await testHelpers.context(source);
         definition = new Definition(context);
-      },
+      }
     );
 
     When('definition is ran', () => {
@@ -591,7 +591,7 @@ Feature('Signals', () => {
         (_, msg) => {
           output[msg.content.id] = msg.content.output;
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -939,7 +939,7 @@ Feature('Signals', () => {
       </definitions>`;
 
         context = await testHelpers.context(source);
-      },
+      }
     );
 
     let end, state, definition;
@@ -954,7 +954,7 @@ Feature('Signals', () => {
         (_, msg) => {
           output[msg.content.id] = msg.content.output;
         },
-        { noAck: true },
+        { noAck: true }
       );
     });
 
@@ -976,7 +976,7 @@ Feature('Signals', () => {
         (_, msg) => {
           output[msg.content.id] = msg.content.output;
         },
-        { noAck: true },
+        { noAck: true }
       );
       definition.recover(state);
       definition.resume();
@@ -1004,7 +1004,7 @@ Feature('Signals', () => {
         (_, msg) => {
           output[msg.content.id] = msg.content.output;
         },
-        { noAck: true },
+        { noAck: true }
       );
       definition.recover(state);
       definition.resume();
@@ -1035,7 +1035,7 @@ Feature('Signals', () => {
         (_, msg) => {
           output[msg.content.id] = msg.content.output;
         },
-        { noAck: true },
+        { noAck: true }
       );
       definition.recover(state);
       definition.resume();
@@ -1068,7 +1068,7 @@ Feature('Signals', () => {
         (_, msg) => {
           output[msg.content.id] = msg.content.output;
         },
-        { noAck: true },
+        { noAck: true }
       );
       definition.recover(state);
 
@@ -1107,7 +1107,7 @@ Feature('Signals', () => {
         (_, msg) => {
           output[msg.content.id] = msg.content.output;
         },
-        { noAck: true },
+        { noAck: true }
       );
       definition.recover(state);
       definition.resume();
@@ -1139,7 +1139,7 @@ Feature('Signals', () => {
         (_, msg) => {
           output[msg.content.id] = msg.content.output;
         },
-        { noAck: true },
+        { noAck: true }
       );
       definition.recover(state);
       definition.resume();
@@ -1171,7 +1171,7 @@ Feature('Signals', () => {
         (_, msg) => {
           output[msg.content.id] = msg.content.output;
         },
-        { noAck: true },
+        { noAck: true }
       );
       definition.recover(state);
       definition.resume();
@@ -1203,7 +1203,7 @@ Feature('Signals', () => {
         (_, msg) => {
           output[msg.content.id] = msg.content.output;
         },
-        { noAck: true },
+        { noAck: true }
       );
       definition.recover(state);
 
@@ -1243,7 +1243,7 @@ Feature('Signals', () => {
         (_, msg) => {
           output[msg.content.id] = msg.content.output;
         },
-        { noAck: true },
+        { noAck: true }
       );
       definition.recover(state);
       definition.resume();

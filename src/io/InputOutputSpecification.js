@@ -71,7 +71,7 @@ IoSpecification.prototype._onFormatEnter = function onFormatOnEnter() {
     {
       dataObjects: [],
       sources: [],
-    },
+    }
   );
 
   if (!dataObjects.length) {
@@ -135,7 +135,7 @@ IoSpecification.prototype._onFormatComplete = function formatOnComplete(message)
     {
       dataObjects: [],
       sources: [],
-    },
+    }
   );
 
   const startRoutingKey = `run.onend.${safeType}`;

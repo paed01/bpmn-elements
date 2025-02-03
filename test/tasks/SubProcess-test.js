@@ -83,7 +83,7 @@ describe('SubProcess', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const completed = subProcess.waitFor('leave', (_, a) => a.content.id === 'subProcess');
@@ -129,7 +129,7 @@ describe('SubProcess', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const completed = subProcess.waitFor('leave', (_, a) => a.content.id === 'subProcess');
@@ -217,7 +217,7 @@ describe('SubProcess', () => {
           getActivities() {
             return [{ id: 'subTask', Behaviour: SignalTask }];
           },
-        }),
+        })
       );
 
       subProcess.run();
@@ -404,7 +404,7 @@ describe('SubProcess', () => {
         (_, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       activity.run();
@@ -551,7 +551,7 @@ describe('SubProcess', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const completed = subProcess.waitFor('leave').catch(() => {});
@@ -594,7 +594,7 @@ describe('SubProcess', () => {
         (routingKey, message) => {
           messages.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       const completed = subProcess.waitFor('leave');
@@ -956,7 +956,7 @@ describe('SubProcess', () => {
           (_, msg) => {
             waiting.push(msg);
           },
-          { noAck: true },
+          { noAck: true }
         );
 
         task.run();
@@ -1096,7 +1096,7 @@ describe('SubProcess', () => {
 
         task.once('wait', (api) => {
           api.signal(
-            `${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.item}')}`,
+            `${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.item}')}`
           );
           task.stop();
         });
@@ -1132,7 +1132,7 @@ describe('SubProcess', () => {
 
         task.once('wait', (api) => {
           api.signal(
-            `${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.index}')}`,
+            `${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.index}')}`
           );
           task.stop();
         });
@@ -1153,7 +1153,7 @@ describe('SubProcess', () => {
 
         const waitConsumer = recoveredTask.on('wait', (api) => {
           api.signal(
-            `${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.index}')}`,
+            `${api.resolveExpression('${environment.variables.prefix}')} ${api.resolveExpression('${environment.variables.content.index}')}`
           );
         });
 

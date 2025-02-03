@@ -42,7 +42,7 @@ Feature('Multiple start events', () => {
               (_, { content }) => {
                 environment.output[content.id] = 1;
               },
-              { noAck: true },
+              { noAck: true }
             );
           },
         },
@@ -140,7 +140,7 @@ Feature('Multiple start events', () => {
               (_, { content }) => {
                 environment.output[content.id] = 1;
               },
-              { noAck: true },
+              { noAck: true }
             );
           },
         },

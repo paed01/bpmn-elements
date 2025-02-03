@@ -234,7 +234,7 @@ describe('SequenceFlow', () => {
           (err, result) => {
             if (err) return reject(err);
             return resolve(result);
-          },
+          }
         );
       });
 
@@ -292,7 +292,7 @@ describe('SequenceFlow', () => {
           (err) => {
             if (err) return resolve(err);
             return reject(new Error('Wut?'));
-          },
+          }
         );
       });
 
@@ -323,7 +323,7 @@ describe('SequenceFlow', () => {
             isOk: 1,
             parent: {},
           },
-        }),
+        })
       ).to.equal(1);
 
       const res = await new Promise((resolve, reject) => {
@@ -337,7 +337,7 @@ describe('SequenceFlow', () => {
           (err, result) => {
             if (err) return reject(err);
             return resolve(result);
-          },
+          }
         );
       });
 
@@ -384,7 +384,7 @@ describe('SequenceFlow', () => {
           (err) => {
             if (err) return resolve(err);
             return reject(new Error('Ehhhh'));
-          },
+          }
         );
       });
 

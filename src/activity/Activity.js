@@ -150,7 +150,7 @@ Object.defineProperties(Activity.prototype, {
           broker,
           logger: this.logger,
         },
-        broker.getQueue('format-run-q'),
+        broker.getQueue('format-run-q')
       );
       return formatter;
     },
@@ -602,7 +602,9 @@ Activity.prototype._onRunMessage = function onRunMessage(routingKey, message, me
 
   const preStatus = this.status;
   this.status = 'formatting';
+  console.log({ routingKey, mc: this.formatter.formatQ.messageCount });
   return this.formatter.format(message, (err, formattedContent, formatted) => {
+    console.log({ routingKey, formatted, mc: this.formatter.formatQ.messageCount });
     if (err) return this.emitFatal(err, message.content);
     if (formatted) message.content = formattedContent;
     this.status = preStatus;
@@ -700,7 +702,7 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
           ...content,
           error: isRedelivered ? makeErrorFromMessage(message) : content.error,
         },
-        { correlationId },
+        { correlationId }
       );
       break;
     }
@@ -819,7 +821,7 @@ Activity.prototype._doRunLeave = function doRunLeave(message, isDiscarded, onOut
       cloneContent(content, {
         ...(outbound.length && { outbound }),
       }),
-      { correlationId },
+      { correlationId }
     );
 
     onOutbound();
@@ -891,7 +893,7 @@ Activity.prototype._publishRunOutbound = function publishRunOutbound(outboundFlo
         sequenceId: getUniqueId(`${flowId}_${action}`),
         ...(discardSequence && { discardSequence: discardSequence.slice() }),
       },
-    }),
+    })
   );
 };
 

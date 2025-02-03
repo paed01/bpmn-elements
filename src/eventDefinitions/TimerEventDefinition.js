@@ -153,7 +153,7 @@ TimerEventDefinition.prototype._onDelegatedApiMessage = function onDelegatedApiM
         ...content.message,
       },
     }),
-    { correlationId, type },
+    { correlationId, type }
   );
 
   return this._onApiMessage(routingKey, message);
@@ -170,7 +170,7 @@ TimerEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey,
           state: 'cancel',
           ...(message.content.message && { message: message.content.message }),
         },
-        { correlationId },
+        { correlationId }
       );
     }
     case 'stop': {

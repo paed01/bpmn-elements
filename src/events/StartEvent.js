@@ -64,7 +64,7 @@ StartEventBehaviour.prototype._onApiMessage = function onApiMessage(routingKey, 
           output: message.content.message,
           state: 'signal',
         }),
-        { correlationId },
+        { correlationId }
       );
     }
     case 'discard': {
@@ -97,7 +97,7 @@ StartEventBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMe
     {
       correlationId,
       type,
-    },
+    }
   );
 
   return this._onApiMessage(routingKey, message);

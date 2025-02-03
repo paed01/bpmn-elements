@@ -41,7 +41,7 @@ ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
       return broker.publish(
         'execution',
         'execute.error',
-        cloneContent(executeContent, { error: new ActivityError(err.message, executeMessage, err) }, { mandatory: true }),
+        cloneContent(executeContent, { error: new ActivityError(err.message, executeMessage, err) }, { mandatory: true })
       );
     }
 

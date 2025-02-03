@@ -81,7 +81,7 @@ async function run() {
       () => {
         broker.publish('format', 'run.input', { form });
       },
-      { noAck: true },
+      { noAck: true }
     );
   }
 }

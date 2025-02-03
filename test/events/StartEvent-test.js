@@ -145,7 +145,7 @@ describe('StartEvent', () => {
             id: 'start',
           },
         },
-        { delegate: false },
+        { delegate: false }
       );
 
       expect(event.counters).property('taken', 0);
@@ -180,7 +180,7 @@ describe('StartEvent', () => {
             id: 'end',
           },
         },
-        { delegate: true },
+        { delegate: true }
       );
 
       expect(event.counters).property('taken', 0);
@@ -374,7 +374,7 @@ describe('StartEvent', () => {
         (_, message) => {
           discarded.push(message);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       event.run();
@@ -397,7 +397,7 @@ describe('StartEvent', () => {
         {
           id: 'start',
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       );
 
       event.once('enter', (api) => api.stop());
@@ -412,7 +412,7 @@ describe('StartEvent', () => {
         {
           id: 'start',
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       );
 
       event.once('start', (api) => api.stop());
@@ -431,7 +431,7 @@ describe('StartEvent', () => {
             eventDefinitions: [{ Behaviour: MessageEventDefinition }],
           },
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       );
 
       event.once('wait', (api) => api.stop());
@@ -448,7 +448,7 @@ describe('StartEvent', () => {
         {
           id: 'start',
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       );
 
       event.once('enter', (api) => api.discard());
@@ -463,7 +463,7 @@ describe('StartEvent', () => {
         {
           id: 'start',
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       );
 
       event.once('start', (api) => api.discard());
@@ -482,7 +482,7 @@ describe('StartEvent', () => {
             eventDefinitions: [{ Behaviour: MessageEventDefinition }],
           },
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       );
 
       event.once('wait', (api) => {
@@ -503,7 +503,7 @@ describe('StartEvent', () => {
           type: 'startevent',
           behaviour: {},
         },
-        testHelpers.emptyContext(),
+        testHelpers.emptyContext()
       );
 
       event.once('enter', () => event.broker.publish('format', 'run.enter', { form: { key: 1 } }));

@@ -155,7 +155,7 @@ Feature('Attempt to provoke a stack overflow', () => {
         (_, msg) => {
           if (msg.content.index > 150) definition.stop();
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       stopped = definition.waitFor('stop');
@@ -234,7 +234,7 @@ Feature('Attempt to provoke a stack overflow', () => {
                       broker.publish('format', 'run.end.error', { error: new Error('Shaky') });
                     });
                   },
-                  { consumerTag: 'shaky' },
+                  { consumerTag: 'shaky' }
                 );
               },
               deactivate() {
@@ -299,7 +299,7 @@ Feature('Attempt to provoke a stack overflow', () => {
         (_, msg) => {
           if (msg.content.index > 5) definition.stop();
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       stopped = definition.waitFor('stop');
@@ -358,7 +358,7 @@ Feature('Attempt to provoke a stack overflow', () => {
           state = definition.getState();
           definition.stop();
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       stopped = definition.waitFor('stop');

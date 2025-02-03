@@ -399,7 +399,7 @@ Feature('Errors', () => {
       serviceCallback(
         new BpmnError('Not found', {
           errorCode: 404,
-        }),
+        })
       );
     });
 
@@ -429,7 +429,7 @@ Feature('Errors', () => {
       serviceCallback(
         new BpmnError('Unauthorized', {
           errorCode: 401,
-        }),
+        })
       );
     });
 
@@ -465,7 +465,7 @@ Feature('Errors', () => {
       serviceCallback(
         new BpmnError('Not found', {
           errorCode: 404,
-        }),
+        })
       );
     });
 
@@ -510,7 +510,7 @@ Feature('Errors', () => {
       serviceCallback(
         new BpmnError('Not found', {
           errorCode: 404,
-        }),
+        })
       );
     });
 
@@ -541,7 +541,7 @@ Feature('Errors', () => {
       serviceCallback(
         new BpmnError('Unauthorized', {
           errorCode: 401,
-        }),
+        })
       );
     });
 

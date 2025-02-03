@@ -79,7 +79,7 @@ CompensateEventDefinition.prototype.executeCatch = function executeCatch(execute
       sourceExchange: 'execution',
       bindExchange: 'compensate',
       expect: 'compensate',
-    }),
+    })
   );
 };
 

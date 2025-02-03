@@ -185,7 +185,7 @@ describe('EventDefinitionExecution', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true },
+      { noAck: true }
     );
 
     execution.execute({
@@ -236,7 +236,7 @@ describe('EventDefinitionExecution', () => {
       (_, msg) => {
         completeMessage = msg;
       },
-      { noAck: true },
+      { noAck: true }
     );
 
     const messages = [];
@@ -246,7 +246,7 @@ describe('EventDefinitionExecution', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true },
+      { noAck: true }
     );
 
     execution.execute({
@@ -288,7 +288,7 @@ describe('EventDefinitionExecution', () => {
       (_, msg) => {
         completeMessage = msg;
       },
-      { noAck: true },
+      { noAck: true }
     );
 
     const startMessages = [];
@@ -298,7 +298,7 @@ describe('EventDefinitionExecution', () => {
       (_, msg) => {
         startMessages.push(msg);
       },
-      { noAck: true },
+      { noAck: true }
     );
 
     execution.execute({
@@ -344,7 +344,7 @@ describe('EventDefinitionExecution', () => {
       (_, msg) => {
         completeMessage = msg;
       },
-      { noAck: true },
+      { noAck: true }
     );
 
     const messages = [];
@@ -354,7 +354,7 @@ describe('EventDefinitionExecution', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true },
+      { noAck: true }
     );
 
     execution.execute({
@@ -412,7 +412,7 @@ describe('EventDefinitionExecution', () => {
         messages.push(msg);
         execution.execute(msg);
       },
-      { noAck: true, consumerTag: 'test-consumer' },
+      { noAck: true, consumerTag: 'test-consumer' }
     );
 
     execution.execute({
@@ -463,7 +463,7 @@ describe('EventDefinitionExecution', () => {
         messages.push(msg);
         event.broker.publish('api', 'activity.stop.root-execution-id', {}, { type: 'stop' });
       },
-      { noAck: true, consumerTag: 'test-consumer' },
+      { noAck: true, consumerTag: 'test-consumer' }
     );
 
     execution.execute({
@@ -618,7 +618,7 @@ describe('EventDefinitionExecution', () => {
       (_, msg) => {
         completeMessage = msg;
       },
-      { noAck: true },
+      { noAck: true }
     );
 
     execution.execute({
@@ -703,7 +703,7 @@ describe('EventDefinitionExecution', () => {
           },
         },
       ],
-      'execute.custom',
+      'execute.custom'
     );
 
     event.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
@@ -749,7 +749,7 @@ describe('EventDefinitionExecution', () => {
       (_, msg) => {
         messages.push(msg);
       },
-      { noAck: true, consumerTag: 'test-consumer' },
+      { noAck: true, consumerTag: 'test-consumer' }
     );
 
     execution.execute({

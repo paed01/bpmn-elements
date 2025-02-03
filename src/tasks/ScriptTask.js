@@ -35,7 +35,7 @@ ScriptTaskBehaviour.prototype.execute = function execute(executeMessage) {
   if (!script) {
     return activity.emitFatal(
       new ActivityError(`Script format ${scriptFormat} is unsupported or was not registered for <${activity.id}>`, executeMessage),
-      executeContent,
+      executeContent
     );
   }
 
@@ -47,7 +47,7 @@ ScriptTaskBehaviour.prototype.execute = function execute(executeMessage) {
       return activity.broker.publish(
         'execution',
         'execute.error',
-        cloneContent(executeContent, { error: new ActivityError(err.message, executeMessage, err) }, { mandatory: true }),
+        cloneContent(executeContent, { error: new ActivityError(err.message, executeMessage, err) }, { mandatory: true })
       );
     }
     return activity.broker.publish('execution', 'execute.completed', cloneContent(executeContent, { output }));

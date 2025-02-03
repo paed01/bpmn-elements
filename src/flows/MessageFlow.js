@@ -80,7 +80,7 @@ MessageFlow.prototype._onSourceEnd = function onSourceEnd({ content }) {
   const source = this.source;
   const target = this.target;
   this.logger.debug(
-    `<${this.id}> sending message from <${source.processId}.${source.id}> to <${target.id ? `${target.processId}.${target.id}` : target.processId}>`,
+    `<${this.id}> sending message from <${source.processId}.${source.id}> to <${target.id ? `${target.processId}.${target.id}` : target.processId}>`
   );
   this.broker.publish('event', 'message.outbound', this._createMessageContent(content.message));
 };

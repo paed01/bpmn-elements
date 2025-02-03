@@ -47,7 +47,7 @@ describe('activity api', () => {
         (_, msg) => {
           apiMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       activity.run();
@@ -83,7 +83,7 @@ describe('activity api', () => {
         (_, msg) => {
           apiMessages.push(msg);
         },
-        { noAck: true },
+        { noAck: true }
       );
 
       activity.run();
@@ -110,7 +110,7 @@ describe('activity api', () => {
               () => {
                 broker.publish('execution', 'execute.discard', { ...content });
               },
-              { noAck: true, priority: 400 },
+              { noAck: true, priority: 400 }
             );
 
             broker.publish('execution', 'execute.start', { ...content });
