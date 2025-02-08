@@ -240,16 +240,105 @@ Feature('Format', () => {
     });
   });
 
+  Scenario('Task following start event with asynchronous formatting via format exchange on multiple events', () => {
+    let definition;
+    Given('a process with a start event', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="formatProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-task" sourceRef="start" targetRef="task" />
+          <task id="task" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = new Definition(context, {
+        extensions: {
+          formatSomething(activity) {
+            if (activity.type !== 'bpmn:Task') return;
+
+            /** @type {import('smqp').Broker} */
+            const broker = activity.broker;
+
+            activity.on('enter', (api) => {
+              if (api.fields.redelivered) return;
+
+              broker.publish('format', 'run.onenter.format', { endRoutingKey: 'run.onenter.format.completed' });
+
+              process.nextTick(() => {
+                broker.publish('format', 'run.onenter.format.completed', { enter: 1 });
+              });
+            });
+
+            activity.on('start', (api) => {
+              if (api.fields.redelivered) return;
+
+              broker.publish('format', 'run.onstart.format', { endRoutingKey: 'run.onstart.format.completed' });
+
+              process.nextTick(() => {
+                broker.publish('format', 'run.onstart.format.completed', { start: 2 });
+              });
+            });
+
+            activity.on('activity.execution.completed', (api) => {
+              if (api.fields.redelivered) return;
+
+              broker.publish('format', 'run.end.format', { endRoutingKey: 'run.end.format.completed' });
+
+              process.nextTick(() => {
+                broker.publish('format', 'run.end.format.completed', { end: 3 });
+              });
+            });
+          },
+        },
+      });
+    });
+
+    let end;
+    const leaveMessages = [];
+    When('ran', () => {
+      end = definition.waitFor('end');
+
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.leave',
+        (_, msg) => {
+          leaveMessages.push(msg);
+        },
+        { noAck: true }
+      );
+
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('formatting broker entities are emptied', () => {
+      const activity = definition.getActivityById('task');
+      expect(activity.getState().broker?.queues).to.not.be.ok;
+    });
+
+    And('leave message is formatted', () => {
+      expect(leaveMessages).to.have.length(2);
+      const [, msg] = leaveMessages;
+      expect(msg.content).to.deep.include({ enter: 1, start: 2 });
+    });
+  });
+
   Scenario('Start event with asynchronous formatting via format exchange on multiple events', () => {
     let definition;
     Given('a process with a start event', async () => {
       const source = `
-        <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-          <process id="formatProcess" isExecutable="true">
-            <startEvent id="start" />
-          </process>
-        </definitions>`;
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="formatProcess" isExecutable="true">
+          <startEvent id="start" />
+        </process>
+      </definitions>`;
 
       const context = await testHelpers.context(source);
       definition = new Definition(context, {
@@ -316,7 +405,7 @@ Feature('Format', () => {
 
     And('formatting broker entities are emptied', () => {
       const activity = definition.getActivityById('start');
-      console.log(activity.getState().broker.queues[0].messages);
+      expect(activity.getState().broker?.queues).to.not.be.ok;
     });
 
     And('leave message is formatted', () => {

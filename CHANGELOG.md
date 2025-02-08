@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-- fix old common exports
+## [17.0.0] - 2025-02-08
+
+- refactor message formatting, not sure if it breaking or not, but now it behaves as expected when formatting with multiple listeners
+- fix activity discard run when activity has completed executing but not yet reached end, status `executed`
+- use es5 trailing comma
 
 ## [16.2.2] - 2024-12-26
 

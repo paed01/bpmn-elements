@@ -76,15 +76,6 @@ export default [
     rules,
   },
   {
-    files: ['src/**/*.js'],
-    languageOptions: {
-      globals: {
-        ...globals['shared-node-browser'],
-        ...globals.es6,
-      },
-    },
-  },
-  {
     files: ['test/**/*.js'],
     languageOptions: {
       globals: {

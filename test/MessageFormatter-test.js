@@ -11,14 +11,11 @@ describe('MessageFormatter', () => {
     const activityBroker = new ActivityBroker({ id: 'element' });
     broker = activityBroker.broker;
 
-    formatter = new Formatter(
-      {
-        id: 'element',
-        broker,
-        logger: Logger('format'),
-      },
-      broker.getQueue('format-run-q')
-    );
+    formatter = new Formatter({
+      id: 'element',
+      broker,
+      logger: Logger('format'),
+    });
   });
 
   it('calls callback if format queue is empty', (done) => {
@@ -39,7 +36,7 @@ describe('MessageFormatter', () => {
 
   describe('synchronous formatting', () => {
     it('calls callback with formatted content', (done) => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
       formatQ.queueMessage({ routingKey: 'run.format.1' }, { me: 1 });
 
       formatter.format(
@@ -66,7 +63,7 @@ describe('MessageFormatter', () => {
     });
 
     it('calls callback for every format complete', async () => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
 
       let result;
 
@@ -97,7 +94,7 @@ describe('MessageFormatter', () => {
     });
 
     it('multiple formatting messages completes all formatting', (done) => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
 
       formatQ.queueMessage({ routingKey: 'run.format.1' }, { me: 1 });
       formatQ.queueMessage({ routingKey: 'run.format.2' }, { me: 3 });
@@ -127,7 +124,7 @@ describe('MessageFormatter', () => {
     });
 
     it('unaltered content calls callback with formatted false', (done) => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
 
       formatQ.queueMessage({ routingKey: 'run.format.start' }, {});
 
@@ -153,7 +150,7 @@ describe('MessageFormatter', () => {
     });
 
     it('unaltered content calls callback with formatted false', (done) => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
 
       formatQ.queueMessage({ routingKey: 'run.format.start' }, {});
 
@@ -181,7 +178,7 @@ describe('MessageFormatter', () => {
 
   describe('asynchronous formatting', () => {
     it('calls callback with formatted content', (done) => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
 
       formatQ.queueMessage({ routingKey: 'run.format.start' }, { endRoutingKey: 'run.format.end' });
 
@@ -211,7 +208,7 @@ describe('MessageFormatter', () => {
     });
 
     it('format on start message is honored', async () => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
 
       formatQ.queueMessage({ routingKey: 'run.format.start.1' }, { endRoutingKey: '#.end.1', started: true });
 
@@ -234,7 +231,7 @@ describe('MessageFormatter', () => {
     });
 
     it('calls callback for every run when completed asynchronously', async () => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
       let result;
 
       formatQ.queueMessage({ routingKey: 'run.format.start' }, { endRoutingKey: 'run.format.end' });
@@ -271,7 +268,7 @@ describe('MessageFormatter', () => {
     });
 
     it('calls callback for every run when completed immediately', async () => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
       let result;
 
       formatQ.queueMessage({ routingKey: 'run.format.start' }, { endRoutingKey: 'run.format.end' });
@@ -308,7 +305,7 @@ describe('MessageFormatter', () => {
     });
 
     it('multiple async formatting calls callback when complete', (done) => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
 
       formatQ.queueMessage({ routingKey: 'run.format.start.1' }, { endRoutingKey: '#.end.1' });
       formatQ.queueMessage({ routingKey: 'run.format.start.2' }, { endRoutingKey: 'run.format.end.2' });
@@ -341,7 +338,7 @@ describe('MessageFormatter', () => {
     });
 
     it('unaltered content calls callback with formatted false', (done) => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
 
       formatQ.queueMessage({ routingKey: 'run.format.start' }, { endRoutingKey: 'run.format.end' });
 
@@ -369,7 +366,7 @@ describe('MessageFormatter', () => {
     });
 
     it('failed formatting calls callback with default error', (done) => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
 
       formatQ.queueMessage({ routingKey: 'run.format.start' }, { endRoutingKey: 'run.format.end' });
 
@@ -406,7 +403,7 @@ describe('MessageFormatter', () => {
     });
 
     it('error without message calls callback with default error message', (done) => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
 
       formatQ.queueMessage({ routingKey: 'run.format.start' }, { endRoutingKey: 'run.format.end' });
 
@@ -443,7 +440,7 @@ describe('MessageFormatter', () => {
     });
 
     it('multiple async formatting calls callback with error if one fails', (done) => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
 
       formatQ.queueMessage({ routingKey: 'run.format.start.1' }, { endRoutingKey: '#.end.1' });
       formatQ.queueMessage({ routingKey: 'run.format.start.2' }, { endRoutingKey: 'run.format.end.2' });
@@ -481,7 +478,7 @@ describe('MessageFormatter', () => {
     });
 
     it('lingering exec message from previous run is ignored', async () => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
 
       formatQ.queueMessage({ routingKey: 'run.format.start.1' }, { endRoutingKey: '#.end.1' });
       formatQ.queueMessage({ routingKey: 'run.format.start.error' }, {});
@@ -577,7 +574,7 @@ describe('MessageFormatter', () => {
     });
 
     it('multiple formatting using queue message calls callback when complete', async () => {
-      const formatQ = formatter.formatQ;
+      const formatQ = formatter.broker.getQueue('format-run-q');
 
       formatQ.queueMessage({ routingKey: 'run.format.1' }, { me: 1 });
       formatQ.queueMessage({ routingKey: 'run.format.start.2' }, { endRoutingKey: 'run.format.end.2' });

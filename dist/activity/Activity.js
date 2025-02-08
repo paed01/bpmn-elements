@@ -156,12 +156,7 @@ Object.defineProperties(Activity.prototype, {
     get() {
       let formatter = this[kFormatter];
       if (formatter) return formatter;
-      const broker = this.broker;
-      formatter = this[kFormatter] = new _MessageFormatter.Formatter({
-        id: this.id,
-        broker,
-        logger: this.logger
-      }, broker.getQueue('format-run-q'));
+      formatter = this[kFormatter] = new _MessageFormatter.Formatter(this);
       return formatter;
     }
   },
@@ -430,7 +425,13 @@ Activity.prototype._discardRun = function discardRun() {
   if (!status) return;
   const execution = this[kExec].get('execution');
   if (execution && !execution.completed) return;
+  let discardRoutingKey = 'run.discard';
   switch (status) {
+    case 'executed':
+      {
+        discardRoutingKey = 'run.discarded';
+        break;
+      }
     case 'end':
     case 'executing':
     case 'error':
@@ -442,7 +443,9 @@ Activity.prototype._discardRun = function discardRun() {
   if (this.extensions) this.extensions.deactivate((0, _messageHelper.cloneMessage)(stateMessage));
   const broker = this.broker;
   broker.getQueue('run-q').purge();
-  broker.publish('run', 'run.discard', (0, _messageHelper.cloneContent)(stateMessage.content));
+  broker.publish('run', discardRoutingKey, (0, _messageHelper.cloneContent)(stateMessage.content), {
+    correlationId: stateMessage.properties.correlationId
+  });
   this[kConsuming] = true;
   this._consumeRunQ();
 };
@@ -609,9 +612,11 @@ Activity.prototype._onRunMessage = function onRunMessage(routingKey, message, me
   const preStatus = this.status;
   this.status = 'formatting';
   return this.formatter.format(message, (err, formattedContent, formatted) => {
-    if (err) return this.emitFatal(err, message.content);
-    if (formatted) message.content = formattedContent;
     this.status = preStatus;
+    if (err) {
+      return this.emitFatal(err, message.content);
+    }
+    if (formatted) message.content = formattedContent;
     this._continueRunMessage(routingKey, message, messageProperties);
   });
 };

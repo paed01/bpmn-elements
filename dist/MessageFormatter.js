@@ -10,7 +10,13 @@ var _Errors = require("./error/Errors.js");
 var _smqp = require("smqp");
 const kOnMessage = Symbol.for('onMessage');
 const kExecution = Symbol.for('execution');
-function Formatter(element, formatQ) {
+const EXEC_ROUTING_KEY = 'run._formatting.exec';
+
+/**
+ * Message formatter used to enrich an element run message before continuing to the next run message
+ * @param {import('types').ElementBase} element
+ */
+function Formatter(element) {
   const {
     id,
     broker,
@@ -19,16 +25,19 @@ function Formatter(element, formatQ) {
   this.id = id;
   this.broker = broker;
   this.logger = logger;
-  this.formatQ = formatQ;
   this[kOnMessage] = this._onMessage.bind(this);
 }
+
+/**
+ * Format message
+ * @param {import('types').MessageElement} message
+ * @param {CallableFunction} callback
+ */
 Formatter.prototype.format = function format(message, callback) {
   const correlationId = this._runId = (0, _shared.getUniqueId)(message.fields.routingKey);
   const consumerTag = '_formatter-' + correlationId;
-  const formatQ = this.formatQ;
-  formatQ.queueMessage({
-    routingKey: '_formatting.exec'
-  }, {}, {
+  const broker = this.broker;
+  broker.publish('format', EXEC_ROUTING_KEY, {}, {
     correlationId,
     persistent: false
   });
@@ -37,11 +46,11 @@ Formatter.prototype.format = function format(message, callback) {
     formatKey: message.fields.routingKey,
     runMessage: (0, _messageHelper.cloneMessage)(message),
     callback,
-    pending: [],
+    pending: new Set(),
     formatted: false,
     executeMessage: null
   };
-  formatQ.consume(this[kOnMessage], {
+  broker.consume('format-run-q', this[kOnMessage], {
     consumerTag,
     prefetch: 100
   });
@@ -53,41 +62,33 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
     pending,
     executeMessage
   } = this[kExecution];
-  const asyncFormatting = pending.length;
-  switch (routingKey) {
-    case '_formatting.exec':
-      if (message.properties.correlationId !== correlationId) return message.ack();
-      if (!asyncFormatting) {
-        message.ack();
-        return this._complete(message);
+  const asyncFormatting = pending.size;
+  if (routingKey === EXEC_ROUTING_KEY) {
+    if (message.properties.correlationId !== correlationId) return message.ack();
+    message.ack();
+    if (!asyncFormatting) {
+      return this._complete(message);
+    }
+    this[kExecution].executeMessage = message;
+  } else {
+    message.ack();
+    const endRoutingKey = message.content?.endRoutingKey;
+    if (endRoutingKey) {
+      this._enrich(message.content);
+      pending.add(message);
+      return this._debug(`start formatting ${formatKey} message content with formatter ${routingKey}`);
+    }
+    if (asyncFormatting) {
+      const isError = this._popFormatStart(pending, routingKey).isError;
+      if (isError) {
+        return this._complete(message, true);
       }
-      this[kExecution].executeMessage = message;
-      break;
-    default:
-      {
-        message.ack();
-        const endRoutingKey = message.content?.endRoutingKey;
-        if (endRoutingKey) {
-          this._decorate(message.content);
-          pending.push(message);
-          return this._debug(`start formatting ${formatKey} message content with formatter ${routingKey}`);
-        }
-        if (asyncFormatting) {
-          const {
-            isError,
-            message: startMessage
-          } = this._popFormatStart(pending, routingKey);
-          if (startMessage) startMessage.ack();
-          if (isError) {
-            return this._complete(message, true);
-          }
-        }
-        this._decorate(message.content);
-        this._debug(`format ${message.fields.routingKey} message content with formatter ${routingKey}`);
-        if (executeMessage && asyncFormatting && !pending.length) {
-          this._complete(message);
-        }
-      }
+    }
+    this._enrich(message.content);
+    this._debug(`format ${message.fields.routingKey} message content with formatter ${routingKey}`);
+    if (executeMessage && !pending.size) {
+      this._complete(message);
+    }
   }
 };
 Formatter.prototype._complete = function complete(message, isError) {
@@ -109,7 +110,7 @@ Formatter.prototype._complete = function complete(message, isError) {
   }
   return callback(null, runMessage.content, formatted);
 };
-Formatter.prototype._decorate = function decorate(withContent) {
+Formatter.prototype._enrich = function enrich(withContent) {
   const content = this[kExecution].runMessage.content;
   for (const key in withContent) {
     switch (key) {
@@ -134,20 +135,19 @@ Formatter.prototype._decorate = function decorate(withContent) {
   }
 };
 Formatter.prototype._popFormatStart = function popFormattingStart(pending, routingKey) {
-  for (let idx = 0; idx < pending.length; idx++) {
-    const msg = pending[idx];
+  for (const msg of pending) {
     const {
       endRoutingKey,
       errorRoutingKey = '#.error'
     } = msg.content;
     if (endRoutingKey && (0, _smqp.getRoutingKeyPattern)(endRoutingKey).test(routingKey)) {
       this._debug(`completed formatting ${msg.fields.routingKey} message content with formatter ${routingKey}`);
-      pending.splice(idx, 1);
+      pending.delete(msg);
       return {
         message: msg
       };
     } else if ((0, _smqp.getRoutingKeyPattern)(errorRoutingKey).test(routingKey)) {
-      pending.splice(idx, 1);
+      pending.delete(msg);
       return {
         isError: true,
         message: msg

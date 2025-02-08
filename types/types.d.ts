@@ -699,6 +699,13 @@ declare interface IScripts {
   getScript(language: string, identifier: { id: string; [x: string]: any }): Script;
 }
 
+declare class MessageFormatter {
+  id: string;
+  broker: Broker;
+  logger: ILogger;
+  format(message: MessageElement, callback: CallableFunction): void;
+}
+
 declare class Activity extends Element<Activity> {
   constructor(behaviour: IActivityBehaviour, activityDef: SerializableElement, context: ContextInstance);
   get Behaviour(): IActivityBehaviour;
@@ -721,6 +728,7 @@ declare class Activity extends Element<Activity> {
   get triggeredByEvent(): boolean;
   get attachedTo(): Activity;
   get eventDefinitions(): EventDefinition[];
+  get formatter(): MessageFormatter;
   /** Parent element process or sub process reference */
   get parentElement(): Process | Activity;
   activate(): void;

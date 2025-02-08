@@ -6,30 +6,31 @@ import { getRoutingKeyPattern } from 'smqp';
 const kOnMessage = Symbol.for('onMessage');
 const kExecution = Symbol.for('execution');
 
-const execRoutingKey = '_formatting.exec';
+const EXEC_ROUTING_KEY = 'run._formatting.exec';
 
-export function Formatter(element, formatQ) {
+/**
+ * Message formatter used to enrich an element run message before continuing to the next run message
+ * @param {import('types').ElementBase} element
+ */
+export function Formatter(element) {
   const { id, broker, logger } = element;
   this.id = id;
   this.broker = broker;
   this.logger = logger;
-  this.formatQ = formatQ;
   this[kOnMessage] = this._onMessage.bind(this);
 }
 
+/**
+ * Format message
+ * @param {import('types').ElementBrokerMessage} message
+ * @param {CallableFunction} callback
+ */
 Formatter.prototype.format = function format(message, callback) {
   const correlationId = (this._runId = getUniqueId(message.fields.routingKey));
   const consumerTag = '_formatter-' + correlationId;
-  const formatQ = this.formatQ;
+  const broker = this.broker;
 
-  console.log({
-    format: message.fields.routingKey,
-    q: formatQ.messageCount,
-    c: formatQ.consumerCount,
-    b: this.broker.getExchange('format').bindings,
-  });
-
-  formatQ.queueMessage({ routingKey: execRoutingKey }, {}, { correlationId, persistent: false });
+  broker.publish('format', EXEC_ROUTING_KEY, {}, { correlationId, persistent: false });
 
   this[kExecution] = {
     correlationId,
@@ -41,7 +42,7 @@ Formatter.prototype.format = function format(message, callback) {
     executeMessage: null,
   };
 
-  formatQ.consume(this[kOnMessage], {
+  broker.consume('format-run-q', this[kOnMessage], {
     consumerTag,
     prefetch: 100,
   });
@@ -50,12 +51,11 @@ Formatter.prototype.format = function format(message, callback) {
 Formatter.prototype._onMessage = function onMessage(routingKey, message) {
   const { formatKey, correlationId, pending, executeMessage } = this[kExecution];
   const asyncFormatting = pending.size;
-  console.log({ f: routingKey, p: asyncFormatting });
 
-  if (routingKey === execRoutingKey) {
+  if (routingKey === EXEC_ROUTING_KEY) {
     if (message.properties.correlationId !== correlationId) return message.ack();
+    message.ack();
     if (!asyncFormatting) {
-      message.ack();
       return this._complete(message);
     }
     this[kExecution].executeMessage = message;
@@ -71,8 +71,7 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
     }
 
     if (asyncFormatting) {
-      const { isError, message: startMessage } = this._popFormatStart(pending, routingKey);
-      if (startMessage) startMessage.ack();
+      const isError = this._popFormatStart(pending, routingKey).isError;
 
       if (isError) {
         return this._complete(message, true);
@@ -82,7 +81,7 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
     this._enrich(message.content);
     this._debug(`format ${message.fields.routingKey} message content with formatter ${routingKey}`);
 
-    if (executeMessage && asyncFormatting && !pending.size) {
+    if (executeMessage && !pending.size) {
       this._complete(message);
     }
   }
