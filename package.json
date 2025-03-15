@@ -93,14 +93,14 @@
     "chronokinesis": "^6.0.0",
     "debug": "^4.3.4",
     "eslint": "^9.0.0",
-    "globals": "^15.0.0",
+    "globals": "^16.0.0",
     "got": "^14.2.1",
     "mocha": "^11.0.1",
     "mocha-cakes-2": "^3.3.0",
     "moddle-context-serializer": "^4.2.1",
     "nock": "^14.0.0",
     "prettier": "^3.2.5",
-    "texample": "^0.0.6"
+    "texample": "^0.0.7"
   },
   "dependencies": {
     "@0dep/piso": "^2.4.0",

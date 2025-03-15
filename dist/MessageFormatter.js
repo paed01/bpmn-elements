@@ -30,7 +30,7 @@ function Formatter(element) {
 
 /**
  * Format message
- * @param {import('types').MessageElement} message
+ * @param {import('types').ElementBrokerMessage} message
  * @param {CallableFunction} callback
  */
 Formatter.prototype.format = function format(message, callback) {
