@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [17.1.0] - 2025-04-30
+
+- add support for ad-hoc subprocess. The behavior is the same as for an ordinary subprocess
+
 ## [17.0.0] - 2025-02-08
 
 - refactor message formatting, not sure if it breaking or not, but now it behaves as expected when formatting with multiple listeners

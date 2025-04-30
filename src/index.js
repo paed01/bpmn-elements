@@ -38,6 +38,7 @@ import { Timers } from './Timers.js';
 export { ActivityError, RunError } from './error/Errors.js';
 
 export {
+  SubProcess as AdHocSubProcess,
   Association,
   Activity,
   BoundaryEvent,
