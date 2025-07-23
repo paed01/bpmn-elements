@@ -306,7 +306,7 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
       this[kStatus] = undefined;
       message.ack();
       this._deactivateRunConsumers();
-      const { output, ...rest } = content; // eslint-disable-line no-unused-vars
+      const { output, ...rest } = content;
       this._publishEvent('leave', rest);
       return;
     }

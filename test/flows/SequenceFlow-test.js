@@ -12,6 +12,46 @@ const extensions = {
 
 const multipleInboundSource = factory.resource('multiple-multiple-inbound.bpmn').toString();
 
+class TestScripts {
+  constructor() {
+    this.javaScripts = new Scripts();
+    this.scripts = new Map();
+  }
+  register({ id, type, behaviour }) {
+    if (!behaviour.conditionExpression) return;
+
+    const scriptBody = behaviour.conditionExpression.body;
+    const sync = !/next\(/.test(scriptBody);
+
+    const registered = this.javaScripts.register({
+      id,
+      type,
+      behaviour: {
+        conditionExpression: {
+          ...behaviour.conditionExpression,
+          language: 'javascript',
+        },
+      },
+    });
+
+    this.scripts.set(id, { sync, registered });
+  }
+  getScript(language, { id }) {
+    const { sync, registered } = this.scripts.get(id);
+    return {
+      execute,
+    };
+
+    function execute(executionContext, callback) {
+      if (sync) {
+        const result = registered.script.runInNewContext(executionContext);
+        return callback(null, result);
+      }
+      return registered.script.runInNewContext({ ...executionContext, next: callback });
+    }
+  }
+}
+
 describe('SequenceFlow', () => {
   describe('properties', () => {
     let context;
@@ -616,43 +656,3 @@ describe('SequenceFlow', () => {
     });
   });
 });
-
-class TestScripts {
-  constructor() {
-    this.javaScripts = new Scripts();
-    this.scripts = new Map();
-  }
-  register({ id, type, behaviour }) {
-    if (!behaviour.conditionExpression) return;
-
-    const scriptBody = behaviour.conditionExpression.body;
-    const sync = !/next\(/.test(scriptBody);
-
-    const registered = this.javaScripts.register({
-      id,
-      type,
-      behaviour: {
-        conditionExpression: {
-          ...behaviour.conditionExpression,
-          language: 'javascript',
-        },
-      },
-    });
-
-    this.scripts.set(id, { sync, registered });
-  }
-  getScript(language, { id }) {
-    const { sync, registered } = this.scripts.get(id);
-    return {
-      execute,
-    };
-
-    function execute(executionContext, callback) {
-      if (sync) {
-        const result = registered.script.runInNewContext(executionContext);
-        return callback(null, result);
-      }
-      return registered.script.runInNewContext({ ...executionContext, next: callback });
-    }
-  }
-}

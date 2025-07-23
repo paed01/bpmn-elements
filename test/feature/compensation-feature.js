@@ -797,7 +797,10 @@ Feature('Compensation', () => {
       });
     });
 
+    let end;
     When('definition is ran', () => {
+      end = definition.waitFor('end');
+
       definition.run();
     });
 
@@ -874,7 +877,6 @@ Feature('Compensation', () => {
       return stopped;
     });
 
-    let end;
     When('definition is recovered and resumed', () => {
       definition = new Definition(context.clone(), {
         services: {

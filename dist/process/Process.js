@@ -314,7 +314,7 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
         const {
           output,
           ...rest
-        } = content; // eslint-disable-line no-unused-vars
+        } = content;
         this._publishEvent('leave', rest);
         return;
       }

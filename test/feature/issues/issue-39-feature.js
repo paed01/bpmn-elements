@@ -21,6 +21,27 @@ const source = `
   </process>
 </definitions>`;
 
+class FlorianSequenceFlow extends SequenceFlow {
+  getCondition() {
+    const condition = super.getCondition();
+    if (condition?.type !== 'expression') return condition;
+
+    const execute = condition.execute;
+    condition.execute = asyncExecute.bind(condition);
+
+    return condition;
+
+    function asyncExecute(message, callback) {
+      execute.call(condition, message, (executeErr, result) => {
+        if (executeErr) return callback(executeErr);
+        return Promise.resolve(result)
+          .then((r) => (callback ? callback(null, r) : result))
+          .catch((err) => (callback ? callback(err) : err));
+      });
+    }
+  }
+}
+
 Feature('Issue 39 - resolve SequenceFlow expression promise', () => {
   Scenario('expression function returns promise', () => {
     let context, definition, end;
@@ -58,24 +79,3 @@ Feature('Issue 39 - resolve SequenceFlow expression promise', () => {
     });
   });
 });
-
-class FlorianSequenceFlow extends SequenceFlow {
-  getCondition() {
-    const condition = super.getCondition();
-    if (condition?.type !== 'expression') return condition;
-
-    const execute = condition.execute;
-    condition.execute = asyncExecute.bind(condition);
-
-    return condition;
-
-    function asyncExecute(message, callback) {
-      execute.call(condition, message, (executeErr, result) => {
-        if (executeErr) return callback(executeErr);
-        return Promise.resolve(result)
-          .then((r) => (callback ? callback(null, r) : result))
-          .catch((err) => (callback ? callback(err) : err));
-      });
-    }
-  }
-}

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [17.2.0] - 2025-07-22
+
+- major upgrade of [smqp@10.0.0](https://github.com/paed01/smqp/blob/default/CHANGELOG.md)
+
 ## [17.1.0] - 2025-04-30
 
 - add support for ad-hoc subprocess. The behavior is the same as for an ordinary subprocess
