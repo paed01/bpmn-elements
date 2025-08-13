@@ -1,4 +1,4 @@
-import ck from 'chronokinesis';
+import * as ck from 'chronokinesis';
 
 import { Timers } from '../src/Timers.js';
 

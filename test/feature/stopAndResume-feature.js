@@ -1,4 +1,4 @@
-import ck from 'chronokinesis';
+import * as ck from 'chronokinesis';
 import Definition from '../../src/definition/Definition.js';
 import JsExtension from '../resources/extensions/JsExtension.js';
 import testHelpers from '../helpers/testHelpers.js';

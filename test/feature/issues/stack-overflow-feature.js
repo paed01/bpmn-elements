@@ -1,5 +1,4 @@
 import { Definition } from '../../../src/index.js';
-import got from 'got';
 import JsExtension from '../../resources/extensions/JsExtension.js';
 import nock from 'nock';
 import testHelpers from '../../helpers/testHelpers.js';
@@ -90,8 +89,8 @@ Feature('Attempt to provoke a stack overflow', () => {
 
       async function makeRequest(path, _, next) {
         try {
-          const { body } = await got(new URL(path, 'http://example.local'), { responseType: 'json', retry: { limit: 0 } });
-          return next(null, body);
+          const res = await fetch(new URL(path, 'http://example.local'));
+          return next(null, await res.json());
         } catch (err) {
           next(err);
         }
@@ -205,8 +204,8 @@ Feature('Attempt to provoke a stack overflow', () => {
 
       async function makeRequest(path, _, next) {
         try {
-          const { body } = await got(new URL(path, 'http://example.local'), { responseType: 'json', retry: { limit: 0 } });
-          return next(null, body);
+          const res = await fetch(new URL(path, 'http://example.local'));
+          return next(null, await res.json());
         } catch (err) {
           next(err);
         }

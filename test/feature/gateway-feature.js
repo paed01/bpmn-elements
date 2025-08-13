@@ -1,6 +1,5 @@
 import Definition from '../../src/definition/Definition.js';
 import factory from '../helpers/factory.js';
-import got from 'got';
 import nock from 'nock';
 
 import testHelpers from '../helpers/testHelpers.js';
@@ -273,9 +272,7 @@ Feature('Gateway', () => {
       }
 
       async function getRule(rule) {
-        const body = await got(rule, {
-          prefixUrl: 'https://rules.local',
-        }).json();
+        const body = await fetch(new URL(rule, 'https://rules.local')).then((res) => res.json());
 
         return { rule, value: body.value };
       }

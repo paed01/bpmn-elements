@@ -1,4 +1,4 @@
-import ck from 'chronokinesis';
+import * as ck from 'chronokinesis';
 import Environment from '../../src/Environment.js';
 import testHelpers from '../helpers/testHelpers.js';
 import TimerEventDefinition from '../../src/eventDefinitions/TimerEventDefinition.js';

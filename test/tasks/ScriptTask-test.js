@@ -1,6 +1,5 @@
 import js from '../resources/extensions/JsExtension.js';
 import nock from 'nock';
-import request from 'got';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityError } from '../../src/error/Errors.js';
 import { Scripts } from '../helpers/JavaScripts.js';
@@ -194,9 +193,9 @@ describe('ScriptTask', () => {
         <scriptTask id="scriptTask" scriptFormat="Javascript">
           <script>
             <![CDATA[
-              const request = environment.getServiceByName('request');
-              request('http://example.com/test')
-                .json()
+              const fetch = environment.getServiceByName('fetch');
+              fetch('http://example.com/test')
+                .then((res) => res.json())
                 .then((body) => next(null, body))
                 .catch(next);
             ]]>
@@ -208,18 +207,10 @@ describe('ScriptTask', () => {
         </process>
       </definitions>`;
 
-      nock('http://example.com').get('/test').reply(
-        200,
-        {
-          data: 2,
-        },
-        {
-          'content-type': 'application/json',
-        }
-      );
+      nock('http://example.com').get('/test').reply(200, { data: 2 }, { 'content-type': 'application/json' });
 
       const context = await testHelpers.context(source);
-      context.environment.addService('request', request);
+      context.environment.addService('fetch', globalThis.fetch);
 
       const task = context.getActivityById('scriptTask');
       task.activate();

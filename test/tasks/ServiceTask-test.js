@@ -1,6 +1,5 @@
 import JsExtension from '../resources/extensions/JsExtension.js';
 import nock from 'nock';
-import got from 'got';
 import ServiceTask from '../../src/tasks/ServiceTask.js';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityError } from '../../src/error/Errors.js';
@@ -752,8 +751,8 @@ async function getLoopContext(isSequential) {
       const callUrl = `http://example.com/api${item}?version=${index}`;
 
       try {
-        const { statusCode, body } = await got(callUrl, { throwHttpErrors: false, responseType: 'json' });
-        return next(null, { statusCode, body });
+        const res = await fetch(callUrl);
+        return next(null, { statusCode: res.status, body: await res.json().catch(() => {}) });
       } catch (err) {
         return next(err);
       }

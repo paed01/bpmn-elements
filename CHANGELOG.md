@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [17.2.1] - 2025-08-13
+
+- major upgrade of [@0dep/piso@3](https://www.npmjs.com/package/@0dep/piso)
+
 ## [17.2.0] - 2025-07-22
 
 - major upgrade of [smqp@10.0.0](https://github.com/paed01/smqp/blob/default/CHANGELOG.md)
