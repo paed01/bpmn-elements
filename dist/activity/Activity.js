@@ -910,6 +910,9 @@ Activity.prototype._publishRunOutbound = function publishRunOutbound(outboundFlo
     action,
     result
   } = outboundFlow;
+  if (action === 'discard' && this.environment.settings.skipDiscard) {
+    return;
+  }
   this.broker.publish('run', 'run.outbound.' + action, (0, _messageHelper.cloneContent)(content, {
     flow: {
       ...(result && typeof result === 'object' && result),

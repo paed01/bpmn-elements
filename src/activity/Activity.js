@@ -885,6 +885,11 @@ Activity.prototype._doRunOutbound = function doRunOutbound(outboundList, content
 
 Activity.prototype._publishRunOutbound = function publishRunOutbound(outboundFlow, content, discardSequence) {
   const { id: flowId, action, result } = outboundFlow;
+
+  if (action === 'discard' && this.environment.settings.skipDiscard) {
+    return;
+  }
+
   this.broker.publish(
     'run',
     'run.outbound.' + action,
