@@ -159,6 +159,11 @@ declare interface EnvironmentSettings {
    * Defaults to falsy
    */
   disableTrackState?: boolean;
+  /**
+   * Skip discarding outbound sequence flows.
+   * Defaults to false
+   */
+  skipDiscard?: boolean;
   [x: string]: any;
 }
 
@@ -725,6 +730,7 @@ declare class Activity extends Element<Activity> {
   get isMultiInstance(): boolean;
   get isThrowing(): boolean;
   get isForCompensation(): boolean;
+  get isParallelJoin(): boolean;
   get triggeredByEvent(): boolean;
   get attachedTo(): Activity;
   get eventDefinitions(): EventDefinition[];

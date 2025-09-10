@@ -47,8 +47,8 @@ Feature('BoundaryEvent', () => {
           <boundaryEvent id="bound" attachedToRef="task" cancelActivity="true">
             <messageEventDefinition />
           </boundaryEvent>
-          <sequenceFlow id="toJoinFromTask" sourceRef="task" targetRef="join" />
-          <sequenceFlow id="toJoinFromBoundary" sourceRef="bound" targetRef="join" />
+          <sequenceFlow id="from-task" sourceRef="task" targetRef="join" />
+          <sequenceFlow id="froun-bound" sourceRef="bound" targetRef="join" />
           <parallelGateway id="join" />
           <sequenceFlow id="toEnd" sourceRef="join" targetRef="end" />
           <endEvent id="end" />

@@ -4,7 +4,7 @@ import { Timers } from '../src/Timers.js';
 describe('Environment', () => {
   describe('ctor', () => {
     it('sets settings', () => {
-      expect(new Environment()).to.have.property('settings').that.eql({});
+      expect(new Environment()).to.have.property('settings').that.deep.equal({});
       expect(
         new Environment({
           settings: {

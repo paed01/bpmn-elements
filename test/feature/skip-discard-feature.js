@@ -230,7 +230,7 @@ Feature('Skip discarding flows if parallel gateway is not used', () => {
     });
   });
 
-  ['issue-42-same-target-sequence-flows.bpmn'].forEach((source) => {
+  ['join-inbound.bpmn', 'join-paradox-1.bpmn', 'issue-42-same-target-sequence-flows.bpmn'].forEach((source) => {
     Scenario(`${source} with parallel join gateways should complete as expected`, () => {
       /** @type {Definition} */
       let definition;
@@ -289,8 +289,8 @@ Feature('Skip discarding flows if parallel gateway is not used', () => {
         return end;
       });
 
-      And('with no discarded flows', () => {
-        expect(discardedFlows).to.have.length(0);
+      And('with discarded flows', () => {
+        expect(discardedFlows.length).to.be.above(0);
       });
     });
   });

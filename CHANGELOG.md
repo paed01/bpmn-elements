@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- new activity readonly property `isParallelJoin` indicating a parallel joun gateway
+
 ## v17.3.0 - 2025-12-03
 
 - major upgrade of [smqp@11](https://github.com/paed01/smqp/blob/default/CHANGELOG.md)

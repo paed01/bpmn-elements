@@ -100,14 +100,19 @@ SequenceFlow.prototype.stop = function stop() {
 };
 
 SequenceFlow.prototype.shake = function shake(message) {
-  const content = cloneContent(message.content);
+  const content = cloneContent(message.content, { sourceId: this.sourceId, targetId: this.targetId });
   content.sequence = content.sequence || [];
-  content.sequence.push({ id: this.id, type: this.type, isSequenceFlow: true, targetId: this.targetId });
+  const hasCondition = !!this.behaviour.conditionExpression;
+  content.sequence.push({ id: this.id, type: this.type, isSequenceFlow: true, hasCondition, targetId: this.targetId });
 
-  if (content.id === this.targetId) return this.broker.publish('event', 'flow.shake.loop', content, { persistent: false, type: 'shake' });
+  if (content.id === this.targetId) {
+    return this.broker.publish('event', 'flow.shake.loop', content, { persistent: false, type: 'shake' });
+  }
 
   for (const s of message.content.sequence || []) {
-    if (s.id === this.id) return this.broker.publish('event', 'flow.shake.loop', content, { persistent: false, type: 'shake' });
+    if (s.id === this.id) {
+      return this.broker.publish('event', 'flow.shake.loop', content, { persistent: false, type: 'shake' });
+    }
   }
 
   this.broker.publish('event', 'flow.shake', content, { persistent: false, type: 'shake' });

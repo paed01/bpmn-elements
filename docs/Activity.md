@@ -34,6 +34,7 @@ Activity properties:
 - `isRunning`: boolean indicating if the activity is running
 - `isStart`: boolean indicating if the activity a start activity
 - `isSubProcess`: boolean indicating if the activity is a sub process
+- `isParallelJoin`: boolean indicating if the activity is a parallel join gateway
 - `logger`: activity [logger](/docs/Environment.md#logger) instance
 - `outbound`: list of outbound sequence flows
 - `parent`: activity parent
