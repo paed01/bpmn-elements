@@ -4,11 +4,9 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = DefinitionExecution;
-var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue.js"));
 var _Api = require("../Api.js");
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kActivated = Symbol.for('activated');
 const kProcessesQ = Symbol.for('processesQ');
 const kCompleted = Symbol.for('completed');
@@ -493,7 +491,7 @@ DefinitionExecution.prototype._onApiMessage = function onApiMessage(routingKey, 
   const messageType = message.properties.type;
   const delegate = message.properties.delegate;
   if (delegate && this.id === message.content.id) {
-    const referenceId = (0, _getPropertyValue.default)(message, 'content.message.id');
+    const referenceId = message.content.message?.id;
     this._startProcessesByMessage({
       referenceId,
       referenceType: messageType

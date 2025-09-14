@@ -44,7 +44,8 @@ function ProcessExecution(parentActivity, context) {
     startActivities: new Set(),
     triggeredByEvent: new Set(),
     detachedActivities: new Set(),
-    startSequences: {}
+    parallelJoins: new Set(),
+    startSequences: new Map()
   };
   const exchangeName = this._exchangeName = isSubProcess ? 'subprocess-execution' : 'execution';
   broker.assertExchange(exchangeName, 'topic', {
@@ -125,10 +126,15 @@ ProcessExecution.prototype.resume = function resume() {
   const {
     startActivities,
     detachedActivities,
-    postponed
+    postponed,
+    parallelJoins
   } = this[kElements];
-  if (startActivities.size > 1) {
-    for (const a of startActivities) a.shake();
+  if (startActivities.size > 1 || parallelJoins.size) {
+    const result = this._shakeElements();
+    if (this.environment.settings.skipDiscard !== result.settings.skipDiscard) {
+      this.environment.settings.skipDiscard = result.settings.skipDiscard;
+      this._debug(!result.settings.skipDiscard ? `forced shake, setting skipDiscard = false due to parallel gateways (${parallelJoins.size})` : 'forced shake');
+    }
   }
   postponed.clear();
   detachedActivities.clear();
@@ -227,45 +233,55 @@ ProcessExecution.prototype.recover = function recover(state) {
   return this;
 };
 ProcessExecution.prototype.shake = function shake(fromId) {
-  let executing = true;
-  const id = this.id;
-  if (!this.isRunning) {
-    executing = false;
-    this.executionId = (0, _shared.getUniqueId)(id);
-    this._activate();
-  }
-  const toShake = fromId ? [this.getActivityById(fromId)].filter(Boolean) : this[kElements].startActivities;
-  const result = {};
-  this.broker.subscribeTmp('event', '*.shake.*', (routingKey, {
-    content
-  }) => {
-    let isLooped = false;
-    switch (routingKey) {
-      case 'flow.shake.loop':
-        isLooped = true;
-      case 'activity.shake.end':
-        {
-          const {
-            id: shakeId,
-            parent: shakeParent
-          } = content;
-          if (shakeParent.id !== id) return;
-          result[shakeId] = result[shakeId] || [];
-          result[shakeId].push({
-            ...content,
-            isLooped
-          });
-          break;
-        }
-    }
-  }, {
-    noAck: true,
-    consumerTag: `_shaker-${this.executionId}`
-  });
-  for (const a of toShake) a.shake();
-  if (!executing) this._deactivate();
-  this.broker.cancel(`_shaker-${this.executionId}`);
-  return result;
+  return Object.fromEntries(this._shakeElements(fromId).sequences);
+  // let executing = true;
+  // const id = this.id;
+  // if (!this.isRunning) {
+  //   executing = false;
+  //   this.executionId = getUniqueId(id);
+  //   this._activate();
+  // }
+  // const toShake = fromId ? [this.getActivityById(fromId)].filter(Boolean) : this[kElements].startActivities;
+
+  // const result = {
+  //   settings: {
+  //     skipDiscard: this.environment.settings.skipDiscard,
+  //   },
+  // };
+  // const joins = new Set();
+  // const consumerTag = `_shaker-${this.executionId}`;
+
+  // this.broker.subscribeTmp(
+  //   'event',
+  //   '*.shake.*',
+  //   (routingKey, { content }) => {
+  //     switch (routingKey) {
+  //       case 'activity.shake.join':
+  //         joins.add(content.join);
+  //         result.settings.skipDiscard = false;
+  //       case 'flow.shake.loop':
+  //       case 'activity.shake.end': {
+  //         const { id: shakeId, parent: shakeParent } = content;
+  //         if (shakeParent.id !== id) return;
+
+  //         result[shakeId] = result[shakeId] || [];
+  //         result[shakeId].push({ ...content, isLooped: routingKey === 'flow.shake.loop' });
+  //         break;
+  //       }
+  //     }
+  //   },
+  //   { noAck: true, consumerTag }
+  // );
+
+  // for (const a of toShake) a.shake();
+  // for (const joinId of joins) this.getActivityById(joinId).shake();
+
+  // console.log('---------------------------', result);
+
+  // if (!executing) this._deactivate();
+  // this.broker.cancel(consumerTag);
+
+  // return result;
 };
 ProcessExecution.prototype.stop = function stop() {
   this.getApi().stop();
@@ -347,10 +363,13 @@ ProcessExecution.prototype._start = function start() {
   const {
     startActivities,
     postponed,
-    detachedActivities
+    detachedActivities,
+    parallelJoins
   } = this[kElements];
-  if (startActivities.size > 1) {
-    for (const a of startActivities) a.shake();
+  if (startActivities.size > 1 || parallelJoins.size) {
+    const result = this._shakeElements();
+    this.environment.settings.skipDiscard = result.settings.skipDiscard;
+    this._debug(!result.settings.skipDiscard ? `forced shake, setting skipDiscard = false due to parallel gateways (${parallelJoins.size})` : 'forced shake');
   }
   for (const a of startActivities) a.init();
   this[kStatus] = 'executing';
@@ -387,6 +406,7 @@ ProcessExecution.prototype._activate = function activate() {
     associations,
     startActivities,
     triggeredByEvent,
+    parallelJoins,
     children
   } = this[kElements];
   for (const flow of outboundMessageFlows) {
@@ -422,7 +442,8 @@ ProcessExecution.prototype._activate = function activate() {
       priority: 200
     });
     if (activity.isStart) startActivities.add(activity);
-    if (activity.triggeredByEvent) triggeredByEvent.add(activity);
+    if (activity.triggeredByEvent || activity.isCatching) triggeredByEvent.add(activity);
+    if (activity.isParallelJoin) parallelJoins.add(activity);
   }
   this[kActivated] = true;
 };
@@ -454,6 +475,71 @@ ProcessExecution.prototype._deactivate = function deactivate() {
   }
   this[kActivated] = false;
 };
+ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
+  let executing = true;
+  const id = this.id;
+  if (!this.isRunning) {
+    executing = false;
+    this.executionId = (0, _shared.getUniqueId)(id);
+    this._activate();
+  }
+  const toShake = fromId ? [this.getActivityById(fromId)].filter(Boolean) : this[kElements].startActivities;
+  const result = {
+    settings: {
+      skipDiscard: this.environment.settings.skipDiscard
+    },
+    sequences: new Map()
+  };
+  const manualShakes = new Set();
+  const consumerTag = `_shaker-${this.executionId}`;
+  this.broker.subscribeTmp('event', '*.shake.*', (routingKey, {
+    content
+  }) => {
+    switch (routingKey) {
+      case 'activity.shake.link':
+        {
+          for (const a of this[kElements].triggeredByEvent) {
+            if (!a.isCatching) continue;
+            a.broker.publish('api', routingKey, (0, _messageHelper.cloneContent)(content), {
+              type: 'shake'
+            });
+          }
+          break;
+        }
+      case 'activity.shake.join':
+        manualShakes.add(content.join);
+        result.settings.skipDiscard = false;
+      case 'flow.shake.loop':
+      case 'activity.shake.linked':
+      case 'activity.shake.end':
+        {
+          const {
+            id: shakeId,
+            parent: shakeParent
+          } = content;
+          if (shakeParent.id !== id) return;
+          let seqnce;
+          if (!(seqnce = result.sequences.get(shakeId))) {
+            seqnce = [];
+            result.sequences.set(shakeId, seqnce);
+          }
+          seqnce.push({
+            ...content,
+            isLooped: routingKey === 'flow.shake.loop'
+          });
+          break;
+        }
+    }
+  }, {
+    noAck: true,
+    consumerTag
+  });
+  for (const a of toShake) a.shake();
+  for (const aid of manualShakes) this.getActivityById(aid).shake();
+  if (!executing) this._deactivate();
+  this.broker.cancel(consumerTag);
+  return result;
+};
 ProcessExecution.prototype._onDelegateEvent = function onDelegateEvent(message) {
   const eventType = message.properties.type;
   let delegate = true;
@@ -464,7 +550,7 @@ ProcessExecution.prototype._onDelegateEvent = function onDelegateEvent(message) 
     this._debug(`delegate ${eventType} anonymous event`);
   }
   for (const activity of this[kElements].triggeredByEvent) {
-    if (activity.getStartActivities({
+    if (activity.isSubProcess && activity.getStartActivities({
       referenceId: content.message?.id,
       referenceType: eventType
     }).length) {
@@ -481,11 +567,15 @@ ProcessExecution.prototype._onMessageFlowEvent = function onMessageFlowEvent(rou
   this.broker.publish('message', routingKey, (0, _messageHelper.cloneContent)(message.content), message.properties);
 };
 ProcessExecution.prototype._onActivityEvent = function onActivityEvent(routingKey, message) {
-  if (message.fields.redelivered && message.properties.persistent === false) return;
-  const content = message.content;
+  const {
+    fields,
+    content,
+    properties
+  } = message;
+  if (fields.redelivered && properties.persistent === false) return;
   const parent = content.parent = content.parent || {};
-  let delegate = message.properties.delegate;
-  const shaking = message.properties.type === 'shake';
+  let delegate = properties.delegate;
+  const shaking = properties.type === 'shake';
   const isDirectChild = content.parent.id === this.id;
   if (isDirectChild) {
     parent.executionId = this.executionId;
@@ -499,11 +589,11 @@ ProcessExecution.prototype._onActivityEvent = function onActivityEvent(routingKe
   if (delegate) delegate = this._onDelegateEvent(message);
   this[kTracker].track(routingKey, message);
   this.broker.publish('event', routingKey, content, {
-    ...message.properties,
+    ...properties,
     delegate,
     mandatory: false
   });
-  if (shaking) return this._onShookEnd(message);
+  if (shaking) return this._onShakeMessage(message);
   if (!isDirectChild) return;
   switch (routingKey) {
     case 'process.terminate':
@@ -680,13 +770,10 @@ ProcessExecution.prototype._onChildCompleted = function onChildCompleted(message
     const startSequences = this[kElements].startSequences;
     for (const msg of postponed) {
       const postponedId = msg.content.id;
-      const startSequence = startSequences[postponedId];
-      if (startSequence) {
-        if (startSequence.content.sequence.some(({
-          id: sid
-        }) => sid === id)) {
-          this._getChildApi(msg).discard();
-        }
+      const startSequence = startSequences.get(postponedId);
+      if (!startSequence) continue;
+      if (startSequence.has(id)) {
+        this._getChildApi(msg).discard();
       }
     }
   }
@@ -867,10 +954,29 @@ ProcessExecution.prototype._getChildApi = function getChildApi(message) {
     if (child) return child.getApi(message);
   }
 };
-ProcessExecution.prototype._onShookEnd = function onShookEnd(message) {
-  const routingKey = message.fields.routingKey;
-  if (routingKey !== 'activity.shake.end') return;
-  this[kElements].startSequences[message.content.id] = (0, _messageHelper.cloneMessage)(message);
+ProcessExecution.prototype._onShakeMessage = function onShakeMessage(message) {
+  const {
+    id,
+    targetId,
+    isLinked
+  } = message.content;
+  let seq = this[kElements].startSequences.get(id);
+  if (!seq) {
+    seq = new Set([id]);
+    this[kElements].startSequences.set(id, seq);
+  }
+  if (targetId) {
+    seq.add(targetId);
+  }
+  if (isLinked) {
+    let linkedSeq = this[kElements].startSequences.get(targetId);
+    if (!linkedSeq) {
+      linkedSeq = new Set(seq);
+      this[kElements].startSequences.set(targetId, linkedSeq);
+    } else {
+      linkedSeq.add(targetId);
+    }
+  }
 };
 ProcessExecution.prototype._debug = function debugMessage(logMessage) {
   this[kParent].logger.debug(`<${this.executionId} (${this.id})> ${logMessage}`);

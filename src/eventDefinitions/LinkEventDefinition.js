@@ -1,4 +1,3 @@
-import getPropertyValue from '../getPropertyValue.js';
 import { brokerSafeId } from '../shared.js';
 import { cloneContent, shiftParent } from '../messageHelper.js';
 
@@ -28,7 +27,26 @@ export default function LinkEventDefinition(activity, eventDefinition) {
     const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(reference.linkName)}-q`;
     this[kMessageQ] = broker.assertQueue(messageQueueName, { autoDelete: false, durable: true });
     broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, { durable: true });
+    broker.subscribeTmp('api', `activity.shake.${reference.referenceType}`, this._onApiMessage.bind(this), { noAck: true });
   } else {
+    broker.subscribeTmp(
+      'event',
+      'activity.shake.start',
+      (_, msg) => {
+        broker.publish(
+          'event',
+          `activity.shake.${reference.referenceType}`,
+          cloneContent(msg.content, { sourceId: this.id, targetId: undefined, message: { ...this.reference } }),
+          { type: 'shake', delegate: true }
+        );
+      },
+      {
+        noAck: true,
+        consumerTag: '_link-parent-shake',
+        priority: 1000,
+      }
+    );
+
     broker.subscribeTmp('event', 'activity.discard', this._onDiscard.bind(this), {
       noAck: true,
       consumerTag: '_link-parent-discard',
@@ -104,21 +122,28 @@ LinkEventDefinition.prototype.executeThrow = function executeThrow(executeMessag
 };
 
 LinkEventDefinition.prototype._onCatchLink = function onCatchLink(routingKey, message) {
-  if (getPropertyValue(message, 'content.message.linkName') !== this.reference.linkName) return;
+  if (message.content.message?.linkName !== this.reference.linkName) return;
   if (message.content.state === 'discard') return this._discard();
   return this._complete('caught', message.content.message);
 };
 
 LinkEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
-  const messageType = message.properties.type;
-
-  switch (messageType) {
+  switch (message.properties.type) {
     case 'discard': {
       return this._discard();
     }
     case 'stop': {
       this._stop();
       break;
+    }
+    case 'shake': {
+      if (message.content.message?.linkName !== this.reference.linkName) return;
+
+      const content = cloneContent(message.content, { targetId: this.id, isLinked: true });
+      content.sequence = content.sequence || [];
+      content.sequence.push({ id: this.id, type: this.type });
+
+      return this.broker.publish('event', 'activity.shake.linked', content, { persistent: false, type: 'shake' });
     }
   }
 };

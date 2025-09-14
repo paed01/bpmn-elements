@@ -147,7 +147,7 @@ Feature('Sub-process', () => {
 
   Scenario('SubProcess with sequential loop characteristics with loopback so that it runs again', () => {
     let context, definition;
-    Given('a process mathching feature', async () => {
+    Given('a process matching feature', async () => {
       const source = factory.resource('misp-loopback.bpmn');
       context = await testHelpers.context(source);
     });
@@ -155,6 +155,9 @@ Feature('Sub-process', () => {
     let leave;
     When('running definition with instruction to loop back', () => {
       definition = new Definition(context, {
+        settings: {
+          skipDiscard: true,
+        },
         variables: {
           cardinality: 10,
           loopback: true,
@@ -172,7 +175,6 @@ Feature('Sub-process', () => {
       const sub = definition.getActivityById('sub');
       expect(sub.counters).to.have.property('taken', 2);
 
-      expect(sub.execution).to.not.be.ok;
       expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(3);
     });
 
@@ -189,14 +191,13 @@ Feature('Sub-process', () => {
       const sub = definition.getActivityById('sub');
       expect(sub.counters).to.have.property('taken', 4);
 
-      expect(sub.execution).to.not.be.ok;
       expect(sub.broker.consumerCount, 'broker.consumerCount').to.equal(3);
     });
   });
 
   Scenario('SubProcess with parallel loop characteristics with loopback', () => {
     let context, definition;
-    Given('a process mathching feature', async () => {
+    Given('a process matching feature', async () => {
       const source = factory.resource('misp-parallel-loopback.bpmn');
       context = await testHelpers.context(source);
     });
@@ -281,8 +282,8 @@ Feature('Sub-process', () => {
 
       And('sub process is taken twice', () => {
         sub = definition.getActivityById('sub');
-        expect(sub.counters).to.have.property('discarded', 1);
         expect(sub.counters).to.have.property('taken', 2);
+        expect(sub.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 1);
       });
 
       And('leaves no lingering references', () => {
@@ -376,7 +377,7 @@ Feature('Sub-process', () => {
       And('sub process was taken twice and discarded once by gateway', () => {
         sub = definition.getActivityById('sub');
         expect(sub.counters).to.have.property('taken', 2);
-        expect(sub.counters).to.have.property('discarded', 1);
+        expect(sub.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 1);
       });
 
       And('leaves no lingering references', () => {

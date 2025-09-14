@@ -19,6 +19,7 @@ function Environment(options = {}) {
   this.scripts = options.scripts || new _Scripts.Scripts();
   this.timers = options.timers || new _Timers.Timers();
   this.settings = {
+    skipDiscard: true,
     ...options.settings
   };
   this.Logger = options.Logger || DummyLogger;

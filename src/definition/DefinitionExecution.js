@@ -1,4 +1,3 @@
-import getPropertyValue from '../getPropertyValue.js';
 import { DefinitionApi } from '../Api.js';
 import { brokerSafeId } from '../shared.js';
 import { cloneContent, cloneMessage, pushParent, cloneParent } from '../messageHelper.js';
@@ -511,7 +510,7 @@ DefinitionExecution.prototype._onApiMessage = function onApiMessage(routingKey, 
   const delegate = message.properties.delegate;
 
   if (delegate && this.id === message.content.id) {
-    const referenceId = getPropertyValue(message, 'content.message.id');
+    const referenceId = message.content.message?.id;
     this._startProcessesByMessage({ referenceId, referenceType: messageType });
   }
 

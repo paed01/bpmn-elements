@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Breaking
+
+- IntermediateCatchEvent cannot be used as a starting element, or it can, but will not be started by default
+
+### Additions
+
 - new activity readonly property `isParallelJoin` indicating a parallel joun gateway
 
 ## v17.3.0 - 2025-12-03

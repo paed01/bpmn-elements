@@ -5,7 +5,7 @@ import { cloneContent } from '../messageHelper.js';
 const kExecution = Symbol.for('execution');
 
 export default function IntermediateCatchEvent(activityDef, context) {
-  return new Activity(IntermediateCatchEventBehaviour, activityDef, context);
+  return new Activity(IntermediateCatchEventBehaviour, { ...activityDef, isCatching: true }, context);
 }
 
 export function IntermediateCatchEventBehaviour(activity) {

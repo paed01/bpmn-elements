@@ -94,6 +94,7 @@ function Activity(Behaviour, activityDef, context) {
     isTransaction: activityDef.isTransaction,
     isParallelJoin,
     isThrowing: activityDef.isThrowing,
+    isCatching: activityDef.isCatching,
     lane: activityDef.lane?.id,
   };
   this[kExec] = new Map();
@@ -191,6 +192,11 @@ Object.defineProperties(Activity.prototype, {
   isThrowing: {
     get() {
       return this[kFlags].isThrowing;
+    },
+  },
+  isCatching: {
+    get() {
+      return this[kFlags].isCatching;
     },
   },
   isForCompensation: {

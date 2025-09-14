@@ -128,7 +128,15 @@ ProcessExecution.prototype.resume = function resume() {
   const { startActivities, detachedActivities, postponed, parallelJoins } = this[kElements];
 
   if (startActivities.size > 1 || parallelJoins.size) {
-    for (const a of startActivities) a.shake();
+    const result = this._shakeElements();
+    if (this.environment.settings.skipDiscard !== result.settings.skipDiscard) {
+      this.environment.settings.skipDiscard = result.settings.skipDiscard;
+      this._debug(
+        !result.settings.skipDiscard
+          ? `forced shake, setting skipDiscard = false due to parallel gateways (${parallelJoins.size})`
+          : 'forced shake'
+      );
+    }
   }
 
   postponed.clear();
@@ -461,7 +469,7 @@ ProcessExecution.prototype._activate = function activate() {
       priority: 200,
     });
     if (activity.isStart) startActivities.add(activity);
-    if (activity.triggeredByEvent) triggeredByEvent.add(activity);
+    if (activity.triggeredByEvent || activity.isCatching) triggeredByEvent.add(activity);
     if (activity.isParallelJoin) parallelJoins.add(activity);
   }
 
@@ -514,7 +522,7 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
     },
     sequences: new Map(),
   };
-  const joins = new Set();
+  const manualShakes = new Set();
   const consumerTag = `_shaker-${this.executionId}`;
 
   this.broker.subscribeTmp(
@@ -522,10 +530,18 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
     '*.shake.*',
     (routingKey, { content }) => {
       switch (routingKey) {
+        case 'activity.shake.link': {
+          for (const a of this[kElements].triggeredByEvent) {
+            if (!a.isCatching) continue;
+            a.broker.publish('api', routingKey, cloneContent(content), { type: 'shake' });
+          }
+          break;
+        }
         case 'activity.shake.join':
-          joins.add(content.join);
+          manualShakes.add(content.join);
           result.settings.skipDiscard = false;
         case 'flow.shake.loop':
+        case 'activity.shake.linked':
         case 'activity.shake.end': {
           const { id: shakeId, parent: shakeParent } = content;
           if (shakeParent.id !== id) return;
@@ -544,7 +560,7 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
   );
 
   for (const a of toShake) a.shake();
-  for (const joinId of joins) this.getActivityById(joinId).shake();
+  for (const aid of manualShakes) this.getActivityById(aid).shake();
 
   if (!executing) this._deactivate();
   this.broker.cancel(consumerTag);
@@ -564,7 +580,7 @@ ProcessExecution.prototype._onDelegateEvent = function onDelegateEvent(message) 
   }
 
   for (const activity of this[kElements].triggeredByEvent) {
-    if (activity.getStartActivities({ referenceId: content.message?.id, referenceType: eventType }).length) {
+    if (activity.isSubProcess && activity.getStartActivities({ referenceId: content.message?.id, referenceType: eventType }).length) {
       delegate = false;
       activity.run(content.message);
     }
@@ -599,7 +615,7 @@ ProcessExecution.prototype._onActivityEvent = function onActivityEvent(routingKe
 
   this[kTracker].track(routingKey, message);
   this.broker.publish('event', routingKey, content, { ...properties, delegate, mandatory: false });
-  if (shaking) return this._onShookEnd(message);
+  if (shaking) return this._onShakeMessage(message);
   if (!isDirectChild) return;
 
   switch (routingKey) {
@@ -994,8 +1010,8 @@ ProcessExecution.prototype._getChildApi = function getChildApi(message) {
   }
 };
 
-ProcessExecution.prototype._onShookEnd = function onShookEnd(message) {
-  const { id, targetId } = message.content;
+ProcessExecution.prototype._onShakeMessage = function onShakeMessage(message) {
+  const { id, targetId, isLinked } = message.content;
 
   let seq = this[kElements].startSequences.get(id);
   if (!seq) {
@@ -1004,6 +1020,16 @@ ProcessExecution.prototype._onShookEnd = function onShookEnd(message) {
   }
   if (targetId) {
     seq.add(targetId);
+  }
+
+  if (isLinked) {
+    let linkedSeq = this[kElements].startSequences.get(targetId);
+    if (!linkedSeq) {
+      linkedSeq = new Set(seq);
+      this[kElements].startSequences.set(targetId, linkedSeq);
+    } else {
+      linkedSeq.add(targetId);
+    }
   }
 };
 

@@ -11,7 +11,10 @@ var _messageHelper = require("../messageHelper.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kExecution = Symbol.for('execution');
 function IntermediateCatchEvent(activityDef, context) {
-  return new _Activity.default(IntermediateCatchEventBehaviour, activityDef, context);
+  return new _Activity.default(IntermediateCatchEventBehaviour, {
+    ...activityDef,
+    isCatching: true
+  }, context);
 }
 function IntermediateCatchEventBehaviour(activity) {
   this.id = activity.id;

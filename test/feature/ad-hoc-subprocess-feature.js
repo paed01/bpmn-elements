@@ -5,7 +5,7 @@ import factory from '../helpers/factory.js';
 Feature('Ad-hoc subprocess', () => {
   Scenario('Running ad-hoc subprocess', () => {
     let context, definition;
-    Given('a process mathching feature', async () => {
+    Given('a process matching feature', async () => {
       const source = factory.resource('ad-hoc-subprocess.bpmn');
       context = await testHelpers.context(source);
     });

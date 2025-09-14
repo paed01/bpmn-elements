@@ -4,10 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = LinkEventDefinition;
-var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue.js"));
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const kCompleted = Symbol.for('completed');
 const kMessageQ = Symbol.for('messageQ');
 const kExecuteMessage = Symbol.for('executeMessage');
@@ -42,7 +40,26 @@ function LinkEventDefinition(activity, eventDefinition) {
     broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, {
       durable: true
     });
+    broker.subscribeTmp('api', `activity.shake.${reference.referenceType}`, this._onApiMessage.bind(this), {
+      noAck: true
+    });
   } else {
+    broker.subscribeTmp('event', 'activity.shake.start', (_, msg) => {
+      broker.publish('event', `activity.shake.${reference.referenceType}`, (0, _messageHelper.cloneContent)(msg.content, {
+        sourceId: this.id,
+        targetId: undefined,
+        message: {
+          ...this.reference
+        }
+      }), {
+        type: 'shake',
+        delegate: true
+      });
+    }, {
+      noAck: true,
+      consumerTag: '_link-parent-shake',
+      priority: 1000
+    });
     broker.subscribeTmp('event', 'activity.discard', this._onDiscard.bind(this), {
       noAck: true,
       consumerTag: '_link-parent-discard'
@@ -115,13 +132,12 @@ LinkEventDefinition.prototype.executeThrow = function executeThrow(executeMessag
   return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
 LinkEventDefinition.prototype._onCatchLink = function onCatchLink(routingKey, message) {
-  if ((0, _getPropertyValue.default)(message, 'content.message.linkName') !== this.reference.linkName) return;
+  if (message.content.message?.linkName !== this.reference.linkName) return;
   if (message.content.state === 'discard') return this._discard();
   return this._complete('caught', message.content.message);
 };
 LinkEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
-  const messageType = message.properties.type;
-  switch (messageType) {
+  switch (message.properties.type) {
     case 'discard':
       {
         return this._discard();
@@ -130,6 +146,23 @@ LinkEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, 
       {
         this._stop();
         break;
+      }
+    case 'shake':
+      {
+        if (message.content.message?.linkName !== this.reference.linkName) return;
+        const content = (0, _messageHelper.cloneContent)(message.content, {
+          targetId: this.id,
+          isLinked: true
+        });
+        content.sequence = content.sequence || [];
+        content.sequence.push({
+          id: this.id,
+          type: this.type
+        });
+        return this.broker.publish('event', 'activity.shake.linked', content, {
+          persistent: false,
+          type: 'shake'
+        });
       }
   }
 };

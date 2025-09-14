@@ -51,9 +51,10 @@ async function context(source, ...args) {
       return result;
     }, {});
 
+  const { settings, ...otherOptions } = options;
   const ctx = Context(
     serializer,
-    new Environment({ Logger, scripts: new Scripts(), settings: { enableDummyService: true }, ...options, extensions })
+    new Environment({ Logger, scripts: new Scripts(), settings: { enableDummyService: true, ...settings }, ...otherOptions, extensions })
   );
   logger.debug('context complete');
   if (callback) {
