@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## [17.2.2] - 2025-11-14
+
+- npm package provenance release
+
 ## [17.2.1] - 2025-08-13
 
 - major upgrade of [@0dep/piso@3](https://www.npmjs.com/package/@0dep/piso)
