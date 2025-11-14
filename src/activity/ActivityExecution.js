@@ -249,7 +249,7 @@ ActivityExecution.prototype._onExecutionCompleted = function onExecutionComplete
 
   const { executionId, keep, isRootScope } = message.content;
   if (!isRootScope) {
-    this._debug('completed sub execution');
+    this._debug('completed sub execution', executionId);
     if (!keep) message.ack();
     if (postponed.size === 1) {
       const onlyMessage = postponed.values().next().value;
@@ -365,9 +365,8 @@ ActivityExecution.prototype._debug = function debug(logMessage, executionId) {
 };
 
 function getExecuteMessage(message) {
-  const result = cloneMessage(message, {
+  return cloneMessage(message, {
     ...(message.fields.redelivered && { isRecovered: true }),
     ignoreIfExecuting: undefined,
   });
-  return result;
 }

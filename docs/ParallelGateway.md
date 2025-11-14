@@ -24,3 +24,7 @@ Both behaviour comes with the same caveat.
 The success of the above example is depending on how the sequence flows are ordered in the source (XML). If the flow `default` comes before `take` or `discard` the process will stall. The default flow will publish a discard initializing the join gateway. As soon as either `take` or `discard` is touched the join gateway will consider the join fulfilled and continue. Thus, the second `task` outbound flow will initiate a new join. But in vain since no more flow actions will come from `decision` gateway. The process has stalled.
 
 But, if the `default` is placed at after `take` or `discard` in the source, both of them will manage to touch the `toJoin` flow before the `default` flow is touched.
+
+## Events
+
+- `activity.converge`: The converging parallel gateway is collecting inbound and monitoring peers

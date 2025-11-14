@@ -70,7 +70,8 @@ function Activity(Behaviour, activityDef, context) {
   }
   const outboundSequenceFlows = context.getOutboundSequenceFlows(id);
 
-  const isParallelJoin = activityDef.isParallelGateway && inboundSequenceFlows.length > 1;
+  const inboundSourceIds = new Set(inboundSequenceFlows.map(({ sourceId }) => sourceId));
+  const isParallelJoin = activityDef.isParallelGateway && inboundSourceIds.size > 1;
 
   this[kFlows] = {
     inboundSequenceFlows,
@@ -93,6 +94,7 @@ function Activity(Behaviour, activityDef, context) {
     attachedTo,
     isTransaction: activityDef.isTransaction,
     isParallelJoin,
+    isParallelGateway: activityDef.isParallelGateway,
     isThrowing: activityDef.isThrowing,
     isCatching: activityDef.isCatching,
     lane: activityDef.lane?.id,
@@ -100,7 +102,8 @@ function Activity(Behaviour, activityDef, context) {
   this[kExec] = new Map();
 
   this[kMessageHandlers] = {
-    onInbound: isParallelJoin ? this._onJoinInbound.bind(this) : this._onInbound.bind(this),
+    // onInbound: isParallelJoin ? this._onJoinInbound.bind(this) : this._onInbound.bind(this),
+    onInbound: this._onInbound.bind(this),
     onRunMessage: this._onRunMessage.bind(this),
     onApiMessage: this._onApiMessage.bind(this),
     onExecutionMessage: this._onExecutionMessage.bind(this),
@@ -244,6 +247,11 @@ Object.defineProperties(Activity.prototype, {
       return new Map(this[kFlows].inboundSourceIds);
     },
   },
+  initialized: {
+    get() {
+      return !!this[kExec]?.get('initExecutionId');
+    },
+  },
 });
 
 Activity.prototype.activate = function activate() {
@@ -258,7 +266,7 @@ Activity.prototype.deactivate = function deactivate() {
   this.removeInboundListeners();
   broker.cancel('_run-on-inbound');
   broker.cancel('_format-consumer');
-  if (this.isParallelJoin) this[kFlows].inboundSourceIds = new Map(this[kFlows].inboundSequenceFlows.map(({ sourceId }) => [sourceId, 0]));
+  // if (this.isParallelJoin) this[kFlows].inboundSourceIds = new Map(this[kFlows].inboundSequenceFlows.map(({ sourceId }) => [sourceId, 0]));
 };
 
 Activity.prototype.init = function init(initContent) {
@@ -313,7 +321,7 @@ Activity.prototype.getState = function getState() {
 
 Activity.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error(`cannot recover running activity <${this.id}>`);
-  if (!state) return;
+  if (!state) return; // TODO: return this
 
   this.stopped = state.stopped;
   this.status = state.status;
@@ -469,7 +477,8 @@ Activity.prototype._discardRun = function discardRun() {
 };
 
 Activity.prototype._onShakeMessage = function _onShakeMessage(sourceMessage) {
-  if (this.isParallelJoin) {
+  // if (this.isParallelJoin) {
+  if (this[kFlags].isParallelGateway) {
     const message = cloneMessage(sourceMessage, { join: this.id });
     message.content.sequence.push({ id: this.id, type: this.type });
     return this.broker.publish('event', 'activity.shake.join', message.content, {
@@ -483,10 +492,13 @@ Activity.prototype._onShakeMessage = function _onShakeMessage(sourceMessage) {
 
 Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
   const message = cloneMessage(sourceMessage);
-  message.content.sequence = message.content.sequence || [];
-  message.content.sequence.push({ id: this.id, type: this.type });
+  const sequence = (message.content.sequence = message.content.sequence || []);
+  const count = 1;
+  const looped = sequence?.find((f) => f.id === this.id);
 
-  this.broker.publish('event', 'activity.shake.start', message.content, { persistent: false, type: 'shake' });
+  sequence.push({ id: this.id, type: this.type, count: looped ? looped.count + 1 : count });
+
+  this.broker.publish('api', 'activity.shake.start', message.content, { persistent: false, type: 'shake' });
 
   if (this[kFlags].isEnd) {
     return this.broker.publish('event', 'activity.shake.end', cloneContent(message.content), { persistent: false, type: 'shake' });
@@ -512,10 +524,6 @@ Activity.prototype._consumeInbound = function consumeInbound() {
   const inboundQ = this.broker.getQueue('inbound-q');
   const onInbound = this[kMessageHandlers].onInbound;
 
-  if (this[kFlags].isParallelJoin) {
-    return inboundQ.assertConsumer(onInbound, { consumerTag: '_run-on-inbound', prefetch: 1000 });
-  }
-
   return inboundQ.assertConsumer(onInbound, { consumerTag: '_run-on-inbound' });
 };
 
@@ -540,7 +548,9 @@ Activity.prototype._onInbound = function onInbound(routingKey, message) {
     case 'activity.discard': {
       let discardSequence;
       if (content.discardSequence) discardSequence = content.discardSequence.slice();
-      return this._runDiscard({ inbound, discardSequence });
+      const context = { inbound, discardSequence };
+      // return this.isParallelJoin ? this.run(context) : this._runDiscard(context);
+      return this[kFlags].isParallelGateway ? this.run(context) : this._runDiscard(context);
     }
   }
 };
@@ -548,11 +558,17 @@ Activity.prototype._onInbound = function onInbound(routingKey, message) {
 Activity.prototype._onJoinInbound = function onJoinInbound(routingKey, message) {
   const { inboundJoinFlows, inboundSourceIds } = this[kFlows];
 
-  const expectedInboundCount = [...inboundSourceIds.values()].reduce((s, a) => s + (a || 1));
+  let expectedInboundCount = 0;
+  for (const [, a] of inboundSourceIds) {
+    expectedInboundCount += a || 0;
+  }
+
+  // const expectedInboundCount = [...inboundSourceIds.values()].reduce((s, a) => s + (a || 1), 0);
 
   inboundJoinFlows.add(message);
 
   const remaining = expectedInboundCount - inboundJoinFlows.size;
+
   if (remaining) {
     return this.logger.debug(`<${this.id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
   }
@@ -624,6 +640,7 @@ Activity.prototype._pauseRunQ = function pauseRunQ() {
 
 Activity.prototype._onRunMessage = function onRunMessage(routingKey, message, messageProperties) {
   switch (routingKey) {
+    case 'run.execute.passthrough':
     case 'run.outbound.discard':
     case 'run.outbound.take':
     case 'run.next':
@@ -809,6 +826,10 @@ Activity.prototype._onExecutionMessage = function onExecutionMessage(routingKey,
         return this._ackRunExecuteMessage();
       });
     }
+    case 'execution.inbound.cancel': {
+      message.ack();
+      return this.broker.cancel('_run-on-inbound');
+    }
     case 'execution.error': {
       this.status = 'error';
       broker.publish('run', 'run.error', content, { correlationId });
@@ -816,10 +837,11 @@ Activity.prototype._onExecutionMessage = function onExecutionMessage(routingKey,
       break;
     }
     case 'execution.cancel':
-    case 'execution.discard':
+    case 'execution.discard': {
       this.status = 'discarded';
       broker.publish('run', 'run.discarded', content, { correlationId });
       break;
+    }
     default: {
       this.status = 'executed';
       broker.publish('run', 'run.end', content, { correlationId });

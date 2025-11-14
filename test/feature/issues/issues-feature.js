@@ -57,30 +57,30 @@ Feature('Issues', () => {
 
     And('first user task is taken once and discarded twice', () => {
       expect(task1.counters).to.have.property('taken', 1);
-      expect(task1.counters).to.have.property('discarded', 2);
+      expect(task1.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 1 : 2);
     });
 
     And('second user task is taken once and discarded twice', () => {
       expect(task2.counters).to.have.property('taken', 1);
-      expect(task2.counters).to.have.property('discarded', 2);
+      expect(task2.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 2);
     });
 
     And('first decision is taken once and discarded once since discard loop prevents more', () => {
       const decision = definition.getActivityById('decision1');
       expect(decision.counters).to.have.property('taken', 1);
-      expect(decision.counters).to.have.property('discarded', 1);
+      expect(decision.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 1);
     });
 
     And('second decision is discarded twice', () => {
       const decision = definition.getActivityById('decision2');
       expect(decision.counters).to.have.property('taken', 0);
-      expect(decision.counters).to.have.property('discarded', 2);
+      expect(decision.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 2);
     });
 
     And('end event is discarded four times', () => {
       const decision = definition.getActivityById('end');
       expect(decision.counters).to.have.property('taken', 0);
-      expect(decision.counters).to.have.property('discarded', 4);
+      expect(decision.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 4);
     });
   });
 
@@ -150,13 +150,13 @@ Feature('Issues', () => {
     });
 
     And('discarded 4 times', () => {
-      expect(usertask.counters).to.have.property('discarded', 4);
+      expect(usertask.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 4);
     });
 
     And('end event is taken once and discarded twice', () => {
       const endEvent = recovered.getActivityById('end');
       expect(endEvent.counters).to.have.property('taken', 1);
-      expect(endEvent.counters).to.have.property('discarded', 2);
+      expect(endEvent.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 2);
     });
   });
 
@@ -280,13 +280,13 @@ Feature('Issues', () => {
       And('user task was discarded once', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 1);
+        expect(task.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 1);
       });
 
       And('end was discarded thrice', () => {
         const task = definition.getActivityById('End');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 3);
+        expect(task.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 3);
       });
 
       Given('variables are reset', () => {
@@ -328,13 +328,13 @@ Feature('Issues', () => {
       And('user task was discarded twice', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 2);
-        expect(task.counters).to.have.property('discarded', 2);
+        expect(task.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 2);
       });
 
       And('end was discarded six times', () => {
         const task = definition.getActivityById('End');
         expect(task.counters).to.have.property('taken', 2);
-        expect(task.counters).to.have.property('discarded', 6);
+        expect(task.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 6);
       });
 
       When('definition is recovered with state from first run user task wait', () => {
@@ -378,13 +378,13 @@ Feature('Issues', () => {
       And('user task was discarded once', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 1);
+        expect(task.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 1);
       });
 
       And('end was discarded thrice', () => {
         const task = definition.getActivityById('End');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 3);
+        expect(task.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 3);
       });
     });
 
@@ -453,7 +453,7 @@ Feature('Issues', () => {
       And('user task was discarded twice', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 2);
+        expect(task.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 2);
       });
 
       When('definition is recovered with state from wait', () => {
@@ -497,7 +497,7 @@ Feature('Issues', () => {
       And('user task was discarded twice', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 2);
+        expect(task.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 2);
       });
     });
 
@@ -568,13 +568,13 @@ Feature('Issues', () => {
       And('user task was discarded once', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 1);
+        expect(task.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 1);
       });
 
       And('end was discarded thrice', () => {
         const task = definition.getActivityById('End');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 3);
+        expect(task.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 3);
       });
 
       Given('variables are reset', () => {
@@ -616,13 +616,13 @@ Feature('Issues', () => {
       And('user task was discarded twice', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 2);
-        expect(task.counters).to.have.property('discarded', 2);
+        expect(task.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 2);
       });
 
       And('end was discarded six times', () => {
         const task = definition.getActivityById('End');
         expect(task.counters).to.have.property('taken', 2);
-        expect(task.counters).to.have.property('discarded', 6);
+        expect(task.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 6);
       });
 
       When('definition is recovered with state from first run user task wait', () => {
@@ -666,13 +666,13 @@ Feature('Issues', () => {
       And('user task was discarded once', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 1);
+        expect(task.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 1);
       });
 
       And('end was discarded thrice', () => {
         const task = definition.getActivityById('End');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 3);
+        expect(task.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 3);
       });
 
       Given('definition is ran again', () => {
@@ -713,7 +713,10 @@ Feature('Issues', () => {
       });
 
       Then('end event is discarded once', () => {
-        expect(definition.getActivityById('End').counters).to.deep.equal({ taken: 0, discarded: 1 });
+        expect(definition.getActivityById('End').counters).to.deep.equal({
+          taken: 0,
+          discarded: definition.environment.settings.skipDiscard ? 0 : 1,
+        });
       });
     });
   });
@@ -723,7 +726,7 @@ Feature('Issues', () => {
     Given('fork two user tasks and then join', async () => {
       const source = `<?xml version="1.0" encoding="UTF-8"?>
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Issue_125" targetNamespace="http://bpmn.io/schema/bpmn">
-        <process id="parallel" isExecutable="true">
+        <process id="Process_0" isExecutable="true">
           <startEvent id="start" name="START" />
           <sequenceFlow id="to-fork" sourceRef="start" targetRef="fork" />
           <parallelGateway id="fork" name="FORK" />

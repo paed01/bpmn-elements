@@ -74,8 +74,14 @@ Feature('Issue 39 - resolve SequenceFlow expression promise', () => {
     });
 
     And('discarded default and the other one', () => {
-      expect(definition.getActivityById('defaultend').counters, 'default').to.deep.equal({ taken: 0, discarded: 1 });
-      expect(definition.getActivityById('theotherone').counters, 'the other one').to.deep.equal({ taken: 0, discarded: 1 });
+      expect(definition.getActivityById('defaultend').counters, 'default').to.deep.equal({
+        taken: 0,
+        discarded: definition.environment.settings.skipDiscard ? 0 : 1,
+      });
+      expect(definition.getActivityById('theotherone').counters, 'the other one').to.deep.equal({
+        taken: 0,
+        discarded: definition.environment.settings.skipDiscard ? 0 : 1,
+      });
     });
   });
 });

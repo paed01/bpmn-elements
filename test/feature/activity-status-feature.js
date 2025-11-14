@@ -1,5 +1,5 @@
 import * as ck from 'chronokinesis';
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 import camunda from '../resources/extensions/CamundaExtension.js';
@@ -189,6 +189,7 @@ Feature('Activity status', () => {
         postponed,
         postponed.map(({ id }) => id)
       ).to.have.length(3);
+
       expect(postponed[0].content).to.have.property('id', 'eventgateway');
       expect(postponed[1].content).to.have.property('id', 'tevent');
       expect(postponed[2].content).to.have.property('id', 'sevent');
@@ -209,13 +210,14 @@ Feature('Activity status', () => {
         postponed.length,
         postponed.map(({ id }) => id)
       ).to.be.above(1);
+
       expect(postponed[0].content).to.have.property('id', 'utask4');
       expect(postponed[1].content).to.have.property('id', 'utask5');
     });
 
     And('definition and process activity status is idle', () => {
-      expect(definition.activityStatus).to.equal('wait');
-      expect(definition.execution.processes[0].activityStatus).to.equal('wait');
+      expect(definition.execution.processes[0].activityStatus, 'process status').to.equal('wait');
+      expect(definition.activityStatus, 'definition status').to.equal('wait');
     });
 
     When('first user task is signaled', () => {

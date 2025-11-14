@@ -375,7 +375,7 @@ declare class Environment {
   recover(state?: EnvironmentState): Environment;
   clone(overrideOptions?: EnvironmentOptions): Environment;
   assignVariables(newVars: Record<string, any>): void;
-  assignSettings(newSettings: Record<string, any>): void;
+  assignSettings(newSettings: Record<string, any>): Environment;
   registerScript(activity: any): Script;
   getScript(language: string, identifier: { id: string; [x: string]: any }): Script;
   getServiceByName(serviceName: string): CallableFunction;

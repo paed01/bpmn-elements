@@ -2,13 +2,21 @@
 
 ## Unreleased
 
+## v18.0.0 - 2026-01-14
+
+Refactor parallel converging and forking gateways.
+
 ### Breaking
 
-- IntermediateCatchEvent cannot be used as a starting element, or it can, but will not be started by default
+- parallel gateways now enters execution as soon as first nbound sequence flow is touched
+- shake sequence has changed
+- IntermediateCatchEvent cannot be used as a starting element, or it can but will not be started by default
 
 ### Additions
 
-- new activity readonly property `isParallelJoin` indicating a parallel joun gateway
+- fix link event definition shaking
+- activity readonly property `isParallelJoin` indicating a parallel converging gateway
+- new activity event published when parallel gateway is executed, namely `activity.converge`
 
 ## v17.3.0 - 2025-12-03
 

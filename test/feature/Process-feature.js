@@ -240,7 +240,7 @@ Feature('Process', () => {
     const messages = [];
     let processInstance, assertMessage;
     Given('a process', async () => {
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, true);
     });
@@ -249,7 +249,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'process.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -258,7 +258,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -478,15 +478,15 @@ Feature('Process', () => {
     });
   });
 
-  Scenario('A process with a join', () => {
+  Scenario('A process with double start and a join', () => {
     const source = `
     <?xml version="1.0" encoding="UTF-8"?>
     <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <process id="theProcess" isExecutable="true">
         <startEvent id="start1" />
         <startEvent id="start2" />
-        <sequenceFlow id="flow1" sourceRef="start1" targetRef="join" />
-        <sequenceFlow id="flow2" sourceRef="start2" targetRef="join" />
+        <sequenceFlow id="from-start1" sourceRef="start1" targetRef="join" />
+        <sequenceFlow id="from-start2" sourceRef="start2" targetRef="join" />
         <parallelGateway id="join" />
         <sequenceFlow id="flow3" sourceRef="join" targetRef="end" />
         <endEvent id="end" />
@@ -496,7 +496,7 @@ Feature('Process', () => {
     const messages = [];
     let processInstance, assertMessage;
     Given('a process', async () => {
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, true);
     });
@@ -539,19 +539,20 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start1');
       assertMessage('activity.start', 'start1');
       assertMessage('activity.end', 'start1');
+      assertMessage('activity.enter', 'join');
+      assertMessage('activity.start', 'join');
+      assertMessage('activity.converge', 'join');
       assertMessage('activity.leave', 'start1');
       assertMessage('activity.enter', 'start2');
       assertMessage('activity.start', 'start2');
       assertMessage('activity.end', 'start2');
-      assertMessage('activity.enter', 'join');
-      assertMessage('activity.start', 'join');
+      assertMessage('activity.leave', 'start2');
       assertMessage('activity.end', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
       assertMessage('activity.leave', 'join');
-      assertMessage('activity.leave', 'start2');
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
     });
@@ -587,7 +588,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'process.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -596,7 +597,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -625,13 +626,14 @@ Feature('Process', () => {
       assertMessage('activity.end', 'decision');
       assertMessage('activity.enter', 'join');
       assertMessage('activity.start', 'join');
+      assertMessage('activity.converge', 'join');
+      assertMessage('activity.leave', 'decision');
       assertMessage('activity.end', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
       assertMessage('activity.leave', 'join');
-      assertMessage('activity.leave', 'decision');
       assertMessage('activity.leave', 'start');
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
@@ -645,7 +647,7 @@ Feature('Process', () => {
       <process id="theProcess" isExecutable="true">
         <startEvent id="start" />
         <sequenceFlow id="to-activity1" sourceRef="start" targetRef="activity1" />
-       <intermediateCatchEvent id="activity1">
+        <intermediateCatchEvent id="activity1">
           <timerEventDefinition>
             <timeDuration xsi:type="tFormalExpression">PT0.01S</timeDuration>
           </timerEventDefinition>
@@ -665,7 +667,7 @@ Feature('Process', () => {
     const messages = [];
     let processInstance, assertMessage;
     Given('a process', async () => {
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, true);
     });
@@ -838,6 +840,8 @@ Feature('Process', () => {
       assertMessage('activity.end', 'start');
       assertMessage('activity.enter', 'fork');
       assertMessage('activity.start', 'fork');
+      assertMessage('activity.converge', 'fork');
+      assertMessage('activity.leave', 'start');
       assertMessage('activity.end', 'fork');
 
       assertMessage('activity.enter', 'timer');
@@ -852,8 +856,6 @@ Feature('Process', () => {
 
       assertMessage('activity.leave', 'fork');
 
-      assertMessage('activity.leave', 'start');
-      assertMessage('activity.stop', 'start');
       assertMessage('activity.stop', 'fork');
       assertMessage('activity.stop', 'timer');
 
@@ -933,20 +935,22 @@ Feature('Process', () => {
     });
 
     And('before the timeout event completes', () => {
+      assertMessage('activity.enter', 'join');
+      assertMessage('activity.start', 'join');
+
+      assertMessage('activity.converge', 'join');
       assertMessage('activity.leave', 'immediate');
       assertMessage('activity.leave', 'start');
 
       assertMessage('activity.timeout', 'postponed');
       assertMessage('activity.end', 'postponed');
-      assertMessage('activity.enter', 'join');
-      assertMessage('activity.start', 'join');
+      assertMessage('activity.leave', 'postponed');
       assertMessage('activity.end', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
       assertMessage('activity.leave', 'join');
-      assertMessage('activity.leave', 'postponed');
     });
   });
 
@@ -968,7 +972,7 @@ Feature('Process', () => {
     const messages = [];
     let bp, assertMessage;
     Given('a process', async () => {
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       bp = context.getProcessById('theProcess');
       bp.environment.variables.condition1 = true;
       assertMessage = AssertMessage(context, messages, true);
@@ -1108,20 +1112,22 @@ Feature('Process', () => {
     });
 
     And('before the timeout event completes', () => {
+      assertMessage('activity.enter', 'join');
+      assertMessage('activity.start', 'join');
+      assertMessage('activity.converge', 'join');
+
       assertMessage('activity.leave', 'immediate');
       assertMessage('activity.leave', 'start');
 
       assertMessage('activity.timeout', 'postponed');
       assertMessage('activity.end', 'postponed');
-      assertMessage('activity.enter', 'join');
-      assertMessage('activity.start', 'join');
+      assertMessage('activity.leave', 'postponed');
       assertMessage('activity.end', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
       assertMessage('activity.leave', 'join');
-      assertMessage('activity.leave', 'postponed');
       expect(messages.length).to.equal(0);
     });
 
@@ -1147,6 +1153,9 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'immediate');
       assertMessage('activity.start', 'immediate');
       assertMessage('activity.end', 'immediate');
+      assertMessage('activity.enter', 'join');
+      assertMessage('activity.start', 'join');
+      assertMessage('activity.converge', 'join');
 
       api.signal();
     });
@@ -1157,19 +1166,17 @@ Feature('Process', () => {
 
       assertMessage('activity.catch', 'postponed');
       assertMessage('activity.end', 'postponed');
+      assertMessage('activity.leave', 'postponed');
     });
 
     And('the timeout is discarded and process completes', async () => {
       await completed;
-      assertMessage('activity.enter', 'join');
-      assertMessage('activity.start', 'join');
       assertMessage('activity.end', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
       assertMessage('activity.leave', 'join');
-      assertMessage('activity.leave', 'postponed');
     });
   });
 
@@ -1255,7 +1262,7 @@ Feature('Process', () => {
     const messages = [];
     let bp, assertMessage, serviceComplete;
     Given('a process', async () => {
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       bp = context.getProcessById('theProcess');
       bp.environment.addService('get', get);
       assertMessage = AssertMessage(context, messages, false);
@@ -1389,7 +1396,7 @@ Feature('Process', () => {
     const messages = [];
     let processInstance, assertMessage, serviceComplete;
     Given('a process', async () => {
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       processInstance = context.getProcessById('theProcess');
       processInstance.environment.variables.timeout = 'PT1S';
       processInstance.environment.addService('get', get);
@@ -1540,7 +1547,7 @@ Feature('Process', () => {
     const messages = [];
     let processInstance, assertMessage, serviceComplete;
     Given('a process', async () => {
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       processInstance = context.getProcessById('theProcess');
       processInstance.environment.variables.timeout = 'PT1S';
       processInstance.environment.addService('get', get);
@@ -1669,7 +1676,7 @@ Feature('Process', () => {
     const messages = [];
     let context, processInstance, assertMessage;
     Given('a process with a user task', async () => {
-      context = await testHelpers.context(source);
+      context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, false);
     });
@@ -1753,7 +1760,7 @@ Feature('Process', () => {
     const messages = [];
     let context, processInstance, assertMessage;
     Given('a process', async () => {
-      context = await testHelpers.context(source);
+      context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       processInstance = context.getProcessById('theProcess');
       processInstance.environment.variables.timeout = 'PT1S';
       assertMessage = AssertMessage(context, messages, false);
@@ -1870,7 +1877,7 @@ Feature('Process', () => {
     const messages = [];
     let processInstance, assertMessage;
     Given('a process with user task and timer', async () => {
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, true);
     });
@@ -2126,7 +2133,7 @@ Feature('Process', () => {
     const messages = [];
     let context, processInstance, assertMessage;
     Given('a process with a task and bound timer event both leading to end event', async () => {
-      context = await testHelpers.context(source);
+      context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, true);
     });

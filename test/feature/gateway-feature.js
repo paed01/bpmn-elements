@@ -1,4 +1,4 @@
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import factory from '../helpers/factory.js';
 import nock from 'nock';
 
@@ -36,7 +36,7 @@ Feature('Gateway', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       definition = new Definition(context);
     });
 
@@ -132,7 +132,7 @@ Feature('Gateway', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       definition = new Definition(context);
     });
 
@@ -386,7 +386,7 @@ Feature('Gateway', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       definition = new Definition(context);
     });
 

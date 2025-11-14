@@ -124,7 +124,6 @@ Feature('Shaking', () => {
 
     Then('execution sequence is presented in first start event shake end message', () => {
       expect(messages).to.have.length(3);
-
       expect(messages[0].content).to.have.property('sequence').that.is.an('array');
       const sequence = messages[0].content.sequence;
       expect(sequence[0]).to.have.property('id', 'start1');
@@ -151,7 +150,8 @@ Feature('Shaking', () => {
     And('second start event loop sequence is presented in shake loop message', () => {
       expect(messages[2].content).to.have.property('sequence').that.is.an('array');
       const sequence = messages[2].content.sequence;
-      expect(sequence).to.have.length(8);
+
+      expect(sequence).to.have.length(7);
       expect(sequence[0]).to.have.property('id', 'start2');
       expect(sequence[1]).to.have.property('id', 'from22Task');
       expect(sequence[2]).to.have.property('id', 'task');
@@ -159,7 +159,6 @@ Feature('Shaking', () => {
       expect(sequence[4]).to.have.property('id', 'gateway');
       expect(sequence[5]).to.have.property('id', 'back2Task');
       expect(sequence[6]).to.have.property('id', 'task');
-      expect(sequence[7]).to.have.property('id', 'fromTask2Gateway');
     });
 
     let start1, start2;
@@ -281,8 +280,7 @@ Feature('Shaking', () => {
           expect(sequence.sequence[4]).to.have.property('id', 'gateway');
           expect(sequence.sequence[5]).to.have.property('id', 'back2Task');
           expect(sequence.sequence[6]).to.have.property('id', 'task');
-          expect(sequence.sequence[7]).to.have.property('id', 'fromTask2Gateway');
-          expect(sequence.sequence).to.have.length(8);
+          expect(sequence.sequence).to.have.length(7);
         });
 
         And('event messsages are forwarded from event activity', () => {
@@ -306,6 +304,7 @@ Feature('Shaking', () => {
           expect(sequence.sequence).to.have.length(3);
 
           sequence = result.gateway[1];
+
           expect(sequence.sequence[0]).to.have.property('id', 'gateway');
           expect(sequence.sequence[1]).to.have.property('id', 'back2Task');
           expect(sequence.sequence[2]).to.have.property('id', 'task');
@@ -551,6 +550,7 @@ Feature('Shaking', () => {
 
         And('sub process sequence is included', () => {
           const subProcess = result.start[0].sequence[2];
+
           expect(subProcess).to.be.an('object').with.property('sequence').that.is.an('object').with.property('task');
           expect(subProcess.sequence.task).to.be.an('array').with.length(1);
           expect(subProcess.sequence.task[0]).to.have.property('sequence').that.is.an('array').with.length(3);
@@ -625,4 +625,43 @@ Feature('Shaking', () => {
       });
     });
   });
+
+  // [
+  //   'join-paradox-1.bpmn',
+  //   'join-paradox-2.bpmn',
+  //   'join-paradox-3.bpmn',
+  //   'join-inbound.bpmn',
+  //   'issue-42-same-target-sequence-flows.bpmn',
+  // ].forEach((source) => {
+  //   Scenario(`${source} with parallel join gateways should shake as expected`, () => {
+  //     /** @type {Definition} */
+  //     let definition;
+  //     Given('a process matching scenario', async () => {
+  //       const context = await testHelpers.context(factory.resource(source));
+
+  //       definition = new Definition(context, {
+  //         settings: { skipDiscard: true },
+  //         variables: { input: 0 },
+  //         services: {
+  //           takeFlow() {
+  //             return true;
+  //           },
+  //           takeOnce({ environment }) {
+  //             const count = environment.variables[environment.variables.content.executionId] ?? 0;
+  //             environment.variables[environment.variables.content.executionId] = count + 1;
+  //             return count === 0;
+  //           },
+  //         },
+  //       });
+  //     });
+
+  //     When('shook', () => {
+  //       console.log('---SHAKE', definition.shake());
+  //     });
+
+  //     Then('join parallel gateway has expected inbound', () => {
+  //       console.log(definition.getProcesses()[0].getActivityById('join').expectedInboundSources);
+  //     });
+  //   });
+  // });
 });

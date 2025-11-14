@@ -20,6 +20,11 @@ export default {
   camundaBpmnModdle,
 };
 
+/**
+ * Context helper
+ * @param {Buffer|string} source BPMN2 source
+ * @param {...any} args
+ */
 async function context(source, ...args) {
   const logger = Logger('test-helpers:context');
 

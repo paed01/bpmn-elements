@@ -13,6 +13,7 @@ export default function LinkEventDefinition(activity, eventDefinition) {
   this.type = type;
 
   const reference = (this.reference = {
+    id: behaviour.name,
     linkName: behaviour.name,
     referenceType: 'link',
   });

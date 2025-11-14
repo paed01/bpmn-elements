@@ -230,8 +230,18 @@ Feature('Skip discarding flows if parallel gateway is not used', () => {
     });
   });
 
-  ['join-inbound.bpmn', 'join-paradox-1.bpmn', 'issue-42-same-target-sequence-flows.bpmn'].forEach((source) => {
-    Scenario(`${source} with parallel join gateways should complete as expected`, () => {
+  [
+    'join-paradox-2.bpmn',
+    'join-paradox-1.bpmn',
+    'join-paradox-3.bpmn',
+    'join-paradox-3-with-loopback.bpmn',
+    'join-paradox-4.bpmn',
+    'join-paradox-5.bpmn',
+    'join-inbound.bpmn',
+    'issue-42-same-target-sequence-flows.bpmn',
+    'parallel-join-edgecase.bpmn',
+  ].forEach((source) => {
+    Scenario(`${source} with parallel converging gateways should complete as expected`, () => {
       /** @type {Definition} */
       let definition;
       Given('a process matching scenario', async () => {
@@ -247,11 +257,23 @@ Feature('Skip discarding flows if parallel gateway is not used', () => {
             takeFlow() {
               return true;
             },
+            takeOnce({ content, environment }) {
+              const onceId = `${environment.variables.content.executionId}_${content.id}`;
+              const count = environment.variables[onceId] ?? 0;
+              environment.variables[onceId] = count + 1;
+              return count === 0;
+            },
+            takeTwice({ content, environment }) {
+              const onceId = `${environment.variables.content.executionId}_${content.id}`;
+              const count = environment.variables[onceId] ?? 0;
+              environment.variables[onceId] = count + 1;
+              return count === 1;
+            },
           },
         });
       });
 
-      And('a listener for wait immediately signalling or discarding if touched more than trice', () => {
+      And('a listener for wait immediately signalling or discarding if touched more than thrice', () => {
         definition.broker.subscribeTmp(
           'event',
           'activity.wait',
@@ -279,6 +301,17 @@ Feature('Skip discarding flows if parallel gateway is not used', () => {
         );
       });
 
+      And('a guard for infinite loop', () => {
+        definition.broker.subscribeTmp(
+          'event',
+          'activity.start',
+          (_, msg) => {
+            if (definition.getActivityById(msg.content.id)?.counters.taken > 5) throw new Error('eternal loop');
+          },
+          { noAck: true }
+        );
+      });
+
       let end;
       When('ran', () => {
         end = definition.waitFor('end');
@@ -287,10 +320,6 @@ Feature('Skip discarding flows if parallel gateway is not used', () => {
 
       Then('run completes', () => {
         return end;
-      });
-
-      And('with discarded flows', () => {
-        expect(discardedFlows.length).to.be.above(0);
       });
     });
   });

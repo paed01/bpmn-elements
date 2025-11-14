@@ -15,7 +15,7 @@ describe('ServiceTask', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, { settings: { disableDummyService: true } });
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false, disableDummyService: true } });
       const task = context.getActivityById('task');
 
       let error;
@@ -290,7 +290,7 @@ describe('ServiceTask', () => {
         </process>
       </definitions>`;
 
-      context = await testHelpers.context(source);
+      context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       context.environment.addService('postMessage', (ctx, next) => {
         next(null, true);
       });
@@ -323,7 +323,7 @@ describe('ServiceTask', () => {
     });
 
     it('error in callback is caught by bound error event', async () => {
-      context.environment.addService('postMessage', (message, callback) => {
+      context.environment.addService('postMessage', (_message, callback) => {
         callback(new Error('Failed'));
       });
 
@@ -338,7 +338,7 @@ describe('ServiceTask', () => {
     });
 
     it('error in callback discards task', async () => {
-      context.environment.addService('postMessage', (message, callback) => {
+      context.environment.addService('postMessage', (_message, callback) => {
         callback(new Error('Failed'));
       });
 

@@ -60,7 +60,7 @@ SequenceFlow.prototype.take = function take(content) {
 
 SequenceFlow.prototype.discard = function discard(content = {}) {
   const sequenceId = content?.sequenceId ?? getUniqueId(this.id);
-  const discardSequence = (content.discardSequence = (content.discardSequence || []).slice());
+  const discardSequence = (content.discardSequence = content.discardSequence?.slice() || []);
   if (discardSequence.indexOf(this.targetId) > -1) {
     ++this[kCounters].looped;
     this.logger.debug(`<${this.id}> discard loop detected <${this.sourceId}> -> <${this.targetId}>. Stop.`);
@@ -100,22 +100,27 @@ SequenceFlow.prototype.stop = function stop() {
 };
 
 SequenceFlow.prototype.shake = function shake(message) {
-  const content = cloneContent(message.content, { sourceId: this.sourceId, targetId: this.targetId });
+  const content = cloneContent(message.content);
+
   content.sequence = content.sequence || [];
-  const hasCondition = !!this.behaviour.conditionExpression;
-  content.sequence.push({ id: this.id, type: this.type, isSequenceFlow: true, hasCondition, targetId: this.targetId });
+
+  const info = {
+    id: this.id,
+    type: this.type,
+    isSequenceFlow: true,
+    sourceId: this.sourceId,
+    targetId: this.targetId,
+  };
 
   if (content.id === this.targetId) {
+    content.sequence.push(info);
     return this.broker.publish('event', 'flow.shake.loop', content, { persistent: false, type: 'shake' });
+  } else if (content.sequence?.find((f) => f.id === this.id)) {
+    return this.broker.publish('event', 'flow.shake.loop', content, { persistent: false, type: 'shake' });
+  } else {
+    content.sequence.push(info);
+    this.broker.publish('event', 'flow.shake', content, { persistent: false, type: 'shake' });
   }
-
-  for (const s of message.content.sequence || []) {
-    if (s.id === this.id) {
-      return this.broker.publish('event', 'flow.shake.loop', content, { persistent: false, type: 'shake' });
-    }
-  }
-
-  this.broker.publish('event', 'flow.shake', content, { persistent: false, type: 'shake' });
 };
 
 SequenceFlow.prototype.getCondition = function getCondition() {

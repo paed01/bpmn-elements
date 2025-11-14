@@ -23,7 +23,7 @@ Feature('Messaging', () => {
         <message id="Message2" name="Start by me" />
       </definitions>`;
 
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       definition = new Definition(context);
     });
 
@@ -549,7 +549,7 @@ Feature('Messaging', () => {
         <message id="Message1" name="Start message" />
       </definitions>`;
 
-      context = await testHelpers.context(source);
+      context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       definition = new Definition(context);
     });
 

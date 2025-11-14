@@ -1,4 +1,4 @@
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 import JsExtension from '../resources/extensions/JsExtension.js';
@@ -41,7 +41,8 @@ Feature('Linking', () => {
 
   [false, true].forEach((skipDiscard) => {
     describe(`run with skipDiscard=${skipDiscard}`, () => {
-      Scenario('Link in discard flow', () => {
+      Scenario('Link within discard flow', () => {
+        /** @type {Definition} */
         let definition;
         const logBook = [];
         Given('a decision decides if an intermediate catch event is discarded', async () => {
@@ -72,6 +73,98 @@ Feature('Linking', () => {
               </scriptTask>
               <sequenceFlow id="to-end2" sourceRef="task2" targetRef="end2" />
               <endEvent id="end2" />
+            </process>
+          </definitions>
+          `;
+          const context = await testHelpers.context(source);
+
+          definition = new Definition(context, {
+            settings: {
+              skipDiscard,
+            },
+            services: {
+              log(...args) {
+                logBook.push(...args);
+              },
+            },
+          });
+        });
+
+        let end;
+        When('definition is ran with the decision to discard', () => {
+          end = definition.waitFor('end');
+          definition.run();
+        });
+
+        Then('definition completes immediately', () => {
+          return end;
+        });
+
+        And('throw event was discarded', () => {
+          expect(definition.getActivityById('throw').counters).to.have.property('discarded', skipDiscard ? 0 : 1);
+          expect(definition.getActivityById('throw').counters).to.have.property('taken', 0);
+        });
+
+        And('catch event was discarded', () => {
+          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 1);
+          expect(definition.getActivityById('catch').counters).to.have.property('taken', 0);
+        });
+
+        Given('decision changes to take', () => {
+          definition.environment.variables.condition = true;
+        });
+
+        When('definition is ran again', () => {
+          end = definition.waitFor('end');
+          definition.run();
+        });
+
+        Then('definition completes immediately', () => {
+          return end;
+        });
+
+        And('throw event was taken', () => {
+          expect(definition.getActivityById('throw').counters).to.have.property('taken', 1);
+          expect(definition.getActivityById('throw').counters).to.have.property('discarded', skipDiscard ? 0 : 1);
+        });
+
+        And('catch event was taken', () => {
+          expect(definition.getActivityById('catch').counters).to.have.property('taken', 1);
+          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 1);
+        });
+      });
+
+      Scenario('Link within discard flow reversed order', () => {
+        let definition;
+        const logBook = [];
+        Given('a decision decides if an intermediate catch event is discarded', async () => {
+          const source = `
+          <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+            <process id="theProcess" isExecutable="true">
+              <intermediateCatchEvent id="catch">
+                <linkEventDefinition name="LINKA" />
+              </intermediateCatchEvent>
+              <sequenceFlow id="from-catch" sourceRef="catch" targetRef="task2" />
+              <scriptTask id="task2" scriptFormat="javascript">
+                <script>environment.services.log("task2"); next()</script>
+              </scriptTask>
+              <sequenceFlow id="to-end2" sourceRef="task2" targetRef="end2" />
+              <endEvent id="end2" />
+              <startEvent id="start" />
+              <sequenceFlow id="to-decision" sourceRef="start" targetRef="decision" />
+              <exclusiveGateway id="decision" default="to-end1" />
+              <sequenceFlow id="to-end1" sourceRef="decision" targetRef="end1" />
+              <endEvent id="end1" />
+              <sequenceFlow id="to-task1" sourceRef="decision" targetRef="task1">
+                <conditionExpression xsi:type="tFormalExpression">\${environment.variables.condition}</conditionExpression>
+              </sequenceFlow>
+              <scriptTask id="task1" scriptFormat="javascript">
+                <script>environment.services.log("task1"); next()</script>
+              </scriptTask>
+              <sequenceFlow id="to-throw" sourceRef="task1" targetRef="throw" />
+              <intermediateThrowEvent id="throw">
+                <linkEventDefinition name="LINKA" />
+              </intermediateThrowEvent>
             </process>
           </definitions>
           `;
@@ -279,6 +372,233 @@ Feature('Linking', () => {
         And('catch event was taken', () => {
           expect(definition.getActivityById('catch').counters).to.have.property('taken', 1);
           expect(definition.getActivityById('catch').counters).to.have.property('discarded', 1);
+        });
+      });
+
+      Scenario('a flow with link event to bypass parallel join', () => {
+        let context, definition;
+        Given('a flow with link event definitions and a bypassed parallel gateway', async () => {
+          const source = factory.resource('link-to-bypass-parallel-join.bpmn');
+
+          context = await testHelpers.context(source);
+
+          definition = new Definition(context, {
+            variables: {
+              condition: true,
+            },
+            settings: {
+              skipDiscard,
+            },
+          });
+        });
+
+        let end;
+        When('definition is ran with condition to take link', () => {
+          end = definition.waitFor('end');
+          definition.run();
+        });
+
+        Then('run completes', () => {
+          return end;
+        });
+
+        And('end was taken', () => {
+          expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
+        });
+
+        When('definition is ran with condition to discard link', () => {
+          end = definition.waitFor('end');
+
+          definition.environment.variables.condition = false;
+
+          definition.run();
+        });
+
+        Then('run completes', () => {
+          return end;
+        });
+
+        And('end was taken', () => {
+          expect(definition.getActivityById('end').counters).to.have.property('taken', 2);
+        });
+      });
+
+      Scenario('a flow with link event to complete parallel join', () => {
+        let context, definition;
+        Given('a flow matching scenario', async () => {
+          const source = factory.resource('link-to-parallel-join.bpmn');
+
+          context = await testHelpers.context(source);
+
+          definition = new Definition(context, {
+            variables: {
+              condition: true,
+            },
+            settings: {
+              skipDiscard,
+            },
+          });
+        });
+
+        let end;
+        When('definition is ran with condition to take link', () => {
+          end = definition.waitFor('end');
+          definition.run();
+        });
+
+        Then('run completes', () => {
+          return end;
+        });
+
+        And('end was taken', () => {
+          expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
+        });
+
+        When('definition is ran with condition to discard link', () => {
+          end = definition.waitFor('end');
+
+          definition.environment.variables.condition = false;
+
+          definition.run();
+        });
+
+        Then('run completes', () => {
+          return end;
+        });
+
+        And('end was taken', () => {
+          expect(definition.getActivityById('end').counters).to.have.property('taken', 2);
+        });
+      });
+
+      Scenario('a flow with link event to bypass logic', () => {
+        let context, definition;
+        Given('a flow with link event definition to bypass major part of logic', async () => {
+          const source = factory.resource('link-to-bypass-logic.bpmn');
+
+          context = await testHelpers.context(source);
+
+          definition = new Definition(context, {
+            variables: {
+              condition: true,
+            },
+            settings: {
+              skipDiscard,
+            },
+          });
+        });
+
+        let end;
+        When('definition is ran with condition to take link', () => {
+          end = definition.waitFor('end');
+          definition.run();
+        });
+
+        Then('run completes', () => {
+          return end;
+        });
+
+        And('end was taken once', () => {
+          expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
+        });
+
+        When('definition is ran with condition to discard link', () => {
+          end = definition.waitFor('end');
+
+          definition.environment.variables.condition = false;
+
+          definition.run();
+        });
+
+        Then('run completes', () => {
+          return end;
+        });
+
+        And('end was taken again', () => {
+          expect(definition.getActivityById('end').counters).to.have.property('taken', 3);
+        });
+      });
+
+      Scenario('a flow with multiple link events to bypass logic', () => {
+        let context, definition;
+        Given('a flow matching scenario', async () => {
+          const source = factory.resource('multiple-links-to-bypass-logic.bpmn');
+
+          context = await testHelpers.context(source);
+
+          definition = new Definition(context, {
+            variables: {
+              condition1: true,
+            },
+            settings: {
+              skipDiscard,
+            },
+          });
+        });
+
+        let end;
+        When('definition is ran with condition to take link 1', () => {
+          end = definition.waitFor('end');
+          definition.run();
+        });
+
+        Then('run completes', () => {
+          return end;
+        });
+
+        And('end was taken once', () => {
+          expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
+        });
+
+        When('definition is ran with condition to take link 2', () => {
+          end = definition.waitFor('end');
+
+          definition.environment.variables.condition1 = false;
+          definition.environment.variables.condition2 = true;
+
+          definition.run();
+        });
+
+        Then('run completes', () => {
+          return end;
+        });
+
+        And('end was taken again', () => {
+          expect(definition.getActivityById('end').counters).to.have.property('taken', 2);
+        });
+
+        When('definition is ran with condition to take both links', () => {
+          end = definition.waitFor('end');
+
+          definition.environment.variables.condition1 = true;
+          definition.environment.variables.condition2 = true;
+
+          definition.run();
+        });
+
+        Then('run completes', () => {
+          return end;
+        });
+
+        And('end was taken twice', () => {
+          expect(definition.getActivityById('end').counters).to.have.property('taken', 4);
+        });
+
+        When('definition is ran with condition to discard both links', () => {
+          end = definition.waitFor('end');
+
+          definition.environment.variables.condition1 = false;
+          definition.environment.variables.condition2 = false;
+
+          definition.run();
+        });
+
+        Then('run completes', () => {
+          return end;
+        });
+
+        And('end was taken twice', () => {
+          expect(definition.getActivityById('end').counters).to.have.property('taken', 6);
         });
       });
     });

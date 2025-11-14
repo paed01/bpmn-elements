@@ -8,7 +8,7 @@ Feature('Outbound flows', () => {
     let definition;
     Given('a task with one default flow, flow with script condition, and a third with expression', async () => {
       const source = factory.resource('conditional-flows.bpmn');
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       definition = new Definition(context);
     });
 

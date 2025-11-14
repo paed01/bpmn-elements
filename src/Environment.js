@@ -89,12 +89,14 @@ Environment.prototype.assignVariables = function assignVariables(newVars) {
 };
 
 Environment.prototype.assignSettings = function assignSettings(newSettings) {
-  if (!newSettings || typeof newSettings !== 'object') return;
+  if (!newSettings || typeof newSettings !== 'object') return this;
 
   this.settings = {
     ...this.settings,
     ...newSettings,
   };
+
+  return this;
 };
 
 Environment.prototype.getScript = function getScript(...args) {
