@@ -335,7 +335,7 @@ ProcessExecution.prototype.getApi = function getApi(message) {
   return api;
 };
 ProcessExecution.prototype._start = function start() {
-  if (this[kElements].children.length === 0) {
+  if (!this[kElements].children.length) {
     return this._complete('completed');
   }
   this[kStatus] = 'start';

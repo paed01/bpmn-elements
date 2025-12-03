@@ -1582,6 +1582,9 @@ describe('Activity', () => {
     it('takes outbound when completed', () => {
       const sequenceFlows = [];
       const context = getContext({
+        getInboundSequenceFlows() {
+          return [];
+        },
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
@@ -1615,6 +1618,9 @@ describe('Activity', () => {
     it('forwards execute completed message message', async () => {
       const sequenceFlows = [];
       const context = getContext({
+        getInboundSequenceFlows() {
+          return [];
+        },
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
@@ -1664,6 +1670,9 @@ describe('Activity', () => {
     it('takes all outbound when completed', () => {
       const sequenceFlows = [];
       const context = getContext({
+        getInboundSequenceFlows() {
+          return [];
+        },
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
@@ -1705,6 +1714,9 @@ describe('Activity', () => {
     it('respects outbound actions during execution', () => {
       const sequenceFlows = [];
       const context = getContext({
+        getInboundSequenceFlows() {
+          return [];
+        },
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
@@ -1766,6 +1778,9 @@ describe('Activity', () => {
     it('discards outbound when discarded', () => {
       const sequenceFlows = [];
       const context = getContext({
+        getInboundSequenceFlows() {
+          return [];
+        },
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
@@ -1798,6 +1813,9 @@ describe('Activity', () => {
     it('respects all outbound discarded during execution', () => {
       const sequenceFlows = [];
       const context = getContext({
+        getInboundSequenceFlows() {
+          return [];
+        },
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
@@ -1859,6 +1877,9 @@ describe('Activity', () => {
     it('uses last action from evaluated flows during execution', () => {
       const sequenceFlows = [];
       const context = getContext({
+        getInboundSequenceFlows() {
+          return [];
+        },
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },
@@ -1924,6 +1945,9 @@ describe('Activity', () => {
     it('discards flows and adds activity id to discard sequence when discarded', () => {
       const sequenceFlows = [];
       const context = getContext({
+        getInboundSequenceFlows() {
+          return [];
+        },
         getOutboundSequenceFlows() {
           return sequenceFlows;
         },

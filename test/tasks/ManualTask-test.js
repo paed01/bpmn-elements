@@ -6,10 +6,10 @@ describe('ManualTask', () => {
   <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <process id="theProcess" isExecutable="true">
       <startEvent id="start" />
-      <manualTask id="task" />
-      <endEvent id="end" />
       <sequenceFlow id="flow1" sourceRef="start" targetRef="task" />
+      <manualTask id="task" />
       <sequenceFlow id="flow2" sourceRef="task" targetRef="end" />
+      <endEvent id="end" />
     </process>
   </definitions>`;
 

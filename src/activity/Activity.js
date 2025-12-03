@@ -72,7 +72,7 @@ function Activity(Behaviour, activityDef, context) {
 
   const isParallelJoin = activityDef.isParallelGateway && inboundSequenceFlows.length > 1;
 
-  const flows = (this[kFlows] = {
+  this[kFlows] = {
     inboundSequenceFlows,
     inboundAssociations,
     inboundTriggers,
@@ -82,11 +82,11 @@ function Activity(Behaviour, activityDef, context) {
       inboundJoinFlows: new Set(),
       inboundSourceIds: new Set(inboundSequenceFlows.map(({ sourceId }) => sourceId)),
     }),
-  });
+  };
 
   this[kFlags] = {
-    isEnd: flows.outboundSequenceFlows.length === 0,
-    isStart: flows.inboundSequenceFlows.length === 0 && !attachedTo && !behaviour.triggeredByEvent && !isForCompensation,
+    isEnd: !outboundSequenceFlows.length,
+    isStart: !inboundTriggers.length && !behaviour.triggeredByEvent,
     isSubProcess: activityDef.isSubProcess,
     isMultiInstance: !!behaviour.loopCharacteristics,
     isForCompensation,
@@ -233,8 +233,7 @@ Object.defineProperties(Activity.prototype, {
 Activity.prototype.activate = function activate() {
   if (this[kActivated]) return;
   this[kActivated] = true;
-  this.addInboundListeners();
-  return this._consumeInbound();
+  return this.addInboundListeners() && this._consumeInbound();
 };
 
 Activity.prototype.deactivate = function deactivate() {
@@ -346,17 +345,21 @@ Activity.prototype.discard = function discard(discardContent) {
 };
 
 Activity.prototype.addInboundListeners = function addInboundListeners() {
-  const onInboundEvent = this._onInboundEvent.bind(this);
-  const triggerConsumerTag = `_inbound-${this.id}`;
-  for (const trigger of this[kFlows].inboundTriggers) {
-    if (trigger.isSequenceFlow) {
-      trigger.broker.subscribeTmp('event', 'flow.#', onInboundEvent, { noAck: true, consumerTag: triggerConsumerTag });
-    } else if (this.isForCompensation) {
-      trigger.broker.subscribeTmp('event', 'association.#', onInboundEvent, { noAck: true, consumerTag: triggerConsumerTag });
-    } else {
-      trigger.broker.subscribeTmp('event', 'activity.#', onInboundEvent, { noAck: true, consumerTag: triggerConsumerTag });
+  const triggers = this[kFlows].inboundTriggers;
+  if (triggers.length) {
+    const onInboundEvent = this._onInboundEvent.bind(this);
+    const triggerConsumerTag = `_inbound-${this.id}`;
+    for (const trigger of triggers) {
+      if (trigger.isSequenceFlow) {
+        trigger.broker.subscribeTmp('event', 'flow.#', onInboundEvent, { noAck: true, consumerTag: triggerConsumerTag });
+      } else if (this.isForCompensation) {
+        trigger.broker.subscribeTmp('event', 'association.#', onInboundEvent, { noAck: true, consumerTag: triggerConsumerTag });
+      } else {
+        trigger.broker.subscribeTmp('event', 'activity.#', onInboundEvent, { noAck: true, consumerTag: triggerConsumerTag });
+      }
     }
   }
+  return triggers.length;
 };
 
 Activity.prototype.removeInboundListeners = function removeInboundListeners() {
@@ -466,16 +469,16 @@ Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
 Activity.prototype._consumeInbound = function consumeInbound() {
   if (!this[kActivated]) return;
 
-  if (this.status) return;
+  if (this.status || !this[kFlows].inboundTriggers.length) return;
 
   const inboundQ = this.broker.getQueue('inbound-q');
   const onInbound = this[kMessageHandlers].onInbound;
 
   if (this[kFlags].isParallelJoin) {
-    return inboundQ.consume(onInbound, { consumerTag: '_run-on-inbound', prefetch: 1000 });
+    return inboundQ.assertConsumer(onInbound, { consumerTag: '_run-on-inbound', prefetch: 1000 });
   }
 
-  return inboundQ.consume(onInbound, { consumerTag: '_run-on-inbound' });
+  return inboundQ.assertConsumer(onInbound, { consumerTag: '_run-on-inbound' });
 };
 
 Activity.prototype._onInbound = function onInbound(routingKey, message) {

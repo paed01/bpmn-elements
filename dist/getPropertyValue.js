@@ -76,7 +76,7 @@ function splitArguments(args, base, fnScope) {
       }
     }
     if (argCompleted) {
-      if (arg.length > 0) {
+      if (arg.length) {
         callArguments.push(getFunctionArgument(base, arg.trim(), fnScope));
       }
       arg = '';

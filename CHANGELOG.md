@@ -2,50 +2,54 @@
 
 ## Unreleased
 
-## [17.2.2] - 2025-11-14
+## v17.3.0 - 2025-12-03
+
+- major upgrade of [smqp@11](https://github.com/paed01/smqp/blob/default/CHANGELOG.md)
+
+## v17.2.2 - 2025-11-14
 
 - npm package provenance release
 
-## [17.2.1] - 2025-08-13
+## v17.2.1 - 2025-08-13
 
 - major upgrade of [@0dep/piso@3](https://www.npmjs.com/package/@0dep/piso)
 
-## [17.2.0] - 2025-07-22
+## v17.2.0 - 2025-07-22
 
 - major upgrade of [smqp@10.0.0](https://github.com/paed01/smqp/blob/default/CHANGELOG.md)
 
-## [17.1.0] - 2025-04-30
+## v17.1.0 - 2025-04-30
 
 - add support for ad-hoc subprocess. The behavior is the same as for an ordinary subprocess
 
-## [17.0.0] - 2025-02-08
+## v17.0.0 - 2025-02-08
 
 - refactor message formatting, not sure if it breaking or not, but now it behaves as expected when formatting with multiple listeners
 - fix activity discard run when activity has completed executing but not yet reached end, status `executed`
 - use es5 trailing comma
 
-## [16.2.2] - 2024-12-26
+## v16.2.2 - 2024-12-26
 
 - fix call activities ignoring delegated cancel api message
 
-## 16.2.1
+## v16.2.1
 
 - fix call activities not represented with `activityStatus=wait`
 - bump [@0dep/piso@2.2](https://www.npmjs.com/package/@0dep/piso) with support for ISO week
 - use optional chaining (?) and nullish coalescing (??) where feasible since it's widely available, in nodejs since v14
 - replace arrays with set and remove unnecessary object assignments
 
-## 16.2.0
+## v16.2.0
 
 ### Breaking
 
 - refactor outbound sequence flow evaluation in an attempt to mitigate nasty discard loops when multiple outbound flows have the same target. What happens now is that only one (1) flow will be touched triggering the targeted activity. E.g: all outbound are discarded - only the last discarded flow is discarded; all but one flow is discarded - only taken flow is touched; all flows taken - only the last taken flow is taken. What about conditional flows? No worries, all conditional flows conditions are still evaluated
 
-## 16.1.0
+## v16.1.0
 
 - support ISO8601 interval timers with unbounded number of repetitions, e.g `R/PT1M` or `R-1/PT1M`
 
-## 16.0.0
+## v16.0.0
 
 ### Breaking
 
@@ -57,35 +61,35 @@
 - support conditional event definition condition script
 - export event definitions and flows
 
-## [15.0.3] - 2024-07-08
+## v15.0.3 - 2024-07-08
 
 - bump [@0dep/piso@2](https://www.npmjs.com/package/@0dep/piso) who totally forgot about applying declared offset before returning date
 
-## 15.0.2
+## v15.0.2
 
 - bump [@0dep/piso@1](https://www.npmjs.com/package/@0dep/piso)
 
-## 15.0.1
+## v15.0.1
 
 - fix parallel join inbound triggers not behaving as expected if inbound flow is taken more than once, unfortunately only for synchronous tasks
 - bump [smqp@9.0.2](https://github.com/paed01/smqp/blob/default/CHANGELOG.md)
 - add an image for activity execution documentation
 
-## 15.0.0
+## v15.0.0
 
 - use Set and Map where feasible to increase performance
 - bump [smqp@9](https://github.com/paed01/smqp/blob/default/CHANGELOG.md)
 
-## 14.1.0
+## v14.1.0
 
 - delegate Signal within a process
 - make sure message flow targeting process works as expected, successful but was not tested
 
-## 14.0.1
+## v14.0.1
 
 - throw `RunError` if `TimerEventDefinition` timer value parsing fails, referencing the complaining activity in the error source property
 
-## 14.0.0
+## v14.0.0
 
 Use [`@0dep/piso`](https://www.npmjs.com/package/@0dep/piso) to parse TimerEventDefinition duration and time date.
 
@@ -99,21 +103,21 @@ Use [`@0dep/piso`](https://www.npmjs.com/package/@0dep/piso) to parse TimerEvent
 
 - an activity discarded on enter, e.g. discarded by a BoundaryEvent, continued running, that arrogant behavior was unacceptable and stops now
 
-## 13.2.0
+## v13.2.0
 
 - hoist process environment output to definition environment on process error
 - major update of eslint
 - use prettier for formatting rules, touched basically ALL files
 
-## 13.1.2
+## v13.1.2
 
 - fix another lingering leave message. Now it was the definition execution that kept `process.leave` messages around for sentimental reasons
 
-## 13.1.1
+## v13.1.1
 
 - found the real reason behind ever groving state size - `activity.leave` messages were not acked by process execution. Doh!
 
-## 13.1.0
+## v13.1.0
 
 - introduce `disableTrackState` setting. Tracking of elements is done by counters, e.g. activity taken or discarded, sequence flow taken and discarded. Counters are saved when getting state. If you run really big flows the state will keep all elements just to be able to recover the number of times an element has been touched. Needless to say it the state will grow out of it's comfort zone. Setting `disableTrackState` to true will only return state for elements that are actually running
 
@@ -121,7 +125,7 @@ Use [`@0dep/piso`](https://www.npmjs.com/package/@0dep/piso) to parse TimerEvent
 
 - `getState()` can return undefined
 
-## 13.0.0
+## v13.0.0
 
 - export task-, events-, and gateway activity behaviors through `bpmn-elements/tasks`, `bpmn-elements/events`, and `bpmn-elements/gateways` respectively
 - refactor type definitions for three days to make the above type safe and VS-code happy. Why is it so freaking complicated? Ambient bla bla bla ts(4-digit-number)??? Looped through all 10.000 ts-typescript errors. Patches are inevitable and imminent
