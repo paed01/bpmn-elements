@@ -6,7 +6,7 @@ import { ActivityError } from '../../src/error/Errors.js';
 
 describe('ServiceTask', () => {
   describe('behaviour', () => {
-    it('no service on execution returns error if disableDummyService is enabled', async () => {
+    it('no service on execution returns error if enableDummyService is false', async () => {
       const source = `
       <?xml version="1.0" encoding="UTF-8"?>
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -15,7 +15,7 @@ describe('ServiceTask', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, { settings: { skipDiscard: false, disableDummyService: true } });
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false, enableDummyService: false } });
       const task = context.getActivityById('task');
 
       let error;

@@ -118,6 +118,7 @@ describe('SubProcess', () => {
     });
 
     it('discarded child activity still completes sub process', async () => {
+      context = await testHelpers.context(subProcessSource, { settings: { skipDiscard: false } });
       const subProcess = context.getActivityById('subProcess');
       subProcess.activate();
 

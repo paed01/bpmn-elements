@@ -42,9 +42,7 @@ describe('InclusiveGateway', () => {
       expect(activity.outbound[0].counters).to.have.property('take', 1);
       expect(activity.outbound[0].counters).to.have.property('discard', 0);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
     });
 
     it('discards default outbound if one outbound was taken', async () => {
@@ -59,11 +57,9 @@ describe('InclusiveGateway', () => {
       await leave;
 
       expect(activity.outbound[0].counters).to.have.property('take', 0);
-      expect(activity.outbound[0].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 1);
       expect(activity.outbound[1].counters).to.have.property('discard', 0);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
     });
 
     it('discards default outbound if more than one outbound was taken', async () => {
@@ -83,7 +79,6 @@ describe('InclusiveGateway', () => {
       expect(activity.outbound[1].counters).to.have.property('take', 1);
       expect(activity.outbound[1].counters).to.have.property('discard', 0);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
     });
 
     it('takes default outbound if no conditional flow was taken', async () => {
@@ -99,9 +94,7 @@ describe('InclusiveGateway', () => {
       await leave;
 
       expect(activity.outbound[0].counters).to.have.property('take', 0);
-      expect(activity.outbound[0].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 1);
       expect(activity.outbound[2].counters).to.have.property('discard', 0);
     });
@@ -119,11 +112,8 @@ describe('InclusiveGateway', () => {
       await leave;
 
       expect(activity.outbound[0].counters).to.have.property('take', 0);
-      expect(activity.outbound[0].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
     });
 
     it('emits error if no flow was taken', async () => {

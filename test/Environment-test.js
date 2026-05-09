@@ -3,8 +3,8 @@ import { Timers } from '../src/Timers.js';
 
 describe('Environment', () => {
   describe('ctor', () => {
-    it('sets settings', () => {
-      expect(new Environment()).to.have.property('settings').that.deep.equal({});
+    it('sets settings with skipDiscard default', () => {
+      expect(new Environment()).to.have.property('settings').that.deep.equal({ skipDiscard: true });
       expect(
         new Environment({
           settings: {
@@ -14,11 +14,12 @@ describe('Environment', () => {
       )
         .to.have.property('settings')
         .that.eql({
+          skipDiscard: true,
           test: 1,
         });
     });
 
-    it('shallow clones settings', () => {
+    it('shallow clones settings while preserving skipDiscard default', () => {
       const settings = {
         test: 1,
       };
@@ -28,6 +29,7 @@ describe('Environment', () => {
       settings.test = 2;
 
       expect(environment).to.have.property('settings').that.eql({
+        skipDiscard: true,
         test: 1,
       });
     });
@@ -267,13 +269,13 @@ describe('Environment', () => {
     it('ignored if non-object is passed', () => {
       const environment = new Environment({ settings: { before: true } });
       environment.assignSettings();
-      expect(environment.settings).to.eql({ before: true });
+      expect(environment.settings).to.eql({ skipDiscard: true, before: true });
       environment.assignSettings(null);
-      expect(environment.settings).to.eql({ before: true });
+      expect(environment.settings).to.eql({ skipDiscard: true, before: true });
       environment.assignSettings('null');
-      expect(environment.settings).to.eql({ before: true });
+      expect(environment.settings).to.eql({ skipDiscard: true, before: true });
       environment.assignSettings(1);
-      expect(environment.settings).to.eql({ before: true });
+      expect(environment.settings).to.eql({ skipDiscard: true, before: true });
     });
   });
 

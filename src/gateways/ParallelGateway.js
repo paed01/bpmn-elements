@@ -107,6 +107,11 @@ ParallelGatewayBehaviour.prototype.setup = function setup(executeMessage) {
     consumerTag: '_parallel-execution-execute-tag',
   });
 
+  this.broker.subscribeTmp('execution', 'execute.start', this._onPeerEnterMessage.bind(this), {
+    noAck: true,
+    consumerTag: '_parallel-execution-peer-enter-tag',
+  });
+
   this.peerMonitor.execute(message);
 
   const inboundQ = this.broker.getQueue('inbound-q');
@@ -121,7 +126,9 @@ ParallelGatewayBehaviour.prototype.setup = function setup(executeMessage) {
     { consumerTag: '_converging-inbound', exclusive: true, prefetch: 10000 }
   );
 
-  this.broker.publish('event', 'activity.converge', cloneContent(executeContent));
+  if (this.isConverging) {
+    this.broker.publish('event', 'activity.converge', cloneContent(executeContent));
+  }
 
   return this.broker.publish(
     'execution',
@@ -135,6 +142,12 @@ ParallelGatewayBehaviour.prototype._onExecuteMessage = function onExecuteMessage
   if (this.peerMonitor._onCompleteMessage(routingKey, message)) {
     return this._complete();
   }
+};
+
+ParallelGatewayBehaviour.prototype._onPeerEnterMessage = function onPeerEnterMessage(_, message) {
+  if (!message.properties.monitor) return;
+  const peer = this.peerMonitor.watching.get(message.content.id);
+  if (peer) this.peerMonitor.running.set(message.content.id, peer);
 };
 
 ParallelGatewayBehaviour.prototype._complete = function complete() {
@@ -158,6 +171,7 @@ ParallelGatewayBehaviour.prototype._stop = function stop() {
   this.broker.cancel('_converging-inbound');
   this.broker.cancel('_api-stop-execution');
   this.broker.cancel('_parallel-execution-execute-tag');
+  this.broker.cancel('_parallel-execution-peer-enter-tag');
   this.peerMonitor.stop();
 };
 
@@ -199,25 +213,43 @@ PeerMonitor.prototype.execute = function execute(executeMessage) {
   this.touched.add(inbound.sourceId);
 
   for (const target of this.targets.values()) {
-    if (target.status || target.initialized) this.monitor(target);
+    this.monitor(target);
   }
 
   return this.running.size;
 };
 
 PeerMonitor.prototype.monitor = function monitor(peerActivity) {
-  if (this.running.has(peerActivity.id)) return;
+  if (this.watching.has(peerActivity.id)) return;
 
   this.activity.logger.debug(`<${this.id}> monitor <${peerActivity.id}> with status: ${peerActivity.status}`);
 
-  this.running.set(peerActivity.id, peerActivity);
+  this.watching.set(peerActivity.id, peerActivity);
 
-  this.broker.publish('execution', 'execute.start', {
-    id: this.id,
-    peerId: peerActivity.id,
-    executionId: peerActivity.executionId,
-    isRootScope: false,
-  });
+  if (peerActivity.status || peerActivity.initialized) {
+    this.running.set(peerActivity.id, peerActivity);
+  }
+
+  peerActivity.broker.createShovel(
+    `_on-enter-${this.id}`,
+    {
+      exchange: 'event',
+      pattern: 'activity.enter',
+    },
+    {
+      broker: this.broker,
+      exchange: 'execution',
+      exchangeKey: 'execute.start',
+      publishProperties: {
+        monitor: true,
+      },
+    },
+    {
+      cloneMessage(sourceMessage) {
+        return cloneMessage(sourceMessage, { isRootScope: false });
+      },
+    }
+  );
 
   peerActivity.broker.createShovel(
     `_on-leave-${this.id}`,
@@ -242,19 +274,14 @@ PeerMonitor.prototype.monitor = function monitor(peerActivity) {
 };
 
 PeerMonitor.prototype._onCompleteMessage = function onCompleteMessage(_routingKey, message) {
-  const peerActivity = this.running.get(message.content.id);
-  peerActivity.broker.closeShovel(`_on-leave-${this.id}`);
   this.running.delete(message.content.id);
-
-  for (const target of this.targets.values()) {
-    if (target.status || target.initialized) this.monitor(target);
-  }
 
   return !this.running.size;
 };
 
 PeerMonitor.prototype.stop = function stop() {
-  for (const peerActivity of this.running.values()) {
+  for (const peerActivity of this.watching.values()) {
     peerActivity.broker.closeShovel(`_on-leave-${this.id}`);
+    peerActivity.broker.closeShovel(`_on-enter-${this.id}`);
   }
 };

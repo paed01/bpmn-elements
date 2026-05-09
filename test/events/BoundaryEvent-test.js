@@ -857,67 +857,6 @@ describe('BoundaryEvent', () => {
         expect(messages[1].content).to.have.property('id', 'service');
       });
 
-      it('adds attachedTo id to discardSequence when attachedTo completes', async () => {
-        context.environment.addService('test', (arg, next) => {
-          next();
-        });
-
-        const task = context.getActivityById('service');
-        const event = context.getActivityById('errorEvent');
-
-        let discardMessage;
-
-        event.outbound[0].broker.subscribeOnce('event', 'flow.discard', (_, message) => {
-          discardMessage = message;
-        });
-
-        const leave = event.waitFor('leave');
-
-        event.activate();
-        task.run();
-
-        await leave;
-
-        expect(event.counters).to.have.property('discarded', 1);
-
-        expect(discardMessage).to.be.ok;
-        expect(discardMessage.content).to.have.property('discardSequence').that.eql(['service', 'errorEvent']);
-      });
-
-      it('adds attachedTo id to discardSequence if discarded during execution', async () => {
-        let executing;
-        const execute = new Promise((resolve) => {
-          executing = resolve;
-        });
-
-        context.environment.addService('test', () => {
-          executing();
-        });
-
-        const task = context.getActivityById('service');
-        const event = context.getActivityById('errorEvent');
-
-        let discardMessage;
-        event.outbound[0].broker.subscribeOnce('event', 'flow.discard', (_, message) => {
-          discardMessage = message;
-        });
-
-        const leave = event.waitFor('leave');
-
-        event.activate();
-        task.run();
-
-        await execute;
-        task.discard();
-
-        await leave;
-
-        expect(event.counters).to.have.property('discarded', 1);
-
-        expect(discardMessage).to.be.ok;
-        expect(discardMessage.content).to.have.property('discardSequence').that.eql(['service', 'errorEvent']);
-      });
-
       it('is discarded if attached activity is discarded', async () => {
         const task = context.getActivityById('service');
         const event = context.getActivityById('errorEvent');
@@ -933,33 +872,6 @@ describe('BoundaryEvent', () => {
         expect(event.counters).to.have.property('discarded', 1);
       });
 
-      it('is discarded with attached inbound discard sequence when attached is discarded', async () => {
-        const task = context.getActivityById('service');
-        const event = context.getActivityById('errorEvent');
-
-        let discardMessage, taskDiscardMessage;
-        task.outbound[0].broker.subscribeOnce('event', 'flow.discard', (_, message) => {
-          taskDiscardMessage = message;
-        });
-        event.outbound[0].broker.subscribeOnce('event', 'flow.discard', (_, message) => {
-          discardMessage = message;
-        });
-
-        const leave = event.waitFor('leave');
-
-        event.activate();
-        task.activate();
-        task.inbound[0].discard({ discardSequence: ['hittepa-1'] });
-
-        await leave;
-
-        expect(event.counters).to.have.property('discarded', 1);
-
-        expect(taskDiscardMessage).to.be.ok;
-        expect(taskDiscardMessage.content).to.have.property('discardSequence').that.eql(['hittepa-1', 'start', 'service']);
-        expect(discardMessage).to.be.ok;
-        expect(discardMessage.content).to.have.property('discardSequence').that.eql(['hittepa-1', 'start', 'errorEvent']);
-      });
     });
 
     describe('non-interrupting with error event definition', () => {

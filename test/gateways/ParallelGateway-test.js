@@ -1,3 +1,4 @@
+import { Definition } from 'bpmn-elements';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 
@@ -19,7 +20,7 @@ describe('ParallelGateway', () => {
 
     let context;
     beforeEach(async () => {
-      context = await testHelpers.context(source);
+      context = await testHelpers.context(source, { settings: { skipDiscard: false } });
     });
 
     it('takes all outbound', async () => {
@@ -57,14 +58,24 @@ describe('ParallelGateway', () => {
 
   describe('join', () => {
     describe('join from different source activities', () => {
-      const sourceSameSourceId = `
+      const source = `
       <?xml version="1.0" encoding="UTF-8"?>
         <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="theProcess" isExecutable="true">
           <startEvent id="start" />
-          <sequenceFlow id="to-task1" sourceRef="start" targetRef="task1" />
-          <sequenceFlow id="to-task2" sourceRef="start" targetRef="task2" />
-          <sequenceFlow id="to-task3" sourceRef="start" targetRef="task3" />
+          <sequenceFlow id="to-fork" sourceRef="start" targetRef="fork" />
+          <inclusiveGateway id="fork" default="fork-default" />
+          <sequenceFlow id="fork-default" sourceRef="fork" targetRef="discardEnd" />
+          <endEvent id="discardEnd" />
+          <sequenceFlow id="fork1" sourceRef="fork" targetRef="task1">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.take1}</conditionExpression>
+          </sequenceFlow>
+          <sequenceFlow id="fork2" sourceRef="fork" targetRef="task2">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.take2}</conditionExpression>
+          </sequenceFlow>
+          <sequenceFlow id="fork3" sourceRef="fork" targetRef="task3">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.take3}</conditionExpression>
+          </sequenceFlow>
           <task id="task1" />
           <task id="task2" />
           <task id="task3" />
@@ -77,91 +88,47 @@ describe('ParallelGateway', () => {
         </process>
       </definitions>`;
 
-      let context;
-      beforeEach(async () => {
-        context = await testHelpers.context(sourceSameSourceId);
+      async function runWith(takes) {
+        const context = await testHelpers.context(source);
+        const definition = new Definition(context, {
+          variables: { take1: takes[0], take2: takes[1], take3: takes[2] },
+        });
+        const leave = definition.waitFor('leave');
+        definition.run();
+        await leave;
+        return definition.getActivityById('join');
+      }
+
+      it('takes outbound once when all three branches lead to a task that takes', async () => {
+        const join = await runWith([true, true, true]);
+        expect(join.counters).to.deep.equal({ taken: 1, discarded: 0 });
+        expect(join.outbound[0].counters).to.have.property('take', 1);
+        expect(join.outbound[0].counters).to.have.property('discard', 0);
       });
 
-      it('waits for all inbound', async () => {
-        const activity = context.getActivityById('join');
-
-        activity.activate();
-
-        const leave = activity.waitFor('leave');
-        activity.inbound[0].take();
-        activity.inbound[1].take();
-        activity.inbound[2].take();
-
-        await leave;
-
-        const outboundFlow = activity.outbound[0];
-        expect(outboundFlow.counters).to.have.property('take', 1);
-        expect(outboundFlow.counters).to.have.property('discard', 0);
+      it('discards outbound when all three branches skip their task (all inbound discarded)', async () => {
+        const join = await runWith([false, false, false]);
+        expect(join.counters).to.deep.equal({ taken: 0, discarded: 1 });
+        expect(join.outbound[0].counters).to.have.property('take', 0);
+        expect(join.outbound[0].counters).to.have.property('discard', 1);
       });
 
-      it('discards outbound if all inbound were discarded', async () => {
-        const activity = context.getActivityById('join');
-
-        activity.activate();
-
-        const leave = activity.waitFor('leave');
-        activity.inbound[0].discard();
-        activity.inbound[1].discard();
-        activity.inbound[2].discard();
-
-        await leave;
-
-        const outboundFlow = activity.outbound[0];
-        expect(outboundFlow.counters).to.have.property('discard', 1);
-        expect(outboundFlow.counters).to.have.property('take', 0);
+      it('takes outbound when at least one branch takes (one discarded, two taken)', async () => {
+        const join = await runWith([true, true, false]);
+        expect(join.counters).to.deep.equal({ taken: 1, discarded: 0 });
+        expect(join.outbound[0].counters).to.have.property('take', 1);
       });
 
-      it('takes outbound if one inbound is discarded', async () => {
-        const activity = context.getActivityById('join');
-
-        activity.activate();
-
-        const leave = activity.waitFor('leave');
-        activity.inbound[0].take();
-        activity.inbound[1].take();
-        activity.inbound[2].discard();
-
-        await leave;
-
-        expect(activity.outbound[0].counters).to.have.property('take', 1);
-        expect(activity.outbound[0].counters).to.have.property('discard', 0);
+      it('takes outbound when only one branch takes (two discarded, one taken)', async () => {
+        const join = await runWith([true, false, false]);
+        expect(join.counters).to.deep.equal({ taken: 1, discarded: 0 });
+        expect(join.outbound[0].counters).to.have.property('take', 1);
       });
 
-      it('takes outbound if all but one inbound is discarded', async () => {
-        const activity = context.getActivityById('join');
-
-        activity.activate();
-
-        const leave = activity.waitFor('leave');
-        activity.inbound[0].take();
-        activity.inbound[1].discard();
-        activity.inbound[2].discard();
-
-        await leave;
-
-        expect(activity.outbound[0].counters).to.have.property('take', 1);
-        expect(activity.outbound[0].counters).to.have.property('discard', 0);
-      });
-
-      it('takes outbound if first inbound is discarded but the rest are taken', async () => {
-        const activity = context.getActivityById('join');
-
-        activity.activate();
-
-        const leave = activity.waitFor('leave');
-        activity.inbound[0].discard();
-        activity.inbound[1].take();
-        activity.inbound[2].take();
-
-        await leave;
-
-        expect(activity.outbound[0].counters).to.have.property('take', 1);
-        expect(activity.outbound[0].counters).to.have.property('discard', 0);
+      it('takes outbound regardless of which branch is discarded (first discarded, rest taken)', async () => {
+        const join = await runWith([false, true, true]);
+        expect(join.counters).to.deep.equal({ taken: 1, discarded: 0 });
+        expect(join.outbound[0].counters).to.have.property('take', 1);
       });
     });
 
@@ -182,7 +149,7 @@ describe('ParallelGateway', () => {
 
       let context;
       beforeEach(async () => {
-        context = await testHelpers.context(sourceSameSourceId);
+        context = await testHelpers.context(sourceSameSourceId, { settings: { skipDiscard: false } });
       });
 
       it('waits for one inbound', async () => {

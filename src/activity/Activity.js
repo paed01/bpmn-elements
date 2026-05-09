@@ -79,10 +79,6 @@ function Activity(Behaviour, activityDef, context) {
     inboundTriggers,
     outboundSequenceFlows,
     outboundEvaluator: new OutboundEvaluator(this, outboundSequenceFlows),
-    ...(isParallelJoin && {
-      inboundJoinFlows: new Set(),
-      inboundSourceIds: new Map(inboundSequenceFlows.map(({ sourceId }) => [sourceId, 0])),
-    }),
   };
 
   this[kFlags] = {
@@ -239,11 +235,6 @@ Object.defineProperties(Activity.prototype, {
   parentElement: {
     get() {
       return this.context.getActivityParentById(this.id);
-    },
-  },
-  expectedInboundSources: {
-    get() {
-      return new Map(this[kFlows].inboundSourceIds);
     },
   },
   initialized: {
@@ -475,7 +466,6 @@ Activity.prototype._discardRun = function discardRun() {
 };
 
 Activity.prototype._onShakeMessage = function _onShakeMessage(sourceMessage) {
-  // if (this.isParallelJoin) {
   if (this[kFlags].isParallelGateway) {
     const message = cloneMessage(sourceMessage, { join: this.id });
     message.content.sequence.push({ id: this.id, type: this.type });
@@ -547,54 +537,9 @@ Activity.prototype._onInbound = function onInbound(routingKey, message) {
       let discardSequence;
       if (content.discardSequence) discardSequence = content.discardSequence.slice();
       const context = { inbound, discardSequence };
-      // return this.isParallelJoin ? this.run(context) : this._runDiscard(context);
       return this[kFlags].isParallelGateway ? this.run(context) : this._runDiscard(context);
     }
   }
-};
-
-Activity.prototype._onJoinInbound = function onJoinInbound(routingKey, message) {
-  const { inboundJoinFlows, inboundSourceIds } = this[kFlows];
-
-  let expectedInboundCount = 0;
-  for (const [, a] of inboundSourceIds) {
-    expectedInboundCount += a || 0;
-  }
-
-  // const expectedInboundCount = [...inboundSourceIds.values()].reduce((s, a) => s + (a || 1), 0);
-
-  inboundJoinFlows.add(message);
-
-  const remaining = expectedInboundCount - inboundJoinFlows.size;
-
-  if (remaining) {
-    return this.logger.debug(`<${this.id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
-  }
-
-  const inbound = [];
-
-  let taken;
-  for (const im of inboundJoinFlows) {
-    if (im.fields.routingKey === 'flow.take') taken = true;
-    im.ack();
-    inbound.push(cloneContent(im.content));
-  }
-
-  const discardSequence = new Set();
-  if (!taken) {
-    for (const im of inboundJoinFlows) {
-      if (!im.content.discardSequence) continue;
-      for (const sourceId of im.content.discardSequence) {
-        discardSequence.add(sourceId);
-      }
-    }
-  }
-
-  inboundJoinFlows.clear();
-  this.broker.cancel('_run-on-inbound');
-
-  if (!taken) return this._runDiscard({ inbound, discardSequence: [...discardSequence] });
-  return this.run({ inbound });
 };
 
 Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message) {
@@ -609,12 +554,7 @@ Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message
       }
       break;
     }
-    case 'flow.shake': {
-      if (this.isParallelJoin) {
-        let count = this[kFlows].inboundSourceIds.get(content.sourceId);
-        this[kFlows].inboundSourceIds.set(content.sourceId, ++count);
-      }
-    }
+    case 'flow.shake':
     case 'activity.shake.start':
       return this._onShakeMessage(message);
     case 'association.take':

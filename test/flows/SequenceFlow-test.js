@@ -124,7 +124,6 @@ describe('SequenceFlow', () => {
       expect(activity.outbound[1].counters).to.have.property('take', 1);
 
       expect(activity.outbound[2]).to.have.property('id', 'flow4withExpression');
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
     });
 
@@ -158,7 +157,6 @@ describe('SequenceFlow', () => {
       activity.run();
 
       expect(activity.outbound[0]).to.have.property('id', 'flow2');
-      expect(activity.outbound[0].counters).to.have.property('discard', 1);
       expect(activity.outbound[0].counters).to.have.property('take', 0);
 
       expect(activity.outbound[1]).to.have.property('id', 'flowWithSyncScript');
@@ -166,7 +164,6 @@ describe('SequenceFlow', () => {
       expect(activity.outbound[1].counters).to.have.property('take', 1);
 
       expect(activity.outbound[2]).to.have.property('id', 'flowWithScript');
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
 
       expect(activity.outbound[3]).to.have.property('id', 'flowWithoutCondition');
@@ -201,7 +198,6 @@ describe('SequenceFlow', () => {
       activity.run();
 
       expect(activity.outbound[1]).to.have.property('id', 'flow3withExpression');
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
     });
 
@@ -246,7 +242,6 @@ describe('SequenceFlow', () => {
       activity.run();
 
       expect(activity.outbound[1]).to.have.property('id', 'flow3withExternalResource');
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
 
       ctx.environment.variables.input = 4;
@@ -254,7 +249,6 @@ describe('SequenceFlow', () => {
       activity.run();
 
       expect(activity.outbound[1]).to.have.property('id', 'flow3withExternalResource');
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 1);
 
       expect(count).to.equal(2);
@@ -649,6 +643,7 @@ describe('SequenceFlow', () => {
         {
           id: flow.id,
           isSequenceFlow: true,
+          sourceId: flow.sourceId,
           targetId: 'decision-1',
           type: 'bpmn:SequenceFlow',
         },

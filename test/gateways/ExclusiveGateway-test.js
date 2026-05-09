@@ -42,9 +42,7 @@ describe('ExclusiveGateway', () => {
       expect(activity.outbound[0].counters).to.have.property('take', 1);
       expect(activity.outbound[0].counters).to.have.property('discard', 0);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
     });
 
     it('takes the first conditional flow even if more than one meet condition', async () => {
@@ -61,9 +59,7 @@ describe('ExclusiveGateway', () => {
 
       expect(activity.outbound[0].counters).to.have.property('take', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
     });
 
     it('takes first conditional flow regardless of position in definition', async () => {
@@ -78,11 +74,9 @@ describe('ExclusiveGateway', () => {
       await leave;
 
       expect(activity.outbound[0].counters).to.have.property('take', 0);
-      expect(activity.outbound[0].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 1);
       expect(activity.outbound[1].counters).to.have.property('discard', 0);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
     });
 
     it('takes default flow if no other flows were taken', async () => {
@@ -96,9 +90,7 @@ describe('ExclusiveGateway', () => {
       await leave;
 
       expect(activity.outbound[0].counters).to.have.property('take', 0);
-      expect(activity.outbound[0].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 1);
       expect(activity.outbound[2].counters).to.have.property('discard', 0);
     });
@@ -168,7 +160,6 @@ describe('ExclusiveGateway', () => {
       expect(activity.outbound[0].counters).to.have.property('take', 1);
       expect(activity.outbound[0].counters).to.have.property('discard', 0);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
     });
 
     it('discards all outbound if inbound was discarded', async () => {
@@ -182,11 +173,8 @@ describe('ExclusiveGateway', () => {
       await leave;
 
       expect(activity.outbound[0].counters).to.have.property('take', 0);
-      expect(activity.outbound[0].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
     });
 
     it('emits error when no flow was taken', async () => {
@@ -277,9 +265,7 @@ describe('ExclusiveGateway', () => {
       expect(activity.outbound[0].counters).to.have.property('take', 1);
       expect(activity.outbound[0].counters).to.have.property('discard', 0);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
     });
   });
 
@@ -324,8 +310,6 @@ describe('ExclusiveGateway', () => {
       bp2.signal({ id: 'usertask' });
 
       expect(bp2.counters).to.have.property('completed', 1);
-      const end = bp2.getActivityById('end');
-      expect(end.counters).to.have.property('discarded', 1);
     });
 
     it('save state on decision to usertask regardless of sequenceFlow order in source', async () => {
@@ -369,8 +353,6 @@ describe('ExclusiveGateway', () => {
       bp2.signal({ id: 'usertask' });
 
       expect(bp2.counters).to.have.property('completed', 1);
-      const end = bp2.getActivityById('end');
-      expect(end.counters).to.have.property('discarded', 1);
     });
   });
 });
