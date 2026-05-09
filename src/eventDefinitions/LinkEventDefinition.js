@@ -26,8 +26,14 @@ export default function LinkEventDefinition(activity, eventDefinition) {
 
   if (!isThrowing) {
     const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(reference.linkName)}-q`;
+
     this[kMessageQ] = broker.assertQueue(messageQueueName, { autoDelete: false, durable: true });
+
+    console.log({ messageQueueName, pattern: `*.${reference.referenceType}.#` });
+
     broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, { durable: true });
+    broker.consume(messageQueueName, this._onApiMessage.bind(this), { consumerTag: '_start-link-catch' });
+
     broker.subscribeTmp('api', `activity.shake.${reference.referenceType}`, this._onApiMessage.bind(this), { noAck: true });
   } else {
     broker.subscribeTmp(
@@ -123,18 +129,26 @@ LinkEventDefinition.prototype.executeThrow = function executeThrow(executeMessag
 };
 
 LinkEventDefinition.prototype._onCatchLink = function onCatchLink(routingKey, message) {
+  console.log('--------------------------');
+
   if (message.content.message?.linkName !== this.reference.linkName) return;
   if (message.content.state === 'discard') return this._discard();
   return this._complete('caught', message.content.message);
 };
 
 LinkEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+  console.log('CATCH', { [this.id]: routingKey, ...message.properties });
+
   switch (message.properties.type) {
     case 'discard': {
       return this._discard();
     }
     case 'stop': {
       this._stop();
+      break;
+    }
+    case 'link': {
+      console.log(message.content);
       break;
     }
     case 'shake': {
@@ -178,8 +192,8 @@ LinkEventDefinition.prototype._discard = function discard() {
 };
 
 LinkEventDefinition.prototype._stop = function stop() {
-  const broker = this.broker,
-    executionId = this.executionId;
+  const broker = this.broker;
+  const executionId = this.executionId;
   broker.cancel(`_api-link-${executionId}`);
   broker.cancel(`_api-parent-${executionId}`);
   broker.cancel(`_api-${executionId}`);

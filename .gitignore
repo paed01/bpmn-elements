@@ -17,6 +17,10 @@ coverage*
 *.iml
 .vscode
 
+# Agent files (AGENTS.md is the canonical, agent-agnostic doc)
+.claude
+CLAUDE.md
+
 # Compiled client resources
 /public/
 

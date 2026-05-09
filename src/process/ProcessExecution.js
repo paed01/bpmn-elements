@@ -891,6 +891,9 @@ ProcessExecution.prototype._delegateApiMessage = function delegateApiMessage(rou
 
   for (const child of this[kElements].children) {
     if (child.placeholder) continue;
+
+    console.log({ [child.id]: routingKey });
+
     child.broker.publish('api', routingKey, cloneContent(message.content), message.properties);
     if (consumed && !continueOnConsumed) break;
   }

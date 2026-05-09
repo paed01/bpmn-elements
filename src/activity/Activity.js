@@ -87,7 +87,7 @@ function Activity(Behaviour, activityDef, context) {
 
   this[kFlags] = {
     isEnd: !outboundSequenceFlows.length,
-    isStart: !inboundTriggers.length && !behaviour.triggeredByEvent,
+    isStart: !inboundTriggers.length && !behaviour.triggeredByEvent && !activityDef.isCatching,
     isSubProcess: activityDef.isSubProcess,
     isMultiInstance: !!behaviour.loopCharacteristics,
     isForCompensation,
@@ -102,7 +102,6 @@ function Activity(Behaviour, activityDef, context) {
   this[kExec] = new Map();
 
   this[kMessageHandlers] = {
-    // onInbound: isParallelJoin ? this._onJoinInbound.bind(this) : this._onInbound.bind(this),
     onInbound: this._onInbound.bind(this),
     onRunMessage: this._onRunMessage.bind(this),
     onApiMessage: this._onApiMessage.bind(this),
@@ -266,7 +265,6 @@ Activity.prototype.deactivate = function deactivate() {
   this.removeInboundListeners();
   broker.cancel('_run-on-inbound');
   broker.cancel('_format-consumer');
-  // if (this.isParallelJoin) this[kFlows].inboundSourceIds = new Map(this[kFlows].inboundSequenceFlows.map(({ sourceId }) => [sourceId, 0]));
 };
 
 Activity.prototype.init = function init(initContent) {

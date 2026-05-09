@@ -2,6 +2,7 @@ import { Definition } from 'bpmn-elements';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 import JsExtension from '../resources/extensions/JsExtension.js';
+import { getTakeServices } from '../helpers/services-helper.js';
 
 Feature('Linking', () => {
   Scenario('Link intermediate throw event & link intermediate catch event', () => {
@@ -41,6 +42,63 @@ Feature('Linking', () => {
 
   [false, true].forEach((skipDiscard) => {
     describe(`run with skipDiscard=${skipDiscard}`, () => {
+      Scenario('basic link event definition', () => {
+        /** @type {Definition} */
+        let definition;
+        Given('a flow matching scenario', async () => {
+          const source = factory.resource('link-basic.bpmn');
+          const context = await testHelpers.context(source);
+
+          definition = new Definition(context, {
+            settings: {
+              skipDiscard,
+            },
+            services: getTakeServices(),
+          });
+        });
+
+        let end;
+        When('definition is ran', () => {
+          end = definition.waitFor('end');
+          definition.run();
+        });
+
+        Then('definition completes immediately', () => {
+          return end;
+        });
+
+        And('throw event was taken', () => {
+          expect(definition.getActivityById('throw').counters).to.deep.equal({ taken: 1, discarded: 0 });
+        });
+
+        And('catch event was taken', () => {
+          expect(definition.getActivityById('catch').counters).to.deep.equal({ taken: 1, discarded: 0 });
+        });
+
+        Given('decision changes to take', () => {
+          definition.environment.variables.condition = true;
+        });
+
+        When('definition is ran again', () => {
+          end = definition.waitFor('end');
+          definition.run();
+        });
+
+        Then('definition completes immediately', () => {
+          return end;
+        });
+
+        And('throw event was taken', () => {
+          expect(definition.getActivityById('throw').counters).to.have.property('taken', 1);
+          expect(definition.getActivityById('throw').counters).to.have.property('discarded', skipDiscard ? 0 : 1);
+        });
+
+        And('catch event was taken', () => {
+          expect(definition.getActivityById('catch').counters).to.have.property('taken', 1);
+          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 1);
+        });
+      });
+
       Scenario('Link within discard flow', () => {
         /** @type {Definition} */
         let definition;
