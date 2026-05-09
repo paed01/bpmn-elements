@@ -67,12 +67,12 @@ Feature('Linking', () => {
           return end;
         });
 
-        And('throw event was taken', () => {
-          expect(definition.getActivityById('throw').counters).to.deep.equal({ taken: 1, discarded: 0 });
+        And('throw event was not reached (default flow taken)', () => {
+          expect(definition.getActivityById('throw').counters).to.deep.equal({ taken: 0, discarded: skipDiscard ? 0 : 1 });
         });
 
-        And('catch event was taken', () => {
-          expect(definition.getActivityById('catch').counters).to.deep.equal({ taken: 1, discarded: 0 });
+        And('catch event stayed dormant', () => {
+          expect(definition.getActivityById('catch').counters).to.deep.equal({ taken: 0, discarded: 0 });
         });
 
         Given('decision changes to take', () => {
@@ -95,7 +95,7 @@ Feature('Linking', () => {
 
         And('catch event was taken', () => {
           expect(definition.getActivityById('catch').counters).to.have.property('taken', 1);
-          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 1);
+          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 0);
         });
       });
 
@@ -164,7 +164,7 @@ Feature('Linking', () => {
         });
 
         And('catch event was discarded', () => {
-          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 1);
+          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 0);
           expect(definition.getActivityById('catch').counters).to.have.property('taken', 0);
         });
 
@@ -188,7 +188,7 @@ Feature('Linking', () => {
 
         And('catch event was taken', () => {
           expect(definition.getActivityById('catch').counters).to.have.property('taken', 1);
-          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 1);
+          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 0);
         });
       });
 
@@ -256,7 +256,7 @@ Feature('Linking', () => {
         });
 
         And('catch event was discarded', () => {
-          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 1);
+          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 0);
           expect(definition.getActivityById('catch').counters).to.have.property('taken', 0);
         });
 
@@ -280,7 +280,7 @@ Feature('Linking', () => {
 
         And('catch event was taken', () => {
           expect(definition.getActivityById('catch').counters).to.have.property('taken', 1);
-          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 1);
+          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 0);
         });
       });
 
@@ -342,8 +342,8 @@ Feature('Linking', () => {
           expect(user).to.have.property('id', 'start');
         });
 
-        And('throw event is waiting as well', () => {
-          expect(definition.getActivityById('catch')).to.have.property('isRunning', true);
+        And('catch is dormant — not running while waiting for the throw', () => {
+          expect(definition.getActivityById('catch')).to.have.property('isRunning', false);
         });
 
         Given('execution is stopped', () => {
@@ -368,7 +368,7 @@ Feature('Linking', () => {
         });
 
         And('catch event was discarded', () => {
-          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 1);
+          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 0);
           expect(definition.getActivityById('catch').counters).to.have.property('taken', 0);
         });
 
@@ -383,8 +383,8 @@ Feature('Linking', () => {
           expect(user).to.have.property('id', 'start');
         });
 
-        And('throw event is waiting as well', () => {
-          expect(definition.getActivityById('catch')).to.have.property('isRunning', true);
+        And('catch is dormant — not running while waiting for the throw', () => {
+          expect(definition.getActivityById('catch')).to.have.property('isRunning', false);
         });
 
         Given('execution is stopped', () => {
@@ -429,7 +429,7 @@ Feature('Linking', () => {
 
         And('catch event was taken', () => {
           expect(definition.getActivityById('catch').counters).to.have.property('taken', 1);
-          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 1);
+          expect(definition.getActivityById('catch').counters).to.have.property('discarded', 0);
         });
       });
 

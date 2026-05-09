@@ -14,281 +14,130 @@ describe('LinkEventDefinition', () => {
   });
 
   describe('catching', () => {
-    it('publishes wait event on parent broker', () => {
-      const catchSignal = new LinkEventDefinition(event, {
+    it('completes immediately on execute, publishing activity.catch and execute.completed with the link payload', () => {
+      const catchEd = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
         behaviour: { name: 'LINKA' },
       });
 
-      const messages = [];
-      event.broker.subscribeTmp(
-        'event',
-        'activity.*',
-        (_, msg) => {
-          messages.push(msg);
-        },
-        { noAck: true }
-      );
+      const eventMessages = [];
+      const executionMessages = [];
+      event.broker.subscribeTmp('event', 'activity.#', (_, msg) => eventMessages.push(msg), { noAck: true });
+      event.broker.subscribeTmp('execution', 'execute.#', (_, msg) => executionMessages.push(msg), { noAck: true });
 
-      catchSignal.execute({
+      catchEd.execute({
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          message: { linkName: 'LINKA', payload: { hello: 'world' } },
           parent: {
-            id: 'bound',
+            id: 'event',
             executionId: 'event_1',
-            path: [
-              {
-                id: 'theProcess',
-                executionId: 'theProcess_0',
-              },
-            ],
+            path: [{ id: 'theProcess', executionId: 'theProcess_0' }],
           },
         },
       });
 
-      expect(messages).to.have.length(1);
-      expect(messages[0].fields).to.have.property('routingKey', 'activity.wait');
-      expect(messages[0].content).to.have.property('executionId', 'event_1');
-      expect(messages[0].content.parent).to.have.property('id', 'theProcess');
-      expect(messages[0].content.parent).to.have.property('executionId', 'theProcess_0');
+      const catchMsg = eventMessages.find((m) => m.fields.routingKey === 'activity.catch');
+      expect(catchMsg, 'activity.catch').to.exist;
+      expect(catchMsg.content.link).to.deep.include({ linkName: 'LINKA', referenceType: 'link' });
+
+      const completedMsg = executionMessages.find((m) => m.fields.routingKey === 'execute.completed');
+      expect(completedMsg, 'execute.completed').to.exist;
+      expect(completedMsg.content).to.have.property('state', 'catch');
+      expect(completedMsg.content.output).to.deep.include({ linkName: 'LINKA', payload: { hello: 'world' } });
     });
 
-    it('completes and clears listeners when signal is caught', () => {
-      const catchSignal = new LinkEventDefinition(event, {
+    it('does not publish activity.wait', () => {
+      const catchEd = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
         behaviour: { name: 'LINKA' },
       });
 
-      const messages = [];
-      event.broker.subscribeTmp(
-        'execution',
-        'execute.completed',
-        (_, msg) => {
-          messages.push(msg);
-        },
-        { noAck: true, consumerTag: '_test-tag' }
-      );
+      const waitMessages = [];
+      event.broker.subscribeTmp('event', 'activity.wait', (_, msg) => waitMessages.push(msg), { noAck: true });
 
-      catchSignal.execute({
+      catchEd.execute({
         fields: {},
         content: {
           executionId: 'event_1_0',
-          index: 0,
+          message: { linkName: 'LINKA' },
           parent: {
-            id: 'bound',
+            id: 'event',
             executionId: 'event_1',
-            path: [
-              {
-                id: 'theProcess',
-                executionId: 'theProcess_0',
-              },
-            ],
+            path: [{ id: 'theProcess', executionId: 'theProcess_0' }],
           },
         },
       });
 
-      event.broker.publish('api', 'activity.link.event_1', { message: { linkName: 'LINKA' } });
-      event.broker.cancel('_test-tag');
-
-      expect(messages).to.have.length(1);
-
-      expect(event.broker).to.have.property('consumerCount', 0);
+      expect(waitMessages).to.have.length(0);
     });
 
-    it('completes and clears listeners if signaled before execution', () => {
-      const catchSignal = new LinkEventDefinition(event, {
+    it('binds a durable named queue for link delivery so messages survive stop/recover', () => {
+      new LinkEventDefinition(event, {
+        type: 'bpmn:LinkEventDefinition',
+        behaviour: { name: 'LINKA' },
+      });
+      const q = event.broker.getQueue('link-event-LINKA-q');
+      expect(q, 'durable link queue').to.exist;
+      expect(q.options).to.include({ durable: true, autoDelete: false });
+    });
+
+    it('responds to shake.link with matching linkName', () => {
+      const catchEd = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
         behaviour: { name: 'LINKA' },
       });
 
-      event.broker.publish('api', 'activity.link.event_1', { message: { linkName: 'LINKA' } });
+      const linkedMessages = [];
+      event.broker.subscribeTmp('event', 'activity.shake.linked', (_, msg) => linkedMessages.push(msg), { noAck: true });
 
-      const messages = [];
-      event.broker.subscribeTmp(
-        'execution',
-        'execute.completed',
-        (_, msg) => {
-          messages.push(msg);
-        },
-        { noAck: true, consumerTag: '_test-tag' }
+      event.broker.publish(
+        'api',
+        'activity.shake.link',
+        { sourceId: 'thrower', sequence: [], message: { linkName: 'LINKA' } },
+        { type: 'shake' }
       );
 
-      catchSignal.execute({
-        fields: {},
-        content: {
-          executionId: 'event_1_0',
-          index: 0,
-          parent: {
-            id: 'bound',
-            executionId: 'event_1',
-            path: [
-              {
-                id: 'theProcess',
-                executionId: 'theProcess_0',
-              },
-            ],
-          },
-        },
-      });
-
-      event.broker.cancel('_test-tag');
-
-      expect(messages).to.have.length(1);
-
-      expect(event.broker).to.have.property('consumerCount', 0);
+      expect(linkedMessages).to.have.length(1);
+      expect(linkedMessages[0].content).to.have.property('targetId', catchEd.id);
+      expect(linkedMessages[0].content).to.have.property('isLinked', true);
     });
 
-    it('completes and clears listeners if discarded', () => {
-      const catchSignal = new LinkEventDefinition(event, {
+    it('ignores shake.link with mismatching linkName', () => {
+      new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
         behaviour: { name: 'LINKA' },
       });
 
-      const messages = [];
-      event.broker.subscribeTmp(
-        'execution',
-        'execute.discard',
-        (_, msg) => {
-          messages.push(msg);
-        },
-        { noAck: true, consumerTag: '_test-tag' }
+      const linkedMessages = [];
+      event.broker.subscribeTmp('event', 'activity.shake.linked', (_, msg) => linkedMessages.push(msg), { noAck: true });
+
+      event.broker.publish(
+        'api',
+        'activity.shake.link',
+        { sourceId: 'thrower', sequence: [], message: { linkName: 'OTHER' } },
+        { type: 'shake' }
       );
 
-      catchSignal.execute({
-        fields: {},
-        content: {
-          executionId: 'event_1_0',
-          index: 0,
-          parent: {
-            id: 'bound',
-            executionId: 'event_1',
-            path: [
-              {
-                id: 'theProcess',
-                executionId: 'theProcess_0',
-              },
-            ],
-          },
-        },
-      });
-
-      event.broker.publish('api', 'activity.discard.event_1_0', {}, { type: 'discard' });
-
-      event.broker.cancel('_test-tag');
-
-      expect(messages).to.have.length(1);
-
-      expect(event.broker).to.have.property('consumerCount', 0);
-    });
-
-    it('stops and clears listeners if stopped', () => {
-      const catchSignal = new LinkEventDefinition(event, {
-        type: 'bpmn:LinkEventDefinition',
-        behaviour: { name: 'LINKA' },
-      });
-
-      const messages = [];
-      event.broker.subscribeTmp(
-        'execution',
-        'execute.#',
-        (_, msg) => {
-          messages.push(msg);
-        },
-        { noAck: true, consumerTag: '_test-tag' }
-      );
-
-      catchSignal.execute({
-        fields: {},
-        content: {
-          executionId: 'event_1_0',
-          index: 0,
-          parent: {
-            id: 'bound',
-            executionId: 'event_1',
-            path: [
-              {
-                id: 'theProcess',
-                executionId: 'theProcess_0',
-              },
-            ],
-          },
-        },
-      });
-
-      event.broker.publish('api', 'activity.stop.event_1_0', {}, { type: 'stop' });
-
-      event.broker.cancel('_test-tag');
-
-      expect(messages).to.have.length(0);
-
-      expect(event.broker).to.have.property('consumerCount', 0);
-    });
-
-    it('ignores link message on link name mismatch', () => {
-      const catchSignal = new LinkEventDefinition(event, {
-        behaviour: { name: 'LINKA' },
-      });
-
-      const messages = [];
-      event.broker.subscribeTmp(
-        'execution',
-        'execute.completed',
-        (_, msg) => {
-          messages.push(msg);
-        },
-        { noAck: true, consumerTag: '_test-tag' }
-      );
-
-      catchSignal.execute({
-        fields: {},
-        content: {
-          executionId: 'event_1_0',
-          index: 0,
-          parent: {
-            id: 'bound',
-            executionId: 'event_1',
-            path: [
-              {
-                id: 'theProcess',
-                executionId: 'theProcess_0',
-              },
-            ],
-          },
-        },
-      });
-
-      event.broker.cancel('_test-tag');
-
-      event.broker.publish('api', 'activity.link.event_1', { message: { linkName: 'LINKB' } });
-
-      expect(messages).to.have.length(0);
-
-      expect(event.broker).to.have.property('consumerCount').that.is.above(1);
+      expect(linkedMessages).to.have.length(0);
     });
   });
 
   describe('throwing', () => {
-    it('publishes signal event on parent broker', () => {
+    it('publishes activity.link with delegate:true and the link payload', () => {
       event.isThrowing = true;
 
-      const definition = new LinkEventDefinition(event, {
+      const throwEd = new LinkEventDefinition(event, {
         type: 'bpmn:LinkEventDefinition',
         behaviour: { name: 'LINKA' },
       });
 
       const messages = [];
-      event.broker.subscribeTmp(
-        'event',
-        'activity.link',
-        (_, msg) => {
-          messages.push(msg);
-        },
-        { noAck: true }
-      );
+      event.broker.subscribeTmp('event', 'activity.link', (_, msg) => messages.push(msg), { noAck: true });
 
-      definition.execute({
+      throwEd.execute({
         fields: {},
         content: {
           executionId: 'event_1_0',
@@ -296,24 +145,47 @@ describe('LinkEventDefinition', () => {
           parent: {
             id: 'intermediate',
             executionId: 'event_1',
-            path: [
-              {
-                id: 'theProcess',
-                executionId: 'theProcess_0',
-              },
-            ],
+            path: [{ id: 'theProcess', executionId: 'theProcess_0' }],
           },
         },
       });
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.link');
+      expect(messages[0].properties).to.have.property('delegate', true);
+      expect(messages[0].properties).to.have.property('type', 'link');
+      expect(messages[0].content.message).to.deep.include({ linkName: 'LINKA', referenceType: 'link' });
+      expect(messages[0].content).to.have.property('state', 'throw');
       expect(messages[0].content).to.have.property('executionId', 'event_1');
-      expect(messages[0].content.parent).to.have.property('id', 'theProcess');
-      expect(messages[0].content.parent).to.have.property('executionId', 'theProcess_0');
     });
 
-    it('publishes signal discard event on parent broker if parent is discarded', () => {
+    it('also publishes execute.completed for itself so the activity terminates', () => {
+      event.isThrowing = true;
+
+      const throwEd = new LinkEventDefinition(event, {
+        type: 'bpmn:LinkEventDefinition',
+        behaviour: { name: 'LINKA' },
+      });
+
+      const messages = [];
+      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => messages.push(msg), { noAck: true });
+
+      throwEd.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          parent: {
+            id: 'intermediate',
+            executionId: 'event_1',
+            path: [{ id: 'theProcess', executionId: 'theProcess_0' }],
+          },
+        },
+      });
+
+      expect(messages).to.have.length(1);
+    });
+
+    it('on activity.shake.start, publishes activity.shake.link with the linkName', () => {
       event.isThrowing = true;
 
       new LinkEventDefinition(event, {
@@ -322,30 +194,19 @@ describe('LinkEventDefinition', () => {
       });
 
       const messages = [];
-      event.broker.subscribeTmp(
-        'event',
-        'activity.link.discard',
-        (_, msg) => {
-          messages.push(msg);
-        },
-        { noAck: true, consumerTag: '_test-tag' }
-      );
+      event.broker.subscribeTmp('event', 'activity.shake.link', (_, msg) => messages.push(msg), { noAck: true });
 
-      event.broker.publish('event', 'activity.discard', {
+      event.broker.publish('event', 'activity.shake.start', {
         executionId: 'event_1',
-        parent: {
-          id: 'theProcess',
-          executionId: 'theProcess_0',
-        },
+        sequence: [],
+        parent: { id: 'theProcess', executionId: 'theProcess_0' },
       });
 
       expect(messages).to.have.length(1);
-      expect(messages[0].content).to.have.property('executionId', 'event_1');
-      expect(messages[0].content).to.have.property('state', 'discard');
-      expect(messages[0].content.parent).to.have.property('executionId', 'theProcess_0');
-
-      event.broker.cancel('_test-tag');
-      expect(event.broker, 'discard consumer only').to.have.property('consumerCount', 1);
+      expect(messages[0].properties).to.have.property('delegate', true);
+      expect(messages[0].properties).to.have.property('type', 'shake');
+      expect(messages[0].content.message).to.deep.include({ linkName: 'LINKA', referenceType: 'link' });
+      expect(messages[0].content).to.have.property('sourceId', 'event');
     });
   });
 });

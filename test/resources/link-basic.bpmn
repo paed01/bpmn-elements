@@ -10,10 +10,10 @@
       <bpmn:outgoing>Flow_011w5tr</bpmn:outgoing>
     </bpmn:exclusiveGateway>
     <bpmn:sequenceFlow id="Flow_1l06o3o" sourceRef="start" targetRef="gw" />
-    <bpmn:sequenceFlow id="Flow_0nezlgs" sourceRef="gw" targetRef="link-throw">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${true}</bpmn:conditionExpression>
+    <bpmn:sequenceFlow id="Flow_0nezlgs" sourceRef="gw" targetRef="throw">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${environment.variables.condition}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
-    <bpmn:intermediateThrowEvent id="link-throw">
+    <bpmn:intermediateThrowEvent id="throw">
       <bpmn:incoming>Flow_0nezlgs</bpmn:incoming>
       <bpmn:linkEventDefinition id="LinkEventDefinition_1mtlryg" name="LINKA" />
     </bpmn:intermediateThrowEvent>
@@ -22,7 +22,7 @@
       <bpmn:outgoing>Flow_1j0pk3d</bpmn:outgoing>
     </bpmn:task>
     <bpmn:sequenceFlow id="Flow_011w5tr" sourceRef="gw" targetRef="task1" />
-    <bpmn:intermediateCatchEvent id="link-catch">
+    <bpmn:intermediateCatchEvent id="catch">
       <bpmn:outgoing>Flow_132srsk</bpmn:outgoing>
       <bpmn:linkEventDefinition id="LinkEventDefinition_1trmjj3" name="LINKA" />
     </bpmn:intermediateCatchEvent>
@@ -30,11 +30,11 @@
       <bpmn:incoming>Flow_132srsk</bpmn:incoming>
       <bpmn:outgoing>Flow_1qj9tz9</bpmn:outgoing>
     </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_132srsk" sourceRef="link-catch" targetRef="task2" />
-    <bpmn:endEvent id="end-link-catch">
+    <bpmn:sequenceFlow id="Flow_132srsk" sourceRef="catch" targetRef="task2" />
+    <bpmn:endEvent id="end-catch">
       <bpmn:incoming>Flow_1qj9tz9</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_1qj9tz9" sourceRef="task2" targetRef="end-link-catch" />
+    <bpmn:sequenceFlow id="Flow_1qj9tz9" sourceRef="task2" targetRef="end-catch" />
     <bpmn:endEvent id="end">
       <bpmn:incoming>Flow_1j0pk3d</bpmn:incoming>
     </bpmn:endEvent>
@@ -54,16 +54,16 @@
       <bpmndi:BPMNShape id="Event_0hxtbk0_di" bpmnElement="end">
         <dc:Bounds x="502" y="162" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1u3elb1_di" bpmnElement="link-throw">
+      <bpmndi:BPMNShape id="Event_1u3elb1_di" bpmnElement="throw">
         <dc:Bounds x="392" y="72" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_1gzqsjn_di" bpmnElement="task2">
         <dc:Bounds x="260" y="280" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1lpvj3v_di" bpmnElement="link-catch">
+      <bpmndi:BPMNShape id="Event_1lpvj3v_di" bpmnElement="catch">
         <dc:Bounds x="182" y="302" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_159ay4v_di" bpmnElement="end-link-catch">
+      <bpmndi:BPMNShape id="Event_159ay4v_di" bpmnElement="end-catch">
         <dc:Bounds x="402" y="302" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1l06o3o_di" bpmnElement="Flow_1l06o3o">
