@@ -38,8 +38,7 @@ function LinkEventDefinition(activity, eventDefinition) {
           ...this.reference
         }
       }), {
-        type: 'shake',
-        delegate: true
+        type: 'shake'
       });
     }, {
       noAck: true,

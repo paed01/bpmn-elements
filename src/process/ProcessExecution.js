@@ -16,6 +16,12 @@ const kStatus = Symbol.for('status');
 const kStopped = Symbol.for('stopped');
 const kTracker = Symbol.for('activity tracker');
 
+/**
+ * Drives the execution of a single process or sub-process: activates children, routes activity
+ * events, and rolls completion up to the owning Process or sub-process Activity.
+ * @param {import('types').Process | import('types').Activity} parentActivity
+ * @param {import('types').ContextInstance} context
+ */
 function ProcessExecution(parentActivity, context) {
   const { id, type, broker, isSubProcess, isTransaction } = parentActivity;
 
@@ -92,6 +98,11 @@ Object.defineProperties(ProcessExecution.prototype, {
   },
 });
 
+/**
+ * Activate children and start the process execution. Resumes if the message is redelivered.
+ * @param {import('types').ElementBrokerMessage} executeMessage
+ * @throws {Error} when message or executionId is missing
+ */
 ProcessExecution.prototype.execute = function execute(executeMessage) {
   if (!executeMessage) throw new Error('Process execution requires message');
   if (!executeMessage.content || !executeMessage.content.executionId) throw new Error('Process execution requires execution id');
@@ -118,6 +129,10 @@ ProcessExecution.prototype.execute = function execute(executeMessage) {
   return true;
 };
 
+/**
+ * Resume after recover. Reshakes elements when there are converging gateways or multiple
+ * start activities, then resumes any postponed children.
+ */
 ProcessExecution.prototype.resume = function resume() {
   this._debug(`resume process execution at ${this.status}`);
 
@@ -167,6 +182,9 @@ ProcessExecution.prototype.resume = function resume() {
   if (!postponed.size && status === 'executing') return this._complete('completed');
 };
 
+/**
+ * Snapshot execution state including children, flows, message flows, and associations.
+ */
 ProcessExecution.prototype.getState = function getState() {
   const { children, flows, outboundMessageFlows, associations } = this[kElements];
 
@@ -195,6 +213,11 @@ ProcessExecution.prototype.getState = function getState() {
   };
 };
 
+/**
+ * Restore execution state captured by getState.
+ * @param {import('types').ProcessExecutionState} [state]
+ * @returns this
+ */
 ProcessExecution.prototype.recover = function recover(state) {
   if (!state) return this;
   this.executionId = state.executionId;
@@ -241,14 +264,25 @@ ProcessExecution.prototype.recover = function recover(state) {
   return this;
 };
 
+/**
+ * Walk activity graph from the given start id, or every start activity when omitted.
+ * @param {string} [fromId]
+ */
 ProcessExecution.prototype.shake = function shake(fromId) {
   return Object.fromEntries(this._shakeElements(fromId).sequences);
 };
 
+/**
+ * Stop the running process execution via the api.
+ */
 ProcessExecution.prototype.stop = function stop() {
   this.getApi().stop();
 };
 
+/**
+ * List currently postponed children as Api wrappers.
+ * @param {import('types').filterPostponed} [filterFn]
+ */
 ProcessExecution.prototype.getPostponed = function getPostponed(filterFn) {
   const result = [];
   for (const msg of this[kElements].postponed) {
@@ -260,6 +294,9 @@ ProcessExecution.prototype.getPostponed = function getPostponed(filterFn) {
   return result;
 };
 
+/**
+ * Queue a discard message that propagates to all running children.
+ */
 ProcessExecution.prototype.discard = function discard() {
   this[kStatus] = 'discard';
   return this[kActivityQ].queueMessage(
@@ -273,6 +310,9 @@ ProcessExecution.prototype.discard = function discard() {
   );
 };
 
+/**
+ * Queue a cancel message that propagates to all running children.
+ */
 ProcessExecution.prototype.cancel = function discard() {
   return this[kActivityQ].queueMessage(
     { routingKey: 'execution.cancel' },
@@ -285,22 +325,38 @@ ProcessExecution.prototype.cancel = function discard() {
   );
 };
 
+/**
+ * Get child activities in the process scope.
+ */
 ProcessExecution.prototype.getActivities = function getActivities() {
   return this[kElements].children.slice();
 };
 
+/**
+ * @param {string} activityId
+ */
 ProcessExecution.prototype.getActivityById = function getActivityById(activityId) {
   return this[kElements].children.find((child) => child.id === activityId);
 };
 
+/**
+ * Get sequence flows in the process scope.
+ */
 ProcessExecution.prototype.getSequenceFlows = function getSequenceFlows() {
   return this[kElements].flows.slice();
 };
 
+/**
+ * Get associations in the process scope.
+ */
 ProcessExecution.prototype.getAssociations = function getAssociations() {
   return this[kElements].associations.slice();
 };
 
+/**
+ * Resolve a process or child Api for the given message.
+ * @param {import('types').ElementBrokerMessage} [message]
+ */
 ProcessExecution.prototype.getApi = function getApi(message) {
   if (!message) return ProcessApi(this.broker, this[kExecuteMessage]);
 
@@ -326,6 +382,7 @@ ProcessExecution.prototype.getApi = function getApi(message) {
   return api;
 };
 
+/** @internal */
 ProcessExecution.prototype._start = function start() {
   if (!this[kElements].children.length) {
     return this._complete('completed');
@@ -364,6 +421,7 @@ ProcessExecution.prototype._start = function start() {
   });
 };
 
+/** @internal */
 ProcessExecution.prototype._activate = function activate() {
   const { onApiMessage, onMessageFlowEvent, onActivityEvent } = this[kMessageHandlers];
 
@@ -436,6 +494,7 @@ ProcessExecution.prototype._activate = function activate() {
   this[kActivated] = true;
 };
 
+/** @internal */
 ProcessExecution.prototype._deactivate = function deactivate() {
   const broker = this.broker;
   const executionId = this.executionId;
@@ -466,6 +525,7 @@ ProcessExecution.prototype._deactivate = function deactivate() {
   this[kActivated] = false;
 };
 
+/** @internal */
 ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
   let executing = true;
   const id = this.id;
@@ -546,6 +606,7 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
   return result;
 };
 
+/** @internal */
 ProcessExecution.prototype._onDelegateEvent = function onDelegateEvent(message) {
   const eventType = message.properties.type;
   let delegate = true;
@@ -569,10 +630,12 @@ ProcessExecution.prototype._onDelegateEvent = function onDelegateEvent(message) 
   return delegate;
 };
 
+/** @internal */
 ProcessExecution.prototype._onMessageFlowEvent = function onMessageFlowEvent(routingKey, message) {
   this.broker.publish('message', routingKey, cloneContent(message.content), message.properties);
 };
 
+/** @internal */
 ProcessExecution.prototype._onActivityEvent = function onActivityEvent(routingKey, message) {
   const { fields, content, properties } = message;
 
@@ -609,6 +672,7 @@ ProcessExecution.prototype._onActivityEvent = function onActivityEvent(routingKe
   this[kActivityQ].queueMessage(message.fields, cloneContent(content), { persistent: true, ...message.properties });
 };
 
+/** @internal */
 ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey, message) {
   if (message.fields.redelivered && message.properties.persistent === false) return message.ack();
 
@@ -693,12 +757,14 @@ ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey,
   }
 };
 
+/** @internal */
 ProcessExecution.prototype._stateChangeMessage = function stateChangeMessage(message, postponeMessage) {
   const previousMsg = this._popPostponed(message.content);
   if (previousMsg) previousMsg.ack();
   if (postponeMessage) this[kElements].postponed.add(message);
 };
 
+/** @internal */
 ProcessExecution.prototype._popPostponed = function popPostponed(byContent) {
   const { postponed, detachedActivities } = this[kElements];
 
@@ -732,6 +798,7 @@ ProcessExecution.prototype._popPostponed = function popPostponed(byContent) {
   return postponedMsg;
 };
 
+/** @internal */
 ProcessExecution.prototype._onChildCompleted = function onChildCompleted(message) {
   this._stateChangeMessage(message, false);
   if (message.fields.redelivered) return message.ack();
@@ -782,6 +849,7 @@ ProcessExecution.prototype._onChildCompleted = function onChildCompleted(message
   }
 };
 
+/** @internal */
 ProcessExecution.prototype._stopExecution = function stopExecution(message) {
   const postponedCount = this.postponedCount;
   this._debug(`stop process execution (stop child executions ${postponedCount})`);
@@ -801,6 +869,7 @@ ProcessExecution.prototype._stopExecution = function stopExecution(message) {
   );
 };
 
+/** @internal */
 ProcessExecution.prototype._onDiscard = function onDiscard() {
   this._deactivate();
   const postponed = this[kElements].postponed;
@@ -821,6 +890,7 @@ ProcessExecution.prototype._onDiscard = function onDiscard() {
   return this._complete('discard');
 };
 
+/** @internal */
 ProcessExecution.prototype._onCancel = function onCancel() {
   const postponed = this[kElements].postponed;
   const running = new Set(postponed);
@@ -853,6 +923,7 @@ ProcessExecution.prototype._onCancel = function onCancel() {
   }
 };
 
+/** @internal */
 ProcessExecution.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   if (message.properties.delegate) {
     return this._delegateApiMessage(routingKey, message);
@@ -877,6 +948,7 @@ ProcessExecution.prototype._onApiMessage = function onApiMessage(routingKey, mes
   }
 };
 
+/** @internal */
 ProcessExecution.prototype._delegateApiMessage = function delegateApiMessage(routingKey, message, continueOnConsumed) {
   const correlationId = message.properties.correlationId || getUniqueId(this.executionId);
   this._debug(`delegate api ${routingKey} message to children, with correlationId <${correlationId}>`);
@@ -905,6 +977,7 @@ ProcessExecution.prototype._delegateApiMessage = function delegateApiMessage(rou
   return broker.cancel(`_ct-delegate-${correlationId}`);
 };
 
+/** @internal */
 ProcessExecution.prototype._complete = function complete(completionType, content) {
   this._deactivate();
   this[kCompleted] = true;
@@ -938,6 +1011,7 @@ ProcessExecution.prototype._complete = function complete(completionType, content
   );
 };
 
+/** @internal */
 ProcessExecution.prototype._terminate = function terminate(message) {
   this[kStatus] = 'terminated';
   this._debug('terminating process execution');
@@ -960,22 +1034,27 @@ ProcessExecution.prototype._terminate = function terminate(message) {
   this[kActivityQ].purge();
 };
 
+/** @internal */
 ProcessExecution.prototype._getFlowById = function getFlowById(flowId) {
   return this[kElements].flows.find((f) => f.id === flowId);
 };
 
+/** @internal */
 ProcessExecution.prototype._getAssociationById = function getAssociationById(associationId) {
   return this[kElements].associations.find((a) => a.id === associationId);
 };
 
+/** @internal */
 ProcessExecution.prototype._getMessageFlowById = function getMessageFlowById(flowId) {
   return this[kElements].outboundMessageFlows.find((f) => f.id === flowId);
 };
 
+/** @internal */
 ProcessExecution.prototype._getChildById = function getChildById(childId) {
   return this.getActivityById(childId) || this._getFlowById(childId);
 };
 
+/** @internal */
 ProcessExecution.prototype._getChildApi = function getChildApi(message) {
   const content = message.content;
 
@@ -995,6 +1074,7 @@ ProcessExecution.prototype._getChildApi = function getChildApi(message) {
   }
 };
 
+/** @internal */
 ProcessExecution.prototype._onShakeMessage = function onShakeMessage(message) {
   if (message.fields.routingKey !== 'activity.shake.end') return;
   let seq;
@@ -1006,6 +1086,7 @@ ProcessExecution.prototype._onShakeMessage = function onShakeMessage(message) {
   }
 };
 
+/** @internal */
 ProcessExecution.prototype._debug = function debugMessage(logMessage) {
   this[kParent].logger.debug(`<${this.executionId} (${this.id})> ${logMessage}`);
 };

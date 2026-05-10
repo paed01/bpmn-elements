@@ -1988,6 +1988,21 @@ describe('Activity', () => {
   });
 
   describe('recover()', () => {
+    it('returns activity when called without state', () => {
+      const activity = getActivity(undefined, SignalTaskBehaviour);
+      expect(activity.recover()).to.equal(activity);
+    });
+
+    it('returns activity when called with state', () => {
+      const activity = getActivity(undefined, SignalTaskBehaviour);
+      activity.run();
+      activity.stop();
+      const state = activity.getState();
+
+      const recovered = getActivity(undefined, SignalTaskBehaviour);
+      expect(recovered.recover(state)).to.equal(recovered);
+    });
+
     it('recovers stopped activity without state', () => {
       const activity = getActivity(undefined, SignalTaskBehaviour);
       activity.run();

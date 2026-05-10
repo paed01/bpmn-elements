@@ -7,6 +7,11 @@ const kVariables = Symbol.for('variables');
 
 const defaultOptions = new Set(['expressions', 'extensions', 'Logger', 'output', 'scripts', 'services', 'settings', 'timers', 'variables']);
 
+/**
+ * Holds global execution config: variables, injected services, timers, scripts engine,
+ * expressions, Logger factory, and settings such as `batchSize`. Cloned and merged per Definition.
+ * @param {import('types').EnvironmentOptions} [options]
+ */
 export default function Environment(options = {}) {
   this.options = validateOptions(options);
 
@@ -41,6 +46,9 @@ Object.defineProperties(Environment.prototype, {
   },
 });
 
+/**
+ * Snapshot environment state for recover.
+ */
 Environment.prototype.getState = function getState() {
   return {
     settings: { ...this.settings },
@@ -49,6 +57,12 @@ Environment.prototype.getState = function getState() {
   };
 };
 
+/**
+ * Restore environment state captured by getState. Merges into the existing settings,
+ * variables, and output rather than replacing them.
+ * @param {import('types').EnvironmentState} [state]
+ * @returns this
+ */
 Environment.prototype.recover = function recover(state) {
   if (!state) return this;
 
@@ -59,6 +73,11 @@ Environment.prototype.recover = function recover(state) {
   return this;
 };
 
+/**
+ * Clone the environment, optionally overriding options. Services are merged when
+ * `overrideOptions.services` is supplied.
+ * @param {import('types').EnvironmentOptions} [overrideOptions]
+ */
 Environment.prototype.clone = function clone(overrideOptions) {
   const services = this[kServices];
   const newOptions = {
@@ -79,6 +98,10 @@ Environment.prototype.clone = function clone(overrideOptions) {
   return new this.constructor(newOptions);
 };
 
+/**
+ * Merge variables into the environment. Non-objects are ignored.
+ * @param {Record<string, any>} newVars
+ */
 Environment.prototype.assignVariables = function assignVariables(newVars) {
   if (!newVars || typeof newVars !== 'object') return;
 
@@ -88,6 +111,11 @@ Environment.prototype.assignVariables = function assignVariables(newVars) {
   };
 };
 
+/**
+ * Merge settings into the environment. Non-objects are ignored.
+ * @param {import('types').EnvironmentSettings} newSettings
+ * @returns this
+ */
 Environment.prototype.assignSettings = function assignSettings(newSettings) {
   if (!newSettings || typeof newSettings !== 'object') return this;
 
@@ -99,18 +127,37 @@ Environment.prototype.assignSettings = function assignSettings(newSettings) {
   return this;
 };
 
+/**
+ * Resolve a registered script by language and identifier.
+ * @param {string} language
+ * @param {{ id: string, [x: string]: any }} identifier
+ */
 Environment.prototype.getScript = function getScript(...args) {
   return this.scripts.getScript(...args);
 };
 
+/**
+ * Register a script for an activity, delegating to the configured scripts engine.
+ * @param {any} activity
+ */
 Environment.prototype.registerScript = function registerScript(...args) {
   return this.scripts.register(...args);
 };
 
+/**
+ * Lookup a registered service by name.
+ * @param {string} serviceName
+ */
 Environment.prototype.getServiceByName = function getServiceByName(serviceName) {
   return this[kServices][serviceName];
 };
 
+/**
+ * Resolve an expression with the environment as scope, optionally extended by an element message.
+ * @param {string} expression
+ * @param {import('types').ElementBrokerMessage} [message] Element message merged onto the resolution scope
+ * @param {any} [expressionFnContext]
+ */
 Environment.prototype.resolveExpression = function resolveExpression(expression, message, expressionFnContext) {
   const from = {
     environment: this,
@@ -120,6 +167,11 @@ Environment.prototype.resolveExpression = function resolveExpression(expression,
   return this.expressions.resolveExpression(expression, from, expressionFnContext);
 };
 
+/**
+ * Register a service callable by name.
+ * @param {string} name
+ * @param {CallableFunction} fn
+ */
 Environment.prototype.addService = function addService(name, fn) {
   this[kServices][name] = fn;
 };

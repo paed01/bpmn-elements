@@ -28,6 +28,12 @@ const kMessageHandlers = Symbol.for('messageHandlers');
 const kStateMessage = Symbol.for('stateMessage');
 const kActivated = Symbol.for('activated');
 var _default = exports.default = Activity;
+/**
+ * Activity wraps any element (task, event, gateway) and orchestrates its lifecycle through the broker.
+ * @param {import('types').IActivityBehaviour} Behaviour Element-specific behaviour constructor invoked per execution
+ * @param {import('moddle-context-serializer').SerializableElement} activityDef Parsed BPMN element definition
+ * @param {import('types').ContextInstance} context Per-execution registry and factory
+ */
 function Activity(Behaviour, activityDef, context) {
   const {
     id,
@@ -124,6 +130,7 @@ function Activity(Behaviour, activityDef, context) {
 }
 Object.defineProperties(Activity.prototype, {
   counters: {
+    /** @returns {{ taken: number, discarded: number }} */
     get() {
       return {
         ...this[kCounters]
@@ -131,27 +138,32 @@ Object.defineProperties(Activity.prototype, {
     }
   },
   execution: {
+    /** @returns {import('types').ActivityExecution | undefined} */
     get() {
       return this[kExec].get('execution');
     }
   },
   executionId: {
+    /** @returns {string | undefined} */
     get() {
       return this[kExec].get('executionId');
     }
   },
   extensions: {
+    /** @returns {import('types').IExtension} */
     get() {
       return this[kExtensions];
     }
   },
   bpmnIo: {
+    /** @returns {import('types').IExtension | undefined} */
     get() {
       const extensions = this[kExtensions];
       return extensions?.extensions.find(e => e.type === 'bpmnio');
     }
   },
   formatter: {
+    /** @returns {import('types').MessageFormatter} */
     get() {
       let formatter = this[kFormatter];
       if (formatter) return formatter;
@@ -160,72 +172,86 @@ Object.defineProperties(Activity.prototype, {
     }
   },
   isRunning: {
+    /** @returns {boolean} */
     get() {
       if (!this[kConsuming]) return false;
       return !!this.status;
     }
   },
   outbound: {
+    /** @returns {import('types').SequenceFlow[]} */
     get() {
       return this[kFlows].outboundSequenceFlows;
     }
   },
   inbound: {
+    /** @returns {import('types').SequenceFlow[]} */
     get() {
       return this[kFlows].inboundSequenceFlows;
     }
   },
   isEnd: {
+    /** @returns {boolean} */
     get() {
       return this[kFlags].isEnd;
     }
   },
   isStart: {
+    /** @returns {boolean} */
     get() {
       return this[kFlags].isStart;
     }
   },
   isSubProcess: {
+    /** @returns {boolean} */
     get() {
       return this[kFlags].isSubProcess;
     }
   },
   isTransaction: {
+    /** @returns {boolean} */
     get() {
       return this[kFlags].isTransaction;
     }
   },
   isMultiInstance: {
+    /** @returns {boolean} */
     get() {
       return this[kFlags].isMultiInstance;
     }
   },
   isThrowing: {
+    /** @returns {boolean} */
     get() {
       return this[kFlags].isThrowing;
     }
   },
   isCatching: {
+    /** @returns {boolean} */
     get() {
       return this[kFlags].isCatching;
     }
   },
   isForCompensation: {
+    /** @returns {boolean} */
     get() {
       return this[kFlags].isForCompensation;
     }
   },
   isParallelJoin: {
+    /** @returns {boolean} */
     get() {
       return this[kFlags].isParallelJoin;
     }
   },
   triggeredByEvent: {
+    /** @returns {boolean} */
     get() {
       return this[kActivityDef].triggeredByEvent;
     }
   },
   attachedTo: {
+    /** @returns {import('types').Activity | null} */
     get() {
       const attachedToId = this[kFlags].attachedTo;
       if (!attachedToId) return null;
@@ -233,6 +259,7 @@ Object.defineProperties(Activity.prototype, {
     }
   },
   lane: {
+    /** @returns {import('types').Lane | undefined} */
     get() {
       const laneId = this[kFlags].lane;
       if (!laneId) return undefined;
@@ -241,26 +268,37 @@ Object.defineProperties(Activity.prototype, {
     }
   },
   eventDefinitions: {
+    /** @returns {import('types').EventDefinition[]} */
     get() {
       return this[kEventDefinitions];
     }
   },
   parentElement: {
+    /** @returns {import('types').Process | import('types').Activity} Parent process or sub process reference */
     get() {
       return this.context.getActivityParentById(this.id);
     }
   },
   initialized: {
+    /** @returns {boolean} */
     get() {
       return !!this[kExec]?.get('initExecutionId');
     }
   }
 });
+
+/**
+ * Subscribe to inbound flows and start consuming the inbound queue.
+ */
 Activity.prototype.activate = function activate() {
   if (this[kActivated]) return;
   this[kActivated] = true;
   return this.addInboundListeners() && this._consumeInbound();
 };
+
+/**
+ * Cancel inbound subscriptions and any pending run/format consumers.
+ */
 Activity.prototype.deactivate = function deactivate() {
   this[kActivated] = false;
   const broker = this.broker;
@@ -268,6 +306,11 @@ Activity.prototype.deactivate = function deactivate() {
   broker.cancel('_run-on-inbound');
   broker.cancel('_format-consumer');
 };
+
+/**
+ * Initialise activity executionId and emit init event without starting the run.
+ * @param {Record<string, any>} [initContent] Optional content merged into the init message
+ */
 Activity.prototype.init = function init(initContent) {
   const id = this.id;
   const exec = this[kExec];
@@ -279,6 +322,12 @@ Activity.prototype.init = function init(initContent) {
     executionId
   }));
 };
+
+/**
+ * Start running the activity by publishing run.enter and run.start.
+ * @param {Record<string, any>} [runContent] Optional content merged into the run message
+ * @throws {Error} if the activity is already running
+ */
 Activity.prototype.run = function run(runContent) {
   const id = this.id;
   if (this.isRunning) throw new Error(`activity <${id}> is already running`);
@@ -297,6 +346,12 @@ Activity.prototype.run = function run(runContent) {
   this[kConsuming] = true;
   this._consumeRunQ();
 };
+
+/**
+ * Snapshot activity state for recover.
+ * Returns undefined when nothing is running and `disableTrackState` is set.
+ * @returns {import('types').ActivityState | undefined}
+ */
 Activity.prototype.getState = function getState() {
   const status = this.status;
   const exec = this[kExec];
@@ -319,6 +374,13 @@ Activity.prototype.getState = function getState() {
     })
   };
 };
+
+/**
+ * Restore activity state captured by getState. Cannot be called while running.
+ * @param {import('types').ActivityState} [state]
+ * @returns {Activity | undefined} this when state was applied
+ * @throws {Error} when activity is currently running
+ */
 Activity.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error(`cannot recover running activity <${this.id}>`);
   if (!state) return; // TODO: return this
@@ -337,6 +399,11 @@ Activity.prototype.recover = function recover(state) {
   this.broker.recover(state.broker);
   return this;
 };
+
+/**
+ * Resume after recover. If no run has been started, falls back to activate.
+ * @throws {Error} when called on a running activity
+ */
 Activity.prototype.resume = function resume() {
   if (this[kConsuming]) {
     throw new Error(`cannot resume running activity <${this.id}>`);
@@ -351,6 +418,11 @@ Activity.prototype.resume = function resume() {
   this[kConsuming] = true;
   this._consumeRunQ();
 };
+
+/**
+ * Discard the activity. Stops execution if running and discards outbound flows.
+ * @param {Record<string, any>} [discardContent] Optional content propagated with the discard
+ */
 Activity.prototype.discard = function discard(discardContent) {
   if (!this.status) return this._runDiscard(discardContent);
   const execution = this[kExec].get('execution');
@@ -362,6 +434,11 @@ Activity.prototype.discard = function discard(discardContent) {
   this[kConsuming] = true;
   this._consumeRunQ();
 };
+
+/**
+ * Subscribe to inbound triggers (sequence flows, attached activity, or compensation associations).
+ * @returns {number} count of subscribed triggers
+ */
 Activity.prototype.addInboundListeners = function addInboundListeners() {
   const triggers = this[kFlows].inboundTriggers;
   if (triggers.length) {
@@ -388,16 +465,29 @@ Activity.prototype.addInboundListeners = function addInboundListeners() {
   }
   return triggers.length;
 };
+
+/**
+ * Cancel inbound trigger subscriptions added by addInboundListeners.
+ */
 Activity.prototype.removeInboundListeners = function removeInboundListeners() {
   const triggerConsumerTag = `_inbound-${this.id}`;
   for (const trigger of this[kFlows].inboundTriggers) {
     trigger.broker.cancel(triggerConsumerTag);
   }
 };
+
+/**
+ * Stop the activity. If not currently running, just cancels the inbound consumer.
+ */
 Activity.prototype.stop = function stop() {
   if (!this[kConsuming]) return this.broker.cancel('_run-on-inbound');
   return this.getApi(this[kStateMessage]).stop();
 };
+
+/**
+ * Advance one run-step when the environment runs in step mode. No-op otherwise.
+ * @returns {import('types').ElementBrokerMessage | false | undefined}
+ */
 Activity.prototype.next = function next() {
   if (!this.environment.settings.step) return;
   const stateMessage = this[kStateMessage];
@@ -408,19 +498,42 @@ Activity.prototype.next = function next() {
   stateMessage.ack();
   return current;
 };
+
+/**
+ * Walk outbound flows to discover the activity graph from this point.
+ */
 Activity.prototype.shake = function shake() {
   this._shakeOutbound({
     content: this._createMessage()
   });
 };
+
+/**
+ * Evaluate outbound sequence flows for the given source message.
+ * @param {import('types').ElementBrokerMessage} fromMessage Source run message
+ * @param {boolean} discardRestAtTake When true, take only the first matching flow and discard the rest
+ * @param {(err: Error, evaluationResult: any) => void} callback
+ */
 Activity.prototype.evaluateOutbound = function evaluateOutbound(fromMessage, discardRestAtTake, callback) {
   return this[kFlows].outboundEvaluator.evaluate(fromMessage, discardRestAtTake, callback);
 };
+
+/**
+ * Resolve an Api wrapper for the activity, preferring the running execution if any.
+ * @param {import('types').ElementBrokerMessage} [message]
+ * @returns {import('types').Api<import('types').Activity>}
+ */
 Activity.prototype.getApi = function getApi(message) {
   const execution = this[kExec].get('execution');
   if (execution && !execution.completed) return execution.getApi(message);
   return (0, _Api.ActivityApi)(this.broker, message || this[kStateMessage]);
 };
+
+/**
+ * Look up another activity in the same context.
+ * @param {string} elementId
+ * @returns {import('types').Activity | undefined}
+ */
 Activity.prototype.getActivityById = function getActivityById(elementId) {
   return this.context.getActivityById(elementId);
 };

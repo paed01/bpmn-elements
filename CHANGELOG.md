@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- fix `Activity.recover()` to return the activity when called without state
+
+### Types
+
+- start migrating runtime types to JSDoc, covering `Activity`, `ActivityExecution`, `Context`, `Process`, `ProcessExecution`, `Definition`, `DefinitionExecution`, `Environment`, `Api`, `EventBroker`, and `MessageFormatter`
+- separate hand-written contracts into `types/interfaces.d.ts`
+- update `smqp` type imports for `smqp@12`
+
 ## v18.0.0 - 2026-01-14
 
 Refactor parallel converging and forking gateways.

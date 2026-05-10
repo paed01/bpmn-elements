@@ -9,6 +9,12 @@ const kPostponed = Symbol.for('postponed');
 
 export default ActivityExecution;
 
+/**
+ * Per-run execution orchestrator for an Activity. Instantiates the element-specific behaviour
+ * and drives the execute message flow over the activity broker.
+ * @param {import('types').Activity} activity
+ * @param {import('types').ContextInstance} context
+ */
 function ActivityExecution(activity, context) {
   this.activity = activity;
   this.context = context;
@@ -30,6 +36,11 @@ Object.defineProperty(ActivityExecution.prototype, 'completed', {
   },
 });
 
+/**
+ * Begin executing the activity behaviour. Resumes if the message is redelivered.
+ * @param {import('types').ElementBrokerMessage} executeMessage
+ * @throws {Error} when message or executionId is missing
+ */
 ActivityExecution.prototype.execute = function execute(executeMessage) {
   if (!executeMessage) throw new Error('Execution requires message');
   const executionId = executeMessage.content?.executionId;
@@ -58,6 +69,9 @@ ActivityExecution.prototype.execute = function execute(executeMessage) {
   this.broker.publish('execution', 'execute.start', cloneContent(initMessage.content));
 };
 
+/**
+ * Bind the execute queue and start consuming execute and api messages.
+ */
 ActivityExecution.prototype.activate = function activate() {
   if (this[kCompleted]) return;
 
@@ -82,6 +96,9 @@ ActivityExecution.prototype.activate = function activate() {
   });
 };
 
+/**
+ * Cancel execute and api consumers and unbind the execute queue.
+ */
 ActivityExecution.prototype.deactivate = function deactivate() {
   const broker = this.broker;
   broker.cancel('_activity-api-execution');
@@ -89,6 +106,9 @@ ActivityExecution.prototype.deactivate = function deactivate() {
   broker.unbindQueue('execute-q', 'execution', 'execute.#');
 };
 
+/**
+ * Discard the running execution.
+ */
 ActivityExecution.prototype.discard = function discard() {
   if (this[kCompleted]) return;
   const initMessage = this[kExecuteMessage];
@@ -96,6 +116,10 @@ ActivityExecution.prototype.discard = function discard() {
   this.getApi(initMessage).discard();
 };
 
+/**
+ * Resolve an Api wrapper, preferring a behaviour-specific Api when the source exposes one.
+ * @param {import('types').ElementBrokerMessage} [apiMessage]
+ */
 ActivityExecution.prototype.getApi = function getApi(apiMessage) {
   const self = this;
   if (!apiMessage) apiMessage = this[kExecuteMessage];
@@ -119,11 +143,18 @@ ActivityExecution.prototype.getApi = function getApi(apiMessage) {
   return api;
 };
 
+/**
+ * Pass an execute message straight to the behaviour, executing first if no source is set up yet.
+ * @param {import('types').ElementBrokerMessage} executeMessage
+ */
 ActivityExecution.prototype.passthrough = function passthrough(executeMessage) {
   if (!this.source) return this.execute(executeMessage);
   return this._sourceExecute(executeMessage);
 };
 
+/**
+ * List currently postponed executions as Api wrappers, including those from sub-process behaviours.
+ */
 ActivityExecution.prototype.getPostponed = function getPostponed() {
   let apis = [];
   for (const msg of this[kPostponed]) {
@@ -134,6 +165,9 @@ ActivityExecution.prototype.getPostponed = function getPostponed() {
   return apis;
 };
 
+/**
+ * Snapshot execution state, merging behaviour-specific state when the source provides it.
+ */
 ActivityExecution.prototype.getState = function getState() {
   const result = { completed: this[kCompleted] };
   const source = this.source;
@@ -142,6 +176,11 @@ ActivityExecution.prototype.getState = function getState() {
   return { ...result, ...source.getState() };
 };
 
+/**
+ * Restore execution state captured by getState.
+ * @param {import('types').ActivityExecutionState} [state]
+ * @returns this
+ */
 ActivityExecution.prototype.recover = function recover(state) {
   this[kPostponed].clear();
 
@@ -156,12 +195,16 @@ ActivityExecution.prototype.recover = function recover(state) {
   return this;
 };
 
+/**
+ * Stop the execution via the activity api.
+ */
 ActivityExecution.prototype.stop = function stop() {
   const executeMessage = this[kExecuteMessage];
   if (!executeMessage) return;
   this.getApi(executeMessage).stop();
 };
 
+/** @internal */
 ActivityExecution.prototype._sourceExecute = function sourceExecute(executeMessage) {
   try {
     return this.source.execute(executeMessage);
@@ -170,6 +213,7 @@ ActivityExecution.prototype._sourceExecute = function sourceExecute(executeMessa
   }
 };
 
+/** @internal */
 ActivityExecution.prototype._onExecuteMessage = function onExecuteMessage(routingKey, message) {
   const { fields, content, properties } = message;
   const isRedelivered = fields.redelivered;
@@ -216,6 +260,7 @@ ActivityExecution.prototype._onExecuteMessage = function onExecuteMessage(routin
   }
 };
 
+/** @internal */
 ActivityExecution.prototype._onStateChangeMessage = function onStateChangeMessage(message) {
   const { ignoreIfExecuting, executionId } = message.content;
   const postponed = this[kPostponed];
@@ -242,6 +287,7 @@ ActivityExecution.prototype._onStateChangeMessage = function onStateChangeMessag
   }
 };
 
+/** @internal */
 ActivityExecution.prototype._onExecutionCompleted = function onExecutionCompleted(message) {
   const postponedMsg = this._ackPostponed(message);
   if (!postponedMsg) return;
@@ -274,6 +320,7 @@ ActivityExecution.prototype._onExecutionCompleted = function onExecutionComplete
   this._publishExecutionCompleted('completed', { ...postponedMsg.content, ...message.content }, message.properties.correlationId);
 };
 
+/** @internal */
 ActivityExecution.prototype._onExecutionDiscarded = function onExecutionDiscarded(discardType, message) {
   const postponedMsg = this._ackPostponed(message);
   const { isRootScope, error } = message.content;
@@ -303,6 +350,7 @@ ActivityExecution.prototype._onExecutionDiscarded = function onExecutionDiscarde
   this._publishExecutionCompleted(discardType, cloneContent(message.content), correlationId);
 };
 
+/** @internal */
 ActivityExecution.prototype._publishExecutionCompleted = function publishExecutionCompleted(
   completionType,
   completeContent,
@@ -321,6 +369,7 @@ ActivityExecution.prototype._publishExecutionCompleted = function publishExecuti
   );
 };
 
+/** @internal */
 ActivityExecution.prototype._ackPostponed = function ackPostponed(completeMessage) {
   const { executionId: eid } = completeMessage.content;
 
@@ -334,6 +383,7 @@ ActivityExecution.prototype._ackPostponed = function ackPostponed(completeMessag
   }
 };
 
+/** @internal */
 ActivityExecution.prototype._onParentApiMessage = function onParentApiMessage(routingKey, message) {
   switch (message.properties.type) {
     case 'error':
@@ -346,6 +396,7 @@ ActivityExecution.prototype._onParentApiMessage = function onParentApiMessage(ro
   }
 };
 
+/** @internal */
 ActivityExecution.prototype._onStop = function onStop(message) {
   const stoppedId = message?.content?.executionId;
   const running = this.getPostponed();
@@ -359,6 +410,7 @@ ActivityExecution.prototype._onStop = function onStop(message) {
   this.broker.cancel('_activity-api-execution');
 };
 
+/** @internal */
 ActivityExecution.prototype._debug = function debug(logMessage, executionId) {
   executionId = executionId || this.executionId;
   this.activity.logger.debug(`<${executionId} (${this.id})> ${logMessage}`);

@@ -16,6 +16,12 @@ const kStopped = Symbol.for('stopped');
 
 export default Definition;
 
+/**
+ * Top-level wrapper for an executable BPMN definition. Owns its DefinitionExecution and
+ * mediates inter-process messaging.
+ * @param {import('types').ContextInstance} context
+ * @param {import('types').EnvironmentOptions} [options] When provided, environment is cloned and settings merged
+ */
 export function Definition(context, options) {
   if (!(this instanceof Definition)) return new Definition(context, options);
   if (!context) throw new Error('No context');
@@ -103,6 +109,14 @@ Object.defineProperties(Definition.prototype, {
   },
 });
 
+/**
+ * Start running the definition. Accepts run options, a callback, or both.
+ * The callback fires once on leave, stop, or error.
+ * @param {Record<string, any> | import('types').runCallback} [optionsOrCallback]
+ * @param {import('types').runCallback} [optionalCallback]
+ * @returns this
+ * @throws {Error} when already running and no callback is supplied
+ */
 Definition.prototype.run = function run(optionsOrCallback, optionalCallback) {
   const [runOptions, callback] = getOptionsAndCallback(optionsOrCallback, optionalCallback);
   if (this.isRunning) {
@@ -132,6 +146,12 @@ Definition.prototype.run = function run(optionsOrCallback, optionalCallback) {
   return this;
 };
 
+/**
+ * Resume after recover by republishing the last run message. The callback fires once on
+ * leave, stop, or error.
+ * @param {import('types').runCallback} [callback]
+ * @returns this
+ */
 Definition.prototype.resume = function resume(callback) {
   if (this.isRunning) {
     const err = new Error('cannot resume running definition');
@@ -154,6 +174,9 @@ Definition.prototype.resume = function resume(callback) {
   return this;
 };
 
+/**
+ * Snapshot definition state for recover.
+ */
 Definition.prototype.getState = function getState() {
   return this._createMessage({
     status: this.status,
@@ -165,6 +188,12 @@ Definition.prototype.getState = function getState() {
   });
 };
 
+/**
+ * Restore definition state captured by getState.
+ * @param {import('types').DefinitionState} [state]
+ * @returns this
+ * @throws {Error} when called on a running definition
+ */
 Definition.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error('cannot recover running definition');
   if (!state) return this;
@@ -189,6 +218,11 @@ Definition.prototype.recover = function recover(state) {
   return this;
 };
 
+/**
+ * Walk activity graphs to discover sequences. Limited to the activity's owning process
+ * when startId is given, otherwise all processes are shaken.
+ * @param {string} [startId]
+ */
 Definition.prototype.shake = function shake(startId) {
   let result = {};
   let bps;
@@ -207,6 +241,7 @@ Definition.prototype.shake = function shake(startId) {
   return result;
 };
 
+/** @internal */
 Definition.prototype._shakeProcess = function shakeProcess(shakeBp, startId) {
   let shovel;
   if (!shakeBp.isRunning) {
@@ -229,28 +264,44 @@ Definition.prototype._shakeProcess = function shakeProcess(shakeBp, startId) {
   return shakeResult;
 };
 
+/**
+ * Get every process in the definition.
+ */
 Definition.prototype.getProcesses = function getProcesses() {
   const execution = this.execution;
   if (execution) return execution.getProcesses();
   return this.context.getProcesses();
 };
 
+/**
+ * Get processes flagged executable in the definition.
+ */
 Definition.prototype.getExecutableProcesses = function getExecutableProcesses() {
   const execution = this.execution;
   if (execution) return execution.getExecutableProcesses();
   return this.context.getExecutableProcesses();
 };
 
+/**
+ * Get processes that are currently running.
+ */
 Definition.prototype.getRunningProcesses = function getRunningProcesses() {
   const execution = this.execution;
   if (!execution) return [];
   return execution.getRunningProcesses();
 };
 
+/**
+ * @param {string} processId
+ */
 Definition.prototype.getProcessById = function getProcessById(processId) {
   return this.getProcesses().find((p) => p.id === processId);
 };
 
+/**
+ * Find an activity by id across all processes in the definition.
+ * @param {string} childId
+ */
 Definition.prototype.getActivityById = function getActivityById(childId) {
   const bps = this.getProcesses();
   for (const bp of bps) {
@@ -260,16 +311,29 @@ Definition.prototype.getActivityById = function getActivityById(childId) {
   return null;
 };
 
+/**
+ * Lookup any element (activity, flow, etc.) in the parsed definition by id.
+ * @param {string} elementId
+ */
 Definition.prototype.getElementById = function getElementById(elementId) {
   return this.context.getActivityById(elementId);
 };
 
+/**
+ * List currently postponed activities as Api wrappers.
+ * @param {import('types').filterPostponed} [filterFn]
+ */
 Definition.prototype.getPostponed = function getPostponed(...args) {
   const execution = this.execution;
   if (!execution) return [];
   return execution.getPostponed(...args);
 };
 
+/**
+ * Resolve a Definition Api wrapper, preferring the running execution if any.
+ * @param {import('types').ElementBrokerMessage} [message]
+ * @throws {Error} when the definition is not running and no message is given
+ */
 Definition.prototype.getApi = function getApi(message) {
   const execution = this.execution;
   if (execution) return execution.getApi(message);
@@ -278,14 +342,27 @@ Definition.prototype.getApi = function getApi(message) {
   return DefinitionApi(this.broker, message);
 };
 
+/**
+ * Send a delegated signal to the running definition.
+ * @param {import('types').signalMessage} [message]
+ */
 Definition.prototype.signal = function signal(message) {
   return this.getApi().signal(message, { delegate: true });
 };
 
+/**
+ * Cancel a running activity inside the definition by delegated api message.
+ * @param {import('types').signalMessage} [message]
+ */
 Definition.prototype.cancelActivity = function cancelActivity(message) {
   return this.getApi().cancel(message, { delegate: true });
 };
 
+/**
+ * Deliver a message to a referenced element. Resolves the message reference when the
+ * target element exposes a `resolve` method (e.g. message-, signal-, escalation events).
+ * @param {{ id?: string, [x: string]: any }} message
+ */
 Definition.prototype.sendMessage = function sendMessage(message) {
   const messageContent = { message };
   let messageType = 'message';
@@ -299,11 +376,15 @@ Definition.prototype.sendMessage = function sendMessage(message) {
   return this.getApi().sendApiMessage(messageType, messageContent, { delegate: true });
 };
 
+/**
+ * Stop the definition if running.
+ */
 Definition.prototype.stop = function stop() {
   if (!this.isRunning) return;
   this.getApi().stop();
 };
 
+/** @internal */
 Definition.prototype._activateRunConsumers = function activateRunConsumers() {
   this[kConsuming] = true;
   const broker = this.broker;
@@ -318,6 +399,7 @@ Definition.prototype._activateRunConsumers = function activateRunConsumers() {
   });
 };
 
+/** @internal */
 Definition.prototype._deactivateRunConsumers = function deactivateRunConsumers() {
   const broker = this.broker;
   broker.cancel('_definition-api');
@@ -326,6 +408,7 @@ Definition.prototype._deactivateRunConsumers = function deactivateRunConsumers()
   this[kConsuming] = false;
 };
 
+/** @internal */
 Definition.prototype._createMessage = function createMessage(override) {
   return {
     id: this.id,
@@ -336,6 +419,7 @@ Definition.prototype._createMessage = function createMessage(override) {
   };
 };
 
+/** @internal */
 Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) {
   const { content, fields } = message;
   if (routingKey === 'run.resume') {
@@ -430,6 +514,7 @@ Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) 
   message.ack();
 };
 
+/** @internal */
 Definition.prototype._onResumeMessage = function onResumeMessage(message) {
   message.ack();
 
@@ -451,6 +536,7 @@ Definition.prototype._onResumeMessage = function onResumeMessage(message) {
   return this.broker.publish('run', stateMessage.fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
 };
 
+/** @internal */
 Definition.prototype._onExecutionMessage = function onExecutionMessage(routingKey, message) {
   const { content, properties } = message;
   const messageType = properties.type;
@@ -476,6 +562,7 @@ Definition.prototype._onExecutionMessage = function onExecutionMessage(routingKe
   executeMessage.ack();
 };
 
+/** @internal */
 Definition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   if (message.properties.type === 'stop') {
     const execution = this.execution;
@@ -485,6 +572,7 @@ Definition.prototype._onApiMessage = function onApiMessage(routingKey, message) 
   }
 };
 
+/** @internal */
 Definition.prototype._publishEvent = function publishEvent(action, content, msgOpts) {
   const execution = this.execution;
   this.broker.publish('event', `definition.${action}`, execution ? execution._createMessage(content) : cloneContent(content), {
@@ -493,12 +581,14 @@ Definition.prototype._publishEvent = function publishEvent(action, content, msgO
   });
 };
 
+/** @internal */
 Definition.prototype._onStop = function onStop() {
   this[kStopped] = true;
   this._deactivateRunConsumers();
   return this._publishEvent('stop', this._createMessage());
 };
 
+/** @internal */
 Definition.prototype._onBrokerReturnFn = function onBrokerReturn(message) {
   if (message.properties.type === 'error') {
     this._deactivateRunConsumers();
@@ -507,6 +597,7 @@ Definition.prototype._onBrokerReturnFn = function onBrokerReturn(message) {
   }
 };
 
+/** @internal */
 Definition.prototype._reset = function reset() {
   this[kExec].delete('executionId');
   this._deactivateRunConsumers();
@@ -514,6 +605,7 @@ Definition.prototype._reset = function reset() {
   this.broker.purgeQueue('execution-q');
 };
 
+/** @internal */
 Definition.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.id}> ${msg}`);
 };

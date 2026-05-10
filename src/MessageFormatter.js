@@ -9,7 +9,9 @@ const kExecution = Symbol.for('execution');
 const EXEC_ROUTING_KEY = 'run._formatting.exec';
 
 /**
- * Message formatter used to enrich an element run message before continuing to the next run message
+ * Enriches an element run message via async format start/end messages on the `format` exchange
+ * before the run message is continued. Handlers publish enrichment by responding to a start
+ * message with a matching end (or error) routing key.
  * @param {import('types').ElementBase} element
  */
 export function Formatter(element) {
@@ -21,9 +23,10 @@ export function Formatter(element) {
 }
 
 /**
- * Format message
+ * Format the given run message. Callback fires with `(err, content, formatted)` once
+ * formatting completes; `formatted` is true when content was actually enriched.
  * @param {import('types').ElementBrokerMessage} message
- * @param {CallableFunction} callback
+ * @param {(err: Error | null, content?: import('types').ElementMessageContent, formatted?: boolean) => void} callback
  */
 Formatter.prototype.format = function format(message, callback) {
   const correlationId = (this._runId = getUniqueId(message.fields.routingKey));
@@ -48,6 +51,7 @@ Formatter.prototype.format = function format(message, callback) {
   });
 };
 
+/** @internal */
 Formatter.prototype._onMessage = function onMessage(routingKey, message) {
   const { formatKey, correlationId, pending, executeMessage } = this[kExecution];
   const asyncFormatting = pending.size;
@@ -87,6 +91,7 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
   }
 };
 
+/** @internal */
 Formatter.prototype._complete = function complete(message, isError) {
   const { runMessage, formatKey, callback, formatted, executeMessage } = this[kExecution];
   this[kExecution] = null;
@@ -104,6 +109,7 @@ Formatter.prototype._complete = function complete(message, isError) {
   return callback(null, runMessage.content, formatted);
 };
 
+/** @internal */
 Formatter.prototype._enrich = function enrich(withContent) {
   const content = this[kExecution].runMessage.content;
   for (const key in withContent) {
@@ -128,6 +134,7 @@ Formatter.prototype._enrich = function enrich(withContent) {
   }
 };
 
+/** @internal */
 Formatter.prototype._popFormatStart = function popFormattingStart(pending, routingKey) {
   for (const msg of pending) {
     const { endRoutingKey, errorRoutingKey = '#.error' } = msg.content;
@@ -144,6 +151,7 @@ Formatter.prototype._popFormatStart = function popFormattingStart(pending, routi
   return {};
 };
 
+/** @internal */
 Formatter.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.id}> ${msg}`);
 };
