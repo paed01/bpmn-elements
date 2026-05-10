@@ -13,6 +13,38 @@ describe('LinkEventDefinition', () => {
     };
   });
 
+  describe('executionId', () => {
+    it('is undefined before execute', () => {
+      const ed = new LinkEventDefinition(event, {
+        type: 'bpmn:LinkEventDefinition',
+        behaviour: { name: 'LINKA' },
+      });
+      expect(ed.executionId).to.be.undefined;
+    });
+
+    it('returns the execution id from the execute message after execute', () => {
+      const ed = new LinkEventDefinition(event, {
+        type: 'bpmn:LinkEventDefinition',
+        behaviour: { name: 'LINKA' },
+      });
+
+      ed.execute({
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          message: { linkName: 'LINKA' },
+          parent: {
+            id: 'event',
+            executionId: 'event_1',
+            path: [{ id: 'theProcess', executionId: 'theProcess_0' }],
+          },
+        },
+      });
+
+      expect(ed.executionId).to.equal('event_1_0');
+    });
+  });
+
   describe('catching', () => {
     it('completes immediately on execute, publishing activity.catch and execute.completed with the link payload', () => {
       const catchEd = new LinkEventDefinition(event, {
@@ -196,14 +228,18 @@ describe('LinkEventDefinition', () => {
       const messages = [];
       event.broker.subscribeTmp('event', 'activity.shake.link', (_, msg) => messages.push(msg), { noAck: true });
 
-      event.broker.publish('event', 'activity.shake.start', {
-        executionId: 'event_1',
-        sequence: [],
-        parent: { id: 'theProcess', executionId: 'theProcess_0' },
-      });
+      event.broker.publish(
+        'api',
+        'activity.shake.start',
+        {
+          executionId: 'event_1',
+          sequence: [],
+          parent: { id: 'theProcess', executionId: 'theProcess_0' },
+        },
+        { type: 'shake' }
+      );
 
       expect(messages).to.have.length(1);
-      expect(messages[0].properties).to.have.property('delegate', true);
       expect(messages[0].properties).to.have.property('type', 'shake');
       expect(messages[0].content.message).to.deep.include({ linkName: 'LINKA', referenceType: 'link' });
       expect(messages[0].content).to.have.property('sourceId', 'event');

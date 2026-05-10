@@ -626,6 +626,78 @@ Feature('Shaking', () => {
     });
   });
 
+  Scenario('a process with paired link throw and catch', () => {
+    let definition;
+    Given('a process where a link throw is followed by a link catch leading to the end', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-throw" sourceRef="start" targetRef="throw" />
+          <intermediateThrowEvent id="throw">
+            <linkEventDefinition name="LINKA" />
+          </intermediateThrowEvent>
+          <intermediateCatchEvent id="catch">
+            <linkEventDefinition name="LINKA" />
+          </intermediateCatchEvent>
+          <sequenceFlow id="from-catch" sourceRef="catch" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    const linkedMessages = [];
+    const shakeEndMessages = [];
+    let result;
+    When('definition is shaken from start', () => {
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.shake.linked',
+        (_, msg) => {
+          linkedMessages.push(msg);
+        },
+        { noAck: true }
+      );
+
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.shake.end',
+        (_, msg) => {
+          shakeEndMessages.push(msg);
+        },
+        { noAck: true }
+      );
+
+      result = definition.shake('start');
+    });
+
+    Then('the catch publishes a linked-shake response with the chain back to the throw', () => {
+      expect(linkedMessages).to.have.length(1);
+      const ids = linkedMessages[0].content.sequence.map((s) => s.id);
+      expect(ids).to.include.members(['throw', 'catch']);
+      expect(linkedMessages[0].content).to.have.property('isLinked', true);
+      expect(linkedMessages[0].content).to.have.property('targetId', 'catch');
+    });
+
+    And('the shake walk continues past the catch and reaches the end event', () => {
+      const reachedEnd = shakeEndMessages.some((m) => m.content.sequence.some((s) => s.id === 'end'));
+      expect(reachedEnd, 'shake.end with end in sequence').to.be.true;
+      const endSequence = shakeEndMessages
+        .map((m) => m.content.sequence.map((s) => s.id))
+        .find((ids) => ids.includes('end'));
+      expect(endSequence).to.include.members(['catch', 'from-catch', 'end']);
+    });
+
+    And('the shake result for start contains a sequence reaching the end via the link', () => {
+      expect(result).to.have.property('start').that.is.an('array');
+      const sequenceIds = result.start.map((s) => s.sequence.map((e) => e.id));
+      expect(sequenceIds.some((ids) => ids.includes('throw') && ids.includes('catch') && ids.includes('end'))).to.be.true;
+    });
+  });
+
   // [
   //   'join-paradox-1.bpmn',
   //   'join-paradox-2.bpmn',

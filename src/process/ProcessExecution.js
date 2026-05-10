@@ -350,6 +350,12 @@ ProcessExecution.prototype._start = function start() {
   this[kStatus] = 'executing';
   for (const a of startActivities) a.run();
 
+  if (!startActivities.size) {
+    for (const a of this[kElements].triggeredByEvent) {
+      if (a.isCatching && !a.isRunning) a.run();
+    }
+  }
+
   postponed.clear();
   detachedActivities.clear();
   this[kActivityQ].assertConsumer(this[kMessageHandlers].onChildMessage, {

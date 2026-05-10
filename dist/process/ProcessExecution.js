@@ -44,7 +44,7 @@ function ProcessExecution(parentActivity, context) {
     startActivities: new Set(),
     triggeredByEvent: new Set(),
     detachedActivities: new Set(),
-    parallelJoins: new Set(),
+    convergingGateways: new Set(),
     startSequences: new Map()
   };
   const exchangeName = this._exchangeName = isSubProcess ? 'subprocess-execution' : 'execution';
@@ -125,16 +125,14 @@ ProcessExecution.prototype.resume = function resume() {
   this._activate();
   const {
     startActivities,
-    detachedActivities,
     postponed,
-    parallelJoins
+    detachedActivities,
+    convergingGateways
   } = this[kElements];
-  if (startActivities.size > 1 || parallelJoins.size) {
+  if (startActivities.size > 1 || convergingGateways.size) {
     const result = this._shakeElements();
-    if (this.environment.settings.skipDiscard !== result.settings.skipDiscard) {
-      this.environment.settings.skipDiscard = result.settings.skipDiscard;
-      this._debug(!result.settings.skipDiscard ? `forced shake, setting skipDiscard = false due to parallel gateways (${parallelJoins.size})` : 'forced shake');
-    }
+    const skipDiscard = this.environment.settings.skipDiscard = result.settings.skipDiscard;
+    this._debug(!skipDiscard ? `forced shake, disabling skipDiscard due to converging gateways (${convergingGateways.size})` : 'forced shake');
   }
   postponed.clear();
   detachedActivities.clear();
@@ -234,54 +232,6 @@ ProcessExecution.prototype.recover = function recover(state) {
 };
 ProcessExecution.prototype.shake = function shake(fromId) {
   return Object.fromEntries(this._shakeElements(fromId).sequences);
-  // let executing = true;
-  // const id = this.id;
-  // if (!this.isRunning) {
-  //   executing = false;
-  //   this.executionId = getUniqueId(id);
-  //   this._activate();
-  // }
-  // const toShake = fromId ? [this.getActivityById(fromId)].filter(Boolean) : this[kElements].startActivities;
-
-  // const result = {
-  //   settings: {
-  //     skipDiscard: this.environment.settings.skipDiscard,
-  //   },
-  // };
-  // const joins = new Set();
-  // const consumerTag = `_shaker-${this.executionId}`;
-
-  // this.broker.subscribeTmp(
-  //   'event',
-  //   '*.shake.*',
-  //   (routingKey, { content }) => {
-  //     switch (routingKey) {
-  //       case 'activity.shake.join':
-  //         joins.add(content.join);
-  //         result.settings.skipDiscard = false;
-  //       case 'flow.shake.loop':
-  //       case 'activity.shake.end': {
-  //         const { id: shakeId, parent: shakeParent } = content;
-  //         if (shakeParent.id !== id) return;
-
-  //         result[shakeId] = result[shakeId] || [];
-  //         result[shakeId].push({ ...content, isLooped: routingKey === 'flow.shake.loop' });
-  //         break;
-  //       }
-  //     }
-  //   },
-  //   { noAck: true, consumerTag }
-  // );
-
-  // for (const a of toShake) a.shake();
-  // for (const joinId of joins) this.getActivityById(joinId).shake();
-
-  // console.log('---------------------------', result);
-
-  // if (!executing) this._deactivate();
-  // this.broker.cancel(consumerTag);
-
-  // return result;
 };
 ProcessExecution.prototype.stop = function stop() {
   this.getApi().stop();
@@ -364,16 +314,21 @@ ProcessExecution.prototype._start = function start() {
     startActivities,
     postponed,
     detachedActivities,
-    parallelJoins
+    convergingGateways
   } = this[kElements];
-  if (startActivities.size > 1 || parallelJoins.size) {
+  if (startActivities.size > 1 || convergingGateways.size) {
     const result = this._shakeElements();
-    this.environment.settings.skipDiscard = result.settings.skipDiscard;
-    this._debug(!result.settings.skipDiscard ? `forced shake, setting skipDiscard = false due to parallel gateways (${parallelJoins.size})` : 'forced shake');
+    const skipDiscard = this.environment.settings.skipDiscard = result.settings.skipDiscard;
+    this._debug(!skipDiscard ? `forced shake, disabling skipDiscard due to converging gateways (${convergingGateways.size})` : 'forced shake');
   }
   for (const a of startActivities) a.init();
   this[kStatus] = 'executing';
   for (const a of startActivities) a.run();
+  if (!startActivities.size) {
+    for (const a of this[kElements].triggeredByEvent) {
+      if (a.isCatching && !a.isRunning) a.run();
+    }
+  }
   postponed.clear();
   detachedActivities.clear();
   this[kActivityQ].assertConsumer(this[kMessageHandlers].onChildMessage, {
@@ -405,8 +360,9 @@ ProcessExecution.prototype._activate = function activate() {
     flows,
     associations,
     startActivities,
+    startSequences,
     triggeredByEvent,
-    parallelJoins,
+    convergingGateways,
     children
   } = this[kElements];
   for (const flow of outboundMessageFlows) {
@@ -441,9 +397,16 @@ ProcessExecution.prototype._activate = function activate() {
       consumerTag: '_process-activity-consumer',
       priority: 200
     });
-    if (activity.isStart) startActivities.add(activity);
+    if (activity.isStart) {
+      startActivities.add(activity);
+    }
     if (activity.triggeredByEvent || activity.isCatching) triggeredByEvent.add(activity);
-    if (activity.isParallelJoin) parallelJoins.add(activity);
+    if (activity.isParallelJoin) convergingGateways.add(activity);
+  }
+  if (startActivities.size > 1) {
+    for (const activity of startActivities) {
+      startSequences.set(activity.id, new Set());
+    }
   }
   this[kActivated] = true;
 };
@@ -490,11 +453,12 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
     },
     sequences: new Map()
   };
-  const manualShakes = new Set();
+  const convergingGateways = new Map();
   const consumerTag = `_shaker-${this.executionId}`;
   this.broker.subscribeTmp('event', '*.shake.*', (routingKey, {
     content
   }) => {
+    if (content.parent.id !== this.id) return;
     switch (routingKey) {
       case 'activity.shake.link':
         {
@@ -507,8 +471,15 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
           break;
         }
       case 'activity.shake.join':
-        manualShakes.add(content.join);
-        result.settings.skipDiscard = false;
+        {
+          const join = convergingGateways.get(content.join);
+          if (!join) {
+            convergingGateways.set(content.join, content);
+          } else {
+            join.sequence = join.sequence.concat(content.sequence);
+          }
+          break;
+        }
       case 'flow.shake.loop':
       case 'activity.shake.linked':
       case 'activity.shake.end':
@@ -535,7 +506,15 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
     consumerTag
   });
   for (const a of toShake) a.shake();
-  for (const aid of manualShakes) this.getActivityById(aid).shake();
+  for (const [aid, c] of convergingGateways.entries()) {
+    this._debug(`manual shake of converging gateway <${aid}>`);
+    this.getActivityById(aid).broker.publish('api', 'activity.shake.continue', c, {
+      type: 'shake'
+    });
+  }
+  if (result.settings.skipDiscard && convergingGateways.size) {
+    result.settings.skipDiscard = false;
+  }
   if (!executing) this._deactivate();
   this.broker.cancel(consumerTag);
   return result;
@@ -740,8 +719,14 @@ ProcessExecution.prototype._onChildCompleted = function onChildCompleted(message
   const {
     id,
     type,
-    isEnd
+    isEnd,
+    isParallelGateway
   } = message.content;
+  if (isParallelGateway) {
+    for (const inb of message.content.inbound) {
+      this._popPostponed(inb)?.ack();
+    }
+  }
   const {
     postponed,
     detachedActivities,
@@ -754,7 +739,7 @@ ProcessExecution.prototype._onChildCompleted = function onChildCompleted(message
     return this._complete('completed');
   }
   message.ack();
-  this._debug(`left <${id}> (${type}), pending activities ${postponedCount}`);
+  this._debug(`left <${id}> (${type}), pending activities ${postponedCount} ${[...postponed].map(m => m.content.id)}`);
   if (postponedCount && postponedCount === detachedActivities.size) {
     return this[kActivityQ].queueMessage({
       routingKey: 'execution.discard.detached'
@@ -955,27 +940,12 @@ ProcessExecution.prototype._getChildApi = function getChildApi(message) {
   }
 };
 ProcessExecution.prototype._onShakeMessage = function onShakeMessage(message) {
-  const {
-    id,
-    targetId,
-    isLinked
-  } = message.content;
-  let seq = this[kElements].startSequences.get(id);
-  if (!seq) {
-    seq = new Set([id]);
-    this[kElements].startSequences.set(id, seq);
-  }
-  if (targetId) {
-    seq.add(targetId);
-  }
-  if (isLinked) {
-    let linkedSeq = this[kElements].startSequences.get(targetId);
-    if (!linkedSeq) {
-      linkedSeq = new Set(seq);
-      this[kElements].startSequences.set(targetId, linkedSeq);
-    } else {
-      linkedSeq.add(targetId);
-    }
+  if (message.fields.routingKey !== 'activity.shake.end') return;
+  let seq;
+  if (!(seq = this[kElements].startSequences.get(message.content.id))) return;
+  for (const s of message.content.sequence) {
+    if (s.isSequenceFlow) continue;
+    seq.add(s.id);
   }
 };
 ProcessExecution.prototype._debug = function debugMessage(logMessage) {

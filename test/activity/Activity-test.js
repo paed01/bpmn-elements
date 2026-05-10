@@ -581,7 +581,6 @@ describe('Activity', () => {
       expect(runQ, 'run queue messages').to.have.property('messageCount', 0);
       expect(runQ, 'run queue consumer active').to.have.property('consumerCount', 0);
     });
-
   });
 
   describe('run()', () => {
@@ -721,7 +720,6 @@ describe('Activity', () => {
 
       activity.discard();
 
-
       return leave;
     });
 
@@ -759,7 +757,6 @@ describe('Activity', () => {
       const leave = activity.waitFor('leave');
       activity.run();
 
-
       return leave;
     });
 
@@ -795,7 +792,6 @@ describe('Activity', () => {
       const leave = activity.waitFor('leave');
       activity.discard();
 
-
       return leave;
     });
 
@@ -830,7 +826,6 @@ describe('Activity', () => {
       activity.run();
 
       await leave;
-
 
       const runQ = activity.broker.getQueue('run-q');
 
@@ -870,7 +865,6 @@ describe('Activity', () => {
       activity.discard();
 
       await leave;
-
     });
 
     it('next run can be discarded by discard', async () => {
@@ -1517,7 +1511,6 @@ describe('Activity', () => {
 
       return leave;
     });
-
   });
 
   describe('extensions', () => {

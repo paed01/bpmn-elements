@@ -23,14 +23,14 @@ export default function LinkEventDefinition(activity, eventDefinition) {
 
   if (isThrowing) {
     broker.subscribeTmp(
-      'event',
+      'api',
       'activity.shake.start',
       (_, msg) => {
         broker.publish(
           'event',
           `activity.shake.${this.reference.referenceType}`,
           cloneContent(msg.content, { sourceId: this.id, targetId: undefined, message: { ...this.reference } }),
-          { type: 'shake', delegate: true }
+          { type: 'shake' }
         );
       },
       { noAck: true, consumerTag: '_link-parent-shake', priority: 1000 }
@@ -81,11 +81,7 @@ LinkEventDefinition.prototype.executeCatch = function executeCatch(executeMessag
 
   broker.publish('event', 'activity.catch', catchContent, { type: 'catch' });
 
-  return broker.publish(
-    'execution',
-    'execute.completed',
-    cloneContent(executeContent, { output: linkMessage, state: 'catch' })
-  );
+  return broker.publish('execution', 'execute.completed', cloneContent(executeContent, { output: linkMessage, state: 'catch' }));
 };
 
 LinkEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
@@ -124,5 +120,10 @@ LinkEventDefinition.prototype._onShakeMessage = function onShakeMessage(_, messa
   content.sequence = content.sequence || [];
   content.sequence.push({ id: this.id, type: this.type });
 
-  return this.broker.publish('event', 'activity.shake.linked', content, { persistent: false, type: 'shake' });
+  this.broker.publish('event', 'activity.shake.linked', content, { persistent: false, type: 'shake' });
+
+  const outbound = this.activity.outbound;
+  if (outbound?.length) {
+    for (const flow of outbound) flow.shake({ content: cloneContent(content) });
+  }
 };

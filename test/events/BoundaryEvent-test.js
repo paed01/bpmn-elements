@@ -871,7 +871,6 @@ describe('BoundaryEvent', () => {
 
         expect(event.counters).to.have.property('discarded', 1);
       });
-
     });
 
     describe('non-interrupting with error event definition', () => {

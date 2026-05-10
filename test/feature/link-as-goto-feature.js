@@ -1,4 +1,5 @@
 import { Definition } from 'bpmn-elements';
+import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 
 const linkSource = `
@@ -168,7 +169,7 @@ Feature('Link as goto', () => {
       definition.resume();
     });
 
-    And('the user task is signaled', async () => {
+    And('the user task is signaled', () => {
       const userTask = definition.getPostponed().find((api) => api.id === 'userTask');
       expect(userTask, 'userTask api').to.exist;
       userTask.signal();
@@ -184,6 +185,56 @@ Feature('Link as goto', () => {
 
     And('throw was taken exactly once', () => {
       expect(definition.getActivityById('throw').counters).to.deep.equal({ taken: 1, discarded: 0 });
+    });
+  });
+
+  Scenario('link routes into a parallel join (link as alternate path to join)', () => {
+    /** @type {Definition} */
+    let definition;
+    let join;
+
+    Given('a process where one of the join inbound paths is reached only via a link', async () => {
+      const source = factory.resource('link-to-parallel-join.bpmn');
+      const context = await testHelpers.context(source);
+      definition = new Definition(context, { variables: { condition: true } });
+      join = definition.getActivityById('join');
+    });
+
+    When('definition is ran with condition routing to the link', async () => {
+      const leave = definition.waitFor('leave');
+      definition.run();
+      await leave;
+    });
+
+    Then('process completes via the link → catch → join path', () => {
+      expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
+    });
+
+    And('the catch was invoked once', () => {
+      expect(definition.getActivityById('catch-link').counters).to.deep.equal({ taken: 1, discarded: 0 });
+    });
+
+    And('the parallel join took once (link branch arrived as take, sibling branches discarded back to it)', () => {
+      expect(join.counters).to.have.property('taken', 1);
+    });
+
+    When('definition is ran again with condition flipped so link is bypassed', async () => {
+      definition.environment.variables.condition = false;
+      const leave = definition.waitFor('leave');
+      definition.run();
+      await leave;
+    });
+
+    Then('process completes via the non-link parallel paths', () => {
+      expect(definition.getActivityById('end').counters).to.have.property('taken', 2);
+    });
+
+    And('catch counter unchanged from the previous run', () => {
+      expect(definition.getActivityById('catch-link').counters).to.have.property('taken', 1);
+    });
+
+    And('the parallel join took twice in total', () => {
+      expect(join.counters).to.have.property('taken', 2);
     });
   });
 

@@ -6,8 +6,6 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = LinkEventDefinition;
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
-const kCompleted = Symbol.for('completed');
-const kMessageQ = Symbol.for('messageQ');
 const kExecuteMessage = Symbol.for('executeMessage');
 function LinkEventDefinition(activity, eventDefinition) {
   const {
@@ -22,7 +20,8 @@ function LinkEventDefinition(activity, eventDefinition) {
   } = eventDefinition;
   this.id = id;
   this.type = type;
-  const reference = this.reference = {
+  this.reference = {
+    id: behaviour.name,
     linkName: behaviour.name,
     referenceType: 'link'
   };
@@ -30,22 +29,9 @@ function LinkEventDefinition(activity, eventDefinition) {
   this.activity = activity;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
-  this[kCompleted] = false;
-  if (!isThrowing) {
-    const messageQueueName = `${reference.referenceType}-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(reference.linkName)}-q`;
-    this[kMessageQ] = broker.assertQueue(messageQueueName, {
-      autoDelete: false,
-      durable: true
-    });
-    broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, {
-      durable: true
-    });
-    broker.subscribeTmp('api', `activity.shake.${reference.referenceType}`, this._onApiMessage.bind(this), {
-      noAck: true
-    });
-  } else {
-    broker.subscribeTmp('event', 'activity.shake.start', (_, msg) => {
-      broker.publish('event', `activity.shake.${reference.referenceType}`, (0, _messageHelper.cloneContent)(msg.content, {
+  if (isThrowing) {
+    broker.subscribeTmp('api', 'activity.shake.start', (_, msg) => {
+      broker.publish('event', `activity.shake.${this.reference.referenceType}`, (0, _messageHelper.cloneContent)(msg.content, {
         sourceId: this.id,
         targetId: undefined,
         message: {
@@ -60,9 +46,22 @@ function LinkEventDefinition(activity, eventDefinition) {
       consumerTag: '_link-parent-shake',
       priority: 1000
     });
-    broker.subscribeTmp('event', 'activity.discard', this._onDiscard.bind(this), {
+  } else {
+    broker.subscribeTmp('api', `activity.shake.${this.reference.referenceType}`, this._onShakeMessage.bind(this), {
       noAck: true,
-      consumerTag: '_link-parent-discard'
+      consumerTag: '_link-catch-shake'
+    });
+    const queueName = `link-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(this.reference.linkName)}-q`;
+    broker.assertQueue(queueName, {
+      autoDelete: false,
+      durable: true
+    });
+    broker.bindQueue(queueName, 'api', '*.link.#', {
+      durable: true
+    });
+    broker.consume(queueName, this._onLinkApiMessage.bind(this), {
+      noAck: true,
+      consumerTag: '_link-catch-listener'
     });
   }
 }
@@ -76,37 +75,34 @@ LinkEventDefinition.prototype.execute = function execute(executeMessage) {
 };
 LinkEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[kExecuteMessage] = executeMessage;
-  this[kCompleted] = false;
   const executeContent = executeMessage.content;
   const {
     executionId,
     parent
   } = executeContent;
   const parentExecutionId = parent.executionId;
-  this[kMessageQ].consume(this._onCatchLink.bind(this), {
-    noAck: true,
-    consumerTag: `_api-link-${executionId}`
-  });
-  if (this[kCompleted]) return;
+  const linkMessage = executeContent.message ?? executeContent.input ?? {
+    ...this.reference
+  };
+  this.logger.debug(`<${executionId} (${this.activity.id})> caught link ${this.reference.linkName}`);
   const broker = this.broker;
-  const onApiMessage = this._onApiMessage.bind(this);
-  broker.subscribeTmp('api', `activity.stop.${parentExecutionId}`, onApiMessage, {
-    noAck: true,
-    consumerTag: `_api-parent-${executionId}`
-  });
-  broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
-    noAck: true,
-    consumerTag: `_api-${executionId}`
-  });
-  this._debug(`expect link ${this.reference.linkName}`);
-  const waitContent = (0, _messageHelper.cloneContent)(executeContent, {
-    executionId: parentExecutionId,
+  const catchContent = (0, _messageHelper.cloneContent)(executeContent, {
     link: {
       ...this.reference
-    }
+    },
+    message: {
+      ...linkMessage
+    },
+    executionId: parentExecutionId
   });
-  waitContent.parent = (0, _messageHelper.shiftParent)(parent);
-  broker.publish('event', 'activity.wait', waitContent);
+  catchContent.parent = (0, _messageHelper.shiftParent)(parent);
+  broker.publish('event', 'activity.catch', catchContent, {
+    type: 'catch'
+  });
+  return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent, {
+    output: linkMessage,
+    state: 'catch'
+  }));
 };
 LinkEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
@@ -131,90 +127,32 @@ LinkEventDefinition.prototype.executeThrow = function executeThrow(executeMessag
   });
   return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
-LinkEventDefinition.prototype._onCatchLink = function onCatchLink(routingKey, message) {
+LinkEventDefinition.prototype._onLinkApiMessage = function onLinkApiMessage(_, message) {
+  if (message.properties.type !== 'link') return;
   if (message.content.message?.linkName !== this.reference.linkName) return;
-  if (message.content.state === 'discard') return this._discard();
-  return this._complete('caught', message.content.message);
+  if (this.activity.isRunning) return;
+  this.activity.run(message.content.message);
 };
-LinkEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
-  switch (message.properties.type) {
-    case 'discard':
-      {
-        return this._discard();
-      }
-    case 'stop':
-      {
-        this._stop();
-        break;
-      }
-    case 'shake':
-      {
-        if (message.content.message?.linkName !== this.reference.linkName) return;
-        const content = (0, _messageHelper.cloneContent)(message.content, {
-          targetId: this.id,
-          isLinked: true
-        });
-        content.sequence = content.sequence || [];
-        content.sequence.push({
-          id: this.id,
-          type: this.type
-        });
-        return this.broker.publish('event', 'activity.shake.linked', content, {
-          persistent: false,
-          type: 'shake'
-        });
-      }
+LinkEventDefinition.prototype._onShakeMessage = function onShakeMessage(_, message) {
+  if (message.properties.type !== 'shake') return;
+  if (message.content.message?.linkName !== this.reference.linkName) return;
+  const content = (0, _messageHelper.cloneContent)(message.content, {
+    targetId: this.id,
+    isLinked: true
+  });
+  content.sequence = content.sequence || [];
+  content.sequence.push({
+    id: this.id,
+    type: this.type
+  });
+  this.broker.publish('event', 'activity.shake.linked', content, {
+    persistent: false,
+    type: 'shake'
+  });
+  const outbound = this.activity.outbound;
+  if (outbound?.length) {
+    for (const flow of outbound) flow.shake({
+      content: (0, _messageHelper.cloneContent)(content)
+    });
   }
-};
-LinkEventDefinition.prototype._complete = function complete(verb, output) {
-  this[kCompleted] = true;
-  this._stop();
-  this._debug(`${verb} link ${this.reference.linkName}`);
-  const executeContent = this[kExecuteMessage].content;
-  const parent = executeContent.parent;
-  const catchContent = (0, _messageHelper.cloneContent)(executeContent, {
-    link: {
-      ...this.reference
-    },
-    message: {
-      ...output
-    },
-    executionId: parent.executionId
-  });
-  catchContent.parent = (0, _messageHelper.shiftParent)(parent);
-  const broker = this.broker;
-  broker.publish('event', 'activity.catch', catchContent, {
-    type: 'catch'
-  });
-  return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent, {
-    output,
-    state: 'catch'
-  }));
-};
-LinkEventDefinition.prototype._discard = function discard() {
-  this[kCompleted] = true;
-  this._stop();
-  return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[kExecuteMessage].content));
-};
-LinkEventDefinition.prototype._stop = function stop() {
-  const broker = this.broker,
-    executionId = this.executionId;
-  broker.cancel(`_api-link-${executionId}`);
-  broker.cancel(`_api-parent-${executionId}`);
-  broker.cancel(`_api-${executionId}`);
-  this[kMessageQ].purge();
-};
-LinkEventDefinition.prototype._onDiscard = function onDiscard(_, message) {
-  this.broker.publish('event', 'activity.link.discard', (0, _messageHelper.cloneContent)(message.content, {
-    message: {
-      ...this.reference
-    },
-    state: 'discard'
-  }), {
-    type: 'link',
-    delegate: true
-  });
-};
-LinkEventDefinition.prototype._debug = function debug(msg) {
-  this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);
 };

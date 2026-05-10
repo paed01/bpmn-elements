@@ -443,65 +443,68 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('resume recovered new instance on enter continuous execution', async () => {
-          const context = await testHelpers.context(singleFlowDefinition);
-          let activity = context.getActivityById('activity');
+        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)(
+          'resume recovered new instance on enter continuous execution',
+          async () => {
+            const context = await testHelpers.context(singleFlowDefinition);
+            let activity = context.getActivityById('activity');
 
-          const messages = [];
-          activity.broker.subscribeTmp(
-            'event',
-            'activity.*',
-            (routingKey, message) => {
-              const api = assertApi(activity, message);
-              if (routingKey === 'activity.wait') return api.signal();
-              messages.push(message);
-            },
-            { noAck: true }
-          );
+            const messages = [];
+            activity.broker.subscribeTmp(
+              'event',
+              'activity.*',
+              (routingKey, message) => {
+                const api = assertApi(activity, message);
+                if (routingKey === 'activity.wait') return api.signal();
+                messages.push(message);
+              },
+              { noAck: true }
+            );
 
-          activity.broker.subscribeOnce('event', 'activity.enter', () => {
-            activity.stop();
-          });
+            activity.broker.subscribeOnce('event', 'activity.enter', () => {
+              activity.stop();
+            });
 
-          const stopped = activity.waitFor('stop');
-          activity.run();
+            const stopped = activity.waitFor('stop');
+            activity.run();
 
-          await stopped;
+            await stopped;
 
-          const state = activity.getState();
-          expect(activity).to.have.property('stopped', true);
-          expect(activity).to.have.property('isRunning', false);
-          expect(state).to.have.property('stopped', true);
+            const state = activity.getState();
+            expect(activity).to.have.property('stopped', true);
+            expect(activity).to.have.property('isRunning', false);
+            expect(state).to.have.property('stopped', true);
 
-          const assertMessage = AssertMessage(context, messages, true);
-          assertMessage('activity.enter');
-          assertMessage('activity.stop');
-          expect(messages, 'no more messages').to.have.length(0);
+            const assertMessage = AssertMessage(context, messages, true);
+            assertMessage('activity.enter');
+            assertMessage('activity.stop');
+            expect(messages, 'no more messages').to.have.length(0);
 
-          activity = context.clone().getActivityById('activity');
+            activity = context.clone().getActivityById('activity');
 
-          activity.broker.subscribeTmp(
-            'event',
-            'activity.*',
-            (routingKey, message) => {
-              const api = assertApi(activity, message);
-              if (routingKey === 'activity.wait') return api.signal();
-              messages.push(message);
-            },
-            { noAck: true }
-          );
+            activity.broker.subscribeTmp(
+              'event',
+              'activity.*',
+              (routingKey, message) => {
+                const api = assertApi(activity, message);
+                if (routingKey === 'activity.wait') return api.signal();
+                messages.push(message);
+              },
+              { noAck: true }
+            );
 
-          activity.recover(state);
+            activity.recover(state);
 
-          const leave = activity.waitFor('leave');
-          activity.resume();
-          await leave;
+            const leave = activity.waitFor('leave');
+            activity.resume();
+            await leave;
 
-          assertMessage('activity.start');
-          assertMessage('activity.end');
-          assertMessage('activity.leave');
-          expect(messages, 'no more messages').to.have.length(0);
-        });
+            assertMessage('activity.start');
+            assertMessage('activity.end');
+            assertMessage('activity.leave');
+            expect(messages, 'no more messages').to.have.length(0);
+          }
+        );
 
         (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('resume stopped on start continuous execution', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
@@ -592,62 +595,65 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('resume recovered new instance on start continuous execution', async () => {
-          const context = await testHelpers.context(singleFlowDefinition);
-          let activity = context.getActivityById('activity');
+        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)(
+          'resume recovered new instance on start continuous execution',
+          async () => {
+            const context = await testHelpers.context(singleFlowDefinition);
+            let activity = context.getActivityById('activity');
 
-          const messages = [];
-          activity.broker.subscribeTmp(
-            'event',
-            'activity.*',
-            (routingKey, message) => {
-              const api = assertApi(activity, message);
-              if (routingKey === 'activity.wait') return api.signal();
-              messages.push(message);
-            },
-            { noAck: true }
-          );
+            const messages = [];
+            activity.broker.subscribeTmp(
+              'event',
+              'activity.*',
+              (routingKey, message) => {
+                const api = assertApi(activity, message);
+                if (routingKey === 'activity.wait') return api.signal();
+                messages.push(message);
+              },
+              { noAck: true }
+            );
 
-          activity.broker.subscribeTmp('event', 'activity.start', function stop() {
-            activity.broker.unsubscribe('activity.start', stop);
-            activity.stop();
-          });
+            activity.broker.subscribeTmp('event', 'activity.start', function stop() {
+              activity.broker.unsubscribe('activity.start', stop);
+              activity.stop();
+            });
 
-          const stopped = activity.waitFor('stop');
-          activity.activate();
-          activity.run();
-          await stopped;
+            const stopped = activity.waitFor('stop');
+            activity.activate();
+            activity.run();
+            await stopped;
 
-          const state = activity.getState();
+            const state = activity.getState();
 
-          const assertMessage = AssertMessage(context, messages, true);
-          assertMessage('activity.enter');
-          assertMessage('activity.start');
-          assertMessage('activity.stop');
-          expect(messages, 'no more messages').to.have.length(0);
+            const assertMessage = AssertMessage(context, messages, true);
+            assertMessage('activity.enter');
+            assertMessage('activity.start');
+            assertMessage('activity.stop');
+            expect(messages, 'no more messages').to.have.length(0);
 
-          activity = context.clone().getActivityById('activity');
-          activity.broker.subscribeTmp(
-            'event',
-            'activity.*',
-            (routingKey, message) => {
-              const api = assertApi(activity, message);
-              if (routingKey === 'activity.wait') return api.signal();
-              messages.push(message);
-            },
-            { noAck: true }
-          );
+            activity = context.clone().getActivityById('activity');
+            activity.broker.subscribeTmp(
+              'event',
+              'activity.*',
+              (routingKey, message) => {
+                const api = assertApi(activity, message);
+                if (routingKey === 'activity.wait') return api.signal();
+                messages.push(message);
+              },
+              { noAck: true }
+            );
 
-          const left = activity.waitFor('leave');
-          activity.recover(state);
-          activity.resume();
+            const left = activity.waitFor('leave');
+            activity.recover(state);
+            activity.resume();
 
-          await left;
+            await left;
 
-          assertMessage('activity.end');
-          assertMessage('activity.leave');
-          expect(messages, 'no more messages').to.have.length(0);
-        });
+            assertMessage('activity.end');
+            assertMessage('activity.leave');
+            expect(messages, 'no more messages').to.have.length(0);
+          }
+        );
 
         (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('resume stopped on end leaves activity', async () => {
           const context = await testHelpers.context(singleFlowDefinition);

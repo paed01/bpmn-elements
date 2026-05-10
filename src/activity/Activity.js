@@ -764,10 +764,6 @@ Activity.prototype._onExecutionMessage = function onExecutionMessage(routingKey,
         return this._ackRunExecuteMessage();
       });
     }
-    case 'execution.inbound.cancel': {
-      message.ack();
-      return this.broker.cancel('_run-on-inbound');
-    }
     case 'execution.error': {
       this.status = 'error';
       broker.publish('run', 'run.error', content, { correlationId });

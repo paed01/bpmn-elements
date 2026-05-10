@@ -66,7 +66,7 @@ describe('EventBasedGateway', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source);
+      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
       const [bp] = context.getProcesses();
       const gateway = bp.getActivityById('decision');
       const usertask = bp.getActivityById('usertask');

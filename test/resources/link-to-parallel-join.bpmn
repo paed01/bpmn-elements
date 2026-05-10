@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0djnguu" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.39.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.23.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0djnguu" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.46.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.23.0">
   <bpmn:process id="Process_0" isExecutable="true">
     <bpmn:startEvent id="start">
       <bpmn:outgoing>Flow_05b3201</bpmn:outgoing>
@@ -21,23 +21,23 @@
       <bpmn:outgoing>Flow_1docann</bpmn:outgoing>
     </bpmn:task>
     <bpmn:sequenceFlow id="Flow_18te781" sourceRef="gw" targetRef="task2" />
-    <bpmn:task id="Activity_1e4kj77">
+    <bpmn:task id="tsk3" name="Task 3">
       <bpmn:incoming>Flow_06pnthd</bpmn:incoming>
-      <bpmn:outgoing>Flow_1loxf70</bpmn:outgoing>
+      <bpmn:outgoing>from-task3</bpmn:outgoing>
     </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_06pnthd" sourceRef="task2" targetRef="Activity_1e4kj77" />
-    <bpmn:task id="Activity_1n8tidw">
+    <bpmn:sequenceFlow id="Flow_06pnthd" sourceRef="task2" targetRef="tsk3" />
+    <bpmn:task id="task4">
       <bpmn:incoming>Flow_1docann</bpmn:incoming>
       <bpmn:outgoing>Flow_1bhj6pc</bpmn:outgoing>
     </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_1docann" sourceRef="task2" targetRef="Activity_1n8tidw" />
-    <bpmn:task id="Activity_1tbp4uv">
+    <bpmn:sequenceFlow id="Flow_1docann" sourceRef="task2" targetRef="task4" />
+    <bpmn:task id="task5">
       <bpmn:incoming>Flow_1bhj6pc</bpmn:incoming>
-      <bpmn:outgoing>Flow_0e0fdrh</bpmn:outgoing>
+      <bpmn:outgoing>from-task5</bpmn:outgoing>
     </bpmn:task>
-    <bpmn:sequenceFlow id="Flow_1bhj6pc" sourceRef="Activity_1n8tidw" targetRef="Activity_1tbp4uv" />
-    <bpmn:sequenceFlow id="Flow_0e0fdrh" sourceRef="Activity_1tbp4uv" targetRef="join" />
-    <bpmn:sequenceFlow id="Flow_1loxf70" sourceRef="Activity_1e4kj77" targetRef="join" />
+    <bpmn:sequenceFlow id="Flow_1bhj6pc" sourceRef="task4" targetRef="task5" />
+    <bpmn:sequenceFlow id="from-task5" sourceRef="task5" targetRef="join" />
+    <bpmn:sequenceFlow id="from-task3" sourceRef="tsk3" targetRef="join" />
     <bpmn:task id="complete-task" name="Complete">
       <bpmn:incoming>to-complete-task</bpmn:incoming>
       <bpmn:outgoing>to-end</bpmn:outgoing>
@@ -60,8 +60,8 @@
       <bpmn:linkEventDefinition id="LinkEventDefinition_0f6i99f" name="LINKA" />
     </bpmn:intermediateCatchEvent>
     <bpmn:parallelGateway id="join">
-      <bpmn:incoming>Flow_0e0fdrh</bpmn:incoming>
-      <bpmn:incoming>Flow_1loxf70</bpmn:incoming>
+      <bpmn:incoming>from-task5</bpmn:incoming>
+      <bpmn:incoming>from-task3</bpmn:incoming>
       <bpmn:incoming>from-catch-link</bpmn:incoming>
       <bpmn:outgoing>to-complete-task</bpmn:outgoing>
     </bpmn:parallelGateway>
@@ -82,6 +82,16 @@
         <dc:Bounds x="530" y="190" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1e4kj77_di" bpmnElement="tsk3">
+        <dc:Bounds x="690" y="190" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1n8tidw_di" bpmnElement="task4">
+        <dc:Bounds x="690" y="340" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1tbp4uv_di" bpmnElement="task5">
+        <dc:Bounds x="850" y="340" width="100" height="80" />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0r34ilg_di" bpmnElement="complete-task">
         <dc:Bounds x="1160" y="190" width="100" height="80" />
         <bpmndi:BPMNLabel />
@@ -92,20 +102,11 @@
       <bpmndi:BPMNShape id="Event_0bhi9qr_di" bpmnElement="throw-link">
         <dc:Bounds x="502" y="82" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_0njelgl_di" bpmnElement="join">
-        <dc:Bounds x="1015" y="205" width="50" height="50" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1n8tidw_di" bpmnElement="Activity_1n8tidw">
-        <dc:Bounds x="690" y="340" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1tbp4uv_di" bpmnElement="Activity_1tbp4uv">
-        <dc:Bounds x="850" y="340" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_1e4kj77_di" bpmnElement="Activity_1e4kj77">
-        <dc:Bounds x="690" y="190" width="100" height="80" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1noc072_di" bpmnElement="catch-link">
         <dc:Bounds x="952" y="82" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0njelgl_di" bpmnElement="join">
+        <dc:Bounds x="1015" y="205" width="50" height="50" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_05b3201_di" bpmnElement="Flow_05b3201">
         <di:waypoint x="218" y="230" />
@@ -133,12 +134,12 @@
         <di:waypoint x="790" y="380" />
         <di:waypoint x="850" y="380" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0e0fdrh_di" bpmnElement="Flow_0e0fdrh">
+      <bpmndi:BPMNEdge id="Flow_0e0fdrh_di" bpmnElement="from-task5">
         <di:waypoint x="950" y="380" />
         <di:waypoint x="1040" y="380" />
         <di:waypoint x="1040" y="255" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_1loxf70_di" bpmnElement="Flow_1loxf70">
+      <bpmndi:BPMNEdge id="Flow_1loxf70_di" bpmnElement="from-task3">
         <di:waypoint x="790" y="230" />
         <di:waypoint x="1015" y="230" />
       </bpmndi:BPMNEdge>

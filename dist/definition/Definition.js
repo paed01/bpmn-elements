@@ -34,7 +34,7 @@ function Definition(context, options) {
   this.name = name;
   let environment;
   if (options) {
-    environment = this.environment = context.environment.clone(options);
+    environment = this.environment = context.environment.clone(options).assignSettings(options.settings);
     this.context = context.clone(environment);
   } else {
     environment = this.environment = context.environment;

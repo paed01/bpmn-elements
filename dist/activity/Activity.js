@@ -85,36 +85,34 @@ function Activity(Behaviour, activityDef, context) {
     inboundTriggers = inboundSequenceFlows.slice();
   }
   const outboundSequenceFlows = context.getOutboundSequenceFlows(id);
-  const isParallelJoin = activityDef.isParallelGateway && inboundSequenceFlows.length > 1;
+  const inboundSourceIds = new Set(inboundSequenceFlows.map(({
+    sourceId
+  }) => sourceId));
+  const isParallelJoin = activityDef.isParallelGateway && inboundSourceIds.size > 1;
   this[kFlows] = {
     inboundSequenceFlows,
     inboundAssociations,
     inboundTriggers,
     outboundSequenceFlows,
-    outboundEvaluator: new _outboundEvaluator.OutboundEvaluator(this, outboundSequenceFlows),
-    ...(isParallelJoin && {
-      inboundJoinFlows: new Set(),
-      inboundSourceIds: new Map(inboundSequenceFlows.map(({
-        sourceId
-      }) => [sourceId, 0]))
-    })
+    outboundEvaluator: new _outboundEvaluator.OutboundEvaluator(this, outboundSequenceFlows)
   };
   this[kFlags] = {
     isEnd: !outboundSequenceFlows.length,
-    isStart: !inboundTriggers.length && !behaviour.triggeredByEvent,
+    isStart: !inboundTriggers.length && !behaviour.triggeredByEvent && !activityDef.isCatching,
     isSubProcess: activityDef.isSubProcess,
     isMultiInstance: !!behaviour.loopCharacteristics,
     isForCompensation,
     attachedTo,
     isTransaction: activityDef.isTransaction,
     isParallelJoin,
+    isParallelGateway: activityDef.isParallelGateway,
     isThrowing: activityDef.isThrowing,
     isCatching: activityDef.isCatching,
     lane: activityDef.lane?.id
   };
   this[kExec] = new Map();
   this[kMessageHandlers] = {
-    onInbound: isParallelJoin ? this._onJoinInbound.bind(this) : this._onInbound.bind(this),
+    onInbound: this._onInbound.bind(this),
     onRunMessage: this._onRunMessage.bind(this),
     onApiMessage: this._onApiMessage.bind(this),
     onExecutionMessage: this._onExecutionMessage.bind(this)
@@ -252,9 +250,9 @@ Object.defineProperties(Activity.prototype, {
       return this.context.getActivityParentById(this.id);
     }
   },
-  expectedInboundSources: {
+  initialized: {
     get() {
-      return new Map(this[kFlows].inboundSourceIds);
+      return !!this[kExec]?.get('initExecutionId');
     }
   }
 });
@@ -269,9 +267,6 @@ Activity.prototype.deactivate = function deactivate() {
   this.removeInboundListeners();
   broker.cancel('_run-on-inbound');
   broker.cancel('_format-consumer');
-  if (this.isParallelJoin) this[kFlows].inboundSourceIds = new Map(this[kFlows].inboundSequenceFlows.map(({
-    sourceId
-  }) => [sourceId, 0]));
 };
 Activity.prototype.init = function init(initContent) {
   const id = this.id;
@@ -326,7 +321,8 @@ Activity.prototype.getState = function getState() {
 };
 Activity.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error(`cannot recover running activity <${this.id}>`);
-  if (!state) return;
+  if (!state) return; // TODO: return this
+
   this.stopped = state.stopped;
   this.status = state.status;
   const exec = this[kExec];
@@ -472,7 +468,7 @@ Activity.prototype._discardRun = function discardRun() {
   this._consumeRunQ();
 };
 Activity.prototype._onShakeMessage = function _onShakeMessage(sourceMessage) {
-  if (this.isParallelJoin) {
+  if (this[kFlags].isParallelGateway) {
     const message = (0, _messageHelper.cloneMessage)(sourceMessage, {
       join: this.id
     });
@@ -489,12 +485,15 @@ Activity.prototype._onShakeMessage = function _onShakeMessage(sourceMessage) {
 };
 Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
   const message = (0, _messageHelper.cloneMessage)(sourceMessage);
-  message.content.sequence = message.content.sequence || [];
-  message.content.sequence.push({
+  const sequence = message.content.sequence = message.content.sequence || [];
+  const count = 1;
+  const looped = sequence?.find(f => f.id === this.id);
+  sequence.push({
     id: this.id,
-    type: this.type
+    type: this.type,
+    count: looped ? looped.count + 1 : count
   });
-  this.broker.publish('event', 'activity.shake.start', message.content, {
+  this.broker.publish('api', 'activity.shake.start', message.content, {
     persistent: false,
     type: 'shake'
   });
@@ -518,12 +517,6 @@ Activity.prototype._consumeInbound = function consumeInbound() {
   if (this.status || !this[kFlows].inboundTriggers.length) return;
   const inboundQ = this.broker.getQueue('inbound-q');
   const onInbound = this[kMessageHandlers].onInbound;
-  if (this[kFlags].isParallelJoin) {
-    return inboundQ.assertConsumer(onInbound, {
-      consumerTag: '_run-on-inbound',
-      prefetch: 1000
-    });
-  }
   return inboundQ.assertConsumer(onInbound, {
     consumerTag: '_run-on-inbound'
   });
@@ -548,49 +541,13 @@ Activity.prototype._onInbound = function onInbound(routingKey, message) {
       {
         let discardSequence;
         if (content.discardSequence) discardSequence = content.discardSequence.slice();
-        return this._runDiscard({
+        const context = {
           inbound,
           discardSequence
-        });
+        };
+        return this[kFlags].isParallelGateway ? this.run(context) : this._runDiscard(context);
       }
   }
-};
-Activity.prototype._onJoinInbound = function onJoinInbound(routingKey, message) {
-  const {
-    inboundJoinFlows,
-    inboundSourceIds
-  } = this[kFlows];
-  const expectedInboundCount = [...inboundSourceIds.values()].reduce((s, a) => s + (a || 1));
-  inboundJoinFlows.add(message);
-  const remaining = expectedInboundCount - inboundJoinFlows.size;
-  if (remaining) {
-    return this.logger.debug(`<${this.id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
-  }
-  const inbound = [];
-  let taken;
-  for (const im of inboundJoinFlows) {
-    if (im.fields.routingKey === 'flow.take') taken = true;
-    im.ack();
-    inbound.push((0, _messageHelper.cloneContent)(im.content));
-  }
-  const discardSequence = new Set();
-  if (!taken) {
-    for (const im of inboundJoinFlows) {
-      if (!im.content.discardSequence) continue;
-      for (const sourceId of im.content.discardSequence) {
-        discardSequence.add(sourceId);
-      }
-    }
-  }
-  inboundJoinFlows.clear();
-  this.broker.cancel('_run-on-inbound');
-  if (!taken) return this._runDiscard({
-    inbound,
-    discardSequence: [...discardSequence]
-  });
-  return this.run({
-    inbound
-  });
 };
 Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message) {
   const {
@@ -609,12 +566,6 @@ Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message
         break;
       }
     case 'flow.shake':
-      {
-        if (this.isParallelJoin) {
-          let count = this[kFlows].inboundSourceIds.get(content.sourceId);
-          this[kFlows].inboundSourceIds.set(content.sourceId, ++count);
-        }
-      }
     case 'activity.shake.start':
       return this._onShakeMessage(message);
     case 'association.take':
@@ -637,6 +588,7 @@ Activity.prototype._pauseRunQ = function pauseRunQ() {
 };
 Activity.prototype._onRunMessage = function onRunMessage(routingKey, message, messageProperties) {
   switch (routingKey) {
+    case 'run.execute.passthrough':
     case 'run.outbound.discard':
     case 'run.outbound.take':
     case 'run.next':
@@ -841,11 +793,13 @@ Activity.prototype._onExecutionMessage = function onExecutionMessage(routingKey,
       }
     case 'execution.cancel':
     case 'execution.discard':
-      this.status = 'discarded';
-      broker.publish('run', 'run.discarded', content, {
-        correlationId
-      });
-      break;
+      {
+        this.status = 'discarded';
+        broker.publish('run', 'run.discarded', content, {
+          correlationId
+        });
+        break;
+      }
     default:
       {
         this.status = 'executed';
