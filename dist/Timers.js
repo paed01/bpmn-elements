@@ -4,8 +4,8 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.Timers = Timers;
-const kExecuting = Symbol.for('executing');
-const kTimerApi = Symbol.for('timers api');
+const K_EXECUTING = Symbol.for('executing');
+const K_TIMER_API = Symbol.for('timers api');
 const MAX_DELAY = 2147483647;
 function Timers(options) {
   this.count = 0;
@@ -14,13 +14,14 @@ function Timers(options) {
     clearTimeout,
     ...options
   };
-  this[kExecuting] = new Set();
+  /** @private */
+  this[K_EXECUTING] = new Set();
   this.setTimeout = this.setTimeout.bind(this);
   this.clearTimeout = this.clearTimeout.bind(this);
 }
 Object.defineProperty(Timers.prototype, 'executing', {
   get() {
-    return [...this[kExecuting]];
+    return [...this[K_EXECUTING]];
   }
 });
 Timers.prototype.register = function register(owner) {
@@ -30,14 +31,14 @@ Timers.prototype.setTimeout = function wrappedSetTimeout(callback, delay, ...arg
   return this._setTimeout(null, callback, delay, ...args);
 };
 Timers.prototype.clearTimeout = function wrappedClearTimeout(ref) {
-  if (this[kExecuting].delete(ref)) {
+  if (this[K_EXECUTING].delete(ref)) {
     ref.timerRef = this.options.clearTimeout(ref.timerRef);
     return;
   }
   return this.options.clearTimeout(ref);
 };
 Timers.prototype._setTimeout = function setTimeout(owner, callback, delay, ...args) {
-  const executing = this[kExecuting];
+  const executing = this[K_EXECUTING];
   const ref = this._getReference(owner, callback, delay, args);
   executing.add(ref);
   if (delay < MAX_DELAY) {
@@ -53,17 +54,19 @@ Timers.prototype._getReference = function getReference(owner, callback, delay, a
   return new Timer(owner, `timer_${this.count++}`, callback, delay, args);
 };
 function RegisteredTimers(timersApi, owner) {
-  this[kTimerApi] = timersApi;
+  /** @private */
+  this[K_TIMER_API] = timersApi;
   this.owner = owner;
   this.setTimeout = this.setTimeout.bind(this);
   this.clearTimeout = this.clearTimeout.bind(this);
 }
 RegisteredTimers.prototype.setTimeout = function registeredSetTimeout(callback, delay, ...args) {
-  const timersApi = this[kTimerApi];
+  const timersApi = this[K_TIMER_API];
   return timersApi._setTimeout(this.owner, callback, delay, ...args);
 };
 RegisteredTimers.prototype.clearTimeout = function registeredClearTimeout(ref) {
-  this[kTimerApi].clearTimeout(ref);
+  /** @private */
+  this[K_TIMER_API].clearTimeout(ref);
 };
 function Timer(owner, timerId, callback, delay, args) {
   this.callback = callback;

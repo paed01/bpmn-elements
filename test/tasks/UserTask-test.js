@@ -199,7 +199,6 @@ describe('UserTask', () => {
 
       expect(executeQ.messageCount, 'execute queue').to.equal(2);
 
-      waiting = task.waitFor('wait');
       taskApi.signal({ iteration: 2 });
 
       const left = await leave;
@@ -356,7 +355,7 @@ describe('UserTask', () => {
     it('keeps execute wait state until signaled', async () => {
       const task = context.getActivityById('task');
 
-      let waiting = task.waitFor('wait');
+      const waiting = task.waitFor('wait');
       const left = task.waitFor('leave');
       task.activate();
       task.run();
@@ -365,8 +364,6 @@ describe('UserTask', () => {
 
       expect(task.broker.getQueue('run-q').messageCount, 'run queue').to.equal(1);
       expect(task.broker.getQueue('execute-q').messageCount, 'execute queue').to.be.above(1);
-
-      waiting = task.waitFor('wait');
 
       const childExecutions = task.getApi().getExecuting();
       expect(childExecutions.length).to.equal(3);

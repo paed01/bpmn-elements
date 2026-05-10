@@ -685,9 +685,7 @@ Feature('Shaking', () => {
     And('the shake walk continues past the catch and reaches the end event', () => {
       const reachedEnd = shakeEndMessages.some((m) => m.content.sequence.some((s) => s.id === 'end'));
       expect(reachedEnd, 'shake.end with end in sequence').to.be.true;
-      const endSequence = shakeEndMessages
-        .map((m) => m.content.sequence.map((s) => s.id))
-        .find((ids) => ids.includes('end'));
+      const endSequence = shakeEndMessages.map((m) => m.content.sequence.map((s) => s.id)).find((ids) => ids.includes('end'));
       expect(endSequence).to.include.members(['catch', 'from-catch', 'end']);
     });
 

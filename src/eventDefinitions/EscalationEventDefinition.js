@@ -1,12 +1,9 @@
 import getPropertyValue from '../getPropertyValue.js';
 import { brokerSafeId } from '../shared.js';
 import { cloneContent, shiftParent } from '../messageHelper.js';
+import { K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_Q, K_REFERENCE_ELEMENT } from '../constants.js';
 
-const kCompleted = Symbol.for('completed');
-const kMessageQ = Symbol.for('messageQ');
-const kExecuteMessage = Symbol.for('executeMessage');
-const kReferenceElement = Symbol.for('referenceElement');
-const kReference = Symbol.for('reference');
+const K_REFERENCE = Symbol.for('reference');
 
 export default function EscalationEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;
@@ -26,19 +23,21 @@ export default function EscalationEventDefinition(activity, eventDefinition) {
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
 
-  const referenceElement = (this[kReferenceElement] = reference.id && activity.getActivityById(reference.id));
+  const referenceElement = (this[K_REFERENCE_ELEMENT] = reference.id && activity.getActivityById(reference.id));
   if (!isThrowing) {
-    this[kCompleted] = false;
+    /** @private */
+    this[K_COMPLETED] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(referenceId)}-q`;
-    this[kMessageQ] = broker.assertQueue(messageQueueName, { autoDelete: false, durable: true });
+    /** @private */
+    this[K_MESSAGE_Q] = broker.assertQueue(messageQueueName, { autoDelete: false, durable: true });
     broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, { durable: true, priority: 400 });
   }
 }
 
 Object.defineProperty(EscalationEventDefinition.prototype, 'executionId', {
   get() {
-    return this[kExecuteMessage]?.content.executionId;
+    return this[K_EXECUTE_MESSAGE]?.content.executionId;
   },
 });
 
@@ -47,20 +46,23 @@ EscalationEventDefinition.prototype.execute = function execute(executeMessage) {
 };
 
 EscalationEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  this[kExecuteMessage] = executeMessage;
-  this[kCompleted] = false;
+  /** @private */
+  this[K_EXECUTE_MESSAGE] = executeMessage;
+  /** @private */
+  this[K_COMPLETED] = false;
 
   const executeContent = executeMessage.content;
   const { executionId, parent } = executeContent;
 
-  const info = (this[kReference] = this._getReferenceInfo(executeMessage));
+  const info = (this[K_REFERENCE] = this._getReferenceInfo(executeMessage));
   const broker = this.broker;
-  this[kMessageQ].consume(this._onCatchMessage.bind(this), {
+  /** @private */
+  this[K_MESSAGE_Q].consume(this._onCatchMessage.bind(this), {
     noAck: true,
     consumerTag: `_onescalate-${executionId}`,
   });
 
-  if (this[kCompleted]) return;
+  if (this[K_COMPLETED]) return;
 
   broker.subscribeTmp('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {
     noAck: true,
@@ -100,17 +102,18 @@ EscalationEventDefinition.prototype.executeThrow = function executeThrow(execute
 };
 
 EscalationEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
-  const info = this[kReference];
+  const info = this[K_REFERENCE];
   if (getPropertyValue(message, 'content.message.id') !== info.message.id) return;
 
   const output = message.content.message;
-  this[kCompleted] = true;
+  /** @private */
+  this[K_COMPLETED] = true;
 
   this._stop();
 
   this._debug(`caught ${info.description}`);
 
-  const executeContent = this[kExecuteMessage].content;
+  const executeContent = this[K_EXECUTE_MESSAGE].content;
   const { parent, ...content } = executeContent;
   const catchContent = cloneContent(content, {
     message: { ...output },
@@ -130,9 +133,10 @@ EscalationEventDefinition.prototype._onApiMessage = function onApiMessage(routin
       return this._onCatchMessage(routingKey, message);
     }
     case 'discard': {
-      this[kCompleted] = true;
+      /** @private */
+      this[K_COMPLETED] = true;
       this._stop();
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content));
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[K_EXECUTE_MESSAGE].content));
     }
     case 'stop': {
       this._stop();
@@ -149,7 +153,7 @@ EscalationEventDefinition.prototype._stop = function stop() {
 };
 
 EscalationEventDefinition.prototype._getReferenceInfo = function getReferenceInfo(message) {
-  const referenceElement = this[kReferenceElement];
+  const referenceElement = this[K_REFERENCE_ELEMENT];
   if (!referenceElement) {
     return {
       message: { ...this.reference },

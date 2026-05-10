@@ -8,9 +8,15 @@ var _Expressions = _interopRequireDefault(require("./Expressions.js"));
 var _Scripts = require("./Scripts.js");
 var _Timers = require("./Timers.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-const kServices = Symbol.for('services');
-const kVariables = Symbol.for('variables');
+const K_SERVICES = Symbol.for('services');
+const K_VARIABLES = Symbol.for('variables');
 const defaultOptions = new Set(['expressions', 'extensions', 'Logger', 'output', 'scripts', 'services', 'settings', 'timers', 'variables']);
+
+/**
+ * Holds global execution config: variables, injected services, timers, scripts engine,
+ * expressions, Logger factory, and settings such as `batchSize`. Cloned and merged per Definition.
+ * @param {import('types').EnvironmentOptions} [options]
+ */
 function Environment(options = {}) {
   this.options = validateOptions(options);
   this.expressions = options.expressions || (0, _Expressions.default)();
@@ -23,21 +29,23 @@ function Environment(options = {}) {
     ...options.settings
   };
   this.Logger = options.Logger || DummyLogger;
-  this[kServices] = options.services || {};
-  this[kVariables] = options.variables || {};
+  /** @private */
+  this[K_SERVICES] = options.services || {};
+  /** @private */
+  this[K_VARIABLES] = options.variables || {};
 }
 Object.defineProperties(Environment.prototype, {
   variables: {
     get() {
-      return this[kVariables];
+      return this[K_VARIABLES];
     }
   },
   services: {
     get() {
-      return this[kServices];
+      return this[K_SERVICES];
     },
     set(value) {
-      const services = this[kServices];
+      const services = this[K_SERVICES];
       for (const name in services) {
         if (!(name in value)) delete services[name];
       }
@@ -45,34 +53,51 @@ Object.defineProperties(Environment.prototype, {
     }
   }
 });
+
+/**
+ * Snapshot environment state for recover.
+ */
 Environment.prototype.getState = function getState() {
   return {
     settings: {
       ...this.settings
     },
     variables: {
-      ...this[kVariables]
+      ...this[K_VARIABLES]
     },
     output: {
       ...this.output
     }
   };
 };
+
+/**
+ * Restore environment state captured by getState. Merges into the existing settings,
+ * variables, and output rather than replacing them.
+ * @param {import('types').EnvironmentState} [state]
+ * @returns {this}
+ */
 Environment.prototype.recover = function recover(state) {
   if (!state) return this;
   if (state.settings) Object.assign(this.settings, state.settings);
-  if (state.variables) Object.assign(this[kVariables], state.variables);
+  if (state.variables) Object.assign(this[K_VARIABLES], state.variables);
   if (state.output) Object.assign(this.output, state.output);
   return this;
 };
+
+/**
+ * Clone the environment, optionally overriding options. Services are merged when
+ * `overrideOptions.services` is supplied.
+ * @param {import('types').EnvironmentOptions} [overrideOptions]
+ */
 Environment.prototype.clone = function clone(overrideOptions) {
-  const services = this[kServices];
+  const services = this[K_SERVICES];
   const newOptions = {
     settings: {
       ...this.settings
     },
     variables: {
-      ...this[kVariables]
+      ...this[K_VARIABLES]
     },
     Logger: this.Logger,
     extensions: this.extensions,
@@ -89,13 +114,26 @@ Environment.prototype.clone = function clone(overrideOptions) {
   };
   return new this.constructor(newOptions);
 };
+
+/**
+ * Merge variables into the environment. Non-objects are ignored.
+ * @param {Record<string, any>} newVars
+ */
 Environment.prototype.assignVariables = function assignVariables(newVars) {
   if (!newVars || typeof newVars !== 'object') return;
-  this[kVariables] = {
+
+  /** @private */
+  this[K_VARIABLES] = {
     ...this.variables,
     ...newVars
   };
 };
+
+/**
+ * Merge settings into the environment. Non-objects are ignored.
+ * @param {import('types').EnvironmentSettings} newSettings
+ * @returns {this}
+ */
 Environment.prototype.assignSettings = function assignSettings(newSettings) {
   if (!newSettings || typeof newSettings !== 'object') return this;
   this.settings = {
@@ -104,15 +142,38 @@ Environment.prototype.assignSettings = function assignSettings(newSettings) {
   };
   return this;
 };
+
+/**
+ * Resolve a registered script by language and identifier.
+ * @param {string} language
+ * @param {{ id: string, [x: string]: any }} identifier
+ */
 Environment.prototype.getScript = function getScript(...args) {
   return this.scripts.getScript(...args);
 };
+
+/**
+ * Register a script for an activity, delegating to the configured scripts engine.
+ * @param {any} activity
+ */
 Environment.prototype.registerScript = function registerScript(...args) {
   return this.scripts.register(...args);
 };
+
+/**
+ * Lookup a registered service by name.
+ * @param {string} serviceName
+ */
 Environment.prototype.getServiceByName = function getServiceByName(serviceName) {
-  return this[kServices][serviceName];
+  return this[K_SERVICES][serviceName];
 };
+
+/**
+ * Resolve an expression with the environment as scope, optionally extended by an element message.
+ * @param {string} expression
+ * @param {import('types').ElementBrokerMessage} [message] Element message merged onto the resolution scope
+ * @param {any} [expressionFnContext]
+ */
 Environment.prototype.resolveExpression = function resolveExpression(expression, message, expressionFnContext) {
   const from = {
     environment: this,
@@ -120,8 +181,15 @@ Environment.prototype.resolveExpression = function resolveExpression(expression,
   };
   return this.expressions.resolveExpression(expression, from, expressionFnContext);
 };
+
+/**
+ * Register a service callable by name.
+ * @param {string} name
+ * @param {CallableFunction} fn
+ */
 Environment.prototype.addService = function addService(name, fn) {
-  this[kServices][name] = fn;
+  /** @private */
+  this[K_SERVICES][name] = fn;
 };
 function validateOptions(input) {
   const options = {};

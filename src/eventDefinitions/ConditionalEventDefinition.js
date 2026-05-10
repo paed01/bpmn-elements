@@ -1,8 +1,7 @@
 import { cloneContent, shiftParent } from '../messageHelper.js';
 import { ActivityError } from '../error/Errors.js';
 import { ScriptCondition, ExpressionCondition } from '../condition.js';
-
-const kExecuteMessage = Symbol.for('executeMessage');
+import { K_EXECUTE_MESSAGE } from '../constants.js';
 
 export default function ConditionalEventDefinition(activity, eventDefinition, _context, index) {
   const { id, broker, environment } = activity;
@@ -20,12 +19,13 @@ export default function ConditionalEventDefinition(activity, eventDefinition, _c
 
 Object.defineProperty(ConditionalEventDefinition.prototype, 'executionId', {
   get() {
-    return this[kExecuteMessage]?.content.executionId;
+    return this[K_EXECUTE_MESSAGE]?.content.executionId;
   },
 });
 
 ConditionalEventDefinition.prototype.execute = function execute(executeMessage) {
-  this[kExecuteMessage] = executeMessage;
+  /** @private */
+  this[K_EXECUTE_MESSAGE] = executeMessage;
 
   if (!this.condition) return this._setup(executeMessage);
 
@@ -88,7 +88,7 @@ ConditionalEventDefinition.prototype.evaluate = function evaluate(message, callb
  */
 ConditionalEventDefinition.prototype.evaluateCallback = function evaluateCallback(err, result) {
   const broker = this.broker;
-  const executeMessage = this[kExecuteMessage];
+  const executeMessage = this[K_EXECUTE_MESSAGE];
   const executeContent = executeMessage.content;
 
   if (err) {
@@ -104,7 +104,7 @@ ConditionalEventDefinition.prototype.evaluateCallback = function evaluateCallbac
   this.broker.publish(
     'event',
     'activity.condition',
-    cloneContent(this[kExecuteMessage].content, {
+    cloneContent(this[K_EXECUTE_MESSAGE].content, {
       conditionResult: result,
     })
   );
@@ -164,7 +164,7 @@ ConditionalEventDefinition.prototype._onApiMessage = function onApiMessage(routi
     case 'discard': {
       this._stop();
       this._debug('discarded');
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content, { state: 'discard' }));
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[K_EXECUTE_MESSAGE].content, { state: 'discard' }));
     }
     case 'stop': {
       this._stop();

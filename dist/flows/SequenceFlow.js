@@ -3,14 +3,21 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.SequenceFlow = SequenceFlow;
 exports.default = void 0;
 var _messageHelper = require("../messageHelper.js");
 var _shared = require("../shared.js");
 var _EventBroker = require("../EventBroker.js");
 var _Api = require("../Api.js");
 var _condition = require("../condition.js");
-const kCounters = Symbol.for('counters');
+var _constants = require("../constants.js");
 var _default = exports.default = SequenceFlow;
+/**
+ * Sequence flow connecting two activities. Owns its broker and publishes take/discard/looped
+ * events; activities subscribe to drive their inbound queue.
+ * @param {import('moddle-context-serializer').SerializableElement} flowDef
+ * @param {import('types').ContextInstance} context
+ */
 function SequenceFlow(flowDef, {
   environment
 }) {
@@ -35,7 +42,9 @@ function SequenceFlow(flowDef, {
   this.isSequenceFlow = true;
   this.environment = environment;
   const logger = this.logger = environment.Logger(type.toLowerCase());
-  this[kCounters] = {
+
+  /** @private */
+  this[_constants.K_COUNTERS] = {
     looped: 0,
     take: 0,
     discard: 0
@@ -60,32 +69,50 @@ function SequenceFlow(flowDef, {
   logger.debug(`<${id}> init, <${sourceId}> -> <${targetId}>`);
 }
 Object.defineProperty(SequenceFlow.prototype, 'counters', {
+  /** @returns {{ take: number, discard: number, looped: number }} */
   get() {
     return {
-      ...this[kCounters]
+      ...this[_constants.K_COUNTERS]
     };
   }
 });
+
+/**
+ * Take the flow and publish flow.take.
+ * @param {Record<string, any>} [content]
+ */
 SequenceFlow.prototype.take = function take(content) {
   const sequenceId = content?.sequenceId;
   this.logger.debug(`<${sequenceId} (${this.id})> take, target <${this.targetId}>`);
-  ++this[kCounters].take;
+  ++this[_constants.K_COUNTERS].take;
   this._publishEvent('take', content);
   return true;
 };
+
+/**
+ * Discard the flow and publish flow.discard. Detects loops via discardSequence and emits
+ * flow.looped instead when the target id is already in the sequence.
+ * @param {Record<string, any>} [content]
+ */
 SequenceFlow.prototype.discard = function discard(content = {}) {
   const sequenceId = content?.sequenceId ?? (0, _shared.getUniqueId)(this.id);
   const discardSequence = content.discardSequence = content.discardSequence?.slice() || [];
   if (discardSequence.indexOf(this.targetId) > -1) {
-    ++this[kCounters].looped;
+    ++this[_constants.K_COUNTERS].looped;
     this.logger.debug(`<${this.id}> discard loop detected <${this.sourceId}> -> <${this.targetId}>. Stop.`);
     return this._publishEvent('looped', content);
   }
   discardSequence.push(this.sourceId);
   this.logger.debug(`<${sequenceId} (${this.id})> discard, target <${this.targetId}>`);
-  ++this[kCounters].discard;
+  ++this[_constants.K_COUNTERS].discard;
   this._publishEvent('discard', content);
 };
+
+/**
+ * Snapshot flow state. Returns undefined when the broker has no state and `disableTrackState`
+ * is set.
+ * @returns {import('types').SequenceFlowState | undefined}
+ */
 SequenceFlow.prototype.getState = function getState() {
   const brokerState = this.broker.getState(true);
   if (!brokerState && this.environment.settings.disableTrackState) return;
@@ -96,18 +123,38 @@ SequenceFlow.prototype.getState = function getState() {
     broker: brokerState
   };
 };
+
+/**
+ * Restore flow state captured by getState.
+ * @param {import('types').SequenceFlowState} state
+ */
 SequenceFlow.prototype.recover = function recover(state) {
-  Object.assign(this[kCounters], state.counters);
+  Object.assign(this[_constants.K_COUNTERS], state.counters);
   this.broker.recover(state.broker);
 };
+
+/**
+ * Resolve a Flow Api wrapper.
+ * @param {import('types').ElementBrokerMessage} [message]
+ */
 SequenceFlow.prototype.getApi = function getApi(message) {
   return (0, _Api.FlowApi)(this.broker, message || {
     content: this.createMessage()
   });
 };
+
+/**
+ * Stop the flow's broker.
+ */
 SequenceFlow.prototype.stop = function stop() {
   this.broker.stop();
 };
+
+/**
+ * Walk the flow as part of a process shake. Detects loops and publishes flow.shake.loop
+ * when the target was already visited, otherwise flow.shake.
+ * @param {import('types').ElementBrokerMessage} message
+ */
 SequenceFlow.prototype.shake = function shake(message) {
   const content = (0, _messageHelper.cloneContent)(message.content);
   content.sequence = content.sequence || [];
@@ -137,6 +184,12 @@ SequenceFlow.prototype.shake = function shake(message) {
     });
   }
 };
+
+/**
+ * Resolve the flow's condition (script or expression). Returns null when no condition is set.
+ * Emits a fatal error when the script language is missing or unsupported.
+ * @returns {import('types').ISequenceFlowCondition | null}
+ */
 SequenceFlow.prototype.getCondition = function getCondition() {
   const conditionExpression = this.behaviour.conditionExpression;
   if (!conditionExpression) return null;
@@ -153,6 +206,11 @@ SequenceFlow.prototype.getCondition = function getCondition() {
   }
   return new _condition.ExpressionCondition(this, conditionExpression.body);
 };
+
+/**
+ * Build a flow event message body, optionally merging override content.
+ * @param {Record<string, any>} [override]
+ */
 SequenceFlow.prototype.createMessage = function createMessage(override) {
   return {
     ...override,
@@ -166,6 +224,12 @@ SequenceFlow.prototype.createMessage = function createMessage(override) {
     parent: (0, _messageHelper.cloneParent)(this.parent)
   };
 };
+
+/**
+ * Evaluate the flow's condition for the source activity message. Default flows are always taken.
+ * @param {import('types').ElementBrokerMessage} fromMessage Source activity message
+ * @param {(err: Error | null, result?: boolean | object) => void} callback Callback with truthy result if flow should be taken
+ */
 SequenceFlow.prototype.evaluate = function evaluate(fromMessage, callback) {
   if (this.isDefault) {
     return callback(null, true);
@@ -176,6 +240,8 @@ SequenceFlow.prototype.evaluate = function evaluate(fromMessage, callback) {
   }
   flowCondition.execute(fromMessage, callback);
 };
+
+/** @internal */
 SequenceFlow.prototype._publishEvent = function publishEvent(action, content) {
   const eventContent = this.createMessage({
     action,

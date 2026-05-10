@@ -1,13 +1,12 @@
 import Activity from '../activity/Activity.js';
 import { cloneContent, cloneMessage } from '../messageHelper.js';
+import { K_EXECUTE_MESSAGE, K_TARGETS } from '../constants.js';
 
 const STATE_MONTITORING = 'monitoring';
 const STATE_SETUP = 'setup';
 
-const kPeers = Symbol.for('peers');
-const kInboundSourceIds = Symbol.for('inbound peers');
-const kTargets = Symbol.for('targets');
-const kExecuteMessage = Symbol.for('executeMessage');
+const K_PEERS = Symbol.for('peers');
+const K_INBOUND_SOURCE_IDS = Symbol.for('inbound peers');
 
 export default function ParallelGateway(activityDef, context) {
   const activity = new Activity(ParallelGatewayBehaviour, { ...activityDef, isParallelGateway: true }, context);
@@ -17,7 +16,7 @@ export default function ParallelGateway(activityDef, context) {
   activity.broker.cancel('_api-shake');
   activity.broker.subscribeTmp('api', 'activity.shake.continue', onApiShake, { noAck: true, consumerTag: '_api-shake', priority: 1000 });
 
-  const peers = (activity[kPeers] = new Map(activity.inbound.map(({ id: flowId, sourceId }) => [flowId, new Set([sourceId])])));
+  const peers = (activity[K_PEERS] = new Map(activity.inbound.map(({ id: flowId, sourceId }) => [flowId, new Set([sourceId])])));
 
   return activity;
 
@@ -53,13 +52,14 @@ export function ParallelGatewayBehaviour(activity) {
   this.inbound = new Set();
 
   this.isConverging = new Set(activity.inbound.map(({ sourceId }) => sourceId)).size > 1;
-  this[kExecuteMessage] = undefined;
+  /** @private */
+  this[K_EXECUTE_MESSAGE] = undefined;
 }
 
 Object.defineProperties(ParallelGatewayBehaviour.prototype, {
   executionId: {
     get() {
-      return this[kExecuteMessage]?.content.executionId;
+      return this[K_EXECUTE_MESSAGE]?.content.executionId;
     },
   },
 });
@@ -70,7 +70,8 @@ ParallelGatewayBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
 
   if (executeContent.isRootScope) {
-    this[kExecuteMessage] = executeMessage;
+    /** @private */
+    this[K_EXECUTE_MESSAGE] = executeMessage;
 
     switch (routingKey) {
       case 'execute.start': {
@@ -87,12 +88,13 @@ ParallelGatewayBehaviour.prototype.execute = function execute(executeMessage) {
 };
 
 ParallelGatewayBehaviour.prototype.setup = function setup(executeMessage) {
-  const peerIds = new Set([...this.activity[kPeers].values()].map((v) => [...v]).flat());
-  this[kTargets] = new Map([...peerIds].map((pid) => [pid, this.activity.getActivityById(pid)]));
+  const peerIds = new Set([...this.activity[K_PEERS].values()].map((v) => [...v]).flat());
+  /** @private */
+  this[K_TARGETS] = new Map([...peerIds].map((pid) => [pid, this.activity.getActivityById(pid)]));
 
-  this.peerMonitor = new PeerMonitor(this.activity, this.activity[kInboundSourceIds], this[kTargets]);
+  this.peerMonitor = new PeerMonitor(this.activity, this.activity[K_INBOUND_SOURCE_IDS], this[K_TARGETS]);
 
-  const message = (this[kExecuteMessage] = cloneMessage(executeMessage));
+  const message = (this[K_EXECUTE_MESSAGE] = cloneMessage(executeMessage));
   const executeContent = message.content;
   const { executionId } = executeContent;
 
@@ -161,7 +163,7 @@ ParallelGatewayBehaviour.prototype._complete = function complete() {
 
   this.activity.logger.debug(`<${this.executionId} (${this.id})> completed monitoring with state: ${state}`);
 
-  const content = cloneContent(this[kExecuteMessage].content, { isRootScope: true, state });
+  const content = cloneContent(this[K_EXECUTE_MESSAGE].content, { isRootScope: true, state });
   content.inbound = this.peerMonitor.inbound;
 
   return this.broker.publish('execution', `execute.${state}`, content);

@@ -2,8 +2,8 @@ import Expressions from './Expressions.js';
 import { Scripts } from './Scripts.js';
 import { Timers } from './Timers.js';
 
-const kServices = Symbol.for('services');
-const kVariables = Symbol.for('variables');
+const K_SERVICES = Symbol.for('services');
+const K_VARIABLES = Symbol.for('variables');
 
 const defaultOptions = new Set(['expressions', 'extensions', 'Logger', 'output', 'scripts', 'services', 'settings', 'timers', 'variables']);
 
@@ -22,22 +22,24 @@ export default function Environment(options = {}) {
   this.timers = options.timers || new Timers();
   this.settings = { skipDiscard: true, ...options.settings };
   this.Logger = options.Logger || DummyLogger;
-  this[kServices] = options.services || {};
-  this[kVariables] = options.variables || {};
+  /** @private */
+  this[K_SERVICES] = options.services || {};
+  /** @private */
+  this[K_VARIABLES] = options.variables || {};
 }
 
 Object.defineProperties(Environment.prototype, {
   variables: {
     get() {
-      return this[kVariables];
+      return this[K_VARIABLES];
     },
   },
   services: {
     get() {
-      return this[kServices];
+      return this[K_SERVICES];
     },
     set(value) {
-      const services = this[kServices];
+      const services = this[K_SERVICES];
       for (const name in services) {
         if (!(name in value)) delete services[name];
       }
@@ -52,7 +54,7 @@ Object.defineProperties(Environment.prototype, {
 Environment.prototype.getState = function getState() {
   return {
     settings: { ...this.settings },
-    variables: { ...this[kVariables] },
+    variables: { ...this[K_VARIABLES] },
     output: { ...this.output },
   };
 };
@@ -61,13 +63,13 @@ Environment.prototype.getState = function getState() {
  * Restore environment state captured by getState. Merges into the existing settings,
  * variables, and output rather than replacing them.
  * @param {import('types').EnvironmentState} [state]
- * @returns this
+ * @returns {this}
  */
 Environment.prototype.recover = function recover(state) {
   if (!state) return this;
 
   if (state.settings) Object.assign(this.settings, state.settings);
-  if (state.variables) Object.assign(this[kVariables], state.variables);
+  if (state.variables) Object.assign(this[K_VARIABLES], state.variables);
   if (state.output) Object.assign(this.output, state.output);
 
   return this;
@@ -79,10 +81,10 @@ Environment.prototype.recover = function recover(state) {
  * @param {import('types').EnvironmentOptions} [overrideOptions]
  */
 Environment.prototype.clone = function clone(overrideOptions) {
-  const services = this[kServices];
+  const services = this[K_SERVICES];
   const newOptions = {
     settings: { ...this.settings },
-    variables: { ...this[kVariables] },
+    variables: { ...this[K_VARIABLES] },
     Logger: this.Logger,
     extensions: this.extensions,
     scripts: this.scripts,
@@ -105,7 +107,8 @@ Environment.prototype.clone = function clone(overrideOptions) {
 Environment.prototype.assignVariables = function assignVariables(newVars) {
   if (!newVars || typeof newVars !== 'object') return;
 
-  this[kVariables] = {
+  /** @private */
+  this[K_VARIABLES] = {
     ...this.variables,
     ...newVars,
   };
@@ -114,7 +117,7 @@ Environment.prototype.assignVariables = function assignVariables(newVars) {
 /**
  * Merge settings into the environment. Non-objects are ignored.
  * @param {import('types').EnvironmentSettings} newSettings
- * @returns this
+ * @returns {this}
  */
 Environment.prototype.assignSettings = function assignSettings(newSettings) {
   if (!newSettings || typeof newSettings !== 'object') return this;
@@ -149,7 +152,7 @@ Environment.prototype.registerScript = function registerScript(...args) {
  * @param {string} serviceName
  */
 Environment.prototype.getServiceByName = function getServiceByName(serviceName) {
-  return this[kServices][serviceName];
+  return this[K_SERVICES][serviceName];
 };
 
 /**
@@ -173,7 +176,8 @@ Environment.prototype.resolveExpression = function resolveExpression(expression,
  * @param {CallableFunction} fn
  */
 Environment.prototype.addService = function addService(name, fn) {
-  this[kServices][name] = fn;
+  /** @private */
+  this[K_SERVICES][name] = fn;
 };
 
 function validateOptions(input) {

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import Debug from 'debug';
-import * as types from '../../src/index.js';
+import * as types from 'bpmn-elements';
 import BpmnModdle from 'bpmn-moddle';
 import Context from '../../src/Context.js';
 import Environment from '../../src/Environment.js';

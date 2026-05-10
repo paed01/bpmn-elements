@@ -7,7 +7,7 @@ exports.default = ConditionalEventDefinition;
 var _messageHelper = require("../messageHelper.js");
 var _Errors = require("../error/Errors.js");
 var _condition = require("../condition.js");
-const kExecuteMessage = Symbol.for('executeMessage');
+var _constants = require("../constants.js");
 function ConditionalEventDefinition(activity, eventDefinition, _context, index) {
   const {
     id,
@@ -29,11 +29,12 @@ function ConditionalEventDefinition(activity, eventDefinition, _context, index) 
 }
 Object.defineProperty(ConditionalEventDefinition.prototype, 'executionId', {
   get() {
-    return this[kExecuteMessage]?.content.executionId;
+    return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }
 });
 ConditionalEventDefinition.prototype.execute = function execute(executeMessage) {
-  this[kExecuteMessage] = executeMessage;
+  /** @private */
+  this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   if (!this.condition) return this._setup(executeMessage);
   this.evaluate(executeMessage, (err, result) => {
     this.evaluateCallback(err, result);
@@ -94,7 +95,7 @@ ConditionalEventDefinition.prototype.evaluate = function evaluate(message, callb
  */
 ConditionalEventDefinition.prototype.evaluateCallback = function evaluateCallback(err, result) {
   const broker = this.broker;
-  const executeMessage = this[kExecuteMessage];
+  const executeMessage = this[_constants.K_EXECUTE_MESSAGE];
   const executeContent = executeMessage.content;
   if (err) {
     return broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(executeContent, {
@@ -104,7 +105,7 @@ ConditionalEventDefinition.prototype.evaluateCallback = function evaluateCallbac
     }));
   }
   this._debug(`condition evaluated to ${!!result}`);
-  this.broker.publish('event', 'activity.condition', (0, _messageHelper.cloneContent)(this[kExecuteMessage].content, {
+  this.broker.publish('event', 'activity.condition', (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content, {
     conditionResult: result
   }));
   if (!result) return;
@@ -166,7 +167,7 @@ ConditionalEventDefinition.prototype._onApiMessage = function onApiMessage(routi
       {
         this._stop();
         this._debug('discarded');
-        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[kExecuteMessage].content, {
+        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content, {
           state: 'discard'
         }));
       }

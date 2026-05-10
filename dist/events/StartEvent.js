@@ -8,9 +8,8 @@ exports.default = StartEvent;
 var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
 var _EventDefinitionExecution = _interopRequireDefault(require("../eventDefinitions/EventDefinitionExecution.js"));
 var _messageHelper = require("../messageHelper.js");
+var _constants = require("../constants.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-const kExecuteMessage = Symbol.for('executeMessage');
-const kExecution = Symbol.for('execution');
 function StartEvent(activityDef, context) {
   return new _Activity.default(StartEventBehaviour, activityDef, context);
 }
@@ -19,15 +18,16 @@ function StartEventBehaviour(activity) {
   this.type = activity.type;
   this.activity = activity;
   this.broker = activity.broker;
-  this[kExecution] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions);
+  /** @private */
+  this[_constants.K_EXECUTION] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions);
 }
 Object.defineProperty(StartEventBehaviour.prototype, 'executionId', {
   get() {
-    return this[kExecuteMessage]?.content.executionId;
+    return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }
 });
 StartEventBehaviour.prototype.execute = function execute(executeMessage) {
-  const execution = this[kExecution];
+  const execution = this[_constants.K_EXECUTION];
   if (execution) {
     return execution.execute(executeMessage);
   }
@@ -37,7 +37,8 @@ StartEventBehaviour.prototype.execute = function execute(executeMessage) {
     return broker.publish('execution', 'execute.completed', content);
   }
   const executionId = content.executionId;
-  this[kExecuteMessage] = executeMessage;
+  /** @private */
+  this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(...args), {
     noAck: true,
     consumerTag: `_api-${executionId}`,
@@ -64,7 +65,7 @@ StartEventBehaviour.prototype._onApiMessage = function onApiMessage(routingKey, 
     case 'signal':
       {
         this._stop();
-        const content = this[kExecuteMessage].content;
+        const content = this[_constants.K_EXECUTE_MESSAGE].content;
         return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
           output: message.content.message,
           state: 'signal'
@@ -75,7 +76,7 @@ StartEventBehaviour.prototype._onApiMessage = function onApiMessage(routingKey, 
     case 'discard':
       {
         this._stop();
-        const content = this[kExecuteMessage].content;
+        const content = this[_constants.K_EXECUTE_MESSAGE].content;
         return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(content), {
           correlationId
         });
@@ -95,7 +96,7 @@ StartEventBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMe
     type,
     correlationId
   } = message.properties;
-  const executeContent = this[kExecuteMessage].content;
+  const executeContent = this[_constants.K_EXECUTE_MESSAGE].content;
   this.broker.publish('event', 'activity.consumed', (0, _messageHelper.cloneContent)(executeContent, {
     message: {
       ...content.message

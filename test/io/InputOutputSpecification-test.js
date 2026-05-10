@@ -463,7 +463,7 @@ describe('InputOutputSpecification', () => {
 
     task.run();
 
-    let api = await wait;
+    const api = await wait;
 
     expect(api.content.ioSpecification).to.have.property('dataOutputs').with.length(1);
     expect(api.content.ioSpecification.dataOutputs[0]).that.eql({ id: 'userInput', type: 'bpmn:DataOutput', name: 'sirname' });
@@ -479,7 +479,7 @@ describe('InputOutputSpecification', () => {
       },
     });
 
-    api = await leave;
+    await leave;
 
     expect(context.environment.variables._data).to.have.property('inputFromUser', 'von Rosen');
   });
@@ -669,7 +669,7 @@ describe('InputOutputSpecification', () => {
 
       task.run();
 
-      let api = await wait;
+      const api = await wait;
 
       api.signal({
         ioSpecification: {
@@ -682,7 +682,7 @@ describe('InputOutputSpecification', () => {
         },
       });
 
-      api = await leave;
+      await leave;
 
       expect(context.environment.variables._data).to.have.property('surname', 'von Rosen');
     });

@@ -569,6 +569,7 @@ Feature('Stop and resume', () => {
 
     let stopped;
     When('run', () => {
+      stopped = definition.waitFor('stop');
       definition.run();
     });
 

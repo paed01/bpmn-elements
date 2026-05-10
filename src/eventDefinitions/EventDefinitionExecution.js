@@ -1,8 +1,5 @@
 import { cloneContent, unshiftParent, shiftParent, cloneParent } from '../messageHelper.js';
-
-const kCompleted = Symbol.for('completed');
-const kExecuteMessage = Symbol.for('executeMessage');
-const kStopped = Symbol.for('stopped');
+import { K_COMPLETED, K_EXECUTE_MESSAGE, K_STOPPED } from '../constants.js';
 
 export default function EventDefinitionExecution(activity, eventDefinitions, completedRoutingKey = 'execute.completed') {
   this.id = activity.id;
@@ -10,20 +7,23 @@ export default function EventDefinitionExecution(activity, eventDefinitions, com
   this.broker = activity.broker;
   this.eventDefinitions = eventDefinitions;
   this.completedRoutingKey = completedRoutingKey;
-  this[kCompleted] = false;
-  this[kStopped] = false;
-  this[kExecuteMessage] = null;
+  /** @private */
+  this[K_COMPLETED] = false;
+  /** @private */
+  this[K_STOPPED] = false;
+  /** @private */
+  this[K_EXECUTE_MESSAGE] = null;
 }
 
 Object.defineProperties(EventDefinitionExecution.prototype, {
   completed: {
     get() {
-      return this[kCompleted];
+      return this[K_COMPLETED];
     },
   },
   stopped: {
     get() {
-      return this[kStopped];
+      return this[K_STOPPED];
     },
   },
 });
@@ -36,7 +36,8 @@ EventDefinitionExecution.prototype.execute = function execute(executeMessage) {
 
   const broker = this.broker;
 
-  this[kExecuteMessage] = executeMessage;
+  /** @private */
+  this[K_EXECUTE_MESSAGE] = executeMessage;
   const executionId = content.executionId;
 
   broker.subscribeTmp('execution', 'execute.#', this._onExecuteMessage.bind(this), {
@@ -58,8 +59,8 @@ EventDefinitionExecution.prototype.execute = function execute(executeMessage) {
   const eventDefinitions = this.eventDefinitions;
 
   for (let index = 0; index < eventDefinitions.length; ++index) {
-    if (this[kCompleted]) break;
-    if (this[kStopped]) break;
+    if (this[K_COMPLETED]) break;
+    if (this[K_STOPPED]) break;
 
     const ed = eventDefinitions[index];
     const edExecutionId = `${executionId}_${index}`;
@@ -110,12 +111,13 @@ EventDefinitionExecution.prototype._onExecuteMessage = function onExecuteMessage
 
 EventDefinitionExecution.prototype._complete = function complete(message) {
   const { executionId, type, index, parent } = message.content;
-  this[kCompleted] = true;
+  /** @private */
+  this[K_COMPLETED] = true;
 
   this._debug(executionId, `event definition ${type} completed, index ${index}`);
 
   const completeContent = cloneContent(message.content, {
-    executionId: this[kExecuteMessage].content.executionId,
+    executionId: this[K_EXECUTE_MESSAGE].content.executionId,
     isRootScope: true,
     isDefinitionScope: undefined,
   });
@@ -133,7 +135,8 @@ EventDefinitionExecution.prototype._executeDefinition = function executeDefiniti
 };
 
 EventDefinitionExecution.prototype._stop = function stop() {
-  this[kStopped] = true;
+  /** @private */
+  this[K_STOPPED] = true;
   this.broker.cancel('_eventdefinition-execution-execute-tag');
   this.broker.cancel('_eventdefinition-execution-api-tag');
 };

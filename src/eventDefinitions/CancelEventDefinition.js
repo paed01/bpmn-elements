@@ -1,7 +1,5 @@
 import { cloneContent, shiftParent } from '../messageHelper.js';
-
-const kCompleted = Symbol.for('completed');
-const kExecuteMessage = Symbol.for('executeMessage');
+import { K_COMPLETED, K_EXECUTE_MESSAGE } from '../constants.js';
 
 export default function CancelEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;
@@ -19,7 +17,7 @@ export default function CancelEventDefinition(activity, eventDefinition) {
 
 Object.defineProperty(CancelEventDefinition.prototype, 'executionId', {
   get() {
-    return this[kExecuteMessage]?.content.executionId;
+    return this[K_EXECUTE_MESSAGE]?.content.executionId;
   },
 });
 
@@ -28,8 +26,10 @@ CancelEventDefinition.prototype.execute = function execute(executeMessage) {
 };
 
 CancelEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  this[kExecuteMessage] = executeMessage;
-  this[kCompleted] = false;
+  /** @private */
+  this[K_EXECUTE_MESSAGE] = executeMessage;
+  /** @private */
+  this[K_COMPLETED] = false;
 
   const executeContent = executeMessage.content;
   const { executionId, parent } = executeContent;
@@ -94,10 +94,11 @@ CancelEventDefinition.prototype._onCatchMessage = function onCatchMessage(_, mes
 };
 
 CancelEventDefinition.prototype._complete = function complete(output) {
-  this[kCompleted] = true;
+  /** @private */
+  this[K_COMPLETED] = true;
   this._stop();
   this._debug('completed');
-  const content = cloneContent(this[kExecuteMessage].content, {
+  const content = cloneContent(this[K_EXECUTE_MESSAGE].content, {
     output,
     state: 'cancel',
   });
@@ -107,9 +108,10 @@ CancelEventDefinition.prototype._complete = function complete(output) {
 CancelEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   switch (message.properties.type) {
     case 'discard': {
-      this[kCompleted] = true;
+      /** @private */
+      this[K_COMPLETED] = true;
       this._stop();
-      const content = cloneContent(this[kExecuteMessage].content);
+      const content = cloneContent(this[K_EXECUTE_MESSAGE].content);
       return this.broker.publish('execution', 'execute.discard', content);
     }
     case 'stop': {

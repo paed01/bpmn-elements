@@ -7,9 +7,9 @@ exports.default = TimerEventDefinition;
 var _piso = require("@0dep/piso");
 var _messageHelper = require("../messageHelper.js");
 var _Errors = require("../error/Errors.js");
-const kStopped = Symbol.for('stopped');
-const kTimerContent = Symbol.for('timerContent');
-const kTimer = Symbol.for('timer');
+var _constants = require("../constants.js");
+const K_TIMER_CONTENT = Symbol.for('timerContent');
+const K_TIMER = Symbol.for('timer');
 const timerTypes = new Set(['timeDuration', 'timeDate', 'timeCycle']);
 function TimerEventDefinition(activity, eventDefinition) {
   const type = this.type = eventDefinition.type || 'TimerEventDefinition';
@@ -26,23 +26,26 @@ function TimerEventDefinition(activity, eventDefinition) {
   if (timeDate) this.timeDate = timeDate;
   this.broker = activity.broker;
   this.logger = environment.Logger(type.toLowerCase());
-  this[kStopped] = false;
-  this[kTimer] = null;
+
+  /** @private */
+  this[_constants.K_STOPPED] = false;
+  /** @private */
+  this[K_TIMER] = null;
 }
 Object.defineProperties(TimerEventDefinition.prototype, {
   executionId: {
     get() {
-      return this[kTimerContent]?.executionId;
+      return this[K_TIMER_CONTENT]?.executionId;
     }
   },
   stopped: {
     get() {
-      return this[kStopped];
+      return this[_constants.K_STOPPED];
     }
   },
   timer: {
     get() {
-      return this[kTimer];
+      return this[K_TIMER];
     }
   }
 });
@@ -51,12 +54,13 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
     routingKey: executeKey,
     redelivered: isResumed
   } = executeMessage.fields;
-  const timer = this[kTimer];
+  const timer = this[K_TIMER];
   if (timer && executeKey === 'execute.timer') {
     return;
   }
-  if (timer) this[kTimer] = this.environment.timers.clearTimeout(timer);
-  this[kStopped] = false;
+  if (timer) this[K_TIMER] = this.environment.timers.clearTimeout(timer);
+  /** @private */
+  this[_constants.K_STOPPED] = false;
   const content = executeMessage.content;
   const executionId = content.executionId;
   const startedAt = this.startedAt = 'startedAt' in content ? new Date(content.startedAt) : new Date();
@@ -67,7 +71,7 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
     this.logger.error(`<${executionId} (${this.activity.id})> failed to get timeout delay: ${err}`);
     throw new _Errors.RunError(err.message, executeMessage, err);
   }
-  const timerContent = this[kTimerContent] = (0, _messageHelper.cloneContent)(content, {
+  const timerContent = this[K_TIMER_CONTENT] = (0, _messageHelper.cloneContent)(content, {
     ...resolvedTimer,
     ...(isResumed && {
       isResumed
@@ -91,7 +95,8 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
   if (timerContent.timeout <= 0) return this._completed();
   const timers = this.environment.timers.register(timerContent);
   const delay = timerContent.timeout;
-  this[kTimer] = timers.setTimeout(this._completed.bind(this), delay, {
+  /** @private */
+  this[K_TIMER] = timers.setTimeout(this._completed.bind(this), delay, {
     id: content.id,
     type: this.type,
     executionId,
@@ -100,15 +105,15 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
   this._debug(`set timeout with delay ${delay}`);
 };
 TimerEventDefinition.prototype.stop = function stopTimer() {
-  const timer = this[kTimer];
-  if (timer) this[kTimer] = this.environment.timers.clearTimeout(timer);
+  const timer = this[K_TIMER];
+  if (timer) this[K_TIMER] = this.environment.timers.clearTimeout(timer);
 };
 TimerEventDefinition.prototype._completed = function completed(completeContent, options) {
   this._stop();
   const stoppedAt = new Date();
   const runningTime = stoppedAt.getTime() - this.startedAt.getTime();
   this._debug(`completed in ${runningTime}ms`);
-  const timerContent = this[kTimerContent];
+  const timerContent = this[K_TIMER_CONTENT];
   const content = {
     stoppedAt,
     runningTime,
@@ -144,7 +149,7 @@ TimerEventDefinition.prototype._onDelegatedApiMessage = function onDelegatedApiM
     type,
     correlationId
   } = message.properties;
-  this.broker.publish('event', 'activity.consumed', (0, _messageHelper.cloneContent)(this[kTimerContent], {
+  this.broker.publish('event', 'activity.consumed', (0, _messageHelper.cloneContent)(this[K_TIMER_CONTENT], {
     message: {
       ...content.message
     }
@@ -181,7 +186,7 @@ TimerEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey,
       {
         this._stop();
         this._debug('discarded');
-        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[kTimerContent], {
+        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[K_TIMER_CONTENT], {
           state: 'discard'
         }), {
           correlationId
@@ -190,9 +195,10 @@ TimerEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey,
   }
 };
 TimerEventDefinition.prototype._stop = function stop() {
-  this[kStopped] = true;
-  const timer = this[kTimer];
-  if (timer) this[kTimer] = this.environment.timers.clearTimeout(timer);
+  /** @private */
+  this[_constants.K_STOPPED] = true;
+  const timer = this[K_TIMER];
+  if (timer) this[K_TIMER] = this.environment.timers.clearTimeout(timer);
   const broker = this.broker;
   broker.cancel(`_api-${this.executionId}`);
   broker.cancel(`_api-delegated-${this.executionId}`);

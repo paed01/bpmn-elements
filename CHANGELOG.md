@@ -6,7 +6,8 @@
 
 ### Types
 
-- start migrating runtime types to JSDoc, covering `Activity`, `ActivityExecution`, `Context`, `Process`, `ProcessExecution`, `Definition`, `DefinitionExecution`, `Environment`, `Api`, `EventBroker`, and `MessageFormatter`
+- bundle `types/index.d.ts` with [dts-buddy](https://github.com/Rich-Harris/dts-buddy); types are generated from JSDoc and source-mapped to `src/*.js`
+- migrate runtime types to JSDoc, covering `Activity`, `ActivityExecution`, `Context`, `Process`, `ProcessExecution`, `Definition`, `DefinitionExecution`, `Environment`, `Api`, `EventBroker`, `MessageFormatter`, `SequenceFlow`, `MessageFlow`, `Association`, and `Lane`
 - separate hand-written contracts into `types/interfaces.d.ts`
 - update `smqp` type imports for `smqp@12`
 

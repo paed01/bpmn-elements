@@ -1,10 +1,6 @@
 import Activity from '../activity/Activity.js';
 import { cloneContent } from '../messageHelper.js';
-
-const kCompleted = Symbol.for('completed');
-const kExecuteMessage = Symbol.for('executeMessage');
-const kReferenceElement = Symbol.for('referenceElement');
-const kReferenceInfo = Symbol.for('referenceInfo');
+import { K_COMPLETED, K_EXECUTE_MESSAGE, K_REFERENCE_ELEMENT, K_REFERENCE_INFO } from '../constants.js';
 
 export default function ReceiveTask(activityDef, context) {
   const task = new Activity(ReceiveTaskBehaviour, activityDef, context);
@@ -32,7 +28,8 @@ export function ReceiveTaskBehaviour(activity) {
   this.activity = activity;
   this.broker = activity.broker;
 
-  this[kReferenceElement] = reference.id && activity.getActivityById(reference.id);
+  /** @private */
+  this[K_REFERENCE_ELEMENT] = reference.id && activity.getActivityById(reference.id);
 }
 
 ReceiveTaskBehaviour.prototype.execute = function execute(executeMessage) {
@@ -47,19 +44,21 @@ function ReceiveTaskExecution(parent) {
   this.reference = reference;
   this.broker = broker;
   this.loopCharacteristics = loopCharacteristics;
-  this.referenceElement = parent[kReferenceElement];
+  this.referenceElement = parent[K_REFERENCE_ELEMENT];
 
-  this[kCompleted] = false;
+  /** @private */
+  this[K_COMPLETED] = false;
 }
 
 ReceiveTaskExecution.prototype.execute = function execute(executeMessage) {
-  this[kExecuteMessage] = executeMessage;
+  /** @private */
+  this[K_EXECUTE_MESSAGE] = executeMessage;
 
   const executeContent = executeMessage.content;
   const { executionId, isRootScope } = executeContent;
   this.executionId = executionId;
 
-  const info = (this[kReferenceInfo] = this._getReferenceInfo(executeMessage));
+  const info = (this[K_REFERENCE_INFO] = this._getReferenceInfo(executeMessage));
 
   if (isRootScope) {
     this._setupMessageHandling(executionId);
@@ -76,7 +75,7 @@ ReceiveTaskExecution.prototype.execute = function execute(executeMessage) {
     consumerTag: `_onmessage-${executionId}`,
   });
 
-  if (this[kCompleted]) return;
+  if (this[K_COMPLETED]) return;
 
   broker.subscribeTmp('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {
     noAck: true,
@@ -93,7 +92,7 @@ ReceiveTaskExecution.prototype._onCatchMessage = function onCatchMessage(routing
   const content = message.content;
 
   const { id: signalId, executionId: signalExecutionId } = content.message || {};
-  const { message: referenceMessage, description } = this[kReferenceInfo];
+  const { message: referenceMessage, description } = this[K_REFERENCE_INFO];
 
   if ((!referenceMessage.id && signalId) || signalExecutionId) {
     if (this.loopCharacteristics && signalExecutionId !== this.executionId) return;
@@ -106,7 +105,7 @@ ReceiveTaskExecution.prototype._onCatchMessage = function onCatchMessage(routing
 
   const { type: messageType, correlationId } = message.properties;
   const broker = this.broker;
-  const executeContent = this[kExecuteMessage].content;
+  const executeContent = this[K_EXECUTE_MESSAGE].content;
 
   broker.publish('event', 'activity.consumed', cloneContent(executeContent, { message: { ...message.content.message } }), {
     correlationId,
@@ -128,9 +127,10 @@ ReceiveTaskExecution.prototype._onApiMessage = function onApiMessage(routingKey,
       return this._complete(message.content.message, { correlationId });
     }
     case 'discard': {
-      this[kCompleted] = true;
+      /** @private */
+      this[K_COMPLETED] = true;
       this._stop();
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content), { correlationId });
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[K_EXECUTE_MESSAGE].content), { correlationId });
     }
     case 'stop': {
       return this._stop();
@@ -139,9 +139,10 @@ ReceiveTaskExecution.prototype._onApiMessage = function onApiMessage(routingKey,
 };
 
 ReceiveTaskExecution.prototype._complete = function complete(output, options) {
-  this[kCompleted] = true;
+  /** @private */
+  this[K_COMPLETED] = true;
   this._stop();
-  return this.broker.publish('execution', 'execute.completed', cloneContent(this[kExecuteMessage].content, { output }), options);
+  return this.broker.publish('execution', 'execute.completed', cloneContent(this[K_EXECUTE_MESSAGE].content, { output }), options);
 };
 
 ReceiveTaskExecution.prototype._stop = function stop() {

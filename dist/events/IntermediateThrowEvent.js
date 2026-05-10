@@ -8,8 +8,8 @@ exports.default = IntermediateThrowEvent;
 var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
 var _EventDefinitionExecution = _interopRequireDefault(require("../eventDefinitions/EventDefinitionExecution.js"));
 var _messageHelper = require("../messageHelper.js");
+var _constants = require("../constants.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-const kExecution = Symbol.for('execution');
 function IntermediateThrowEvent(activityDef, context) {
   return new _Activity.default(IntermediateThrowEventBehaviour, {
     ...activityDef,
@@ -20,10 +20,11 @@ function IntermediateThrowEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
   this.broker = activity.broker;
-  this[kExecution] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions);
+  /** @private */
+  this[_constants.K_EXECUTION] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions);
 }
 IntermediateThrowEventBehaviour.prototype.execute = function execute(executeMessage) {
-  const execution = this[kExecution];
+  const execution = this[_constants.K_EXECUTION];
   if (execution) {
     return execution.execute(executeMessage);
   }

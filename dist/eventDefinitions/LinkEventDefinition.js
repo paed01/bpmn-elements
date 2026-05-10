@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = LinkEventDefinition;
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
-const kExecuteMessage = Symbol.for('executeMessage');
+var _constants = require("../constants.js");
 function LinkEventDefinition(activity, eventDefinition) {
   const {
     id,
@@ -66,14 +66,15 @@ function LinkEventDefinition(activity, eventDefinition) {
 }
 Object.defineProperty(LinkEventDefinition.prototype, 'executionId', {
   get() {
-    return this[kExecuteMessage]?.content.executionId;
+    return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }
 });
 LinkEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 LinkEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  this[kExecuteMessage] = executeMessage;
+  /** @private */
+  this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   const executeContent = executeMessage.content;
   const {
     executionId,

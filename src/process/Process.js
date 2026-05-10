@@ -4,17 +4,19 @@ import { ProcessApi } from '../Api.js';
 import { ProcessBroker } from '../EventBroker.js';
 import { cloneMessage, cloneContent, cloneParent } from '../messageHelper.js';
 import { makeErrorFromMessage } from '../error/Errors.js';
+import {
+  K_CONSUMING,
+  K_COUNTERS,
+  K_EXECUTE_MESSAGE,
+  K_EXECUTION,
+  K_EXTENSIONS,
+  K_MESSAGE_HANDLERS,
+  K_STATE_MESSAGE,
+  K_STATUS,
+  K_STOPPED,
+} from '../constants.js';
 
-const kConsuming = Symbol.for('consuming');
-const kCounters = Symbol.for('counters');
-const kExec = Symbol.for('execution');
-const kExecuteMessage = Symbol.for('executeMessage');
-const kExtensions = Symbol.for('extensions');
-const kLanes = Symbol.for('lanes');
-const kMessageHandlers = Symbol.for('messageHandlers');
-const kStateMessage = Symbol.for('stateMessage');
-const kStatus = Symbol.for('status');
-const kStopped = Symbol.for('stopped');
+const K_LANES = Symbol.for('lanes');
 
 export default Process;
 
@@ -37,14 +39,19 @@ export function Process(processDef, context) {
 
   const environment = (this.environment = context.environment);
   this.context = context;
-  this[kCounters] = {
+  /** @private */
+  this[K_COUNTERS] = {
     completed: 0,
     discarded: 0,
   };
-  this[kConsuming] = false;
-  this[kExec] = new Map();
-  this[kStatus] = undefined;
-  this[kStopped] = false;
+  /** @private */
+  this[K_CONSUMING] = false;
+  /** @private */
+  this[K_EXECUTION] = new Map();
+  /** @private */
+  this[K_STATUS] = undefined;
+  /** @private */
+  this[K_STOPPED] = false;
 
   const { broker, on, once, waitFor } = ProcessBroker(this);
   this.broker = broker;
@@ -52,7 +59,8 @@ export function Process(processDef, context) {
   this.once = once;
   this.waitFor = waitFor;
 
-  this[kMessageHandlers] = {
+  /** @private */
+  this[K_MESSAGE_HANDLERS] = {
     onApiMessage: this._onApiMessage.bind(this),
     onRunMessage: this._onRunMessage.bind(this),
     onExecutionMessage: this._onExecutionMessage.bind(this),
@@ -61,57 +69,59 @@ export function Process(processDef, context) {
   this.logger = environment.Logger(type.toLowerCase());
 
   if (behaviour.lanes) {
-    this[kLanes] = behaviour.lanes.map((lane) => new lane.Behaviour(this, lane));
+    /** @private */
+    this[K_LANES] = behaviour.lanes.map((lane) => new lane.Behaviour(this, lane));
   }
-  this[kExtensions] = context.loadExtensions(this);
+  /** @private */
+  this[K_EXTENSIONS] = context.loadExtensions(this);
 }
 
 Object.defineProperties(Process.prototype, {
   counters: {
     get() {
-      return { ...this[kCounters] };
+      return { ...this[K_COUNTERS] };
     },
   },
   lanes: {
     get() {
-      return this[kLanes]?.slice();
+      return this[K_LANES]?.slice();
     },
   },
   extensions: {
     get() {
-      return this[kExtensions];
+      return this[K_EXTENSIONS];
     },
   },
   stopped: {
     get() {
-      return this[kStopped];
+      return this[K_STOPPED];
     },
   },
   isRunning: {
     get() {
-      if (!this[kConsuming]) return false;
+      if (!this[K_CONSUMING]) return false;
       return !!this.status;
     },
   },
   executionId: {
     get() {
-      const exec = this[kExec];
+      const exec = this[K_EXECUTION];
       return exec.get('executionId') || exec.get('initExecutionId');
     },
   },
   execution: {
     get() {
-      return this[kExec].get('execution');
+      return this[K_EXECUTION].get('execution');
     },
   },
   status: {
     get() {
-      return this[kStatus];
+      return this[K_STATUS];
     },
   },
   activityStatus: {
     get() {
-      return this[kExec].get('execution')?.activityStatus || 'idle';
+      return this[K_EXECUTION].get('execution')?.activityStatus || 'idle';
     },
   },
 });
@@ -122,7 +132,8 @@ Object.defineProperties(Process.prototype, {
  */
 Process.prototype.init = function init(useAsExecutionId) {
   const initExecutionId = useAsExecutionId || getUniqueId(this.id);
-  this[kExec].set('initExecutionId', initExecutionId);
+  /** @private */
+  this[K_EXECUTION].set('initExecutionId', initExecutionId);
 
   this._debug(`initialized with executionId <${initExecutionId}>`);
   this._publishEvent('init', this._createMessage({ executionId: initExecutionId }));
@@ -136,7 +147,7 @@ Process.prototype.init = function init(useAsExecutionId) {
 Process.prototype.run = function run(runContent) {
   if (this.isRunning) throw new Error(`process <${this.id}> is already running`);
 
-  const exec = this[kExec];
+  const exec = this[K_EXECUTION];
   const executionId = exec.get('initExecutionId') || getUniqueId(this.id);
   exec.delete('initExecutionId');
   exec.set('executionId', executionId);
@@ -153,14 +164,15 @@ Process.prototype.run = function run(runContent) {
 
 /**
  * Resume after recover by republishing the last run message.
- * @returns this
+ * @returns {this}
  * @throws {Error} when called on a running process
  */
 Process.prototype.resume = function resume() {
   if (this.isRunning) throw new Error(`cannot resume running process <${this.id}>`);
   if (!this.status) return this;
 
-  this[kStopped] = false;
+  /** @private */
+  this[K_STOPPED] = false;
 
   const content = this._createMessage();
   this.broker.publish('run', 'run.resume', content, { persistent: false });
@@ -188,18 +200,21 @@ Process.prototype.getState = function getState() {
 /**
  * Restore process state captured by getState.
  * @param {import('types').ProcessState} [state]
- * @returns this
+ * @returns {this}
  * @throws {Error} when called on a running process
  */
 Process.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error(`cannot recover running process <${this.id}>`);
   if (!state) return this;
 
-  this[kStopped] = !!state.stopped;
-  this[kStatus] = state.status;
-  const exec = this[kExec];
+  /** @private */
+  this[K_STOPPED] = !!state.stopped;
+  /** @private */
+  this[K_STATUS] = state.status;
+  const exec = this[K_EXECUTION];
   exec.set('executionId', state.executionId);
-  this[kCounters] = { ...this[kCounters], ...state.counters };
+  /** @private */
+  this[K_COUNTERS] = { ...this[K_COUNTERS], ...state.counters };
   this.environment.recover(state.environment);
 
   if (state.execution) {
@@ -235,7 +250,7 @@ Process.prototype.stop = function stop() {
 Process.prototype.getApi = function getApi(message) {
   const execution = this.execution;
   if (execution) return execution.getApi(message);
-  return ProcessApi(this.broker, message || this[kStateMessage]);
+  return ProcessApi(this.broker, message || this[K_STATE_MESSAGE]);
 };
 
 /**
@@ -256,9 +271,10 @@ Process.prototype.cancelActivity = function cancelActivity(message) {
 
 /** @internal */
 Process.prototype._activateRunConsumers = function activateRunConsumers() {
-  this[kConsuming] = true;
+  /** @private */
+  this[K_CONSUMING] = true;
   const broker = this.broker;
-  const { onApiMessage, onRunMessage } = this[kMessageHandlers];
+  const { onApiMessage, onRunMessage } = this[K_MESSAGE_HANDLERS];
   broker.subscribeTmp('api', `process.*.${this.executionId}`, onApiMessage, { noAck: true, consumerTag: '_process-api', priority: 100 });
   broker.getQueue('run-q').assertConsumer(onRunMessage, { exclusive: true, consumerTag: '_process-run' });
 };
@@ -269,7 +285,8 @@ Process.prototype._deactivateRunConsumers = function deactivateRunConsumers() {
   broker.cancel('_process-api');
   broker.cancel('_process-run');
   broker.cancel('_process-execution');
-  this[kConsuming] = false;
+  /** @private */
+  this[K_CONSUMING] = false;
 };
 
 /** @internal */
@@ -280,37 +297,43 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
     return this._onResumeMessage(message);
   }
 
-  this[kStateMessage] = message;
+  /** @private */
+  this[K_STATE_MESSAGE] = message;
 
   switch (routingKey) {
     case 'run.enter': {
       this._debug('enter');
 
-      this[kStatus] = 'entered';
+      /** @private */
+      this[K_STATUS] = 'entered';
       if (fields.redelivered) break;
 
-      this[kExec].delete('execution');
+      /** @private */
+      this[K_EXECUTION].delete('execution');
       this._publishEvent('enter', content);
 
       break;
     }
     case 'run.start': {
       this._debug('start');
-      this[kStatus] = 'start';
+      /** @private */
+      this[K_STATUS] = 'start';
       this._publishEvent('start', content);
       break;
     }
     case 'run.execute': {
-      const exec = this[kExec];
-      this[kStatus] = 'executing';
+      const exec = this[K_EXECUTION];
+      /** @private */
+      this[K_STATUS] = 'executing';
       const executeMessage = cloneMessage(message);
       let execution = exec.get('execution');
       if (fields.redelivered && !execution) {
         executeMessage.fields.redelivered = undefined;
       }
-      this[kExecuteMessage] = message;
+      /** @private */
+      this[K_EXECUTE_MESSAGE] = message;
 
-      this.broker.getQueue('execution-q').assertConsumer(this[kMessageHandlers].onExecutionMessage, {
+      this.broker.getQueue('execution-q').assertConsumer(this[K_MESSAGE_HANDLERS].onExecutionMessage, {
         exclusive: true,
         consumerTag: '_process-execution',
       });
@@ -320,7 +343,8 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
       return execution.execute(executeMessage);
     }
     case 'run.error': {
-      this[kStatus] = 'errored';
+      /** @private */
+      this[K_STATUS] = 'errored';
       this._publishEvent(
         'error',
         cloneContent(content, {
@@ -330,12 +354,14 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
       break;
     }
     case 'run.end': {
-      this[kStatus] = 'end';
+      /** @private */
+      this[K_STATUS] = 'end';
 
       if (fields.redelivered) break;
       this._debug('completed');
 
-      this[kCounters].completed++;
+      /** @private */
+      this[K_COUNTERS].completed++;
 
       this.broker.publish('run', 'run.leave', content);
 
@@ -343,10 +369,12 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
       break;
     }
     case 'run.discarded': {
-      this[kStatus] = 'discarded';
+      /** @private */
+      this[K_STATUS] = 'discarded';
       if (fields.redelivered) break;
 
-      this[kCounters].discarded++;
+      /** @private */
+      this[K_COUNTERS].discarded++;
 
       this.broker.publish('run', 'run.leave', content);
 
@@ -354,7 +382,8 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
       break;
     }
     case 'run.leave': {
-      this[kStatus] = undefined;
+      /** @private */
+      this[K_STATUS] = undefined;
       message.ack();
       this._deactivateRunConsumers();
       const { output, ...rest } = content;
@@ -370,7 +399,7 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
 Process.prototype._onResumeMessage = function onResumeMessage(message) {
   message.ack();
 
-  const stateMessage = this[kStateMessage];
+  const stateMessage = this[K_STATE_MESSAGE];
   switch (stateMessage.fields.routingKey) {
     case 'run.enter':
     case 'run.start':
@@ -412,8 +441,9 @@ Process.prototype._onExecutionMessage = function onExecutionMessage(routingKey, 
     }
   }
 
-  const executeMessage = this[kExecuteMessage];
-  this[kExecuteMessage] = null;
+  const executeMessage = this[K_EXECUTE_MESSAGE];
+  /** @private */
+  this[K_EXECUTE_MESSAGE] = null;
   executeMessage.ack();
 };
 
@@ -486,7 +516,7 @@ Process.prototype.getSequenceFlows = function getSequenceFlows() {
  * @param {string} laneId
  */
 Process.prototype.getLaneById = function getLaneById(laneId) {
-  const lanes = this[kLanes];
+  const lanes = this[K_LANES];
   if (!lanes) return;
   return lanes.find((lane) => lane.id === laneId);
 };
@@ -516,7 +546,8 @@ Process.prototype._onApiMessage = function onApiMessage(routingKey, message) {
 
 /** @internal */
 Process.prototype._onStop = function onStop() {
-  this[kStopped] = true;
+  /** @private */
+  this[K_STOPPED] = true;
   this._deactivateRunConsumers();
   return this._publishEvent('stop');
 };

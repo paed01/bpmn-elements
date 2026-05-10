@@ -9,12 +9,11 @@ var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
 var _EventDefinitionExecution = _interopRequireDefault(require("../eventDefinitions/EventDefinitionExecution.js"));
 var _messageHelper = require("../messageHelper.js");
 var _shared = require("../shared.js");
+var _constants = require("../constants.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-const kAttachedTags = Symbol.for('attachedConsumers');
-const kCompleteContent = Symbol.for('completeContent');
-const kExecuteMessage = Symbol.for('executeMessage');
-const kExecution = Symbol.for('execution');
-const kShovels = Symbol.for('shovels');
+const K_ATTACHED_TAGS = Symbol.for('attachedConsumers');
+const K_COMPLETE_CONTENT = Symbol.for('completeContent');
+const K_SHOVELS = Symbol.for('shovels');
 function BoundaryEvent(activityDef, context) {
   return new _Activity.default(BoundaryEventBehaviour, activityDef, context);
 }
@@ -25,14 +24,17 @@ function BoundaryEventBehaviour(activity) {
   this.activity = activity;
   this.environment = activity.environment;
   this.broker = activity.broker;
-  this[kExecution] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions, 'execute.bound.completed');
-  this[kShovels] = new Set();
-  this[kAttachedTags] = new Set();
+  /** @private */
+  this[_constants.K_EXECUTION] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions, 'execute.bound.completed');
+  /** @private */
+  this[K_SHOVELS] = new Set();
+  /** @private */
+  this[K_ATTACHED_TAGS] = new Set();
 }
 Object.defineProperties(BoundaryEventBehaviour.prototype, {
   executionId: {
     get() {
-      return this[kExecuteMessage]?.content.executionId;
+      return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
     }
   },
   cancelActivity: {
@@ -47,9 +49,10 @@ BoundaryEventBehaviour.prototype.execute = function execute(executeMessage) {
     isRootScope,
     executionId
   } = executeMessage.content;
-  const eventDefinitionExecution = this[kExecution];
+  const eventDefinitionExecution = this[_constants.K_EXECUTION];
   if (isRootScope && executeMessage.content.id === this.id) {
-    this[kExecuteMessage] = executeMessage;
+    /** @private */
+    this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
     const broker = this.broker;
     if (executeMessage.fields.routingKey === 'execute.bound.completed') {
       this._stop();
@@ -61,7 +64,8 @@ BoundaryEventBehaviour.prototype.execute = function execute(executeMessage) {
       consumerTag,
       priority: 300
     });
-    this[kAttachedTags].add(consumerTag);
+    /** @private */
+    this[K_ATTACHED_TAGS].add(consumerTag);
     broker.subscribeOnce('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {
       consumerTag: `_api-${executionId}`
     });
@@ -108,17 +112,20 @@ BoundaryEventBehaviour.prototype._onCompleted = function onCompleted(_, {
       cancelActivity: false
     }));
   }
-  this[kCompleteContent] = content;
+
+  /** @private */
+  this[K_COMPLETE_CONTENT] = content;
   const {
     inbound,
     executionId
-  } = this[kExecuteMessage].content;
+  } = this[_constants.K_EXECUTE_MESSAGE].content;
   const attachedToContent = inbound?.[0];
   const attachedTo = this.attachedTo;
   this.activity.logger.debug(`<${executionId} (${this.id})> cancel ${attachedTo.status} activity <${attachedToContent.executionId} (${attachedToContent.id})>`);
   if (content.isRecovered && !attachedTo.isRunning) {
     const attachedExecuteTag = `_on-attached-execute-${executionId}`;
-    this[kAttachedTags].add(attachedExecuteTag);
+    /** @private */
+    this[K_ATTACHED_TAGS].add(attachedExecuteTag);
     attachedTo.broker.subscribeOnce('execution', '#', () => {
       attachedTo.getApi({
         content: attachedToContent
@@ -137,8 +144,8 @@ BoundaryEventBehaviour.prototype._onAttachedLeave = function onAttachedLeave(_, 
 }) {
   if (content.id !== this.attachedTo.id) return;
   this._stop();
-  const completeContent = this[kCompleteContent];
-  if (!completeContent) return this.broker.publish('execution', 'execute.discard', this[kExecuteMessage].content);
+  const completeContent = this[K_COMPLETE_CONTENT];
+  if (!completeContent) return this.broker.publish('execution', 'execute.discard', this[_constants.K_EXECUTE_MESSAGE].content);
   return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(completeContent));
 };
 BoundaryEventBehaviour.prototype._onExpectMessage = function onExpectMessage(_, {
@@ -152,7 +159,8 @@ BoundaryEventBehaviour.prototype._onExpectMessage = function onExpectMessage(_, 
   } = content;
   const attachedTo = this.attachedTo;
   const errorConsumerTag = `_bound-error-listener-${executionId}`;
-  this[kAttachedTags].add(errorConsumerTag);
+  /** @private */
+  this[K_ATTACHED_TAGS].add(errorConsumerTag);
   attachedTo.broker.subscribeTmp('event', pattern, (__, message) => {
     if (message.content.id !== attachedTo.id) return;
     this.broker.publish(exchange, expectRoutingKey, (0, _messageHelper.cloneContent)(message.content, {
@@ -172,7 +180,7 @@ BoundaryEventBehaviour.prototype._onDetachMessage = function onDetachMessage(_, 
   const {
     executionId,
     parent
-  } = this[kExecuteMessage].content;
+  } = this[_constants.K_EXECUTE_MESSAGE].content;
   const id = this.id,
     attachedTo = this.attachedTo;
   this.activity.logger.debug(`<${executionId} (${id})> detach from activity <${attachedTo.id}>`);
@@ -184,7 +192,8 @@ BoundaryEventBehaviour.prototype._onDetachMessage = function onDetachMessage(_, 
     sourcePattern
   } = content;
   const shovelName = `_detached-${(0, _shared.brokerSafeId)(id)}_${detachId}`;
-  this[kShovels].add(shovelName);
+  /** @private */
+  this[K_SHOVELS].add(shovelName);
   const broker = this.broker;
   attachedTo.broker.createShovel(shovelName, {
     exchange: sourceExchange,
@@ -219,7 +228,7 @@ BoundaryEventBehaviour.prototype._onApiMessage = function onApiMessage(_, messag
   }
 };
 BoundaryEventBehaviour.prototype._onRepeatMessage = function onRepeatMessage(_, message) {
-  const executeMessage = this[kExecuteMessage];
+  const executeMessage = this[_constants.K_EXECUTE_MESSAGE];
   const repeat = message.content.repeat;
   this.broker.getQueue('inbound-q').queueMessage({
     routingKey: 'activity.restart'
@@ -231,10 +240,12 @@ BoundaryEventBehaviour.prototype._stop = function stop(detach) {
   const attachedTo = this.attachedTo,
     broker = this.broker,
     executionId = this.executionId;
-  for (const tag of this[kAttachedTags]) attachedTo.broker.cancel(tag);
-  this[kAttachedTags].clear();
-  for (const shovelName of this[kShovels]) attachedTo.broker.closeShovel(shovelName);
-  this[kShovels].clear();
+  for (const tag of this[K_ATTACHED_TAGS]) attachedTo.broker.cancel(tag);
+  /** @private */
+  this[K_ATTACHED_TAGS].clear();
+  for (const shovelName of this[K_SHOVELS]) attachedTo.broker.closeShovel(shovelName);
+  /** @private */
+  this[K_SHOVELS].clear();
   broker.cancel('_execution-tag');
   broker.cancel(`_execution-completed-${executionId}`);
   if (detach) return;

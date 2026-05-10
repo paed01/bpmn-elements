@@ -1,9 +1,9 @@
 import BpmnIO from './io/BpmnIO.js';
 import Environment from './Environment.js';
 import { getUniqueId } from './shared.js';
+import { K_ACTIVATED } from './constants.js';
 
-const kOwner = Symbol.for('owner');
-const kActivated = Symbol.for('activated');
+const K_OWNER = Symbol.for('owner');
 
 /**
  * Build a runtime Context from a parsed BPMN definition.
@@ -40,12 +40,14 @@ function ContextInstance(definitionContext, environment, owner) {
     ['dataObjectRefs', new Map()],
     ['dataStoreRefs', new Map()],
   ]);
-  this[kOwner] = owner;
+  /** @private */
+  this[K_OWNER] = owner;
 }
 
 Object.defineProperty(ContextInstance.prototype, 'owner', {
+  /** @returns {import('types').Process | import('types').Activity | undefined} Process or sub-process activity that owns this context */
   get() {
-    return this[kOwner];
+    return this[K_OWNER];
   },
 });
 
@@ -193,7 +195,7 @@ ContextInstance.prototype.getProcessById = function getProcessById(processId) {
   const bpContext = this.clone(this.environment.clone());
   bp = new processDefinition.Behaviour(processDefinition, bpContext);
   processRefs.set(processId, bp);
-  bpContext[kOwner] = bp;
+  bpContext[K_OWNER] = bp;
 
   return bp;
 };
@@ -208,7 +210,7 @@ ContextInstance.prototype.getNewProcessById = function getNewProcessById(process
 
   const bpContext = this.clone(this.environment.clone());
   const bp = new bpDef.Behaviour(bpDef, bpContext);
-  bpContext[kOwner] = bp;
+  bpContext[K_OWNER] = bp;
 
   return bp;
 };
@@ -334,7 +336,7 @@ ContextInstance.prototype.loadExtensions = function loadExtensions(activity) {
  * @param {string} activityId
  */
 ContextInstance.prototype.getActivityParentById = function getActivityParentById(activityId) {
-  const owner = this[kOwner];
+  const owner = this[K_OWNER];
   if (owner) return owner;
   const activity = this.getActivityById(activityId);
   const parentId = activity.parent.id;
@@ -362,7 +364,8 @@ function Extensions(activity, context, extensions) {
     const extension = Extension(activity, context);
     if (extension) result.push(extension);
   }
-  this[kActivated] = false;
+  /** @private */
+  this[K_ACTIVATED] = false;
 }
 
 Object.defineProperty(Extensions.prototype, 'count', {
@@ -372,13 +375,15 @@ Object.defineProperty(Extensions.prototype, 'count', {
 });
 
 Extensions.prototype.activate = function activate(message) {
-  if (this[kActivated]) return;
-  this[kActivated] = true;
+  if (this[K_ACTIVATED]) return;
+  /** @private */
+  this[K_ACTIVATED] = true;
   for (const extension of this.extensions) extension.activate(message);
 };
 
 Extensions.prototype.deactivate = function deactivate(message) {
-  if (!this[kActivated]) return;
-  this[kActivated] = false;
+  if (!this[K_ACTIVATED]) return;
+  /** @private */
+  this[K_ACTIVATED] = false;
   for (const extension of this.extensions) extension.deactivate(message);
 };

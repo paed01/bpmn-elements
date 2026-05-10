@@ -1,7 +1,6 @@
 import { brokerSafeId } from '../shared.js';
 import { cloneContent, shiftParent } from '../messageHelper.js';
-
-const kExecuteMessage = Symbol.for('executeMessage');
+import { K_EXECUTE_MESSAGE } from '../constants.js';
 
 export default function LinkEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;
@@ -52,7 +51,7 @@ export default function LinkEventDefinition(activity, eventDefinition) {
 
 Object.defineProperty(LinkEventDefinition.prototype, 'executionId', {
   get() {
-    return this[kExecuteMessage]?.content.executionId;
+    return this[K_EXECUTE_MESSAGE]?.content.executionId;
   },
 });
 
@@ -61,7 +60,8 @@ LinkEventDefinition.prototype.execute = function execute(executeMessage) {
 };
 
 LinkEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  this[kExecuteMessage] = executeMessage;
+  /** @private */
+  this[K_EXECUTE_MESSAGE] = executeMessage;
 
   const executeContent = executeMessage.content;
   const { executionId, parent } = executeContent;

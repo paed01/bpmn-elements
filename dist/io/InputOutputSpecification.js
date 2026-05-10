@@ -6,8 +6,8 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = IoSpecification;
 var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue.js"));
 var _shared = require("../shared.js");
+var _constants = require("../constants.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-const kConsuming = Symbol.for('consuming');
 function IoSpecification(activity, ioSpecificationDef, context) {
   const {
     id,
@@ -22,19 +22,20 @@ function IoSpecification(activity, ioSpecificationDef, context) {
   this.context = context;
 }
 IoSpecification.prototype.activate = function activate(message) {
-  if (this[kConsuming]) return;
+  if (this[_constants.K_CONSUMING]) return;
   if (message?.fields.redelivered && message.fields.routingKey === 'run.start') {
     this._onFormatEnter();
   }
   if (message?.fields.redelivered && message.fields.routingKey === 'run.end') {
     this._onFormatComplete(message);
   }
-  this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {
+  /** @private */
+  this[_constants.K_CONSUMING] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {
     noAck: true
   });
 };
 IoSpecification.prototype.deactivate = function deactivate() {
-  if (this[kConsuming]) this[kConsuming] = this[kConsuming].cancel();
+  if (this[_constants.K_CONSUMING]) this[_constants.K_CONSUMING] = this[_constants.K_CONSUMING].cancel();
 };
 IoSpecification.prototype._onActivityEvent = function onActivityEvent(routingKey, message) {
   const {

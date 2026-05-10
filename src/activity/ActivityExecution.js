@@ -1,11 +1,9 @@
 import { ActivityApi } from '../Api.js';
 import { cloneContent, cloneMessage } from '../messageHelper.js';
+import { K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_HANDLERS } from '../constants.js';
 
-const kCompleted = Symbol.for('completed');
-const kExecuteQ = Symbol.for('executeQ');
-const kExecuteMessage = Symbol.for('executeMessage');
-const kMessageHandlers = Symbol.for('messageHandlers');
-const kPostponed = Symbol.for('postponed');
+const K_EXECUTE_Q = Symbol.for('executeQ');
+const K_POSTPONED = Symbol.for('postponed');
 
 export default ActivityExecution;
 
@@ -20,19 +18,24 @@ function ActivityExecution(activity, context) {
   this.context = context;
   this.id = activity.id;
   this.broker = activity.broker;
-  this[kPostponed] = new Set();
-  this[kCompleted] = false;
-  this[kExecuteQ] = this.broker.assertQueue('execute-q', { durable: true, autoDelete: false });
+  /** @private */
+  this[K_POSTPONED] = new Set();
+  /** @private */
+  this[K_COMPLETED] = false;
+  /** @private */
+  this[K_EXECUTE_Q] = this.broker.assertQueue('execute-q', { durable: true, autoDelete: false });
 
-  this[kMessageHandlers] = {
+  /** @private */
+  this[K_MESSAGE_HANDLERS] = {
     onParentApiMessage: this._onParentApiMessage.bind(this),
     onExecuteMessage: this._onExecuteMessage.bind(this),
   };
 }
 
 Object.defineProperty(ActivityExecution.prototype, 'completed', {
+  /** @returns {boolean} */
   get() {
-    return this[kCompleted];
+    return this[K_COMPLETED];
   },
 });
 
@@ -47,14 +50,15 @@ ActivityExecution.prototype.execute = function execute(executeMessage) {
   if (!executionId) throw new Error('Execution requires execution id');
 
   this.executionId = executionId;
-  const initMessage = (this[kExecuteMessage] = cloneMessage(executeMessage, {
+  const initMessage = (this[K_EXECUTE_MESSAGE] = cloneMessage(executeMessage, {
     executionId,
     state: 'start',
     isRootScope: true,
   }));
 
   if (executeMessage.fields.redelivered) {
-    this[kPostponed].clear();
+    /** @private */
+    this[K_POSTPONED].clear();
     this._debug('resume execution');
 
     if (!this.source) this.source = new this.activity.Behaviour(this.activity, this.context);
@@ -73,21 +77,22 @@ ActivityExecution.prototype.execute = function execute(executeMessage) {
  * Bind the execute queue and start consuming execute and api messages.
  */
 ActivityExecution.prototype.activate = function activate() {
-  if (this[kCompleted]) return;
+  if (this[K_COMPLETED]) return;
 
   const broker = this.broker;
   const batchSize = this.activity.environment.settings.batchSize || 50;
   broker.bindQueue('execute-q', 'execution', 'execute.#', { priority: 100 });
 
-  const { onExecuteMessage, onParentApiMessage } = this[kMessageHandlers];
-  this[kExecuteQ].assertConsumer(onExecuteMessage, {
+  const { onExecuteMessage, onParentApiMessage } = this[K_MESSAGE_HANDLERS];
+  /** @private */
+  this[K_EXECUTE_Q].assertConsumer(onExecuteMessage, {
     exclusive: true,
     prefetch: batchSize * 2,
     priority: 100,
     consumerTag: '_activity-execute',
   });
 
-  if (this[kCompleted]) return this.deactivate();
+  if (this[K_COMPLETED]) return this.deactivate();
 
   broker.subscribeTmp('api', `activity.*.${this.executionId}`, onParentApiMessage, {
     noAck: true,
@@ -110,8 +115,8 @@ ActivityExecution.prototype.deactivate = function deactivate() {
  * Discard the running execution.
  */
 ActivityExecution.prototype.discard = function discard() {
-  if (this[kCompleted]) return;
-  const initMessage = this[kExecuteMessage];
+  if (this[K_COMPLETED]) return;
+  const initMessage = this[K_EXECUTE_MESSAGE];
   if (!initMessage) return this.activity.logger.warn(`<${this.id}> is not executing`);
   this.getApi(initMessage).discard();
 };
@@ -122,7 +127,7 @@ ActivityExecution.prototype.discard = function discard() {
  */
 ActivityExecution.prototype.getApi = function getApi(apiMessage) {
   const self = this;
-  if (!apiMessage) apiMessage = this[kExecuteMessage];
+  if (!apiMessage) apiMessage = this[K_EXECUTE_MESSAGE];
 
   if (self.source.getApi) {
     const sourceApi = self.source.getApi(apiMessage);
@@ -133,7 +138,7 @@ ActivityExecution.prototype.getApi = function getApi(apiMessage) {
 
   api.getExecuting = function getExecuting() {
     const result = [];
-    for (const msg of self[kPostponed]) {
+    for (const msg of self[K_POSTPONED]) {
       if (msg.content.executionId === apiMessage.content.executionId) continue;
       result.push(self.getApi(msg));
     }
@@ -157,7 +162,7 @@ ActivityExecution.prototype.passthrough = function passthrough(executeMessage) {
  */
 ActivityExecution.prototype.getPostponed = function getPostponed() {
   let apis = [];
-  for (const msg of this[kPostponed]) {
+  for (const msg of this[K_POSTPONED]) {
     apis.push(this.getApi(msg));
   }
   if (!this.activity.isSubProcess || !this.source) return apis;
@@ -169,7 +174,7 @@ ActivityExecution.prototype.getPostponed = function getPostponed() {
  * Snapshot execution state, merging behaviour-specific state when the source provides it.
  */
 ActivityExecution.prototype.getState = function getState() {
-  const result = { completed: this[kCompleted] };
+  const result = { completed: this[K_COMPLETED] };
   const source = this.source;
 
   if (!source || !source.getState) return result;
@@ -179,13 +184,14 @@ ActivityExecution.prototype.getState = function getState() {
 /**
  * Restore execution state captured by getState.
  * @param {import('types').ActivityExecutionState} [state]
- * @returns this
+ * @returns {this}
  */
 ActivityExecution.prototype.recover = function recover(state) {
-  this[kPostponed].clear();
+  /** @private */
+  this[K_POSTPONED].clear();
 
   if (!state) return this;
-  if ('completed' in state) this[kCompleted] = state.completed;
+  if ('completed' in state) this[K_COMPLETED] = state.completed;
 
   const source = (this.source = new this.activity.Behaviour(this.activity, this.context));
   if (source.recover) {
@@ -199,7 +205,7 @@ ActivityExecution.prototype.recover = function recover(state) {
  * Stop the execution via the activity api.
  */
 ActivityExecution.prototype.stop = function stop() {
-  const executeMessage = this[kExecuteMessage];
+  const executeMessage = this[K_EXECUTE_MESSAGE];
   if (!executeMessage) return;
   this.getApi(executeMessage).stop();
 };
@@ -222,7 +228,7 @@ ActivityExecution.prototype._onExecuteMessage = function onExecuteMessage(routin
 
   switch (routingKey) {
     case 'execute.resume.execution': {
-      if (!this[kPostponed].size) return this.broker.publish('execution', 'execute.start', cloneContent(this[kExecuteMessage].content));
+      if (!this[K_POSTPONED].size) return this.broker.publish('execution', 'execute.start', cloneContent(this[K_EXECUTE_MESSAGE].content));
       break;
     }
     case 'execute.cancel':
@@ -263,7 +269,7 @@ ActivityExecution.prototype._onExecuteMessage = function onExecuteMessage(routin
 /** @internal */
 ActivityExecution.prototype._onStateChangeMessage = function onStateChangeMessage(message) {
   const { ignoreIfExecuting, executionId } = message.content;
-  const postponed = this[kPostponed];
+  const postponed = this[K_POSTPONED];
 
   let previousMsg;
   for (const msg of postponed) {
@@ -291,7 +297,7 @@ ActivityExecution.prototype._onStateChangeMessage = function onStateChangeMessag
 ActivityExecution.prototype._onExecutionCompleted = function onExecutionCompleted(message) {
   const postponedMsg = this._ackPostponed(message);
   if (!postponedMsg) return;
-  const postponed = this[kPostponed];
+  const postponed = this[K_POSTPONED];
 
   const { executionId, keep, isRootScope } = message.content;
   if (!isRootScope) {
@@ -307,7 +313,8 @@ ActivityExecution.prototype._onExecutionCompleted = function onExecutionComplete
   }
 
   this._debug('completed execution', executionId);
-  this[kCompleted] = true;
+  /** @private */
+  this[K_COMPLETED] = true;
 
   message.ack(true);
 
@@ -326,7 +333,7 @@ ActivityExecution.prototype._onExecutionDiscarded = function onExecutionDiscarde
   const { isRootScope, error } = message.content;
   if (!isRootScope && !postponedMsg) return;
 
-  const postponed = this[kPostponed];
+  const postponed = this[K_POSTPONED];
   const correlationId = message.properties.correlationId;
   if (!error && !isRootScope) {
     message.ack();
@@ -356,7 +363,8 @@ ActivityExecution.prototype._publishExecutionCompleted = function publishExecuti
   completeContent,
   correlationId
 ) {
-  this[kCompleted] = true;
+  /** @private */
+  this[K_COMPLETED] = true;
 
   this.broker.publish(
     'execution',
@@ -373,7 +381,7 @@ ActivityExecution.prototype._publishExecutionCompleted = function publishExecuti
 ActivityExecution.prototype._ackPostponed = function ackPostponed(completeMessage) {
   const { executionId: eid } = completeMessage.content;
 
-  const postponed = this[kPostponed];
+  const postponed = this[K_POSTPONED];
   for (const msg of postponed) {
     if (msg.content.executionId === eid) {
       postponed.delete(msg);
@@ -387,9 +395,9 @@ ActivityExecution.prototype._ackPostponed = function ackPostponed(completeMessag
 ActivityExecution.prototype._onParentApiMessage = function onParentApiMessage(routingKey, message) {
   switch (message.properties.type) {
     case 'error':
-      return this[kExecuteQ].queueMessage({ routingKey: 'execute.error' }, { error: message.content.error });
+      return this[K_EXECUTE_Q].queueMessage({ routingKey: 'execute.error' }, { error: message.content.error });
     case 'discard':
-      return this[kExecuteQ].queueMessage({ routingKey: 'execute.discard' }, cloneContent(this[kExecuteMessage].content));
+      return this[K_EXECUTE_Q].queueMessage({ routingKey: 'execute.discard' }, cloneContent(this[K_EXECUTE_MESSAGE].content));
     case 'stop': {
       return this._onStop(message);
     }

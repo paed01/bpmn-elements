@@ -5,8 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = CancelEventDefinition;
 var _messageHelper = require("../messageHelper.js");
-const kCompleted = Symbol.for('completed');
-const kExecuteMessage = Symbol.for('executeMessage');
+var _constants = require("../constants.js");
 function CancelEventDefinition(activity, eventDefinition) {
   const {
     id,
@@ -28,15 +27,17 @@ function CancelEventDefinition(activity, eventDefinition) {
 }
 Object.defineProperty(CancelEventDefinition.prototype, 'executionId', {
   get() {
-    return this[kExecuteMessage]?.content.executionId;
+    return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }
 });
 CancelEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 CancelEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  this[kExecuteMessage] = executeMessage;
-  this[kCompleted] = false;
+  /** @private */
+  this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
+  /** @private */
+  this[_constants.K_COMPLETED] = false;
   const executeContent = executeMessage.content;
   const {
     executionId,
@@ -90,10 +91,11 @@ CancelEventDefinition.prototype._onCatchMessage = function onCatchMessage(_, mes
   return this._complete(content.message);
 };
 CancelEventDefinition.prototype._complete = function complete(output) {
-  this[kCompleted] = true;
+  /** @private */
+  this[_constants.K_COMPLETED] = true;
   this._stop();
   this._debug('completed');
-  const content = (0, _messageHelper.cloneContent)(this[kExecuteMessage].content, {
+  const content = (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content, {
     output,
     state: 'cancel'
   });
@@ -103,9 +105,10 @@ CancelEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey
   switch (message.properties.type) {
     case 'discard':
       {
-        this[kCompleted] = true;
+        /** @private */
+        this[_constants.K_COMPLETED] = true;
         this._stop();
-        const content = (0, _messageHelper.cloneContent)(this[kExecuteMessage].content);
+        const content = (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content);
         return this.broker.publish('execution', 'execute.discard', content);
       }
     case 'stop':

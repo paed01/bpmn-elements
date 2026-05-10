@@ -942,7 +942,7 @@ Feature('Signals', () => {
       }
     );
 
-    let end, state, definition;
+    let state, definition;
     const output = {};
     When('definition is ran', () => {
       definition = new Definition(context);
@@ -1256,10 +1256,6 @@ Feature('Signals', () => {
 
     Then('activity output is set to signal message', () => {
       expect(output).to.have.property('namedMessageEvent').with.property('input', 1);
-    });
-
-    And('execution completes', () => {
-      return end;
     });
   });
 });

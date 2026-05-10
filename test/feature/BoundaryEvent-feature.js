@@ -868,7 +868,7 @@ Feature('BoundaryEvent', () => {
 
     let end;
     When('task is completed', () => {
-      definition.waitFor('leave');
+      end = definition.waitFor('leave');
       definition.signal({ id: 'task' });
     });
 

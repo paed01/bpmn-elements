@@ -1393,7 +1393,7 @@ describe('Process', () => {
 
       bp.run();
 
-      let api = await wait1;
+      const api = await wait1;
 
       const wait2 = new Promise((resolve) => {
         bp.once('wait', resolve);
@@ -1401,7 +1401,7 @@ describe('Process', () => {
 
       api.signal();
 
-      api = await wait2;
+      await wait2;
       expect(count).to.equal(1);
     });
   });

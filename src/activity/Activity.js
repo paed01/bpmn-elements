@@ -6,21 +6,23 @@ import { Formatter } from '../MessageFormatter.js';
 import { cloneContent, cloneParent, cloneMessage } from '../messageHelper.js';
 import { makeErrorFromMessage, ActivityError } from '../error/Errors.js';
 import { OutboundEvaluator, formatFlowAction } from './outbound-evaluator.js';
+import {
+  K_ACTIVATED,
+  K_CONSUMING,
+  K_COUNTERS,
+  K_EXECUTE_MESSAGE,
+  K_EXTENSIONS,
+  K_MESSAGE_HANDLERS,
+  K_STATE_MESSAGE,
+} from '../constants.js';
 
-const kActivityDef = Symbol.for('activityDefinition');
-const kConsuming = Symbol.for('consuming');
-const kConsumingRunQ = Symbol.for('run queue consumer');
-const kCounters = Symbol.for('counters');
-const kEventDefinitions = Symbol.for('eventDefinitions');
-const kExec = Symbol.for('exec');
-const kExecuteMessage = Symbol.for('executeMessage');
-const kExtensions = Symbol.for('extensions');
-const kFlags = Symbol.for('flags');
-const kFlows = Symbol.for('flows');
-const kFormatter = Symbol.for('formatter');
-const kMessageHandlers = Symbol.for('messageHandlers');
-const kStateMessage = Symbol.for('stateMessage');
-const kActivated = Symbol.for('activated');
+const K_ACTIVITY_DEF = Symbol.for('activityDefinition');
+const K_CONSUMING_RUN_Q = Symbol.for('run queue consumer');
+const K_EVENT_DEFINITIONS = Symbol.for('eventDefinitions');
+const K_EXEC = Symbol.for('exec');
+const K_FLAGS = Symbol.for('flags');
+const K_FLOWS = Symbol.for('flows');
+const K_FORMATTER = Symbol.for('formatter');
 
 export default Activity;
 
@@ -30,11 +32,12 @@ export default Activity;
  * @param {import('moddle-context-serializer').SerializableElement} activityDef Parsed BPMN element definition
  * @param {import('types').ContextInstance} context Per-execution registry and factory
  */
-function Activity(Behaviour, activityDef, context) {
+export function Activity(Behaviour, activityDef, context) {
   const { id, type = 'activity', name, behaviour = {} } = activityDef;
   const { attachedTo: attachedToRef, eventDefinitions } = behaviour;
 
-  this[kActivityDef] = activityDef;
+  /** @private */
+  this[K_ACTIVITY_DEF] = activityDef;
   this.id = id;
   this.type = type;
   this.name = name;
@@ -44,7 +47,8 @@ function Activity(Behaviour, activityDef, context) {
   this.logger = context.environment.Logger(type.toLowerCase());
   this.environment = context.environment;
   this.context = context;
-  this[kCounters] = {
+  /** @private */
+  this[K_COUNTERS] = {
     taken: 0,
     discarded: 0,
   };
@@ -79,7 +83,8 @@ function Activity(Behaviour, activityDef, context) {
   const inboundSourceIds = new Set(inboundSequenceFlows.map(({ sourceId }) => sourceId));
   const isParallelJoin = activityDef.isParallelGateway && inboundSourceIds.size > 1;
 
-  this[kFlows] = {
+  /** @private */
+  this[K_FLOWS] = {
     inboundSequenceFlows,
     inboundAssociations,
     inboundTriggers,
@@ -87,7 +92,8 @@ function Activity(Behaviour, activityDef, context) {
     outboundEvaluator: new OutboundEvaluator(this, outboundSequenceFlows),
   };
 
-  this[kFlags] = {
+  /** @private */
+  this[K_FLAGS] = {
     isEnd: !outboundSequenceFlows.length,
     isStart: !inboundTriggers.length && !behaviour.triggeredByEvent && !activityDef.isCatching,
     isSubProcess: activityDef.isSubProcess,
@@ -101,133 +107,139 @@ function Activity(Behaviour, activityDef, context) {
     isCatching: activityDef.isCatching,
     lane: activityDef.lane?.id,
   };
-  this[kExec] = new Map();
+  /** @private */
+  this[K_EXEC] = new Map();
 
-  this[kMessageHandlers] = {
+  /** @private */
+  this[K_MESSAGE_HANDLERS] = {
     onInbound: this._onInbound.bind(this),
     onRunMessage: this._onRunMessage.bind(this),
     onApiMessage: this._onApiMessage.bind(this),
     onExecutionMessage: this._onExecutionMessage.bind(this),
   };
 
-  this[kEventDefinitions] = eventDefinitions?.map((ed, idx) => new ed.Behaviour(this, ed, context, idx));
-  this[kExtensions] = context.loadExtensions(this);
-  this[kConsuming] = false;
-  this[kConsumingRunQ] = undefined;
+  /** @private */
+  this[K_EVENT_DEFINITIONS] = eventDefinitions?.map((ed, idx) => new ed.Behaviour(this, ed, context, idx));
+  /** @private */
+  this[K_EXTENSIONS] = context.loadExtensions(this);
+  /** @private */
+  this[K_CONSUMING] = false;
+  /** @private */
+  this[K_CONSUMING_RUN_Q] = undefined;
 }
 
 Object.defineProperties(Activity.prototype, {
   counters: {
     get() {
-      return { ...this[kCounters] };
+      return { ...this[K_COUNTERS] };
     },
   },
   execution: {
     get() {
-      return this[kExec].get('execution');
+      return this[K_EXEC].get('execution');
     },
   },
   executionId: {
     get() {
-      return this[kExec].get('executionId');
+      return this[K_EXEC].get('executionId');
     },
   },
   extensions: {
     get() {
-      return this[kExtensions];
+      return this[K_EXTENSIONS];
     },
   },
   bpmnIo: {
     get() {
-      const extensions = this[kExtensions];
+      const extensions = this[K_EXTENSIONS];
       return extensions?.extensions.find((e) => e.type === 'bpmnio');
     },
   },
   formatter: {
     get() {
-      let formatter = this[kFormatter];
+      let formatter = this[K_FORMATTER];
       if (formatter) return formatter;
 
-      formatter = this[kFormatter] = new Formatter(this);
+      formatter = this[K_FORMATTER] = new Formatter(this);
       return formatter;
     },
   },
   isRunning: {
     get() {
-      if (!this[kConsuming]) return false;
+      if (!this[K_CONSUMING]) return false;
       return !!this.status;
     },
   },
   outbound: {
     get() {
-      return this[kFlows].outboundSequenceFlows;
+      return this[K_FLOWS].outboundSequenceFlows;
     },
   },
   inbound: {
     get() {
-      return this[kFlows].inboundSequenceFlows;
+      return this[K_FLOWS].inboundSequenceFlows;
     },
   },
   isEnd: {
     get() {
-      return this[kFlags].isEnd;
+      return this[K_FLAGS].isEnd;
     },
   },
   isStart: {
     get() {
-      return this[kFlags].isStart;
+      return this[K_FLAGS].isStart;
     },
   },
   isSubProcess: {
     get() {
-      return this[kFlags].isSubProcess;
+      return this[K_FLAGS].isSubProcess;
     },
   },
   isTransaction: {
     get() {
-      return this[kFlags].isTransaction;
+      return this[K_FLAGS].isTransaction;
     },
   },
   isMultiInstance: {
     get() {
-      return this[kFlags].isMultiInstance;
+      return this[K_FLAGS].isMultiInstance;
     },
   },
   isThrowing: {
     get() {
-      return this[kFlags].isThrowing;
+      return this[K_FLAGS].isThrowing;
     },
   },
   isCatching: {
     get() {
-      return this[kFlags].isCatching;
+      return this[K_FLAGS].isCatching;
     },
   },
   isForCompensation: {
     get() {
-      return this[kFlags].isForCompensation;
+      return this[K_FLAGS].isForCompensation;
     },
   },
   isParallelJoin: {
     get() {
-      return this[kFlags].isParallelJoin;
+      return this[K_FLAGS].isParallelJoin;
     },
   },
   triggeredByEvent: {
     get() {
-      return this[kActivityDef].triggeredByEvent;
+      return this[K_ACTIVITY_DEF].triggeredByEvent;
     },
   },
   attachedTo: {
     get() {
-      const attachedToId = this[kFlags].attachedTo;
+      const attachedToId = this[K_FLAGS].attachedTo;
       if (!attachedToId) return null;
       return this.getActivityById(attachedToId);
     },
   },
   lane: {
     get() {
-      const laneId = this[kFlags].lane;
+      const laneId = this[K_FLAGS].lane;
       if (!laneId) return undefined;
       const parent = this.parentElement;
       return parent.getLaneById && parent.getLaneById(laneId);
@@ -235,18 +247,17 @@ Object.defineProperties(Activity.prototype, {
   },
   eventDefinitions: {
     get() {
-      return this[kEventDefinitions];
+      return this[K_EVENT_DEFINITIONS];
     },
   },
   parentElement: {
-    /** Parent process or sub process reference */
     get() {
       return this.context.getActivityParentById(this.id);
     },
   },
   initialized: {
     get() {
-      return !!this[kExec]?.get('initExecutionId');
+      return !!this[K_EXEC]?.get('initExecutionId');
     },
   },
 });
@@ -255,8 +266,9 @@ Object.defineProperties(Activity.prototype, {
  * Subscribe to inbound flows and start consuming the inbound queue.
  */
 Activity.prototype.activate = function activate() {
-  if (this[kActivated]) return;
-  this[kActivated] = true;
+  if (this[K_ACTIVATED]) return;
+  /** @private */
+  this[K_ACTIVATED] = true;
   return this.addInboundListeners() && this._consumeInbound();
 };
 
@@ -264,7 +276,8 @@ Activity.prototype.activate = function activate() {
  * Cancel inbound subscriptions and any pending run/format consumers.
  */
 Activity.prototype.deactivate = function deactivate() {
-  this[kActivated] = false;
+  /** @private */
+  this[K_ACTIVATED] = false;
   const broker = this.broker;
   this.removeInboundListeners();
   broker.cancel('_run-on-inbound');
@@ -277,7 +290,7 @@ Activity.prototype.deactivate = function deactivate() {
  */
 Activity.prototype.init = function init(initContent) {
   const id = this.id;
-  const exec = this[kExec];
+  const exec = this[K_EXEC];
   const executionId = exec.has('initExecutionId') ? exec.get('initExecutionId') : getUniqueId(id);
   exec.set('initExecutionId', executionId);
   this.logger.debug(`<${id}> initialized with executionId <${executionId}>`);
@@ -293,7 +306,7 @@ Activity.prototype.run = function run(runContent) {
   const id = this.id;
   if (this.isRunning) throw new Error(`activity <${id}> is already running`);
 
-  const exec = this[kExec];
+  const exec = this[K_EXEC];
   const executionId = exec.get('initExecutionId') || getUniqueId(id);
   exec.set('executionId', executionId);
   exec.delete('initExecutionId');
@@ -306,7 +319,8 @@ Activity.prototype.run = function run(runContent) {
   broker.publish('run', 'run.enter', content);
   broker.publish('run', 'run.start', cloneContent(content));
 
-  this[kConsuming] = true;
+  /** @private */
+  this[K_CONSUMING] = true;
   this._consumeRunQ();
 };
 
@@ -316,7 +330,7 @@ Activity.prototype.run = function run(runContent) {
  */
 Activity.prototype.getState = function getState() {
   const status = this.status;
-  const exec = this[kExec];
+  const exec = this[K_EXEC];
   const execution = exec.get('execution');
   const executionId = exec.get('executionId');
   const brokerState = this.broker.getState(true);
@@ -337,7 +351,7 @@ Activity.prototype.getState = function getState() {
 /**
  * Restore activity state captured by getState. Cannot be called while running.
  * @param {import('types').ActivityState} [state]
- * @returns this when state was applied
+ * @returns {this} this when state was applied
  * @throws {Error} when activity is currently running
  */
 Activity.prototype.recover = function recover(state) {
@@ -346,10 +360,11 @@ Activity.prototype.recover = function recover(state) {
 
   this.stopped = state.stopped;
   this.status = state.status;
-  const exec = this[kExec];
+  const exec = this[K_EXEC];
   exec.set('executionId', state.executionId);
 
-  this[kCounters] = { ...this[kCounters], ...state.counters };
+  /** @private */
+  this[K_COUNTERS] = { ...this[K_COUNTERS], ...state.counters };
 
   if (state.execution) {
     exec.set('execution', new ActivityExecution(this, this.context).recover(state.execution));
@@ -365,7 +380,7 @@ Activity.prototype.recover = function recover(state) {
  * @throws {Error} when called on a running activity
  */
 Activity.prototype.resume = function resume() {
-  if (this[kConsuming]) {
+  if (this[K_CONSUMING]) {
     throw new Error(`cannot resume running activity <${this.id}>`);
   }
   if (!this.status) return this.activate();
@@ -377,7 +392,8 @@ Activity.prototype.resume = function resume() {
   const content = this._createMessage();
   this.broker.publish('run', 'run.resume', content, { persistent: false });
 
-  this[kConsuming] = true;
+  /** @private */
+  this[K_CONSUMING] = true;
   this._consumeRunQ();
 };
 
@@ -387,14 +403,15 @@ Activity.prototype.resume = function resume() {
  */
 Activity.prototype.discard = function discard(discardContent) {
   if (!this.status) return this._runDiscard(discardContent);
-  const execution = this[kExec].get('execution');
+  const execution = this[K_EXEC].get('execution');
   if (execution && !execution.completed) return execution.discard();
 
   this._deactivateRunConsumers();
   const broker = this.broker;
   broker.getQueue('run-q').purge();
-  broker.publish('run', 'run.discard', cloneContent(this[kStateMessage].content));
-  this[kConsuming] = true;
+  broker.publish('run', 'run.discard', cloneContent(this[K_STATE_MESSAGE].content));
+  /** @private */
+  this[K_CONSUMING] = true;
   this._consumeRunQ();
 };
 
@@ -403,7 +420,7 @@ Activity.prototype.discard = function discard(discardContent) {
  * @returns count of subscribed triggers
  */
 Activity.prototype.addInboundListeners = function addInboundListeners() {
-  const triggers = this[kFlows].inboundTriggers;
+  const triggers = this[K_FLOWS].inboundTriggers;
   if (triggers.length) {
     const onInboundEvent = this._onInboundEvent.bind(this);
     const triggerConsumerTag = `_inbound-${this.id}`;
@@ -425,7 +442,7 @@ Activity.prototype.addInboundListeners = function addInboundListeners() {
  */
 Activity.prototype.removeInboundListeners = function removeInboundListeners() {
   const triggerConsumerTag = `_inbound-${this.id}`;
-  for (const trigger of this[kFlows].inboundTriggers) {
+  for (const trigger of this[K_FLOWS].inboundTriggers) {
     trigger.broker.cancel(triggerConsumerTag);
   }
 };
@@ -434,8 +451,8 @@ Activity.prototype.removeInboundListeners = function removeInboundListeners() {
  * Stop the activity. If not currently running, just cancels the inbound consumer.
  */
 Activity.prototype.stop = function stop() {
-  if (!this[kConsuming]) return this.broker.cancel('_run-on-inbound');
-  return this.getApi(this[kStateMessage]).stop();
+  if (!this[K_CONSUMING]) return this.broker.cancel('_run-on-inbound');
+  return this.getApi(this[K_STATE_MESSAGE]).stop();
 };
 
 /**
@@ -443,7 +460,7 @@ Activity.prototype.stop = function stop() {
  */
 Activity.prototype.next = function next() {
   if (!this.environment.settings.step) return;
-  const stateMessage = this[kStateMessage];
+  const stateMessage = this[K_STATE_MESSAGE];
   if (!stateMessage) return;
   if (this.status === 'executing') return false;
   if (this.status === 'formatting') return false;
@@ -466,7 +483,7 @@ Activity.prototype.shake = function shake() {
  * @param {(err: Error, evaluationResult: any) => void} callback
  */
 Activity.prototype.evaluateOutbound = function evaluateOutbound(fromMessage, discardRestAtTake, callback) {
-  return this[kFlows].outboundEvaluator.evaluate(fromMessage, discardRestAtTake, callback);
+  return this[K_FLOWS].outboundEvaluator.evaluate(fromMessage, discardRestAtTake, callback);
 };
 
 /**
@@ -474,9 +491,9 @@ Activity.prototype.evaluateOutbound = function evaluateOutbound(fromMessage, dis
  * @param {import('types').ElementBrokerMessage} [message]
  */
 Activity.prototype.getApi = function getApi(message) {
-  const execution = this[kExec].get('execution');
+  const execution = this[K_EXEC].get('execution');
   if (execution && !execution.completed) return execution.getApi(message);
-  return ActivityApi(this.broker, message || this[kStateMessage]);
+  return ActivityApi(this.broker, message || this[K_STATE_MESSAGE]);
 };
 
 /**
@@ -489,7 +506,7 @@ Activity.prototype.getActivityById = function getActivityById(elementId) {
 
 /** @internal */
 Activity.prototype._runDiscard = function runDiscard(discardContent) {
-  const exec = this[kExec];
+  const exec = this[K_EXEC];
   const executionId = exec.get('initExecutionId') || getUniqueId(this.id);
   exec.set('executionId', executionId);
   exec.delete('initExecutionId');
@@ -499,7 +516,8 @@ Activity.prototype._runDiscard = function runDiscard(discardContent) {
   const content = this._createMessage({ ...discardContent, executionId });
   this.broker.publish('run', 'run.discard', content);
 
-  this[kConsuming] = true;
+  /** @private */
+  this[K_CONSUMING] = true;
   this._consumeRunQ();
 };
 
@@ -508,7 +526,7 @@ Activity.prototype._discardRun = function discardRun() {
   const status = this.status;
   if (!status) return;
 
-  const execution = this[kExec].get('execution');
+  const execution = this[K_EXEC].get('execution');
   if (execution && !execution.completed) return;
 
   let discardRoutingKey = 'run.discard';
@@ -526,20 +544,21 @@ Activity.prototype._discardRun = function discardRun() {
 
   this._deactivateRunConsumers();
 
-  const stateMessage = this[kStateMessage];
+  const stateMessage = this[K_STATE_MESSAGE];
   if (this.extensions) this.extensions.deactivate(cloneMessage(stateMessage));
 
   const broker = this.broker;
   broker.getQueue('run-q').purge();
 
   broker.publish('run', discardRoutingKey, cloneContent(stateMessage.content), { correlationId: stateMessage.properties.correlationId });
-  this[kConsuming] = true;
+  /** @private */
+  this[K_CONSUMING] = true;
   this._consumeRunQ();
 };
 
 /** @internal */
 Activity.prototype._onShakeMessage = function _onShakeMessage(sourceMessage) {
-  if (this[kFlags].isParallelGateway) {
+  if (this[K_FLAGS].isParallelGateway) {
     const message = cloneMessage(sourceMessage, { join: this.id });
     message.content.sequence.push({ id: this.id, type: this.type });
     return this.broker.publish('event', 'activity.shake.join', message.content, {
@@ -562,13 +581,13 @@ Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
 
   this.broker.publish('api', 'activity.shake.start', message.content, { persistent: false, type: 'shake' });
 
-  if (this[kFlags].isEnd) {
+  if (this[K_FLAGS].isEnd) {
     return this.broker.publish('event', 'activity.shake.end', cloneContent(message.content), { persistent: false, type: 'shake' });
   }
 
   const targets = new Map();
 
-  for (const outboundFlow of this[kFlows].outboundSequenceFlows) {
+  for (const outboundFlow of this[K_FLOWS].outboundSequenceFlows) {
     const prevTarget = targets.get(outboundFlow.targetId);
     if (!prevTarget) {
       targets.set(outboundFlow.targetId, outboundFlow);
@@ -580,12 +599,12 @@ Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
 
 /** @internal */
 Activity.prototype._consumeInbound = function consumeInbound() {
-  if (!this[kActivated]) return;
+  if (!this[K_ACTIVATED]) return;
 
-  if (this.status || !this[kFlows].inboundTriggers.length) return;
+  if (this.status || !this[K_FLOWS].inboundTriggers.length) return;
 
   const inboundQ = this.broker.getQueue('inbound-q');
-  const onInbound = this[kMessageHandlers].onInbound;
+  const onInbound = this[K_MESSAGE_HANDLERS].onInbound;
 
   return inboundQ.assertConsumer(onInbound, { consumerTag: '_run-on-inbound' });
 };
@@ -613,7 +632,7 @@ Activity.prototype._onInbound = function onInbound(routingKey, message) {
       let discardSequence;
       if (content.discardSequence) discardSequence = content.discardSequence.slice();
       const context = { inbound, discardSequence };
-      return this[kFlags].isParallelGateway ? this.run(context) : this._runDiscard(context);
+      return this[K_FLAGS].isParallelGateway ? this.run(context) : this._runDiscard(context);
     }
   }
 };
@@ -626,7 +645,7 @@ Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message
   switch (routingKey) {
     case 'activity.enter':
     case 'activity.discard': {
-      if (content.id === this[kFlags].attachedTo) {
+      if (content.id === this[K_FLAGS].attachedTo) {
         inboundQ.queueMessage(fields, cloneContent(content), properties);
       }
       break;
@@ -643,15 +662,17 @@ Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message
 
 /** @internal */
 Activity.prototype._consumeRunQ = function consumeRunQ() {
-  this[kConsumingRunQ] = true;
-  this.broker.getQueue('run-q').assertConsumer(this[kMessageHandlers].onRunMessage, { exclusive: true, consumerTag: '_activity-run' });
+  /** @private */
+  this[K_CONSUMING_RUN_Q] = true;
+  this.broker.getQueue('run-q').assertConsumer(this[K_MESSAGE_HANDLERS].onRunMessage, { exclusive: true, consumerTag: '_activity-run' });
 };
 
 /** @internal */
 Activity.prototype._pauseRunQ = function pauseRunQ() {
-  if (!this[kConsumingRunQ]) return;
+  if (!this[K_CONSUMING_RUN_Q]) return;
 
-  this[kConsumingRunQ] = false;
+  /** @private */
+  this[K_CONSUMING_RUN_Q] = false;
   this.broker.cancel('_activity-run');
 };
 
@@ -689,7 +710,8 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
 
   const id = this.id;
   const step = this.environment.settings.step;
-  this[kStateMessage] = message;
+  /** @private */
+  this[K_STATE_MESSAGE] = message;
 
   switch (routingKey) {
     case 'run.enter': {
@@ -697,7 +719,8 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
 
       this.status = 'entered';
       if (!isRedelivered) {
-        this[kExec].delete('execution');
+        /** @private */
+        this[K_EXEC].delete('execution');
         if (this.extensions) this.extensions.activate(cloneMessage(message));
         this._publishEvent('enter', content, { correlationId });
       }
@@ -707,7 +730,8 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
       this.logger.debug(`<${id}> discard`, isRedelivered ? 'redelivered' : '');
 
       this.status = 'discard';
-      this[kExec].delete('execution');
+      /** @private */
+      this[K_EXEC].delete('execution');
 
       if (this.extensions) this.extensions.activate(cloneMessage(message));
 
@@ -727,20 +751,22 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
       break;
     }
     case 'run.execute.passthrough': {
-      const execution = this[kExec].get('execution');
+      const execution = this[K_EXEC].get('execution');
       if (!isRedelivered && execution) {
         if (execution.completed) return message.ack();
-        this[kExecuteMessage] = message;
+        /** @private */
+        this[K_EXECUTE_MESSAGE] = message;
         return execution.passthrough(message);
       }
     }
     case 'run.execute': {
       this.status = 'executing';
-      this[kExecuteMessage] = message;
+      /** @private */
+      this[K_EXECUTE_MESSAGE] = message;
 
       if (isRedelivered && this.extensions) this.extensions.activate(cloneMessage(message));
 
-      const exec = this[kExec];
+      const exec = this[K_EXEC];
       let execution = exec.get('execution');
       if (!execution) {
         execution = new ActivityExecution(this, this.context);
@@ -749,14 +775,15 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
 
       this.broker
         .getQueue('execution-q')
-        .assertConsumer(this[kMessageHandlers].onExecutionMessage, { exclusive: true, consumerTag: '_activity-execution' });
+        .assertConsumer(this[K_MESSAGE_HANDLERS].onExecutionMessage, { exclusive: true, consumerTag: '_activity-execution' });
       return execution.execute(message);
     }
     case 'run.end': {
       this.logger.debug(`<${id}> end`, isRedelivered ? 'redelivered' : '');
       if (isRedelivered) break;
 
-      this[kCounters].taken++;
+      /** @private */
+      this[K_COUNTERS].taken++;
 
       this.status = 'end';
 
@@ -778,7 +805,8 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
     }
     case 'run.discarded': {
       this.logger.debug(`<${content.executionId} (${id})> discarded`);
-      this[kCounters].discarded++;
+      /** @private */
+      this[K_COUNTERS].discarded++;
 
       this.status = 'discarded';
       content.outbound = undefined;
@@ -824,7 +852,7 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
 
 /** @internal */
 Activity.prototype._onExecutionMessage = function onExecutionMessage(routingKey, message) {
-  const executeMessage = this[kExecuteMessage];
+  const executeMessage = this[K_EXECUTE_MESSAGE];
   const content = cloneContent({
     ...executeMessage.content,
     ...message.content,
@@ -871,7 +899,7 @@ Activity.prototype._onExecutionMessage = function onExecutionMessage(routingKey,
 /** @internal */
 Activity.prototype._ackRunExecuteMessage = function ackRunExecuteMessage() {
   if (this.environment.settings.step) return;
-  const executeMessage = this[kExecuteMessage];
+  const executeMessage = this[K_EXECUTE_MESSAGE];
   executeMessage.ack();
 };
 
@@ -904,13 +932,13 @@ Activity.prototype._doRunLeave = function doRunLeave(message, isDiscarded, onOut
 
 /** @internal */
 Activity.prototype._doOutbound = function doOutbound(fromMessage, isDiscarded, callback) {
-  const outboundSequenceFlows = this[kFlows].outboundSequenceFlows;
+  const outboundSequenceFlows = this[K_FLOWS].outboundSequenceFlows;
   if (!outboundSequenceFlows.length) return callback(null, []);
 
   const fromContent = fromMessage.content;
 
   let discardSequence = fromContent.discardSequence;
-  if (isDiscarded && !discardSequence && this[kFlags].attachedTo && fromContent.inbound?.[0]) {
+  if (isDiscarded && !discardSequence && this[K_FLAGS].attachedTo && fromContent.inbound?.[0]) {
     discardSequence = [fromContent.inbound[0].id];
   }
 
@@ -983,7 +1011,7 @@ Activity.prototype._publishRunOutbound = function publishRunOutbound(outboundFlo
 Activity.prototype._onResumeMessage = function onResumeMessage(message) {
   message.ack();
 
-  const stateMessage = this[kStateMessage];
+  const stateMessage = this[K_STATE_MESSAGE];
   const fields = stateMessage.fields;
   if (!fields.redelivered) return;
 
@@ -1016,11 +1044,12 @@ Activity.prototype._publishEvent = function publishEvent(state, content, propert
 
 /** @internal */
 Activity.prototype._onStop = function onStop(message) {
-  const running = this[kConsuming];
+  const running = this[K_CONSUMING];
 
   this.stopped = true;
 
-  this[kConsuming] = false;
+  /** @private */
+  this[K_CONSUMING] = false;
   const broker = this.broker;
   this._pauseRunQ();
   broker.cancel('_activity-api');
@@ -1037,11 +1066,11 @@ Activity.prototype._onStop = function onStop(message) {
 
 /** @internal */
 Activity.prototype._consumeApi = function consumeApi() {
-  const executionId = this[kExec].get('executionId');
+  const executionId = this[K_EXEC].get('executionId');
   if (!executionId) return;
   const broker = this.broker;
   broker.cancel('_activity-api');
-  broker.subscribeTmp('api', `activity.*.${executionId}`, this[kMessageHandlers].onApiMessage, {
+  broker.subscribeTmp('api', `activity.*.${executionId}`, this[K_MESSAGE_HANDLERS].onApiMessage, {
     noAck: true,
     consumerTag: '_activity-api',
     priority: 100,
@@ -1076,7 +1105,7 @@ Activity.prototype._createMessage = function createMessage(override) {
     ...(parent && { parent: cloneParent(parent) }),
   };
 
-  for (const [flag, value] of Object.entries(this[kFlags])) {
+  for (const [flag, value] of Object.entries(this[K_FLAGS])) {
     if (value) result[flag] = value;
   }
 
@@ -1085,7 +1114,7 @@ Activity.prototype._createMessage = function createMessage(override) {
 
 /** @internal */
 Activity.prototype._getOutboundSequenceFlowById = function getOutboundSequenceFlowById(flowId) {
-  return this[kFlows].outboundSequenceFlows.find((flow) => flow.id === flowId);
+  return this[K_FLOWS].outboundSequenceFlows.find((flow) => flow.id === flowId);
 };
 
 /** @internal */
@@ -1094,5 +1123,6 @@ Activity.prototype._deactivateRunConsumers = function _deactivateRunConsumers() 
   broker.cancel('_activity-api');
   this._pauseRunQ();
   broker.cancel('_activity-execution');
-  this[kConsuming] = false;
+  /** @private */
+  this[K_CONSUMING] = false;
 };

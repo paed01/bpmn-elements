@@ -5,28 +5,29 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = EventDefinitionExecution;
 var _messageHelper = require("../messageHelper.js");
-const kCompleted = Symbol.for('completed');
-const kExecuteMessage = Symbol.for('executeMessage');
-const kStopped = Symbol.for('stopped');
+var _constants = require("../constants.js");
 function EventDefinitionExecution(activity, eventDefinitions, completedRoutingKey = 'execute.completed') {
   this.id = activity.id;
   this.activity = activity;
   this.broker = activity.broker;
   this.eventDefinitions = eventDefinitions;
   this.completedRoutingKey = completedRoutingKey;
-  this[kCompleted] = false;
-  this[kStopped] = false;
-  this[kExecuteMessage] = null;
+  /** @private */
+  this[_constants.K_COMPLETED] = false;
+  /** @private */
+  this[_constants.K_STOPPED] = false;
+  /** @private */
+  this[_constants.K_EXECUTE_MESSAGE] = null;
 }
 Object.defineProperties(EventDefinitionExecution.prototype, {
   completed: {
     get() {
-      return this[kCompleted];
+      return this[_constants.K_COMPLETED];
     }
   },
   stopped: {
     get() {
-      return this[kStopped];
+      return this[_constants.K_STOPPED];
     }
   }
 });
@@ -35,7 +36,9 @@ EventDefinitionExecution.prototype.execute = function execute(executeMessage) {
   if (content.isDefinitionScope) return this._executeDefinition(executeMessage);
   if (!content.isRootScope) return;
   const broker = this.broker;
-  this[kExecuteMessage] = executeMessage;
+
+  /** @private */
+  this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   const executionId = content.executionId;
   broker.subscribeTmp('execution', 'execute.#', this._onExecuteMessage.bind(this), {
     noAck: true,
@@ -54,8 +57,8 @@ EventDefinitionExecution.prototype.execute = function execute(executeMessage) {
   const parent = (0, _messageHelper.unshiftParent)(content.parent, content);
   const eventDefinitions = this.eventDefinitions;
   for (let index = 0; index < eventDefinitions.length; ++index) {
-    if (this[kCompleted]) break;
-    if (this[kStopped]) break;
+    if (this[_constants.K_COMPLETED]) break;
+    if (this[_constants.K_STOPPED]) break;
     const ed = eventDefinitions[index];
     const edExecutionId = `${executionId}_${index}`;
     this._debug(executionId, `start event definition ${ed.type}, index ${index}`);
@@ -109,10 +112,11 @@ EventDefinitionExecution.prototype._complete = function complete(message) {
     index,
     parent
   } = message.content;
-  this[kCompleted] = true;
+  /** @private */
+  this[_constants.K_COMPLETED] = true;
   this._debug(executionId, `event definition ${type} completed, index ${index}`);
   const completeContent = (0, _messageHelper.cloneContent)(message.content, {
-    executionId: this[kExecuteMessage].content.executionId,
+    executionId: this[_constants.K_EXECUTE_MESSAGE].content.executionId,
     isRootScope: true,
     isDefinitionScope: undefined
   });
@@ -132,7 +136,8 @@ EventDefinitionExecution.prototype._executeDefinition = function executeDefiniti
   ed.execute(message);
 };
 EventDefinitionExecution.prototype._stop = function stop() {
-  this[kStopped] = true;
+  /** @private */
+  this[_constants.K_STOPPED] = true;
   this.broker.cancel('_eventdefinition-execution-execute-tag');
   this.broker.cancel('_eventdefinition-execution-api-tag');
 };

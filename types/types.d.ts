@@ -1,5 +1,7 @@
 import { Broker } from 'smqp';
 import { SerializableContext, SerializableElement } from 'moddle-context-serializer';
+export { Activity } from '../src/activity/Activity.js';
+import { Activity } from '../src/activity/Activity.js';
 
 import {
   ElementBroker,
@@ -413,46 +415,8 @@ export declare class MessageFormatter {
   format(message: MessageElement, callback: CallableFunction): void;
 }
 
-export declare class Activity extends Element<Activity> {
-  constructor(behaviour: IActivityBehaviour, activityDef: SerializableElement, context: ContextInstance);
-  get Behaviour(): IActivityBehaviour;
-  get stopped(): boolean;
-  get status(): ActivityRunStatus | undefined;
-  get context(): ContextInstance;
-  get counters(): { taken: number; discarded: number };
-  get execution(): ActivityExecution;
-  get executionId(): string;
-  get extensions(): IExtension;
-  get isRunning(): boolean;
-  get outbound(): SequenceFlow[];
-  get inbound(): SequenceFlow[];
-  get isEnd(): boolean;
-  get isStart(): boolean;
-  get isSubProcess(): boolean;
-  get isMultiInstance(): boolean;
-  get isThrowing(): boolean;
-  get isForCompensation(): boolean;
-  get isParallelJoin(): boolean;
-  get triggeredByEvent(): boolean;
-  get attachedTo(): Activity;
-  get eventDefinitions(): EventDefinition[];
-  get formatter(): MessageFormatter;
-  /** Parent element process or sub process reference */
-  get parentElement(): Process | Activity;
-  activate(): void;
-  deactivate(): void;
-  init(initContent?: any): void;
-  run(runContent?: any): void;
-  discard(discardContent?: any): void;
-  next(): ElementBrokerMessage;
-  shake(): void;
-  evaluateOutbound(
-    fromMessage: ElementBrokerMessage,
-    discardRestAtTake: boolean,
-    callback: (err: Error, evaluationResult: any) => void
-  ): void;
-  getState(): ActivityState | undefined;
-}
+// Activity is generated from JSDoc in src/activity/Activity.js. Re-exporting keeps
+// existing `import('types').Activity` JSDoc references resolving.
 
 export declare class ActivityError extends Error {
   type: string;

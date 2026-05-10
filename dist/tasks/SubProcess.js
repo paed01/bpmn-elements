@@ -9,8 +9,8 @@ var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
 var _ProcessExecution = _interopRequireDefault(require("../process/ProcessExecution.js"));
 var _messageHelper = require("../messageHelper.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-const kExecutions = Symbol.for('executions');
-const kOnExecutionCompleted = Symbol.for('execution completed handler');
+const K_EXECUTIONS = Symbol.for('executions');
+const K_ON_EXECUTION_COMPLETED = Symbol.for('execution completed handler');
 function SubProcess(activityDef, context) {
   const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
   const subProcess = new _Activity.default(SubProcessBehaviour, {
@@ -54,18 +54,21 @@ function SubProcessBehaviour(activity, context) {
   this.environment = activity.environment;
   this.broker = activity.broker;
   this.executionId = undefined;
-  this[kExecutions] = new Set();
-  this[kOnExecutionCompleted] = this._onExecutionCompleted.bind(this);
+
+  /** @private */
+  this[K_EXECUTIONS] = new Set();
+  /** @private */
+  this[K_ON_EXECUTION_COMPLETED] = this._onExecutionCompleted.bind(this);
 }
 Object.defineProperties(SubProcessBehaviour.prototype, {
   execution: {
     get() {
-      return [...this[kExecutions]][0];
+      return [...this[K_EXECUTIONS]][0];
     }
   },
   executions: {
     get() {
-      return [...this[kExecutions]];
+      return [...this[K_EXECUTIONS]];
     }
   }
 });
@@ -86,7 +89,7 @@ SubProcessBehaviour.prototype.execute = function execute(executeMessage) {
 };
 SubProcessBehaviour.prototype.getState = function getState() {
   const states = [];
-  for (const pe of this[kExecutions]) {
+  for (const pe of this[K_EXECUTIONS]) {
     const state = pe.getState();
     state.environment = pe.environment.getState();
     states.push(state);
@@ -100,7 +103,7 @@ SubProcessBehaviour.prototype.getState = function getState() {
 };
 SubProcessBehaviour.prototype.recover = function recover(state) {
   if (!state) return;
-  const executions = this[kExecutions];
+  const executions = this[K_EXECUTIONS];
   const loopCharacteristics = this.loopCharacteristics;
   if (loopCharacteristics && state.executions) {
     executions.clear();
@@ -120,7 +123,7 @@ SubProcessBehaviour.prototype.recover = function recover(state) {
 };
 SubProcessBehaviour.prototype.getPostponed = function getPostponed() {
   let postponed = [];
-  for (const pe of this[kExecutions]) {
+  for (const pe of this[K_EXECUTIONS]) {
     postponed = postponed.concat(pe.getPostponed());
   }
   return postponed;
@@ -136,12 +139,13 @@ SubProcessBehaviour.prototype._upsertExecution = function upsertExecution(execut
   const subEnvironment = this.environment.clone();
   const subContext = this.context.clone(subEnvironment, this.activity);
   execution = new _ProcessExecution.default(this.activity, subContext);
-  this[kExecutions].add(execution);
+  /** @private */
+  this[K_EXECUTIONS].add(execution);
   this._addListeners(executionId);
   return execution;
 };
 SubProcessBehaviour.prototype._addListeners = function addListeners(executionId) {
-  this.broker.subscribeTmp('subprocess-execution', `execution.#.${executionId}`, this[kOnExecutionCompleted], {
+  this.broker.subscribeTmp('subprocess-execution', `execution.#.${executionId}`, this[K_ON_EXECUTION_COMPLETED], {
     noAck: true,
     consumerTag: `_sub-process-execution-${executionId}`
   });
@@ -177,7 +181,8 @@ SubProcessBehaviour.prototype._onExecutionCompleted = function onExecutionComple
 SubProcessBehaviour.prototype._completeExecution = function completeExecution(completeRoutingKey, content) {
   if (this.loopCharacteristics) {
     const execution = this._getExecutionById(content.executionId);
-    this[kExecutions].delete(execution);
+    /** @private */
+    this[K_EXECUTIONS].delete(execution);
   }
   this.broker.publish('execution', completeRoutingKey, (0, _messageHelper.cloneContent)(content));
 };
@@ -194,7 +199,7 @@ SubProcessBehaviour.prototype.getApi = function getApi(apiMessage) {
   }
 };
 SubProcessBehaviour.prototype._getExecutionById = function getExecutionById(executionId) {
-  for (const pe of this[kExecutions]) {
+  for (const pe of this[K_EXECUTIONS]) {
     if (pe.executionId === executionId) return pe;
   }
 };

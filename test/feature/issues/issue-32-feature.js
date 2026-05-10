@@ -1,4 +1,4 @@
-import { Definition } from '../../../src/index.js';
+import { Definition } from 'bpmn-elements';
 import testHelpers from '../../helpers/testHelpers.js';
 
 const source1 = `

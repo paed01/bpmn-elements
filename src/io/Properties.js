@@ -1,13 +1,13 @@
 import getPropertyValue from '../getPropertyValue.js';
+import { K_CONSUMING } from '../constants.js';
 
-const kProperties = Symbol.for('properties');
-const kConsuming = Symbol.for('consuming');
+const K_PROPERTIES = Symbol.for('properties');
 
 export default function Properties(activity, propertiesDef, context) {
   this.activity = activity;
   this.broker = activity.broker;
 
-  const props = (this[kProperties] = {
+  const props = (this[K_PROPERTIES] = {
     properties: new Set(),
     dataInputObjects: new Set(),
     dataOutputObjects: new Set(),
@@ -58,7 +58,7 @@ export default function Properties(activity, propertiesDef, context) {
 }
 
 Properties.prototype.activate = function activate(message) {
-  if (this[kConsuming]) return;
+  if (this[K_CONSUMING]) return;
   if (message.fields.redelivered && message.fields.routingKey === 'run.start') {
     this._onActivityEvent('activity.enter', message);
   }
@@ -67,11 +67,12 @@ Properties.prototype.activate = function activate(message) {
     this._onActivityEvent('activity.extension.resume', message);
   }
 
-  this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), { noAck: true });
+  /** @private */
+  this[K_CONSUMING] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), { noAck: true });
 };
 
 Properties.prototype.deactivate = function deactivate() {
-  if (this[kConsuming]) this[kConsuming] = this[kConsuming].cancel();
+  if (this[K_CONSUMING]) this[K_CONSUMING] = this[K_CONSUMING].cancel();
 };
 
 Properties.prototype._onActivityEvent = function onActivityEvent(routingKey, message) {
@@ -87,7 +88,7 @@ Properties.prototype._onActivityEvent = function onActivityEvent(routingKey, mes
 Properties.prototype._formatOnEnter = function formatOnEnter(message) {
   const startRoutingKey = 'run.enter.bpmn-properties';
 
-  const dataInputObjects = this[kProperties].dataInputObjects;
+  const dataInputObjects = this[K_PROPERTIES].dataInputObjects;
   const broker = this.broker;
   if (!dataInputObjects.size) {
     return broker.getQueue('format-run-q').queueMessage(
@@ -120,7 +121,7 @@ Properties.prototype._formatOnComplete = function formatOnComplete(message) {
   const messageOutput = getPropertyValue(message, 'content.output.properties') || {};
   const outputProperties = this._getProperties(message, messageOutput);
 
-  const dataOutputObjects = this[kProperties].dataOutputObjects;
+  const dataOutputObjects = this[K_PROPERTIES].dataOutputObjects;
   const broker = this.broker;
   if (!dataOutputObjects.size) {
     return broker.getQueue('format-run-q').queueMessage(
@@ -154,7 +155,7 @@ Properties.prototype._getProperties = function getProperties(message, values) {
     response = { ...message.content.properties };
   }
 
-  for (const { id, type, name } of this[kProperties].properties) {
+  for (const { id, type, name } of this[K_PROPERTIES].properties) {
     if (!(id in response)) {
       response[id] = { id, type, name };
     }

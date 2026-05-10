@@ -8,12 +8,14 @@ var _messageHelper = require("./messageHelper.js");
 var _shared = require("./shared.js");
 var _Errors = require("./error/Errors.js");
 var _smqp = require("smqp");
-const kOnMessage = Symbol.for('onMessage');
-const kExecution = Symbol.for('execution');
+var _constants = require("./constants.js");
+const K_ON_MESSAGE = Symbol.for('onMessage');
 const EXEC_ROUTING_KEY = 'run._formatting.exec';
 
 /**
- * Message formatter used to enrich an element run message before continuing to the next run message
+ * Enriches an element run message via async format start/end messages on the `format` exchange
+ * before the run message is continued. Handlers publish enrichment by responding to a start
+ * message with a matching end (or error) routing key.
  * @param {import('types').ElementBase} element
  */
 function Formatter(element) {
@@ -25,13 +27,15 @@ function Formatter(element) {
   this.id = id;
   this.broker = broker;
   this.logger = logger;
-  this[kOnMessage] = this._onMessage.bind(this);
+  /** @private */
+  this[K_ON_MESSAGE] = this._onMessage.bind(this);
 }
 
 /**
- * Format message
+ * Format the given run message. Callback fires with `(err, content, formatted)` once
+ * formatting completes; `formatted` is true when content was actually enriched.
  * @param {import('types').ElementBrokerMessage} message
- * @param {CallableFunction} callback
+ * @param {(err: Error | null, content?: import('types').ElementMessageContent, formatted?: boolean) => void} callback
  */
 Formatter.prototype.format = function format(message, callback) {
   const correlationId = this._runId = (0, _shared.getUniqueId)(message.fields.routingKey);
@@ -41,7 +45,9 @@ Formatter.prototype.format = function format(message, callback) {
     correlationId,
     persistent: false
   });
-  this[kExecution] = {
+
+  /** @private */
+  this[_constants.K_EXECUTION] = {
     correlationId,
     formatKey: message.fields.routingKey,
     runMessage: (0, _messageHelper.cloneMessage)(message),
@@ -50,18 +56,20 @@ Formatter.prototype.format = function format(message, callback) {
     formatted: false,
     executeMessage: null
   };
-  broker.consume('format-run-q', this[kOnMessage], {
+  broker.consume('format-run-q', this[K_ON_MESSAGE], {
     consumerTag,
     prefetch: 100
   });
 };
+
+/** @internal */
 Formatter.prototype._onMessage = function onMessage(routingKey, message) {
   const {
     formatKey,
     correlationId,
     pending,
     executeMessage
-  } = this[kExecution];
+  } = this[_constants.K_EXECUTION];
   const asyncFormatting = pending.size;
   if (routingKey === EXEC_ROUTING_KEY) {
     if (message.properties.correlationId !== correlationId) return message.ack();
@@ -69,7 +77,8 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
     if (!asyncFormatting) {
       return this._complete(message);
     }
-    this[kExecution].executeMessage = message;
+    /** @private */
+    this[_constants.K_EXECUTION].executeMessage = message;
   } else {
     message.ack();
     const endRoutingKey = message.content?.endRoutingKey;
@@ -91,6 +100,8 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
     }
   }
 };
+
+/** @internal */
 Formatter.prototype._complete = function complete(message, isError) {
   const {
     runMessage,
@@ -98,8 +109,9 @@ Formatter.prototype._complete = function complete(message, isError) {
     callback,
     formatted,
     executeMessage
-  } = this[kExecution];
-  this[kExecution] = null;
+  } = this[_constants.K_EXECUTION];
+  /** @private */
+  this[_constants.K_EXECUTION] = null;
   if (executeMessage) executeMessage.ack();
   this.broker.cancel(message.fields.consumerTag);
   if (isError) {
@@ -110,8 +122,10 @@ Formatter.prototype._complete = function complete(message, isError) {
   }
   return callback(null, runMessage.content, formatted);
 };
+
+/** @internal */
 Formatter.prototype._enrich = function enrich(withContent) {
-  const content = this[kExecution].runMessage.content;
+  const content = this[_constants.K_EXECUTION].runMessage.content;
   for (const key in withContent) {
     switch (key) {
       case 'id':
@@ -129,11 +143,14 @@ Formatter.prototype._enrich = function enrich(withContent) {
       default:
         {
           content[key] = withContent[key];
-          this[kExecution].formatted = true;
+          /** @private */
+          this[_constants.K_EXECUTION].formatted = true;
         }
     }
   }
 };
+
+/** @internal */
 Formatter.prototype._popFormatStart = function popFormattingStart(pending, routingKey) {
   for (const msg of pending) {
     const {
@@ -156,6 +173,8 @@ Formatter.prototype._popFormatStart = function popFormattingStart(pending, routi
   }
   return {};
 };
+
+/** @internal */
 Formatter.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.id}> ${msg}`);
 };

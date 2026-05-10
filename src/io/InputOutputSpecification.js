@@ -1,7 +1,6 @@
 import getPropertyValue from '../getPropertyValue.js';
 import { brokerSafeId } from '../shared.js';
-
-const kConsuming = Symbol.for('consuming');
+import { K_CONSUMING } from '../constants.js';
 
 export default function IoSpecification(activity, ioSpecificationDef, context) {
   const { id, type = 'iospecification', behaviour = {} } = ioSpecificationDef;
@@ -14,18 +13,19 @@ export default function IoSpecification(activity, ioSpecificationDef, context) {
 }
 
 IoSpecification.prototype.activate = function activate(message) {
-  if (this[kConsuming]) return;
+  if (this[K_CONSUMING]) return;
   if (message?.fields.redelivered && message.fields.routingKey === 'run.start') {
     this._onFormatEnter();
   }
   if (message?.fields.redelivered && message.fields.routingKey === 'run.end') {
     this._onFormatComplete(message);
   }
-  this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), { noAck: true });
+  /** @private */
+  this[K_CONSUMING] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), { noAck: true });
 };
 
 IoSpecification.prototype.deactivate = function deactivate() {
-  if (this[kConsuming]) this[kConsuming] = this[kConsuming].cancel();
+  if (this[K_CONSUMING]) this[K_CONSUMING] = this[K_CONSUMING].cancel();
 };
 
 IoSpecification.prototype._onActivityEvent = function onActivityEvent(routingKey, message) {

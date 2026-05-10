@@ -1,4 +1,4 @@
-import { Definition, SequenceFlow } from '../../../src/index.js';
+import { Definition, SequenceFlow } from 'bpmn-elements';
 import testHelpers from '../../helpers/testHelpers.js';
 
 const source = `

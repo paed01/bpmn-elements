@@ -7,12 +7,8 @@ exports.default = MessageEventDefinition;
 var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue.js"));
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
+var _constants = require("../constants.js");
 function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-const kCompleted = Symbol.for('completed');
-const kMessageQ = Symbol.for('messageQ');
-const kExecuteMessage = Symbol.for('executeMessage');
-const kReferenceElement = Symbol.for('referenceElement');
-const kReferenceInfo = Symbol.for('referenceInfo');
 function MessageEventDefinition(activity, eventDefinition) {
   const {
     id,
@@ -35,12 +31,14 @@ function MessageEventDefinition(activity, eventDefinition) {
   this.activity = activity;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
-  const referenceElement = this[kReferenceElement] = reference.id && activity.getActivityById(reference.id);
+  const referenceElement = this[_constants.K_REFERENCE_ELEMENT] = reference.id && activity.getActivityById(reference.id);
   if (!isThrowing) {
-    this[kCompleted] = false;
+    /** @private */
+    this[_constants.K_COMPLETED] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${reference.referenceType}-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(referenceId)}-q`;
-    this[kMessageQ] = broker.assertQueue(messageQueueName, {
+    /** @private */
+    this[_constants.K_MESSAGE_Q] = broker.assertQueue(messageQueueName, {
       autoDelete: false,
       durable: true
     });
@@ -51,30 +49,33 @@ function MessageEventDefinition(activity, eventDefinition) {
 }
 Object.defineProperty(MessageEventDefinition.prototype, 'executionId', {
   get() {
-    return this[kExecuteMessage]?.content.executionId;
+    return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }
 });
 MessageEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 MessageEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  this[kExecuteMessage] = executeMessage;
-  this[kCompleted] = false;
+  /** @private */
+  this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
+  /** @private */
+  this[_constants.K_COMPLETED] = false;
   const executeContent = executeMessage.content;
   const {
     executionId,
     parent
   } = executeContent;
   const parentExecutionId = parent?.executionId;
-  const info = this[kReferenceInfo] = this._getReferenceInfo(executeMessage);
+  const info = this[_constants.K_REFERENCE_INFO] = this._getReferenceInfo(executeMessage);
   this._debug(`expect ${info.description}`);
   const broker = this.broker;
   const onCatchMessage = this._onCatchMessage.bind(this);
-  this[kMessageQ].consume(onCatchMessage, {
+  /** @private */
+  this[_constants.K_MESSAGE_Q].consume(onCatchMessage, {
     noAck: true,
     consumerTag: `_api-message-${executionId}`
   });
-  if (this[kCompleted]) return;
+  if (this[_constants.K_COMPLETED]) return;
   const onApiMessage = this._onApiMessage.bind(this);
   broker.subscribeTmp('api', `activity.#.${executionId}`, onApiMessage, {
     noAck: true,
@@ -124,12 +125,12 @@ MessageEventDefinition.prototype.executeThrow = function executeThrow(executeMes
   return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
 MessageEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
-  if ((0, _getPropertyValue.default)(message, 'content.message.id') !== this[kReferenceInfo].message.id) return;
+  if ((0, _getPropertyValue.default)(message, 'content.message.id') !== this[_constants.K_REFERENCE_INFO].message.id) return;
   const {
     type,
     correlationId
   } = message.properties;
-  this.broker.publish('event', 'activity.consumed', (0, _messageHelper.cloneContent)(this[kExecuteMessage].content, {
+  this.broker.publish('event', 'activity.consumed', (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content, {
     message: {
       ...message.content.message
     }
@@ -156,9 +157,10 @@ MessageEventDefinition.prototype._onApiMessage = function onApiMessage(routingKe
       }
     case 'discard':
       {
-        this[kCompleted] = true;
+        /** @private */
+        this[_constants.K_COMPLETED] = true;
         this._stop();
-        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[kExecuteMessage].content), {
+        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content), {
           correlationId
         });
       }
@@ -169,11 +171,12 @@ MessageEventDefinition.prototype._onApiMessage = function onApiMessage(routingKe
   }
 };
 MessageEventDefinition.prototype._complete = function complete(verb, output, options) {
-  this[kCompleted] = true;
+  /** @private */
+  this[_constants.K_COMPLETED] = true;
   this._stop();
-  this._debug(`${verb} ${this[kReferenceInfo].description}`);
+  this._debug(`${verb} ${this[_constants.K_REFERENCE_INFO].description}`);
   const broker = this.broker;
-  const executeContent = this[kExecuteMessage].content;
+  const executeContent = this[_constants.K_EXECUTE_MESSAGE].content;
   const catchContent = (0, _messageHelper.cloneContent)(executeContent, {
     message: {
       ...output
@@ -196,10 +199,11 @@ MessageEventDefinition.prototype._stop = function stop() {
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_api-parent-${executionId}`);
   broker.cancel(`_api-delegated-${executionId}`);
-  this[kMessageQ].purge();
+  /** @private */
+  this[_constants.K_MESSAGE_Q].purge();
 };
 MessageEventDefinition.prototype._getReferenceInfo = function getReferenceInfo(message) {
-  const referenceElement = this[kReferenceElement];
+  const referenceElement = this[_constants.K_REFERENCE_ELEMENT];
   if (!referenceElement) {
     return {
       message: {

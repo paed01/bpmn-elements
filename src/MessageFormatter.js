@@ -2,9 +2,9 @@ import { cloneMessage } from './messageHelper.js';
 import { getUniqueId } from './shared.js';
 import { ActivityError } from './error/Errors.js';
 import { getRoutingKeyPattern } from 'smqp';
+import { K_EXECUTION } from './constants.js';
 
-const kOnMessage = Symbol.for('onMessage');
-const kExecution = Symbol.for('execution');
+const K_ON_MESSAGE = Symbol.for('onMessage');
 
 const EXEC_ROUTING_KEY = 'run._formatting.exec';
 
@@ -19,7 +19,8 @@ export function Formatter(element) {
   this.id = id;
   this.broker = broker;
   this.logger = logger;
-  this[kOnMessage] = this._onMessage.bind(this);
+  /** @private */
+  this[K_ON_MESSAGE] = this._onMessage.bind(this);
 }
 
 /**
@@ -35,7 +36,8 @@ Formatter.prototype.format = function format(message, callback) {
 
   broker.publish('format', EXEC_ROUTING_KEY, {}, { correlationId, persistent: false });
 
-  this[kExecution] = {
+  /** @private */
+  this[K_EXECUTION] = {
     correlationId,
     formatKey: message.fields.routingKey,
     runMessage: cloneMessage(message),
@@ -45,7 +47,7 @@ Formatter.prototype.format = function format(message, callback) {
     executeMessage: null,
   };
 
-  broker.consume('format-run-q', this[kOnMessage], {
+  broker.consume('format-run-q', this[K_ON_MESSAGE], {
     consumerTag,
     prefetch: 100,
   });
@@ -53,7 +55,7 @@ Formatter.prototype.format = function format(message, callback) {
 
 /** @internal */
 Formatter.prototype._onMessage = function onMessage(routingKey, message) {
-  const { formatKey, correlationId, pending, executeMessage } = this[kExecution];
+  const { formatKey, correlationId, pending, executeMessage } = this[K_EXECUTION];
   const asyncFormatting = pending.size;
 
   if (routingKey === EXEC_ROUTING_KEY) {
@@ -62,7 +64,8 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
     if (!asyncFormatting) {
       return this._complete(message);
     }
-    this[kExecution].executeMessage = message;
+    /** @private */
+    this[K_EXECUTION].executeMessage = message;
   } else {
     message.ack();
 
@@ -93,8 +96,9 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
 
 /** @internal */
 Formatter.prototype._complete = function complete(message, isError) {
-  const { runMessage, formatKey, callback, formatted, executeMessage } = this[kExecution];
-  this[kExecution] = null;
+  const { runMessage, formatKey, callback, formatted, executeMessage } = this[K_EXECUTION];
+  /** @private */
+  this[K_EXECUTION] = null;
   if (executeMessage) executeMessage.ack();
 
   this.broker.cancel(message.fields.consumerTag);
@@ -111,7 +115,7 @@ Formatter.prototype._complete = function complete(message, isError) {
 
 /** @internal */
 Formatter.prototype._enrich = function enrich(withContent) {
-  const content = this[kExecution].runMessage.content;
+  const content = this[K_EXECUTION].runMessage.content;
   for (const key in withContent) {
     switch (key) {
       case 'id':
@@ -128,7 +132,8 @@ Formatter.prototype._enrich = function enrich(withContent) {
         break;
       default: {
         content[key] = withContent[key];
-        this[kExecution].formatted = true;
+        /** @private */
+        this[K_EXECUTION].formatted = true;
       }
     }
   }

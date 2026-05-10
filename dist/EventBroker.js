@@ -10,10 +10,19 @@ exports.MessageFlowBroker = MessageFlowBroker;
 exports.ProcessBroker = ProcessBroker;
 var _smqp = require("smqp");
 var _Errors = require("./error/Errors.js");
+/**
+ * Build the broker for an activity, including run/format/execution/api exchanges and queues.
+ * @param {import('types').Activity} activity
+ */
 function ActivityBroker(activity) {
   const executionBroker = ExecutionBroker(activity, 'activity');
   return executionBroker;
 }
+
+/**
+ * Build the broker for a process, with an additional api-q bound to all api routing keys.
+ * @param {import('types').Process} owner
+ */
 function ProcessBroker(owner) {
   const executionBroker = ExecutionBroker(owner, 'process');
   executionBroker.broker.assertQueue('api-q', {
@@ -23,9 +32,20 @@ function ProcessBroker(owner) {
   executionBroker.broker.bindQueue('api-q', 'api', '#');
   return executionBroker;
 }
+
+/**
+ * Build the broker for a definition. Optionally registers a custom return-message handler.
+ * @param {import('types').Definition} owner
+ * @param {(message: import('types').ElementBrokerMessage) => void} [onBrokerReturn]
+ */
 function DefinitionBroker(owner, onBrokerReturn) {
   return ExecutionBroker(owner, 'definition', onBrokerReturn);
 }
+
+/**
+ * Build the broker for a message flow with a durable message exchange and message-q.
+ * @param {import('types').MessageFlow} owner
+ */
 function MessageFlowBroker(owner) {
   const eventBroker = new EventBroker(owner, {
     prefix: 'messageflow',
@@ -85,6 +105,13 @@ function ExecutionBroker(brokerOwner, prefix, onBrokerReturn) {
   broker.bindQueue(executionQ.name, 'execution', 'execution.#');
   return eventBroker;
 }
+
+/**
+ * Owns an smqp Broker on behalf of the calling element and exposes prefixed event helpers.
+ * @param {any} brokerOwner Element that owns the broker, accessed as `broker.owner`
+ * @param {{ prefix: string, autoDelete?: boolean, durable?: boolean }} options
+ * @param {(message: import('types').ElementBrokerMessage) => void} [onBrokerReturn] Override for unrouted return messages
+ */
 function EventBroker(brokerOwner, options, onBrokerReturn) {
   this.options = options;
   this.eventPrefix = options.prefix;
@@ -97,6 +124,14 @@ function EventBroker(brokerOwner, options, onBrokerReturn) {
   this.emit = this.emit.bind(this);
   this.emitFatal = this.emitFatal.bind(this);
 }
+
+/**
+ * Subscribe to a prefixed event. Errors are unwrapped via `makeErrorFromMessage`,
+ * other events resolve to the owner's Api wrapper.
+ * @param {string} eventName Bare name (e.g. `enter`) or a full routing key
+ * @param {CallableFunction} callback
+ * @param {{ once?: boolean, [x: string]: any }} [eventOptions]
+ */
 EventBroker.prototype.on = function on(eventName, callback, eventOptions = {
   once: false
 }) {
@@ -111,12 +146,26 @@ EventBroker.prototype.on = function on(eventName, callback, eventOptions = {
     callback(owner.getApi(message));
   }
 };
+
+/**
+ * Subscribe to the next occurrence of an event.
+ * @param {string} eventName
+ * @param {CallableFunction} callback
+ * @param {any} [eventOptions]
+ */
 EventBroker.prototype.once = function once(eventName, callback, eventOptions) {
   return this.on(eventName, callback, {
     ...eventOptions,
     once: true
   });
 };
+
+/**
+ * Promise-style wait for an event. Rejects on a mandatory `*.error` message.
+ * @param {string} eventName
+ * @param {(routingKey: string, message: import('types').ElementBrokerMessage, owner: any) => boolean | undefined} [onMessage]
+ *   Filter; the promise only resolves when it returns truthy
+ */
 EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
   const key = this._getEventRoutingKey(eventName);
   return new Promise((resolve, reject) => {
@@ -142,6 +191,13 @@ EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
     }
   });
 };
+
+/**
+ * Publish a prefixed event message.
+ * @param {string} eventName
+ * @param {Record<string, any>} [content]
+ * @param {any} [props]
+ */
 EventBroker.prototype.emit = function emit(eventName, content, props) {
   this.broker.publish('event', `${this.eventPrefix}.${eventName}`, {
     ...content
@@ -150,6 +206,12 @@ EventBroker.prototype.emit = function emit(eventName, content, props) {
     ...props
   });
 };
+
+/**
+ * Emit a mandatory error event. Surfaces via `on('error', ...)` or causes a return message to throw.
+ * @param {Error} error
+ * @param {Record<string, any>} [content]
+ */
 EventBroker.prototype.emitFatal = function emitFatal(error, content) {
   this.emit('error', {
     ...content,
@@ -158,12 +220,16 @@ EventBroker.prototype.emitFatal = function emitFatal(error, content) {
     mandatory: true
   });
 };
+
+/** @internal */
 EventBroker.prototype._onBrokerReturnFn = function onBrokerReturnFn(message) {
   if (message.properties.type === 'error') {
     const err = (0, _Errors.makeErrorFromMessage)(message);
     throw err;
   }
 };
+
+/** @internal */
 EventBroker.prototype._getEventRoutingKey = function getEventRoutingKey(eventName) {
   if (eventName.indexOf('.') > -1) return eventName;
   switch (eventName) {

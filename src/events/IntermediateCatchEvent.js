@@ -1,8 +1,7 @@
 import Activity from '../activity/Activity.js';
 import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution.js';
 import { cloneContent } from '../messageHelper.js';
-
-const kExecution = Symbol.for('execution');
+import { K_EXECUTION } from '../constants.js';
 
 export default function IntermediateCatchEvent(activityDef, context) {
   return new Activity(IntermediateCatchEventBehaviour, { ...activityDef, isCatching: true }, context);
@@ -12,11 +11,12 @@ export function IntermediateCatchEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
   this.broker = activity.broker;
-  this[kExecution] = activity.eventDefinitions && new EventDefinitionExecution(activity, activity.eventDefinitions);
+  /** @private */
+  this[K_EXECUTION] = activity.eventDefinitions && new EventDefinitionExecution(activity, activity.eventDefinitions);
 }
 
 IntermediateCatchEventBehaviour.prototype.execute = function execute(executeMessage) {
-  const execution = this[kExecution];
+  const execution = this[K_EXECUTION];
   if (execution) {
     return execution.execute(executeMessage);
   }
