@@ -1,9 +1,10 @@
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 
 Feature('Activity', () => {
   Scenario('When a task is discarded by multiple flows', () => {
+    /** @type {Definition} */
     let definition;
 
     Given('a process with several decisions all ending up in one manual task', async () => {

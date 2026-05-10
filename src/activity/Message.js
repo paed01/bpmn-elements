@@ -1,4 +1,4 @@
-export default function Message(messageDef, context) {
+export function Message(messageDef, context) {
   const { id, type, name, parent: originalParent } = messageDef;
   const { environment } = context;
   const parent = { ...originalParent };

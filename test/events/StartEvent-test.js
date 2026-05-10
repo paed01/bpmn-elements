@@ -1,6 +1,6 @@
 import JsExtension from '../resources/extensions/JsExtension.js';
-import MessageEventDefinition from '../../src/eventDefinitions/MessageEventDefinition.js';
-import StartEvent from '../../src/events/StartEvent.js';
+import { MessageEventDefinition } from '../../src/eventDefinitions/MessageEventDefinition.js';
+import { StartEvent } from '../../src/events/StartEvent.js';
 import testHelpers from '../helpers/testHelpers.js';
 
 describe('StartEvent', () => {

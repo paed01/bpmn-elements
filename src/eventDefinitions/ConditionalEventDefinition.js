@@ -3,7 +3,7 @@ import { ActivityError } from '../error/Errors.js';
 import { ScriptCondition, ExpressionCondition } from '../condition.js';
 import { K_EXECUTE_MESSAGE } from '../constants.js';
 
-export default function ConditionalEventDefinition(activity, eventDefinition, _context, index) {
+export function ConditionalEventDefinition(activity, eventDefinition, _context, index) {
   const { id, broker, environment } = activity;
 
   const { type = 'ConditionalEventDefinition', behaviour = {} } = eventDefinition;

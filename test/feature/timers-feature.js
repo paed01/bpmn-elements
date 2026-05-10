@@ -1,12 +1,9 @@
 import * as ck from 'chronokinesis';
-import Definition from '../../src/definition/Definition.js';
+import { Definition, RunError, TimerEventDefinition } from 'bpmn-elements';
 import testHelpers from '../helpers/testHelpers.js';
 import factory from '../helpers/factory.js';
 import CamundaExtension from '../resources/extensions/CamundaExtension.js';
 import { resolveExpression } from '@aircall/expression-parser';
-import { RunError } from '../../src/error/Errors.js';
-import TimerEventDefinition from '../../src/eventDefinitions/TimerEventDefinition.js';
-
 const extensions = {
   camunda: CamundaExtension,
 };

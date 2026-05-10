@@ -1,5 +1,5 @@
-import Environment from '../../src/Environment.js';
-import DefinitionExecution from '../../src/definition/DefinitionExecution.js';
+import { Environment } from '../../src/Environment.js';
+import { DefinitionExecution } from '../../src/definition/DefinitionExecution.js';
 import testHelpers from '../helpers/testHelpers.js';
 import { DefinitionBroker, ProcessBroker } from '../../src/EventBroker.js';
 

@@ -1,6 +1,6 @@
 import { cloneContent, shiftParent } from '../messageHelper.js';
 
-export default function TerminateEventDefinition(activity, eventDefinition) {
+export function TerminateEventDefinition(activity, eventDefinition) {
   const { id, broker, environment } = activity;
   const { type = 'TerminateEventDefinition' } = eventDefinition;
 

@@ -5,15 +5,13 @@ import { K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_HANDLERS } from '../constants
 const K_EXECUTE_Q = Symbol.for('executeQ');
 const K_POSTPONED = Symbol.for('postponed');
 
-export default ActivityExecution;
-
 /**
  * Per-run execution orchestrator for an Activity. Instantiates the element-specific behaviour
  * and drives the execute message flow over the activity broker.
  * @param {import('types').Activity} activity
  * @param {import('types').ContextInstance} context
  */
-function ActivityExecution(activity, context) {
+export function ActivityExecution(activity, context) {
   this.activity = activity;
   this.context = context;
   this.id = activity.id;

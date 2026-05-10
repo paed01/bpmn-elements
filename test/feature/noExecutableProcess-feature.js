@@ -1,7 +1,6 @@
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
-import Definition from '../../src/definition/Definition.js';
-
+import { Definition } from 'bpmn-elements';
 const extensions = {
   camunda: {
     moddleOptions: testHelpers.camundaBpmnModdle,

@@ -2,8 +2,8 @@ import fs from 'fs';
 import Debug from 'debug';
 import * as types from 'bpmn-elements';
 import BpmnModdle from 'bpmn-moddle';
-import Context from '../../src/Context.js';
-import Environment from '../../src/Environment.js';
+import { Context } from '../../src/Context.js';
+import { Environment } from '../../src/Environment.js';
 import { Serializer, TypeResolver } from 'moddle-context-serializer';
 import { Scripts } from './JavaScripts.js';
 

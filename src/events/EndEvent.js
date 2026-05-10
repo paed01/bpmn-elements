@@ -1,9 +1,9 @@
-import Activity from '../activity/Activity.js';
-import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution.js';
+import { Activity } from '../activity/Activity.js';
+import { EventDefinitionExecution } from '../eventDefinitions/EventDefinitionExecution.js';
 import { cloneContent } from '../messageHelper.js';
 import { K_EXECUTION } from '../constants.js';
 
-export default function EndEvent(activityDef, context) {
+export function EndEvent(activityDef, context) {
   return new Activity(EndEventBehaviour, { ...activityDef, isThrowing: true }, context);
 }
 

@@ -1,4 +1,4 @@
-export default function BpmnIO(activity, context) {
+export function BpmnIO(activity, context) {
   this.activity = activity;
   this.context = context;
   this.type = 'bpmnio';

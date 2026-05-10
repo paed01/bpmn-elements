@@ -1,5 +1,5 @@
-import Activity from '../src/activity/Activity.js';
-import Context from '../src/Context.js';
+import { Activity } from '../src/activity/Activity.js';
+import { Context } from '../src/Context.js';
 import factory from './helpers/factory.js';
 import testHelpers from './helpers/testHelpers.js';
 

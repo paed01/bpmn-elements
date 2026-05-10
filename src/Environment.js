@@ -1,4 +1,4 @@
-import Expressions from './Expressions.js';
+import { Expressions } from './Expressions.js';
 import { Scripts } from './Scripts.js';
 import { Timers } from './Timers.js';
 
@@ -12,7 +12,7 @@ const defaultOptions = new Set(['expressions', 'extensions', 'Logger', 'output',
  * expressions, Logger factory, and settings such as `batchSize`. Cloned and merged per Definition.
  * @param {import('types').EnvironmentOptions} [options]
  */
-export default function Environment(options = {}) {
+export function Environment(options = {}) {
   this.options = validateOptions(options);
 
   this.expressions = options.expressions || Expressions();

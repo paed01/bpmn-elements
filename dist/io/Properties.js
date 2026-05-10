@@ -3,10 +3,9 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Properties;
-var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue.js"));
+exports.Properties = Properties;
+var _getPropertyValue = require("../getPropertyValue.js");
 var _constants = require("../constants.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const K_PROPERTIES = Symbol.for('properties');
 function Properties(activity, propertiesDef, context) {
   this.activity = activity;
@@ -26,10 +25,10 @@ function Properties(activity, propertiesDef, context) {
       name: def.behaviour?.name
     };
     props.properties.add(source);
-    const inputDataObjectId = (0, _getPropertyValue.default)(def, 'behaviour.dataInput.association.source.dataObject.id');
-    const outputDataObjectId = (0, _getPropertyValue.default)(def, 'behaviour.dataOutput.association.target.dataObject.id');
-    const inputDataStoreId = (0, _getPropertyValue.default)(def, 'behaviour.dataInput.association.source.dataStore.id');
-    const outputDataStoreId = (0, _getPropertyValue.default)(def, 'behaviour.dataOutput.association.target.dataStore.id');
+    const inputDataObjectId = (0, _getPropertyValue.getPropertyValue)(def, 'behaviour.dataInput.association.source.dataObject.id');
+    const outputDataObjectId = (0, _getPropertyValue.getPropertyValue)(def, 'behaviour.dataOutput.association.target.dataObject.id');
+    const inputDataStoreId = (0, _getPropertyValue.getPropertyValue)(def, 'behaviour.dataInput.association.source.dataStore.id');
+    const outputDataStoreId = (0, _getPropertyValue.getPropertyValue)(def, 'behaviour.dataOutput.association.target.dataStore.id');
     if (inputDataObjectId) {
       const reference = context.getDataObjectById(inputDataObjectId);
       props.dataInputObjects.add({
@@ -124,7 +123,7 @@ Properties.prototype._formatOnEnter = function formatOnEnter(message) {
 };
 Properties.prototype._formatOnComplete = function formatOnComplete(message) {
   const startRoutingKey = 'run.end.bpmn-properties';
-  const messageOutput = (0, _getPropertyValue.default)(message, 'content.output.properties') || {};
+  const messageOutput = (0, _getPropertyValue.getPropertyValue)(message, 'content.output.properties') || {};
   const outputProperties = this._getProperties(message, messageOutput);
   const dataOutputObjects = this[K_PROPERTIES].dataOutputObjects;
   const broker = this.broker;

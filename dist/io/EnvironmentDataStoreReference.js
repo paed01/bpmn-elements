@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = EnvironmentDataStoreReference;
+exports.EnvironmentDataStoreReference = EnvironmentDataStoreReference;
 function EnvironmentDataStoreReference(dataObjectDef, {
   environment
 }) {

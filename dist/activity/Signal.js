@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Signal;
+exports.Signal = Signal;
 function Signal(signalDef, context) {
   const {
     id,

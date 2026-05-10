@@ -3,19 +3,18 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.BoundaryEvent = BoundaryEvent;
 exports.BoundaryEventBehaviour = BoundaryEventBehaviour;
-exports.default = BoundaryEvent;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
-var _EventDefinitionExecution = _interopRequireDefault(require("../eventDefinitions/EventDefinitionExecution.js"));
+var _Activity = require("../activity/Activity.js");
+var _EventDefinitionExecution = require("../eventDefinitions/EventDefinitionExecution.js");
 var _messageHelper = require("../messageHelper.js");
 var _shared = require("../shared.js");
 var _constants = require("../constants.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const K_ATTACHED_TAGS = Symbol.for('attachedConsumers');
 const K_COMPLETE_CONTENT = Symbol.for('completeContent');
 const K_SHOVELS = Symbol.for('shovels');
 function BoundaryEvent(activityDef, context) {
-  return new _Activity.default(BoundaryEventBehaviour, activityDef, context);
+  return new _Activity.Activity(BoundaryEventBehaviour, activityDef, context);
 }
 function BoundaryEventBehaviour(activity) {
   this.id = activity.id;
@@ -25,7 +24,7 @@ function BoundaryEventBehaviour(activity) {
   this.environment = activity.environment;
   this.broker = activity.broker;
   /** @private */
-  this[_constants.K_EXECUTION] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions, 'execute.bound.completed');
+  this[_constants.K_EXECUTION] = activity.eventDefinitions && new _EventDefinitionExecution.EventDefinitionExecution(activity, activity.eventDefinitions, 'execute.bound.completed');
   /** @private */
   this[K_SHOVELS] = new Set();
   /** @private */

@@ -1,6 +1,6 @@
-import Activity from '../../src/activity/Activity.js';
-import Environment from '../../src/Environment.js';
-import SequenceFlow from '../../src/flows/SequenceFlow.js';
+import { Activity } from '../../src/activity/Activity.js';
+import { Environment } from '../../src/Environment.js';
+import { SequenceFlow } from '../../src/flows/SequenceFlow.js';
 import testHelpers from '../helpers/testHelpers.js';
 import { TaskBehaviour } from '../../src/tasks/Task.js';
 

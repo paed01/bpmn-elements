@@ -13,7 +13,7 @@ const K_SOURCE_ELEMENT = Symbol.for('sourceElement');
  * @param {import('moddle-context-serializer').SerializableElement} flowDef
  * @param {import('types').ContextInstance} context
  */
-export default function MessageFlow(flowDef, context) {
+export function MessageFlow(flowDef, context) {
   const { id, type = 'messageflow', name, target, source, behaviour, parent } = flowDef;
 
   this.id = id;

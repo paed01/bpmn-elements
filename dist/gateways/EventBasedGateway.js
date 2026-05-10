@@ -3,14 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.EventBasedGateway = EventBasedGateway;
 exports.EventBasedGatewayBehaviour = EventBasedGatewayBehaviour;
-exports.default = EventBasedGateway;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
+var _Activity = require("../activity/Activity.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function EventBasedGateway(activityDef, context) {
-  return new _Activity.default(EventBasedGatewayBehaviour, activityDef, context);
+  return new _Activity.Activity(EventBasedGatewayBehaviour, activityDef, context);
 }
 function EventBasedGatewayBehaviour(activity, context) {
   this.id = activity.id;

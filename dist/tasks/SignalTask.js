@@ -3,14 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.SignalTask = SignalTask;
 exports.SignalTaskBehaviour = SignalTaskBehaviour;
-exports.default = SignalTask;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
+var _Activity = require("../activity/Activity.js");
 var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function SignalTask(activityDef, context) {
-  return new _Activity.default(SignalTaskBehaviour, activityDef, context);
+  return new _Activity.Activity(SignalTaskBehaviour, activityDef, context);
 }
 function SignalTaskBehaviour(activity) {
   const {

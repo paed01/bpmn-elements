@@ -1,4 +1,4 @@
-export default function Escalation(signalDef, context) {
+export function Escalation(signalDef, context) {
   const { id, type, name, parent: originalParent } = signalDef;
   const { environment } = context;
   const parent = { ...originalParent };

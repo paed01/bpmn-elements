@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Escalation;
+exports.Escalation = Escalation;
 function Escalation(signalDef, context) {
   const {
     id,

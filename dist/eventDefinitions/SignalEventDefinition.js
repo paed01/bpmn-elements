@@ -3,12 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = SignalEventDefinition;
-var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue.js"));
+exports.SignalEventDefinition = SignalEventDefinition;
+var _getPropertyValue = require("../getPropertyValue.js");
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function SignalEventDefinition(activity, eventDefinition) {
   const {
     id,
@@ -127,7 +126,7 @@ SignalEventDefinition.prototype.executeThrow = function executeThrow(executeMess
 };
 SignalEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
   const info = this[_constants.K_REFERENCE_INFO];
-  if ((0, _getPropertyValue.default)(message, 'content.message.id') !== info.message.id) return;
+  if ((0, _getPropertyValue.getPropertyValue)(message, 'content.message.id') !== info.message.id) return;
   /** @private */
   this[_constants.K_COMPLETED] = true;
   this._stop();

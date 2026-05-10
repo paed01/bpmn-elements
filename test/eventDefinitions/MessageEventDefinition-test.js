@@ -1,6 +1,6 @@
-import Message from '../../src/activity/Message.js';
-import MessageEventDefinition from '../../src/eventDefinitions/MessageEventDefinition.js';
-import Environment from '../../src/Environment.js';
+import { Message } from '../../src/activity/Message.js';
+import { MessageEventDefinition } from '../../src/eventDefinitions/MessageEventDefinition.js';
+import { Environment } from '../../src/Environment.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { Logger } from '../helpers/testHelpers.js';
 

@@ -1,8 +1,8 @@
-import getPropertyValue from '../getPropertyValue.js';
+import { getPropertyValue } from '../getPropertyValue.js';
 import { brokerSafeId } from '../shared.js';
 import { K_CONSUMING } from '../constants.js';
 
-export default function IoSpecification(activity, ioSpecificationDef, context) {
+export function IoSpecification(activity, ioSpecificationDef, context) {
   const { id, type = 'iospecification', behaviour = {} } = ioSpecificationDef;
   this.id = id;
   this.type = type;

@@ -3,15 +3,14 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.StartEvent = StartEvent;
 exports.StartEventBehaviour = StartEventBehaviour;
-exports.default = StartEvent;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
-var _EventDefinitionExecution = _interopRequireDefault(require("../eventDefinitions/EventDefinitionExecution.js"));
+var _Activity = require("../activity/Activity.js");
+var _EventDefinitionExecution = require("../eventDefinitions/EventDefinitionExecution.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function StartEvent(activityDef, context) {
-  return new _Activity.default(StartEventBehaviour, activityDef, context);
+  return new _Activity.Activity(StartEventBehaviour, activityDef, context);
 }
 function StartEventBehaviour(activity) {
   this.id = activity.id;
@@ -19,7 +18,7 @@ function StartEventBehaviour(activity) {
   this.activity = activity;
   this.broker = activity.broker;
   /** @private */
-  this[_constants.K_EXECUTION] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions);
+  this[_constants.K_EXECUTION] = activity.eventDefinitions && new _EventDefinitionExecution.EventDefinitionExecution(activity, activity.eventDefinitions);
 }
 Object.defineProperty(StartEventBehaviour.prototype, 'executionId', {
   get() {

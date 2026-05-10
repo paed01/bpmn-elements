@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = TimerEventDefinition;
+exports.TimerEventDefinition = TimerEventDefinition;
 var _piso = require("@0dep/piso");
 var _messageHelper = require("../messageHelper.js");
 var _Errors = require("../error/Errors.js");

@@ -1,5 +1,5 @@
-import LinkEventDefinition from '../../src/eventDefinitions/LinkEventDefinition.js';
-import Environment from '../../src/Environment.js';
+import { LinkEventDefinition } from '../../src/eventDefinitions/LinkEventDefinition.js';
+import { Environment } from '../../src/Environment.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { Logger } from '../helpers/testHelpers.js';
 

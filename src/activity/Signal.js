@@ -1,4 +1,4 @@
-export default function Signal(signalDef, context) {
+export function Signal(signalDef, context) {
   const { id, type = 'Signal', name, parent: originalParent } = signalDef;
   const { environment } = context;
   const parent = { ...originalParent };

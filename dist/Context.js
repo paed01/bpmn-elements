@@ -3,12 +3,12 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Context;
-var _BpmnIO = _interopRequireDefault(require("./io/BpmnIO.js"));
-var _Environment = _interopRequireDefault(require("./Environment.js"));
+exports.Context = Context;
+exports.ContextInstance = ContextInstance;
+var _BpmnIO = require("./io/BpmnIO.js");
+var _Environment = require("./Environment.js");
 var _shared = require("./shared.js");
 var _constants = require("./constants.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const K_OWNER = Symbol.for('owner');
 
 /**
@@ -17,7 +17,7 @@ const K_OWNER = Symbol.for('owner');
  * @param {import('types').Environment} [environment] Existing environment to clone; a fresh one is created when omitted
  */
 function Context(definitionContext, environment) {
-  environment = environment ? environment.clone() : new _Environment.default();
+  environment = environment ? environment.clone() : new _Environment.Environment();
   return new ContextInstance(definitionContext, environment);
 }
 
@@ -304,7 +304,7 @@ ContextInstance.prototype.getStartActivities = function getStartActivities(filte
  * @param {import('types').ElementBase} activity
  */
 ContextInstance.prototype.loadExtensions = function loadExtensions(activity) {
-  const io = new _BpmnIO.default(activity, this);
+  const io = new _BpmnIO.BpmnIO(activity, this);
   const extensions = this.extensionsMapper.get(activity);
   if (io.hasIo) extensions.extensions.push(io);
   if (!extensions.extensions.length) return;

@@ -1,7 +1,7 @@
 import * as ck from 'chronokinesis';
-import Environment from '../../src/Environment.js';
+import { Environment } from '../../src/Environment.js';
 import testHelpers from '../helpers/testHelpers.js';
-import TimerEventDefinition from '../../src/eventDefinitions/TimerEventDefinition.js';
+import { TimerEventDefinition } from '../../src/eventDefinitions/TimerEventDefinition.js';
 import { ActivityApi, DefinitionApi } from '../../src/Api.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { Timers } from '../../src/Timers.js';

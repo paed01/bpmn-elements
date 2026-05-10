@@ -1,5 +1,4 @@
-import ExecutionScope from './activity/ExecutionScope.js';
-
+import { ExecutionScope } from './activity/ExecutionScope.js';
 /**
  * Script condition
  * @param {import('types').ElementBase} owner

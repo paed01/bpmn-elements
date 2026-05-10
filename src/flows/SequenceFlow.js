@@ -5,8 +5,6 @@ import { FlowApi } from '../Api.js';
 import { ScriptCondition, ExpressionCondition } from '../condition.js';
 import { K_COUNTERS } from '../constants.js';
 
-export default SequenceFlow;
-
 /**
  * Sequence flow connecting two activities. Owns its broker and publishes take/discard/looped
  * events; activities subscribe to drive their inbound queue.

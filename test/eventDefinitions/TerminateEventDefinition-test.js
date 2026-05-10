@@ -1,5 +1,5 @@
-import Environment from '../../src/Environment.js';
-import TerminateEventDefinition from '../../src/eventDefinitions/TerminateEventDefinition.js';
+import { Environment } from '../../src/Environment.js';
+import { TerminateEventDefinition } from '../../src/eventDefinitions/TerminateEventDefinition.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('TerminateEventDefinition', () => {

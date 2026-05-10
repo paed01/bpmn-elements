@@ -3,14 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.ServiceTask = ServiceTask;
 exports.ServiceTaskBehaviour = ServiceTaskBehaviour;
-exports.default = ServiceTask;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
+var _Activity = require("../activity/Activity.js");
 var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ServiceTask(activityDef, context) {
-  return new _Activity.default(ServiceTaskBehaviour, activityDef, context);
+  return new _Activity.Activity(ServiceTaskBehaviour, activityDef, context);
 }
 function ServiceTaskBehaviour(activity) {
   const {

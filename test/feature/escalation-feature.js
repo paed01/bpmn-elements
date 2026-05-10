@@ -1,5 +1,5 @@
 import CamundaExtension from '../resources/extensions/CamundaExtension.js';
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 

@@ -10,7 +10,7 @@ import { K_COUNTERS } from '../constants.js';
  * @param {import('moddle-context-serializer').SerializableElement} associationDef
  * @param {import('types').ContextInstance} context
  */
-export default function Association(associationDef, { environment }) {
+export function Association(associationDef, { environment }) {
   const { id, type = 'association', name, parent, targetId, sourceId, behaviour = {} } = associationDef;
 
   this.id = id;

@@ -1,4 +1,4 @@
-export default function BpmnErrorActivity(errorDef, context) {
+export function BpmnErrorActivity(errorDef, context) {
   const { id, type, name = 'BpmnError', behaviour = {} } = errorDef;
   const { environment } = context;
 

@@ -3,13 +3,12 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.ExclusiveGateway = ExclusiveGateway;
 exports.ExclusiveGatewayBehaviour = ExclusiveGatewayBehaviour;
-exports.default = ExclusiveGateway;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
+var _Activity = require("../activity/Activity.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ExclusiveGateway(activityDef, context) {
-  return new _Activity.default(ExclusiveGatewayBehaviour, activityDef, context);
+  return new _Activity.Activity(ExclusiveGatewayBehaviour, activityDef, context);
 }
 function ExclusiveGatewayBehaviour(activity) {
   const {

@@ -2,7 +2,7 @@ import { brokerSafeId } from '../shared.js';
 import { cloneContent, shiftParent } from '../messageHelper.js';
 import { K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_Q, K_REFERENCE_ELEMENT, K_REFERENCE_INFO } from '../constants.js';
 
-export default function ErrorEventDefinition(activity, eventDefinition) {
+export function ErrorEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;
   const { type = 'ErrorEventDefinition', behaviour = {} } = eventDefinition;
 

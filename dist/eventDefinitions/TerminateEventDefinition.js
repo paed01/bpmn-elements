@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = TerminateEventDefinition;
+exports.TerminateEventDefinition = TerminateEventDefinition;
 var _messageHelper = require("../messageHelper.js");
 function TerminateEventDefinition(activity, eventDefinition) {
   const {

@@ -1,4 +1,4 @@
-import DefinitionExecution from './DefinitionExecution.js';
+import { DefinitionExecution } from './DefinitionExecution.js';
 import { DefinitionApi } from '../Api.js';
 import { DefinitionBroker } from '../EventBroker.js';
 import { getUniqueId, getOptionsAndCallback } from '../shared.js';
@@ -14,8 +14,6 @@ import {
   K_STATUS,
   K_STOPPED,
 } from '../constants.js';
-
-export default Definition;
 
 /**
  * Top-level wrapper for an executable BPMN definition. Owns its DefinitionExecution and
@@ -63,6 +61,7 @@ export function Definition(context, options) {
   };
 
   const { broker, on, once, waitFor, emit, emitFatal } = DefinitionBroker(this, onBrokerReturn);
+  /** @type {import('smqp').Broker} */
   this.broker = broker;
 
   this.on = on;

@@ -5,8 +5,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.ExpressionCondition = ExpressionCondition;
 exports.ScriptCondition = ScriptCondition;
-var _ExecutionScope = _interopRequireDefault(require("./activity/ExecutionScope.js"));
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+var _ExecutionScope = require("./activity/ExecutionScope.js");
 /**
  * Script condition
  * @param {import('types').ElementBase} owner
@@ -28,7 +27,7 @@ function ScriptCondition(owner, script, language) {
 ScriptCondition.prototype.execute = function execute(message, callback) {
   const owner = this._owner;
   try {
-    return this._script.execute((0, _ExecutionScope.default)(owner, message), callback);
+    return this._script.execute((0, _ExecutionScope.ExecutionScope)(owner, message), callback);
   } catch (err) {
     if (!callback) throw err;
     owner.logger.error(`<${owner.id}>`, err);

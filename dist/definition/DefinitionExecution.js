@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = DefinitionExecution;
+exports.DefinitionExecution = DefinitionExecution;
 var _Api = require("../Api.js");
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");

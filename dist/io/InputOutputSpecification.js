@@ -3,11 +3,10 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = IoSpecification;
-var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue.js"));
+exports.IoSpecification = IoSpecification;
+var _getPropertyValue = require("../getPropertyValue.js");
 var _shared = require("../shared.js");
 var _constants = require("../constants.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function IoSpecification(activity, ioSpecificationDef, context) {
   const {
     id,
@@ -74,7 +73,7 @@ IoSpecification.prototype._onFormatEnter = function onFormatOnEnter() {
       name: ioSource.name
     };
     result.sources.push(source);
-    const dataObjectId = (0, _getPropertyValue.default)(ioSource, 'behaviour.association.source.dataObject.id');
+    const dataObjectId = (0, _getPropertyValue.getPropertyValue)(ioSource, 'behaviour.association.source.dataObject.id');
     if (!dataObjectId) return result;
     const dataObject = this.context.getDataObjectById(dataObjectId);
     if (!dataObject) return result;
@@ -119,8 +118,8 @@ IoSpecification.prototype._onFormatEnter = function onFormatOnEnter() {
 };
 IoSpecification.prototype._onFormatComplete = function formatOnComplete(message) {
   const safeType = (0, _shared.brokerSafeId)(this.type).toLowerCase();
-  const messageInputs = (0, _getPropertyValue.default)(message, 'content.ioSpecification.dataInputs');
-  const messageOutputs = (0, _getPropertyValue.default)(message, 'content.output.ioSpecification.dataOutputs') || [];
+  const messageInputs = (0, _getPropertyValue.getPropertyValue)(message, 'content.ioSpecification.dataInputs');
+  const messageOutputs = (0, _getPropertyValue.getPropertyValue)(message, 'content.output.ioSpecification.dataOutputs') || [];
   const dataOutputs = this.behaviour.dataOutputs;
   const broker = this.broker;
   const context = this.context;
@@ -138,7 +137,7 @@ IoSpecification.prototype._onFormatComplete = function formatOnComplete(message)
       value
     };
     result.sources.push(source);
-    const dataObjectId = (0, _getPropertyValue.default)(ioSource, 'behaviour.association.target.dataObject.id');
+    const dataObjectId = (0, _getPropertyValue.getPropertyValue)(ioSource, 'behaviour.association.target.dataObject.id');
     if (!dataObjectId) return result;
     const dataObject = context.getDataObjectById(dataObjectId);
     if (!dataObject) return result;

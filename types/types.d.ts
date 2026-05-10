@@ -1,103 +1,77 @@
-import { Broker } from 'smqp';
+import { Broker, BrokerState, Consumer, MessageEnvelope, MessageFields, MessageProperties } from 'smqp';
 import { SerializableContext, SerializableElement } from 'moddle-context-serializer';
+
+// Class re-exports — types follow the implementation in src/.
 export { Activity } from '../src/activity/Activity.js';
+export { ActivityExecution } from '../src/activity/ActivityExecution.js';
+export { Process } from '../src/process/Process.js';
+export { ProcessExecution } from '../src/process/ProcessExecution.js';
+export { Lane } from '../src/process/Lane.js';
+export { Definition } from '../src/definition/Definition.js';
+export { DefinitionExecution } from '../src/definition/DefinitionExecution.js';
+export { Environment } from '../src/Environment.js';
+export { Context, ContextInstance } from '../src/Context.js';
+export { SequenceFlow } from '../src/flows/SequenceFlow.js';
+export { MessageFlow } from '../src/flows/MessageFlow.js';
+export { Association } from '../src/flows/Association.js';
+export { Timers } from '../src/Timers.js';
+export { Formatter as MessageFormatter } from '../src/MessageFormatter.js';
+export { ActivityError, BpmnError, RunError } from '../src/error/Errors.js';
+export { TimerEventDefinition } from '../src/eventDefinitions/TimerEventDefinition.js';
+export { ConditionalEventDefinition } from '../src/eventDefinitions/ConditionalEventDefinition.js';
+
+// Re-export of supporting smqp types (kept here so JSDoc can address them via `import('types')`).
+export { Consumer, MessageFields, MessageProperties };
+
 import { Activity } from '../src/activity/Activity.js';
+import { Process } from '../src/process/Process.js';
+import { Definition } from '../src/definition/Definition.js';
+import { Environment } from '../src/Environment.js';
+import { ContextInstance } from '../src/Context.js';
+import { ActivityError } from '../src/error/Errors.js';
 
-import {
-  ElementBroker,
-  ElementBrokerMessage,
-  ElementMessageContent,
-  ElementParent,
-  ElementState,
-  ActivityState,
-  ActivityExecutionState,
-  IActivityBehaviour,
-  IExtension,
-  IExpressions,
-  IScripts,
-  ITimers,
-  ILogger,
-  ICondition,
-  ISequenceFlowCondition,
-  ActivityRunStatus,
-  ActivityStatus,
-  DefinitionRunStatus,
-  ProcessRunStatus,
-  TimerType,
-  parsedTimer,
-  EnvironmentSettings,
-  EnvironmentOptions,
-  EnvironmentState,
-  startActivityFilterOptions,
-  filterPostponed,
-  runCallback,
-  completedCounters,
-  signalMessage,
-  ProcessExecutionState,
-  ProcessState,
-  DefinitionExecutionState,
-  DefinitionState,
-  SequenceFlowState,
-  MessageFlowState,
-  AssociationState,
-  MessageFlowReference,
-  LoggerFactory,
-  Timer,
-  RegisteredTimer,
-  TimersOptions,
-  Script,
-  wrappedSetTimeout,
-  wrappedClearTimeout,
-} from './interfaces.js';
+// --- Broker / message contracts -----------------------------------------------
 
-export * from './interfaces.js';
+export declare interface ElementBroker<T> extends Broker {
+  get owner(): T;
+}
 
-export declare class EventDefinition {
-  constructor(activity: Activity, eventDefinitionElement: SerializableElement, context?: ContextInstance, index?: number);
+export declare type signalMessage = {
+  /**
+   * Optional signal id
+   * - Activity id
+   * - Signal-, Message-, Escalation id, etc
+   */
+  id?: string;
+  /**
+   * Optional execution id
+   * e.g. excutionId of a parallel multi instance user task
+   */
+  executionId?: string;
+  /** Any other input that will be added to completed activity output */
+  [x: string]: any;
+};
+
+export declare interface ElementMessageContent {
+  id?: string;
+  type?: string;
+  executionId?: string;
+  parent?: ElementParent;
+  [x: string]: any;
+}
+
+export declare interface ElementBrokerMessage extends MessageEnvelope {
+  content: ElementMessageContent;
+}
+
+export declare interface ElementParent {
   get id(): string;
   get type(): string;
   get executionId(): string;
-  get isThrowing(): boolean;
-  get activity(): Activity;
-  get broker(): Broker;
-  get logger(): ILogger;
-  get reference(): {
-    id?: string;
-    name: string;
-    referenceType: string;
-  };
-  [x: string]: any;
-  execute(executeMessage: ElementBrokerMessage): void;
+  get path(): ElementParent[];
 }
 
-export declare class TimerEventDefinition extends EventDefinition {
-  /**
-   * Parse timer type
-   * @param timerType type of timer
-   * @param timerValue resolved expression timer string
-   */
-  parse(timerType: TimerType, timerValue: string): parsedTimer;
-}
-
-export declare class ConditionalEventDefinition extends EventDefinition {
-  /**
-   * Evaluate condition
-   * @param message
-   * @param callback
-   */
-  evaluate(message: ElementBrokerMessage, callback: CallableFunction): void;
-  /**
-   * Handle evaluate result or error
-   * @param err Condition evaluation error
-   * @param result Result from evaluated condition, completes execution if truthy
-   */
-  evaluateCallback(err: Error | null, result?: any): void;
-  /**
-   * Get condition from behaviour
-   * @param index Event definition sequence number, used to name registered script
-   */
-  getCondition(index: number): ICondition | null;
-}
+// --- Element abstract bases ---------------------------------------------------
 
 export declare abstract class ElementBase {
   get id(): string;
@@ -121,38 +95,371 @@ export declare abstract class Element<T> extends ElementBase {
   waitFor(eventName: string, options?: any): Promise<Api<T>>;
 }
 
-export declare interface DefinitionExecution {
+export declare abstract class MessageElement {
   get id(): string;
   get type(): string;
+  get name(): string;
+  get parent(): ElementParent;
+  resolve(executionMessage: ElementBrokerMessage): {
+    parent: ElementParent;
+    name: string;
+    id: string;
+    type: string;
+    messageType: string;
+  };
+}
+
+// --- Event definitions --------------------------------------------------------
+
+// Common ancestor for the typed event definitions; concrete types live in src/eventDefinitions.
+export declare class EventDefinition {
+  constructor(activity: Activity, eventDefinitionElement: SerializableElement, context?: ContextInstance, index?: number);
+  get id(): string;
+  get type(): string;
+  get executionId(): string;
+  get isThrowing(): boolean;
+  get activity(): Activity;
   get broker(): Broker;
-  get environment(): Environment;
-  get context(): ContextInstance;
-  get executionId(): string;
-  get stopped(): boolean;
-  get completed(): boolean;
-  get status(): string;
-  get processes(): Process[];
-  get postponedCount(): number;
-  get isRunning(): boolean;
-  get activityStatus(): ActivityStatus;
-  execute(executeMessage: ElementBrokerMessage): void;
-  getProcesses(): Process[];
-  getProcessById(processId: string): Process;
-  getProcessesById(processId: string): Process[];
-  getProcessByExecutionId(processExecutionId: string): Process;
-  getRunningProcesses(): Process[];
-  getExecutableProcesses(): Process[];
-  getPostponed(filterFn?: filterPostponed): Api<ElementBase>[];
-}
-
-export declare interface ActivityExecution {
-  get completed(): boolean;
-  get executionId(): string;
-  get source(): IActivityBehaviour;
+  get logger(): ILogger;
+  get reference(): {
+    id?: string;
+    name: string;
+    referenceType: string;
+  };
+  [x: string]: any;
   execute(executeMessage: ElementBrokerMessage): void;
 }
 
+export declare const enum TimerType {
+  TimeCycle = 'timeCycle',
+  TimeDuration = 'timeDuration',
+  TimeDate = 'timeDate',
+}
+
+export declare type parsedTimer = {
+  /** Expires at date time */
+  expireAt?: Date;
+  /** Repeat number of times */
+  repeat?: number;
+  /** Delay in milliseconds */
+  delay?: number;
+};
+
+// --- Conditions ---------------------------------------------------------------
+
+export declare interface ICondition {
+  /** Condition type */
+  get type(): string;
+  [x: string]: any;
+  execute(message: ElementBrokerMessage, callback: CallableFunction): void;
+}
+
+export declare interface ISequenceFlowCondition {
+  /** Condition type, e.g. script or expression */
+  get type(): string;
+  /**
+   * Execute sequence flow condition
+   * @param message Source element execution message
+   * @param callback Callback with truthy result if flow should be taken
+   */
+  execute(message: ElementBrokerMessage, callback: (err: Error, result: any) => void): void;
+}
+
+// --- Activity behaviour & extensions ------------------------------------------
+
+export declare interface IActivityBehaviour {
+  id: string;
+  type: string;
+  activity: any;
+  environment: any;
+  new (activity: any, context: any): IActivityBehaviour;
+  execute(executeMessage: ElementBrokerMessage): void;
+}
+
+// Custom activity behaviour factory signature.
 export declare function ActivityBehaviour(activityDef: SerializableElement, context: ContextInstance): Activity;
+
+export declare type Extension = (activity: any, context: any) => IExtension;
+export declare interface IExtension {
+  activate(message: ElementBrokerMessage): void;
+  deactivate(message: ElementBrokerMessage): void;
+}
+
+export declare interface IExpressions {
+  resolveExpression(templatedString: string, context?: any, expressionFnContext?: any): any;
+}
+
+// --- Environment --------------------------------------------------------------
+
+export declare interface EnvironmentSettings {
+  /** true returns dummy service function for service task if not found */
+  enableDummyService?: boolean;
+  /** true forces activity runs to go forward in steps, defaults to false */
+  step?: boolean;
+  /** strict mode, see documentation, defaults to false */
+  strict?: boolean;
+  /** positive integer to control parallel loop batch size, defaults to 50 */
+  batchSize?: number;
+  /**
+   * disable tracking state between recover and resume
+   * true will only return state for elements that are actually running
+   * Defaults to falsy
+   */
+  disableTrackState?: boolean;
+  /**
+   * Skip discarding outbound sequence flows.
+   * Defaults to false
+   */
+  skipDiscard?: boolean;
+  [x: string]: any;
+}
+
+export declare interface EnvironmentOptions {
+  settings?: EnvironmentSettings;
+  variables?: Record<string, any>;
+  services?: Record<string, CallableFunction>;
+  Logger?: LoggerFactory;
+  timers?: ITimers;
+  scripts?: IScripts;
+  extensions?: Record<string, Extension>;
+  /**
+   * optional override expressions handler
+   */
+  expressions?: IExpressions;
+}
+
+// --- Filter / callback shapes -------------------------------------------------
+
+export declare type startActivityFilterOptions = {
+  /** Event definition id, i.e. Message, Signal, Error, etc */
+  referenceId?: string;
+  /** Event definition type, i.e. message, signal, error, etc */
+  referenceType?: string;
+};
+
+export declare type filterPostponed = (elementApi: any) => boolean;
+
+export declare type runCallback = (err: Error, definitionApi: any) => void;
+
+// --- Run-status enums ---------------------------------------------------------
+
+export declare const enum DefinitionRunStatus {
+  Entered = 'entered',
+  Start = 'start',
+  Executing = 'executing',
+  End = 'end',
+  Discarded = 'discarded',
+}
+
+export declare const enum ProcessRunStatus {
+  Entered = 'entered',
+  Start = 'start',
+  Executing = 'executing',
+  Errored = 'errored',
+  End = 'end',
+  Discarded = 'discarded',
+}
+
+/**
+ * Activity status
+ * Can be used to decide when to save states, Timer and Wait is recommended.
+ */
+export declare const enum ActivityStatus {
+  /** Idle, not running anything */
+  Idle = 'idle',
+  /**
+   * At least one activity is executing,
+   * e.g. a service task making a asynchronous request
+   */
+  Executing = 'executing',
+  /**
+   * At least one activity is waiting for a timer to complete,
+   * usually only TimerEventDefinition's
+   */
+  Timer = 'timer',
+  /**
+   * At least one activity is waiting for a signal of some sort,
+   * e.g. user tasks, intermediate catch events, etc
+   */
+  Wait = 'wait',
+}
+
+/**
+ * Activity run status
+ */
+export declare const enum ActivityRunStatus {
+  /** Run entered, triggered by taken inbound flow */
+  Entered = 'entered',
+  /** Run started */
+  Started = 'started',
+  /** Executing activity behaviour */
+  Executing = 'executing',
+  /** Activity behaviour execution completed successfully */
+  Executed = 'executed',
+  /** Run end, take outbound flows */
+  End = 'end',
+  /** Entering discard run, triggered by discarded inbound flow */
+  Discard = 'discard',
+  /** Run was discarded, discard outbound flows */
+  Discarded = 'discarded',
+  /** Activity behaviour execution failed, discard run */
+  Error = 'error',
+  /** Formatting next run message */
+  Formatting = 'formatting',
+}
+
+// --- State snapshots ----------------------------------------------------------
+
+export declare interface ElementState {
+  id: string;
+  type: string;
+  broker?: BrokerState;
+  [x: string]: any;
+}
+
+export declare interface EnvironmentState {
+  settings: EnvironmentSettings;
+  variables: Record<string, any>;
+  output: Record<string, any>;
+}
+
+export declare type completedCounters = { completed: number; discarded: number };
+
+export declare interface ActivityExecutionState {
+  completed: boolean;
+  [x: string]: any;
+}
+
+export declare interface ActivityState extends ElementState {
+  status?: string;
+  executionId: string;
+  stopped: boolean;
+  counters: { taken: number; discarded: number };
+  execution?: ActivityExecutionState;
+}
+
+export declare interface SequenceFlowState extends ElementState {
+  counters: { take: number; discard: number; looped: number };
+}
+
+export declare interface MessageFlowState extends ElementState {
+  counters: { messages: number };
+}
+
+export declare interface AssociationState extends ElementState {
+  counters: { take: number; discard: number };
+}
+
+export declare interface ProcessExecutionState {
+  executionId: string;
+  stopped: boolean;
+  completed: boolean;
+  status: string;
+  children: ActivityState[];
+  flows?: SequenceFlowState[];
+  messageFlows?: MessageFlowState[];
+  associations?: AssociationState[];
+}
+
+export declare interface ProcessState extends ElementState {
+  status: string;
+  stopped: boolean;
+  executionId?: string;
+  counters: completedCounters;
+  environment: EnvironmentState;
+  execution?: ProcessExecutionState;
+}
+
+export declare interface DefinitionExecutionState {
+  executionId: string;
+  stopped: boolean;
+  completed: boolean;
+  status: string;
+  processes: ProcessState[];
+}
+
+export declare interface DefinitionState extends ElementState {
+  status: string;
+  stopped: boolean;
+  executionId?: string;
+  counters: completedCounters;
+  environment: EnvironmentState;
+  execution?: DefinitionExecutionState;
+}
+
+// --- Flow references ----------------------------------------------------------
+
+export declare interface MessageFlowReference {
+  /** activity id */
+  get id(): string;
+  get processId(): string;
+}
+
+// --- Logging ------------------------------------------------------------------
+
+export declare type LoggerFactory = (scope: string) => ILogger;
+
+export declare interface ILogger {
+  debug(...args: any[]): void;
+  error(...args: any[]): void;
+  warn(...args: any[]): void;
+  [x: string]: any;
+}
+
+// --- Timers -------------------------------------------------------------------
+
+export declare type wrappedSetTimeout = (handler: CallableFunction, delay: number, ...args: any[]) => Timer;
+export declare type wrappedClearTimeout = (ref: any) => void;
+
+export declare interface Timer {
+  /** The function to call when the timer elapses */
+  readonly callback: CallableFunction;
+  /** The number of milliseconds to wait before calling the callback */
+  readonly delay: number;
+  /** Optional arguments to pass when the callback is called */
+  readonly args?: any[];
+  /** Timer owner if any */
+  readonly owner?: any;
+  /** Timer Id */
+  readonly timerId: string;
+  /** Timeout, return from setTimeout */
+  readonly timerRef: any;
+  [x: string]: any;
+}
+
+export declare interface RegisteredTimer {
+  owner?: any;
+  get setTimeout(): wrappedSetTimeout;
+  get clearTimeout(): wrappedClearTimeout;
+}
+
+export declare interface ITimers {
+  get setTimeout(): wrappedSetTimeout;
+  get clearTimeout(): wrappedClearTimeout;
+  register(owner?: any): RegisteredTimer;
+  [x: string]: any;
+}
+
+export declare interface TimersOptions {
+  /** Defaults to builtin setTimeout */
+  setTimeout?: typeof setTimeout;
+  /** Defaults to builtin clearTimeout */
+  clearTimeout?: typeof clearTimeout;
+  [x: string]: any;
+}
+
+// --- Scripts ------------------------------------------------------------------
+
+export declare interface IScripts {
+  register(activity: any): Script | undefined;
+  getScript(language: string, identifier: { id: string; [x: string]: any }): Script;
+}
+
+export declare interface Script {
+  execute(executionContext: any, callback: CallableFunction): void;
+}
+
+// --- Generic api shape; constructed via Activity/Process/Definition/Flow Api factories.
 
 export declare interface Api<T> extends ElementBrokerMessage {
   get id(): string;
@@ -173,6 +480,8 @@ export declare interface Api<T> extends ElementBrokerMessage {
   createMessage(content?: Record<string, any>): any;
   getExecuting(): Api<T>[];
 }
+
+// --- Scope passed to user scripts/services -----------------------------------
 
 interface ExecutionScope {
   /** Calling element id */
@@ -197,234 +506,9 @@ interface ExecutionScope {
   ActivityError: ActivityError;
 }
 
-export declare abstract class MessageElement {
-  get id(): string;
-  get type(): string;
-  get name(): string;
-  get parent(): ElementParent;
-  resolve(executionMessage: ElementBrokerMessage): {
-    parent: ElementParent;
-    name: string;
-    id: string;
-    type: string;
-    messageType: string;
-  };
-}
-
-export declare class Environment {
-  constructor(options?: EnvironmentOptions);
-  options: Record<string, any>;
-  expressions: IExpressions;
-  extensions: Record<string, IExtension>;
-  scripts: IScripts;
-  timers: ITimers;
-  Logger: LoggerFactory;
-  get settings(): EnvironmentSettings;
-  get variables(): Record<string, any>;
-  get output(): Record<string, any>;
-  set services(arg: any);
-  get services(): any;
-  getState(): EnvironmentState;
-  recover(state?: EnvironmentState): Environment;
-  clone(overrideOptions?: EnvironmentOptions): Environment;
-  assignVariables(newVars: Record<string, any>): void;
-  assignSettings(newSettings: Record<string, any>): Environment;
-  registerScript(activity: any): Script;
-  getScript(language: string, identifier: { id: string; [x: string]: any }): Script;
-  getServiceByName(serviceName: string): CallableFunction;
-  resolveExpression(expression: string, message?: ElementBrokerMessage, expressionFnContext?: any): any;
-  addService(name: string, fn: CallableFunction): void;
-}
-
-export declare function Context(definitionContext: SerializableContext, environment?: Environment): ContextInstance;
-export declare class ContextInstance {
-  constructor(definitionContext: SerializableContext, environment?: Environment);
-  get id(): string;
-  get name(): string;
-  get type(): string;
-  /** Unique context instance id */
-  get sid(): string;
-  get definitionContext(): SerializableContext;
-  get environment(): Environment;
-  /** Context owner, Process or SubProcess activity */
-  get owner(): Process | Activity | undefined;
-  getActivityById<T>(activityId: string): T;
-  getSequenceFlowById(sequenceFlowId: string): SequenceFlow;
-  getInboundSequenceFlows(activityId: string): SequenceFlow[];
-  getOutboundSequenceFlows(activityId: string): SequenceFlow[];
-  getInboundAssociations(activityId: string): Association[];
-  getOutboundAssociations(activityId: string): Association[];
-  getActivities(scopeId?: string): ElementBase[];
-  getSequenceFlows(scopeId?: string): SequenceFlow[];
-  getAssociations(scopeId?: string): Association[];
-  clone(newEnvironment?: Environment): ContextInstance;
-  getProcessById(processId: string): Process;
-  getNewProcessById(processId: string): Process;
-  getProcesses(): Process[];
-  getExecutableProcesses(): Process[];
-  getMessageFlows(sourceId: string): MessageFlow[];
-  getDataObjectById(referenceId: string): any;
-  getDataStoreById(referenceId: string): any;
-  getStartActivities(filterOptions?: startActivityFilterOptions, scopeId?: string): Activity[];
-  loadExtensions(activity: ElementBase): IExtension;
-}
-
-export declare class Definition extends Element<Definition> {
-  constructor(context: ContextInstance, options?: EnvironmentOptions);
-  get counters(): completedCounters;
-  get execution(): DefinitionExecution;
-  get executionId(): string;
-  get isRunning(): boolean;
-  get status(): DefinitionRunStatus | undefined;
-  get stopped(): boolean;
-  get activityStatus(): ActivityStatus;
-  run(): Definition;
-  run(runContent: Record<string, any>): Definition;
-  run(runContent: Record<string, any>, callback: runCallback): Definition;
-  run(callback: runCallback): Definition;
-  getState(): DefinitionState;
-  recover(state?: DefinitionState): Definition;
-  resume(): void;
-  resume(callback: (err: Error, definitionApi: Api<Definition>) => void): void;
-  shake(startId?: string): object;
-  getProcesses(): Process[];
-  /** get processes marked with isExecutable=true */
-  getExecutableProcesses(): Process[];
-  getRunningProcesses(): Process[];
-  getProcessById(processId: string): Process;
-  getActivityById(childId: string): Activity;
-  getElementById<T>(elementId: string): Element<T>;
-  getPostponed(filterFn?: filterPostponed): Api<ElementBase>[];
-  /** Send delegated signal message */
-  signal(message: any): void;
-  cancelActivity(message: any): void;
-  sendMessage(message: any): void;
-}
-
-export declare class Process extends Element<Process> {
-  constructor(processDef: SerializableElement, context: ContextInstance);
-  get isExecutable(): boolean;
-  get counters(): completedCounters;
-  get lanes(): Lane[] | undefined;
-  get extensions(): IExtension;
-  get stopped(): boolean;
-  get isRunning(): boolean;
-  get executionId(): string;
-  get execution(): ProcessExecution;
-  get status(): ProcessRunStatus | undefined;
-  get activityStatus(): ActivityStatus;
-  init(useAsExecutionId?: string): void;
-  run(runContent?: Record<string, any>): void;
-  getState(): ProcessState;
-  recover(state?: ProcessState): Process;
-  shake(startId?: string): void;
-  signal(message: any): any;
-  cancelActivity(message: any): any;
-  sendMessage(message: any): void;
-  getActivityById<T>(childId: string): T;
-  getActivities(): Activity[];
-  getStartActivities(filterOptions?: startActivityFilterOptions): Activity[];
-  getSequenceFlows(): SequenceFlow[];
-  getLaneById(laneId: string): Lane | undefined;
-  getPostponed(filterFn: filterPostponed): Api<ElementBase>[];
-}
-
-export declare interface ProcessExecution {
-  get isSubProcess(): boolean;
-  get broker(): Broker;
-  get environment(): Environment;
-  get context(): ContextInstance;
-  get executionId(): string;
-  get stopped(): boolean;
-  get completed(): boolean;
-  get status(): string;
-  get postponedCount(): number;
-  get isRunning(): boolean;
-  get activityStatus(): ActivityStatus;
-  execute(executeMessage: ElementBrokerMessage): void;
-  getPostponed(filterFn: filterPostponed): Api<ElementBase>[];
-  getActivities(): Activity[];
-  getActivityById<T>(activityId: string): T;
-  getSequenceFlows(): SequenceFlow[];
-  getApi(message?: ElementBrokerMessage): Api<ElementBase>;
-}
-
-export declare class Lane extends ElementBase {
-  constructor(process: Process, laneDefinition: SerializableElement);
-  /** Process broker */
-  get broker(): Broker;
-  get process(): Process;
-}
-
-export declare class SequenceFlow extends Element<SequenceFlow> {
-  constructor(flowDef: SerializableElement, context: ContextInstance);
-  get sourceId(): string;
-  get targetId(): string;
-  get isDefault(): boolean;
-  get isSequenceFlow(): boolean;
-  get counters(): { take: number; discard: number; looped: number };
-  take(content?: any): boolean;
-  discard(content?: any): void;
-  shake(message: any): number;
-  getCondition(): ISequenceFlowCondition | null;
-  createMessage(override?: any): object;
-  /**
-   * Evaluate flow
-   * Executes condition if any, default flow is
-   * @param fromMessage Activity message
-   * @param {evaluateCallback} callback Callback with evaluation result, if truthy flow should be taken
-   */
-  evaluate(fromMessage: ElementBrokerMessage, callback: (err: Error, result: any) => void): void;
-  getState(): SequenceFlowState | undefined;
-}
-
-export declare class MessageFlow extends Element<MessageFlow> {
-  constructor(flowDef: SerializableElement, context: ContextInstance);
-  get source(): MessageFlowReference;
-  get target(): MessageFlowReference;
-  get counters(): { messages: number };
-  activate(): void;
-  deactivate(): void;
-  getState(): MessageFlowState | undefined;
-}
-
-export declare class Association extends Element<Association> {
-  constructor(associationDef: SerializableElement, context: ContextInstance);
-  get sourceId(): string;
-  get targetId(): string;
-  get isAssociation(): boolean;
-  get counters(): { take: number; discard: number };
-  take(content?: any): boolean;
-  discard(content?: any): boolean;
-  getState(): AssociationState | undefined;
-}
-
-export declare class Timers implements ITimers {
-  options: TimersOptions;
-  constructor(options?: TimersOptions);
-  get executing(): Timer[];
-  get setTimeout(): wrappedSetTimeout;
-  get clearTimeout(): wrappedClearTimeout;
-  register(owner?: any): RegisteredTimer;
-}
-
-export declare class MessageFormatter {
-  id: string;
-  broker: Broker;
-  logger: ILogger;
-  format(message: MessageElement, callback: CallableFunction): void;
-}
-
-// Activity is generated from JSDoc in src/activity/Activity.js. Re-exporting keeps
-// existing `import('types').Activity` JSDoc references resolving.
-
-export declare class ActivityError extends Error {
-  type: string;
-  description: string;
-  /** Activity that threw error */
-  source?: ElementBrokerMessage;
-  /** Original error */
-  inner?: Error;
-  code?: string;
-  constructor(description: string, sourceMessage: any, inner?: Error);
-}
+/**
+ * Evaluate flow callback
+ * @callback evaluateCallback
+ * @param {Error} err Evaluation error
+ * @param {boolean|object} evaluationResult If thruthy flow should be taken
+ */

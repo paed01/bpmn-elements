@@ -1,9 +1,9 @@
-import Activity from '../activity/Activity.js';
-import ExecutionScope from '../activity/ExecutionScope.js';
+import { Activity } from '../activity/Activity.js';
+import { ExecutionScope } from '../activity/ExecutionScope.js';
 import { ActivityError } from '../error/Errors.js';
 import { cloneContent, cloneMessage } from '../messageHelper.js';
 
-export default function ScriptTask(activityDef, context) {
+export function ScriptTask(activityDef, context) {
   return new Activity(ScriptTaskBehaviour, activityDef, context);
 }
 

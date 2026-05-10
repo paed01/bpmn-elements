@@ -1,4 +1,4 @@
-export default function EnvironmentDataStoreReference(dataObjectDef, { environment }) {
+export function EnvironmentDataStoreReference(dataObjectDef, { environment }) {
   const { id, type, name, behaviour, parent } = dataObjectDef;
   this.id = id;
   this.type = type;

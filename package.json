@@ -13,6 +13,11 @@
       "require": "./dist/index.js",
       "import": "./src/index.js"
     },
+    "./errors": {
+      "types": "./types/index.d.ts",
+      "require": "./dist/error/Errors.js",
+      "import": "./src/error/Errors.js"
+    },
     "./events": {
       "types": "./types/index.d.ts",
       "require": "./dist/events/index.js",
@@ -115,6 +120,6 @@
   },
   "dependencies": {
     "@0dep/piso": "^4.0.0",
-    "smqp": "^12.0.0"
+    "smqp": "^13.0.0"
   }
 }

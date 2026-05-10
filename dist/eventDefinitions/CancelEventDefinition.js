@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = CancelEventDefinition;
+exports.CancelEventDefinition = CancelEventDefinition;
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
 function CancelEventDefinition(activity, eventDefinition) {

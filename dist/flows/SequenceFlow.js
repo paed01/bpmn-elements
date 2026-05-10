@@ -4,14 +4,12 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.SequenceFlow = SequenceFlow;
-exports.default = void 0;
 var _messageHelper = require("../messageHelper.js");
 var _shared = require("../shared.js");
 var _EventBroker = require("../EventBroker.js");
 var _Api = require("../Api.js");
 var _condition = require("../condition.js");
 var _constants = require("../constants.js");
-var _default = exports.default = SequenceFlow;
 /**
  * Sequence flow connecting two activities. Owns its broker and publishes take/discard/looped
  * events; activities subscribe to drive their inbound queue.

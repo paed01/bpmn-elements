@@ -3,15 +3,14 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.ScriptTask = ScriptTask;
 exports.ScriptTaskBehaviour = ScriptTaskBehaviour;
-exports.default = ScriptTask;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
-var _ExecutionScope = _interopRequireDefault(require("../activity/ExecutionScope.js"));
+var _Activity = require("../activity/Activity.js");
+var _ExecutionScope = require("../activity/ExecutionScope.js");
 var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ScriptTask(activityDef, context) {
-  return new _Activity.default(ScriptTaskBehaviour, activityDef, context);
+  return new _Activity.Activity(ScriptTaskBehaviour, activityDef, context);
 }
 function ScriptTaskBehaviour(activity) {
   const {
@@ -39,7 +38,7 @@ ScriptTaskBehaviour.prototype.execute = function execute(executeMessage) {
   if (!script) {
     return activity.emitFatal(new _Errors.ActivityError(`Script format ${scriptFormat} is unsupported or was not registered for <${activity.id}>`, executeMessage), executeContent);
   }
-  return script.execute((0, _ExecutionScope.default)(activity, executeMessage), scriptCallback);
+  return script.execute((0, _ExecutionScope.ExecutionScope)(activity, executeMessage), scriptCallback);
   function scriptCallback(err, output) {
     if (err) {
       activity.logger.error(`<${executeContent.executionId} (${activity.id})>`, err);

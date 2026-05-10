@@ -1,5 +1,5 @@
-import ConditionalEventDefinition from '../../src/eventDefinitions/ConditionalEventDefinition.js';
-import Environment from '../../src/Environment.js';
+import { ConditionalEventDefinition } from '../../src/eventDefinitions/ConditionalEventDefinition.js';
+import { Environment } from '../../src/Environment.js';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { ActivityApi } from '../../src/Api.js';

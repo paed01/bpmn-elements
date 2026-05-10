@@ -3,14 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.ReceiveTask = ReceiveTask;
 exports.ReceiveTaskBehaviour = ReceiveTaskBehaviour;
-exports.default = ReceiveTask;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
+var _Activity = require("../activity/Activity.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function ReceiveTask(activityDef, context) {
-  const task = new _Activity.default(ReceiveTaskBehaviour, activityDef, context);
+  const task = new _Activity.Activity(ReceiveTaskBehaviour, activityDef, context);
   task.broker.assertQueue('message', {
     autoDelete: false,
     durable: true

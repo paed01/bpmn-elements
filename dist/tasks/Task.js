@@ -3,13 +3,12 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.Task = Task;
 exports.TaskBehaviour = TaskBehaviour;
-exports.default = Task;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
+var _Activity = require("../activity/Activity.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function Task(activityDef, context) {
-  return new _Activity.default(TaskBehaviour, activityDef, context);
+  return new _Activity.Activity(TaskBehaviour, activityDef, context);
 }
 function TaskBehaviour(activity) {
   const {

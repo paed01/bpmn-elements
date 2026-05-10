@@ -1,6 +1,6 @@
-import BpmnError from '../../src/error/BpmnError.js';
-import Environment from '../../src/Environment.js';
-import ErrorEventDefinition from '../../src/eventDefinitions/ErrorEventDefinition.js';
+import { BpmnErrorActivity as BpmnError } from '../../src/error/BpmnError.js';
+import { Environment } from '../../src/Environment.js';
+import { ErrorEventDefinition } from '../../src/eventDefinitions/ErrorEventDefinition.js';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 

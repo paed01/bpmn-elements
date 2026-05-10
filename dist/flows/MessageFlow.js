@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = MessageFlow;
+exports.MessageFlow = MessageFlow;
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
 var _EventBroker = require("../EventBroker.js");

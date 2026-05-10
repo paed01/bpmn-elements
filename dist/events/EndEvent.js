@@ -3,15 +3,14 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.EndEvent = EndEvent;
 exports.EndEventBehaviour = EndEventBehaviour;
-exports.default = EndEvent;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
-var _EventDefinitionExecution = _interopRequireDefault(require("../eventDefinitions/EventDefinitionExecution.js"));
+var _Activity = require("../activity/Activity.js");
+var _EventDefinitionExecution = require("../eventDefinitions/EventDefinitionExecution.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function EndEvent(activityDef, context) {
-  return new _Activity.default(EndEventBehaviour, {
+  return new _Activity.Activity(EndEventBehaviour, {
     ...activityDef,
     isThrowing: true
   }, context);
@@ -21,7 +20,7 @@ function EndEventBehaviour(activity) {
   this.type = activity.type;
   this.broker = activity.broker;
   /** @private */
-  this[_constants.K_EXECUTION] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions);
+  this[_constants.K_EXECUTION] = activity.eventDefinitions && new _EventDefinitionExecution.EventDefinitionExecution(activity, activity.eventDefinitions);
 }
 EndEventBehaviour.prototype.execute = function execute(executeMessage) {
   const execution = this[_constants.K_EXECUTION];

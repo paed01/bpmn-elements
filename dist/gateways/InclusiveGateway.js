@@ -3,13 +3,12 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.InclusiveGateway = InclusiveGateway;
 exports.InclusiveGatewayBehaviour = InclusiveGatewayBehaviour;
-exports.default = InclusiveGateway;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
+var _Activity = require("../activity/Activity.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function InclusiveGateway(activityDef, context) {
-  return new _Activity.default(InclusiveGatewayBehaviour, activityDef, context);
+  return new _Activity.Activity(InclusiveGatewayBehaviour, activityDef, context);
 }
 function InclusiveGatewayBehaviour(activity) {
   const {

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = EventDefinitionExecution;
+exports.EventDefinitionExecution = EventDefinitionExecution;
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
 function EventDefinitionExecution(activity, eventDefinitions, completedRoutingKey = 'execute.completed') {

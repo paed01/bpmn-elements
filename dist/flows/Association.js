@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Association;
+exports.Association = Association;
 var _messageHelper = require("../messageHelper.js");
 var _EventBroker = require("../EventBroker.js");
 var _Api = require("../Api.js");

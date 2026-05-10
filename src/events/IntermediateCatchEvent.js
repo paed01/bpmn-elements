@@ -1,9 +1,9 @@
-import Activity from '../activity/Activity.js';
-import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution.js';
+import { Activity } from '../activity/Activity.js';
+import { EventDefinitionExecution } from '../eventDefinitions/EventDefinitionExecution.js';
 import { cloneContent } from '../messageHelper.js';
 import { K_EXECUTION } from '../constants.js';
 
-export default function IntermediateCatchEvent(activityDef, context) {
+export function IntermediateCatchEvent(activityDef, context) {
   return new Activity(IntermediateCatchEventBehaviour, { ...activityDef, isCatching: true }, context);
 }
 

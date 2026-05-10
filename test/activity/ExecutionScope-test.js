@@ -1,5 +1,5 @@
-import Environment from '../../src/Environment.js';
-import ExecutionScope from '../../src/activity/ExecutionScope.js';
+import { Environment } from '../../src/Environment.js';
+import { ExecutionScope } from '../../src/activity/ExecutionScope.js';
 import { ActivityError, BpmnError } from '../../src/error/Errors.js';
 
 describe('ExecutionScope', () => {

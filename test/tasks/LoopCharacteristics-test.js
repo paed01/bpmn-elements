@@ -1,5 +1,5 @@
-import Environment from '../../src/Environment.js';
-import LoopCharacteristics from '../../src/tasks/LoopCharacteristics.js';
+import { Environment } from '../../src/Environment.js';
+import { LoopCharacteristics } from '../../src/tasks/LoopCharacteristics.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { Logger } from '../helpers/testHelpers.js';
 import { ActivityError } from '../../src/error/Errors.js';

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = ConditionalEventDefinition;
+exports.ConditionalEventDefinition = ConditionalEventDefinition;
 var _messageHelper = require("../messageHelper.js");
 var _Errors = require("../error/Errors.js");
 var _condition = require("../condition.js");

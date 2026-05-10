@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = getPropertyValue;
+exports.getPropertyValue = getPropertyValue;
 const propertyPattern = /(\w+)\((.*?)(?:\))|(\.|\[|^)(.+?)(?:\]|\[|\.|$)/;
 const stringConstantPattern = /^(['"])(.*)\1$/;
 const numberConstantPattern = /^\W*-?\d+(.\d+)?\W*$/;

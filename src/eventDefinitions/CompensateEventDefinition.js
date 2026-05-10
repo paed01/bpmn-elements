@@ -5,7 +5,7 @@ import { K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_Q } from '../constants.js';
 const K_COMPENSATE_Q = Symbol.for('compensateQ');
 const K_ASSOCIATIONS = Symbol.for('associations');
 
-export default function CompensateEventDefinition(activity, eventDefinition, context) {
+export function CompensateEventDefinition(activity, eventDefinition, context) {
   const { id, broker, environment, isThrowing } = activity;
 
   this.id = id;

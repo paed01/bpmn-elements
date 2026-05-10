@@ -3,13 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.ActivityExecution = ActivityExecution;
 var _Api = require("../Api.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
 const K_EXECUTE_Q = Symbol.for('executeQ');
 const K_POSTPONED = Symbol.for('postponed');
-var _default = exports.default = ActivityExecution;
+
 /**
  * Per-run execution orchestrator for an Activity. Instantiates the element-specific behaviour
  * and drives the execute message flow over the activity broker.

@@ -1,4 +1,4 @@
-import InputOutputSpecification from '../../src/io/InputOutputSpecification.js';
+import { IoSpecification as InputOutputSpecification } from '../../src/io/InputOutputSpecification.js';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 

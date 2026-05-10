@@ -1,4 +1,4 @@
-import ProcessExecution from './ProcessExecution.js';
+import { ProcessExecution } from './ProcessExecution.js';
 import { getUniqueId } from '../shared.js';
 import { ProcessApi } from '../Api.js';
 import { ProcessBroker } from '../EventBroker.js';
@@ -17,8 +17,6 @@ import {
 } from '../constants.js';
 
 const K_LANES = Symbol.for('lanes');
-
-export default Process;
 
 /**
  * Owns one `<bpmn:process>`. Wraps the structural definition and orchestrates flow traversal,

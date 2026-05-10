@@ -1,9 +1,8 @@
-import getPropertyValue from './getPropertyValue.js';
-
+import { getPropertyValue } from './getPropertyValue.js';
 const isExpressionPattern = /^\${(.+?)}$/;
 const expressionPattern = /\${(.+?)}/;
 
-export default function Expressions() {
+export function Expressions() {
   return {
     resolveExpression,
     isExpression,

@@ -1,4 +1,4 @@
-import Activity from '../activity/Activity.js';
+import { Activity } from '../activity/Activity.js';
 import { cloneContent, cloneMessage } from '../messageHelper.js';
 import { K_EXECUTE_MESSAGE, K_TARGETS } from '../constants.js';
 
@@ -8,7 +8,7 @@ const STATE_SETUP = 'setup';
 const K_PEERS = Symbol.for('peers');
 const K_INBOUND_SOURCE_IDS = Symbol.for('inbound peers');
 
-export default function ParallelGateway(activityDef, context) {
+export function ParallelGateway(activityDef, context) {
   const activity = new Activity(ParallelGatewayBehaviour, { ...activityDef, isParallelGateway: true }, context);
 
   const id = (this.id = activity.id);

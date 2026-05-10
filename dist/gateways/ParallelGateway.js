@@ -3,18 +3,17 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.ParallelGateway = ParallelGateway;
 exports.ParallelGatewayBehaviour = ParallelGatewayBehaviour;
-exports.default = ParallelGateway;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
+var _Activity = require("../activity/Activity.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const STATE_MONTITORING = 'monitoring';
 const STATE_SETUP = 'setup';
 const K_PEERS = Symbol.for('peers');
 const K_INBOUND_SOURCE_IDS = Symbol.for('inbound peers');
 function ParallelGateway(activityDef, context) {
-  const activity = new _Activity.default(ParallelGatewayBehaviour, {
+  const activity = new _Activity.Activity(ParallelGatewayBehaviour, {
     ...activityDef,
     isParallelGateway: true
   }, context);

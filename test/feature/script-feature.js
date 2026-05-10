@@ -1,4 +1,4 @@
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import testHelpers from '../helpers/testHelpers.js';
 
 class Scripts {

@@ -1,4 +1,4 @@
-import Environment from '../src/Environment.js';
+import { Environment } from '../src/Environment.js';
 import { Timers } from '../src/Timers.js';
 
 describe('Environment', () => {

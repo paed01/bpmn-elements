@@ -1,8 +1,8 @@
-import Environment from '../../src/Environment.js';
+import { Environment } from '../../src/Environment.js';
 import factory from '../helpers/factory.js';
 import js from '../resources/extensions/JsExtension.js';
 import testHelpers from '../helpers/testHelpers.js';
-import SequenceFlow from '../../src/flows/SequenceFlow.js';
+import { SequenceFlow } from '../../src/flows/SequenceFlow.js';
 import { resolveExpression } from '@aircall/expression-parser';
 import { Scripts } from '../helpers/JavaScripts.js';
 

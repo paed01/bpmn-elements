@@ -1,8 +1,8 @@
-import Activity from '../activity/Activity.js';
+import { Activity } from '../activity/Activity.js';
 import { ActivityError } from '../error/Errors.js';
 import { cloneContent } from '../messageHelper.js';
 
-export default function CallActivity(activityDef, context) {
+export function CallActivity(activityDef, context) {
   return new Activity(CallActivityBehaviour, activityDef, context);
 }
 

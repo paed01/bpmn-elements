@@ -1,5 +1,5 @@
 import testHelpers from '../helpers/testHelpers.js';
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import factory from '../helpers/factory.js';
 
 const motherOfAll = factory.resource('mother-of-all.bpmn');

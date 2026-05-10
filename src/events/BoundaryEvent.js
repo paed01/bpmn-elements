@@ -1,5 +1,5 @@
-import Activity from '../activity/Activity.js';
-import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution.js';
+import { Activity } from '../activity/Activity.js';
+import { EventDefinitionExecution } from '../eventDefinitions/EventDefinitionExecution.js';
 import { cloneContent, cloneMessage } from '../messageHelper.js';
 import { brokerSafeId } from '../shared.js';
 import { K_EXECUTE_MESSAGE, K_EXECUTION } from '../constants.js';
@@ -8,7 +8,7 @@ const K_ATTACHED_TAGS = Symbol.for('attachedConsumers');
 const K_COMPLETE_CONTENT = Symbol.for('completeContent');
 const K_SHOVELS = Symbol.for('shovels');
 
-export default function BoundaryEvent(activityDef, context) {
+export function BoundaryEvent(activityDef, context) {
   return new Activity(BoundaryEventBehaviour, activityDef, context);
 }
 

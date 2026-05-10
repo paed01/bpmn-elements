@@ -1,5 +1,5 @@
-import BpmnIO from './io/BpmnIO.js';
-import Environment from './Environment.js';
+import { BpmnIO } from './io/BpmnIO.js';
+import { Environment } from './Environment.js';
 import { getUniqueId } from './shared.js';
 import { K_ACTIVATED } from './constants.js';
 
@@ -10,7 +10,7 @@ const K_OWNER = Symbol.for('owner');
  * @param {import('moddle-context-serializer').SerializableContext} definitionContext
  * @param {import('types').Environment} [environment] Existing environment to clone; a fresh one is created when omitted
  */
-export default function Context(definitionContext, environment) {
+export function Context(definitionContext, environment) {
   environment = environment ? environment.clone() : new Environment();
   return new ContextInstance(definitionContext, environment);
 }
@@ -21,7 +21,7 @@ export default function Context(definitionContext, environment) {
  * @param {import('types').Environment} environment
  * @param {import('types').Process | import('types').Activity} [owner] Process or sub-process activity that owns this context
  */
-function ContextInstance(definitionContext, environment, owner) {
+export function ContextInstance(definitionContext, environment, owner) {
   const { id = 'Def', name, type = 'context' } = definitionContext;
   const sid = getUniqueId(id);
   this.id = id;

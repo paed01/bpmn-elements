@@ -1,5 +1,5 @@
 import * as ck from 'chronokinesis';
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import JsExtension from '../resources/extensions/JsExtension.js';
 import testHelpers from '../helpers/testHelpers.js';
 

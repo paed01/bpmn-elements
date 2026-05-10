@@ -3,17 +3,16 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.SubProcess = SubProcess;
 exports.SubProcessBehaviour = SubProcessBehaviour;
-exports.default = SubProcess;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
-var _ProcessExecution = _interopRequireDefault(require("../process/ProcessExecution.js"));
+var _Activity = require("../activity/Activity.js");
+var _ProcessExecution = require("../process/ProcessExecution.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const K_EXECUTIONS = Symbol.for('executions');
 const K_ON_EXECUTION_COMPLETED = Symbol.for('execution completed handler');
 function SubProcess(activityDef, context) {
   const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
-  const subProcess = new _Activity.default(SubProcessBehaviour, {
+  const subProcess = new _Activity.Activity(SubProcessBehaviour, {
     ...activityDef,
     isSubProcess: true,
     triggeredByEvent
@@ -32,7 +31,7 @@ function SubProcess(activityDef, context) {
       startId
     } = message.content;
     const last = message.content.sequence.pop();
-    const sequence = new _ProcessExecution.default(subProcess, context).shake(startId);
+    const sequence = new _ProcessExecution.ProcessExecution(subProcess, context).shake(startId);
     message.content.sequence.push({
       ...last,
       isSubProcess: true,
@@ -117,7 +116,7 @@ SubProcessBehaviour.prototype.recover = function recover(state) {
   }
   const subEnvironment = this.environment.clone().recover(state.environment);
   const subContext = this.context.clone(subEnvironment, this.activity);
-  const execution = new _ProcessExecution.default(this.activity, subContext).recover(state);
+  const execution = new _ProcessExecution.ProcessExecution(this.activity, subContext).recover(state);
   executions.add(execution);
   return execution;
 };
@@ -138,7 +137,7 @@ SubProcessBehaviour.prototype._upsertExecution = function upsertExecution(execut
   }
   const subEnvironment = this.environment.clone();
   const subContext = this.context.clone(subEnvironment, this.activity);
-  execution = new _ProcessExecution.default(this.activity, subContext);
+  execution = new _ProcessExecution.ProcessExecution(this.activity, subContext);
   /** @private */
   this[K_EXECUTIONS].add(execution);
   this._addListeners(executionId);

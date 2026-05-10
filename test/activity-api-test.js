@@ -1,4 +1,4 @@
-import Activity from '../src/activity/Activity.js';
+import { Activity } from '../src/activity/Activity.js';
 import testHelpers from './helpers/testHelpers.js';
 import { cloneContent } from '../src/messageHelper.js';
 

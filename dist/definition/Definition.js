@@ -4,16 +4,13 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.Definition = Definition;
-exports.default = void 0;
-var _DefinitionExecution = _interopRequireDefault(require("./DefinitionExecution.js"));
+var _DefinitionExecution = require("./DefinitionExecution.js");
 var _Api = require("../Api.js");
 var _EventBroker = require("../EventBroker.js");
 var _shared = require("../shared.js");
 var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-var _default = exports.default = Definition;
 /**
  * Top-level wrapper for an executable BPMN definition. Owns its DefinitionExecution and
  * mediates inter-process messaging.
@@ -66,6 +63,7 @@ function Definition(context, options) {
     emit,
     emitFatal
   } = (0, _EventBroker.DefinitionBroker)(this, onBrokerReturn);
+  /** @type {import('smqp').Broker} */
   this.broker = broker;
   this.on = on;
   this.once = once;
@@ -216,7 +214,7 @@ Definition.prototype.recover = function recover(state) {
   }
   this.environment.recover(state.environment);
   if (state.execution) {
-    exec.set('execution', new _DefinitionExecution.default(this, this.context).recover(state.execution));
+    exec.set('execution', new _DefinitionExecution.DefinitionExecution(this, this.context).recover(state.execution));
   }
   this.broker.recover(state.broker);
   return this;
@@ -483,7 +481,7 @@ Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) 
           consumerTag: '_definition-execution'
         });
         if (!execution) {
-          execution = new _DefinitionExecution.default(this, this.context);
+          execution = new _DefinitionExecution.DefinitionExecution(this, this.context);
           exec.set('execution', execution);
         }
         if (executeMessage.fields.redelivered) {

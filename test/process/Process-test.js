@@ -1,6 +1,6 @@
 import factory from '../helpers/factory.js';
 import JsExtension from '../resources/extensions/JsExtension.js';
-import SignalTask from '../../src/tasks/SignalTask.js';
+import { SignalTask } from '../../src/tasks/SignalTask.js';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityError } from '../../src/error/Errors.js';
 import { Process } from '../../src/process/Process.js';

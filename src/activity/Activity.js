@@ -1,4 +1,4 @@
-import ActivityExecution from './ActivityExecution.js';
+import { ActivityExecution } from './ActivityExecution.js';
 import { getUniqueId } from '../shared.js';
 import { ActivityApi } from '../Api.js';
 import { ActivityBroker } from '../EventBroker.js';
@@ -23,8 +23,6 @@ const K_EXEC = Symbol.for('exec');
 const K_FLAGS = Symbol.for('flags');
 const K_FLOWS = Symbol.for('flows');
 const K_FORMATTER = Symbol.for('formatter');
-
-export default Activity;
 
 /**
  * Activity wraps any element (task, event, gateway) and orchestrates its lifecycle through the broker.

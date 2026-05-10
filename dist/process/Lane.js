@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Lane;
+exports.Lane = Lane;
 const K_PROCESS = Symbol.for('process');
 
 /**

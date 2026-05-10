@@ -1,10 +1,9 @@
 import * as ck from 'chronokinesis';
 import { Definition } from 'bpmn-elements';
+import { BpmnError } from 'bpmn-elements/errors';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 import camunda from '../resources/extensions/CamundaExtension.js';
-import { BpmnError } from '../../src/error/Errors.js';
-
 const waitingSource = factory.resource('wait-activities.bpmn');
 const escalationSource = factory.resource('escalation.bpmn');
 const transactionSource = factory.resource('transaction.bpmn');

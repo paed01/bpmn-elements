@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = EnvironmentDataObject;
+exports.EnvironmentDataObject = EnvironmentDataObject;
 function EnvironmentDataObject(dataObjectDef, {
   environment
 }) {

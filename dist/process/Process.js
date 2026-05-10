@@ -4,17 +4,15 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.Process = Process;
-exports.default = void 0;
-var _ProcessExecution = _interopRequireDefault(require("./ProcessExecution.js"));
+var _ProcessExecution = require("./ProcessExecution.js");
 var _shared = require("../shared.js");
 var _Api = require("../Api.js");
 var _EventBroker = require("../EventBroker.js");
 var _messageHelper = require("../messageHelper.js");
 var _Errors = require("../error/Errors.js");
 var _constants = require("../constants.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const K_LANES = Symbol.for('lanes');
-var _default = exports.default = Process;
+
 /**
  * Owns one `<bpmn:process>`. Wraps the structural definition and orchestrates flow traversal,
  * joins, and parallel activation through ProcessExecution.
@@ -225,7 +223,7 @@ Process.prototype.recover = function recover(state) {
   };
   this.environment.recover(state.environment);
   if (state.execution) {
-    exec.set('execution', new _ProcessExecution.default(this, this.context).recover(state.execution));
+    exec.set('execution', new _ProcessExecution.ProcessExecution(this, this.context).recover(state.execution));
   }
   this.broker.recover(state.broker);
   return this;
@@ -237,7 +235,7 @@ Process.prototype.recover = function recover(state) {
  */
 Process.prototype.shake = function shake(startId) {
   if (this.isRunning) return this.execution.shake(startId);
-  return new _ProcessExecution.default(this, this.context).shake(startId);
+  return new _ProcessExecution.ProcessExecution(this, this.context).shake(startId);
 };
 
 /**
@@ -358,7 +356,7 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
           exclusive: true,
           consumerTag: '_process-execution'
         });
-        execution = execution || new _ProcessExecution.default(this, this.context);
+        execution = execution || new _ProcessExecution.ProcessExecution(this, this.context);
         exec.set('execution', execution);
         return execution.execute(executeMessage);
       }

@@ -1,8 +1,8 @@
-import Activity from '../activity/Activity.js';
+import { Activity } from '../activity/Activity.js';
 import { cloneContent } from '../messageHelper.js';
 import { K_COMPLETED, K_EXECUTE_MESSAGE, K_REFERENCE_ELEMENT, K_REFERENCE_INFO } from '../constants.js';
 
-export default function ReceiveTask(activityDef, context) {
+export function ReceiveTask(activityDef, context) {
   const task = new Activity(ReceiveTaskBehaviour, activityDef, context);
 
   task.broker.assertQueue('message', { autoDelete: false, durable: true });

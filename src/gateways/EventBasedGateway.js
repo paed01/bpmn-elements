@@ -1,8 +1,8 @@
-import Activity from '../activity/Activity.js';
+import { Activity } from '../activity/Activity.js';
 import { cloneContent } from '../messageHelper.js';
 import { K_COMPLETED, K_TARGETS } from '../constants.js';
 
-export default function EventBasedGateway(activityDef, context) {
+export function EventBasedGateway(activityDef, context) {
   return new Activity(EventBasedGatewayBehaviour, activityDef, context);
 }
 

@@ -1,6 +1,5 @@
 import testHelpers from '../helpers/testHelpers.js';
-import Definition from '../../src/definition/Definition.js';
-
+import { Definition } from 'bpmn-elements';
 Feature('Environment', () => {
   Scenario('A definition with one process and a user task', () => {
     const source = `

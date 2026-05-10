@@ -1,9 +1,8 @@
 import CamundaExtension from '../resources/extensions/CamundaExtension.js';
-import Definition from '../../src/definition/Definition.js';
+import { ActivityError, Definition } from 'bpmn-elements';
+import { BpmnError } from 'bpmn-elements/errors';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
-import { ActivityError, BpmnError } from '../../src/error/Errors.js';
-
 const bpmnErrorSource = factory.resource('bpmn-error.bpmn');
 
 class CustomError extends Error {

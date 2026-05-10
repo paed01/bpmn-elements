@@ -3,14 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.CallActivity = CallActivity;
 exports.CallActivityBehaviour = CallActivityBehaviour;
-exports.default = CallActivity;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
+var _Activity = require("../activity/Activity.js");
 var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function CallActivity(activityDef, context) {
-  return new _Activity.default(CallActivityBehaviour, activityDef, context);
+  return new _Activity.Activity(CallActivityBehaviour, activityDef, context);
 }
 function CallActivityBehaviour(activity) {
   const {

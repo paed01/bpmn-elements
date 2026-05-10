@@ -1,6 +1,6 @@
 import JsExtension from '../resources/extensions/JsExtension.js';
 import nock from 'nock';
-import ServiceTask from '../../src/tasks/ServiceTask.js';
+import { ServiceTask } from '../../src/tasks/ServiceTask.js';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityError } from '../../src/error/Errors.js';
 

@@ -3,12 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = MessageEventDefinition;
-var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue.js"));
+exports.MessageEventDefinition = MessageEventDefinition;
+var _getPropertyValue = require("../getPropertyValue.js");
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 function MessageEventDefinition(activity, eventDefinition) {
   const {
     id,
@@ -125,7 +124,7 @@ MessageEventDefinition.prototype.executeThrow = function executeThrow(executeMes
   return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
 MessageEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
-  if ((0, _getPropertyValue.default)(message, 'content.message.id') !== this[_constants.K_REFERENCE_INFO].message.id) return;
+  if ((0, _getPropertyValue.getPropertyValue)(message, 'content.message.id') !== this[_constants.K_REFERENCE_INFO].message.id) return;
   const {
     type,
     correlationId

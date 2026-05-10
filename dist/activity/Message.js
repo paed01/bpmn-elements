@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Message;
+exports.Message = Message;
 function Message(messageDef, context) {
   const {
     id,

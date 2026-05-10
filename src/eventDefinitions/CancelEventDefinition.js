@@ -1,7 +1,7 @@
 import { cloneContent, shiftParent } from '../messageHelper.js';
 import { K_COMPLETED, K_EXECUTE_MESSAGE } from '../constants.js';
 
-export default function CancelEventDefinition(activity, eventDefinition) {
+export function CancelEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;
   const type = eventDefinition.type;
 

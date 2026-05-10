@@ -13,7 +13,7 @@ const K_PROCESSES = Symbol.for('processes');
  * @param {import('types').Definition} definition
  * @param {import('types').ContextInstance} context
  */
-export default function DefinitionExecution(definition, context) {
+export function DefinitionExecution(definition, context) {
   const broker = definition.broker;
 
   /** @private */

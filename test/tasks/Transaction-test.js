@@ -1,4 +1,4 @@
-import Transaction from '../../src/tasks/Transaction.js';
+import { Transaction } from '../../src/tasks/Transaction.js';
 import testHelpers from '../helpers/testHelpers.js';
 
 describe('Transaction', () => {

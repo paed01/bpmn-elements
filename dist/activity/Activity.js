@@ -4,8 +4,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.Activity = Activity;
-exports.default = void 0;
-var _ActivityExecution = _interopRequireDefault(require("./ActivityExecution.js"));
+var _ActivityExecution = require("./ActivityExecution.js");
 var _shared = require("../shared.js");
 var _Api = require("../Api.js");
 var _EventBroker = require("../EventBroker.js");
@@ -14,7 +13,6 @@ var _messageHelper = require("../messageHelper.js");
 var _Errors = require("../error/Errors.js");
 var _outboundEvaluator = require("./outbound-evaluator.js");
 var _constants = require("../constants.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const K_ACTIVITY_DEF = Symbol.for('activityDefinition');
 const K_CONSUMING_RUN_Q = Symbol.for('run queue consumer');
 const K_EVENT_DEFINITIONS = Symbol.for('eventDefinitions');
@@ -22,7 +20,7 @@ const K_EXEC = Symbol.for('exec');
 const K_FLAGS = Symbol.for('flags');
 const K_FLOWS = Symbol.for('flows');
 const K_FORMATTER = Symbol.for('formatter');
-var _default = exports.default = Activity;
+
 /**
  * Activity wraps any element (task, event, gateway) and orchestrates its lifecycle through the broker.
  * @param {import('types').IActivityBehaviour} Behaviour Element-specific behaviour constructor invoked per execution
@@ -384,7 +382,7 @@ Activity.prototype.recover = function recover(state) {
     ...state.counters
   };
   if (state.execution) {
-    exec.set('execution', new _ActivityExecution.default(this, this.context).recover(state.execution));
+    exec.set('execution', new _ActivityExecution.ActivityExecution(this, this.context).recover(state.execution));
   }
   this.broker.recover(state.broker);
   return this;
@@ -811,7 +809,7 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
         const exec = this[K_EXEC];
         let execution = exec.get('execution');
         if (!execution) {
-          execution = new _ActivityExecution.default(this, this.context);
+          execution = new _ActivityExecution.ActivityExecution(this, this.context);
           exec.set('execution', execution);
         }
         this.broker.getQueue('execution-q').assertConsumer(this[_constants.K_MESSAGE_HANDLERS].onExecutionMessage, {

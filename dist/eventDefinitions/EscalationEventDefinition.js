@@ -3,12 +3,11 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = EscalationEventDefinition;
-var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue.js"));
+exports.EscalationEventDefinition = EscalationEventDefinition;
+var _getPropertyValue = require("../getPropertyValue.js");
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const K_REFERENCE = Symbol.for('reference');
 function EscalationEventDefinition(activity, eventDefinition) {
   const {
@@ -113,7 +112,7 @@ EscalationEventDefinition.prototype.executeThrow = function executeThrow(execute
 };
 EscalationEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
   const info = this[K_REFERENCE];
-  if ((0, _getPropertyValue.default)(message, 'content.message.id') !== info.message.id) return;
+  if ((0, _getPropertyValue.getPropertyValue)(message, 'content.message.id') !== info.message.id) return;
   const output = message.content.message;
   /** @private */
   this[_constants.K_COMPLETED] = true;

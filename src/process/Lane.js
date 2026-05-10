@@ -6,7 +6,7 @@ const K_PROCESS = Symbol.for('process');
  * @param {import('types').Process} process
  * @param {import('moddle-context-serializer').SerializableElement} laneDefinition
  */
-export default function Lane(process, laneDefinition) {
+export function Lane(process, laneDefinition) {
   const { broker, environment } = process;
   const { id, type, behaviour } = laneDefinition;
 

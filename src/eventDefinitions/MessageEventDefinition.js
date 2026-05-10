@@ -1,9 +1,9 @@
-import getPropertyValue from '../getPropertyValue.js';
+import { getPropertyValue } from '../getPropertyValue.js';
 import { brokerSafeId } from '../shared.js';
 import { cloneContent, shiftParent } from '../messageHelper.js';
 import { K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_Q, K_REFERENCE_ELEMENT, K_REFERENCE_INFO } from '../constants.js';
 
-export default function MessageEventDefinition(activity, eventDefinition) {
+export function MessageEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;
   const { type = 'MessageEventDefinition', behaviour = {} } = eventDefinition;
 

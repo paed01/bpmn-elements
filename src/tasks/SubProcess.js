@@ -1,11 +1,11 @@
-import Activity from '../activity/Activity.js';
-import ProcessExecution from '../process/ProcessExecution.js';
+import { Activity } from '../activity/Activity.js';
+import { ProcessExecution } from '../process/ProcessExecution.js';
 import { cloneContent } from '../messageHelper.js';
 
 const K_EXECUTIONS = Symbol.for('executions');
 const K_ON_EXECUTION_COMPLETED = Symbol.for('execution completed handler');
 
-export default function SubProcess(activityDef, context) {
+export function SubProcess(activityDef, context) {
   const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
   const subProcess = new Activity(SubProcessBehaviour, { ...activityDef, isSubProcess: true, triggeredByEvent }, context);
 

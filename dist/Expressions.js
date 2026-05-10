@@ -3,9 +3,8 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Expressions;
-var _getPropertyValue = _interopRequireDefault(require("./getPropertyValue.js"));
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+exports.Expressions = Expressions;
+var _getPropertyValue = require("./getPropertyValue.js");
 const isExpressionPattern = /^\${(.+?)}$/;
 const expressionPattern = /\${(.+?)}/;
 function Expressions() {
@@ -30,7 +29,7 @@ function resolveExpression(templatedString, context, expressionFnContext) {
       const n = Number(innerProperty);
       if (!isNaN(n)) return n;
     }
-    const contextValue = (0, _getPropertyValue.default)(context, innerProperty, expressionFnContext);
+    const contextValue = (0, _getPropertyValue.getPropertyValue)(context, innerProperty, expressionFnContext);
     if (expressionMatch.input === expressionMatch[0]) {
       return contextValue;
     }

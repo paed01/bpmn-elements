@@ -1,9 +1,9 @@
-import Activity from '../activity/Activity.js';
-import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution.js';
+import { Activity } from '../activity/Activity.js';
+import { EventDefinitionExecution } from '../eventDefinitions/EventDefinitionExecution.js';
 import { cloneContent } from '../messageHelper.js';
 import { K_EXECUTE_MESSAGE, K_EXECUTION } from '../constants.js';
 
-export default function StartEvent(activityDef, context) {
+export function StartEvent(activityDef, context) {
   return new Activity(StartEventBehaviour, activityDef, context);
 }
 

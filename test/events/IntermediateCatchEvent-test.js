@@ -1,4 +1,4 @@
-import IntermediateCatchEvent from '../../src/events/IntermediateCatchEvent.js';
+import { IntermediateCatchEvent } from '../../src/events/IntermediateCatchEvent.js';
 import testHelpers from '../helpers/testHelpers.js';
 
 describe('IntermediateCatchEvent', () => {

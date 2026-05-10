@@ -1,5 +1,5 @@
-import DataObject from '../../src/io/EnvironmentDataObject.js';
-import Environment from '../../src/Environment.js';
+import { EnvironmentDataObject as DataObject } from '../../src/io/EnvironmentDataObject.js';
+import { Environment } from '../../src/Environment.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('DataObject', () => {

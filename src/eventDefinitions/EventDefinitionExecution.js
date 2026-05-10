@@ -1,7 +1,7 @@
 import { cloneContent, unshiftParent, shiftParent, cloneParent } from '../messageHelper.js';
 import { K_COMPLETED, K_EXECUTE_MESSAGE, K_STOPPED } from '../constants.js';
 
-export default function EventDefinitionExecution(activity, eventDefinitions, completedRoutingKey = 'execute.completed') {
+export function EventDefinitionExecution(activity, eventDefinitions, completedRoutingKey = 'execute.completed') {
   this.id = activity.id;
   this.activity = activity;
   this.broker = activity.broker;

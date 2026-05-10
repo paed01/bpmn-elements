@@ -3,13 +3,12 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = void 0;
+exports.ProcessExecution = ProcessExecution;
 var _Api = require("../Api.js");
 var _messageHelper = require("../messageHelper.js");
 var _shared = require("../shared.js");
 var _Tracker = require("../Tracker.js");
 var _constants = require("../constants.js");
-var _default = exports.default = ProcessExecution;
 const K_ACTIVITY_Q = Symbol.for('activityQ');
 const K_ELEMENTS = Symbol.for('elements');
 const K_PARENT = Symbol.for('parent');

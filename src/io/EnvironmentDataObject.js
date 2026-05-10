@@ -1,4 +1,4 @@
-export default function EnvironmentDataObject(dataObjectDef, { environment }) {
+export function EnvironmentDataObject(dataObjectDef, { environment }) {
   const { id, type, name, behaviour, parent } = dataObjectDef;
   this.id = id;
   this.type = type;

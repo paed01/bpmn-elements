@@ -2,7 +2,7 @@ import { brokerSafeId } from '../shared.js';
 import { cloneContent, shiftParent } from '../messageHelper.js';
 import { K_EXECUTE_MESSAGE } from '../constants.js';
 
-export default function LinkEventDefinition(activity, eventDefinition) {
+export function LinkEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;
   const { type = 'LinkEventDefinition', behaviour } = eventDefinition;
 

@@ -3,6 +3,10 @@
 ## Unreleased
 
 - fix `Activity.recover()` to return the activity when called without state
+- expose throwable error classes via new `bpmn-elements/errors` subpath: `import { ActivityError, BpmnError, RunError } from 'bpmn-elements/errors'` (the `BpmnError` activity factory remains the named export of `bpmn-elements`)
+- drop default exports across all implementation files in favour of named exports — internal-facing churn only, the package's public exports map (`bpmn-elements`, `bpmn-elements/events`, `…/eventDefinitions`, `…/flows`, `…/gateways`, `…/tasks`) is unchanged
+- replace hand-rolled class declarations in `types/types.d.ts` with re-exports from the implementation files — the type definitions track the JSDoc-driven source rather than living in parallel
+- strip the duplicate `export function Foo(...)` declarations that tsc emits alongside `export class Foo` for constructor-function patterns — the bundled `Definition`, `Activity`, `Process`, etc. are now plain class declarations that merge cleanly with the property augmentations
 
 ### Types
 

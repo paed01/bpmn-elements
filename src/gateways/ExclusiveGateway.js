@@ -1,7 +1,7 @@
-import Activity from '../activity/Activity.js';
+import { Activity } from '../activity/Activity.js';
 import { cloneContent } from '../messageHelper.js';
 
-export default function ExclusiveGateway(activityDef, context) {
+export function ExclusiveGateway(activityDef, context) {
   return new Activity(ExclusiveGatewayBehaviour, activityDef, context);
 }
 

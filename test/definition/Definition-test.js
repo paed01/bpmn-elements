@@ -1,4 +1,4 @@
-import Environment from '../../src/Environment.js';
+import { Environment } from '../../src/Environment.js';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityError } from '../../src/error/Errors.js';

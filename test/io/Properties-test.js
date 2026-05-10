@@ -1,5 +1,5 @@
-import Environment from '../../src/Environment.js';
-import Properties from '../../src/io/Properties.js';
+import { Environment } from '../../src/Environment.js';
+import { Properties } from '../../src/io/Properties.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('Properties', () => {

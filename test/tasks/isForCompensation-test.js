@@ -1,5 +1,5 @@
-import Association from '../../src/flows/Association.js';
-import ServiceTask from '../../src/tasks/ServiceTask.js';
+import { Association } from '../../src/flows/Association.js';
+import { ServiceTask } from '../../src/tasks/ServiceTask.js';
 import testHelpers from '../helpers/testHelpers.js';
 
 describe('isForCompensation task', () => {

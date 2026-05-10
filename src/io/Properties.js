@@ -1,9 +1,9 @@
-import getPropertyValue from '../getPropertyValue.js';
+import { getPropertyValue } from '../getPropertyValue.js';
 import { K_CONSUMING } from '../constants.js';
 
 const K_PROPERTIES = Symbol.for('properties');
 
-export default function Properties(activity, propertiesDef, context) {
+export function Properties(activity, propertiesDef, context) {
   this.activity = activity;
   this.broker = activity.broker;
 

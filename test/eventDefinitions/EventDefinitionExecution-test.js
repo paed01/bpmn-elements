@@ -1,4 +1,4 @@
-import EventDefinitionExecution from '../../src/eventDefinitions/EventDefinitionExecution.js';
+import { EventDefinitionExecution } from '../../src/eventDefinitions/EventDefinitionExecution.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { cloneContent } from '../../src/messageHelper.js';
 import { Logger } from '../helpers/testHelpers.js';

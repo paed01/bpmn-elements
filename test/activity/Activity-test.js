@@ -1,7 +1,7 @@
-import Activity from '../../src/activity/Activity.js';
-import Association from '../../src/flows/Association.js';
-import Environment from '../../src/Environment.js';
-import SequenceFlow from '../../src/flows/SequenceFlow.js';
+import { Activity } from '../../src/activity/Activity.js';
+import { Association } from '../../src/flows/Association.js';
+import { Environment } from '../../src/Environment.js';
+import { SequenceFlow } from '../../src/flows/SequenceFlow.js';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { TaskBehaviour, SignalTaskBehaviour } from '../../src/tasks/index.js';

@@ -4,8 +4,6 @@ import { getUniqueId } from '../shared.js';
 import { ActivityTracker } from '../Tracker.js';
 import { K_ACTIVATED, K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_HANDLERS, K_STATUS, K_STOPPED } from '../constants.js';
 
-export default ProcessExecution;
-
 const K_ACTIVITY_Q = Symbol.for('activityQ');
 const K_ELEMENTS = Symbol.for('elements');
 const K_PARENT = Symbol.for('parent');
@@ -17,7 +15,7 @@ const K_TRACKER = Symbol.for('activity tracker');
  * @param {import('types').Process | import('types').Activity} parentActivity
  * @param {import('types').ContextInstance} context
  */
-function ProcessExecution(parentActivity, context) {
+export function ProcessExecution(parentActivity, context) {
   const { id, type, broker, isSubProcess, isTransaction } = parentActivity;
 
   /** @private */

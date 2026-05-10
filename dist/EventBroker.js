@@ -115,7 +115,7 @@ function ExecutionBroker(brokerOwner, prefix, onBrokerReturn) {
 function EventBroker(brokerOwner, options, onBrokerReturn) {
   this.options = options;
   this.eventPrefix = options.prefix;
-  const broker = this.broker = (0, _smqp.Broker)(brokerOwner);
+  const broker = this.broker = new _smqp.Broker(brokerOwner);
   broker.assertExchange('event', 'topic', options);
   broker.on('return', onBrokerReturn ? onBrokerReturn.bind(brokerOwner) : this._onBrokerReturnFn.bind(this));
   this.on = this.on.bind(this);

@@ -8,7 +8,7 @@ const K_TIMER = Symbol.for('timer');
 
 const timerTypes = new Set(['timeDuration', 'timeDate', 'timeCycle']);
 
-export default function TimerEventDefinition(activity, eventDefinition) {
+export function TimerEventDefinition(activity, eventDefinition) {
   const type = (this.type = eventDefinition.type || 'TimerEventDefinition');
   this.activity = activity;
   const environment = (this.environment = activity.environment);

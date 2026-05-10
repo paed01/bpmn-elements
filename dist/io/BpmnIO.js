@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = BpmnIO;
+exports.BpmnIO = BpmnIO;
 function BpmnIO(activity, context) {
   this.activity = activity;
   this.context = context;

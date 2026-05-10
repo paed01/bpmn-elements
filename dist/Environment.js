@@ -3,11 +3,10 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Environment;
-var _Expressions = _interopRequireDefault(require("./Expressions.js"));
+exports.Environment = Environment;
+var _Expressions = require("./Expressions.js");
 var _Scripts = require("./Scripts.js");
 var _Timers = require("./Timers.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
 const K_SERVICES = Symbol.for('services');
 const K_VARIABLES = Symbol.for('variables');
 const defaultOptions = new Set(['expressions', 'extensions', 'Logger', 'output', 'scripts', 'services', 'settings', 'timers', 'variables']);
@@ -19,7 +18,7 @@ const defaultOptions = new Set(['expressions', 'extensions', 'Logger', 'output',
  */
 function Environment(options = {}) {
   this.options = validateOptions(options);
-  this.expressions = options.expressions || (0, _Expressions.default)();
+  this.expressions = options.expressions || (0, _Expressions.Expressions)();
   this.extensions = options.extensions;
   this.output = options.output || {};
   this.scripts = options.scripts || new _Scripts.Scripts();

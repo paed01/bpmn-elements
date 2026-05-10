@@ -1,6 +1,6 @@
-import Environment from '../../src/Environment.js';
+import { Environment } from '../../src/Environment.js';
 import factory from '../helpers/factory.js';
-import MessageFlow from '../../src/flows/MessageFlow.js';
+import { MessageFlow } from '../../src/flows/MessageFlow.js';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 

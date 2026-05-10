@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = DummyActivity;
+exports.DummyActivity = DummyActivity;
 var _messageHelper = require("../messageHelper.js");
 function DummyActivity(activityDef) {
   const {
