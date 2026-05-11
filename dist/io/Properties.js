@@ -79,8 +79,6 @@ Properties.prototype.activate = function activate(message) {
   if (message.fields.redelivered && message.content.properties) {
     this._onActivityEvent('activity.extension.resume', message);
   }
-
-  /** @private */
   this[_constants.K_CONSUMING] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {
     noAck: true
   });

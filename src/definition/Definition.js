@@ -18,8 +18,8 @@ import {
 /**
  * Top-level wrapper for an executable BPMN definition. Owns its DefinitionExecution and
  * mediates inter-process messaging.
- * @param {import('types').ContextInstance} context
- * @param {import('types').EnvironmentOptions} [options] When provided, environment is cloned and settings merged
+ * @param {import('../Context.js').ContextInstance} context
+ * @param {import('#types').EnvironmentOptions} [options] When provided, environment is cloned and settings merged
  */
 export function Definition(context, options) {
   if (!(this instanceof Definition)) return new Definition(context, options);
@@ -40,19 +40,15 @@ export function Definition(context, options) {
     this.context = context;
   }
 
-  /** @private */
   this[K_COUNTERS] = {
     completed: 0,
     discarded: 0,
   };
 
-  /** @private */
   this[K_STOPPED] = false;
-  /** @private */
   this[K_EXECUTION] = new Map();
 
   const onBrokerReturn = this._onBrokerReturnFn.bind(this);
-  /** @private */
   this[K_MESSAGE_HANDLERS] = {
     onBrokerReturn,
     onApiMessage: this._onApiMessage.bind(this),
@@ -70,6 +66,7 @@ export function Definition(context, options) {
   this.emit = emit;
   this.emitFatal = emitFatal;
 
+  /** @type {import('#types').ILogger} */
   this.logger = environment.Logger(type.toLowerCase());
 }
 
@@ -116,8 +113,8 @@ Object.defineProperties(Definition.prototype, {
 /**
  * Start running the definition. Accepts run options, a callback, or both.
  * The callback fires once on leave, stop, or error.
- * @param {Record<string, any> | import('types').runCallback} [optionsOrCallback]
- * @param {import('types').runCallback} [optionalCallback]
+ * @param {Record<string, any> | import('#types').runCallback} [optionsOrCallback]
+ * @param {import('#types').runCallback} [optionalCallback]
  * @returns {this}
  * @throws {Error} when already running and no callback is supplied
  */
@@ -153,7 +150,7 @@ Definition.prototype.run = function run(optionsOrCallback, optionalCallback) {
 /**
  * Resume after recover by republishing the last run message. The callback fires once on
  * leave, stop, or error.
- * @param {import('types').runCallback} [callback]
+ * @param {import('#types').runCallback} [callback]
  * @returns {this}
  */
 Definition.prototype.resume = function resume(callback) {
@@ -163,7 +160,6 @@ Definition.prototype.resume = function resume(callback) {
     throw err;
   }
 
-  /** @private */
   this[K_STOPPED] = false;
   if (!this.status) return this;
 
@@ -195,7 +191,7 @@ Definition.prototype.getState = function getState() {
 
 /**
  * Restore definition state captured by getState.
- * @param {import('types').DefinitionState} [state]
+ * @param {import('#types').DefinitionState} [state]
  * @returns {this}
  * @throws {Error} when called on a running definition
  */
@@ -203,15 +199,12 @@ Definition.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error('cannot recover running definition');
   if (!state) return this;
 
-  /** @private */
   this[K_STOPPED] = !!state.stopped;
-  /** @private */
   this[K_STATUS] = state.status;
 
   const exec = this[K_EXECUTION];
   exec.set('executionId', state.executionId);
   if (state.counters) {
-    /** @private */
     this[K_COUNTERS] = { ...this[K_COUNTERS], ...state.counters };
   }
 
@@ -329,7 +322,7 @@ Definition.prototype.getElementById = function getElementById(elementId) {
 
 /**
  * List currently postponed activities as Api wrappers.
- * @param {import('types').filterPostponed} [filterFn]
+ * @param {import('#types').filterPostponed} [filterFn]
  */
 Definition.prototype.getPostponed = function getPostponed(...args) {
   const execution = this.execution;
@@ -339,7 +332,8 @@ Definition.prototype.getPostponed = function getPostponed(...args) {
 
 /**
  * Resolve a Definition Api wrapper, preferring the running execution if any.
- * @param {import('types').ElementBrokerMessage} [message]
+ * @param {import('#types').ElementBrokerMessage} [message]
+ * @returns {import('#types').IApi<this>}
  * @throws {Error} when the definition is not running and no message is given
  */
 Definition.prototype.getApi = function getApi(message) {
@@ -352,7 +346,7 @@ Definition.prototype.getApi = function getApi(message) {
 
 /**
  * Send a delegated signal to the running definition.
- * @param {import('types').signalMessage} [message]
+ * @param {import('#types').signalMessage} [message]
  */
 Definition.prototype.signal = function signal(message) {
   return this.getApi().signal(message, { delegate: true });
@@ -360,7 +354,7 @@ Definition.prototype.signal = function signal(message) {
 
 /**
  * Cancel a running activity inside the definition by delegated api message.
- * @param {import('types').signalMessage} [message]
+ * @param {import('#types').signalMessage} [message]
  */
 Definition.prototype.cancelActivity = function cancelActivity(message) {
   return this.getApi().cancel(message, { delegate: true });
@@ -394,7 +388,6 @@ Definition.prototype.stop = function stop() {
 
 /** @internal */
 Definition.prototype._activateRunConsumers = function activateRunConsumers() {
-  /** @private */
   this[K_CONSUMING] = true;
   const broker = this.broker;
   const { onApiMessage, onRunMessage } = this[K_MESSAGE_HANDLERS];
@@ -414,7 +407,6 @@ Definition.prototype._deactivateRunConsumers = function deactivateRunConsumers()
   broker.cancel('_definition-api');
   broker.cancel('_definition-run');
   broker.cancel('_definition-execution');
-  /** @private */
   this[K_CONSUMING] = false;
 };
 
@@ -437,14 +429,12 @@ Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) 
   }
 
   const exec = this[K_EXECUTION];
-  /** @private */
   this[K_STATE_MESSAGE] = message;
 
   switch (routingKey) {
     case 'run.enter': {
       this.logger.debug(`<${this.executionId} (${this.id})> enter`);
 
-      /** @private */
       this[K_STATUS] = 'entered';
       if (fields.redelivered) break;
 
@@ -454,20 +444,17 @@ Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) 
     }
     case 'run.start': {
       this.logger.debug(`<${this.executionId} (${this.id})> start`);
-      /** @private */
       this[K_STATUS] = 'start';
       this._publishEvent('start', content);
       break;
     }
     case 'run.execute': {
-      /** @private */
       this[K_STATUS] = 'executing';
       const executeMessage = cloneMessage(message);
       let execution = exec.get('execution');
       if (fields.redelivered && !execution) {
         executeMessage.fields.redelivered = undefined;
       }
-      /** @private */
       this[K_EXECUTE_MESSAGE] = message;
       this.broker.getQueue('execution-q').assertConsumer(this[K_MESSAGE_HANDLERS].onExecutionMessage, {
         exclusive: true,
@@ -488,11 +475,9 @@ Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) 
     case 'run.end': {
       if (this[K_STATUS] === 'end') break;
 
-      /** @private */
       this[K_COUNTERS].completed++;
 
       this.logger.debug(`<${this.executionId} (${this.id})> completed`);
-      /** @private */
       this[K_STATUS] = 'end';
       this.broker.publish('run', 'run.leave', content);
       this._publishEvent('end', content);
@@ -512,17 +497,14 @@ Definition.prototype._onRunMessage = function onRunMessage(routingKey, message) 
     case 'run.discarded': {
       if (this[K_STATUS] === 'discarded') break;
 
-      /** @private */
       this[K_COUNTERS].discarded++;
 
-      /** @private */
       this[K_STATUS] = 'discarded';
       this.broker.publish('run', 'run.leave', content);
       break;
     }
     case 'run.leave': {
       message.ack();
-      /** @private */
       this[K_STATUS] = undefined;
       this._deactivateRunConsumers();
 
@@ -578,7 +560,6 @@ Definition.prototype._onExecutionMessage = function onExecutionMessage(routingKe
   }
 
   const executeMessage = this[K_EXECUTE_MESSAGE];
-  /** @private */
   this[K_EXECUTE_MESSAGE] = null;
   executeMessage.ack();
 };
@@ -604,7 +585,6 @@ Definition.prototype._publishEvent = function publishEvent(action, content, msgO
 
 /** @internal */
 Definition.prototype._onStop = function onStop() {
-  /** @private */
   this[K_STOPPED] = true;
   this._deactivateRunConsumers();
   return this._publishEvent('stop', this._createMessage());
@@ -621,7 +601,6 @@ Definition.prototype._onBrokerReturnFn = function onBrokerReturn(message) {
 
 /** @internal */
 Definition.prototype._reset = function reset() {
-  /** @private */
   this[K_EXECUTION].delete('executionId');
   this._deactivateRunConsumers();
   this.broker.purgeQueue('run-q');

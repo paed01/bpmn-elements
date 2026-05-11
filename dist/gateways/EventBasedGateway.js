@@ -17,7 +17,6 @@ function EventBasedGatewayBehaviour(activity, context) {
   this.activity = activity;
   this.broker = activity.broker;
   this.context = context;
-  /** @private */
   this[_constants.K_TARGETS] = new Set(activity.outbound.map(flow => context.getActivityById(flow.targetId)));
 }
 EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) {
@@ -28,7 +27,6 @@ EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) 
     outboundTaken
   } = executeContent;
   const targets = this[_constants.K_TARGETS];
-  /** @private */
   this[_constants.K_COMPLETED] = false;
   if (!targets.size) return this._complete(executeContent);
   for (const flow of this.activity.outbound) {
@@ -49,8 +47,6 @@ EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) 
   broker.subscribeOnce('api', `activity.stop.${executionId}`, () => this._stop(), {
     consumerTag: '_api-stop-execution'
   });
-
-  /** @private */
   this[_constants.K_COMPLETED] = false;
   if (!executeMessage.fields.redelivered) {
     return broker.publish('execution', 'execute.outbound.take', (0, _messageHelper.cloneContent)(executeContent, {
@@ -81,7 +77,6 @@ EventBasedGatewayBehaviour.prototype._onTargetCompleted = function onTargetCompl
   this._complete(completedContent);
 };
 EventBasedGatewayBehaviour.prototype._complete = function complete(completedContent) {
-  /** @private */
   this[_constants.K_COMPLETED] = true;
   this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(completedContent));
 };

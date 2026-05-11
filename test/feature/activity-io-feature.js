@@ -45,7 +45,7 @@ Feature('Activity IO', () => {
   });
 
   Scenario('Activity with properties that references output DataObject by association', () => {
-    /** @type {import('../../src/definition/Definition.js').Definition} */
+    /** @type {Definition} */
     let definition;
     let taskMessage;
     Given('a process with an activity with property', async () => {

@@ -34,6 +34,11 @@ EnvironmentDataObject.prototype.write = function write(broker, exchange, routing
   const content = this._createContent(value);
   return broker.publish(exchange, `${routingKeyPrefix}response`, content, messageProperties);
 };
+
+/**
+ * @private
+ * Create content
+ */
 EnvironmentDataObject.prototype._createContent = function createContent(value) {
   return {
     id: this.id,

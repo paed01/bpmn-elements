@@ -60,7 +60,6 @@ LinkEventDefinition.prototype.execute = function execute(executeMessage) {
 };
 
 LinkEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  /** @private */
   this[K_EXECUTE_MESSAGE] = executeMessage;
 
   const executeContent = executeMessage.content;

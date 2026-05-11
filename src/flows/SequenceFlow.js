@@ -9,7 +9,7 @@ import { K_COUNTERS } from '../constants.js';
  * Sequence flow connecting two activities. Owns its broker and publishes take/discard/looped
  * events; activities subscribe to drive their inbound queue.
  * @param {import('moddle-context-serializer').SerializableElement} flowDef
- * @param {import('types').ContextInstance} context
+ * @param {import('#types').ContextInstance} context
  */
 export function SequenceFlow(flowDef, { environment }) {
   const { id, type = 'sequenceflow', name, parent, targetId, sourceId, isDefault, behaviour = {} } = flowDef;
@@ -26,7 +26,6 @@ export function SequenceFlow(flowDef, { environment }) {
   this.environment = environment;
   const logger = (this.logger = environment.Logger(type.toLowerCase()));
 
-  /** @private */
   this[K_COUNTERS] = {
     looped: 0,
     take: 0,
@@ -91,7 +90,7 @@ SequenceFlow.prototype.discard = function discard(content = {}) {
 /**
  * Snapshot flow state. Returns undefined when the broker has no state and `disableTrackState`
  * is set.
- * @returns {import('types').SequenceFlowState | undefined}
+ * @returns {import('#types').SequenceFlowState | undefined}
  */
 SequenceFlow.prototype.getState = function getState() {
   const brokerState = this.broker.getState(true);
@@ -107,7 +106,7 @@ SequenceFlow.prototype.getState = function getState() {
 
 /**
  * Restore flow state captured by getState.
- * @param {import('types').SequenceFlowState} state
+ * @param {import('#types').SequenceFlowState} state
  */
 SequenceFlow.prototype.recover = function recover(state) {
   Object.assign(this[K_COUNTERS], state.counters);
@@ -116,7 +115,8 @@ SequenceFlow.prototype.recover = function recover(state) {
 
 /**
  * Resolve a Flow Api wrapper.
- * @param {import('types').ElementBrokerMessage} [message]
+ * @param {import('#types').ElementBrokerMessage} [message]
+ * @returns {import('#types').IApi<this>}
  */
 SequenceFlow.prototype.getApi = function getApi(message) {
   return FlowApi(this.broker, message || { content: this.createMessage() });
@@ -132,7 +132,7 @@ SequenceFlow.prototype.stop = function stop() {
 /**
  * Walk the flow as part of a process shake. Detects loops and publishes flow.shake.loop
  * when the target was already visited, otherwise flow.shake.
- * @param {import('types').ElementBrokerMessage} message
+ * @param {import('#types').ElementBrokerMessage} message
  */
 SequenceFlow.prototype.shake = function shake(message) {
   const content = cloneContent(message.content);
@@ -161,7 +161,7 @@ SequenceFlow.prototype.shake = function shake(message) {
 /**
  * Resolve the flow's condition (script or expression). Returns null when no condition is set.
  * Emits a fatal error when the script language is missing or unsupported.
- * @returns {import('types').ISequenceFlowCondition | null}
+ * @returns {import('#types').ISequenceFlowCondition | null}
  */
 SequenceFlow.prototype.getCondition = function getCondition() {
   const conditionExpression = this.behaviour.conditionExpression;
@@ -203,7 +203,7 @@ SequenceFlow.prototype.createMessage = function createMessage(override) {
 
 /**
  * Evaluate the flow's condition for the source activity message. Default flows are always taken.
- * @param {import('types').ElementBrokerMessage} fromMessage Source activity message
+ * @param {import('#types').ElementBrokerMessage} fromMessage Source activity message
  * @param {(err: Error | null, result?: boolean | object) => void} callback Callback with truthy result if flow should be taken
  */
 SequenceFlow.prototype.evaluate = function evaluate(fromMessage, callback) {

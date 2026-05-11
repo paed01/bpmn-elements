@@ -17,8 +17,8 @@ const K_TRACKER = Symbol.for('activity tracker');
 /**
  * Drives the execution of a single process or sub-process: activates children, routes activity
  * events, and rolls completion up to the owning Process or sub-process Activity.
- * @param {import('types').Process | import('types').Activity} parentActivity
- * @param {import('types').ContextInstance} context
+ * @param {import('#types').Process | import('#types').Activity} parentActivity
+ * @param {import('#types').ContextInstance} context
  */
 function ProcessExecution(parentActivity, context) {
   const {
@@ -28,8 +28,6 @@ function ProcessExecution(parentActivity, context) {
     isSubProcess,
     isTransaction
   } = parentActivity;
-
-  /** @private */
   this[K_PARENT] = parentActivity;
   this.id = id;
   this.type = type;
@@ -38,8 +36,6 @@ function ProcessExecution(parentActivity, context) {
   this.broker = broker;
   this.environment = context.environment;
   this.context = context;
-
-  /** @private */
   this[K_ELEMENTS] = {
     postponed: new Set(),
     children: context.getActivities(id),
@@ -57,20 +53,12 @@ function ProcessExecution(parentActivity, context) {
     autoDelete: false,
     durable: true
   });
-
-  /** @private */
   this[_constants.K_COMPLETED] = false;
-  /** @private */
   this[_constants.K_STOPPED] = false;
-  /** @private */
   this[_constants.K_ACTIVATED] = false;
-  /** @private */
   this[_constants.K_STATUS] = 'init';
-  /** @private */
   this[K_TRACKER] = new _Tracker.ActivityTracker(id);
   this.executionId = undefined;
-
-  /** @private */
   this[_constants.K_MESSAGE_HANDLERS] = {
     onActivityEvent: this._onActivityEvent.bind(this),
     onApiMessage: this._onApiMessage.bind(this),
@@ -113,24 +101,19 @@ Object.defineProperties(ProcessExecution.prototype, {
 
 /**
  * Activate children and start the process execution. Resumes if the message is redelivered.
- * @param {import('types').ElementBrokerMessage} executeMessage
+ * @param {import('#types').ElementBrokerMessage} executeMessage
  * @throws {Error} when message or executionId is missing
  */
 ProcessExecution.prototype.execute = function execute(executeMessage) {
   if (!executeMessage) throw new Error('Process execution requires message');
   if (!executeMessage.content || !executeMessage.content.executionId) throw new Error('Process execution requires execution id');
   const executionId = this.executionId = executeMessage.content.executionId;
-
-  /** @private */
   this[_constants.K_EXECUTE_MESSAGE] = (0, _messageHelper.cloneMessage)(executeMessage, {
     executionId,
     state: 'start'
   });
-
-  /** @private */
   this[_constants.K_STOPPED] = false;
   this.environment.assignVariables(executeMessage);
-  /** @private */
   this[K_ACTIVITY_Q] = this.broker.assertQueue(`execute-${executionId}-q`, {
     durable: true,
     autoDelete: false
@@ -165,8 +148,6 @@ ProcessExecution.prototype.resume = function resume() {
   }
   postponed.clear();
   detachedActivities.clear();
-
-  /** @private */
   this[K_ACTIVITY_Q].consume(this[_constants.K_MESSAGE_HANDLERS].onChildMessage, {
     prefetch: 1000,
     consumerTag: `_process-activity-${this.executionId}`
@@ -193,6 +174,7 @@ ProcessExecution.prototype.resume = function resume() {
 
 /**
  * Snapshot execution state including children, flows, message flows, and associations.
+ * @returns {import('#types').ProcessExecutionState}
  */
 ProcessExecution.prototype.getState = function getState() {
   const {
@@ -231,18 +213,14 @@ ProcessExecution.prototype.getState = function getState() {
 
 /**
  * Restore execution state captured by getState.
- * @param {import('types').ProcessExecutionState} [state]
+ * @param {import('#types').ProcessExecutionState} [state]
  * @returns {this}
  */
 ProcessExecution.prototype.recover = function recover(state) {
   if (!state) return this;
   this.executionId = state.executionId;
-
-  /** @private */
   this[_constants.K_STOPPED] = state.stopped;
-  /** @private */
   this[_constants.K_COMPLETED] = state.completed;
-  /** @private */
   this[_constants.K_STATUS] = state.status;
   this._debug(`recover process execution at ${this.status}`);
   if (state.messageFlows) {
@@ -293,7 +271,7 @@ ProcessExecution.prototype.stop = function stop() {
 
 /**
  * List currently postponed children as Api wrappers.
- * @param {import('types').filterPostponed} [filterFn]
+ * @param {import('#types').filterPostponed} [filterFn]
  */
 ProcessExecution.prototype.getPostponed = function getPostponed(filterFn) {
   const result = [];
@@ -310,7 +288,6 @@ ProcessExecution.prototype.getPostponed = function getPostponed(filterFn) {
  * Queue a discard message that propagates to all running children.
  */
 ProcessExecution.prototype.discard = function discard() {
-  /** @private */
   this[_constants.K_STATUS] = 'discard';
   return this[K_ACTIVITY_Q].queueMessage({
     routingKey: 'execution.discard'
@@ -368,7 +345,8 @@ ProcessExecution.prototype.getAssociations = function getAssociations() {
 
 /**
  * Resolve a process or child Api for the given message.
- * @param {import('types').ElementBrokerMessage} [message]
+ * @param {import('#types').ElementBrokerMessage} [message]
+ * @returns {import('#types').IApi<import('./Process.js').Process>}
  */
 ProcessExecution.prototype.getApi = function getApi(message) {
   if (!message) return (0, _Api.ProcessApi)(this.broker, this[_constants.K_EXECUTE_MESSAGE]);
@@ -395,8 +373,6 @@ ProcessExecution.prototype._start = function start() {
   if (!this[K_ELEMENTS].children.length) {
     return this._complete('completed');
   }
-
-  /** @private */
   this[_constants.K_STATUS] = 'start';
   const executeContent = {
     ...this[_constants.K_EXECUTE_MESSAGE].content,
@@ -415,7 +391,6 @@ ProcessExecution.prototype._start = function start() {
     this._debug(!skipDiscard ? `forced shake, disabling skipDiscard due to converging gateways (${convergingGateways.size})` : 'forced shake');
   }
   for (const a of startActivities) a.init();
-  /** @private */
   this[_constants.K_STATUS] = 'executing';
   for (const a of startActivities) a.run();
   if (!startActivities.size) {
@@ -425,7 +400,6 @@ ProcessExecution.prototype._start = function start() {
   }
   postponed.clear();
   detachedActivities.clear();
-  /** @private */
   this[K_ACTIVITY_Q].assertConsumer(this[_constants.K_MESSAGE_HANDLERS].onChildMessage, {
     prefetch: 1000,
     consumerTag: `_process-activity-${this.executionId}`
@@ -461,8 +435,7 @@ ProcessExecution.prototype._activate = function activate() {
     triggeredByEvent,
     convergingGateways,
     children
-  } = /** @private */
-  this[K_ELEMENTS];
+  } = this[K_ELEMENTS];
   for (const flow of outboundMessageFlows) {
     flow.activate();
     flow.broker.subscribeTmp('event', '#', onMessageFlowEvent, {
@@ -506,8 +479,6 @@ ProcessExecution.prototype._activate = function activate() {
       startSequences.set(activity.id, new Set());
     }
   }
-
-  /** @private */
   this[_constants.K_ACTIVATED] = true;
 };
 
@@ -538,8 +509,6 @@ ProcessExecution.prototype._deactivate = function deactivate() {
     flow.deactivate();
     flow.broker.cancel('_process-message-consumer');
   }
-
-  /** @private */
   this[_constants.K_ACTIVATED] = false;
 };
 
@@ -678,8 +647,6 @@ ProcessExecution.prototype._onActivityEvent = function onActivityEvent(routingKe
     });
   }
   if (delegate) delegate = this._onDelegateEvent(message);
-
-  /** @private */
   this[K_TRACKER].track(routingKey, message);
   this.broker.publish('event', routingKey, content, {
     ...properties,
@@ -699,8 +666,6 @@ ProcessExecution.prototype._onActivityEvent = function onActivityEvent(routingKe
     case 'activity.stop':
       return;
   }
-
-  /** @private */
   this[K_ACTIVITY_Q].queueMessage(message.fields, (0, _messageHelper.cloneContent)(content), {
     persistent: true,
     ...message.properties
@@ -752,7 +717,6 @@ ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey,
   switch (routingKey) {
     case 'activity.detach':
       {
-        /** @private */
         this[K_ELEMENTS].detachedActivities.add((0, _messageHelper.cloneMessage)(message));
         break;
       }
@@ -782,7 +746,6 @@ ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey,
           }
         }
         if (eventCaughtBy) {
-          /** @private */
           this[K_ACTIVITY_Q].queueMessage({
             routingKey: 'activity.error.caught'
           }, (0, _messageHelper.cloneContent)(content), {
@@ -898,7 +861,6 @@ ProcessExecution.prototype._stopExecution = function stopExecution(message) {
     for (const api of this.getPostponed()) api.stop();
   }
   this._deactivate();
-  /** @private */
   this[_constants.K_STOPPED] = true;
   return this.broker.publish(this._exchangeName, `execution.stopped.${this.executionId}`, {
     ...this[_constants.K_EXECUTE_MESSAGE].content,
@@ -923,8 +885,6 @@ ProcessExecution.prototype._onDiscard = function onDiscard() {
     for (const flow of this.getAssociations()) flow.stop();
     for (const msg of running) this._getChildApi(msg).discard();
   }
-
-  /** @private */
   this[K_ACTIVITY_Q].purge();
   return this._complete('discard');
 };
@@ -936,7 +896,6 @@ ProcessExecution.prototype._onCancel = function onCancel() {
   const isTransaction = this.isTransaction;
   if (isTransaction) {
     this._debug(`cancel transaction execution (cancel child executions ${running.size})`);
-    /** @private */
     this[_constants.K_STATUS] = 'cancel';
     this.broker.publish('event', 'transaction.cancel', (0, _messageHelper.cloneMessage)(this[_constants.K_EXECUTE_MESSAGE], {
       state: 'cancel'
@@ -973,7 +932,6 @@ ProcessExecution.prototype._onApiMessage = function onApiMessage(routingKey, mes
     case 'discard':
       return this.discard(message);
     case 'stop':
-      /** @private */
       this[K_ACTIVITY_Q].queueMessage({
         routingKey: 'execution.stop'
       }, (0, _messageHelper.cloneContent)(message.content), {
@@ -1009,7 +967,6 @@ ProcessExecution.prototype._delegateApiMessage = function delegateApiMessage(rou
 /** @internal */
 ProcessExecution.prototype._complete = function complete(completionType, content) {
   this._deactivate();
-  /** @private */
   this[_constants.K_COMPLETED] = true;
   const status = this.status;
   switch (this.status) {
@@ -1022,13 +979,11 @@ ProcessExecution.prototype._complete = function complete(completionType, content
       break;
     default:
       this._debug(`process execution ${completionType}`);
-      /** @private */
       this[_constants.K_STATUS] = completionType;
   }
   const broker = this.broker;
-  /** @private */
   this[K_ACTIVITY_Q].delete();
-  return broker.publish(this._exchangeName, `execution.${completionType}.${this.executionId}`, (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content, {
+  broker.publish(this._exchangeName, `execution.${completionType}.${this.executionId}`, (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content, {
     output: {
       ...this.environment.output
     },
@@ -1042,7 +997,6 @@ ProcessExecution.prototype._complete = function complete(completionType, content
 
 /** @internal */
 ProcessExecution.prototype._terminate = function terminate(message) {
-  /** @private */
   this[_constants.K_STATUS] = 'terminated';
   this._debug('terminating process execution');
   const postponed = this[K_ELEMENTS].postponed;
@@ -1061,8 +1015,6 @@ ProcessExecution.prototype._terminate = function terminate(message) {
     this._getChildApi(msg).stop();
     msg.ack();
   }
-
-  /** @private */
   this[K_ACTIVITY_Q].purge();
 };
 
@@ -1114,6 +1066,5 @@ ProcessExecution.prototype._onShakeMessage = function onShakeMessage(message) {
 
 /** @internal */
 ProcessExecution.prototype._debug = function debugMessage(logMessage) {
-  /** @private */
   this[K_PARENT].logger.debug(`<${this.executionId} (${this.id})> ${logMessage}`);
 };

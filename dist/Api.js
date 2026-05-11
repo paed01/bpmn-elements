@@ -13,8 +13,8 @@ var _shared = require("./shared.js");
 /**
  * Build an activity-scoped Api wrapper. Routing keys are published under `activity.*`.
  * @param {any} broker
- * @param {import('types').ElementBrokerMessage} apiMessage
- * @param {import('types').Environment} [environment]
+ * @param {import('#types').ElementBrokerMessage} apiMessage
+ * @param {import('#types').Environment} [environment]
  */
 function ActivityApi(broker, apiMessage, environment) {
   return new Api('activity', broker, apiMessage, environment);
@@ -23,8 +23,8 @@ function ActivityApi(broker, apiMessage, environment) {
 /**
  * Build a definition-scoped Api wrapper. Routing keys are published under `definition.*`.
  * @param {any} broker
- * @param {import('types').ElementBrokerMessage} apiMessage
- * @param {import('types').Environment} [environment]
+ * @param {import('#types').ElementBrokerMessage} apiMessage
+ * @param {import('#types').Environment} [environment]
  */
 function DefinitionApi(broker, apiMessage, environment) {
   return new Api('definition', broker, apiMessage, environment);
@@ -33,8 +33,8 @@ function DefinitionApi(broker, apiMessage, environment) {
 /**
  * Build a process-scoped Api wrapper. Routing keys are published under `process.*`.
  * @param {any} broker
- * @param {import('types').ElementBrokerMessage} apiMessage
- * @param {import('types').Environment} [environment]
+ * @param {import('#types').ElementBrokerMessage} apiMessage
+ * @param {import('#types').Environment} [environment]
  */
 function ProcessApi(broker, apiMessage, environment) {
   return new Api('process', broker, apiMessage, environment);
@@ -43,8 +43,8 @@ function ProcessApi(broker, apiMessage, environment) {
 /**
  * Build a flow-scoped Api wrapper. Routing keys are published under `flow.*`.
  * @param {any} broker
- * @param {import('types').ElementBrokerMessage} apiMessage
- * @param {import('types').Environment} [environment]
+ * @param {import('#types').ElementBrokerMessage} apiMessage
+ * @param {import('#types').Environment} [environment]
  */
 function FlowApi(broker, apiMessage, environment) {
   return new Api('flow', broker, apiMessage, environment);
@@ -54,8 +54,8 @@ function FlowApi(broker, apiMessage, environment) {
  * Lightweight wrapper over the broker that exposes signal/cancel/fail/stop and other api actions.
  * @param {string} pfx Message prefix, e.g. `activity`, `process`, `definition`, `flow`
  * @param {any} broker
- * @param {import('types').ElementBrokerMessage} sourceMessage Cloned to back the api
- * @param {import('types').Environment} [environment] Defaults to `broker.owner.environment`
+ * @param {import('#types').ElementBrokerMessage} sourceMessage Cloned to back the api
+ * @param {import('#types').Environment} [environment] Defaults to `broker.owner.environment`
  * @throws {Error} when sourceMessage is missing
  */
 function Api(pfx, broker, sourceMessage, environment) {
@@ -82,7 +82,7 @@ function Api(pfx, broker, sourceMessage, environment) {
 
 /**
  * Send a cancel api message.
- * @param {import('types').signalMessage} [message]
+ * @param {import('#types').signalMessage} [message]
  * @param {any} [options]
  */
 Api.prototype.cancel = function cancel(message, options) {
@@ -110,7 +110,7 @@ Api.prototype.fail = function fail(error) {
 
 /**
  * Send a signal api message.
- * @param {import('types').signalMessage} [message]
+ * @param {import('#types').signalMessage} [message]
  * @param {any} [options]
  */
 Api.prototype.signal = function signal(message, options) {
@@ -141,7 +141,7 @@ Api.prototype.resolveExpression = function resolveExpression(expression) {
 /**
  * Publish a custom api message to the broker.
  * @param {string} action Routing key suffix, e.g. `signal`, `cancel`
- * @param {import('types').signalMessage} [content] Merged into the message content
+ * @param {import('#types').signalMessage} [content] Merged into the message content
  * @param {any} [options]
  */
 Api.prototype.sendApiMessage = function sendApiMessage(action, content, options) {
@@ -157,7 +157,7 @@ Api.prototype.sendApiMessage = function sendApiMessage(action, content, options)
 
 /**
  * List currently postponed activities, falling back to a sub-process execution when applicable.
- * @param {import('types').filterPostponed} [filterFn]
+ * @param {import('#types').filterPostponed} [filterFn]
  */
 Api.prototype.getPostponed = function getPostponed(...args) {
   if (this.owner.getPostponed) return this.owner.getPostponed(...args);

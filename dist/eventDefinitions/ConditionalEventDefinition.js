@@ -33,7 +33,6 @@ Object.defineProperty(ConditionalEventDefinition.prototype, 'executionId', {
   }
 });
 ConditionalEventDefinition.prototype.execute = function execute(executeMessage) {
-  /** @private */
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   if (!this.condition) return this._setup(executeMessage);
   this.evaluate(executeMessage, (err, result) => {
@@ -76,7 +75,7 @@ ConditionalEventDefinition.prototype._setup = function setup(executeMessage) {
 
 /**
  * Evaluate condition
- * @param {import('types').ElementBrokerMessage} message
+ * @param {import('#types').ElementBrokerMessage} message
  * @param {CallableFunction} callback
  */
 ConditionalEventDefinition.prototype.evaluate = function evaluate(message, callback) {

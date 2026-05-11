@@ -31,6 +31,9 @@ CLAUDE.md
 *.swp
 *.swo
 
+# TS
+*.d.ts.map
+
 # eslint
 .eslintcache
 

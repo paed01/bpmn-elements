@@ -33,11 +33,9 @@ function EscalationEventDefinition(activity, eventDefinition) {
   this.logger = environment.Logger(type.toLowerCase());
   const referenceElement = this[_constants.K_REFERENCE_ELEMENT] = reference.id && activity.getActivityById(reference.id);
   if (!isThrowing) {
-    /** @private */
     this[_constants.K_COMPLETED] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${reference.referenceType}-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(referenceId)}-q`;
-    /** @private */
     this[_constants.K_MESSAGE_Q] = broker.assertQueue(messageQueueName, {
       autoDelete: false,
       durable: true
@@ -57,9 +55,7 @@ EscalationEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 EscalationEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  /** @private */
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
-  /** @private */
   this[_constants.K_COMPLETED] = false;
   const executeContent = executeMessage.content;
   const {
@@ -68,7 +64,6 @@ EscalationEventDefinition.prototype.executeCatch = function executeCatch(execute
   } = executeContent;
   const info = this[K_REFERENCE] = this._getReferenceInfo(executeMessage);
   const broker = this.broker;
-  /** @private */
   this[_constants.K_MESSAGE_Q].consume(this._onCatchMessage.bind(this), {
     noAck: true,
     consumerTag: `_onescalate-${executionId}`
@@ -114,7 +109,6 @@ EscalationEventDefinition.prototype._onCatchMessage = function onCatchMessage(ro
   const info = this[K_REFERENCE];
   if ((0, _getPropertyValue.getPropertyValue)(message, 'content.message.id') !== info.message.id) return;
   const output = message.content.message;
-  /** @private */
   this[_constants.K_COMPLETED] = true;
   this._stop();
   this._debug(`caught ${info.description}`);
@@ -147,7 +141,6 @@ EscalationEventDefinition.prototype._onApiMessage = function onApiMessage(routin
       }
     case 'discard':
       {
-        /** @private */
         this[_constants.K_COMPLETED] = true;
         this._stop();
         return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content));

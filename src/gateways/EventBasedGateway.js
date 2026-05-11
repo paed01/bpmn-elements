@@ -12,7 +12,6 @@ export function EventBasedGatewayBehaviour(activity, context) {
   this.activity = activity;
   this.broker = activity.broker;
   this.context = context;
-  /** @private */
   this[K_TARGETS] = new Set(activity.outbound.map((flow) => context.getActivityById(flow.targetId)));
 }
 
@@ -21,7 +20,6 @@ EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) 
   const { executionId, outbound = [], outboundTaken } = executeContent;
 
   const targets = this[K_TARGETS];
-  /** @private */
   this[K_COMPLETED] = false;
   if (!targets.size) return this._complete(executeContent);
 
@@ -43,7 +41,6 @@ EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) 
     consumerTag: '_api-stop-execution',
   });
 
-  /** @private */
   this[K_COMPLETED] = false;
 
   if (!executeMessage.fields.redelivered) {
@@ -75,7 +72,6 @@ EventBasedGatewayBehaviour.prototype._onTargetCompleted = function onTargetCompl
 };
 
 EventBasedGatewayBehaviour.prototype._complete = function complete(completedContent) {
-  /** @private */
   this[K_COMPLETED] = true;
   this.broker.publish('execution', 'execute.completed', cloneContent(completedContent));
 };

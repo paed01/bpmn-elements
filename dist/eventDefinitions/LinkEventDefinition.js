@@ -73,7 +73,6 @@ LinkEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 LinkEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  /** @private */
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   const executeContent = executeMessage.content;
   const {

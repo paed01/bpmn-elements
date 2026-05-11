@@ -15,13 +15,11 @@ const K_PROCESSES = Symbol.for('processes');
 /**
  * Drives the execution of a Definition. Activates executable processes, routes inter-process
  * delegate messages and call activity hand-offs, and rolls completion up to the Definition.
- * @param {import('types').Definition} definition
- * @param {import('types').ContextInstance} context
+ * @param {import('./Definition.js').Definition} definition
+ * @param {import('../Context.js').ContextInstance} context
  */
 function DefinitionExecution(definition, context) {
   const broker = definition.broker;
-
-  /** @private */
   this[K_PARENT] = definition;
   this.id = definition.id;
   this.type = definition.type;
@@ -31,7 +29,7 @@ function DefinitionExecution(definition, context) {
   const processes = context.getProcesses();
   /** @type {Set<string>} */
   const ids = new Set();
-  /** @type {Set<import('../process/Process.js')>} */
+  /** @type {Set<import('../process/Process.js').Process>} */
   const executable = new Set();
   for (const bp of processes) {
     bp.environment.assignVariables(environment.variables);
@@ -39,16 +37,14 @@ function DefinitionExecution(definition, context) {
     ids.add(bp.id);
     if (bp.isExecutable) executable.add(bp);
   }
-
-  /** @private */
   this[K_PROCESSES] = {
     /** @type {import('../process/Process.js').Process[]} */
     processes,
     ids,
     executable,
-    /** @type {Set<import('../process/Process.js')>} */
+    /** @type {Set<import('../process/Process.js').Process>} */
     running: new Set(),
-    /** @type {Set<import('../process/Process.js')>} */
+    /** @type {Set<import('../process/Process.js').Process>} */
     postponed: new Set()
   };
   broker.assertExchange('execution', 'topic', {
@@ -56,18 +52,11 @@ function DefinitionExecution(definition, context) {
     durable: true
   });
   this.executionId = undefined;
-  /** @private */
   this[_constants.K_COMPLETED] = false;
-  /** @private */
   this[_constants.K_STOPPED] = false;
-  /** @private */
   this[_constants.K_ACTIVATED] = false;
-  /** @private */
   this[_constants.K_STATUS] = 'init';
-  /** @private */
   this[K_PROCESSES_Q] = undefined;
-
-  /** @private */
   this[_constants.K_MESSAGE_HANDLERS] = {
     onApiMessage: this._onApiMessage.bind(this),
     onCallActivity: this._onCallActivity.bind(this),
@@ -137,7 +126,7 @@ Object.defineProperties(DefinitionExecution.prototype, {
 /**
  * Activate executable processes and start the definition execution. Resumes if the message
  * is redelivered. When `content.processId` is set, only that process is started.
- * @param {import('types').ElementBrokerMessage} executeMessage
+ * @param {import('#types').ElementBrokerMessage} executeMessage
  * @throws {Error} when message or executionId is missing
  */
 DefinitionExecution.prototype.execute = function execute(executeMessage) {
@@ -145,17 +134,11 @@ DefinitionExecution.prototype.execute = function execute(executeMessage) {
   const content = executeMessage.content;
   const executionId = this.executionId = content.executionId;
   if (!executionId) throw new Error('Definition execution requires execution id');
-
-  /** @private */
   this[_constants.K_EXECUTE_MESSAGE] = (0, _messageHelper.cloneMessage)(executeMessage, {
     executionId,
     state: 'start'
   });
-
-  /** @private */
   this[_constants.K_STOPPED] = false;
-
-  /** @private */
   this[K_PROCESSES_Q] = this.broker.assertQueue(`execute-${executionId}-q`, {
     durable: true,
     autoDelete: false
@@ -195,7 +178,6 @@ DefinitionExecution.prototype.resume = function resume() {
   } = this[K_PROCESSES];
   this._activate(running);
   postponed.clear();
-  /** @private */
   this[K_PROCESSES_Q].consume(this[_constants.K_MESSAGE_HANDLERS].onProcessMessage, {
     prefetch: 1000,
     consumerTag: `_definition-activity-${this.executionId}`
@@ -206,18 +188,14 @@ DefinitionExecution.prototype.resume = function resume() {
 
 /**
  * Restore execution state captured by getState. Reinstates running processes from the snapshot.
- * @param {import('types').DefinitionExecutionState} [state]
+ * @param {import('#types').DefinitionExecutionState} [state]
  * @returns {this}
  */
 DefinitionExecution.prototype.recover = function recover(state) {
   if (!state) return this;
   this.executionId = state.executionId;
-
-  /** @private */
   this[_constants.K_STOPPED] = state.stopped;
-  /** @private */
   this[_constants.K_COMPLETED] = state.completed;
-  /** @private */
   this[_constants.K_STATUS] = state.status;
   this._debug(`recover ${this[_constants.K_STATUS]} definition execution`);
   const running = this[K_PROCESSES].running;
@@ -318,7 +296,8 @@ DefinitionExecution.prototype.getState = function getState() {
 
 /**
  * Resolve a Definition Api or, when the message belongs to a child process, its process Api.
- * @param {import('types').ElementBrokerMessage} [apiMessage]
+ * @param {import('#types').ElementBrokerMessage} [apiMessage]
+ * @returns {import('#types').IApi<import('./Definition.js').Definition>}
  */
 DefinitionExecution.prototype.getApi = function getApi(apiMessage) {
   if (!apiMessage) apiMessage = this[_constants.K_EXECUTE_MESSAGE] || {
@@ -344,7 +323,7 @@ DefinitionExecution.prototype.getApi = function getApi(apiMessage) {
 
 /**
  * List currently postponed activities across every running process.
- * @param {import('types').filterPostponed} [filterFn]
+ * @param {import('#types').filterPostponed} [filterFn]
  */
 DefinitionExecution.prototype.getPostponed = function getPostponed(...args) {
   let result = [];
@@ -369,13 +348,10 @@ DefinitionExecution.prototype._start = function start() {
       error: new Error('No executable process')
     });
   }
-
-  /** @private */
   this[_constants.K_STATUS] = 'start';
   for (const bp of executable) bp.init();
   for (const bp of executable) bp.run();
   postponed.clear();
-  /** @private */
   this[K_PROCESSES_Q].assertConsumer(this[_constants.K_MESSAGE_HANDLERS].onProcessMessage, {
     prefetch: 1000,
     consumerTag: `_definition-activity-${this.executionId}`
@@ -389,7 +365,6 @@ DefinitionExecution.prototype._activate = function activate(processList) {
     consumerTag: '_definition-api-consumer'
   });
   for (const bp of processList) this._activateProcess(bp);
-  /** @private */
   this[_constants.K_ACTIVATED] = true;
 };
 
@@ -448,8 +423,6 @@ DefinitionExecution.prototype._onChildEvent = function onChildEvent(routingKey, 
     mandatory: false
   });
   if (!isDirectChild) return;
-
-  /** @private */
   this[K_PROCESSES_Q].queueMessage(message.fields, (0, _messageHelper.cloneContent)(content), message.properties);
 };
 
@@ -458,7 +431,6 @@ DefinitionExecution.prototype._deactivate = function deactivate() {
   this.broker.cancel('_definition-api-consumer');
   this.broker.cancel(`_definition-activity-${this.executionId}`);
   for (const bp of this[K_PROCESSES].running) this._deactivateProcess(bp);
-  /** @private */
   this[_constants.K_ACTIVATED] = false;
 };
 
@@ -494,7 +466,6 @@ DefinitionExecution.prototype._onProcessMessage = function onProcessMessage(rout
   this._stateChangeMessage(message, true);
   switch (routingKey) {
     case 'process.enter':
-      /** @private */
       this[_constants.K_STATUS] = 'executing';
       break;
     case 'process.discarded':
@@ -593,12 +564,9 @@ DefinitionExecution.prototype._onProcessCompleted = function onProcessCompleted(
 DefinitionExecution.prototype._onStopped = function onStopped(message) {
   const running = this[K_PROCESSES].running;
   this._debug(`stop definition execution (stop process executions ${running.size})`);
-  /** @private */
   this[K_PROCESSES_Q].close();
   for (const bp of new Set(running)) bp.stop();
   this._deactivate();
-
-  /** @private */
   this[_constants.K_STOPPED] = true;
   return this.broker.publish('execution', `execution.stopped.${this.executionId}`, (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content, {
     ...message.content
@@ -626,7 +594,6 @@ DefinitionExecution.prototype._onApiMessage = function onApiMessage(routingKey, 
   }
   if (this.executionId !== message.content.executionId) return;
   if (messageType === 'stop') {
-    /** @private */
     this[K_PROCESSES_Q].queueMessage({
       routingKey: 'execution.stop'
     }, (0, _messageHelper.cloneContent)(message.content), {
@@ -686,7 +653,6 @@ DefinitionExecution.prototype._onMessageOutbound = function onMessageOutbound(ro
   if (found) return;
   targetProcess = targetProcess || this.context.getNewProcessById(target.processId);
   this._activateProcess(targetProcess);
-  /** @private */
   this[K_PROCESSES].running.add(targetProcess);
   targetProcess.init();
   targetProcess.run();
@@ -721,7 +687,6 @@ DefinitionExecution.prototype._onCallActivity = function onCallActivity(routingK
   if (!targetProcess) return;
   this._debug(`call from <${fromParent.id}.${fromId}> to <${calledElement}>`);
   this._activateProcess(targetProcess);
-  /** @private */
   this[K_PROCESSES].running.add(targetProcess);
   targetProcess.init(bpExecutionId);
   targetProcess.run({
@@ -795,9 +760,7 @@ DefinitionExecution.prototype._complete = function complete(completionType, cont
   const stateMessage = this[_constants.K_EXECUTE_MESSAGE];
   this._debug(`definition execution ${completionType} in ${Date.now() - stateMessage.properties.timestamp}ms`);
   if (!content) content = this._createMessage();
-  /** @private */
   this[_constants.K_COMPLETED] = true;
-  /** @private */
   this[_constants.K_STATUS] = completionType;
   this.broker.deleteQueue(this[K_PROCESSES_Q].name);
   return this.broker.publish('execution', `execution.${completionType}.${this.executionId}`, {
@@ -849,6 +812,5 @@ DefinitionExecution.prototype._getProcessApiByExecutionId = function getProcessA
 
 /** @internal */
 DefinitionExecution.prototype._debug = function debug(logMessage) {
-  /** @private */
   this[K_PARENT].logger.debug(`<${this.executionId} (${this.id})> ${logMessage}`);
 };

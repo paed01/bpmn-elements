@@ -26,27 +26,22 @@ function TimerEventDefinition(activity, eventDefinition) {
   if (timeDate) this.timeDate = timeDate;
   this.broker = activity.broker;
   this.logger = environment.Logger(type.toLowerCase());
-
-  /** @private */
   this[_constants.K_STOPPED] = false;
-  /** @private */
   this[K_TIMER] = null;
 }
-Object.defineProperties(TimerEventDefinition.prototype, {
-  executionId: {
-    get() {
-      return this[K_TIMER_CONTENT]?.executionId;
-    }
-  },
-  stopped: {
-    get() {
-      return this[_constants.K_STOPPED];
-    }
-  },
-  timer: {
-    get() {
-      return this[K_TIMER];
-    }
+Object.defineProperty(TimerEventDefinition.prototype, 'executionId', {
+  get() {
+    return this[K_TIMER_CONTENT]?.executionId;
+  }
+});
+Object.defineProperty(TimerEventDefinition.prototype, 'stopped', {
+  get() {
+    return this[_constants.K_STOPPED];
+  }
+});
+Object.defineProperty(TimerEventDefinition.prototype, 'timer', {
+  get() {
+    return this[K_TIMER];
   }
 });
 TimerEventDefinition.prototype.execute = function execute(executeMessage) {
@@ -59,7 +54,6 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
     return;
   }
   if (timer) this[K_TIMER] = this.environment.timers.clearTimeout(timer);
-  /** @private */
   this[_constants.K_STOPPED] = false;
   const content = executeMessage.content;
   const executionId = content.executionId;
@@ -95,7 +89,6 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
   if (timerContent.timeout <= 0) return this._completed();
   const timers = this.environment.timers.register(timerContent);
   const delay = timerContent.timeout;
-  /** @private */
   this[K_TIMER] = timers.setTimeout(this._completed.bind(this), delay, {
     id: content.id,
     type: this.type,
@@ -195,7 +188,6 @@ TimerEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey,
   }
 };
 TimerEventDefinition.prototype._stop = function stop() {
-  /** @private */
   this[_constants.K_STOPPED] = true;
   const timer = this[K_TIMER];
   if (timer) this[K_TIMER] = this.environment.timers.clearTimeout(timer);

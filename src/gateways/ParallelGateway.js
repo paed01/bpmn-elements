@@ -52,15 +52,12 @@ export function ParallelGatewayBehaviour(activity) {
   this.inbound = new Set();
 
   this.isConverging = new Set(activity.inbound.map(({ sourceId }) => sourceId)).size > 1;
-  /** @private */
   this[K_EXECUTE_MESSAGE] = undefined;
 }
 
-Object.defineProperties(ParallelGatewayBehaviour.prototype, {
-  executionId: {
-    get() {
-      return this[K_EXECUTE_MESSAGE]?.content.executionId;
-    },
+Object.defineProperty(ParallelGatewayBehaviour.prototype, 'executionId', {
+  get() {
+    return this[K_EXECUTE_MESSAGE]?.content.executionId;
   },
 });
 
@@ -70,7 +67,6 @@ ParallelGatewayBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
 
   if (executeContent.isRootScope) {
-    /** @private */
     this[K_EXECUTE_MESSAGE] = executeMessage;
 
     switch (routingKey) {
@@ -89,7 +85,6 @@ ParallelGatewayBehaviour.prototype.execute = function execute(executeMessage) {
 
 ParallelGatewayBehaviour.prototype.setup = function setup(executeMessage) {
   const peerIds = new Set([...this.activity[K_PEERS].values()].map((v) => [...v]).flat());
-  /** @private */
   this[K_TARGETS] = new Map([...peerIds].map((pid) => [pid, this.activity.getActivityById(pid)]));
 
   this.peerMonitor = new PeerMonitor(this.activity, this.activity[K_INBOUND_SOURCE_IDS], this[K_TARGETS]);

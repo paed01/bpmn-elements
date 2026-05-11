@@ -3,6 +3,7 @@ import { Definition } from 'bpmn-elements';
 
 Feature('BoundaryEvent', () => {
   Scenario('task with boundary event followed by a join', () => {
+    /** @type {import('bpmn-elements').Process} */
     let bp;
     Given('a process', async () => {
       const source = `
@@ -123,6 +124,7 @@ Feature('BoundaryEvent', () => {
   });
 
   Scenario('user task with non-interrupting boundary event followed by a join', () => {
+    /** @type {import('bpmn-elements').Process} */
     let bp;
     Given('a process', async () => {
       const source = `

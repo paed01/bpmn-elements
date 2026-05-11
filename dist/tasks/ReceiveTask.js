@@ -35,8 +35,6 @@ function ReceiveTaskBehaviour(activity) {
   this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
   this.broker = activity.broker;
-
-  /** @private */
   this[_constants.K_REFERENCE_ELEMENT] = reference.id && activity.getActivityById(reference.id);
 }
 ReceiveTaskBehaviour.prototype.execute = function execute(executeMessage) {
@@ -55,12 +53,9 @@ function ReceiveTaskExecution(parent) {
   this.broker = broker;
   this.loopCharacteristics = loopCharacteristics;
   this.referenceElement = parent[_constants.K_REFERENCE_ELEMENT];
-
-  /** @private */
   this[_constants.K_COMPLETED] = false;
 }
 ReceiveTaskExecution.prototype.execute = function execute(executeMessage) {
-  /** @private */
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   const executeContent = executeMessage.content;
   const {
@@ -150,7 +145,6 @@ ReceiveTaskExecution.prototype._onApiMessage = function onApiMessage(routingKey,
       }
     case 'discard':
       {
-        /** @private */
         this[_constants.K_COMPLETED] = true;
         this._stop();
         return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content), {
@@ -164,7 +158,6 @@ ReceiveTaskExecution.prototype._onApiMessage = function onApiMessage(routingKey,
   }
 };
 ReceiveTaskExecution.prototype._complete = function complete(output, options) {
-  /** @private */
   this[_constants.K_COMPLETED] = true;
   this._stop();
   return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content, {

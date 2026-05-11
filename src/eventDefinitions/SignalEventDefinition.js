@@ -23,11 +23,9 @@ export function SignalEventDefinition(activity, eventDefinition) {
 
   const referenceElement = (this[K_REFERENCE_ELEMENT] = reference.id && activity.getActivityById(reference.id));
   if (!isThrowing && isStart) {
-    /** @private */
     this[K_COMPLETED] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(referenceId)}-q`;
-    /** @private */
     this[K_MESSAGE_Q] = broker.assertQueue(messageQueueName, { autoDelete: false, durable: true });
     broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, { durable: true });
   }
@@ -44,9 +42,7 @@ SignalEventDefinition.prototype.execute = function execute(executeMessage) {
 };
 
 SignalEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  /** @private */
   this[K_EXECUTE_MESSAGE] = executeMessage;
-  /** @private */
   this[K_COMPLETED] = false;
 
   const executeContent = executeMessage.content;
@@ -58,7 +54,6 @@ SignalEventDefinition.prototype.executeCatch = function executeCatch(executeMess
 
   const onCatchMessage = this._onCatchMessage.bind(this);
   if (this.activity.isStart) {
-    /** @private */
     this[K_MESSAGE_Q].consume(onCatchMessage, {
       noAck: true,
       consumerTag: `_api-signal-${executionId}`,
@@ -115,7 +110,6 @@ SignalEventDefinition.prototype.executeThrow = function executeThrow(executeMess
 SignalEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
   const info = this[K_REFERENCE_INFO];
   if (getPropertyValue(message, 'content.message.id') !== info.message.id) return;
-  /** @private */
   this[K_COMPLETED] = true;
   this._stop();
 
@@ -143,7 +137,6 @@ SignalEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey
       return this._complete(message.content.message, { correlationId });
     }
     case 'discard': {
-      /** @private */
       this[K_COMPLETED] = true;
       this._stop();
       return this.broker.publish('execution', 'execute.discard', cloneContent(this[K_EXECUTE_MESSAGE].content), { correlationId });
@@ -156,7 +149,6 @@ SignalEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey
 };
 
 SignalEventDefinition.prototype._complete = function complete(output, options) {
-  /** @private */
   this[K_COMPLETED] = true;
   this._stop();
   this._debug(`signaled with ${this[K_REFERENCE_INFO].description}`);

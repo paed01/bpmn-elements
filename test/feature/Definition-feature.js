@@ -20,7 +20,9 @@ Feature('Definition', () => {
       </process>
     </definitions>`;
 
-    let definition, assertMessage;
+    /** @type {Definition} */
+    let definition;
+    let assertMessage;
     const messages = [];
     Given('a definition', async () => {
       const context = await testHelpers.context(source);

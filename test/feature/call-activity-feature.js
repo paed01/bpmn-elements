@@ -1,8 +1,9 @@
 import * as ck from 'chronokinesis';
+import { Definition } from 'bpmn-elements';
 
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
-import { Definition } from 'bpmn-elements';
+
 Feature('Call activity', () => {
   after(ck.reset);
 

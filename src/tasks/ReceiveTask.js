@@ -28,7 +28,6 @@ export function ReceiveTaskBehaviour(activity) {
   this.activity = activity;
   this.broker = activity.broker;
 
-  /** @private */
   this[K_REFERENCE_ELEMENT] = reference.id && activity.getActivityById(reference.id);
 }
 
@@ -46,12 +45,10 @@ function ReceiveTaskExecution(parent) {
   this.loopCharacteristics = loopCharacteristics;
   this.referenceElement = parent[K_REFERENCE_ELEMENT];
 
-  /** @private */
   this[K_COMPLETED] = false;
 }
 
 ReceiveTaskExecution.prototype.execute = function execute(executeMessage) {
-  /** @private */
   this[K_EXECUTE_MESSAGE] = executeMessage;
 
   const executeContent = executeMessage.content;
@@ -127,7 +124,6 @@ ReceiveTaskExecution.prototype._onApiMessage = function onApiMessage(routingKey,
       return this._complete(message.content.message, { correlationId });
     }
     case 'discard': {
-      /** @private */
       this[K_COMPLETED] = true;
       this._stop();
       return this.broker.publish('execution', 'execute.discard', cloneContent(this[K_EXECUTE_MESSAGE].content), { correlationId });
@@ -139,7 +135,6 @@ ReceiveTaskExecution.prototype._onApiMessage = function onApiMessage(routingKey,
 };
 
 ReceiveTaskExecution.prototype._complete = function complete(output, options) {
-  /** @private */
   this[K_COMPLETED] = true;
   this._stop();
   return this.broker.publish('execution', 'execute.completed', cloneContent(this[K_EXECUTE_MESSAGE].content, { output }), options);

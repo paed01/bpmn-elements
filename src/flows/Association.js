@@ -8,7 +8,7 @@ import { K_COUNTERS } from '../constants.js';
  * Association connecting a source and target activity. Used to drive compensation —
  * activities marked `isForCompensation` subscribe to inbound association events.
  * @param {import('moddle-context-serializer').SerializableElement} associationDef
- * @param {import('types').ContextInstance} context
+ * @param {import('#types').ContextInstance} context
  */
 export function Association(associationDef, { environment }) {
   const { id, type = 'association', name, parent, targetId, sourceId, behaviour = {} } = associationDef;
@@ -24,7 +24,6 @@ export function Association(associationDef, { environment }) {
   this.environment = environment;
   const logger = (this.logger = environment.Logger(type.toLowerCase()));
 
-  /** @private */
   this[K_COUNTERS] = {
     take: 0,
     discard: 0,
@@ -75,7 +74,7 @@ Association.prototype.discard = function discard(content) {
 /**
  * Snapshot association state. Returns undefined when broker has no state and
  * `disableTrackState` is set.
- * @returns {import('types').AssociationState | undefined}
+ * @returns {import('#types').AssociationState | undefined}
  */
 Association.prototype.getState = function getState() {
   const brokerState = this.broker.getState(true);
@@ -91,7 +90,7 @@ Association.prototype.getState = function getState() {
 
 /**
  * Restore association state captured by getState.
- * @param {import('types').AssociationState} state
+ * @param {import('#types').AssociationState} state
  */
 Association.prototype.recover = function recover(state) {
   Object.assign(this[K_COUNTERS], state.counters);
@@ -100,7 +99,8 @@ Association.prototype.recover = function recover(state) {
 
 /**
  * Resolve an association-scoped Api wrapper.
- * @param {import('types').ElementBrokerMessage} [message]
+ * @param {import('#types').ElementBrokerMessage} [message]
+ * @returns {import('#types').IApi<this>}
  */
 Association.prototype.getApi = function getApi(message) {
   return new Api('association', this.broker, message || { content: this._createMessageContent() });

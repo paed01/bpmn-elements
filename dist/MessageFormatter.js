@@ -16,7 +16,7 @@ const EXEC_ROUTING_KEY = 'run._formatting.exec';
  * Enriches an element run message via async format start/end messages on the `format` exchange
  * before the run message is continued. Handlers publish enrichment by responding to a start
  * message with a matching end (or error) routing key.
- * @param {import('types').ElementBase} element
+ * @param {import('#types').ElementBase} element
  */
 function Formatter(element) {
   const {
@@ -27,15 +27,14 @@ function Formatter(element) {
   this.id = id;
   this.broker = broker;
   this.logger = logger;
-  /** @private */
   this[K_ON_MESSAGE] = this._onMessage.bind(this);
 }
 
 /**
  * Format the given run message. Callback fires with `(err, content, formatted)` once
  * formatting completes; `formatted` is true when content was actually enriched.
- * @param {import('types').ElementBrokerMessage} message
- * @param {(err: Error | null, content?: import('types').ElementMessageContent, formatted?: boolean) => void} callback
+ * @param {import('#types').ElementBrokerMessage} message
+ * @param {(err: Error | null, content?: import('#types').ElementMessageContent, formatted?: boolean) => void} callback
  */
 Formatter.prototype.format = function format(message, callback) {
   const correlationId = this._runId = (0, _shared.getUniqueId)(message.fields.routingKey);
@@ -45,8 +44,6 @@ Formatter.prototype.format = function format(message, callback) {
     correlationId,
     persistent: false
   });
-
-  /** @private */
   this[_constants.K_EXECUTION] = {
     correlationId,
     formatKey: message.fields.routingKey,
@@ -77,7 +74,6 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
     if (!asyncFormatting) {
       return this._complete(message);
     }
-    /** @private */
     this[_constants.K_EXECUTION].executeMessage = message;
   } else {
     message.ack();
@@ -110,7 +106,6 @@ Formatter.prototype._complete = function complete(message, isError) {
     formatted,
     executeMessage
   } = this[_constants.K_EXECUTION];
-  /** @private */
   this[_constants.K_EXECUTION] = null;
   if (executeMessage) executeMessage.ack();
   this.broker.cancel(message.fields.consumerTag);
@@ -143,7 +138,6 @@ Formatter.prototype._enrich = function enrich(withContent) {
       default:
         {
           content[key] = withContent[key];
-          /** @private */
           this[_constants.K_EXECUTION].formatted = true;
         }
     }

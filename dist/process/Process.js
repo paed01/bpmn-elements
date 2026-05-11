@@ -16,8 +16,8 @@ const K_LANES = Symbol.for('lanes');
 /**
  * Owns one `<bpmn:process>`. Wraps the structural definition and orchestrates flow traversal,
  * joins, and parallel activation through ProcessExecution.
- * @param {import('moddle-context-serializer').SerializableElement} processDef
- * @param {import('types').ContextInstance} context
+ * @param {import('moddle-context-serializer').MappedProcess} processDef
+ * @param {import('#types').ContextInstance} context
  */
 function Process(processDef, context) {
   const {
@@ -32,24 +32,16 @@ function Process(processDef, context) {
   this.name = name;
   this.parent = parent ? (0, _messageHelper.cloneParent)(parent) : {};
   this.behaviour = behaviour;
-  const {
-    isExecutable
-  } = behaviour;
-  this.isExecutable = isExecutable;
+  this.isExecutable = behaviour.isExecutable;
   const environment = this.environment = context.environment;
   this.context = context;
-  /** @private */
   this[_constants.K_COUNTERS] = {
     completed: 0,
     discarded: 0
   };
-  /** @private */
   this[_constants.K_CONSUMING] = false;
-  /** @private */
   this[_constants.K_EXECUTION] = new Map();
-  /** @private */
   this[_constants.K_STATUS] = undefined;
-  /** @private */
   this[_constants.K_STOPPED] = false;
   const {
     broker,
@@ -61,8 +53,6 @@ function Process(processDef, context) {
   this.on = on;
   this.once = once;
   this.waitFor = waitFor;
-
-  /** @private */
   this[_constants.K_MESSAGE_HANDLERS] = {
     onApiMessage: this._onApiMessage.bind(this),
     onRunMessage: this._onRunMessage.bind(this),
@@ -70,10 +60,8 @@ function Process(processDef, context) {
   };
   this.logger = environment.Logger(type.toLowerCase());
   if (behaviour.lanes) {
-    /** @private */
     this[K_LANES] = behaviour.lanes.map(lane => new lane.Behaviour(this, lane));
   }
-  /** @private */
   this[_constants.K_EXTENSIONS] = context.loadExtensions(this);
 }
 Object.defineProperties(Process.prototype, {
@@ -134,7 +122,6 @@ Object.defineProperties(Process.prototype, {
  */
 Process.prototype.init = function init(useAsExecutionId) {
   const initExecutionId = useAsExecutionId || (0, _shared.getUniqueId)(this.id);
-  /** @private */
   this[_constants.K_EXECUTION].set('initExecutionId', initExecutionId);
   this._debug(`initialized with executionId <${initExecutionId}>`);
   this._publishEvent('init', this._createMessage({
@@ -172,8 +159,6 @@ Process.prototype.run = function run(runContent) {
 Process.prototype.resume = function resume() {
   if (this.isRunning) throw new Error(`cannot resume running process <${this.id}>`);
   if (!this.status) return this;
-
-  /** @private */
   this[_constants.K_STOPPED] = false;
   const content = this._createMessage();
   this.broker.publish('run', 'run.resume', content, {
@@ -202,21 +187,17 @@ Process.prototype.getState = function getState() {
 
 /**
  * Restore process state captured by getState.
- * @param {import('types').ProcessState} [state]
+ * @param {import('#types').ProcessState} [state]
  * @returns {this}
  * @throws {Error} when called on a running process
  */
 Process.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error(`cannot recover running process <${this.id}>`);
   if (!state) return this;
-
-  /** @private */
   this[_constants.K_STOPPED] = !!state.stopped;
-  /** @private */
   this[_constants.K_STATUS] = state.status;
   const exec = this[_constants.K_EXECUTION];
   exec.set('executionId', state.executionId);
-  /** @private */
   this[_constants.K_COUNTERS] = {
     ...this[_constants.K_COUNTERS],
     ...state.counters
@@ -248,7 +229,8 @@ Process.prototype.stop = function stop() {
 
 /**
  * Resolve a Process Api wrapper, preferring the running execution if any.
- * @param {import('types').ElementBrokerMessage} [message]
+ * @param {import('#types').ElementBrokerMessage} [message]
+ * @returns {import('#types').IApi<this>}
  */
 Process.prototype.getApi = function getApi(message) {
   const execution = this.execution;
@@ -258,7 +240,7 @@ Process.prototype.getApi = function getApi(message) {
 
 /**
  * Send a delegated signal to the running process.
- * @param {import('types').signalMessage} [message]
+ * @param {import('#types').signalMessage} [message]
  */
 Process.prototype.signal = function signal(message) {
   return this.getApi().signal(message, {
@@ -268,7 +250,7 @@ Process.prototype.signal = function signal(message) {
 
 /**
  * Cancel a running activity inside the process by delegated api message.
- * @param {import('types').signalMessage} [message]
+ * @param {import('#types').signalMessage} [message]
  */
 Process.prototype.cancelActivity = function cancelActivity(message) {
   return this.getApi().cancel(message, {
@@ -278,7 +260,6 @@ Process.prototype.cancelActivity = function cancelActivity(message) {
 
 /** @internal */
 Process.prototype._activateRunConsumers = function activateRunConsumers() {
-  /** @private */
   this[_constants.K_CONSUMING] = true;
   const broker = this.broker;
   const {
@@ -302,7 +283,6 @@ Process.prototype._deactivateRunConsumers = function deactivateRunConsumers() {
   broker.cancel('_process-api');
   broker.cancel('_process-run');
   broker.cancel('_process-execution');
-  /** @private */
   this[_constants.K_CONSUMING] = false;
 };
 
@@ -315,19 +295,13 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
   if (routingKey === 'run.resume') {
     return this._onResumeMessage(message);
   }
-
-  /** @private */
   this[_constants.K_STATE_MESSAGE] = message;
   switch (routingKey) {
     case 'run.enter':
       {
         this._debug('enter');
-
-        /** @private */
         this[_constants.K_STATUS] = 'entered';
         if (fields.redelivered) break;
-
-        /** @private */
         this[_constants.K_EXECUTION].delete('execution');
         this._publishEvent('enter', content);
         break;
@@ -335,7 +309,6 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
     case 'run.start':
       {
         this._debug('start');
-        /** @private */
         this[_constants.K_STATUS] = 'start';
         this._publishEvent('start', content);
         break;
@@ -343,14 +316,12 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
     case 'run.execute':
       {
         const exec = this[_constants.K_EXECUTION];
-        /** @private */
         this[_constants.K_STATUS] = 'executing';
         const executeMessage = (0, _messageHelper.cloneMessage)(message);
         let execution = exec.get('execution');
         if (fields.redelivered && !execution) {
           executeMessage.fields.redelivered = undefined;
         }
-        /** @private */
         this[_constants.K_EXECUTE_MESSAGE] = message;
         this.broker.getQueue('execution-q').assertConsumer(this[_constants.K_MESSAGE_HANDLERS].onExecutionMessage, {
           exclusive: true,
@@ -362,7 +333,6 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
       }
     case 'run.error':
       {
-        /** @private */
         this[_constants.K_STATUS] = 'errored';
         this._publishEvent('error', (0, _messageHelper.cloneContent)(content, {
           error: fields.redelivered ? (0, _Errors.makeErrorFromMessage)(message) : content.error
@@ -371,12 +341,9 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
       }
     case 'run.end':
       {
-        /** @private */
         this[_constants.K_STATUS] = 'end';
         if (fields.redelivered) break;
         this._debug('completed');
-
-        /** @private */
         this[_constants.K_COUNTERS].completed++;
         this.broker.publish('run', 'run.leave', content);
         this._publishEvent('end', content);
@@ -384,11 +351,8 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
       }
     case 'run.discarded':
       {
-        /** @private */
         this[_constants.K_STATUS] = 'discarded';
         if (fields.redelivered) break;
-
-        /** @private */
         this[_constants.K_COUNTERS].discarded++;
         this.broker.publish('run', 'run.leave', content);
         this._publishEvent('discarded', content);
@@ -396,7 +360,6 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
       }
     case 'run.leave':
       {
-        /** @private */
         this[_constants.K_STATUS] = undefined;
         message.ack();
         this._deactivateRunConsumers();
@@ -455,7 +418,6 @@ Process.prototype._onExecutionMessage = function onExecutionMessage(routingKey, 
       }
   }
   const executeMessage = this[_constants.K_EXECUTE_MESSAGE];
-  /** @private */
   this[_constants.K_EXECUTE_MESSAGE] = null;
   executeMessage.ack();
 };
@@ -475,7 +437,7 @@ Process.prototype._publishEvent = function publishEvent(state, content) {
 /**
  * Deliver a message to a target activity or start activity that references it.
  * Starts the process if a target is found and the process is idle.
- * @param {import('types').ElementBrokerMessage} message
+ * @param {import('#types').ElementBrokerMessage} message
  */
 Process.prototype.sendMessage = function sendMessage(message) {
   const messageContent = message?.content;
@@ -516,7 +478,7 @@ Process.prototype.getActivities = function getActivities() {
 
 /**
  * Get start activities, optionally filtered by referenced event definition.
- * @param {import('types').startActivityFilterOptions} [filterOptions]
+ * @param {import('#types').startActivityFilterOptions} [filterOptions]
  */
 Process.prototype.getStartActivities = function getStartActivities(filterOptions) {
   return this.context.getStartActivities(filterOptions, this.id);
@@ -542,7 +504,7 @@ Process.prototype.getLaneById = function getLaneById(laneId) {
 
 /**
  * List currently postponed activities as Api wrappers.
- * @param {import('types').filterPostponed} [filterFn]
+ * @param {import('#types').filterPostponed} [filterFn]
  */
 Process.prototype.getPostponed = function getPostponed(...args) {
   const execution = this.execution;
@@ -565,7 +527,6 @@ Process.prototype._onApiMessage = function onApiMessage(routingKey, message) {
 
 /** @internal */
 Process.prototype._onStop = function onStop() {
-  /** @private */
   this[_constants.K_STOPPED] = true;
   this._deactivateRunConsumers();
   return this._publishEvent('stop');

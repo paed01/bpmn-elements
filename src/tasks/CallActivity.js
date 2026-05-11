@@ -2,6 +2,12 @@ import { Activity } from '../activity/Activity.js';
 import { ActivityError } from '../error/Errors.js';
 import { cloneContent } from '../messageHelper.js';
 
+/**
+ * Create call activity
+ * @param {import('moddle-context-serializer').MappedActivity} activityDef
+ * @param {import('../Context.js').ContextInstance} context
+ * @returns Call activity
+ */
 export function CallActivity(activityDef, context) {
   return new Activity(CallActivityBehaviour, activityDef, context);
 }

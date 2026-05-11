@@ -13,7 +13,7 @@ var _constants = require("../constants.js");
  * Association connecting a source and target activity. Used to drive compensation —
  * activities marked `isForCompensation` subscribe to inbound association events.
  * @param {import('moddle-context-serializer').SerializableElement} associationDef
- * @param {import('types').ContextInstance} context
+ * @param {import('#types').ContextInstance} context
  */
 function Association(associationDef, {
   environment
@@ -37,8 +37,6 @@ function Association(associationDef, {
   this.isAssociation = true;
   this.environment = environment;
   const logger = this.logger = environment.Logger(type.toLowerCase());
-
-  /** @private */
   this[_constants.K_COUNTERS] = {
     take: 0,
     discard: 0
@@ -93,7 +91,7 @@ Association.prototype.discard = function discard(content) {
 /**
  * Snapshot association state. Returns undefined when broker has no state and
  * `disableTrackState` is set.
- * @returns {import('types').AssociationState | undefined}
+ * @returns {import('#types').AssociationState | undefined}
  */
 Association.prototype.getState = function getState() {
   const brokerState = this.broker.getState(true);
@@ -108,7 +106,7 @@ Association.prototype.getState = function getState() {
 
 /**
  * Restore association state captured by getState.
- * @param {import('types').AssociationState} state
+ * @param {import('#types').AssociationState} state
  */
 Association.prototype.recover = function recover(state) {
   Object.assign(this[_constants.K_COUNTERS], state.counters);
@@ -117,7 +115,8 @@ Association.prototype.recover = function recover(state) {
 
 /**
  * Resolve an association-scoped Api wrapper.
- * @param {import('types').ElementBrokerMessage} [message]
+ * @param {import('#types').ElementBrokerMessage} [message]
+ * @returns {import('#types').IApi<this>}
  */
 Association.prototype.getApi = function getApi(message) {
   return new _Api.Api('association', this.broker, message || {

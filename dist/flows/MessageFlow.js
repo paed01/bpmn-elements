@@ -16,7 +16,7 @@ const K_SOURCE_ELEMENT = Symbol.for('sourceElement');
  * source's `end` event and publishes `message.outbound` whenever the source completes,
  * carrying any message payload through to the target.
  * @param {import('moddle-context-serializer').SerializableElement} flowDef
- * @param {import('types').ContextInstance} context
+ * @param {import('#types').ContextInstance} context
  */
 function MessageFlow(flowDef, context) {
   const {
@@ -37,8 +37,6 @@ function MessageFlow(flowDef, context) {
   this.behaviour = behaviour;
   this.environment = context.environment;
   this.context = context;
-
-  /** @private */
   this[_constants.K_COUNTERS] = {
     messages: 0
   };
@@ -54,8 +52,6 @@ function MessageFlow(flowDef, context) {
   this.once = once;
   this.emit = emit;
   this.waitFor = waitFor;
-
-  /** @private */
   this[K_SOURCE_ELEMENT] = context.getActivityById(source.id) || context.getProcessById(source.processId);
   this.logger = context.environment.Logger(type.toLowerCase());
 }
@@ -71,7 +67,7 @@ Object.defineProperty(MessageFlow.prototype, 'counters', {
 /**
  * Snapshot message-flow state. Returns undefined when broker has no state and
  * `disableTrackState` is set.
- * @returns {import('types').MessageFlowState | undefined}
+ * @returns {import('#types').MessageFlowState | undefined}
  */
 MessageFlow.prototype.getState = function getState() {
   const brokerState = this.broker.getState(true);
@@ -86,7 +82,7 @@ MessageFlow.prototype.getState = function getState() {
 
 /**
  * Restore message-flow state captured by getState.
- * @param {import('types').MessageFlowState} state
+ * @param {import('#types').MessageFlowState} state
  */
 MessageFlow.prototype.recover = function recover(state) {
   Object.assign(this[_constants.K_COUNTERS], state.counters);
@@ -95,7 +91,8 @@ MessageFlow.prototype.recover = function recover(state) {
 
 /**
  * Resolve a message-scoped Api wrapper.
- * @param {import('types').ElementBrokerMessage} [message]
+ * @param {import('#types').ElementBrokerMessage} [message]
+ * @returns {import('#types').IApi<this>}
  */
 MessageFlow.prototype.getApi = function getApi(message) {
   return new _Api.Api('message', this.broker, message || {

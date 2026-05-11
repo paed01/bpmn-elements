@@ -19,26 +19,22 @@ export function BoundaryEventBehaviour(activity) {
   this.activity = activity;
   this.environment = activity.environment;
   this.broker = activity.broker;
-  /** @private */
   this[K_EXECUTION] =
     activity.eventDefinitions && new EventDefinitionExecution(activity, activity.eventDefinitions, 'execute.bound.completed');
-  /** @private */
   this[K_SHOVELS] = new Set();
-  /** @private */
   this[K_ATTACHED_TAGS] = new Set();
 }
 
-Object.defineProperties(BoundaryEventBehaviour.prototype, {
-  executionId: {
-    get() {
-      return this[K_EXECUTE_MESSAGE]?.content.executionId;
-    },
+Object.defineProperty(BoundaryEventBehaviour.prototype, 'executionId', {
+  get() {
+    return this[K_EXECUTE_MESSAGE]?.content.executionId;
   },
-  cancelActivity: {
-    get() {
-      const behaviour = this.activity.behaviour || {};
-      return 'cancelActivity' in behaviour ? behaviour.cancelActivity : true;
-    },
+});
+
+Object.defineProperty(BoundaryEventBehaviour.prototype, 'cancelActivity', {
+  get() {
+    const behaviour = this.activity.behaviour || {};
+    return 'cancelActivity' in behaviour ? behaviour.cancelActivity : true;
   },
 });
 
@@ -47,7 +43,6 @@ BoundaryEventBehaviour.prototype.execute = function execute(executeMessage) {
 
   const eventDefinitionExecution = this[K_EXECUTION];
   if (isRootScope && executeMessage.content.id === this.id) {
-    /** @private */
     this[K_EXECUTE_MESSAGE] = executeMessage;
 
     const broker = this.broker;
@@ -62,7 +57,6 @@ BoundaryEventBehaviour.prototype.execute = function execute(executeMessage) {
       consumerTag,
       priority: 300,
     });
-    /** @private */
     this[K_ATTACHED_TAGS].add(consumerTag);
 
     broker.subscribeOnce('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {
@@ -113,7 +107,6 @@ BoundaryEventBehaviour.prototype._onCompleted = function onCompleted(_, { conten
     );
   }
 
-  /** @private */
   this[K_COMPLETE_CONTENT] = content;
 
   const { inbound, executionId } = this[K_EXECUTE_MESSAGE].content;
@@ -126,7 +119,6 @@ BoundaryEventBehaviour.prototype._onCompleted = function onCompleted(_, { conten
 
   if (content.isRecovered && !attachedTo.isRunning) {
     const attachedExecuteTag = `_on-attached-execute-${executionId}`;
-    /** @private */
     this[K_ATTACHED_TAGS].add(attachedExecuteTag);
     attachedTo.broker.subscribeOnce(
       'execution',
@@ -155,7 +147,6 @@ BoundaryEventBehaviour.prototype._onExpectMessage = function onExpectMessage(_, 
   const attachedTo = this.attachedTo;
 
   const errorConsumerTag = `_bound-error-listener-${executionId}`;
-  /** @private */
   this[K_ATTACHED_TAGS].add(errorConsumerTag);
 
   attachedTo.broker.subscribeTmp(
@@ -187,7 +178,6 @@ BoundaryEventBehaviour.prototype._onDetachMessage = function onDetachMessage(_, 
   const { executionId: detachId, bindExchange, sourceExchange, sourcePattern } = content;
 
   const shovelName = `_detached-${brokerSafeId(id)}_${detachId}`;
-  /** @private */
   this[K_SHOVELS].add(shovelName);
 
   const broker = this.broker;
@@ -249,10 +239,8 @@ BoundaryEventBehaviour.prototype._stop = function stop(detach) {
     broker = this.broker,
     executionId = this.executionId;
   for (const tag of this[K_ATTACHED_TAGS]) attachedTo.broker.cancel(tag);
-  /** @private */
   this[K_ATTACHED_TAGS].clear();
   for (const shovelName of this[K_SHOVELS]) attachedTo.broker.closeShovel(shovelName);
-  /** @private */
   this[K_SHOVELS].clear();
 
   broker.cancel('_execution-tag');

@@ -12,22 +12,21 @@ const EXEC_ROUTING_KEY = 'run._formatting.exec';
  * Enriches an element run message via async format start/end messages on the `format` exchange
  * before the run message is continued. Handlers publish enrichment by responding to a start
  * message with a matching end (or error) routing key.
- * @param {import('types').ElementBase} element
+ * @param {import('#types').ElementBase} element
  */
 export function Formatter(element) {
   const { id, broker, logger } = element;
   this.id = id;
   this.broker = broker;
   this.logger = logger;
-  /** @private */
   this[K_ON_MESSAGE] = this._onMessage.bind(this);
 }
 
 /**
  * Format the given run message. Callback fires with `(err, content, formatted)` once
  * formatting completes; `formatted` is true when content was actually enriched.
- * @param {import('types').ElementBrokerMessage} message
- * @param {(err: Error | null, content?: import('types').ElementMessageContent, formatted?: boolean) => void} callback
+ * @param {import('#types').ElementBrokerMessage} message
+ * @param {(err: Error | null, content?: import('#types').ElementMessageContent, formatted?: boolean) => void} callback
  */
 Formatter.prototype.format = function format(message, callback) {
   const correlationId = (this._runId = getUniqueId(message.fields.routingKey));
@@ -36,7 +35,6 @@ Formatter.prototype.format = function format(message, callback) {
 
   broker.publish('format', EXEC_ROUTING_KEY, {}, { correlationId, persistent: false });
 
-  /** @private */
   this[K_EXECUTION] = {
     correlationId,
     formatKey: message.fields.routingKey,
@@ -64,7 +62,6 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
     if (!asyncFormatting) {
       return this._complete(message);
     }
-    /** @private */
     this[K_EXECUTION].executeMessage = message;
   } else {
     message.ack();
@@ -97,7 +94,6 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
 /** @internal */
 Formatter.prototype._complete = function complete(message, isError) {
   const { runMessage, formatKey, callback, formatted, executeMessage } = this[K_EXECUTION];
-  /** @private */
   this[K_EXECUTION] = null;
   if (executeMessage) executeMessage.ack();
 
@@ -132,7 +128,6 @@ Formatter.prototype._enrich = function enrich(withContent) {
         break;
       default: {
         content[key] = withContent[key];
-        /** @private */
         this[K_EXECUTION].formatted = true;
       }
     }

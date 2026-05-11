@@ -23,11 +23,9 @@ export function MessageEventDefinition(activity, eventDefinition) {
 
   const referenceElement = (this[K_REFERENCE_ELEMENT] = reference.id && activity.getActivityById(reference.id));
   if (!isThrowing) {
-    /** @private */
     this[K_COMPLETED] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(referenceId)}-q`;
-    /** @private */
     this[K_MESSAGE_Q] = broker.assertQueue(messageQueueName, { autoDelete: false, durable: true });
     broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, { durable: true });
   }
@@ -44,9 +42,7 @@ MessageEventDefinition.prototype.execute = function execute(executeMessage) {
 };
 
 MessageEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  /** @private */
   this[K_EXECUTE_MESSAGE] = executeMessage;
-  /** @private */
   this[K_COMPLETED] = false;
 
   const executeContent = executeMessage.content;
@@ -58,7 +54,6 @@ MessageEventDefinition.prototype.executeCatch = function executeCatch(executeMes
 
   const broker = this.broker;
   const onCatchMessage = this._onCatchMessage.bind(this);
-  /** @private */
   this[K_MESSAGE_Q].consume(onCatchMessage, {
     noAck: true,
     consumerTag: `_api-message-${executionId}`,
@@ -138,7 +133,6 @@ MessageEventDefinition.prototype._onApiMessage = function onApiMessage(routingKe
       return this._complete('got signal with', message.content.message, { correlationId });
     }
     case 'discard': {
-      /** @private */
       this[K_COMPLETED] = true;
       this._stop();
       return this.broker.publish('execution', 'execute.discard', cloneContent(this[K_EXECUTE_MESSAGE].content), { correlationId });
@@ -150,7 +144,6 @@ MessageEventDefinition.prototype._onApiMessage = function onApiMessage(routingKe
 };
 
 MessageEventDefinition.prototype._complete = function complete(verb, output, options) {
-  /** @private */
   this[K_COMPLETED] = true;
 
   this._stop();
@@ -184,7 +177,6 @@ MessageEventDefinition.prototype._stop = function stop() {
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_api-parent-${executionId}`);
   broker.cancel(`_api-delegated-${executionId}`);
-  /** @private */
   this[K_MESSAGE_Q].purge();
 };
 

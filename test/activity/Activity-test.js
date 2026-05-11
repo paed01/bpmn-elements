@@ -1,4 +1,4 @@
-import { Activity } from '../../src/activity/Activity.js';
+import { Activity } from 'bpmn-elements';
 import { Association } from '../../src/flows/Association.js';
 import { Environment } from '../../src/Environment.js';
 import { SequenceFlow } from '../../src/flows/SequenceFlow.js';

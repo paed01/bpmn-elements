@@ -8,22 +8,18 @@ const K_POSTPONED = Symbol.for('postponed');
 /**
  * Per-run execution orchestrator for an Activity. Instantiates the element-specific behaviour
  * and drives the execute message flow over the activity broker.
- * @param {import('types').Activity} activity
- * @param {import('types').ContextInstance} context
+ * @param {import('./Activity.js').Activity} activity
+ * @param {import('../Context.js').ContextInstance} context
  */
 export function ActivityExecution(activity, context) {
   this.activity = activity;
   this.context = context;
   this.id = activity.id;
   this.broker = activity.broker;
-  /** @private */
   this[K_POSTPONED] = new Set();
-  /** @private */
   this[K_COMPLETED] = false;
-  /** @private */
   this[K_EXECUTE_Q] = this.broker.assertQueue('execute-q', { durable: true, autoDelete: false });
 
-  /** @private */
   this[K_MESSAGE_HANDLERS] = {
     onParentApiMessage: this._onParentApiMessage.bind(this),
     onExecuteMessage: this._onExecuteMessage.bind(this),
@@ -39,7 +35,7 @@ Object.defineProperty(ActivityExecution.prototype, 'completed', {
 
 /**
  * Begin executing the activity behaviour. Resumes if the message is redelivered.
- * @param {import('types').ElementBrokerMessage} executeMessage
+ * @param {import('#types').ElementBrokerMessage} executeMessage
  * @throws {Error} when message or executionId is missing
  */
 ActivityExecution.prototype.execute = function execute(executeMessage) {
@@ -55,7 +51,6 @@ ActivityExecution.prototype.execute = function execute(executeMessage) {
   }));
 
   if (executeMessage.fields.redelivered) {
-    /** @private */
     this[K_POSTPONED].clear();
     this._debug('resume execution');
 
@@ -82,7 +77,6 @@ ActivityExecution.prototype.activate = function activate() {
   broker.bindQueue('execute-q', 'execution', 'execute.#', { priority: 100 });
 
   const { onExecuteMessage, onParentApiMessage } = this[K_MESSAGE_HANDLERS];
-  /** @private */
   this[K_EXECUTE_Q].assertConsumer(onExecuteMessage, {
     exclusive: true,
     prefetch: batchSize * 2,
@@ -121,7 +115,8 @@ ActivityExecution.prototype.discard = function discard() {
 
 /**
  * Resolve an Api wrapper, preferring a behaviour-specific Api when the source exposes one.
- * @param {import('types').ElementBrokerMessage} [apiMessage]
+ * @param {import('#types').ElementBrokerMessage} [apiMessage]
+ * @returns {import('#types').IApi<import('./Activity.js').Activity>}
  */
 ActivityExecution.prototype.getApi = function getApi(apiMessage) {
   const self = this;
@@ -148,7 +143,7 @@ ActivityExecution.prototype.getApi = function getApi(apiMessage) {
 
 /**
  * Pass an execute message straight to the behaviour, executing first if no source is set up yet.
- * @param {import('types').ElementBrokerMessage} executeMessage
+ * @param {import('#types').ElementBrokerMessage} executeMessage
  */
 ActivityExecution.prototype.passthrough = function passthrough(executeMessage) {
   if (!this.source) return this.execute(executeMessage);
@@ -181,11 +176,10 @@ ActivityExecution.prototype.getState = function getState() {
 
 /**
  * Restore execution state captured by getState.
- * @param {import('types').ActivityExecutionState} [state]
+ * @param {import('#types').ActivityExecutionState} [state]
  * @returns {this}
  */
 ActivityExecution.prototype.recover = function recover(state) {
-  /** @private */
   this[K_POSTPONED].clear();
 
   if (!state) return this;
@@ -311,7 +305,6 @@ ActivityExecution.prototype._onExecutionCompleted = function onExecutionComplete
   }
 
   this._debug('completed execution', executionId);
-  /** @private */
   this[K_COMPLETED] = true;
 
   message.ack(true);
@@ -361,7 +354,6 @@ ActivityExecution.prototype._publishExecutionCompleted = function publishExecuti
   completeContent,
   correlationId
 ) {
-  /** @private */
   this[K_COMPLETED] = true;
 
   this.broker.publish(

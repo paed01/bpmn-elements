@@ -34,9 +34,7 @@ CancelEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 CancelEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  /** @private */
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
-  /** @private */
   this[_constants.K_COMPLETED] = false;
   const executeContent = executeMessage.content;
   const {
@@ -91,7 +89,6 @@ CancelEventDefinition.prototype._onCatchMessage = function onCatchMessage(_, mes
   return this._complete(content.message);
 };
 CancelEventDefinition.prototype._complete = function complete(output) {
-  /** @private */
   this[_constants.K_COMPLETED] = true;
   this._stop();
   this._debug('completed');
@@ -105,7 +102,6 @@ CancelEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey
   switch (message.properties.type) {
     case 'discard':
       {
-        /** @private */
         this[_constants.K_COMPLETED] = true;
         this._stop();
         const content = (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content);

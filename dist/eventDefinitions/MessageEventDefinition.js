@@ -32,11 +32,9 @@ function MessageEventDefinition(activity, eventDefinition) {
   this.logger = environment.Logger(type.toLowerCase());
   const referenceElement = this[_constants.K_REFERENCE_ELEMENT] = reference.id && activity.getActivityById(reference.id);
   if (!isThrowing) {
-    /** @private */
     this[_constants.K_COMPLETED] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${reference.referenceType}-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(referenceId)}-q`;
-    /** @private */
     this[_constants.K_MESSAGE_Q] = broker.assertQueue(messageQueueName, {
       autoDelete: false,
       durable: true
@@ -55,9 +53,7 @@ MessageEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 MessageEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  /** @private */
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
-  /** @private */
   this[_constants.K_COMPLETED] = false;
   const executeContent = executeMessage.content;
   const {
@@ -69,7 +65,6 @@ MessageEventDefinition.prototype.executeCatch = function executeCatch(executeMes
   this._debug(`expect ${info.description}`);
   const broker = this.broker;
   const onCatchMessage = this._onCatchMessage.bind(this);
-  /** @private */
   this[_constants.K_MESSAGE_Q].consume(onCatchMessage, {
     noAck: true,
     consumerTag: `_api-message-${executionId}`
@@ -156,7 +151,6 @@ MessageEventDefinition.prototype._onApiMessage = function onApiMessage(routingKe
       }
     case 'discard':
       {
-        /** @private */
         this[_constants.K_COMPLETED] = true;
         this._stop();
         return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content), {
@@ -170,7 +164,6 @@ MessageEventDefinition.prototype._onApiMessage = function onApiMessage(routingKe
   }
 };
 MessageEventDefinition.prototype._complete = function complete(verb, output, options) {
-  /** @private */
   this[_constants.K_COMPLETED] = true;
   this._stop();
   this._debug(`${verb} ${this[_constants.K_REFERENCE_INFO].description}`);
@@ -198,7 +191,6 @@ MessageEventDefinition.prototype._stop = function stop() {
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_api-parent-${executionId}`);
   broker.cancel(`_api-delegated-${executionId}`);
-  /** @private */
   this[_constants.K_MESSAGE_Q].purge();
 };
 MessageEventDefinition.prototype._getReferenceInfo = function getReferenceInfo(message) {

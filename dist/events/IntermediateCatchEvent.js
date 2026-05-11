@@ -19,7 +19,6 @@ function IntermediateCatchEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
   this.broker = activity.broker;
-  /** @private */
   this[_constants.K_EXECUTION] = activity.eventDefinitions && new _EventDefinitionExecution.EventDefinitionExecution(activity, activity.eventDefinitions);
 }
 IntermediateCatchEventBehaviour.prototype.execute = function execute(executeMessage) {

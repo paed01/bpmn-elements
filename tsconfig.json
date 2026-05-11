@@ -1,6 +1,5 @@
 {
   "include": ["src/**/*", "types"],
-  "exclude": ["types/augmentations.d.ts"],
   "compilerOptions": {
     "emitDeclarationOnly": true,
     "sourceMap": false,
@@ -24,8 +23,7 @@
     "noUnusedParameters": true,
     "types": ["node"],
     "paths": {
-      "types": ["./types/types.js"],
-      "src/*": ["./src/*"]
+      "#types": ["./types/interfaces.d.ts"]
     }
   }
 }

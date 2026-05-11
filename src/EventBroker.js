@@ -2,8 +2,18 @@ import { Broker } from 'smqp';
 import { makeErrorFromMessage } from './error/Errors.js';
 
 /**
+ * @typedef {object} BrokerApi Shape of the bound event helpers exposed by an EventBroker
+ * (and inherited by every element class that destructures from one).
+ * @property {(eventName: string, callback: CallableFunction, eventOptions?: { once?: boolean, [x: string]: any }) => import('smqp').Consumer} on
+ * @property {(eventName: string, callback: CallableFunction, eventOptions?: { [x: string]: any }) => import('smqp').Consumer} once
+ * @property {(eventName: string, onMessage?: (routingKey: string, message: import('#types').ElementBrokerMessage, owner: any) => boolean) => Promise<any>} waitFor
+ * @property {(eventName: string, content?: Record<string, any>, props?: any) => void} emit
+ * @property {(error: Error, content?: Record<string, any>) => void} emitFatal
+ */
+
+/**
  * Build the broker for an activity, including run/format/execution/api exchanges and queues.
- * @param {import('types').Activity} activity
+ * @param {import('#types').Activity} activity
  */
 export function ActivityBroker(activity) {
   const executionBroker = ExecutionBroker(activity, 'activity');
@@ -12,7 +22,7 @@ export function ActivityBroker(activity) {
 
 /**
  * Build the broker for a process, with an additional api-q bound to all api routing keys.
- * @param {import('types').Process} owner
+ * @param {import('#types').Process} owner
  */
 export function ProcessBroker(owner) {
   const executionBroker = ExecutionBroker(owner, 'process');
@@ -23,8 +33,8 @@ export function ProcessBroker(owner) {
 
 /**
  * Build the broker for a definition. Optionally registers a custom return-message handler.
- * @param {import('types').Definition} owner
- * @param {(message: import('types').ElementBrokerMessage) => void} [onBrokerReturn]
+ * @param {import('#types').Definition} owner
+ * @param {(message: import('#types').ElementBrokerMessage) => void} [onBrokerReturn]
  */
 export function DefinitionBroker(owner, onBrokerReturn) {
   return ExecutionBroker(owner, 'definition', onBrokerReturn);
@@ -32,7 +42,7 @@ export function DefinitionBroker(owner, onBrokerReturn) {
 
 /**
  * Build the broker for a message flow with a durable message exchange and message-q.
- * @param {import('types').MessageFlow} owner
+ * @param {import('#types').MessageFlow} owner
  */
 export function MessageFlowBroker(owner) {
   const eventBroker = new EventBroker(owner, { prefix: 'messageflow', autoDelete: false, durable: false });
@@ -70,7 +80,7 @@ function ExecutionBroker(brokerOwner, prefix, onBrokerReturn) {
  * Owns an smqp Broker on behalf of the calling element and exposes prefixed event helpers.
  * @param {any} brokerOwner Element that owns the broker, accessed as `broker.owner`
  * @param {{ prefix: string, autoDelete?: boolean, durable?: boolean }} options
- * @param {(message: import('types').ElementBrokerMessage) => void} [onBrokerReturn] Override for unrouted return messages
+ * @param {(message: import('#types').ElementBrokerMessage) => void} [onBrokerReturn] Override for unrouted return messages
  */
 export function EventBroker(brokerOwner, options, onBrokerReturn) {
   this.options = options;
@@ -80,19 +90,22 @@ export function EventBroker(brokerOwner, options, onBrokerReturn) {
   broker.assertExchange('event', 'topic', options);
   broker.on('return', onBrokerReturn ? onBrokerReturn.bind(brokerOwner) : this._onBrokerReturnFn.bind(this));
 
+  /** @type {BrokerApi['on']} */
   this.on = this.on.bind(this);
+  /** @type {BrokerApi['once']} */
   this.once = this.once.bind(this);
+  /** @type {BrokerApi['waitFor']} */
   this.waitFor = this.waitFor.bind(this);
+  /** @type {BrokerApi['emit']} */
   this.emit = this.emit.bind(this);
+  /** @type {BrokerApi['emitFatal']} */
   this.emitFatal = this.emitFatal.bind(this);
 }
 
 /**
  * Subscribe to a prefixed event. Errors are unwrapped via `makeErrorFromMessage`,
  * other events resolve to the owner's Api wrapper.
- * @param {string} eventName Bare name (e.g. `enter`) or a full routing key
- * @param {CallableFunction} callback
- * @param {{ once?: boolean, [x: string]: any }} [eventOptions]
+ * @type {BrokerApi['on']}
  */
 EventBroker.prototype.on = function on(eventName, callback, eventOptions = { once: false }) {
   const key = this._getEventRoutingKey(eventName);
@@ -108,9 +121,7 @@ EventBroker.prototype.on = function on(eventName, callback, eventOptions = { onc
 
 /**
  * Subscribe to the next occurrence of an event.
- * @param {string} eventName
- * @param {CallableFunction} callback
- * @param {any} [eventOptions]
+ * @type {BrokerApi['once']}
  */
 EventBroker.prototype.once = function once(eventName, callback, eventOptions) {
   return this.on(eventName, callback, { ...eventOptions, once: true });
@@ -118,9 +129,7 @@ EventBroker.prototype.once = function once(eventName, callback, eventOptions) {
 
 /**
  * Promise-style wait for an event. Rejects on a mandatory `*.error` message.
- * @param {string} eventName
- * @param {(routingKey: string, message: import('types').ElementBrokerMessage, owner: any) => boolean | undefined} [onMessage]
- *   Filter; the promise only resolves when it returns truthy
+ * @type {BrokerApi['waitFor']}
  */
 EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
   const key = this._getEventRoutingKey(eventName);
@@ -153,9 +162,7 @@ EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
 
 /**
  * Publish a prefixed event message.
- * @param {string} eventName
- * @param {Record<string, any>} [content]
- * @param {any} [props]
+ * @type {BrokerApi['emit']}
  */
 EventBroker.prototype.emit = function emit(eventName, content, props) {
   this.broker.publish('event', `${this.eventPrefix}.${eventName}`, { ...content }, { type: eventName, ...props });
@@ -163,8 +170,7 @@ EventBroker.prototype.emit = function emit(eventName, content, props) {
 
 /**
  * Emit a mandatory error event. Surfaces via `on('error', ...)` or causes a return message to throw.
- * @param {Error} error
- * @param {Record<string, any>} [content]
+ * @type {BrokerApi['emitFatal']}
  */
 EventBroker.prototype.emitFatal = function emitFatal(error, content) {
   this.emit('error', { ...content, error }, { mandatory: true });

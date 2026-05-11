@@ -8,6 +8,12 @@ exports.CallActivityBehaviour = CallActivityBehaviour;
 var _Activity = require("../activity/Activity.js");
 var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
+/**
+ * Create call activity
+ * @param {import('moddle-context-serializer').MappedActivity} activityDef
+ * @param {import('../Context.js').ContextInstance} context
+ * @returns Call activity
+ */
 function CallActivity(activityDef, context) {
   return new _Activity.Activity(CallActivityBehaviour, activityDef, context);
 }

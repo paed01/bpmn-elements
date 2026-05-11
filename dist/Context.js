@@ -14,7 +14,7 @@ const K_OWNER = Symbol.for('owner');
 /**
  * Build a runtime Context from a parsed BPMN definition.
  * @param {import('moddle-context-serializer').SerializableContext} definitionContext
- * @param {import('types').Environment} [environment] Existing environment to clone; a fresh one is created when omitted
+ * @param {import('#types').Environment} [environment] Existing environment to clone; a fresh one is created when omitted
  */
 function Context(definitionContext, environment) {
   environment = environment ? environment.clone() : new _Environment.Environment();
@@ -24,8 +24,8 @@ function Context(definitionContext, environment) {
 /**
  * Per-execution registry that lazily upserts activities, flows, and processes from the parsed BPMN definition.
  * @param {import('moddle-context-serializer').SerializableContext} definitionContext
- * @param {import('types').Environment} environment
- * @param {import('types').Process | import('types').Activity} [owner] Process or sub-process activity that owns this context
+ * @param {import('#types').Environment} environment
+ * @param {import('#types').Process | import('#types').Activity} [owner] Process or sub-process activity that owns this context
  */
 function ContextInstance(definitionContext, environment, owner) {
   const {
@@ -40,13 +40,13 @@ function ContextInstance(definitionContext, environment, owner) {
   this.sid = sid;
   this.definitionContext = definitionContext;
   this.environment = environment;
+  /** @type {import('#types').IExtensionsMapper}  */
   this.extensionsMapper = new ExtensionsMapper(this);
   this.refs = new Map([['activityRefs', new Map()], ['sequenceFlowRefs', new Map()], ['processRefs', new Map()], ['messageFlows', new Set()], ['associationRefs', new Map()], ['dataObjectRefs', new Map()], ['dataStoreRefs', new Map()]]);
-  /** @private */
   this[K_OWNER] = owner;
 }
 Object.defineProperty(ContextInstance.prototype, 'owner', {
-  /** @returns {import('types').Process | import('types').Activity | undefined} Process or sub-process activity that owns this context */
+  /** @returns {import('#types').Process | import('#types').Activity | undefined} Process or sub-process activity that owns this context */
   get() {
     return this[K_OWNER];
   }
@@ -55,6 +55,7 @@ Object.defineProperty(ContextInstance.prototype, 'owner', {
 /**
  * Get or create the activity instance for the given id.
  * @param {string} activityId
+ * @returns {import('./activity/Activity.js').Activity | null}
  */
 ContextInstance.prototype.getActivityById = function getActivityById(activityId) {
   const activityInstance = this.refs.get('activityRefs').get(activityId);
@@ -67,6 +68,7 @@ ContextInstance.prototype.getActivityById = function getActivityById(activityId)
 /**
  * Return the cached activity instance, instantiating it the first time it is referenced.
  * @param {import('moddle-context-serializer').SerializableElement} activityDef
+ * @returns {import('./activity/Activity.js').Activity}
  */
 ContextInstance.prototype.upsertActivity = function upsertActivity(activityDef) {
   let activityInstance = this.refs.get('activityRefs').get(activityDef.id);
@@ -79,6 +81,7 @@ ContextInstance.prototype.upsertActivity = function upsertActivity(activityDef) 
 /**
  * Get or create the sequence flow instance for the given id.
  * @param {string} sequenceFlowId
+ * @returns {import('./flows/SequenceFlow.js').SequenceFlow | null}
  */
 ContextInstance.prototype.getSequenceFlowById = function getSequenceFlowById(sequenceFlowId) {
   const flowInstance = this.refs.get('sequenceFlowRefs').get(sequenceFlowId);
@@ -166,8 +169,8 @@ ContextInstance.prototype.upsertAssociation = function upsertAssociation(associa
 
 /**
  * Create a new context that shares the parsed definition but optionally swaps environment and owner.
- * @param {import('types').Environment} [newEnvironment]
- * @param {import('types').Process | import('types').Activity} [newOwner]
+ * @param {import('#types').Environment} [newEnvironment]
+ * @param {import('#types').Process | import('#types').Activity} [newOwner]
  */
 ContextInstance.prototype.clone = function clone(newEnvironment, newOwner) {
   return new ContextInstance(this.definitionContext, newEnvironment || this.environment, newOwner);
@@ -176,6 +179,7 @@ ContextInstance.prototype.clone = function clone(newEnvironment, newOwner) {
 /**
  * Get or create the process instance for the given id. Each process gets its own cloned environment.
  * @param {string} processId
+ * @returns {import('./process/Process.js').Process | null}
  */
 ContextInstance.prototype.getProcessById = function getProcessById(processId) {
   const processRefs = this.refs.get('processRefs');
@@ -275,7 +279,7 @@ ContextInstance.prototype.getDataStoreById = function getDataStoreById(reference
 
 /**
  * Get start activities, optionally filtered by referenced event definition or restricted to a parent scope.
- * @param {import('types').startActivityFilterOptions} [filterOptions]
+ * @param {import('#types').startActivityFilterOptions} [filterOptions]
  * @param {string} [scopeId] Process or sub-process id
  */
 ContextInstance.prototype.getStartActivities = function getStartActivities(filterOptions, scopeId) {
@@ -301,7 +305,8 @@ ContextInstance.prototype.getStartActivities = function getStartActivities(filte
 /**
  * Resolve user-registered extensions and the built-in BpmnIO extension for an activity.
  * Returns undefined when the activity has no extensions to attach.
- * @param {import('types').ElementBase} activity
+ * @param {import('#types').ElementBase} activity
+ * @returns {import('#types').IExtension | undefined}
  */
 ContextInstance.prototype.loadExtensions = function loadExtensions(activity) {
   const io = new _BpmnIO.BpmnIO(activity, this);
@@ -341,7 +346,6 @@ function Extensions(activity, context, extensions) {
     const extension = Extension(activity, context);
     if (extension) result.push(extension);
   }
-  /** @private */
   this[_constants.K_ACTIVATED] = false;
 }
 Object.defineProperty(Extensions.prototype, 'count', {
@@ -351,13 +355,11 @@ Object.defineProperty(Extensions.prototype, 'count', {
 });
 Extensions.prototype.activate = function activate(message) {
   if (this[_constants.K_ACTIVATED]) return;
-  /** @private */
   this[_constants.K_ACTIVATED] = true;
   for (const extension of this.extensions) extension.activate(message);
 };
 Extensions.prototype.deactivate = function deactivate(message) {
   if (!this[_constants.K_ACTIVATED]) return;
-  /** @private */
   this[_constants.K_ACTIVATED] = false;
   for (const extension of this.extensions) extension.deactivate(message);
 };

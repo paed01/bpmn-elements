@@ -25,11 +25,9 @@ export function EscalationEventDefinition(activity, eventDefinition) {
 
   const referenceElement = (this[K_REFERENCE_ELEMENT] = reference.id && activity.getActivityById(reference.id));
   if (!isThrowing) {
-    /** @private */
     this[K_COMPLETED] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(referenceId)}-q`;
-    /** @private */
     this[K_MESSAGE_Q] = broker.assertQueue(messageQueueName, { autoDelete: false, durable: true });
     broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, { durable: true, priority: 400 });
   }
@@ -46,9 +44,7 @@ EscalationEventDefinition.prototype.execute = function execute(executeMessage) {
 };
 
 EscalationEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  /** @private */
   this[K_EXECUTE_MESSAGE] = executeMessage;
-  /** @private */
   this[K_COMPLETED] = false;
 
   const executeContent = executeMessage.content;
@@ -56,7 +52,6 @@ EscalationEventDefinition.prototype.executeCatch = function executeCatch(execute
 
   const info = (this[K_REFERENCE] = this._getReferenceInfo(executeMessage));
   const broker = this.broker;
-  /** @private */
   this[K_MESSAGE_Q].consume(this._onCatchMessage.bind(this), {
     noAck: true,
     consumerTag: `_onescalate-${executionId}`,
@@ -106,7 +101,6 @@ EscalationEventDefinition.prototype._onCatchMessage = function onCatchMessage(ro
   if (getPropertyValue(message, 'content.message.id') !== info.message.id) return;
 
   const output = message.content.message;
-  /** @private */
   this[K_COMPLETED] = true;
 
   this._stop();
@@ -133,7 +127,6 @@ EscalationEventDefinition.prototype._onApiMessage = function onApiMessage(routin
       return this._onCatchMessage(routingKey, message);
     }
     case 'discard': {
-      /** @private */
       this[K_COMPLETED] = true;
       this._stop();
       return this.broker.publish('execution', 'execute.discard', cloneContent(this[K_EXECUTE_MESSAGE].content));

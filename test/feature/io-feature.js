@@ -1,10 +1,11 @@
-import camunda from '../resources/extensions/CamundaExtension.js';
 import { Definition } from 'bpmn-elements';
+import camunda from '../resources/extensions/CamundaExtension.js';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 
 Feature('IO', () => {
   Scenario('DataStoreReference and DataInput- and DataOutputAssociation', () => {
+    /** @type {Definition} */
     let definition;
     Given('two tasks associated with a data store reference only', async () => {
       const context = await testHelpers.context(factory.resource('signals.bpmn'), {

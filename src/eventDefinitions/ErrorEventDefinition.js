@@ -23,11 +23,9 @@ export function ErrorEventDefinition(activity, eventDefinition) {
 
   const referenceElement = (this[K_REFERENCE_ELEMENT] = reference.id && activity.getActivityById(reference.id));
   if (!isThrowing) {
-    /** @private */
     this[K_COMPLETED] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(referenceId)}-q`;
-    /** @private */
     this[K_MESSAGE_Q] = broker.assertQueue(messageQueueName, { autoDelete: false, durable: true });
     broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, { durable: true, priority: 300 });
   }
@@ -44,9 +42,7 @@ ErrorEventDefinition.prototype.execute = function execute(executeMessage) {
 };
 
 ErrorEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  /** @private */
   this[K_EXECUTE_MESSAGE] = executeMessage;
-  /** @private */
   this[K_COMPLETED] = false;
 
   const executeContent = executeMessage.content;
@@ -55,7 +51,6 @@ ErrorEventDefinition.prototype.executeCatch = function executeCatch(executeMessa
 
   const info = (this[K_REFERENCE_INFO] = this._getReferenceInfo(executeMessage));
 
-  /** @private */
   this[K_MESSAGE_Q].consume(this._onThrowApiMessage.bind(this), {
     noAck: true,
     consumerTag: `_onthrow-${executionId}`,
@@ -149,7 +144,6 @@ ErrorEventDefinition.prototype._onThrowApiMessage = function onThrowApiMessage(r
 };
 
 ErrorEventDefinition.prototype._catchError = function catchError(routingKey, message, error) {
-  /** @private */
   this[K_COMPLETED] = true;
 
   this._stop();
@@ -188,7 +182,6 @@ ErrorEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey,
 
   switch (messageType) {
     case 'discard': {
-      /** @private */
       this[K_COMPLETED] = true;
       this._stop();
       return this.broker.publish('execution', 'execute.discard', cloneContent(this[K_EXECUTE_MESSAGE].content));
@@ -206,7 +199,6 @@ ErrorEventDefinition.prototype._stop = function stop() {
   broker.cancel(`_onthrow-${executionId}`);
   broker.cancel(`_onerror-${executionId}`);
   broker.cancel(`_api-${executionId}`);
-  /** @private */
   this[K_MESSAGE_Q].purge();
 };
 

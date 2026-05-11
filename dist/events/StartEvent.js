@@ -17,7 +17,6 @@ function StartEventBehaviour(activity) {
   this.type = activity.type;
   this.activity = activity;
   this.broker = activity.broker;
-  /** @private */
   this[_constants.K_EXECUTION] = activity.eventDefinitions && new _EventDefinitionExecution.EventDefinitionExecution(activity, activity.eventDefinitions);
 }
 Object.defineProperty(StartEventBehaviour.prototype, 'executionId', {
@@ -36,7 +35,6 @@ StartEventBehaviour.prototype.execute = function execute(executeMessage) {
     return broker.publish('execution', 'execute.completed', content);
   }
   const executionId = content.executionId;
-  /** @private */
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(...args), {
     noAck: true,

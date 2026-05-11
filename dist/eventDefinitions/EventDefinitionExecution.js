@@ -12,23 +12,18 @@ function EventDefinitionExecution(activity, eventDefinitions, completedRoutingKe
   this.broker = activity.broker;
   this.eventDefinitions = eventDefinitions;
   this.completedRoutingKey = completedRoutingKey;
-  /** @private */
   this[_constants.K_COMPLETED] = false;
-  /** @private */
   this[_constants.K_STOPPED] = false;
-  /** @private */
   this[_constants.K_EXECUTE_MESSAGE] = null;
 }
-Object.defineProperties(EventDefinitionExecution.prototype, {
-  completed: {
-    get() {
-      return this[_constants.K_COMPLETED];
-    }
-  },
-  stopped: {
-    get() {
-      return this[_constants.K_STOPPED];
-    }
+Object.defineProperty(EventDefinitionExecution.prototype, 'completed', {
+  get() {
+    return this[_constants.K_COMPLETED];
+  }
+});
+Object.defineProperty(EventDefinitionExecution.prototype, 'stopped', {
+  get() {
+    return this[_constants.K_STOPPED];
   }
 });
 EventDefinitionExecution.prototype.execute = function execute(executeMessage) {
@@ -36,8 +31,6 @@ EventDefinitionExecution.prototype.execute = function execute(executeMessage) {
   if (content.isDefinitionScope) return this._executeDefinition(executeMessage);
   if (!content.isRootScope) return;
   const broker = this.broker;
-
-  /** @private */
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   const executionId = content.executionId;
   broker.subscribeTmp('execution', 'execute.#', this._onExecuteMessage.bind(this), {
@@ -112,7 +105,6 @@ EventDefinitionExecution.prototype._complete = function complete(message) {
     index,
     parent
   } = message.content;
-  /** @private */
   this[_constants.K_COMPLETED] = true;
   this._debug(executionId, `event definition ${type} completed, index ${index}`);
   const completeContent = (0, _messageHelper.cloneContent)(message.content, {
@@ -136,7 +128,6 @@ EventDefinitionExecution.prototype._executeDefinition = function executeDefiniti
   ed.execute(message);
 };
 EventDefinitionExecution.prototype._stop = function stop() {
-  /** @private */
   this[_constants.K_STOPPED] = true;
   this.broker.cancel('_eventdefinition-execution-execute-tag');
   this.broker.cancel('_eventdefinition-execution-api-tag');

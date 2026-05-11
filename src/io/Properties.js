@@ -67,7 +67,6 @@ Properties.prototype.activate = function activate(message) {
     this._onActivityEvent('activity.extension.resume', message);
   }
 
-  /** @private */
   this[K_CONSUMING] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), { noAck: true });
 };
 

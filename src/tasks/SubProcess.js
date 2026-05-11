@@ -38,22 +38,19 @@ export function SubProcessBehaviour(activity, context) {
   this.broker = activity.broker;
   this.executionId = undefined;
 
-  /** @private */
   this[K_EXECUTIONS] = new Set();
-  /** @private */
   this[K_ON_EXECUTION_COMPLETED] = this._onExecutionCompleted.bind(this);
 }
 
-Object.defineProperties(SubProcessBehaviour.prototype, {
-  execution: {
-    get() {
-      return [...this[K_EXECUTIONS]][0];
-    },
+Object.defineProperty(SubProcessBehaviour.prototype, 'execution', {
+  get() {
+    return [...this[K_EXECUTIONS]][0];
   },
-  executions: {
-    get() {
-      return [...this[K_EXECUTIONS]];
-    },
+});
+
+Object.defineProperty(SubProcessBehaviour.prototype, 'executions', {
+  get() {
+    return [...this[K_EXECUTIONS]];
   },
 });
 
@@ -139,7 +136,6 @@ SubProcessBehaviour.prototype._upsertExecution = function upsertExecution(execut
   const subContext = this.context.clone(subEnvironment, this.activity);
 
   execution = new ProcessExecution(this.activity, subContext);
-  /** @private */
   this[K_EXECUTIONS].add(execution);
 
   this._addListeners(executionId);
@@ -185,7 +181,6 @@ SubProcessBehaviour.prototype._onExecutionCompleted = function onExecutionComple
 SubProcessBehaviour.prototype._completeExecution = function completeExecution(completeRoutingKey, content) {
   if (this.loopCharacteristics) {
     const execution = this._getExecutionById(content.executionId);
-    /** @private */
     this[K_EXECUTIONS].delete(execution);
   }
 

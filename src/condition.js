@@ -1,7 +1,7 @@
 import { ExecutionScope } from './activity/ExecutionScope.js';
 /**
  * Script condition
- * @param {import('types').ElementBase} owner
+ * @param {import('#types').ElementBase} owner
  * @param {any} script
  * @param {string} language
  */
@@ -30,7 +30,7 @@ ScriptCondition.prototype.execute = function execute(message, callback) {
 
 /**
  * Expression condition
- * @param {import('types').ElementBase} owner
+ * @param {import('#types').ElementBase} owner
  * @param {string} expression
  */
 export function ExpressionCondition(owner, expression) {
@@ -41,7 +41,7 @@ export function ExpressionCondition(owner, expression) {
 
 /**
  * Execute
- * @param {any} message
+ * @param {import('#types').ElementBrokerMessage} message
  * @param {CallableFunction} callback
  */
 ExpressionCondition.prototype.execute = function execute(message, callback) {

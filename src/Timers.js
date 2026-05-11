@@ -10,7 +10,6 @@ export function Timers(options) {
     clearTimeout,
     ...options,
   };
-  /** @private */
   this[K_EXECUTING] = new Set();
   this.setTimeout = this.setTimeout.bind(this);
   this.clearTimeout = this.clearTimeout.bind(this);
@@ -58,7 +57,6 @@ Timers.prototype._getReference = function getReference(owner, callback, delay, a
 };
 
 function RegisteredTimers(timersApi, owner) {
-  /** @private */
   this[K_TIMER_API] = timersApi;
   this.owner = owner;
   this.setTimeout = this.setTimeout.bind(this);
@@ -71,7 +69,6 @@ RegisteredTimers.prototype.setTimeout = function registeredSetTimeout(callback, 
 };
 
 RegisteredTimers.prototype.clearTimeout = function registeredClearTimeout(ref) {
-  /** @private */
   this[K_TIMER_API].clearTimeout(ref);
 };
 
