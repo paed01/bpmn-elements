@@ -9,6 +9,12 @@ var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
 const K_REFERENCE = Symbol.for('reference');
+
+/**
+ * Escalation event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ */
 function EscalationEventDefinition(activity, eventDefinition) {
   const {
     id,
@@ -47,6 +53,7 @@ function EscalationEventDefinition(activity, eventDefinition) {
   }
 }
 Object.defineProperty(EscalationEventDefinition.prototype, 'executionId', {
+  /** @returns {string} */
   get() {
     return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }

@@ -6,6 +6,11 @@ Object.defineProperty(exports, "__esModule", {
 exports.CancelEventDefinition = CancelEventDefinition;
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
+/**
+ * Cancel event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ */
 function CancelEventDefinition(activity, eventDefinition) {
   const {
     id,
@@ -26,6 +31,7 @@ function CancelEventDefinition(activity, eventDefinition) {
   this.logger = environment.Logger(type.toLowerCase());
 }
 Object.defineProperty(CancelEventDefinition.prototype, 'executionId', {
+  /** @returns {string} */
   get() {
     return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }

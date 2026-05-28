@@ -23,15 +23,16 @@ export function Context(definitionContext, environment) {
  */
 export function ContextInstance(definitionContext, environment, owner) {
   const { id = 'Def', name, type = 'context' } = definitionContext;
-  const sid = getUniqueId(id);
   this.id = id;
   this.name = name;
   this.type = type;
-  this.sid = sid;
+  /** Unique instance id */
+  this.sid = getUniqueId(id);
   this.definitionContext = definitionContext;
   this.environment = environment;
   /** @type {import('#types').IExtensionsMapper}  */
   this.extensionsMapper = new ExtensionsMapper(this);
+  /** @private */
   this.refs = new Map([
     ['activityRefs', new Map()],
     ['sequenceFlowRefs', new Map()],
@@ -140,6 +141,7 @@ ContextInstance.prototype.getSequenceFlows = function getSequenceFlows(scopeId) 
 /**
  * Return the cached sequence flow, instantiating it the first time it is referenced.
  * @param {import('moddle-context-serializer').SerializableElement} flowDefinition
+ * @returns {import('./flows/SequenceFlow.js').SequenceFlow}
  */
 ContextInstance.prototype.upsertSequenceFlow = function upsertSequenceFlow(flowDefinition) {
   const sequenceFlowRefs = this.refs.get('sequenceFlowRefs');
@@ -153,6 +155,7 @@ ContextInstance.prototype.upsertSequenceFlow = function upsertSequenceFlow(flowD
 };
 
 /**
+ * Get association flows
  * @param {string} [scopeId] Process or sub-process id
  */
 ContextInstance.prototype.getAssociations = function getAssociations(scopeId) {
@@ -161,6 +164,7 @@ ContextInstance.prototype.getAssociations = function getAssociations(scopeId) {
 
 /**
  * @param {import('moddle-context-serializer').SerializableElement} associationDefinition
+ * @returns {import('./flows/Association.js').Association}
  */
 ContextInstance.prototype.upsertAssociation = function upsertAssociation(associationDefinition) {
   const associationRefs = this.refs.get('associationRefs');
@@ -186,7 +190,7 @@ ContextInstance.prototype.clone = function clone(newEnvironment, newOwner) {
 /**
  * Get or create the process instance for the given id. Each process gets its own cloned environment.
  * @param {string} processId
- * @returns {import('./process/Process.js').Process | null}
+ * @returns {import('#types').Process | null}
  */
 ContextInstance.prototype.getProcessById = function getProcessById(processId) {
   const processRefs = this.refs.get('processRefs');
@@ -207,6 +211,7 @@ ContextInstance.prototype.getProcessById = function getProcessById(processId) {
 /**
  * Build a fresh, uncached process instance for the given id. Used by call activities.
  * @param {string} processId
+ * @returns {import('#types').Process | null}
  */
 ContextInstance.prototype.getNewProcessById = function getNewProcessById(processId) {
   if (!this.getProcessById(processId)) return null;
@@ -221,6 +226,7 @@ ContextInstance.prototype.getNewProcessById = function getNewProcessById(process
 
 /**
  * Get every process in the definition.
+ * @returns {import('#types').Process[]}
  */
 ContextInstance.prototype.getProcesses = function getProcesses() {
   return this.definitionContext.getProcesses().map(({ id: processId }) => this.getProcessById(processId));
@@ -228,6 +234,7 @@ ContextInstance.prototype.getProcesses = function getProcesses() {
 
 /**
  * Get processes flagged executable in the definition.
+ * @returns {import('#types').Process[]}
  */
 ContextInstance.prototype.getExecutableProcesses = function getExecutableProcesses() {
   return this.definitionContext.getExecutableProcesses().map(({ id: processId }) => this.getProcessById(processId));
@@ -236,6 +243,7 @@ ContextInstance.prototype.getExecutableProcesses = function getExecutableProcess
 /**
  * Get message flows that originate from the given process id.
  * @param {string} sourceId Source process id
+ * @returns {import('./flows/MessageFlow.js').MessageFlow[]}
  */
 ContextInstance.prototype.getMessageFlows = function getMessageFlows(sourceId) {
   const messageFlowRefs = this.refs.get('messageFlows');
@@ -261,6 +269,7 @@ ContextInstance.prototype.getMessageFlows = function getMessageFlows(sourceId) {
 /**
  * Get or create a data object instance for the given reference id.
  * @param {string} referenceId
+ * @return {import('#types').IIOData | undefined}
  */
 ContextInstance.prototype.getDataObjectById = function getDataObjectById(referenceId) {
   const dataObjectRefs = this.refs.get('dataObjectRefs');
@@ -279,6 +288,7 @@ ContextInstance.prototype.getDataObjectById = function getDataObjectById(referen
 /**
  * Get or create a data store instance for the given reference id.
  * @param {string} referenceId
+ * @return {import('#types').IIOData | undefined}
  */
 ContextInstance.prototype.getDataStoreById = function getDataStoreById(referenceId) {
   const dataStoreRefs = this.refs.get('dataStoreRefs');

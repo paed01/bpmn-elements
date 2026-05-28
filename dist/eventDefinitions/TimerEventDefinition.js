@@ -11,6 +11,12 @@ var _constants = require("../constants.js");
 const K_TIMER_CONTENT = Symbol.for('timerContent');
 const K_TIMER = Symbol.for('timer');
 const timerTypes = new Set(['timeDuration', 'timeDate', 'timeCycle']);
+
+/**
+ * Timer event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ */
 function TimerEventDefinition(activity, eventDefinition) {
   const type = this.type = eventDefinition.type || 'TimerEventDefinition';
   this.activity = activity;
@@ -30,6 +36,7 @@ function TimerEventDefinition(activity, eventDefinition) {
   this[K_TIMER] = null;
 }
 Object.defineProperty(TimerEventDefinition.prototype, 'executionId', {
+  /** @returns {string} */
   get() {
     return this[K_TIMER_CONTENT]?.executionId;
   }

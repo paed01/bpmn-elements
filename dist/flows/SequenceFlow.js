@@ -13,7 +13,7 @@ var _constants = require("../constants.js");
 /**
  * Sequence flow connecting two activities. Owns its broker and publishes take/discard/looped
  * events; activities subscribe to drive their inbound queue.
- * @param {import('moddle-context-serializer').SerializableElement} flowDef
+ * @param {import('moddle-context-serializer').SequenceFlow} flowDef
  * @param {import('#types').ContextInstance} context
  */
 function SequenceFlow(flowDef, {
@@ -33,6 +33,7 @@ function SequenceFlow(flowDef, {
   this.type = type;
   this.name = name;
   this.parent = (0, _messageHelper.cloneParent)(parent);
+  /** @type {Record<string, any>} */
   this.behaviour = behaviour;
   this.sourceId = sourceId;
   this.targetId = targetId;
@@ -207,6 +208,7 @@ SequenceFlow.prototype.getCondition = function getCondition() {
 /**
  * Build a flow event message body, optionally merging override content.
  * @param {Record<string, any>} [override]
+ * @returns {import('#types').ElementMessageContent}
  */
 SequenceFlow.prototype.createMessage = function createMessage(override) {
   return {
@@ -225,7 +227,7 @@ SequenceFlow.prototype.createMessage = function createMessage(override) {
 /**
  * Evaluate the flow's condition for the source activity message. Default flows are always taken.
  * @param {import('#types').ElementBrokerMessage} fromMessage Source activity message
- * @param {(err: Error | null, result?: boolean | object) => void} callback Callback with truthy result if flow should be taken
+ * @param {(err: Error | null, result?: boolean | unknown) => void} callback Callback with truthy result if flow should be taken
  */
 SequenceFlow.prototype.evaluate = function evaluate(fromMessage, callback) {
   if (this.isDefault) {

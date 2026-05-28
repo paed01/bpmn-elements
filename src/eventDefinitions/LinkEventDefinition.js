@@ -2,6 +2,11 @@ import { brokerSafeId } from '../shared.js';
 import { cloneContent, shiftParent } from '../messageHelper.js';
 import { K_EXECUTE_MESSAGE } from '../constants.js';
 
+/**
+ * Link event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ */
 export function LinkEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;
   const { type = 'LinkEventDefinition', behaviour } = eventDefinition;
@@ -50,6 +55,7 @@ export function LinkEventDefinition(activity, eventDefinition) {
 }
 
 Object.defineProperty(LinkEventDefinition.prototype, 'executionId', {
+  /** @returns {string} */
   get() {
     return this[K_EXECUTE_MESSAGE]?.content.executionId;
   },

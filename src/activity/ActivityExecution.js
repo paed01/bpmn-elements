@@ -144,6 +144,7 @@ ActivityExecution.prototype.getApi = function getApi(apiMessage) {
 /**
  * Pass an execute message straight to the behaviour, executing first if no source is set up yet.
  * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
  */
 ActivityExecution.prototype.passthrough = function passthrough(executeMessage) {
   if (!this.source) return this.execute(executeMessage);
@@ -165,6 +166,7 @@ ActivityExecution.prototype.getPostponed = function getPostponed() {
 
 /**
  * Snapshot execution state, merging behaviour-specific state when the source provides it.
+ * @returns {import('#types').ActivityExecutionState}
  */
 ActivityExecution.prototype.getState = function getState() {
   const result = { completed: this[K_COMPLETED] };

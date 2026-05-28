@@ -5,6 +5,11 @@ import { K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_Q, K_REFERENCE_ELEMENT } from
 
 const K_REFERENCE = Symbol.for('reference');
 
+/**
+ * Escalation event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ */
 export function EscalationEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;
   const { type, behaviour = {} } = eventDefinition;
@@ -34,6 +39,7 @@ export function EscalationEventDefinition(activity, eventDefinition) {
 }
 
 Object.defineProperty(EscalationEventDefinition.prototype, 'executionId', {
+  /** @returns {string} */
   get() {
     return this[K_EXECUTE_MESSAGE]?.content.executionId;
   },

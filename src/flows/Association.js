@@ -7,7 +7,7 @@ import { K_COUNTERS } from '../constants.js';
 /**
  * Association connecting a source and target activity. Used to drive compensation —
  * activities marked `isForCompensation` subscribe to inbound association events.
- * @param {import('moddle-context-serializer').SerializableElement} associationDef
+ * @param {import('moddle-context-serializer').Association} associationDef
  * @param {import('#types').ContextInstance} context
  */
 export function Association(associationDef, { environment }) {
@@ -17,6 +17,7 @@ export function Association(associationDef, { environment }) {
   this.type = type;
   this.name = name;
   this.parent = cloneParent(parent);
+  /** @type {Record<string, any>} */
   this.behaviour = behaviour;
   this.sourceId = sourceId;
   this.targetId = targetId;

@@ -42,7 +42,7 @@ declare module '../src/activity/Activity.js' {
     get triggeredByEvent(): boolean;
     get attachedTo(): Activity | null;
     get lane(): Lane | undefined;
-    get eventDefinitions(): any[];
+    get eventDefinitions(): EventDefinition[] | undefined;
     get parentElement(): Activity | Process;
     get initialized(): boolean;
   }
@@ -120,8 +120,11 @@ export type signalMessage = {
 };
 
 export interface ElementMessageContent {
+  /** Element id */
   id?: string;
+  /** Element type */
   type?: string;
+  /** Element execution id */
   executionId?: string;
   parent?: ElementParent;
   [x: string]: any;
@@ -132,10 +135,10 @@ export interface ElementBrokerMessage extends MessageEnvelope {
 }
 
 export interface ElementParent {
-  get id(): string;
-  get type(): string;
-  get executionId(): string;
-  get path(): ElementParent[];
+  id: string;
+  type: string;
+  executionId: string;
+  path?: Omit<ElementParent, 'path'>[];
 }
 
 // --- Element abstract bases ---------------------------------------------------
@@ -519,12 +522,12 @@ export interface TimersOptions {
 // --- Scripts ------------------------------------------------------------------
 
 export interface IScripts {
-  register(activity: any): Script | undefined;
+  register(activity: Activity): Script | undefined;
   getScript(language: string, identifier: { id: string; [x: string]: any }): Script;
 }
 
 export interface Script {
-  execute(executionContext: any, callback: CallableFunction): void;
+  execute(executionContext: ExecutionScope, callback: CallableFunction): void;
 }
 
 // --- Generic api shape; constructed via Activity/Process/Definition/Flow Api factories.
@@ -551,17 +554,11 @@ export interface IApi<T> extends ElementBrokerMessage {
 
 // --- Scope passed to user scripts/services -----------------------------------
 
-export interface ExecutionScope {
+export interface ExecutionScope extends ElementBrokerMessage {
   /** Calling element id */
   id: string;
   /** Calling element type */
   type: string;
-  /** Execution message fields */
-  fields: any;
-  /** Execution message content */
-  content: ElementMessageContent;
-  /** Execution message properties */
-  properties: any;
   environment: Environment;
   /** Calling element logger instance */
   logger?: ILogger;
@@ -581,4 +578,12 @@ export interface IExtensionsMapper {
 
 export interface IExtensions extends IExtension {
   readonly count: number;
+}
+
+// --- IO ---
+
+export interface IIOData {
+  [x: string]: any;
+  read(broker: Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): void;
+  write(broker: Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): void;
 }

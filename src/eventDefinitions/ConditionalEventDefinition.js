@@ -3,6 +3,13 @@ import { ActivityError } from '../error/Errors.js';
 import { ScriptCondition, ExpressionCondition } from '../condition.js';
 import { K_EXECUTE_MESSAGE } from '../constants.js';
 
+/**
+ * Conditional event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ * @param {import('#types').ContextInstance} _context
+ * @param {number} index event definition index
+ */
 export function ConditionalEventDefinition(activity, eventDefinition, _context, index) {
   const { id, broker, environment } = activity;
 
@@ -18,6 +25,7 @@ export function ConditionalEventDefinition(activity, eventDefinition, _context, 
 }
 
 Object.defineProperty(ConditionalEventDefinition.prototype, 'executionId', {
+  /** @returns {string} */
   get() {
     return this[K_EXECUTE_MESSAGE]?.content.executionId;
   },

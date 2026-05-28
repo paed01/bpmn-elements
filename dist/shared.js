@@ -14,6 +14,8 @@ function generateId() {
 function brokerSafeId(id) {
   return id.replace(safePattern, '_');
 }
+
+/** @param {string} prefix */
 function getUniqueId(prefix) {
   return `${brokerSafeId(prefix)}_${generateId()}`;
 }

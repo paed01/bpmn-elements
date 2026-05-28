@@ -7,6 +7,11 @@ exports.ErrorEventDefinition = ErrorEventDefinition;
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
+/**
+ * Error event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ */
 function ErrorEventDefinition(activity, eventDefinition) {
   const {
     id,
@@ -46,6 +51,7 @@ function ErrorEventDefinition(activity, eventDefinition) {
   }
 }
 Object.defineProperty(ErrorEventDefinition.prototype, 'executionId', {
+  /** @returns {string} */
   get() {
     return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }

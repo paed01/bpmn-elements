@@ -1,9 +1,9 @@
-import fs from 'fs';
+import fs from 'node:fs';
 import Debug from 'debug';
-import * as types from 'bpmn-elements';
 import BpmnModdle from 'bpmn-moddle';
-import { Context } from '../../src/Context.js';
-import { Environment } from '../../src/Environment.js';
+import * as types from 'bpmn-elements';
+
+import { Context, Environment } from 'bpmn-elements';
 import { Serializer, TypeResolver } from 'moddle-context-serializer';
 import { Scripts } from './JavaScripts.js';
 
@@ -81,6 +81,7 @@ function moddleContext(source, options = {}) {
   return bpmnModdle.fromXML(Buffer.isBuffer(source) ? source.toString() : source.trim());
 }
 
+/** @type {import('bpmn-elements').LoggerFactory} */
 export function Logger(scope) {
   return {
     debug: Debug('bpmn-elements:' + scope),

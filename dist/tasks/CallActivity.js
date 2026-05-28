@@ -10,7 +10,7 @@ var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
 /**
  * Create call activity
- * @param {import('moddle-context-serializer').MappedActivity} activityDef
+ * @param {import('moddle-context-serializer').Activity} activityDef
  * @param {import('../Context.js').ContextInstance} context
  * @returns Call activity
  */

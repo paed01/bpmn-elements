@@ -12,7 +12,7 @@ var _constants = require("../constants.js");
 /**
  * Association connecting a source and target activity. Used to drive compensation —
  * activities marked `isForCompensation` subscribe to inbound association events.
- * @param {import('moddle-context-serializer').SerializableElement} associationDef
+ * @param {import('moddle-context-serializer').Association} associationDef
  * @param {import('#types').ContextInstance} context
  */
 function Association(associationDef, {
@@ -31,6 +31,7 @@ function Association(associationDef, {
   this.type = type;
   this.name = name;
   this.parent = (0, _messageHelper.cloneParent)(parent);
+  /** @type {Record<string, any>} */
   this.behaviour = behaviour;
   this.sourceId = sourceId;
   this.targetId = targetId;

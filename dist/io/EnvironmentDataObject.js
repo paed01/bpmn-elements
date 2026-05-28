@@ -4,6 +4,12 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.EnvironmentDataObject = EnvironmentDataObject;
+/**
+ * Builtin data object
+ * @param {import('moddle-context-serializer').DataObject>} dataObjectDef
+ * @param {import('../Context.js').ContextInstance} context
+ * @satisfies {import('#types').IIOData}
+ */
 function EnvironmentDataObject(dataObjectDef, {
   environment
 }) {

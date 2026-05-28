@@ -26,14 +26,17 @@ function Definition(context, options) {
     type = 'definition'
   } = context;
   this.id = id;
+  /** @type {string} */
   this.type = type;
   this.name = name;
-  let environment;
+
+  /** @type {import('../Environment.js').Environment} */
+  this.environment = undefined;
   if (options) {
-    environment = this.environment = context.environment.clone(options).assignSettings(options.settings);
-    this.context = context.clone(environment);
+    this.environment = context.environment.clone(options).assignSettings(options.settings);
+    this.context = context.clone(this.environment);
   } else {
-    environment = this.environment = context.environment;
+    this.environment = context.environment;
     this.context = context;
   }
   this[_constants.K_COUNTERS] = {
@@ -66,7 +69,7 @@ function Definition(context, options) {
   this.emitFatal = emitFatal;
 
   /** @type {import('#types').ILogger} */
-  this.logger = environment.Logger(type.toLowerCase());
+  this.logger = this.environment.Logger(type.toLowerCase());
 }
 Object.defineProperties(Definition.prototype, {
   counters: {
@@ -171,6 +174,7 @@ Definition.prototype.resume = function resume(callback) {
 
 /**
  * Snapshot definition state for recover.
+ * @returns {import('#types').DefinitionState}
  */
 Definition.prototype.getState = function getState() {
   return this._createMessage({
@@ -311,9 +315,7 @@ Definition.prototype.getElementById = function getElementById(elementId) {
  * @param {import('#types').filterPostponed} [filterFn]
  */
 Definition.prototype.getPostponed = function getPostponed(...args) {
-  const execution = this.execution;
-  if (!execution) return [];
-  return execution.getPostponed(...args);
+  return this.execution?.getPostponed(...args) || [];
 };
 
 /**

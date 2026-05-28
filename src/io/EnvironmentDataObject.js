@@ -1,3 +1,9 @@
+/**
+ * Builtin data object
+ * @param {import('moddle-context-serializer').DataObject>} dataObjectDef
+ * @param {import('../Context.js').ContextInstance} context
+ * @satisfies {import('#types').IIOData}
+ */
 export function EnvironmentDataObject(dataObjectDef, { environment }) {
   const { id, type, name, behaviour, parent } = dataObjectDef;
   this.id = id;

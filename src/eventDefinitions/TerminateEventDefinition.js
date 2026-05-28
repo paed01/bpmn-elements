@@ -1,5 +1,10 @@
 import { cloneContent, shiftParent } from '../messageHelper.js';
 
+/**
+ * Terminate event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ */
 export function TerminateEventDefinition(activity, eventDefinition) {
   const { id, broker, environment } = activity;
   const { type = 'TerminateEventDefinition' } = eventDefinition;

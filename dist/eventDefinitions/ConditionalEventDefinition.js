@@ -8,6 +8,13 @@ var _messageHelper = require("../messageHelper.js");
 var _Errors = require("../error/Errors.js");
 var _condition = require("../condition.js");
 var _constants = require("../constants.js");
+/**
+ * Conditional event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ * @param {import('#types').ContextInstance} _context
+ * @param {number} index event definition index
+ */
 function ConditionalEventDefinition(activity, eventDefinition, _context, index) {
   const {
     id,
@@ -28,6 +35,7 @@ function ConditionalEventDefinition(activity, eventDefinition, _context, index) 
   this.condition = this.getCondition(index);
 }
 Object.defineProperty(ConditionalEventDefinition.prototype, 'executionId', {
+  /** @returns {string} */
   get() {
     return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }

@@ -8,6 +8,11 @@ var _getPropertyValue = require("../getPropertyValue.js");
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
+/**
+ * Signal event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ */
 function SignalEventDefinition(activity, eventDefinition) {
   const {
     id,
@@ -46,6 +51,7 @@ function SignalEventDefinition(activity, eventDefinition) {
   }
 }
 Object.defineProperty(SignalEventDefinition.prototype, 'executionId', {
+  /** @returns {string} */
   get() {
     return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }

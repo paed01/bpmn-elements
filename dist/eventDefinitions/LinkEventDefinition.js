@@ -7,6 +7,11 @@ exports.LinkEventDefinition = LinkEventDefinition;
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
+/**
+ * Link event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ */
 function LinkEventDefinition(activity, eventDefinition) {
   const {
     id,
@@ -65,6 +70,7 @@ function LinkEventDefinition(activity, eventDefinition) {
   }
 }
 Object.defineProperty(LinkEventDefinition.prototype, 'executionId', {
+  /** @returns {string} */
   get() {
     return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }

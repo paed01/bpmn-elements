@@ -5,6 +5,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.TerminateEventDefinition = TerminateEventDefinition;
 var _messageHelper = require("../messageHelper.js");
+/**
+ * Terminate event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ */
 function TerminateEventDefinition(activity, eventDefinition) {
   const {
     id,

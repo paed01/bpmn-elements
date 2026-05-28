@@ -24,7 +24,7 @@ const K_FORMATTER = Symbol.for('formatter');
 /**
  * Activity wraps any element (task, event, gateway) and orchestrates its lifecycle through the broker.
  * @param {import('#types').IActivityBehaviour} Behaviour Element-specific behaviour constructor invoked per execution
- * @param {import('moddle-context-serializer').SerializableElement} activityDef Parsed BPMN element definition
+ * @param {import('moddle-context-serializer').Activity} activityDef Parsed BPMN element definition
  * @param {import('#types').ContextInstance} context Per-execution registry and factory
  */
 function Activity(Behaviour, activityDef, context) {
@@ -49,6 +49,7 @@ function Activity(Behaviour, activityDef, context) {
   this.Behaviour = Behaviour;
   /** @type {import('moddle-context-serializer').Parent} */
   this.parent = activityDef.parent ? (0, _messageHelper.cloneParent)(activityDef.parent) : {};
+  /** @type {import('#types').ILogger} */
   this.logger = context.environment.Logger(type.toLowerCase());
   this.environment = context.environment;
   this.context = context;
@@ -119,6 +120,8 @@ function Activity(Behaviour, activityDef, context) {
     onApiMessage: this._onApiMessage.bind(this),
     onExecutionMessage: this._onExecutionMessage.bind(this)
   };
+
+  /** @type {import('#types').EventDefinition[] | undefined} */
   this[K_EVENT_DEFINITIONS] = eventDefinitions?.map((ed, idx) => new ed.Behaviour(this, ed, context, idx));
   this[_constants.K_EXTENSIONS] = context.loadExtensions(this);
   this[_constants.K_CONSUMING] = false;
@@ -409,7 +412,7 @@ Activity.prototype.discard = function discard(discardContent) {
 
 /**
  * Subscribe to inbound triggers (sequence flows, attached activity, or compensation associations).
- * @returns count of subscribed triggers
+ * @returns {number} count of subscribed triggers
  */
 Activity.prototype.addInboundListeners = function addInboundListeners() {
   const triggers = this[K_FLOWS].inboundTriggers;

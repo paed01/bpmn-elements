@@ -16,7 +16,7 @@ const K_LANES = Symbol.for('lanes');
 /**
  * Owns one `<bpmn:process>`. Wraps the structural definition and orchestrates flow traversal,
  * joins, and parallel activation through ProcessExecution.
- * @param {import('moddle-context-serializer').MappedProcess} processDef
+ * @param {import('moddle-context-serializer').Process} processDef
  * @param {import('#types').ContextInstance} context
  */
 function Process(processDef, context) {
@@ -30,7 +30,9 @@ function Process(processDef, context) {
   this.id = id;
   this.type = type;
   this.name = name;
+  /** @type {import('#types').ElementParent} */
   this.parent = parent ? (0, _messageHelper.cloneParent)(parent) : {};
+  /** @type {import('moddle-context-serializer').Process['behaviour']} */
   this.behaviour = behaviour;
   this.isExecutable = behaviour.isExecutable;
   const environment = this.environment = context.environment;
@@ -170,6 +172,7 @@ Process.prototype.resume = function resume() {
 
 /**
  * Snapshot process state for recover.
+ * @returns {import('#types').ProcessState}
  */
 Process.prototype.getState = function getState() {
   return {
@@ -495,11 +498,10 @@ Process.prototype.getSequenceFlows = function getSequenceFlows() {
 
 /**
  * @param {string} laneId
+ * @returns {import('./Lane.js') | undefined}
  */
 Process.prototype.getLaneById = function getLaneById(laneId) {
-  const lanes = this[K_LANES];
-  if (!lanes) return;
-  return lanes.find(lane => lane.id === laneId);
+  return this[K_LANES]?.find(lane => lane.id === laneId);
 };
 
 /**
@@ -507,15 +509,12 @@ Process.prototype.getLaneById = function getLaneById(laneId) {
  * @param {import('#types').filterPostponed} [filterFn]
  */
 Process.prototype.getPostponed = function getPostponed(...args) {
-  const execution = this.execution;
-  if (!execution) return [];
-  return execution.getPostponed(...args);
+  return this.execution?.getPostponed(...args) || [];
 };
 
 /** @internal */
 Process.prototype._onApiMessage = function onApiMessage(routingKey, message) {
-  const messageType = message.properties.type;
-  switch (messageType) {
+  switch (message.properties.type) {
     case 'stop':
       {
         if (this.execution && !this.execution.completed) return;

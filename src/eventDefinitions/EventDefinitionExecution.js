@@ -1,6 +1,13 @@
 import { cloneContent, unshiftParent, shiftParent, cloneParent } from '../messageHelper.js';
 import { K_COMPLETED, K_EXECUTE_MESSAGE, K_STOPPED } from '../constants.js';
 
+/**
+ * Event definition execution orchestrator. Drives a sequence of event definitions for the
+ * activity and publishes the completed routing key when the last definition completes.
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').EventDefinition[]} eventDefinitions
+ * @param {string} [completedRoutingKey] Routing key to publish on completion, defaults to `execute.completed`
+ */
 export function EventDefinitionExecution(activity, eventDefinitions, completedRoutingKey = 'execute.completed') {
   this.id = activity.id;
   this.activity = activity;

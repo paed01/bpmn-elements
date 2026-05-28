@@ -5,6 +5,12 @@ import { K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_Q } from '../constants.js';
 const K_COMPENSATE_Q = Symbol.for('compensateQ');
 const K_ASSOCIATIONS = Symbol.for('associations');
 
+/**
+ * Compensate event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ * @param {import('#types').ContextInstance} context
+ */
 export function CompensateEventDefinition(activity, eventDefinition, context) {
   const { id, broker, environment, isThrowing } = activity;
 
@@ -27,6 +33,7 @@ export function CompensateEventDefinition(activity, eventDefinition, context) {
 }
 
 Object.defineProperty(CompensateEventDefinition.prototype, 'executionId', {
+  /** @returns {string} */
   get() {
     return this[K_EXECUTE_MESSAGE]?.content.executionId;
   },

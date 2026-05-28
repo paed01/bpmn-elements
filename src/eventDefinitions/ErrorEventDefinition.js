@@ -2,6 +2,11 @@ import { brokerSafeId } from '../shared.js';
 import { cloneContent, shiftParent } from '../messageHelper.js';
 import { K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_Q, K_REFERENCE_ELEMENT, K_REFERENCE_INFO } from '../constants.js';
 
+/**
+ * Error event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ */
 export function ErrorEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;
   const { type = 'ErrorEventDefinition', behaviour = {} } = eventDefinition;
@@ -32,6 +37,7 @@ export function ErrorEventDefinition(activity, eventDefinition) {
 }
 
 Object.defineProperty(ErrorEventDefinition.prototype, 'executionId', {
+  /** @returns {string} */
   get() {
     return this[K_EXECUTE_MESSAGE]?.content.executionId;
   },

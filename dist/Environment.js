@@ -53,6 +53,7 @@ Object.defineProperty(Environment.prototype, 'services', {
 
 /**
  * Snapshot environment state for recover.
+ * @returns {import('#types').EnvironmentState}
  */
 Environment.prototype.getState = function getState() {
   return {

@@ -321,6 +321,7 @@ ProcessExecution.prototype.cancel = function discard() {
 
 /**
  * Get child activities in the process scope.
+ * @returns {import('#types').Activity[]}
  */
 ProcessExecution.prototype.getActivities = function getActivities() {
   return this[K_ELEMENTS].children.slice();
@@ -328,6 +329,7 @@ ProcessExecution.prototype.getActivities = function getActivities() {
 
 /**
  * @param {string} activityId
+ * @returns {import('#types').Activity}
  */
 ProcessExecution.prototype.getActivityById = function getActivityById(activityId) {
   return this[K_ELEMENTS].children.find((child) => child.id === activityId);
@@ -335,6 +337,7 @@ ProcessExecution.prototype.getActivityById = function getActivityById(activityId
 
 /**
  * Get sequence flows in the process scope.
+ * @returns {import('#types').SequenceFlow}
  */
 ProcessExecution.prototype.getSequenceFlows = function getSequenceFlows() {
   return this[K_ELEMENTS].flows.slice();
@@ -342,6 +345,7 @@ ProcessExecution.prototype.getSequenceFlows = function getSequenceFlows() {
 
 /**
  * Get associations in the process scope.
+ * @returns {import('../flows/Association.js').Association}
  */
 ProcessExecution.prototype.getAssociations = function getAssociations() {
   return this[K_ELEMENTS].associations.slice();
@@ -350,7 +354,7 @@ ProcessExecution.prototype.getAssociations = function getAssociations() {
 /**
  * Resolve a process or child Api for the given message.
  * @param {import('#types').ElementBrokerMessage} [message]
- * @returns {import('#types').IApi<import('./Process.js').Process>}
+ * @returns {import('#types').IApi<import('#types').Process>}
  */
 ProcessExecution.prototype.getApi = function getApi(message) {
   if (!message) return ProcessApi(this.broker, this[K_EXECUTE_MESSAGE]);

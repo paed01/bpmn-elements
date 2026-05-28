@@ -36,13 +36,10 @@ export function DefinitionExecution(definition, context) {
   }
 
   this[K_PROCESSES] = {
-    /** @type {import('../process/Process.js').Process[]} */
     processes,
     ids,
     executable,
-    /** @type {Set<import('../process/Process.js').Process>} */
     running: new Set(),
-    /** @type {Set<import('../process/Process.js').Process>} */
     postponed: new Set(),
   };
 
@@ -235,6 +232,7 @@ DefinitionExecution.prototype.stop = function stop() {
 
 /**
  * Get every process in the definition (running first, then any non-running by id).
+ * @returns {import('../process/Process.js').Process[]}
  */
 DefinitionExecution.prototype.getProcesses = function getProcesses() {
   const { running, processes } = this[K_PROCESSES];
@@ -262,6 +260,7 @@ DefinitionExecution.prototype.getProcessesById = function getProcessesById(proce
 
 /**
  * @param {string} processExecutionId
+ * @returns {import('../process/Process.js').Process | undefined}
  */
 DefinitionExecution.prototype.getProcessByExecutionId = function getProcessByExecutionId(processExecutionId) {
   for (const bp of this[K_PROCESSES].running) {
@@ -271,6 +270,7 @@ DefinitionExecution.prototype.getProcessByExecutionId = function getProcessByExe
 
 /**
  * Get processes that have an executionId, i.e. are currently running.
+ * @returns {import('../process/Process.js').Process[]}
  */
 DefinitionExecution.prototype.getRunningProcesses = function getRunningProcesses() {
   return [...this[K_PROCESSES].running].filter((bp) => bp.executionId);
@@ -278,6 +278,7 @@ DefinitionExecution.prototype.getRunningProcesses = function getRunningProcesses
 
 /**
  * Get processes flagged executable in the definition.
+ * @returns {import('../process/Process.js').Process[]}
  */
 DefinitionExecution.prototype.getExecutableProcesses = function getExecutableProcesses() {
   return [...this[K_PROCESSES].executable];
@@ -285,6 +286,7 @@ DefinitionExecution.prototype.getExecutableProcesses = function getExecutablePro
 
 /**
  * Snapshot execution state for recover.
+ * @returns {import('#types').DefinitionExecutionState}
  */
 DefinitionExecution.prototype.getState = function getState() {
   const processes = [];
@@ -333,6 +335,7 @@ DefinitionExecution.prototype.getApi = function getApi(apiMessage) {
 /**
  * List currently postponed activities across every running process.
  * @param {import('#types').filterPostponed} [filterFn]
+ * @returns {import('#types').IApi<import('#types').Activity>}
  */
 DefinitionExecution.prototype.getPostponed = function getPostponed(...args) {
   let result = [];
