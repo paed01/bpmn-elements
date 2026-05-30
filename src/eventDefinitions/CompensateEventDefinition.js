@@ -16,7 +16,9 @@ export function CompensateEventDefinition(activity, eventDefinition, context) {
 
   this.id = id;
   const type = (this.type = eventDefinition.type);
-  const reference = (this.reference = { referenceType: 'compensate' });
+  const referenceType = 'compensate';
+  /** @type {import('#types').EventDefinitionReference} */
+  this.reference = { referenceType };
   this.isThrowing = isThrowing;
   this.activity = activity;
   this.broker = broker;
@@ -25,10 +27,10 @@ export function CompensateEventDefinition(activity, eventDefinition, context) {
   if (!isThrowing) {
     this[K_COMPLETED] = false;
     this[K_ASSOCIATIONS] = context.getOutboundAssociations(id);
-    const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-q`;
+    const messageQueueName = `${referenceType}-${brokerSafeId(id)}-q`;
     this[K_MESSAGE_Q] = broker.assertQueue(messageQueueName, { autoDelete: false, durable: true });
     this[K_COMPENSATE_Q] = broker.assertQueue('compensate-q', { autoDelete: false, durable: true });
-    broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, { durable: true, priority: 400 });
+    broker.bindQueue(messageQueueName, 'api', `*.${referenceType}.#`, { durable: true, priority: 400 });
   }
 }
 
@@ -39,10 +41,16 @@ Object.defineProperty(CompensateEventDefinition.prototype, 'executionId', {
   },
 });
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 CompensateEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 CompensateEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[K_EXECUTE_MESSAGE] = executeMessage;
   this[K_COMPLETED] = false;
@@ -88,6 +96,9 @@ CompensateEventDefinition.prototype.executeCatch = function executeCatch(execute
   );
 };
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 CompensateEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const { parent } = executeContent;

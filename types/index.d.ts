@@ -45,6 +45,28 @@ declare module 'bpmn-elements' {
 	path?: Omit<ElementParent, 'path'>[];
   }
 
+  // --- Shake results ------------------------------------------------------------
+
+  /** A single hop (activity or sequence flow) recorded during a shake walk. */
+  export interface ShakeSequenceItem {
+	id: string;
+	type: string;
+	count?: number;
+	sourceId?: string;
+	targetId?: string;
+  }
+
+  /** A single end-to-end sequence discovered while shaking an activity graph. */
+  export interface ShakenSequence extends ElementMessageContent {
+	/** The activity- and flow-id steps that were walked, in order. */
+	sequence: ShakeSequenceItem[];
+	/** true when the walk revisited an already-seen activity. */
+	isLooped: boolean;
+  }
+
+  /** Result of shaking an activity graph, keyed by the starting activity id. */
+  export type ShakeResult = Record<string, ShakenSequence[]>;
+
   // --- Element abstract bases ---------------------------------------------------
 
   export class ElementBase {
@@ -86,6 +108,13 @@ declare module 'bpmn-elements' {
 
   // --- Event definitions --------------------------------------------------------
 
+  export interface EventDefinitionReference {
+	id?: string;
+	name?: string;
+	referenceType: string;
+	[x: string]: any;
+  }
+
   // Common ancestor for the typed event definitions; concrete types live in src/eventDefinitions.
   export class EventDefinition {
 	constructor(activity: Activity, eventDefinitionElement: SerializableElement, context?: ContextInstance, index?: number);
@@ -96,11 +125,7 @@ declare module 'bpmn-elements' {
 	get activity(): Activity;
 	get broker(): Broker;
 	get logger(): ILogger;
-	get reference(): {
-	  id?: string;
-	  name: string;
-	  referenceType: string;
-	};
+	get reference(): EventDefinitionReference;
 	[x: string]: any;
 	execute(executeMessage: ElementBrokerMessage): void;
   }
@@ -505,10 +530,12 @@ declare module 'bpmn-elements' {
 		 * @param context Per-execution registry and factory
 		 */
 		constructor(Behaviour: IActivityBehaviour, activityDef: import("moddle-context-serializer").Activity, context: ContextInstance);
-		id: any;
-		type: any;
-		name: any;
-		behaviour: any;
+		id: string | undefined;
+		type: string;
+		name: string | undefined;
+		behaviour: {
+			eventDefinitions: any;
+		};
 		Behaviour: IActivityBehaviour;
 		
 		parent: import("moddle-context-serializer").Parent;
@@ -644,14 +671,14 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity, context: ContextInstance);
 		activity: Activity;
 		context: ContextInstance;
-		id: any;
+		id: string | undefined;
 		broker: import("smqp").Broker;
 		get completed(): boolean;
 		/**
 		 * Begin executing the activity behaviour. Resumes if the message is redelivered.
 		 * @throws {Error} when message or executionId is missing
 		 */
-		execute(executeMessage: ElementBrokerMessage): any;
+		execute(executeMessage: ElementBrokerMessage): number | undefined;
 		executionId: string | undefined;
 		source: IActivityBehaviour | undefined;
 		/**
@@ -691,17 +718,21 @@ declare module 'bpmn-elements' {
 		 */
 		stop(): void;
 	}
-	export function BpmnError(errorDef: any, context: any): {
-		id: any;
-		type: any;
-		name: any;
+	/**
+	 * BPMN error.
+	 * */
+	export function BpmnError(errorDef: import("moddle-context-serializer").SerializableElement, context: ContextInstance): {
+		id: string | undefined;
+		type: string | undefined;
+		name: string;
 		errorCode: any;
-		resolve: (executionMessage: any, error: any) => {
-			id: any;
-			type: any;
+		resolve: (executionMessage: ElementBrokerMessage, error?: Error) => {
+			id?: string;
+			type?: string;
 			messageType: string;
-			name: any;
-			code: any;
+			name: string;
+			code: string | undefined;
+			inner?: Error;
 		};
 	};
 	/**
@@ -875,9 +906,8 @@ declare module 'bpmn-elements' {
 		/**
 		 * Walk activity graphs to discover sequences. Limited to the activity's owning process
 		 * when startId is given, otherwise all processes are shaken.
-		 * 
-		 */
-		shake(startId?: string): {} | undefined;
+		 * */
+		shake(startId?: string): ShakeResult | undefined;
 		/**
 		 * Get every process in the definition.
 		 */
@@ -904,7 +934,7 @@ declare module 'bpmn-elements' {
 		 * List currently postponed activities as Api wrappers.
 		 * 
 		 */
-		getPostponed(...args: any[]): any[];
+		getPostponed(...args: any[]): never[] | IApi<Activity>;
 		/**
 		 * Resolve a Definition Api wrapper, preferring the running execution if any.
 		 * @throws {Error} when the definition is not running and no message is given
@@ -964,11 +994,11 @@ declare module 'bpmn-elements' {
 		 * is redelivered. When `content.processId` is set, only that process is started.
 		 * @throws {Error} when message or executionId is missing
 		 */
-		execute(executeMessage: ElementBrokerMessage): any;
+		execute(executeMessage: ElementBrokerMessage): number | true | undefined;
 		/**
 		 * Resume after recover by reactivating running processes.
 		 */
-		resume(): any;
+		resume(): number | undefined;
 		/**
 		 * Restore execution state captured by getState. Reinstates running processes from the snapshot.
 		 * */
@@ -1007,9 +1037,8 @@ declare module 'bpmn-elements' {
 		getApi(apiMessage?: ElementBrokerMessage): IApi<Definition>;
 		/**
 		 * List currently postponed activities across every running process.
-		 * 
-		 */
-		getPostponed(...args: any[]): any[];
+		 * */
+		getPostponed(...args: any[]): IApi<Activity>;
 		get stopped(): boolean;
 		get completed(): boolean;
 		get status(): string;
@@ -1018,13 +1047,16 @@ declare module 'bpmn-elements' {
 		get isRunning(): boolean;
 		get activityStatus(): string;
 	}
-	export function Category(activityDef: any): {
-		id: any;
-		type: any;
-		name: any;
-		behaviour: any;
+	/**
+	 * Placeholder activity for non-executable elements (text annotations, groups, categories).
+	 * */
+	export function Category(activityDef: import("moddle-context-serializer").Activity): {
+		id: string;
+		type: string;
+		name: string | undefined;
+		behaviour: Record<string, any>;
 		parent: ElementParent;
-		placeholder: boolean;
+		placeholder: true;
 	};
 	/**
 	 * Holds global execution config: variables, injected services, timers, scripts engine,
@@ -1038,20 +1070,18 @@ declare module 'bpmn-elements' {
 		 * 
 		 */
 		constructor(options?: EnvironmentOptions);
-		options: {};
+		options: EnvironmentOptions;
+		
 		expressions: IExpressions;
 		extensions: Record<string, Extension> | undefined;
 		output: any;
-		scripts: Scripts | IScripts;
-		timers: Timers | ITimers;
-		settings: {
-			enableDummyService?: boolean;
-			step?: boolean;
-			strict?: boolean;
-			batchSize?: number;
-			disableTrackState?: boolean;
-			skipDiscard: boolean;
-		};
+		
+		scripts: IScripts;
+		
+		timers: ITimers;
+		
+		settings: EnvironmentSettings;
+		
 		Logger: LoggerFactory;
 		get variables(): Record<string, any>;
 		set services(value: Record<string, CallableFunction>);
@@ -1068,9 +1098,8 @@ declare module 'bpmn-elements' {
 		/**
 		 * Clone the environment, optionally overriding options. Services are merged when
 		 * `overrideOptions.services` is supplied.
-		 * 
-		 */
-		clone(overrideOptions?: EnvironmentOptions): any;
+		 * */
+		clone(overrideOptions?: EnvironmentOptions): Environment;
 		/**
 		 * Merge variables into the environment. Non-objects are ignored.
 		 * */
@@ -1082,11 +1111,11 @@ declare module 'bpmn-elements' {
 		/**
 		 * Resolve a registered script by language and identifier.
 		 * */
-		getScript(...args: any[]): void | Script;
+		getScript(...args: any[]): Script;
 		/**
 		 * Register a script for an activity, delegating to the configured scripts engine.
 		 * */
-		registerScript(...args: any[]): void | Script;
+		registerScript(...args: any[]): Script | undefined;
 		/**
 		 * Lookup a registered service by name.
 		 * */
@@ -1099,53 +1128,73 @@ declare module 'bpmn-elements' {
 		resolveExpression(expression: string, message?: ElementBrokerMessage, expressionFnContext?: any): any;
 		/**
 		 * Register a service callable by name.
-		 * */
+		 * @param name service function name
+		 * @param fn service function
+		 */
 		addService(name: string, fn: CallableFunction): void;
 	}
 	/**
-	 * Builtin data object
-	 * @param >} dataObjectDef
+	 * Builtin data object. Reads from / writes to `environment.variables._data`.
 	 * */
 		export class DataObject {
 		/**
-		 * Builtin data object
-		 * @param >} dataObjectDef
+		 * Builtin data object. Reads from / writes to `environment.variables._data`.
 		 * */
-		constructor(dataObjectDef: any, { environment }: ContextInstance);
-		id: any;
-		type: any;
-		name: any;
-		behaviour: any;
-		parent: any;
+		constructor(dataObjectDef: import("moddle-context-serializer").DataObject, { environment }: ContextInstance);
+		id: string | undefined;
+		type: string | undefined;
+		name: string | undefined;
+		
+		behaviour: Record<string, any>;
+		
+		parent: import("moddle-context-serializer").Parent | undefined;
 		environment: Environment;
-		read(broker: any, exchange: any, routingKeyPrefix: any, messageProperties: any): any;
-		write(broker: any, exchange: any, routingKeyPrefix: any, value: any, messageProperties: any): any;
+		
+		read(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): number | undefined;
+		
+		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): number | undefined;
 	}
+	/**
+	 * Builtin data store. Reads from / writes to `environment.variables._data`.
+	 * */
 		export class DataStore {
-		constructor(dataStoreDef: any, { environment }: {
-			environment: any;
-		});
-		id: any;
-		type: any;
-		name: any;
-		behaviour: any;
-		parent: any;
-		environment: any;
-		read(broker: any, exchange: any, routingKeyPrefix: any, messageProperties: any): any;
-		write(broker: any, exchange: any, routingKeyPrefix: any, value: any, messageProperties: any): any;
+		/**
+		 * Builtin data store. Reads from / writes to `environment.variables._data`.
+		 * */
+		constructor(dataStoreDef: import("moddle-context-serializer").DataStore, { environment }: ContextInstance);
+		id: string | undefined;
+		type: string | undefined;
+		name: string | undefined;
+		
+		behaviour: Record<string, any>;
+		
+		parent: import("moddle-context-serializer").Parent | undefined;
+		environment: Environment;
+		
+		read(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): number | undefined;
+		
+		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): number | undefined;
 	}
+	/**
+	 * Builtin data store reference. Reads from / writes to `environment.variables._data`.
+	 * */
 		export class DataStoreReference {
-		constructor(dataObjectDef: any, { environment }: {
-			environment: any;
-		});
-		id: any;
-		type: any;
-		name: any;
-		behaviour: any;
-		parent: any;
-		environment: any;
-		read(broker: any, exchange: any, routingKeyPrefix: any, messageProperties: any): any;
-		write(broker: any, exchange: any, routingKeyPrefix: any, value: any, messageProperties: any): any;
+		/**
+		 * Builtin data store reference. Reads from / writes to `environment.variables._data`.
+		 * */
+		constructor(dataObjectDef: import("moddle-context-serializer").DataStore, { environment }: ContextInstance);
+		id: string | undefined;
+		type: string | undefined;
+		name: string | undefined;
+		
+		behaviour: Record<string, any>;
+		
+		parent: import("moddle-context-serializer").Parent | undefined;
+		environment: Environment;
+		
+		read(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): number | undefined;
+		
+		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): number | undefined;
 	}
 	export function Escalation(signalDef: any, context: any): {
 		id: any;
@@ -1160,15 +1209,25 @@ declare module 'bpmn-elements' {
 			parent: any;
 		};
 	};
+	/**
+	 * Activity ioSpecification behaviour. Reads bound data objects on enter and writes them on completion.
+	 * */
 		export class InputOutputSpecification {
-		constructor(activity: any, ioSpecificationDef: any, context: any);
-		id: any;
-		type: any;
-		behaviour: any;
-		activity: any;
-		broker: any;
-		context: any;
-		activate(message: any): void;
+		/**
+		 * Activity ioSpecification behaviour. Reads bound data objects on enter and writes them on completion.
+		 * */
+		constructor(activity: Activity, ioSpecificationDef: import("moddle-context-serializer").IoSpecification, context: ContextInstance);
+		id: string | undefined;
+		type: string;
+		behaviour: {
+			dataInputs?: import("moddle-context-serializer").IElement[];
+			dataOutputs?: import("moddle-context-serializer").IElement[];
+		};
+		activity: Activity;
+		broker: import("smqp").Broker;
+		context: ContextInstance;
+		
+		activate(message?: ElementBrokerMessage): void;
 		deactivate(): void;
 	}
 	/**
@@ -1183,33 +1242,91 @@ declare module 'bpmn-elements' {
 		constructor(process: Process, laneDefinition: import("moddle-context-serializer").SerializableElement);
 		id: string | undefined;
 		type: string | undefined;
-		name: any;
-		parent: {
-			id: any;
-			type: any;
-		};
-		behaviour: {
-			[x: string]: any;
-		};
+		
+		name: string;
+		
+		parent: import("moddle-context-serializer").Parent;
+		
+		behaviour: Record<string, any>;
 		environment: Environment;
 		broker: import("smqp").Broker;
 		context: ContextInstance;
 		logger: ILogger;
 		get process(): Process;
 	}
+	/**
+	 * Loop characteristics
+	 * */
 		export class MultiInstanceLoopCharacteristics {
-		constructor(activity: any, loopCharacteristics: any);
-		activity: any;
-		loopCharacteristics: any;
-		type: any;
-		isSequential: any;
-		collection: any;
-		loopCardinality: any;
+		/**
+		 * Loop characteristics
+		 * */
+		constructor(activity: Activity, loopCharacteristics: import("moddle-context-serializer").SerializableElement);
+		activity: Activity;
+		loopCharacteristics: import("moddle-context-serializer").SerializableElement<Record<string, any>>;
+		type: string;
+		
+		isSequential: boolean;
+		
+		collection: string | undefined;
+		
+		loopCardinality: number | undefined;
 		loopType: string | undefined;
-		elementVariable: any;
-		characteristics: any;
+		
+		elementVariable: string | undefined;
+		
+		characteristics: Characteristics;
 		execution: any;
-		execute(executeMessage: any): any;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
+	}
+	/**
+	 * Per-execution snapshot of resolved loop characteristics (cardinality, collection, conditions).
+	 * */
+		class Characteristics {
+		/**
+		 * Per-execution snapshot of resolved loop characteristics (cardinality, collection, conditions).
+		 * */
+		constructor(activity: Activity, loopCharacteristics: import("moddle-context-serializer").SerializableElement, executeMessage: ElementBrokerMessage);
+		activity: Activity;
+		behaviour: Record<string, any>;
+		message: ElementBrokerMessage;
+		type: string;
+		id: string | undefined;
+		broker: import("smqp").Broker;
+		parentExecutionId: string | undefined;
+		
+		isSequential: boolean;
+		output: any;
+		parent: ElementParent;
+		loopCardinality: number | undefined;
+		startCondition: string | undefined;
+		completionCondition: string;
+		collection: any[] | undefined;
+		
+		elementVariable: string;
+		cardinality: number | undefined;
+		logger: ILogger;
+		batchSize: number;
+		
+		getContent(): ElementMessageContent;
+		
+		next(index: number): ElementMessageContent;
+		/**
+		 * @returns cardinality
+		 */
+		getCardinality(collection?: any): number | undefined;
+		
+		getCollection(): any[] | undefined;
+		
+		isStartConditionMet(message: ElementBrokerMessage): any;
+		
+		isCompletionConditionMet(message: ElementBrokerMessage): any;
+		
+		complete(content: ElementMessageContent, allDiscarded?: boolean): void;
+		
+		subscribe(onIterationCompleteMessage: ElementBrokerMessage): void;
+		stop(): void;
 	}
 	export function Message(messageDef: any, context: any): {
 		id: any;
@@ -1228,9 +1345,9 @@ declare module 'bpmn-elements' {
 		 * joins, and parallel activation through ProcessExecution.
 		 * */
 		constructor(processDef: import("moddle-context-serializer").Process, context: ContextInstance);
-		id: any;
-		type: any;
-		name: any;
+		id: string | undefined;
+		type: string;
+		name: string | undefined;
 		
 		parent: ElementParent;
 		
@@ -1275,9 +1392,8 @@ declare module 'bpmn-elements' {
 		recover(state?: ProcessState): this;
 		/**
 		 * Walk activity graph from the given start id, or every start activity when omitted.
-		 * 
-		 */
-		shake(startId?: string): any;
+		 * */
+		shake(startId?: string): ShakeResult;
 		/**
 		 * Stop the process if running.
 		 */
@@ -1317,7 +1433,7 @@ declare module 'bpmn-elements' {
 		 */
 		getSequenceFlows(): SequenceFlow | SequenceFlow[];
 		
-		getLaneById(laneId: string): any;
+		getLaneById(laneId: string): Lane | undefined;
 		/**
 		 * List currently postponed activities as Api wrappers.
 		 * 
@@ -1336,18 +1452,38 @@ declare module 'bpmn-elements' {
 		get status(): string | undefined;
 		get activityStatus(): string;
 	}
-		export class Properties {
-		constructor(activity: any, propertiesDef: any, context: any);
-		activity: any;
-		broker: any;
-		activate(message: any): void;
+	/**
+	 * Activity properties behaviour. Resolves bound data input/output references during the run.
+	 * */
+	export function Properties(activity: Activity, propertiesDef: {
+		type: "properties";
+		values: import("moddle-context-serializer").IElement[];
+	}, context: ContextInstance): void;
+	export class Properties {
+		/**
+		 * Activity properties behaviour. Resolves bound data input/output references during the run.
+		 * */
+		constructor(activity: Activity, propertiesDef: {
+			type: "properties";
+			values: import("moddle-context-serializer").IElement[];
+		}, context: ContextInstance);
+		activity: Activity;
+		broker: import("smqp").Broker;
+		
+		activate(message: ElementBrokerMessage): void;
 		deactivate(): void;
 	}
+	/**
+	 * Service implementation
+	 * */
 		export class ServiceImplementation {
-		constructor(activity: any);
+		/**
+		 * Service implementation
+		 * */
+		constructor(activity: Activity);
 		type: string;
 		implementation: any;
-		activity: any;
+		activity: Activity;
 		execute(executionMessage: any, callback: any): any;
 	}
 	export function Signal(signalDef: any, context: any): {
@@ -1357,43 +1493,31 @@ declare module 'bpmn-elements' {
 		parent: any;
 		resolve: (executionMessage: any) => any;
 	};
-	export function StandardLoopCharacteristics(activity: any, loopCharacteristics: any): MultiInstanceLoopCharacteristics;
-		export class Timers {
-		constructor(options: any);
-		count: number;
-		options: any;
-		setTimeout: any;
-		clearTimeout: any;
-		get executing(): any[];
-		register(owner: any): RegisteredTimers;
-	}
-		class RegisteredTimers {
-		constructor(timersApi: any, owner: any);
-		owner: any;
-		setTimeout: any;
-		clearTimeout: any;
-	}
-		class Timer_1 {
-		constructor(owner: any, timerId: any, callback: any, delay: any, args: any);
-		callback: any;
-		delay: any;
-		args: any;
-		owner: any;
-		timerId: any;
-		expireAt: Date;
-		timerRef: any;
-	}
+	/**
+	 * Standard loop characteristics
+	 * */
+	export function StandardLoopCharacteristics(activity: Activity, loopCharacteristics: import("moddle-context-serializer").SerializableElement): MultiInstanceLoopCharacteristics;
 	export class ActivityError extends Error {
-		constructor(description: any, sourceMessage: any, inner: any);
+		
+		constructor(description: string, sourceMessage?: ElementBrokerMessage, inner?: Error | {
+			name?: string;
+			code?: string | number;
+		});
+		
 		type: string;
-		name: any;
-		description: any;
-		source: any;
-		inner: any;
-		code: any;
+		
+		description: string;
+		
+		source: Pick<ElementBrokerMessage, "fields" | "content" | "properties"> | undefined;
+		
+		inner: Error | {
+			name?: string;
+			code?: string | number;
+		} | undefined;
+		
+		code: string | number | undefined;
 	}
 	export class RunError extends ActivityError {
-		constructor(...args: any[]);
 	}
 	/**
 	 * Drives the execution of a single process or sub-process: activates children, routes activity
@@ -1405,8 +1529,8 @@ declare module 'bpmn-elements' {
 		 * events, and rolls completion up to the owning Process or sub-process Activity.
 		 * */
 		constructor(parentActivity: Process | Activity, context: ContextInstance);
-		id: any;
-		type: any;
+		id: string | undefined;
+		type: string;
 		isSubProcess: any;
 		isTransaction: any;
 		broker: import("smqp").Broker;
@@ -1433,9 +1557,8 @@ declare module 'bpmn-elements' {
 		recover(state?: ProcessExecutionState): this;
 		/**
 		 * Walk activity graph from the given start id, or every start activity when omitted.
-		 * 
-		 */
-		shake(fromId?: string): any;
+		 * */
+		shake(fromId?: string): ShakeResult;
 		/**
 		 * Stop the running process execution via the api.
 		 */
@@ -1448,11 +1571,11 @@ declare module 'bpmn-elements' {
 		/**
 		 * Queue a discard message that propagates to all running children.
 		 */
-		discard(): any;
+		discard(): void;
 		/**
 		 * Queue a cancel message that propagates to all running children.
 		 */
-		cancel(): any;
+		cancel(): void;
 		/**
 		 * Get child activities in the process scope.
 		 * */
@@ -1488,14 +1611,15 @@ declare module 'bpmn-elements' {
 		 * events; activities subscribe to drive their inbound queue.
 		 * */
 		constructor(flowDef: import("moddle-context-serializer").SequenceFlow, { environment }: ContextInstance);
-		id: any;
-		type: any;
-		name: any;
+		id: string | undefined;
+		type: string;
+		name: string | undefined;
 		parent: ElementParent;
-		behaviour: any;
-		sourceId: any;
-		targetId: any;
-		isDefault: any;
+		
+		behaviour: Record<string, any>;
+		sourceId: string;
+		targetId: string;
+		isDefault: boolean | undefined;
 		isSequenceFlow: boolean;
 		environment: Environment;
 		logger: ILogger;
@@ -1546,7 +1670,7 @@ declare module 'bpmn-elements' {
 		 * Walk the flow as part of a process shake. Detects loops and publishes flow.shake.loop
 		 * when the target was already visited, otherwise flow.shake.
 		 * */
-		shake(message: ElementBrokerMessage): any;
+		shake(message: ElementBrokerMessage): number | undefined;
 		/**
 		 * Resolve the flow's condition (script or expression). Returns null when no condition is set.
 		 * Emits a fatal error when the script language is missing or unsupported.
@@ -1593,14 +1717,15 @@ declare module 'bpmn-elements' {
 		 * Association connecting a source and target activity. Used to drive compensation —
 		 * activities marked `isForCompensation` subscribe to inbound association events.
 		 * */
-		constructor(associationDef: import("moddle-context-serializer").SerializableElement, { environment }: ContextInstance);
+		constructor(associationDef: import("moddle-context-serializer").Association, { environment }: ContextInstance);
 		id: string | undefined;
 		type: string;
-		name: any;
+		name: string | undefined;
 		parent: ElementParent;
+		
 		behaviour: Record<string, any>;
-		sourceId: any;
-		targetId: any;
+		sourceId: string;
+		targetId: string;
 		isAssociation: boolean;
 		environment: Environment;
 		logger: ILogger;
@@ -1656,13 +1781,14 @@ declare module 'bpmn-elements' {
 		 * source's `end` event and publishes `message.outbound` whenever the source completes,
 		 * carrying any message payload through to the target.
 		 * */
-		constructor(flowDef: import("moddle-context-serializer").SerializableElement, context: ContextInstance);
+		constructor(flowDef: import("moddle-context-serializer").MessageFlow, context: ContextInstance);
 		id: string | undefined;
 		type: string;
-		name: any;
+		name: string | undefined;
 		parent: ElementParent;
-		source: any;
-		target: any;
+		source: import("moddle-context-serializer").MessageFlowEndpoint;
+		target: import("moddle-context-serializer").MessageFlowEndpoint;
+		
 		behaviour: Record<string, any>;
 		environment: Environment;
 		context: ContextInstance;
@@ -1702,79 +1828,150 @@ declare module 'bpmn-elements' {
 		 */
 		deactivate(): void;
 	}
-		class Scripts {
-		getScript(): void;
-		register(): void;
-	}
-	export function BoundaryEvent(activityDef: any, context: any): Activity;
-	export function EndEvent(activityDef: any, context: any): Activity;
-	export function IntermediateCatchEvent(activityDef: any, context: any): Activity;
-	export function IntermediateThrowEvent(activityDef: any, context: any): Activity;
-	export function StartEvent(activityDef: any, context: any): Activity;
-	export function EventBasedGateway(activityDef: any, context: any): Activity;
-	export function ExclusiveGateway(activityDef: any, context: any): Activity;
-	export function InclusiveGateway(activityDef: any, context: any): Activity;
+	/**
+	 * Boundary event
+	 * */
+	export function BoundaryEvent(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * End event
+	 * */
+	export function EndEvent(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Intermediate catch event
+	 * */
+	export function IntermediateCatchEvent(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Intermediate throw event
+	 * */
+	export function IntermediateThrowEvent(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Start event
+	 * */
+	export function StartEvent(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Event based gateway
+	 * */
+	export function EventBasedGateway(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Exclusive gateway
+	 * */
+	export function ExclusiveGateway(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Inclusive gateway
+	 * */
+	export function InclusiveGateway(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Parallel gateway
+	 * */
 		export class ParallelGateway {
-		constructor(activityDef: any, context: any);
-		id: any;
+		/**
+		 * Parallel gateway
+		 * */
+		constructor(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance);
+		id: string | undefined;
 	}
 	/**
-	 * Create call activity
-	 * @returns Call activity
-	 */
+	 * Call activity
+	 * */
 	export function CallActivity(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
-	export function ReceiveTask(activityDef: any, context: any): Activity;
-	export function ScriptTask(activityDef: any, context: any): Activity;
-	export function SendTask(activityDef: any, context: any): Activity;
-	export function UserTask(activityDef: any, context: any): Activity;
-	export function AdHocSubProcess(activityDef: any, context: any): Activity;
-	export function Task(activityDef: any, context: any): Activity;
-	export function Transaction(activityDef: any, context: any): Activity;
+	/**
+	 * Receive task
+	 * */
+	export function ReceiveTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Script task
+	 * */
+	export function ScriptTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Service task
+	 * */
+	export function SendTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Signal task
+	 * */
+	export function UserTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Sub process
+	 * */
+	export function AdHocSubProcess(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Task
+	 * */
+	export function Task(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Transaction
+	 * */
+	export function Transaction(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Cancel event definition
+	 * */
 		export class CancelEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		id: any;
-		type: any;
-		reference: {
-			referenceType: string;
-		};
-		isThrowing: any;
-		activity: any;
-		environment: any;
-		broker: any;
-		logger: any;
-		get executionId(): any;
-		execute(executeMessage: any): any;
-		executeCatch(executeMessage: any): void;
-		executeThrow(executeMessage: any): any;
+		/**
+		 * Cancel event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		id: string | undefined;
+		type: string | undefined;
+		
+		reference: EventDefinitionReference;
+		isThrowing: boolean;
+		activity: Activity;
+		environment: Environment;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
+		
+		executeCatch(executeMessage: ElementBrokerMessage): void;
+		
+		executeThrow(executeMessage: ElementBrokerMessage): void;
 	}
+	/**
+	 * Compensate event definition
+	 * */
 		export class CompensateEventDefinition {
-		constructor(activity: any, eventDefinition: any, context: any);
-		id: any;
-		type: any;
-		reference: {
-			referenceType: string;
-		};
-		isThrowing: any;
-		activity: any;
-		broker: any;
-		logger: any;
-		get executionId(): any;
-		execute(executeMessage: any): any;
-		executeCatch(executeMessage: any): any;
-		executeThrow(executeMessage: any): any;
+		/**
+		 * Compensate event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition, context: ContextInstance);
+		id: string | undefined;
+		type: string | undefined;
+		
+		reference: EventDefinitionReference;
+		isThrowing: boolean;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): number | import("smqp").Consumer | undefined;
+		
+		executeCatch(executeMessage: ElementBrokerMessage): import("smqp").Consumer | undefined;
+		
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
+	/**
+	 * Conditional event definition
+	 * @param index event definition index
+	 */
 		export class ConditionalEventDefinition {
-		constructor(activity: any, eventDefinition: any, _context: any, index: any);
-		id: any;
-		type: any;
-		behaviour: any;
-		activity: any;
-		environment: any;
-		broker: any;
-		logger: any;
+		/**
+		 * Conditional event definition
+		 * @param index event definition index
+		 */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition, _context: ContextInstance, index: number);
+		id: string | undefined;
+		type: string;
+		behaviour: {};
+		activity: Activity;
+		environment: Environment;
+		broker: import("smqp").Broker;
+		logger: ILogger;
 		condition: ScriptCondition | ExpressionCondition | null;
-		get executionId(): any;
-		execute(executeMessage: any): void;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 		/**
 		 * Evaluate condition
 		 * */
@@ -1784,115 +1981,178 @@ declare module 'bpmn-elements' {
 		 * @param err Condition evaluation error
 		 * @param result Result from evaluated condition, completes execution if truthy
 		 */
-		evaluateCallback(err: Error | null, result: any): any;
+		evaluateCallback(err: Error | null, result: any): number | undefined;
 		/**
 		 * Get condition
 		 * @param index Eventdefinition sequence number, used to name registered script
 		 * */
 		getCondition(index: number): ExpressionCondition | ScriptCondition | null;
 	}
+	/**
+	 * Error event definition
+	 * */
 		export class ErrorEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		id: any;
-		type: any;
-		reference: any;
-		isThrowing: any;
-		activity: any;
-		environment: any;
-		broker: any;
-		logger: any;
-		get executionId(): any;
-		execute(executeMessage: any): any;
-		executeCatch(executeMessage: any): void;
-		executeThrow(executeMessage: any): any;
+		/**
+		 * Error event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		id: string | undefined;
+		type: string;
+		
+		reference: EventDefinitionReference;
+		isThrowing: boolean;
+		activity: Activity;
+		environment: Environment;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): number | void;
+		
+		executeCatch(executeMessage: ElementBrokerMessage): void;
+		
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
+	/**
+	 * Escalation event definition
+	 * */
 		export class EscalationEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		id: any;
-		type: any;
-		reference: any;
-		isThrowing: any;
-		activity: any;
-		broker: any;
-		logger: any;
-		get executionId(): any;
-		execute(executeMessage: any): any;
-		executeCatch(executeMessage: any): void;
-		executeThrow(executeMessage: any): any;
+		/**
+		 * Escalation event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		id: string | undefined;
+		type: string | undefined;
+		
+		reference: EventDefinitionReference;
+		isThrowing: boolean;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): number | void;
+		
+		executeCatch(executeMessage: ElementBrokerMessage): void;
+		
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
+	/**
+	 * Link event definition
+	 * */
 		export class LinkEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		id: any;
-		type: any;
-		reference: {
-			id: any;
-			linkName: any;
-			referenceType: string;
-		};
-		isThrowing: any;
-		activity: any;
-		broker: any;
-		logger: any;
-		get executionId(): any;
-		execute(executeMessage: any): any;
-		executeCatch(executeMessage: any): any;
-		executeThrow(executeMessage: any): any;
+		/**
+		 * Link event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		id: string | undefined;
+		type: string;
+		
+		reference: EventDefinitionReference;
+		isThrowing: boolean;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): number | undefined;
+		
+		executeCatch(executeMessage: ElementBrokerMessage): number | undefined;
+		
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
+	/**
+	 * Message event definition
+	 * */
 		export class MessageEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		id: any;
-		type: any;
-		reference: any;
-		isThrowing: any;
-		activity: any;
-		broker: any;
-		logger: any;
-		get executionId(): any;
-		execute(executeMessage: any): any;
-		executeCatch(executeMessage: any): void;
-		executeThrow(executeMessage: any): any;
+		/**
+		 * Message event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		id: string | undefined;
+		type: string;
+		
+		reference: EventDefinitionReference;
+		isThrowing: boolean;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): number | void;
+		
+		executeCatch(executeMessage: ElementBrokerMessage): void;
+		
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
+	/**
+	 * Signal event definition
+	 * */
 		export class SignalEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		id: any;
-		type: any;
-		reference: any;
-		isThrowing: any;
-		activity: any;
-		broker: any;
-		logger: any;
-		get executionId(): any;
-		execute(executeMessage: any): any;
-		executeCatch(executeMessage: any): void;
-		executeThrow(executeMessage: any): any;
+		/**
+		 * Signal event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		id: string | undefined;
+		type: string | undefined;
+		
+		reference: EventDefinitionReference;
+		isThrowing: boolean;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): number | void;
+		
+		executeCatch(executeMessage: ElementBrokerMessage): void;
+		
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
+	/**
+	 * Terminate event definition
+	 * */
 		export class TerminateEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		id: any;
-		type: any;
-		activity: any;
-		broker: any;
-		logger: any;
-		execute(executeMessage: any): void;
+		/**
+		 * Terminate event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		id: string | undefined;
+		type: string;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 	}
+	/**
+	 * Timer event definition
+	 * */
 		export class TimerEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		type: any;
-		activity: any;
-		environment: any;
-		eventDefinition: any;
-		timeDuration: any;
-		timeCycle: any;
-		timeDate: any;
-		broker: any;
-		logger: any;
-		get executionId(): string | undefined;
+		/**
+		 * Timer event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		type: string;
+		activity: Activity;
+		environment: Environment;
+		eventDefinition: import("moddle-context-serializer").EventDefinition;
+		timeDuration: string | undefined;
+		timeCycle: string | undefined;
+		timeDate: string | undefined;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
 		get stopped(): boolean;
-		get timer(): any;
-		execute(executeMessage: any): void;
+		get timer(): Timer | null;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 		startedAt: Date | undefined;
 		stop(): void;
-		parse(timerType: any, value: any): {
+		/**
+		 * Parse timer
+		 * */
+		parse(timerType: string, value: string): {
 			expireAt: Date | undefined;
 			repeat: number | undefined;
 			delay: number | undefined;
@@ -1933,28 +2193,53 @@ declare module 'bpmn-elements' {
 }
 
 declare module 'bpmn-elements/errors' {
-	export function makeErrorFromMessage(errorMessage: any): any;
+	import type { MessageEnvelope } from 'smqp';
+	import type { ElementBrokerMessage, ElementMessageContent, ElementParent } from 'bpmn-elements';
+
+	/**
+	 * Get an Error from an error message.
+	 * */
+	export function makeErrorFromMessage(errorMessage: ElementBrokerMessage): Error | ActivityError | RunError | BpmnError;
 	export class ActivityError extends Error {
-		constructor(description: any, sourceMessage: any, inner: any);
+		
+		constructor(description: string, sourceMessage?: ElementBrokerMessage, inner?: Error | {
+			name?: string;
+			code?: string | number;
+		});
+		
 		type: string;
-		name: any;
-		description: any;
-		source: any;
-		inner: any;
-		code: any;
+		
+		description: string;
+		
+		source: Pick<ElementBrokerMessage, "fields" | "content" | "properties"> | undefined;
+		
+		inner: Error | {
+			name?: string;
+			code?: string | number;
+		} | undefined;
+		
+		code: string | number | undefined;
 	}
 	export class RunError extends ActivityError {
-		constructor(...args: any[]);
 	}
 	export class BpmnError extends Error {
-		constructor(description: any, behaviour: any, sourceMessage: any, inner: any);
+		
+		constructor(description: string, behaviour?: {
+			id?: string;
+			name?: string;
+			errorCode?: string | number;
+			code?: string;
+		}, sourceMessage?: ElementBrokerMessage);
+		
 		type: string;
-		name: any;
-		description: any;
-		code: any;
-		id: any;
-		source: any;
-		inner: any;
+		
+		description: string;
+		
+		code: string | undefined;
+		
+		id: string | undefined;
+		
+		source: Pick<ElementBrokerMessage, "fields" | "content" | "properties"> | undefined;
 	}
 
 	export {};
@@ -1963,75 +2248,126 @@ declare module 'bpmn-elements/errors' {
 declare module 'bpmn-elements/events' {
 	import type { Broker, BrokerState, MessageEnvelope } from 'smqp';
 	import type { SerializableElement } from 'moddle-context-serializer';
-	import type { Activity, ActivityError, ActivityExecution, ActivityExecutionState, ActivityRunStatus, ActivityState, Association, AssociationState, ContextInstance, ElementBase, ElementBroker, ElementBrokerMessage, ElementMessageContent, ElementParent, ElementState, Environment, EnvironmentOptions, EnvironmentSettings, EnvironmentState, EventDefinition, ExecutionScope, Extension, IActivityBehaviour, IApi, IExpressions, IExtension, IExtensions, IExtensionsMapper, IIOData, ILogger, IScripts, ISequenceFlowCondition, ITimers, Lane, LoggerFactory, MessageFlow, MessageFlowState, Process, ProcessExecutionState, ProcessState, RegisteredTimer, Script, SequenceFlow, SequenceFlowState, Timer, Timers, completedCounters, filterPostponed, signalMessage, startActivityFilterOptions, wrappedClearTimeout, wrappedSetTimeout } from 'bpmn-elements';
+	import type { Activity, ActivityError, ActivityExecution, ActivityExecutionState, ActivityRunStatus, ActivityState, Association, AssociationState, ContextInstance, ElementBase, ElementBroker, ElementBrokerMessage, ElementMessageContent, ElementParent, ElementState, Environment, EnvironmentOptions, EnvironmentSettings, EnvironmentState, EventDefinition, EventDefinitionReference, ExecutionScope, Extension, IActivityBehaviour, IApi, IExpressions, IExtension, IExtensions, IExtensionsMapper, IIOData, ILogger, IScripts, ISequenceFlowCondition, ITimers, Lane, LoggerFactory, MessageFlow, MessageFlowState, Process, ProcessExecutionState, ProcessState, RegisteredTimer, Script, SequenceFlow, SequenceFlowState, ShakeResult, ShakeSequenceItem, ShakenSequence, Timer, completedCounters, filterPostponed, signalMessage, startActivityFilterOptions, wrappedClearTimeout, wrappedSetTimeout } from 'bpmn-elements';
 
-	export function BoundaryEvent(activityDef: any, context: any): Activity;
+	/**
+	 * Boundary event
+	 * */
+	export function BoundaryEvent(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Boundary event behaviour
+	 * */
 		export class BoundaryEventBehaviour {
-		constructor(activity: any);
-		id: any;
-		type: any;
-		attachedTo: any;
-		activity: any;
-		environment: any;
-		broker: any;
-		get executionId(): any;
-		get cancelActivity(): any;
-		execute(executeMessage: any): any;
-	}
-	export function EndEvent(activityDef: any, context: any): Activity;
-		export class EndEventBehaviour {
-		constructor(activity: any);
-		id: any;
-		type: any;
-		broker: any;
-		execute(executeMessage: any): any;
-	}
-	export function IntermediateCatchEvent(activityDef: any, context: any): Activity;
-		export class IntermediateCatchEventBehaviour {
-		constructor(activity: any);
-		id: any;
-		type: any;
-		broker: any;
-		execute(executeMessage: any): any;
-	}
-	export function IntermediateThrowEvent(activityDef: any, context: any): Activity;
-		export class IntermediateThrowEventBehaviour {
-		constructor(activity: any);
-		id: any;
-		type: any;
-		broker: any;
-		execute(executeMessage: any): any;
-	}
-	export function StartEvent(activityDef: any, context: any): Activity;
-		export class StartEventBehaviour {
-		constructor(activity: any);
-		id: any;
-		type: any;
-		activity: any;
-		broker: any;
-		get executionId(): any;
-		execute(executeMessage: any): any;
+		/**
+		 * Boundary event behaviour
+		 * */
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
+		attachedTo: Activity | null;
+		activity: Activity;
+		environment: Environment;
+		broker: import("smqp").Broker;
+		get executionId(): string | undefined;
+		get cancelActivity(): unknown;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 	}
 	/**
-	 * Enriches an element run message via async format start/end messages on the `format` exchange
-	 * before the run message is continued. Handlers publish enrichment by responding to a start
-	 * message with a matching end (or error) routing key.
+	 * End event
 	 * */
-		class Formatter {
+	export function EndEvent(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * End event behaviour
+	 * */
+		export class EndEventBehaviour {
 		/**
-		 * Enriches an element run message via async format start/end messages on the `format` exchange
-		 * before the run message is continued. Handlers publish enrichment by responding to a start
-		 * message with a matching end (or error) routing key.
+		 * End event behaviour
 		 * */
-		constructor(element: ElementBase);
-		id: string;
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
 		broker: import("smqp").Broker;
-		logger: ILogger;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
+	}
+	/**
+	 * Intermediate catch event
+	 * */
+	export function IntermediateCatchEvent(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Intermediate catch event behaviour
+	 * */
+		export class IntermediateCatchEventBehaviour {
 		/**
-		 * Format the given run message. Callback fires with `(err, content, formatted)` once
-		 * formatting completes; `formatted` is true when content was actually enriched.
+		 * Intermediate catch event behaviour
 		 * */
-		format(message: ElementBrokerMessage, callback: (err: Error | null, content?: ElementMessageContent, formatted?: boolean) => void): void;
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
+		broker: import("smqp").Broker;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
+	}
+	/**
+	 * Intermediate throw event
+	 * */
+	export function IntermediateThrowEvent(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Intermediate throw event behaviour
+	 * */
+		export class IntermediateThrowEventBehaviour {
+		/**
+		 * Intermediate throw event behaviour
+		 * */
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
+		broker: import("smqp").Broker;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
+	}
+	/**
+	 * Start event
+	 * */
+	export function StartEvent(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Start event behaviour
+	 * */
+		export class StartEventBehaviour {
+		/**
+		 * Start event behaviour
+		 * */
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		get executionId(): string | undefined;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
+	}
+	/**
+	 * Event definition execution orchestrator. Drives a sequence of event definitions for the
+	 * activity and publishes the completed routing key when the last definition completes.
+	 * @param completedRoutingKey Routing key to publish on completion, defaults to `execute.completed`
+	 */
+		class EventDefinitionExecution {
+		/**
+		 * Event definition execution orchestrator. Drives a sequence of event definitions for the
+		 * activity and publishes the completed routing key when the last definition completes.
+		 * @param completedRoutingKey Routing key to publish on completion, defaults to `execute.completed`
+		 */
+		constructor(activity: Activity, eventDefinitions: EventDefinition[], completedRoutingKey?: string);
+		id: string | undefined;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		eventDefinitions: EventDefinition[];
+		completedRoutingKey: string;
+		get completed(): boolean;
+		get stopped(): boolean;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 	}
 	/**
 	 * Drives the execution of a single process or sub-process: activates children, routes activity
@@ -2043,8 +2379,8 @@ declare module 'bpmn-elements/events' {
 		 * events, and rolls completion up to the owning Process or sub-process Activity.
 		 * */
 		constructor(parentActivity: Process | Activity, context: ContextInstance);
-		id: any;
-		type: any;
+		id: string | undefined;
+		type: string;
 		isSubProcess: any;
 		isTransaction: any;
 		broker: import("smqp").Broker;
@@ -2071,9 +2407,8 @@ declare module 'bpmn-elements/events' {
 		recover(state?: ProcessExecutionState): this;
 		/**
 		 * Walk activity graph from the given start id, or every start activity when omitted.
-		 * 
-		 */
-		shake(fromId?: string): any;
+		 * */
+		shake(fromId?: string): ShakeResult;
 		/**
 		 * Stop the running process execution via the api.
 		 */
@@ -2086,11 +2421,11 @@ declare module 'bpmn-elements/events' {
 		/**
 		 * Queue a discard message that propagates to all running children.
 		 */
-		discard(): any;
+		discard(): void;
 		/**
 		 * Queue a cancel message that propagates to all running children.
 		 */
-		cancel(): any;
+		cancel(): void;
 		/**
 		 * Get child activities in the process scope.
 		 * */
@@ -2116,25 +2451,26 @@ declare module 'bpmn-elements/events' {
 		get isRunning(): boolean;
 		get activityStatus(): string;
 	}
-		class Scripts {
-		getScript(): void;
-		register(): void;
-	}
-		class RegisteredTimers {
-		constructor(timersApi: any, owner: any);
-		owner: any;
-		setTimeout: any;
-		clearTimeout: any;
-	}
-		class Timer_1 {
-		constructor(owner: any, timerId: any, callback: any, delay: any, args: any);
-		callback: any;
-		delay: any;
-		args: any;
-		owner: any;
-		timerId: any;
-		expireAt: Date;
-		timerRef: any;
+	/**
+	 * Enriches an element run message via async format start/end messages on the `format` exchange
+	 * before the run message is continued. Handlers publish enrichment by responding to a start
+	 * message with a matching end (or error) routing key.
+	 * */
+		class Formatter {
+		/**
+		 * Enriches an element run message via async format start/end messages on the `format` exchange
+		 * before the run message is continued. Handlers publish enrichment by responding to a start
+		 * message with a matching end (or error) routing key.
+		 * */
+		constructor(element: ElementBase);
+		id: string;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		/**
+		 * Format the given run message. Callback fires with `(err, content, formatted)` once
+		 * formatting completes; `formatted` is true when content was actually enriched.
+		 * */
+		format(message: ElementBrokerMessage, callback: (err: Error | null, content?: ElementMessageContent, formatted?: boolean) => void): void;
 	}
 
 	export {};
@@ -2143,53 +2479,78 @@ declare module 'bpmn-elements/events' {
 declare module 'bpmn-elements/eventDefinitions' {
 	import type { Broker, BrokerState, MessageEnvelope } from 'smqp';
 	import type { SerializableElement } from 'moddle-context-serializer';
-	import type { Activity, ActivityError, ActivityExecution, ActivityExecutionState, ActivityRunStatus, ActivityState, Association, AssociationState, ContextInstance, ElementBase, ElementBroker, ElementBrokerMessage, ElementMessageContent, ElementParent, ElementState, Environment, EnvironmentOptions, EnvironmentSettings, EnvironmentState, EventDefinition, ExecutionScope, Extension, IActivityBehaviour, IApi, IExpressions, IExtension, IExtensions, IExtensionsMapper, IIOData, ILogger, IScripts, ISequenceFlowCondition, ITimers, Lane, LoggerFactory, MessageFlow, MessageFlowState, Process, ProcessExecutionState, ProcessState, RegisteredTimer, Script, SequenceFlow, SequenceFlowState, Timer, Timers, completedCounters, filterPostponed, signalMessage, startActivityFilterOptions, wrappedClearTimeout, wrappedSetTimeout } from 'bpmn-elements';
+	import type { Activity, ActivityError, ActivityExecution, ActivityExecutionState, ActivityRunStatus, ActivityState, Association, AssociationState, ContextInstance, ElementBase, ElementBroker, ElementBrokerMessage, ElementMessageContent, ElementParent, ElementState, Environment, EnvironmentOptions, EnvironmentSettings, EnvironmentState, EventDefinition, EventDefinitionReference, ExecutionScope, Extension, IActivityBehaviour, IApi, IExpressions, IExtension, IExtensions, IExtensionsMapper, IIOData, ILogger, IScripts, ISequenceFlowCondition, ITimers, Lane, LoggerFactory, MessageFlow, MessageFlowState, Process, ProcessExecutionState, ProcessState, RegisteredTimer, Script, SequenceFlow, SequenceFlowState, ShakeResult, ShakeSequenceItem, ShakenSequence, Timer, completedCounters, filterPostponed, signalMessage, startActivityFilterOptions, wrappedClearTimeout, wrappedSetTimeout } from 'bpmn-elements';
 
+	/**
+	 * Cancel event definition
+	 * */
 		export class CancelEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		id: any;
-		type: any;
-		reference: {
-			referenceType: string;
-		};
-		isThrowing: any;
-		activity: any;
-		environment: any;
-		broker: any;
-		logger: any;
-		get executionId(): any;
-		execute(executeMessage: any): any;
-		executeCatch(executeMessage: any): void;
-		executeThrow(executeMessage: any): any;
+		/**
+		 * Cancel event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		id: string | undefined;
+		type: string | undefined;
+		
+		reference: EventDefinitionReference;
+		isThrowing: boolean;
+		activity: Activity;
+		environment: Environment;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
+		
+		executeCatch(executeMessage: ElementBrokerMessage): void;
+		
+		executeThrow(executeMessage: ElementBrokerMessage): void;
 	}
+	/**
+	 * Compensate event definition
+	 * */
 		export class CompensateEventDefinition {
-		constructor(activity: any, eventDefinition: any, context: any);
-		id: any;
-		type: any;
-		reference: {
-			referenceType: string;
-		};
-		isThrowing: any;
-		activity: any;
-		broker: any;
-		logger: any;
-		get executionId(): any;
-		execute(executeMessage: any): any;
-		executeCatch(executeMessage: any): any;
-		executeThrow(executeMessage: any): any;
+		/**
+		 * Compensate event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition, context: ContextInstance);
+		id: string | undefined;
+		type: string | undefined;
+		
+		reference: EventDefinitionReference;
+		isThrowing: boolean;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): number | import("smqp").Consumer | undefined;
+		
+		executeCatch(executeMessage: ElementBrokerMessage): import("smqp").Consumer | undefined;
+		
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
+	/**
+	 * Conditional event definition
+	 * @param index event definition index
+	 */
 		export class ConditionalEventDefinition {
-		constructor(activity: any, eventDefinition: any, _context: any, index: any);
-		id: any;
-		type: any;
-		behaviour: any;
-		activity: any;
-		environment: any;
-		broker: any;
-		logger: any;
+		/**
+		 * Conditional event definition
+		 * @param index event definition index
+		 */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition, _context: ContextInstance, index: number);
+		id: string | undefined;
+		type: string;
+		behaviour: {};
+		activity: Activity;
+		environment: Environment;
+		broker: import("smqp").Broker;
+		logger: ILogger;
 		condition: ScriptCondition | ExpressionCondition | null;
-		get executionId(): any;
-		execute(executeMessage: any): void;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 		/**
 		 * Evaluate condition
 		 * */
@@ -2199,115 +2560,178 @@ declare module 'bpmn-elements/eventDefinitions' {
 		 * @param err Condition evaluation error
 		 * @param result Result from evaluated condition, completes execution if truthy
 		 */
-		evaluateCallback(err: Error | null, result: any): any;
+		evaluateCallback(err: Error | null, result: any): number | undefined;
 		/**
 		 * Get condition
 		 * @param index Eventdefinition sequence number, used to name registered script
 		 * */
 		getCondition(index: number): ExpressionCondition | ScriptCondition | null;
 	}
+	/**
+	 * Error event definition
+	 * */
 		export class ErrorEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		id: any;
-		type: any;
-		reference: any;
-		isThrowing: any;
-		activity: any;
-		environment: any;
-		broker: any;
-		logger: any;
-		get executionId(): any;
-		execute(executeMessage: any): any;
-		executeCatch(executeMessage: any): void;
-		executeThrow(executeMessage: any): any;
+		/**
+		 * Error event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		id: string | undefined;
+		type: string;
+		
+		reference: EventDefinitionReference;
+		isThrowing: boolean;
+		activity: Activity;
+		environment: Environment;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): number | void;
+		
+		executeCatch(executeMessage: ElementBrokerMessage): void;
+		
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
+	/**
+	 * Escalation event definition
+	 * */
 		export class EscalationEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		id: any;
-		type: any;
-		reference: any;
-		isThrowing: any;
-		activity: any;
-		broker: any;
-		logger: any;
-		get executionId(): any;
-		execute(executeMessage: any): any;
-		executeCatch(executeMessage: any): void;
-		executeThrow(executeMessage: any): any;
+		/**
+		 * Escalation event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		id: string | undefined;
+		type: string | undefined;
+		
+		reference: EventDefinitionReference;
+		isThrowing: boolean;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): number | void;
+		
+		executeCatch(executeMessage: ElementBrokerMessage): void;
+		
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
+	/**
+	 * Link event definition
+	 * */
 		export class LinkEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		id: any;
-		type: any;
-		reference: {
-			id: any;
-			linkName: any;
-			referenceType: string;
-		};
-		isThrowing: any;
-		activity: any;
-		broker: any;
-		logger: any;
-		get executionId(): any;
-		execute(executeMessage: any): any;
-		executeCatch(executeMessage: any): any;
-		executeThrow(executeMessage: any): any;
+		/**
+		 * Link event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		id: string | undefined;
+		type: string;
+		
+		reference: EventDefinitionReference;
+		isThrowing: boolean;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): number | undefined;
+		
+		executeCatch(executeMessage: ElementBrokerMessage): number | undefined;
+		
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
+	/**
+	 * Message event definition
+	 * */
 		export class MessageEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		id: any;
-		type: any;
-		reference: any;
-		isThrowing: any;
-		activity: any;
-		broker: any;
-		logger: any;
-		get executionId(): any;
-		execute(executeMessage: any): any;
-		executeCatch(executeMessage: any): void;
-		executeThrow(executeMessage: any): any;
+		/**
+		 * Message event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		id: string | undefined;
+		type: string;
+		
+		reference: EventDefinitionReference;
+		isThrowing: boolean;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): number | void;
+		
+		executeCatch(executeMessage: ElementBrokerMessage): void;
+		
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
+	/**
+	 * Signal event definition
+	 * */
 		export class SignalEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		id: any;
-		type: any;
-		reference: any;
-		isThrowing: any;
-		activity: any;
-		broker: any;
-		logger: any;
-		get executionId(): any;
-		execute(executeMessage: any): any;
-		executeCatch(executeMessage: any): void;
-		executeThrow(executeMessage: any): any;
+		/**
+		 * Signal event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		id: string | undefined;
+		type: string | undefined;
+		
+		reference: EventDefinitionReference;
+		isThrowing: boolean;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
+		
+		execute(executeMessage: ElementBrokerMessage): number | void;
+		
+		executeCatch(executeMessage: ElementBrokerMessage): void;
+		
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
+	/**
+	 * Terminate event definition
+	 * */
 		export class TerminateEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		id: any;
-		type: any;
-		activity: any;
-		broker: any;
-		logger: any;
-		execute(executeMessage: any): void;
+		/**
+		 * Terminate event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		id: string | undefined;
+		type: string;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 	}
+	/**
+	 * Timer event definition
+	 * */
 		export class TimerEventDefinition {
-		constructor(activity: any, eventDefinition: any);
-		type: any;
-		activity: any;
-		environment: any;
-		eventDefinition: any;
-		timeDuration: any;
-		timeCycle: any;
-		timeDate: any;
-		broker: any;
-		logger: any;
-		get executionId(): string | undefined;
+		/**
+		 * Timer event definition
+		 * */
+		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		type: string;
+		activity: Activity;
+		environment: Environment;
+		eventDefinition: import("moddle-context-serializer").EventDefinition;
+		timeDuration: string | undefined;
+		timeCycle: string | undefined;
+		timeDate: string | undefined;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		get executionId(): string;
 		get stopped(): boolean;
-		get timer(): any;
-		execute(executeMessage: any): void;
+		get timer(): Timer | null;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 		startedAt: Date | undefined;
 		stop(): void;
-		parse(timerType: any, value: any): {
+		/**
+		 * Parse timer
+		 * */
+		parse(timerType: string, value: string): {
 			expireAt: Date | undefined;
 			repeat: number | undefined;
 			delay: number | undefined;
@@ -2353,8 +2777,8 @@ declare module 'bpmn-elements/eventDefinitions' {
 		 * events, and rolls completion up to the owning Process or sub-process Activity.
 		 * */
 		constructor(parentActivity: Process | Activity, context: ContextInstance);
-		id: any;
-		type: any;
+		id: string | undefined;
+		type: string;
 		isSubProcess: any;
 		isTransaction: any;
 		broker: import("smqp").Broker;
@@ -2381,9 +2805,8 @@ declare module 'bpmn-elements/eventDefinitions' {
 		recover(state?: ProcessExecutionState): this;
 		/**
 		 * Walk activity graph from the given start id, or every start activity when omitted.
-		 * 
-		 */
-		shake(fromId?: string): any;
+		 * */
+		shake(fromId?: string): ShakeResult;
 		/**
 		 * Stop the running process execution via the api.
 		 */
@@ -2396,11 +2819,11 @@ declare module 'bpmn-elements/eventDefinitions' {
 		/**
 		 * Queue a discard message that propagates to all running children.
 		 */
-		discard(): any;
+		discard(): void;
 		/**
 		 * Queue a cancel message that propagates to all running children.
 		 */
-		cancel(): any;
+		cancel(): void;
 		/**
 		 * Get child activities in the process scope.
 		 * */
@@ -2447,26 +2870,6 @@ declare module 'bpmn-elements/eventDefinitions' {
 		 * */
 		format(message: ElementBrokerMessage, callback: (err: Error | null, content?: ElementMessageContent, formatted?: boolean) => void): void;
 	}
-		class Scripts {
-		getScript(): void;
-		register(): void;
-	}
-		class RegisteredTimers {
-		constructor(timersApi: any, owner: any);
-		owner: any;
-		setTimeout: any;
-		clearTimeout: any;
-	}
-		class Timer_1 {
-		constructor(owner: any, timerId: any, callback: any, delay: any, args: any);
-		callback: any;
-		delay: any;
-		args: any;
-		owner: any;
-		timerId: any;
-		expireAt: Date;
-		timerRef: any;
-	}
 
 	export {};
 }
@@ -2474,7 +2877,7 @@ declare module 'bpmn-elements/eventDefinitions' {
 declare module 'bpmn-elements/flows' {
 	import type { Broker, BrokerState, MessageEnvelope } from 'smqp';
 	import type { SerializableElement } from 'moddle-context-serializer';
-	import type { Activity, ActivityError, ActivityExecution, ActivityExecutionState, ActivityRunStatus, ActivityState, AssociationState, ContextInstance, ElementBase, ElementBroker, ElementBrokerMessage, ElementMessageContent, ElementParent, ElementState, Environment, EnvironmentOptions, EnvironmentSettings, EnvironmentState, EventDefinition, ExecutionScope, Extension, IActivityBehaviour, IApi, IExpressions, IExtension, IExtensions, IExtensionsMapper, IIOData, ILogger, IScripts, ISequenceFlowCondition, ITimers, Lane, LoggerFactory, MessageFlowState, Process, ProcessExecutionState, ProcessState, RegisteredTimer, Script, SequenceFlowState, Timer, Timers, completedCounters, filterPostponed, signalMessage, startActivityFilterOptions, wrappedClearTimeout, wrappedSetTimeout } from 'bpmn-elements';
+	import type { Activity, ActivityError, ActivityExecution, ActivityExecutionState, ActivityRunStatus, ActivityState, AssociationState, ContextInstance, ElementBase, ElementBroker, ElementBrokerMessage, ElementMessageContent, ElementParent, ElementState, Environment, EnvironmentOptions, EnvironmentSettings, EnvironmentState, EventDefinition, EventDefinitionReference, ExecutionScope, Extension, IActivityBehaviour, IApi, IExpressions, IExtension, IExtensions, IExtensionsMapper, IIOData, ILogger, IScripts, ISequenceFlowCondition, ITimers, Lane, LoggerFactory, MessageFlowState, Process, ProcessExecutionState, ProcessState, RegisteredTimer, Script, SequenceFlowState, ShakeResult, ShakeSequenceItem, ShakenSequence, Timer, completedCounters, filterPostponed, signalMessage, startActivityFilterOptions, wrappedClearTimeout, wrappedSetTimeout } from 'bpmn-elements';
 
 	/**
 	 * Association connecting a source and target activity. Used to drive compensation —
@@ -2485,14 +2888,15 @@ declare module 'bpmn-elements/flows' {
 		 * Association connecting a source and target activity. Used to drive compensation —
 		 * activities marked `isForCompensation` subscribe to inbound association events.
 		 * */
-		constructor(associationDef: import("moddle-context-serializer").SerializableElement, { environment }: ContextInstance);
+		constructor(associationDef: import("moddle-context-serializer").Association, { environment }: ContextInstance);
 		id: string | undefined;
 		type: string;
-		name: any;
+		name: string | undefined;
 		parent: ElementParent;
+		
 		behaviour: Record<string, any>;
-		sourceId: any;
-		targetId: any;
+		sourceId: string;
+		targetId: string;
 		isAssociation: boolean;
 		environment: Environment;
 		logger: ILogger;
@@ -2548,13 +2952,14 @@ declare module 'bpmn-elements/flows' {
 		 * source's `end` event and publishes `message.outbound` whenever the source completes,
 		 * carrying any message payload through to the target.
 		 * */
-		constructor(flowDef: import("moddle-context-serializer").SerializableElement, context: ContextInstance);
+		constructor(flowDef: import("moddle-context-serializer").MessageFlow, context: ContextInstance);
 		id: string | undefined;
 		type: string;
-		name: any;
+		name: string | undefined;
 		parent: ElementParent;
-		source: any;
-		target: any;
+		source: import("moddle-context-serializer").MessageFlowEndpoint;
+		target: import("moddle-context-serializer").MessageFlowEndpoint;
+		
 		behaviour: Record<string, any>;
 		environment: Environment;
 		context: ContextInstance;
@@ -2604,14 +3009,15 @@ declare module 'bpmn-elements/flows' {
 		 * events; activities subscribe to drive their inbound queue.
 		 * */
 		constructor(flowDef: import("moddle-context-serializer").SequenceFlow, { environment }: ContextInstance);
-		id: any;
-		type: any;
-		name: any;
+		id: string | undefined;
+		type: string;
+		name: string | undefined;
 		parent: ElementParent;
-		behaviour: any;
-		sourceId: any;
-		targetId: any;
-		isDefault: any;
+		
+		behaviour: Record<string, any>;
+		sourceId: string;
+		targetId: string;
+		isDefault: boolean | undefined;
 		isSequenceFlow: boolean;
 		environment: Environment;
 		logger: ILogger;
@@ -2662,7 +3068,7 @@ declare module 'bpmn-elements/flows' {
 		 * Walk the flow as part of a process shake. Detects loops and publishes flow.shake.loop
 		 * when the target was already visited, otherwise flow.shake.
 		 * */
-		shake(message: ElementBrokerMessage): any;
+		shake(message: ElementBrokerMessage): number | undefined;
 		/**
 		 * Resolve the flow's condition (script or expression). Returns null when no condition is set.
 		 * Emits a fatal error when the script language is missing or unsupported.
@@ -2689,8 +3095,8 @@ declare module 'bpmn-elements/flows' {
 		 * events, and rolls completion up to the owning Process or sub-process Activity.
 		 * */
 		constructor(parentActivity: Process | Activity, context: ContextInstance);
-		id: any;
-		type: any;
+		id: string | undefined;
+		type: string;
 		isSubProcess: any;
 		isTransaction: any;
 		broker: import("smqp").Broker;
@@ -2717,9 +3123,8 @@ declare module 'bpmn-elements/flows' {
 		recover(state?: ProcessExecutionState): this;
 		/**
 		 * Walk activity graph from the given start id, or every start activity when omitted.
-		 * 
-		 */
-		shake(fromId?: string): any;
+		 * */
+		shake(fromId?: string): ShakeResult;
 		/**
 		 * Stop the running process execution via the api.
 		 */
@@ -2732,11 +3137,11 @@ declare module 'bpmn-elements/flows' {
 		/**
 		 * Queue a discard message that propagates to all running children.
 		 */
-		discard(): any;
+		discard(): void;
 		/**
 		 * Queue a cancel message that propagates to all running children.
 		 */
-		cancel(): any;
+		cancel(): void;
 		/**
 		 * Get child activities in the process scope.
 		 * */
@@ -2783,26 +3188,6 @@ declare module 'bpmn-elements/flows' {
 		 * */
 		format(message: ElementBrokerMessage, callback: (err: Error | null, content?: ElementMessageContent, formatted?: boolean) => void): void;
 	}
-		class Scripts {
-		getScript(): void;
-		register(): void;
-	}
-		class RegisteredTimers {
-		constructor(timersApi: any, owner: any);
-		owner: any;
-		setTimeout: any;
-		clearTimeout: any;
-	}
-		class Timer_1 {
-		constructor(owner: any, timerId: any, callback: any, delay: any, args: any);
-		callback: any;
-		delay: any;
-		args: any;
-		owner: any;
-		timerId: any;
-		expireAt: Date;
-		timerRef: any;
-	}
 
 	export {};
 }
@@ -2810,53 +3195,92 @@ declare module 'bpmn-elements/flows' {
 declare module 'bpmn-elements/gateways' {
 	import type { Broker, BrokerState, MessageEnvelope } from 'smqp';
 	import type { SerializableElement } from 'moddle-context-serializer';
-	import type { Activity, ActivityError, ActivityExecution, ActivityExecutionState, ActivityRunStatus, ActivityState, Association, AssociationState, ContextInstance, ElementBase, ElementBroker, ElementBrokerMessage, ElementMessageContent, ElementParent, ElementState, Environment, EnvironmentOptions, EnvironmentSettings, EnvironmentState, EventDefinition, ExecutionScope, Extension, IActivityBehaviour, IApi, IExpressions, IExtension, IExtensions, IExtensionsMapper, IIOData, ILogger, IScripts, ISequenceFlowCondition, ITimers, Lane, LoggerFactory, MessageFlow, MessageFlowState, Process, ProcessExecutionState, ProcessState, RegisteredTimer, Script, SequenceFlow, SequenceFlowState, Timer, Timers, completedCounters, filterPostponed, signalMessage, startActivityFilterOptions, wrappedClearTimeout, wrappedSetTimeout } from 'bpmn-elements';
+	import type { Activity, ActivityError, ActivityExecution, ActivityExecutionState, ActivityRunStatus, ActivityState, Association, AssociationState, ContextInstance, ElementBase, ElementBroker, ElementBrokerMessage, ElementMessageContent, ElementParent, ElementState, Environment, EnvironmentOptions, EnvironmentSettings, EnvironmentState, EventDefinition, EventDefinitionReference, ExecutionScope, Extension, IActivityBehaviour, IApi, IExpressions, IExtension, IExtensions, IExtensionsMapper, IIOData, ILogger, IScripts, ISequenceFlowCondition, ITimers, Lane, LoggerFactory, MessageFlow, MessageFlowState, Process, ProcessExecutionState, ProcessState, RegisteredTimer, Script, SequenceFlow, SequenceFlowState, ShakeResult, ShakeSequenceItem, ShakenSequence, Timer, completedCounters, filterPostponed, signalMessage, startActivityFilterOptions, wrappedClearTimeout, wrappedSetTimeout } from 'bpmn-elements';
 
-	export function EventBasedGateway(activityDef: any, context: any): Activity;
+	/**
+	 * Event based gateway
+	 * */
+	export function EventBasedGateway(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Event based gateway behaviour
+	 * */
 		export class EventBasedGatewayBehaviour {
-		constructor(activity: any, context: any);
-		id: any;
-		type: any;
-		activity: any;
-		broker: any;
-		context: any;
-		execute(executeMessage: any): any;
+		/**
+		 * Event based gateway behaviour
+		 * */
+		constructor(activity: Activity, context: ContextInstance);
+		id: string | undefined;
+		type: string;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		context: ContextInstance;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 	}
-	export function ExclusiveGateway(activityDef: any, context: any): Activity;
+	/**
+	 * Exclusive gateway
+	 * */
+	export function ExclusiveGateway(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Exclusive gateway behaviour
+	 * */
 		export class ExclusiveGatewayBehaviour {
-		constructor(activity: any);
-		id: any;
-		type: any;
-		broker: any;
-		execute({ content }: {
-			content: any;
-		}): void;
+		/**
+		 * Exclusive gateway behaviour
+		 * */
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
+		broker: import("smqp").Broker;
+		
+		execute({ content }: ElementBrokerMessage): void;
 	}
-	export function InclusiveGateway(activityDef: any, context: any): Activity;
+	/**
+	 * Inclusive gateway
+	 * */
+	export function InclusiveGateway(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Inclusive gateway behaviour
+	 * */
 		export class InclusiveGatewayBehaviour {
-		constructor(activity: any);
-		id: any;
-		type: any;
-		broker: any;
-		execute({ content }: {
-			content: any;
-		}): void;
+		/**
+		 * Inclusive gateway behaviour
+		 * */
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
+		broker: import("smqp").Broker;
+		
+		execute({ content }: ElementBrokerMessage): void;
 	}
+	/**
+	 * Parallel gateway
+	 * */
 		export class ParallelGateway {
-		constructor(activityDef: any, context: any);
-		id: any;
+		/**
+		 * Parallel gateway
+		 * */
+		constructor(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance);
+		id: string | undefined;
 	}
+	/**
+	 * Parallel gateway behaviour
+	 * */
 		export class ParallelGatewayBehaviour {
-		constructor(activity: any);
-		id: any;
-		type: any;
-		activity: any;
-		broker: any;
+		/**
+		 * Parallel gateway behaviour
+		 * */
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
+		activity: Activity;
+		broker: import("smqp").Broker;
 		inbound: Set<any>;
 		isConverging: boolean;
 		get executionId(): any;
-		execute(executeMessage: any): any;
-		setup(executeMessage: any): any;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
+		setup(executeMessage: any): number | undefined;
 		peerMonitor: PeerMonitor | undefined;
 	}
 		class PeerMonitor {
@@ -2878,27 +3302,6 @@ declare module 'bpmn-elements/gateways' {
 		stop(): void;
 	}
 	/**
-	 * Enriches an element run message via async format start/end messages on the `format` exchange
-	 * before the run message is continued. Handlers publish enrichment by responding to a start
-	 * message with a matching end (or error) routing key.
-	 * */
-		class Formatter {
-		/**
-		 * Enriches an element run message via async format start/end messages on the `format` exchange
-		 * before the run message is continued. Handlers publish enrichment by responding to a start
-		 * message with a matching end (or error) routing key.
-		 * */
-		constructor(element: ElementBase);
-		id: string;
-		broker: import("smqp").Broker;
-		logger: ILogger;
-		/**
-		 * Format the given run message. Callback fires with `(err, content, formatted)` once
-		 * formatting completes; `formatted` is true when content was actually enriched.
-		 * */
-		format(message: ElementBrokerMessage, callback: (err: Error | null, content?: ElementMessageContent, formatted?: boolean) => void): void;
-	}
-	/**
 	 * Drives the execution of a single process or sub-process: activates children, routes activity
 	 * events, and rolls completion up to the owning Process or sub-process Activity.
 	 * */
@@ -2908,8 +3311,8 @@ declare module 'bpmn-elements/gateways' {
 		 * events, and rolls completion up to the owning Process or sub-process Activity.
 		 * */
 		constructor(parentActivity: Process | Activity, context: ContextInstance);
-		id: any;
-		type: any;
+		id: string | undefined;
+		type: string;
 		isSubProcess: any;
 		isTransaction: any;
 		broker: import("smqp").Broker;
@@ -2936,9 +3339,8 @@ declare module 'bpmn-elements/gateways' {
 		recover(state?: ProcessExecutionState): this;
 		/**
 		 * Walk activity graph from the given start id, or every start activity when omitted.
-		 * 
-		 */
-		shake(fromId?: string): any;
+		 * */
+		shake(fromId?: string): ShakeResult;
 		/**
 		 * Stop the running process execution via the api.
 		 */
@@ -2951,11 +3353,11 @@ declare module 'bpmn-elements/gateways' {
 		/**
 		 * Queue a discard message that propagates to all running children.
 		 */
-		discard(): any;
+		discard(): void;
 		/**
 		 * Queue a cancel message that propagates to all running children.
 		 */
-		cancel(): any;
+		cancel(): void;
 		/**
 		 * Get child activities in the process scope.
 		 * */
@@ -2981,25 +3383,26 @@ declare module 'bpmn-elements/gateways' {
 		get isRunning(): boolean;
 		get activityStatus(): string;
 	}
-		class Scripts {
-		getScript(): void;
-		register(): void;
-	}
-		class RegisteredTimers {
-		constructor(timersApi: any, owner: any);
-		owner: any;
-		setTimeout: any;
-		clearTimeout: any;
-	}
-		class Timer_1 {
-		constructor(owner: any, timerId: any, callback: any, delay: any, args: any);
-		callback: any;
-		delay: any;
-		args: any;
-		owner: any;
-		timerId: any;
-		expireAt: Date;
-		timerRef: any;
+	/**
+	 * Enriches an element run message via async format start/end messages on the `format` exchange
+	 * before the run message is continued. Handlers publish enrichment by responding to a start
+	 * message with a matching end (or error) routing key.
+	 * */
+		class Formatter {
+		/**
+		 * Enriches an element run message via async format start/end messages on the `format` exchange
+		 * before the run message is continued. Handlers publish enrichment by responding to a start
+		 * message with a matching end (or error) routing key.
+		 * */
+		constructor(element: ElementBase);
+		id: string;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		/**
+		 * Format the given run message. Callback fires with `(err, content, formatted)` once
+		 * formatting completes; `formatted` is true when content was actually enriched.
+		 * */
+		format(message: ElementBrokerMessage, callback: (err: Error | null, content?: ElementMessageContent, formatted?: boolean) => void): void;
 	}
 
 	export {};
@@ -3008,134 +3411,241 @@ declare module 'bpmn-elements/gateways' {
 declare module 'bpmn-elements/tasks' {
 	import type { Broker, BrokerState, MessageEnvelope } from 'smqp';
 	import type { SerializableElement } from 'moddle-context-serializer';
-	import type { Activity, ActivityError, ActivityExecution, ActivityExecutionState, ActivityRunStatus, ActivityState, Association, AssociationState, ContextInstance, ElementBase, ElementBroker, ElementBrokerMessage, ElementMessageContent, ElementParent, ElementState, Environment, EnvironmentOptions, EnvironmentSettings, EnvironmentState, EventDefinition, ExecutionScope, Extension, IActivityBehaviour, IApi, IExpressions, IExtension, IExtensions, IExtensionsMapper, IIOData, ILogger, IScripts, ISequenceFlowCondition, ITimers, Lane, LoggerFactory, MessageFlow, MessageFlowState, Process, ProcessExecutionState, ProcessState, RegisteredTimer, Script, SequenceFlow, SequenceFlowState, Timer, Timers, completedCounters, filterPostponed, signalMessage, startActivityFilterOptions, wrappedClearTimeout, wrappedSetTimeout } from 'bpmn-elements';
+	import type { Activity, ActivityError, ActivityExecution, ActivityExecutionState, ActivityRunStatus, ActivityState, Association, AssociationState, ContextInstance, ElementBase, ElementBroker, ElementBrokerMessage, ElementMessageContent, ElementParent, ElementState, Environment, EnvironmentOptions, EnvironmentSettings, EnvironmentState, EventDefinition, EventDefinitionReference, ExecutionScope, Extension, IActivityBehaviour, IApi, IExpressions, IExtension, IExtensions, IExtensionsMapper, IIOData, ILogger, IScripts, ISequenceFlowCondition, ITimers, Lane, LoggerFactory, MessageFlow, MessageFlowState, Process, ProcessExecutionState, ProcessState, RegisteredTimer, Script, SequenceFlow, SequenceFlowState, ShakeResult, ShakeSequenceItem, ShakenSequence, Timer, completedCounters, filterPostponed, signalMessage, startActivityFilterOptions, wrappedClearTimeout, wrappedSetTimeout } from 'bpmn-elements';
 
 	/**
-	 * Create call activity
-	 * @returns Call activity
-	 */
+	 * Call activity
+	 * */
 	export function CallActivity(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Call activity behaviour
+	 * */
 		export class CallActivityBehaviour {
-		constructor(activity: any);
-		id: any;
-		type: any;
+		/**
+		 * Call activity behaviour
+		 * */
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
 		calledElement: any;
-		loopCharacteristics: any;
-		activity: any;
-		broker: any;
-		environment: any;
-		execute(executeMessage: any): any;
+		
+		loopCharacteristics: LoopCharacteristics;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		environment: Environment;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 	}
-	export function ReceiveTask(activityDef: any, context: any): Activity;
+	/**
+	 * Receive task
+	 * */
+	export function ReceiveTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Receive task behaviour
+	 * */
 		export class ReceiveTaskBehaviour {
-		constructor(activity: any);
-		id: any;
-		type: any;
+		/**
+		 * Receive task behaviour
+		 * */
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
 		reference: any;
 		loopCharacteristics: any;
-		activity: any;
-		broker: any;
-		execute(executeMessage: any): any;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 	}
-	export function ScriptTask(activityDef: any, context: any): Activity;
+	/**
+	 * Script task
+	 * */
+	export function ScriptTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Script task behaviour
+	 * */
 		export class ScriptTaskBehaviour {
-		constructor(activity: any);
-		id: any;
-		type: any;
+		/**
+		 * Script task behaviour
+		 * */
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
 		scriptFormat: any;
 		loopCharacteristics: any;
-		activity: any;
-		environment: any;
-		execute(executeMessage: any): any;
+		activity: Activity;
+		environment: Environment;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 	}
-	export function ServiceTask(activityDef: any, context: any): Activity;
+	/**
+	 * Service task
+	 * */
+	export function ServiceTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Service task behaviour
+	 * */
 		export class ServiceTaskBehaviour {
-		constructor(activity: any);
-		id: any;
-		type: any;
+		/**
+		 * Service task behaviour
+		 * */
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
 		loopCharacteristics: any;
-		activity: any;
-		environment: any;
-		broker: any;
-		execute(executeMessage: any): any;
+		activity: Activity;
+		environment: Environment;
+		broker: import("smqp").Broker;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 		service: any;
 		getService(message: any): any;
 	}
-	export function SignalTask(activityDef: any, context: any): Activity;
+	/**
+	 * Signal task
+	 * */
+	export function SignalTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Signal task behaviour
+	 * */
 		export class SignalTaskBehaviour {
-		constructor(activity: any);
-		id: any;
-		type: any;
+		/**
+		 * Signal task behaviour
+		 * */
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
 		loopCharacteristics: any;
-		activity: any;
-		broker: any;
-		execute(executeMessage: any): any;
+		activity: Activity;
+		broker: import("smqp").Broker;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 	}
-	export function SubProcess(activityDef: any, context: any): Activity;
+	/**
+	 * Sub process
+	 * */
+	export function SubProcess(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Sub process behaviour
+	 * */
 		export class SubProcessBehaviour {
-		constructor(activity: any, context: any);
-		id: any;
-		type: any;
+		/**
+		 * Sub process behaviour
+		 * */
+		constructor(activity: Activity, context: ContextInstance);
+		id: string | undefined;
+		type: string;
 		loopCharacteristics: any;
-		activity: any;
-		context: any;
-		environment: any;
-		broker: any;
-		executionId: any;
+		activity: Activity;
+		context: ContextInstance;
+		environment: Environment;
+		broker: import("smqp").Broker;
+		executionId: string | undefined;
 		get execution(): any;
 		get executions(): any[];
-		execute(executeMessage: any): any;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 		getState(): any;
 		recover(state: any): this | undefined;
 		getPostponed(): any[];
 		getApi(apiMessage: any): any;
 	}
-	export function Task(activityDef: any, context: any): Activity;
-		export class TaskBehaviour {
-		constructor(activity: any);
-		id: any;
-		type: any;
-		loopCharacteristics: any;
-		broker: any;
-		execute(executeMessage: any): any;
-	}
-	export function Transaction(activityDef: any, context: any): Activity;
 	/**
-	 * Enriches an element run message via async format start/end messages on the `format` exchange
-	 * before the run message is continued. Handlers publish enrichment by responding to a start
-	 * message with a matching end (or error) routing key.
+	 * Task
 	 * */
-		class Formatter {
+	export function Task(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Task behaviour
+	 * */
+		export class TaskBehaviour {
 		/**
-		 * Enriches an element run message via async format start/end messages on the `format` exchange
-		 * before the run message is continued. Handlers publish enrichment by responding to a start
-		 * message with a matching end (or error) routing key.
+		 * Task behaviour
 		 * */
-		constructor(element: ElementBase);
-		id: string;
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
+		loopCharacteristics: any;
 		broker: import("smqp").Broker;
-		logger: ILogger;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
+	}
+	/**
+	 * Transaction
+	 * */
+	export function Transaction(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Loop characteristics
+	 * */
+		class LoopCharacteristics {
 		/**
-		 * Format the given run message. Callback fires with `(err, content, formatted)` once
-		 * formatting completes; `formatted` is true when content was actually enriched.
+		 * Loop characteristics
 		 * */
-		format(message: ElementBrokerMessage, callback: (err: Error | null, content?: ElementMessageContent, formatted?: boolean) => void): void;
+		constructor(activity: Activity, loopCharacteristics: import("moddle-context-serializer").SerializableElement);
+		activity: Activity;
+		loopCharacteristics: import("moddle-context-serializer").SerializableElement<Record<string, any>>;
+		type: string;
+		
+		isSequential: boolean;
+		
+		collection: string | undefined;
+		
+		loopCardinality: number | undefined;
+		loopType: string | undefined;
+		
+		elementVariable: string | undefined;
+		
+		characteristics: Characteristics;
+		execution: any;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 	}
-		class RegisteredTimers {
-		constructor(timersApi: any, owner: any);
-		owner: any;
-		setTimeout: any;
-		clearTimeout: any;
-	}
-		class Timer_1 {
-		constructor(owner: any, timerId: any, callback: any, delay: any, args: any);
-		callback: any;
-		delay: any;
-		args: any;
-		owner: any;
-		timerId: any;
-		expireAt: Date;
-		timerRef: any;
+	/**
+	 * Per-execution snapshot of resolved loop characteristics (cardinality, collection, conditions).
+	 * */
+		class Characteristics {
+		/**
+		 * Per-execution snapshot of resolved loop characteristics (cardinality, collection, conditions).
+		 * */
+		constructor(activity: Activity, loopCharacteristics: import("moddle-context-serializer").SerializableElement, executeMessage: ElementBrokerMessage);
+		activity: Activity;
+		behaviour: Record<string, any>;
+		message: ElementBrokerMessage;
+		type: string;
+		id: string | undefined;
+		broker: import("smqp").Broker;
+		parentExecutionId: string | undefined;
+		
+		isSequential: boolean;
+		output: any;
+		parent: ElementParent;
+		loopCardinality: number | undefined;
+		startCondition: string | undefined;
+		completionCondition: string;
+		collection: any[] | undefined;
+		
+		elementVariable: string;
+		cardinality: number | undefined;
+		logger: ILogger;
+		batchSize: number;
+		
+		getContent(): ElementMessageContent;
+		
+		next(index: number): ElementMessageContent;
+		/**
+		 * @returns cardinality
+		 */
+		getCardinality(collection?: any): number | undefined;
+		
+		getCollection(): any[] | undefined;
+		
+		isStartConditionMet(message: ElementBrokerMessage): any;
+		
+		isCompletionConditionMet(message: ElementBrokerMessage): any;
+		
+		complete(content: ElementMessageContent, allDiscarded?: boolean): void;
+		
+		subscribe(onIterationCompleteMessage: ElementBrokerMessage): void;
+		stop(): void;
 	}
 	/**
 	 * Drives the execution of a single process or sub-process: activates children, routes activity
@@ -3147,8 +3657,8 @@ declare module 'bpmn-elements/tasks' {
 		 * events, and rolls completion up to the owning Process or sub-process Activity.
 		 * */
 		constructor(parentActivity: Process | Activity, context: ContextInstance);
-		id: any;
-		type: any;
+		id: string | undefined;
+		type: string;
 		isSubProcess: any;
 		isTransaction: any;
 		broker: import("smqp").Broker;
@@ -3175,9 +3685,8 @@ declare module 'bpmn-elements/tasks' {
 		recover(state?: ProcessExecutionState): this;
 		/**
 		 * Walk activity graph from the given start id, or every start activity when omitted.
-		 * 
-		 */
-		shake(fromId?: string): any;
+		 * */
+		shake(fromId?: string): ShakeResult;
 		/**
 		 * Stop the running process execution via the api.
 		 */
@@ -3190,11 +3699,11 @@ declare module 'bpmn-elements/tasks' {
 		/**
 		 * Queue a discard message that propagates to all running children.
 		 */
-		discard(): any;
+		discard(): void;
 		/**
 		 * Queue a cancel message that propagates to all running children.
 		 */
-		cancel(): any;
+		cancel(): void;
 		/**
 		 * Get child activities in the process scope.
 		 * */
@@ -3220,9 +3729,26 @@ declare module 'bpmn-elements/tasks' {
 		get isRunning(): boolean;
 		get activityStatus(): string;
 	}
-		class Scripts {
-		getScript(): void;
-		register(): void;
+	/**
+	 * Enriches an element run message via async format start/end messages on the `format` exchange
+	 * before the run message is continued. Handlers publish enrichment by responding to a start
+	 * message with a matching end (or error) routing key.
+	 * */
+		class Formatter {
+		/**
+		 * Enriches an element run message via async format start/end messages on the `format` exchange
+		 * before the run message is continued. Handlers publish enrichment by responding to a start
+		 * message with a matching end (or error) routing key.
+		 * */
+		constructor(element: ElementBase);
+		id: string;
+		broker: import("smqp").Broker;
+		logger: ILogger;
+		/**
+		 * Format the given run message. Callback fires with `(err, content, formatted)` once
+		 * formatting completes; `formatted` is true when content was actually enriched.
+		 * */
+		format(message: ElementBrokerMessage, callback: (err: Error | null, content?: ElementMessageContent, formatted?: boolean) => void): void;
 	}
 
 	export {};

@@ -21,6 +21,7 @@ function CancelEventDefinition(activity, eventDefinition) {
   const type = eventDefinition.type;
   this.id = id;
   this.type = type;
+  /** @type {import('#types').EventDefinitionReference} */
   this.reference = {
     referenceType: 'cancel'
   };
@@ -36,9 +37,17 @@ Object.defineProperty(CancelEventDefinition.prototype, 'executionId', {
     return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }
 });
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 CancelEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 CancelEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   this[_constants.K_COMPLETED] = false;
@@ -71,6 +80,10 @@ CancelEventDefinition.prototype.executeCatch = function executeCatch(executeMess
   waitContent.parent = (0, _messageHelper.shiftParent)(parent);
   broker.publish('event', 'activity.wait', waitContent);
 };
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 CancelEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const {
@@ -87,7 +100,7 @@ CancelEventDefinition.prototype.executeThrow = function executeThrow(executeMess
   broker.publish('event', 'activity.cancel', cancelContent, {
     type: 'cancel'
   });
-  return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
+  broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
 CancelEventDefinition.prototype._onCatchMessage = function onCatchMessage(_, message) {
   const content = message.content;

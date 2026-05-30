@@ -1,10 +1,19 @@
 import { Activity } from '../activity/Activity.js';
 import { cloneContent } from '../messageHelper.js';
 
+/**
+ * Exclusive gateway
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 export function ExclusiveGateway(activityDef, context) {
   return new Activity(ExclusiveGatewayBehaviour, activityDef, context);
 }
 
+/**
+ * Exclusive gateway behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function ExclusiveGatewayBehaviour(activity) {
   const { id, type, broker } = activity;
   this.id = id;
@@ -12,6 +21,10 @@ export function ExclusiveGatewayBehaviour(activity) {
   this.broker = broker;
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 ExclusiveGatewayBehaviour.prototype.execute = function execute({ content }) {
   this.broker.publish('execution', 'execute.completed', cloneContent(content, { outboundTakeOne: true }));
 };

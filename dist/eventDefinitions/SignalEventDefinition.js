@@ -27,7 +27,9 @@ function SignalEventDefinition(activity, eventDefinition) {
   } = eventDefinition;
   this.id = id;
   this.type = type;
-  const reference = this.reference = {
+
+  /** @type {import('#types').EventDefinitionReference} */
+  this.reference = {
     name: 'anonymous',
     ...behaviour.signalRef,
     referenceType: 'signal'
@@ -36,16 +38,16 @@ function SignalEventDefinition(activity, eventDefinition) {
   this.activity = activity;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
-  const referenceElement = this[_constants.K_REFERENCE_ELEMENT] = reference.id && activity.getActivityById(reference.id);
+  const referenceElement = this[_constants.K_REFERENCE_ELEMENT] = this.reference.id && activity.getActivityById(this.reference.id);
   if (!isThrowing && isStart) {
     this[_constants.K_COMPLETED] = false;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
-    const messageQueueName = `${reference.referenceType}-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(referenceId)}-q`;
+    const messageQueueName = `${this.reference.referenceType}-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(referenceId)}-q`;
     this[_constants.K_MESSAGE_Q] = broker.assertQueue(messageQueueName, {
       autoDelete: false,
       durable: true
     });
-    broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, {
+    broker.bindQueue(messageQueueName, 'api', `*.${this.reference.referenceType}.#`, {
       durable: true
     });
   }
@@ -56,9 +58,17 @@ Object.defineProperty(SignalEventDefinition.prototype, 'executionId', {
     return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }
 });
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 SignalEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 SignalEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   this[_constants.K_COMPLETED] = false;
@@ -101,6 +111,10 @@ SignalEventDefinition.prototype.executeCatch = function executeCatch(executeMess
   waitContent.parent = (0, _messageHelper.shiftParent)(parent);
   broker.publish('event', 'activity.wait', waitContent);
 };
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 SignalEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const {

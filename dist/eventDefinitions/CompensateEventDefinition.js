@@ -25,8 +25,10 @@ function CompensateEventDefinition(activity, eventDefinition, context) {
   } = activity;
   this.id = id;
   const type = this.type = eventDefinition.type;
-  const reference = this.reference = {
-    referenceType: 'compensate'
+  const referenceType = 'compensate';
+  /** @type {import('#types').EventDefinitionReference} */
+  this.reference = {
+    referenceType
   };
   this.isThrowing = isThrowing;
   this.activity = activity;
@@ -35,7 +37,7 @@ function CompensateEventDefinition(activity, eventDefinition, context) {
   if (!isThrowing) {
     this[_constants.K_COMPLETED] = false;
     this[K_ASSOCIATIONS] = context.getOutboundAssociations(id);
-    const messageQueueName = `${reference.referenceType}-${(0, _shared.brokerSafeId)(id)}-q`;
+    const messageQueueName = `${referenceType}-${(0, _shared.brokerSafeId)(id)}-q`;
     this[_constants.K_MESSAGE_Q] = broker.assertQueue(messageQueueName, {
       autoDelete: false,
       durable: true
@@ -44,7 +46,7 @@ function CompensateEventDefinition(activity, eventDefinition, context) {
       autoDelete: false,
       durable: true
     });
-    broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, {
+    broker.bindQueue(messageQueueName, 'api', `*.${referenceType}.#`, {
       durable: true,
       priority: 400
     });
@@ -56,9 +58,17 @@ Object.defineProperty(CompensateEventDefinition.prototype, 'executionId', {
     return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }
 });
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 CompensateEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 CompensateEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   this[_constants.K_COMPLETED] = false;
@@ -95,6 +105,10 @@ CompensateEventDefinition.prototype.executeCatch = function executeCatch(execute
     expect: 'compensate'
   }));
 };
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 CompensateEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const {

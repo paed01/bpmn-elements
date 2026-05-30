@@ -14,6 +14,7 @@ export function LinkEventDefinition(activity, eventDefinition) {
   this.id = id;
   this.type = type;
 
+  /** @type {import('#types').EventDefinitionReference} */
   this.reference = {
     id: behaviour.name,
     linkName: behaviour.name,
@@ -61,10 +62,16 @@ Object.defineProperty(LinkEventDefinition.prototype, 'executionId', {
   },
 });
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 LinkEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 LinkEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[K_EXECUTE_MESSAGE] = executeMessage;
 
@@ -89,6 +96,9 @@ LinkEventDefinition.prototype.executeCatch = function executeCatch(executeMessag
   return broker.publish('execution', 'execute.completed', cloneContent(executeContent, { output: linkMessage, state: 'catch' }));
 };
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 LinkEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const { executionId, parent } = executeContent;

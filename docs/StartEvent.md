@@ -8,7 +8,7 @@ If a form property is available when start event is executed, the event will wai
 
 ```javascript
 import * as elements from 'bpmn-elements';
-import BpmnModdle from 'bpmn-moddle';
+import { BpmnModdle } from 'bpmn-moddle';
 
 import { default as serialize, TypeResolver } from 'moddle-context-serializer';
 

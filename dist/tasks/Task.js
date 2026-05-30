@@ -7,9 +7,19 @@ exports.Task = Task;
 exports.TaskBehaviour = TaskBehaviour;
 var _Activity = require("../activity/Activity.js");
 var _messageHelper = require("../messageHelper.js");
+/**
+ * Task
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function Task(activityDef, context) {
   return new _Activity.Activity(TaskBehaviour, activityDef, context);
 }
+
+/**
+ * Task behaviour
+ * @param {import('#types').Activity} activity
+ */
 function TaskBehaviour(activity) {
   const {
     id,
@@ -22,6 +32,11 @@ function TaskBehaviour(activity) {
   this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.broker = broker;
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 TaskBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;

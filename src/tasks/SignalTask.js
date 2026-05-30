@@ -2,10 +2,19 @@ import { Activity } from '../activity/Activity.js';
 import { ActivityError } from '../error/Errors.js';
 import { cloneContent } from '../messageHelper.js';
 
+/**
+ * Signal task
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 export function SignalTask(activityDef, context) {
   return new Activity(SignalTaskBehaviour, activityDef, context);
 }
 
+/**
+ * Signal task behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function SignalTaskBehaviour(activity) {
   const { id, type, behaviour } = activity;
 
@@ -17,6 +26,10 @@ export function SignalTaskBehaviour(activity) {
   this.broker = activity.broker;
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 SignalTaskBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;

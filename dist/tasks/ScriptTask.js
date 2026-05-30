@@ -9,9 +9,19 @@ var _Activity = require("../activity/Activity.js");
 var _ExecutionScope = require("../activity/ExecutionScope.js");
 var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
+/**
+ * Script task
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function ScriptTask(activityDef, context) {
   return new _Activity.Activity(ScriptTaskBehaviour, activityDef, context);
 }
+
+/**
+ * Script task behaviour
+ * @param {import('#types').Activity} activity
+ */
 function ScriptTaskBehaviour(activity) {
   const {
     id,
@@ -26,6 +36,11 @@ function ScriptTaskBehaviour(activity) {
   const environment = this.environment = activity.environment;
   environment.registerScript(activity);
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 ScriptTaskBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;

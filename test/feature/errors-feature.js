@@ -998,7 +998,74 @@ Feature('Errors', () => {
       expect(err.inner.stack).to.match(/to-end-2/i);
     });
   });
+
+  Scenario('recovered state carries an error with an unrecognized type', () => {
+    let context, definition, serviceCallback;
+    const options = {
+      services: {
+        volatile(_, next) {
+          serviceCallback = next;
+        },
+      },
+    };
+
+    Given('a source with a volatile service task', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="Process_0" isExecutable="true">
+          <serviceTask id="service" implementation="\${environment.services.volatile}" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = new Definition(context, options);
+    });
+
+    let state, errored;
+    When('definition is ran with listener that saves state on error', () => {
+      definition.once('error', () => {
+        state = JSON.stringify(definition.getState());
+      });
+      errored = definition.waitFor('error');
+      definition.run();
+    });
+
+    And('service fails', () => {
+      serviceCallback(new Error('boom'));
+    });
+
+    Then('definition errors', () => {
+      return errored;
+    });
+
+    let recovered;
+    Given('the persisted state has its error type rewritten to an unrecognized value', () => {
+      const parsed = JSON.parse(state);
+      mutateErrorType(parsed, 'LegacyError');
+      recovered = new Definition(context.clone(), options).recover(parsed);
+    });
+
+    let recoveredError;
+    When('definition is resumed', () => {
+      recoveredError = recovered.waitFor('error');
+      recovered.resume();
+    });
+
+    Then('error bubbles through verbatim', async () => {
+      const errApi = await recoveredError;
+      expect(errApi.content).to.have.property('error');
+      expect(errApi.content.error).to.have.property('type', 'LegacyError');
+      expect(errApi.content.error).to.have.property('description', 'boom');
+      expect(errApi.content.error).to.not.be.instanceof(Error);
+    });
+  });
 });
+
+function mutateErrorType(node, type) {
+  if (!node || typeof node !== 'object') return;
+  if (node.error && typeof node.error === 'object' && 'type' in node.error) node.error.type = type;
+  for (const key in node) mutateErrorType(node[key], type);
+}
 
 async function prepareSource() {
   const context = await testHelpers.context(bpmnErrorSource, {

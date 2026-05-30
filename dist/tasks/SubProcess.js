@@ -10,6 +10,12 @@ var _ProcessExecution = require("../process/ProcessExecution.js");
 var _messageHelper = require("../messageHelper.js");
 const K_EXECUTIONS = Symbol.for('executions');
 const K_ON_EXECUTION_COMPLETED = Symbol.for('execution completed handler');
+
+/**
+ * Sub process
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function SubProcess(activityDef, context) {
   const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
   const subProcess = new _Activity.Activity(SubProcessBehaviour, {
@@ -39,6 +45,12 @@ function SubProcess(activityDef, context) {
     });
   }
 }
+
+/**
+ * Sub process behaviour
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').ContextInstance} context
+ */
 function SubProcessBehaviour(activity, context) {
   const {
     id,
@@ -66,6 +78,11 @@ Object.defineProperty(SubProcessBehaviour.prototype, 'executions', {
     return [...this[K_EXECUTIONS]];
   }
 });
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 SubProcessBehaviour.prototype.execute = function execute(executeMessage) {
   const {
     isRootScope,

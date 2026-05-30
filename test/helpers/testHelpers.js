@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import Debug from 'debug';
-import BpmnModdle from 'bpmn-moddle';
+import { BpmnModdle } from 'bpmn-moddle';
 import * as types from 'bpmn-elements';
 
 import { Context, Environment } from 'bpmn-elements';

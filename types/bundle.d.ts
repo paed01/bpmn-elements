@@ -27,7 +27,6 @@ export { Properties } from '../src/io/Properties.js';
 export { ServiceImplementation } from '../src/tasks/ServiceImplementation.js';
 export { Signal } from '../src/activity/Signal.js';
 export { StandardLoopCharacteristics } from '../src/tasks/StandardLoopCharacteristics.js';
-export { Timers } from '../src/Timers.js';
 
 export { Association, MessageFlow, SequenceFlow } from '../src/flows/index.js';
 export { BoundaryEvent, EndEvent, IntermediateCatchEvent, IntermediateThrowEvent, StartEvent } from '../src/events/index.js';

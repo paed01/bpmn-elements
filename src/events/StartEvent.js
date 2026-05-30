@@ -3,10 +3,19 @@ import { EventDefinitionExecution } from '../eventDefinitions/EventDefinitionExe
 import { cloneContent } from '../messageHelper.js';
 import { K_EXECUTE_MESSAGE, K_EXECUTION } from '../constants.js';
 
+/**
+ * Start event
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 export function StartEvent(activityDef, context) {
   return new Activity(StartEventBehaviour, activityDef, context);
 }
 
+/**
+ * Start event behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function StartEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
@@ -21,6 +30,10 @@ Object.defineProperty(StartEventBehaviour.prototype, 'executionId', {
   },
 });
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 StartEventBehaviour.prototype.execute = function execute(executeMessage) {
   const execution = this[K_EXECUTION];
   if (execution) {

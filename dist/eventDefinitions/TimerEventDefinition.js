@@ -27,9 +27,9 @@ function TimerEventDefinition(activity, eventDefinition) {
     timeCycle,
     timeDate
   } = eventDefinition.behaviour || {};
-  if (timeDuration) this.timeDuration = timeDuration;
-  if (timeCycle) this.timeCycle = timeCycle;
-  if (timeDate) this.timeDate = timeDate;
+  if (timeDuration) this.timeDuration = /** @type {string} */timeDuration;
+  if (timeCycle) this.timeCycle = /** @type {string} */timeCycle;
+  if (timeDate) this.timeDate = /** @type {string} */timeDate;
   this.broker = activity.broker;
   this.logger = environment.Logger(type.toLowerCase());
   this[_constants.K_STOPPED] = false;
@@ -42,15 +42,21 @@ Object.defineProperty(TimerEventDefinition.prototype, 'executionId', {
   }
 });
 Object.defineProperty(TimerEventDefinition.prototype, 'stopped', {
+  /** @returns {boolean} */
   get() {
     return this[_constants.K_STOPPED];
   }
 });
 Object.defineProperty(TimerEventDefinition.prototype, 'timer', {
+  /** @returns {import('#types').Timer | null} */
   get() {
     return this[K_TIMER];
   }
 });
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 TimerEventDefinition.prototype.execute = function execute(executeMessage) {
   const {
     routingKey: executeKey,
@@ -194,6 +200,8 @@ TimerEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey,
       }
   }
 };
+
+/** @private */
 TimerEventDefinition.prototype._stop = function stop() {
   this[_constants.K_STOPPED] = true;
   const timer = this[K_TIMER];
@@ -202,6 +210,12 @@ TimerEventDefinition.prototype._stop = function stop() {
   broker.cancel(`_api-${this.executionId}`);
   broker.cancel(`_api-delegated-${this.executionId}`);
 };
+
+/**
+ * Parse timer
+ * @param {string} timerType
+ * @param {string} value
+ */
 TimerEventDefinition.prototype.parse = function parse(timerType, value) {
   let repeat, delay, expireAt;
   const now = new Date();

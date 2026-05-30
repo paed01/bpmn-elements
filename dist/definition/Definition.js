@@ -218,8 +218,10 @@ Definition.prototype.recover = function recover(state) {
  * Walk activity graphs to discover sequences. Limited to the activity's owning process
  * when startId is given, otherwise all processes are shaken.
  * @param {string} [startId]
+ * @returns {import('#types').ShakeResult | undefined}
  */
 Definition.prototype.shake = function shake(startId) {
+  /** @type {import('#types').ShakeResult} */
   let result = {};
   let bps;
   if (startId) {

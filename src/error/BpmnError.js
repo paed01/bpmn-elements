@@ -1,3 +1,8 @@
+/**
+ * BPMN error.
+ * @param {import('moddle-context-serializer').SerializableElement} errorDef
+ * @param {import('#types').ContextInstance} context
+ */
 export function BpmnErrorActivity(errorDef, context) {
   const { id, type, name = 'BpmnError', behaviour = {} } = errorDef;
   const { environment } = context;
@@ -10,8 +15,13 @@ export function BpmnErrorActivity(errorDef, context) {
     resolve,
   };
 
+  /**
+   * @param {import('#types').ElementBrokerMessage} executionMessage
+   * @param {Error} [error]
+   */
   function resolve(executionMessage, error) {
     const resolveCtx = { ...executionMessage, error };
+    /** @type {{ id?: string; type?: string; messageType: string; name: string; code: string | undefined; inner?: Error }} */
     const result = {
       id,
       type,

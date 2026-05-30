@@ -9,18 +9,33 @@ var _Activity = require("../activity/Activity.js");
 var _EventDefinitionExecution = require("../eventDefinitions/EventDefinitionExecution.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
+/**
+ * Intermediate catch event
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function IntermediateCatchEvent(activityDef, context) {
   return new _Activity.Activity(IntermediateCatchEventBehaviour, {
     ...activityDef,
     isCatching: true
   }, context);
 }
+
+/**
+ * Intermediate catch event behaviour
+ * @param {import('#types').Activity} activity
+ */
 function IntermediateCatchEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
   this.broker = activity.broker;
   this[_constants.K_EXECUTION] = activity.eventDefinitions && new _EventDefinitionExecution.EventDefinitionExecution(activity, activity.eventDefinitions);
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 IntermediateCatchEventBehaviour.prototype.execute = function execute(executeMessage) {
   const execution = this[_constants.K_EXECUTION];
   if (execution) {

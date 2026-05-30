@@ -31,6 +31,9 @@ Object.defineProperty(EventDefinitionExecution.prototype, 'stopped', {
   },
 });
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 EventDefinitionExecution.prototype.execute = function execute(executeMessage) {
   const content = executeMessage.content;
 

@@ -2,6 +2,13 @@ import { getPropertyValue } from '../getPropertyValue.js';
 import { brokerSafeId } from '../shared.js';
 import { K_CONSUMING } from '../constants.js';
 
+/**
+ * Activity ioSpecification behaviour. Reads bound data objects on enter and writes them on completion.
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').IoSpecification} ioSpecificationDef
+ * @param {import('#types').ContextInstance} context
+ * @satisfies {import('#types').IExtension}
+ */
 export function IoSpecification(activity, ioSpecificationDef, context) {
   const { id, type = 'iospecification', behaviour = {} } = ioSpecificationDef;
   this.id = id;
@@ -12,6 +19,9 @@ export function IoSpecification(activity, ioSpecificationDef, context) {
   this.context = context;
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} [message]
+ */
 IoSpecification.prototype.activate = function activate(message) {
   if (this[K_CONSUMING]) return;
   if (message?.fields.redelivered && message.fields.routingKey === 'run.start') {

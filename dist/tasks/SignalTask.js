@@ -8,9 +8,19 @@ exports.SignalTaskBehaviour = SignalTaskBehaviour;
 var _Activity = require("../activity/Activity.js");
 var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
+/**
+ * Signal task
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function SignalTask(activityDef, context) {
   return new _Activity.Activity(SignalTaskBehaviour, activityDef, context);
 }
+
+/**
+ * Signal task behaviour
+ * @param {import('#types').Activity} activity
+ */
 function SignalTaskBehaviour(activity) {
   const {
     id,
@@ -23,6 +33,11 @@ function SignalTaskBehaviour(activity) {
   this.activity = activity;
   this.broker = activity.broker;
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 SignalTaskBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;

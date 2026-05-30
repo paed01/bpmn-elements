@@ -141,6 +141,28 @@ export interface ElementParent {
   path?: Omit<ElementParent, 'path'>[];
 }
 
+// --- Shake results ------------------------------------------------------------
+
+/** A single hop (activity or sequence flow) recorded during a shake walk. */
+export interface ShakeSequenceItem {
+  id: string;
+  type: string;
+  count?: number;
+  sourceId?: string;
+  targetId?: string;
+}
+
+/** A single end-to-end sequence discovered while shaking an activity graph. */
+export interface ShakenSequence extends ElementMessageContent {
+  /** The activity- and flow-id steps that were walked, in order. */
+  sequence: ShakeSequenceItem[];
+  /** true when the walk revisited an already-seen activity. */
+  isLooped: boolean;
+}
+
+/** Result of shaking an activity graph, keyed by the starting activity id. */
+export type ShakeResult = Record<string, ShakenSequence[]>;
+
 // --- Element abstract bases ---------------------------------------------------
 
 export abstract class ElementBase {
@@ -182,6 +204,13 @@ export abstract class MessageElement {
 
 // --- Event definitions --------------------------------------------------------
 
+export interface EventDefinitionReference {
+  id?: string;
+  name?: string;
+  referenceType: string;
+  [x: string]: any;
+}
+
 // Common ancestor for the typed event definitions; concrete types live in src/eventDefinitions.
 export class EventDefinition {
   constructor(activity: Activity, eventDefinitionElement: SerializableElement, context?: ContextInstance, index?: number);
@@ -192,11 +221,7 @@ export class EventDefinition {
   get activity(): Activity;
   get broker(): Broker;
   get logger(): ILogger;
-  get reference(): {
-    id?: string;
-    name: string;
-    referenceType: string;
-  };
+  get reference(): EventDefinitionReference;
   [x: string]: any;
   execute(executeMessage: ElementBrokerMessage): void;
 }

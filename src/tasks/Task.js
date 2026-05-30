@@ -1,10 +1,19 @@
 import { Activity } from '../activity/Activity.js';
 import { cloneContent } from '../messageHelper.js';
 
+/**
+ * Task
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 export function Task(activityDef, context) {
   return new Activity(TaskBehaviour, activityDef, context);
 }
 
+/**
+ * Task behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function TaskBehaviour(activity) {
   const { id, type, behaviour, broker } = activity;
   this.id = id;
@@ -14,6 +23,10 @@ export function TaskBehaviour(activity) {
   this.broker = broker;
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 TaskBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;

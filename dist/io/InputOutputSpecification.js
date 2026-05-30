@@ -7,6 +7,13 @@ exports.IoSpecification = IoSpecification;
 var _getPropertyValue = require("../getPropertyValue.js");
 var _shared = require("../shared.js");
 var _constants = require("../constants.js");
+/**
+ * Activity ioSpecification behaviour. Reads bound data objects on enter and writes them on completion.
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').IoSpecification} ioSpecificationDef
+ * @param {import('#types').ContextInstance} context
+ * @satisfies {import('#types').IExtension}
+ */
 function IoSpecification(activity, ioSpecificationDef, context) {
   const {
     id,
@@ -20,6 +27,10 @@ function IoSpecification(activity, ioSpecificationDef, context) {
   this.broker = activity.broker;
   this.context = context;
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} [message]
+ */
 IoSpecification.prototype.activate = function activate(message) {
   if (this[_constants.K_CONSUMING]) return;
   if (message?.fields.redelivered && message.fields.routingKey === 'run.start') {

@@ -33,6 +33,10 @@ Object.defineProperty(EventDefinitionExecution.prototype, 'stopped', {
     return this[_constants.K_STOPPED];
   }
 });
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 EventDefinitionExecution.prototype.execute = function execute(executeMessage) {
   const content = executeMessage.content;
   if (content.isDefinitionScope) return this._executeDefinition(executeMessage);

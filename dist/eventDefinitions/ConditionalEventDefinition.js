@@ -40,6 +40,10 @@ Object.defineProperty(ConditionalEventDefinition.prototype, 'executionId', {
     return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }
 });
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 ConditionalEventDefinition.prototype.execute = function execute(executeMessage) {
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   if (!this.condition) return this._setup(executeMessage);

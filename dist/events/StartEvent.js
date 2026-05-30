@@ -9,9 +9,19 @@ var _Activity = require("../activity/Activity.js");
 var _EventDefinitionExecution = require("../eventDefinitions/EventDefinitionExecution.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
+/**
+ * Start event
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function StartEvent(activityDef, context) {
   return new _Activity.Activity(StartEventBehaviour, activityDef, context);
 }
+
+/**
+ * Start event behaviour
+ * @param {import('#types').Activity} activity
+ */
 function StartEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
@@ -24,6 +34,11 @@ Object.defineProperty(StartEventBehaviour.prototype, 'executionId', {
     return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }
 });
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 StartEventBehaviour.prototype.execute = function execute(executeMessage) {
   const execution = this[_constants.K_EXECUTION];
   if (execution) {

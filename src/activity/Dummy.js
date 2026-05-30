@@ -1,5 +1,10 @@
 import { cloneParent } from '../messageHelper.js';
 
+/**
+ * Placeholder activity for non-executable elements (text annotations, groups, categories).
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @returns {{ id: string, type: string, name: string | undefined, behaviour: Record<string, any>, parent: import('#types').ElementParent, placeholder: true }}
+ */
 export function DummyActivity(activityDef) {
   const { id, type = 'dummy', name, parent, behaviour } = activityDef;
   return {

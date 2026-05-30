@@ -25,6 +25,8 @@ function LinkEventDefinition(activity, eventDefinition) {
   } = eventDefinition;
   this.id = id;
   this.type = type;
+
+  /** @type {import('#types').EventDefinitionReference} */
   this.reference = {
     id: behaviour.name,
     linkName: behaviour.name,
@@ -75,9 +77,17 @@ Object.defineProperty(LinkEventDefinition.prototype, 'executionId', {
     return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }
 });
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 LinkEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 LinkEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   const executeContent = executeMessage.content;
@@ -109,6 +119,10 @@ LinkEventDefinition.prototype.executeCatch = function executeCatch(executeMessag
     state: 'catch'
   }));
 };
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 LinkEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const {

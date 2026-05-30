@@ -4,6 +4,12 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.BpmnIO = BpmnIO;
+/**
+ * Built-in IO extension. Composes the activity's ioSpecification and properties behaviours.
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').ContextInstance} context
+ * @satisfies {import('#types').IExtension}
+ */
 function BpmnIO(activity, context) {
   this.activity = activity;
   this.context = context;
@@ -20,12 +26,20 @@ Object.defineProperty(BpmnIO.prototype, 'hasIo', {
     return this.specification || this.properties;
   }
 });
+
+/**
+ * @param {import('#types').ElementBrokerMessage} message
+ */
 BpmnIO.prototype.activate = function activate(message) {
   const properties = this.properties,
     specification = this.specification;
   if (properties) properties.activate(message);
   if (specification) specification.activate(message);
 };
+
+/**
+ * @param {import('#types').ElementBrokerMessage} message
+ */
 BpmnIO.prototype.deactivate = function deactivate(message) {
   const properties = this.properties,
     specification = this.specification;

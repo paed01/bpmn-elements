@@ -5,6 +5,11 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.StandardLoopCharacteristics = StandardLoopCharacteristics;
 var _LoopCharacteristics = require("./LoopCharacteristics.js");
+/**
+ * Standard loop characteristics
+ * @param {import('#types').Activity} activity
+ * @param {import('moddle-context-serializer').SerializableElement} loopCharacteristics
+ */
 function StandardLoopCharacteristics(activity, loopCharacteristics) {
   let {
     behaviour

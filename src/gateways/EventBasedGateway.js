@@ -2,10 +2,20 @@ import { Activity } from '../activity/Activity.js';
 import { cloneContent } from '../messageHelper.js';
 import { K_COMPLETED, K_TARGETS } from '../constants.js';
 
+/**
+ * Event based gateway
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 export function EventBasedGateway(activityDef, context) {
   return new Activity(EventBasedGatewayBehaviour, activityDef, context);
 }
 
+/**
+ * Event based gateway behaviour
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').ContextInstance} context
+ */
 export function EventBasedGatewayBehaviour(activity, context) {
   this.id = activity.id;
   this.type = activity.type;
@@ -15,6 +25,10 @@ export function EventBasedGatewayBehaviour(activity, context) {
   this[K_TARGETS] = new Set(activity.outbound.map((flow) => context.getActivityById(flow.targetId)));
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const { executionId, outbound = [], outboundTaken } = executeContent;

@@ -31,6 +31,9 @@ Object.defineProperty(ConditionalEventDefinition.prototype, 'executionId', {
   },
 });
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 ConditionalEventDefinition.prototype.execute = function execute(executeMessage) {
   this[K_EXECUTE_MESSAGE] = executeMessage;
 

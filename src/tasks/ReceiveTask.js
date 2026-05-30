@@ -2,6 +2,11 @@ import { Activity } from '../activity/Activity.js';
 import { cloneContent } from '../messageHelper.js';
 import { K_COMPLETED, K_EXECUTE_MESSAGE, K_REFERENCE_ELEMENT, K_REFERENCE_INFO } from '../constants.js';
 
+/**
+ * Receive task
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 export function ReceiveTask(activityDef, context) {
   const task = new Activity(ReceiveTaskBehaviour, activityDef, context);
 
@@ -11,6 +16,10 @@ export function ReceiveTask(activityDef, context) {
   return task;
 }
 
+/**
+ * Receive task behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function ReceiveTaskBehaviour(activity) {
   const { id, type, behaviour } = activity;
 
@@ -31,6 +40,10 @@ export function ReceiveTaskBehaviour(activity) {
   this[K_REFERENCE_ELEMENT] = reference.id && activity.getActivityById(reference.id);
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 ReceiveTaskBehaviour.prototype.execute = function execute(executeMessage) {
   return new ReceiveTaskExecution(this).execute(executeMessage);
 };

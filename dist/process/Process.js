@@ -216,6 +216,7 @@ Process.prototype.recover = function recover(state) {
 /**
  * Walk activity graph from the given start id, or every start activity when omitted.
  * @param {string} [startId]
+ * @returns {import('#types').ShakeResult}
  */
 Process.prototype.shake = function shake(startId) {
   if (this.isRunning) return this.execution.shake(startId);
@@ -498,7 +499,7 @@ Process.prototype.getSequenceFlows = function getSequenceFlows() {
 
 /**
  * @param {string} laneId
- * @returns {import('./Lane.js') | undefined}
+ * @returns {import('./Lane.js').Lane | undefined}
  */
 Process.prototype.getLaneById = function getLaneById(laneId) {
   return this[K_LANES]?.find(lane => lane.id === laneId);

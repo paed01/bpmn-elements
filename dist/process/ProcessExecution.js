@@ -257,6 +257,7 @@ ProcessExecution.prototype.recover = function recover(state) {
 /**
  * Walk activity graph from the given start id, or every start activity when omitted.
  * @param {string} [fromId]
+ * @returns {import('#types').ShakeResult}
  */
 ProcessExecution.prototype.shake = function shake(fromId) {
   return Object.fromEntries(this._shakeElements(fromId).sequences);
@@ -289,7 +290,7 @@ ProcessExecution.prototype.getPostponed = function getPostponed(filterFn) {
  */
 ProcessExecution.prototype.discard = function discard() {
   this[_constants.K_STATUS] = 'discard';
-  return this[K_ACTIVITY_Q].queueMessage({
+  this[K_ACTIVITY_Q].queueMessage({
     routingKey: 'execution.discard'
   }, {
     id: this.id,
@@ -304,7 +305,7 @@ ProcessExecution.prototype.discard = function discard() {
  * Queue a cancel message that propagates to all running children.
  */
 ProcessExecution.prototype.cancel = function discard() {
-  return this[K_ACTIVITY_Q].queueMessage({
+  this[K_ACTIVITY_Q].queueMessage({
     routingKey: 'execution.cancel'
   }, {
     id: this.id,

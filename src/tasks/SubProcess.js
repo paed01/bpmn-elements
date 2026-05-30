@@ -5,6 +5,11 @@ import { cloneContent } from '../messageHelper.js';
 const K_EXECUTIONS = Symbol.for('executions');
 const K_ON_EXECUTION_COMPLETED = Symbol.for('execution completed handler');
 
+/**
+ * Sub process
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 export function SubProcess(activityDef, context) {
   const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
   const subProcess = new Activity(SubProcessBehaviour, { ...activityDef, isSubProcess: true, triggeredByEvent }, context);
@@ -26,6 +31,11 @@ export function SubProcess(activityDef, context) {
   }
 }
 
+/**
+ * Sub process behaviour
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').ContextInstance} context
+ */
 export function SubProcessBehaviour(activity, context) {
   const { id, type, behaviour } = activity;
   this.id = id;
@@ -54,6 +64,10 @@ Object.defineProperty(SubProcessBehaviour.prototype, 'executions', {
   },
 });
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 SubProcessBehaviour.prototype.execute = function execute(executeMessage) {
   const { isRootScope, executionId } = executeMessage.content;
 

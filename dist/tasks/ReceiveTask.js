@@ -8,6 +8,11 @@ exports.ReceiveTaskBehaviour = ReceiveTaskBehaviour;
 var _Activity = require("../activity/Activity.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
+/**
+ * Receive task
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function ReceiveTask(activityDef, context) {
   const task = new _Activity.Activity(ReceiveTaskBehaviour, activityDef, context);
   task.broker.assertQueue('message', {
@@ -19,6 +24,11 @@ function ReceiveTask(activityDef, context) {
   });
   return task;
 }
+
+/**
+ * Receive task behaviour
+ * @param {import('#types').Activity} activity
+ */
 function ReceiveTaskBehaviour(activity) {
   const {
     id,
@@ -37,6 +47,11 @@ function ReceiveTaskBehaviour(activity) {
   this.broker = activity.broker;
   this[_constants.K_REFERENCE_ELEMENT] = reference.id && activity.getActivityById(reference.id);
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 ReceiveTaskBehaviour.prototype.execute = function execute(executeMessage) {
   return new ReceiveTaskExecution(this).execute(executeMessage);
 };

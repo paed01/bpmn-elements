@@ -5,6 +5,10 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.ServiceImplementation = ServiceImplementation;
 var _ExecutionScope = require("../activity/ExecutionScope.js");
+/**
+ * Service implementation
+ * @param {import('#types').Activity} activity
+ */
 function ServiceImplementation(activity) {
   this.type = `${activity.type}:implementation`;
   this.implementation = activity.behaviour.implementation;

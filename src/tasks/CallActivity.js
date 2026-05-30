@@ -3,20 +3,24 @@ import { ActivityError } from '../error/Errors.js';
 import { cloneContent } from '../messageHelper.js';
 
 /**
- * Create call activity
+ * Call activity
  * @param {import('moddle-context-serializer').Activity} activityDef
- * @param {import('../Context.js').ContextInstance} context
- * @returns Call activity
+ * @param {import('#types').ContextInstance} context
  */
 export function CallActivity(activityDef, context) {
   return new Activity(CallActivityBehaviour, activityDef, context);
 }
 
+/**
+ * Call activity behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function CallActivityBehaviour(activity) {
   const { id, type, behaviour = {} } = activity;
   this.id = id;
   this.type = type;
   this.calledElement = behaviour.calledElement;
+  /** @type {import('./LoopCharacteristics.js').LoopCharacteristics} */
   this.loopCharacteristics =
     behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
@@ -24,6 +28,10 @@ export function CallActivityBehaviour(activity) {
   this.environment = activity.environment;
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 CallActivityBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;

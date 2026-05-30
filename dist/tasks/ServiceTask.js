@@ -8,9 +8,19 @@ exports.ServiceTaskBehaviour = ServiceTaskBehaviour;
 var _Activity = require("../activity/Activity.js");
 var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
+/**
+ * Service task
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function ServiceTask(activityDef, context) {
   return new _Activity.Activity(ServiceTaskBehaviour, activityDef, context);
 }
+
+/**
+ * Service task behaviour
+ * @param {import('#types').Activity} activity
+ */
 function ServiceTaskBehaviour(activity) {
   const {
     id,
@@ -24,6 +34,11 @@ function ServiceTaskBehaviour(activity) {
   this.environment = activity.environment;
   this.broker = activity.broker;
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;

@@ -3,6 +3,13 @@ import { K_CONSUMING } from '../constants.js';
 
 const K_PROPERTIES = Symbol.for('properties');
 
+/**
+ * Activity properties behaviour. Resolves bound data input/output references during the run.
+ * @param {import('#types').Activity} activity
+ * @param {{ type: 'properties', values: import('moddle-context-serializer').IElement[] }} propertiesDef
+ * @param {import('#types').ContextInstance} context
+ * @satisfies {import('#types').IExtension}
+ */
 export function Properties(activity, propertiesDef, context) {
   this.activity = activity;
   this.broker = activity.broker;
@@ -57,6 +64,9 @@ export function Properties(activity, propertiesDef, context) {
   }
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} message
+ */
 Properties.prototype.activate = function activate(message) {
   if (this[K_CONSUMING]) return;
   if (message.fields.redelivered && message.fields.routingKey === 'run.start') {

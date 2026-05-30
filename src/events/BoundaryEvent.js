@@ -8,10 +8,19 @@ const K_ATTACHED_TAGS = Symbol.for('attachedConsumers');
 const K_COMPLETE_CONTENT = Symbol.for('completeContent');
 const K_SHOVELS = Symbol.for('shovels');
 
+/**
+ * Boundary event
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 export function BoundaryEvent(activityDef, context) {
   return new Activity(BoundaryEventBehaviour, activityDef, context);
 }
 
+/**
+ * Boundary event behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function BoundaryEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
@@ -38,6 +47,10 @@ Object.defineProperty(BoundaryEventBehaviour.prototype, 'cancelActivity', {
   },
 });
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 BoundaryEventBehaviour.prototype.execute = function execute(executeMessage) {
   const { isRootScope, executionId } = executeMessage.content;
 

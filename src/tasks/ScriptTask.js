@@ -3,10 +3,19 @@ import { ExecutionScope } from '../activity/ExecutionScope.js';
 import { ActivityError } from '../error/Errors.js';
 import { cloneContent, cloneMessage } from '../messageHelper.js';
 
+/**
+ * Script task
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 export function ScriptTask(activityDef, context) {
   return new Activity(ScriptTaskBehaviour, activityDef, context);
 }
 
+/**
+ * Script task behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function ScriptTaskBehaviour(activity) {
   const { id, type, behaviour } = activity;
 
@@ -22,6 +31,10 @@ export function ScriptTaskBehaviour(activity) {
   environment.registerScript(activity);
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 ScriptTaskBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;

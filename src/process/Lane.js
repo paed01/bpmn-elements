@@ -14,11 +14,14 @@ export function Lane(process, laneDefinition) {
 
   this.id = id;
   this.type = type;
+  /** @type {string} */
   this.name = behaviour.name;
+  /** @type {import('moddle-context-serializer').Parent} */
   this.parent = {
     id: process.id,
     type: process.type,
   };
+  /** @type {Record<string, any>} */
   this.behaviour = { ...behaviour };
   this.environment = environment;
   this.broker = broker;

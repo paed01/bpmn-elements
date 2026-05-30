@@ -5,7 +5,7 @@ Signal-/User-/Manual task behaviour.
 ```javascript
 import * as elements from 'bpmn-elements';
 
-import BpmnModdle from 'bpmn-moddle';
+import { BpmnModdle } from 'bpmn-moddle';
 
 import { default as serialize, TypeResolver } from 'moddle-context-serializer';
 

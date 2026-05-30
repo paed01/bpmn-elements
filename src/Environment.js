@@ -15,12 +15,17 @@ const defaultOptions = new Set(['expressions', 'extensions', 'Logger', 'output',
 export function Environment(options = {}) {
   this.options = validateOptions(options);
 
+  /** @type {import('#types').IExpressions} */
   this.expressions = options.expressions || Expressions();
   this.extensions = options.extensions;
   this.output = options.output || {};
+  /** @type {import('#types').IScripts} */
   this.scripts = options.scripts || new Scripts();
+  /** @type {import('#types').ITimers} */
   this.timers = options.timers || new Timers();
+  /** @type {import('#types').EnvironmentSettings} */
   this.settings = { skipDiscard: true, ...options.settings };
+  /** @type {import('#types').LoggerFactory} */
   this.Logger = options.Logger || DummyLogger;
   this[K_SERVICES] = options.services || {};
   this[K_VARIABLES] = options.variables || {};
@@ -79,6 +84,7 @@ Environment.prototype.recover = function recover(state) {
  * Clone the environment, optionally overriding options. Services are merged when
  * `overrideOptions.services` is supplied.
  * @param {import('#types').EnvironmentOptions} [overrideOptions]
+ * @returns {Environment}
  */
 Environment.prototype.clone = function clone(overrideOptions) {
   const services = this[K_SERVICES];
@@ -171,13 +177,17 @@ Environment.prototype.resolveExpression = function resolveExpression(expression,
 
 /**
  * Register a service callable by name.
- * @param {string} name
- * @param {CallableFunction} fn
+ * @param {string} name service function name
+ * @param {CallableFunction} fn service function
  */
 Environment.prototype.addService = function addService(name, fn) {
   this[K_SERVICES][name] = fn;
 };
 
+/**
+ * @param {import('#types').EnvironmentOptions} input
+ * @returns {import('#types').EnvironmentOptions} validated options
+ */
 function validateOptions(input) {
   const options = {};
   for (const key in input) {

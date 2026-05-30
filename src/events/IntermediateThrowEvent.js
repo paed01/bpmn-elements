@@ -3,10 +3,19 @@ import { EventDefinitionExecution } from '../eventDefinitions/EventDefinitionExe
 import { cloneContent } from '../messageHelper.js';
 import { K_EXECUTION } from '../constants.js';
 
+/**
+ * Intermediate throw event
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 export function IntermediateThrowEvent(activityDef, context) {
   return new Activity(IntermediateThrowEventBehaviour, { ...activityDef, isThrowing: true }, context);
 }
 
+/**
+ * Intermediate throw event behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function IntermediateThrowEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
@@ -14,6 +23,10 @@ export function IntermediateThrowEventBehaviour(activity) {
   this[K_EXECUTION] = activity.eventDefinitions && new EventDefinitionExecution(activity, activity.eventDefinitions);
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 IntermediateThrowEventBehaviour.prototype.execute = function execute(executeMessage) {
   const execution = this[K_EXECUTION];
   if (execution) {

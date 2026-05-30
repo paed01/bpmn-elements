@@ -7,6 +7,11 @@ exports.Timers = Timers;
 const K_EXECUTING = Symbol.for('executing');
 const K_TIMER_API = Symbol.for('timers api');
 const MAX_DELAY = 2147483647;
+
+/**
+ *
+ * @param {*} options
+ */
 function Timers(options) {
   this.count = 0;
   this.options = {

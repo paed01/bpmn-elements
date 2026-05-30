@@ -3,10 +3,19 @@ import { EventDefinitionExecution } from '../eventDefinitions/EventDefinitionExe
 import { cloneContent } from '../messageHelper.js';
 import { K_EXECUTION } from '../constants.js';
 
+/**
+ * End event
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 export function EndEvent(activityDef, context) {
   return new Activity(EndEventBehaviour, { ...activityDef, isThrowing: true }, context);
 }
 
+/**
+ * End event behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function EndEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
@@ -14,6 +23,10 @@ export function EndEventBehaviour(activity) {
   this[K_EXECUTION] = activity.eventDefinitions && new EventDefinitionExecution(activity, activity.eventDefinitions);
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 EndEventBehaviour.prototype.execute = function execute(executeMessage) {
   const execution = this[K_EXECUTION];
   if (execution) {

@@ -8,6 +8,11 @@ const STATE_SETUP = 'setup';
 const K_PEERS = Symbol.for('peers');
 const K_INBOUND_SOURCE_IDS = Symbol.for('inbound peers');
 
+/**
+ * Parallel gateway
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 export function ParallelGateway(activityDef, context) {
   const activity = new Activity(ParallelGatewayBehaviour, { ...activityDef, isParallelGateway: true }, context);
 
@@ -44,6 +49,10 @@ export function ParallelGateway(activityDef, context) {
   }
 }
 
+/**
+ * Parallel gateway behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function ParallelGatewayBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
@@ -61,6 +70,10 @@ Object.defineProperty(ParallelGatewayBehaviour.prototype, 'executionId', {
   },
 });
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 ParallelGatewayBehaviour.prototype.execute = function execute(executeMessage) {
   const routingKey = executeMessage.fields.routingKey;
   const isRedelivered = executeMessage.fields.redelivered;

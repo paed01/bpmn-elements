@@ -25,6 +25,10 @@ function TerminateEventDefinition(activity, eventDefinition) {
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 TerminateEventDefinition.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const throwContent = (0, _messageHelper.cloneContent)(executeContent, {

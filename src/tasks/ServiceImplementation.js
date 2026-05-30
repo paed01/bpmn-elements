@@ -1,4 +1,8 @@
 import { ExecutionScope } from '../activity/ExecutionScope.js';
+/**
+ * Service implementation
+ * @param {import('#types').Activity} activity
+ */
 export function ServiceImplementation(activity) {
   this.type = `${activity.type}:implementation`;
   this.implementation = activity.behaviour.implementation;
