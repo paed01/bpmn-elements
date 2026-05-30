@@ -13,7 +13,7 @@ describe('SignalEventDefinition', () => {
       broker: ActivityBroker(this).broker,
       getActivityById(id) {
         if (id !== 'Signal_0') return;
-        return Signal({ id }, testHelpers.emptyContext());
+        return new Signal({ id }, testHelpers.emptyContext());
       },
     };
   });

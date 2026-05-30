@@ -1196,19 +1196,36 @@ declare module 'bpmn-elements' {
 		
 		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): number | undefined;
 	}
-	export function Escalation(signalDef: any, context: any): {
-		id: any;
-		type: any;
-		name: any;
-		parent: any;
-		resolve: (executionMessage: any) => {
-			id: any;
-			type: any;
+	/**
+	 * Escalation reference element. Resolves the escalation name expression against the execution message.
+	 * */
+		export class Escalation {
+		/**
+		 * Escalation reference element. Resolves the escalation name expression against the execution message.
+		 * */
+		constructor(escalationDef: import("moddle-context-serializer").SerializableElement, context: ContextInstance);
+		id: string | undefined;
+		type: string | undefined;
+		name: string | undefined;
+		
+		parent: ElementParent;
+		environment: Environment | undefined;
+		/**
+		 * Resolve escalation reference for the given execution message.
+		 * */
+		resolve(executionMessage: ElementBrokerMessage): {
+			id: string | undefined;
+			type: string | undefined;
 			messageType: string;
 			name: any;
-			parent: any;
+			parent: {
+				id: string;
+				type: string;
+				executionId: string;
+				path?: Omit<ElementParent, "path">[];
+			};
 		};
-	};
+	}
 	/**
 	 * Activity ioSpecification behaviour. Reads bound data objects on enter and writes them on completion.
 	 * */
@@ -1328,13 +1345,36 @@ declare module 'bpmn-elements' {
 		subscribe(onIterationCompleteMessage: ElementBrokerMessage): void;
 		stop(): void;
 	}
-	export function Message(messageDef: any, context: any): {
-		id: any;
-		type: any;
-		name: any;
-		parent: any;
-		resolve: (executionMessage: any) => any;
-	};
+	/**
+	 * Message reference element. Resolves the message name expression against the execution message.
+	 * */
+		export class Message {
+		/**
+		 * Message reference element. Resolves the message name expression against the execution message.
+		 * */
+		constructor(messageDef: import("moddle-context-serializer").SerializableElement, context: ContextInstance);
+		id: string | undefined;
+		type: string | undefined;
+		name: string | undefined;
+		
+		parent: ElementParent;
+		environment: Environment | undefined;
+		/**
+		 * Resolve message reference for the given execution message.
+		 * */
+		resolve(executionMessage: ElementBrokerMessage): {
+			parent: {
+				id: string;
+				type: string;
+				executionId: string;
+				path?: Omit<ElementParent, "path">[];
+			};
+			name?: any;
+			id: string | undefined;
+			type: string | undefined;
+			messageType: string;
+		};
+	}
 	/**
 	 * Owns one `<bpmn:process>`. Wraps the structural definition and orchestrates flow traversal,
 	 * joins, and parallel activation through ProcessExecution.
@@ -1486,13 +1526,36 @@ declare module 'bpmn-elements' {
 		activity: Activity;
 		execute(executionMessage: any, callback: any): any;
 	}
-	export function Signal(signalDef: any, context: any): {
-		id: any;
-		type: any;
-		name: any;
-		parent: any;
-		resolve: (executionMessage: any) => any;
-	};
+	/**
+	 * Signal reference element. Resolves the signal name expression against the execution message.
+	 * */
+		export class Signal {
+		/**
+		 * Signal reference element. Resolves the signal name expression against the execution message.
+		 * */
+		constructor(signalDef: import("moddle-context-serializer").SerializableElement, context: ContextInstance);
+		id: string | undefined;
+		type: string | undefined;
+		name: string | undefined;
+		
+		parent: ElementParent;
+		environment: Environment | undefined;
+		/**
+		 * Resolve signal reference for the given execution message.
+		 * */
+		resolve(executionMessage: ElementBrokerMessage): {
+			parent: {
+				id: string;
+				type: string;
+				executionId: string;
+				path?: Omit<ElementParent, "path">[];
+			};
+			name?: any;
+			id: string | undefined;
+			type: string | undefined;
+			messageType: string;
+		};
+	}
 	/**
 	 * Standard loop characteristics
 	 * */

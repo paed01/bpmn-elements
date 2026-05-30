@@ -14,7 +14,7 @@ describe('MessageEventDefinition', () => {
       broker: ActivityBroker(this).broker,
       getActivityById(id) {
         if (id !== 'message_1') return;
-        return Message(
+        return new Message(
           {
             id: 'message_1',
             type: 'bpmn:Message',
