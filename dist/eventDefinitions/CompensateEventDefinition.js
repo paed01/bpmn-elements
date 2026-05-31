@@ -26,7 +26,7 @@ function CompensateEventDefinition(activity, eventDefinition, context) {
   this.id = id;
   const type = this.type = eventDefinition.type;
   const referenceType = 'compensate';
-  /** @type {import('#types').EventDefinitionReference} */
+  /** @type {import('#types').EventReference} */
   this.reference = {
     referenceType
   };

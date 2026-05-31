@@ -1,36 +1,27 @@
 # Changelog
 
-## Unreleased
-
-- fix `Activity.recover()` to return the activity when called without state
-- expose throwable error classes via new `bpmn-elements/errors` subpath: `import { ActivityError, BpmnError, RunError } from 'bpmn-elements/errors'` (the `BpmnError` activity factory remains the named export of `bpmn-elements`)
-- drop default exports across all implementation files in favour of named exports — internal-facing churn only, the package's public exports map (`bpmn-elements`, `bpmn-elements/events`, `…/eventDefinitions`, `…/flows`, `…/gateways`, `…/tasks`) is unchanged
-- replace hand-rolled class declarations in `types/types.d.ts` with re-exports from the implementation files — the type definitions track the JSDoc-driven source rather than living in parallel
-- strip the duplicate `export function Foo(...)` declarations that tsc emits alongside `export class Foo` for constructor-function patterns — the bundled `Definition`, `Activity`, `Process`, etc. are now plain class declarations that merge cleanly with the property augmentations
-- strip internal class members (`@internal`, `private`, and underscore-prefixed names) from the bundled `.d.ts` — dts-buddy's built-in `stripInternal` only handles `PropertySignature` (interface members), so the build script now walks the bundle AST and removes matching `MethodDeclaration`/`PropertyDeclaration`/accessor nodes
-
-### Types
-
-- bundle `types/index.d.ts` with [dts-buddy](https://github.com/Rich-Harris/dts-buddy); types are generated from JSDoc and source-mapped to `src/*.js`
-- migrate runtime types to JSDoc, covering `Activity`, `ActivityExecution`, `Context`, `Process`, `ProcessExecution`, `Definition`, `DefinitionExecution`, `Environment`, `Api`, `EventBroker`, `MessageFormatter`, `SequenceFlow`, `MessageFlow`, `Association`, and `Lane`
-- separate hand-written contracts into `types/interfaces.d.ts`
-- update `smqp` type imports for `smqp@12`
-
-## v18.0.0 - 2026-01-14
+## v18.0.0 - 2026-05-31
 
 Refactor parallel converging and forking gateways.
 
 ### Breaking
 
-- parallel gateways now enters execution as soon as first nbound sequence flow is touched
+- parallel gateways now enter execution as soon as the first inbound sequence flow is touched
 - shake sequence has changed
 - IntermediateCatchEvent cannot be used as a starting element, or it can but will not be started by default
+- `Definition` must be called with `new`
 
 ### Additions
 
-- fix link event definition shaking
+- expose throwable error classes via new `bpmn-elements/errors` subpath: `import { ActivityError, BpmnError, RunError } from 'bpmn-elements/errors'`
 - activity readonly property `isParallelJoin` indicating a parallel converging gateway
-- new activity event published when parallel gateway is executed, namely `activity.converge`
+- new activity event `activity.converge` published when parallel gateway is executed
+- fix link event definition shaking
+- fix `Activity.recover()` to return the activity when called without state
+
+### Types
+
+- runtime types are now generated from JSDoc and bundled with [dts-buddy](https://github.com/Rich-Harris/dts-buddy); status enums (`ActivityStatus`, `DefinitionStatus`, `ProcessStatus`) and `TimerType` accept both enum members and their string literals.
 
 ## v17.3.0 - 2025-12-03
 

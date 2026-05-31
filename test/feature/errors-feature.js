@@ -1073,7 +1073,7 @@ async function prepareSource() {
       camunda: CamundaExtension,
     },
   });
-  return Definition(context, {
+  return new Definition(context, {
     services: {
       isAbove(treshold, value) {
         return parseInt(treshold) < parseInt(value);

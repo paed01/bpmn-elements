@@ -54,9 +54,9 @@ declare module '../src/definition/Definition.js' {
     get execution(): DefinitionExecution | undefined;
     get executionId(): string | undefined;
     get isRunning(): boolean;
-    get status(): string | undefined;
+    get status(): DefinitionStatus | undefined;
     get stopped(): boolean;
-    get activityStatus(): string;
+    get activityStatus(): ActivityStatus;
   }
 }
 
@@ -69,8 +69,8 @@ declare module '../src/process/Process.js' {
     get isRunning(): boolean;
     get executionId(): string | undefined;
     get execution(): ProcessExecution | undefined;
-    get status(): string | undefined;
-    get activityStatus(): string;
+    get status(): ProcessStatus | undefined;
+    get activityStatus(): ActivityStatus;
   }
 }
 
@@ -78,10 +78,10 @@ declare module '../src/process/ProcessExecution.js' {
   interface ProcessExecution {
     get stopped(): boolean;
     get completed(): boolean;
-    get status(): string;
+    get status(): ProcessStatus;
     get postponedCount(): number;
     get isRunning(): boolean;
-    get activityStatus(): string;
+    get activityStatus(): ActivityStatus;
   }
 }
 
@@ -89,11 +89,11 @@ declare module '../src/definition/DefinitionExecution.js' {
   interface DefinitionExecution {
     get stopped(): boolean;
     get completed(): boolean;
-    get status(): string;
+    get status(): DefinitionStatus;
     get processes(): Process[];
     get postponedCount(): number;
     get isRunning(): boolean;
-    get activityStatus(): string;
+    get activityStatus(): ActivityStatus;
   }
 }
 
@@ -101,6 +101,24 @@ declare module '../src/definition/DefinitionExecution.js' {
 
 export interface ElementBroker<T> extends Broker {
   get owner(): T;
+}
+
+/**
+ * Wrapper returned by `ActivityBroker`, `ProcessBroker`, `DefinitionBroker`,
+ * `MessageFlowBroker`, and `new EventBroker(owner, options)`. Owns an underlying
+ * smqp Broker and exposes bound, prefixed event helpers.
+ *
+ * @template T Broker owner element type (Activity, Process, Definition, ...).
+ */
+export interface EventBroker<T> {
+  options: { prefix: string; autoDelete?: boolean; durable?: boolean };
+  eventPrefix: string;
+  broker: ElementBroker<T>;
+  on(eventName: string, callback: CallableFunction, eventOptions?: { once?: boolean; [x: string]: any }): Consumer;
+  once(eventName: string, callback: CallableFunction, eventOptions?: { [x: string]: any }): Consumer;
+  waitFor(eventName: string, onMessage?: (routingKey: string, message: ElementBrokerMessage, owner: T) => boolean): Promise<IApi<T>>;
+  emit(eventName: string, content?: Record<string, any>, props?: any): void;
+  emitFatal(error: Error, content?: Record<string, any>): void;
 }
 
 export type signalMessage = {
@@ -178,33 +196,9 @@ export abstract class ElementBase {
   get logger(): ILogger;
 }
 
-export abstract class Element<T> extends ElementBase {
-  get broker(): ElementBroker<T>;
-  stop(): void;
-  resume(): void;
-  getApi(message?: ElementBrokerMessage): IApi<T>;
-  on(eventName: string, callback: CallableFunction, options?: any): any;
-  once(eventName: string, callback: CallableFunction, options?: any): any;
-  waitFor(eventName: string, options?: any): Promise<IApi<T>>;
-}
-
-export abstract class MessageElement {
-  get id(): string;
-  get type(): string;
-  get name(): string;
-  get parent(): ElementParent;
-  resolve(executionMessage: ElementBrokerMessage): {
-    parent: ElementParent;
-    name: string;
-    id: string;
-    type: string;
-    messageType: string;
-  };
-}
-
 // --- Event definitions --------------------------------------------------------
 
-export interface EventDefinitionReference {
+export interface EventReference {
   id?: string;
   name?: string;
   referenceType: string;
@@ -221,16 +215,20 @@ export class EventDefinition {
   get activity(): Activity;
   get broker(): Broker;
   get logger(): ILogger;
-  get reference(): EventDefinitionReference;
+  get reference(): EventReference;
   [x: string]: any;
   execute(executeMessage: ElementBrokerMessage): void;
 }
 
-export const enum TimerType {
+/** Supported BPMN timer event definition types. */
+export const enum TimerTypeValue {
   TimeCycle = 'timeCycle',
   TimeDuration = 'timeDuration',
   TimeDate = 'timeDate',
 }
+
+/** Accepts either a `TimerTypeValue` enum member or its underlying string literal. */
+export type TimerType = TimerTypeValue | `${TimerTypeValue}`;
 
 export type parsedTimer = {
   /** Expires at date time */
@@ -247,18 +245,12 @@ export interface ICondition {
   /** Condition type */
   get type(): string;
   [x: string]: any;
-  execute(message: ElementBrokerMessage, callback: CallableFunction): void;
-}
-
-export interface ISequenceFlowCondition {
-  /** Condition type, e.g. script or expression */
-  get type(): string;
   /**
-   * Execute sequence flow condition
+   * Execute condition
    * @param message Source element execution message
    * @param callback Callback with truthy result if flow should be taken
    */
-  execute(message: ElementBrokerMessage, callback: (err: Error, result: any) => void): void;
+  execute(message: ElementBrokerMessage, callback: CallableFunction): void;
 }
 
 // --- Activity behaviour & extensions ------------------------------------------
@@ -272,10 +264,8 @@ export interface IActivityBehaviour {
   execute(executeMessage: ElementBrokerMessage): void;
 }
 
-// Custom activity behaviour factory signature.
-export function ActivityBehaviour(activityDef: SerializableElement, context: ContextInstance): Activity;
-
 export type Extension = (activity: any, context: any) => IExtension;
+
 export interface IExtension {
   activate(message: ElementBrokerMessage): void;
   deactivate(message: ElementBrokerMessage): void;
@@ -339,56 +329,82 @@ export type runCallback = (err: Error, definitionApi: any) => void;
 
 // --- Run-status enums ---------------------------------------------------------
 
-export const enum DefinitionRunStatus {
+/**
+ * Definition status values. Covers both the entity (`Definition.status`) and
+ * the execution (`DefinitionExecution.status`) lifecycles.
+ */
+export const enum DefinitionStatusValue {
+  /** DefinitionExecution constructed, not yet started */
+  Init = 'init',
+  /** Definition run entered */
   Entered = 'entered',
+  /** Definition run started */
   Start = 'start',
+  /** Definition is executing */
   Executing = 'executing',
+  /** Definition run ended */
   End = 'end',
+  /** Definition run discarded */
   Discarded = 'discarded',
+  /** Definition execution completed successfully */
+  Completed = 'completed',
+  /** Definition execution failed */
+  Error = 'error',
 }
 
-export const enum ProcessRunStatus {
-  Entered = 'entered',
-  Start = 'start',
-  Executing = 'executing',
-  Errored = 'errored',
-  End = 'end',
-  Discarded = 'discarded',
-}
+/** Accepts either a `DefinitionStatusValue` enum member or its string literal. */
+export type DefinitionStatus = DefinitionStatusValue | `${DefinitionStatusValue}`;
 
 /**
- * Activity status
- * Can be used to decide when to save states, Timer and Wait is recommended.
+ * Process status values. Covers both the entity (`Process.status`) and the
+ * execution (`ProcessExecution.status`) lifecycles.
  */
-export const enum ActivityStatus {
+export const enum ProcessStatusValue {
+  /** ProcessExecution constructed, not yet started */
+  Init = 'init',
+  /** Process run entered */
+  Entered = 'entered',
+  /** Process run started */
+  Start = 'start',
+  /** Process is executing */
+  Executing = 'executing',
+  /** Process run errored */
+  Errored = 'errored',
+  /** Process run ended */
+  End = 'end',
+  /** Process run discarded */
+  Discarded = 'discarded',
+  /** Process execution discard in progress */
+  Discard = 'discard',
+  /** Process execution cancelled */
+  Cancel = 'cancel',
+  /** Process execution completed successfully */
+  Completed = 'completed',
+  /** Process execution failed */
+  Error = 'error',
+  /** Process execution terminated by a terminate end event */
+  Terminated = 'terminated',
+}
+
+/** Accepts either a `ProcessStatusValue` enum member or its string literal. */
+export type ProcessStatus = ProcessStatusValue | `${ProcessStatusValue}`;
+
+/**
+ * Activity status values. Covers both the per-activity run lifecycle and the
+ * rollup states surfaced by Process/Definition `activityStatus` getters. Save
+ * point candidates are `Timer` and `Wait`.
+ */
+export const enum ActivityStatusValue {
   /** Idle, not running anything */
   Idle = 'idle',
-  /**
-   * At least one activity is executing,
-   * e.g. a service task making a asynchronous request
-   */
-  Executing = 'executing',
-  /**
-   * At least one activity is waiting for a timer to complete,
-   * usually only TimerEventDefinition's
-   */
-  Timer = 'timer',
-  /**
-   * At least one activity is waiting for a signal of some sort,
-   * e.g. user tasks, intermediate catch events, etc
-   */
-  Wait = 'wait',
-}
-
-/**
- * Activity run status
- */
-export const enum ActivityRunStatus {
   /** Run entered, triggered by taken inbound flow */
   Entered = 'entered',
   /** Run started */
   Started = 'started',
-  /** Executing activity behaviour */
+  /**
+   * At least one activity is executing,
+   * e.g. a service task making a asynchronous request
+   */
   Executing = 'executing',
   /** Activity behaviour execution completed successfully */
   Executed = 'executed',
@@ -402,7 +418,24 @@ export const enum ActivityRunStatus {
   Error = 'error',
   /** Formatting next run message */
   Formatting = 'formatting',
+  /**
+   * At least one activity is waiting for a timer to complete,
+   * usually only TimerEventDefinition's
+   */
+  Timer = 'timer',
+  /**
+   * At least one activity is waiting for a signal of some sort,
+   * e.g. user tasks, intermediate catch events, etc
+   */
+  Wait = 'wait',
 }
+
+/**
+ * Accepts either an `ActivityStatusValue` enum member or its underlying string
+ * literal, so JSDoc-typed assignments like `this.status = 'entered'` keep
+ * type-checking.
+ */
+export type ActivityStatus = ActivityStatusValue | `${ActivityStatusValue}`;
 
 // --- State snapshots ----------------------------------------------------------
 
@@ -427,7 +460,7 @@ export interface ActivityExecutionState {
 }
 
 export interface ActivityState extends ElementState {
-  status?: string;
+  status?: ActivityStatus;
   executionId: string;
   stopped: boolean;
   counters: { taken: number; discarded: number };
@@ -450,7 +483,7 @@ export interface ProcessExecutionState {
   executionId: string;
   stopped: boolean;
   completed: boolean;
-  status: string;
+  status: ProcessStatus;
   children: ActivityState[];
   flows?: SequenceFlowState[];
   messageFlows?: MessageFlowState[];
@@ -458,7 +491,7 @@ export interface ProcessExecutionState {
 }
 
 export interface ProcessState extends ElementState {
-  status: string;
+  status: ProcessStatus;
   stopped: boolean;
   executionId?: string;
   counters: completedCounters;
@@ -470,25 +503,17 @@ export interface DefinitionExecutionState {
   executionId: string;
   stopped: boolean;
   completed: boolean;
-  status: string;
+  status: DefinitionStatus;
   processes: ProcessState[];
 }
 
 export interface DefinitionState extends ElementState {
-  status: string;
+  status: DefinitionStatus;
   stopped: boolean;
   executionId?: string;
   counters: completedCounters;
   environment: EnvironmentState;
   execution?: DefinitionExecutionState;
-}
-
-// --- Flow references ----------------------------------------------------------
-
-export interface MessageFlowReference {
-  /** activity id */
-  get id(): string;
-  get processId(): string;
 }
 
 // --- Logging ------------------------------------------------------------------

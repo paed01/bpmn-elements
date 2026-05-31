@@ -12,7 +12,7 @@ export function CancelEventDefinition(activity, eventDefinition) {
 
   this.id = id;
   this.type = type;
-  /** @type {import('#types').EventDefinitionReference} */
+  /** @type {import('#types').EventReference} */
   this.reference = { referenceType: 'cancel' };
   this.isThrowing = isThrowing;
   this.activity = activity;

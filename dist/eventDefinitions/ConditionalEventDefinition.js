@@ -129,7 +129,7 @@ ConditionalEventDefinition.prototype.evaluateCallback = function evaluateCallbac
 /**
  * Get condition
  * @param {number} index Eventdefinition sequence number, used to name registered script
- * @returns {ExpressionCondition|ScriptCondition|null}
+ * @returns {import('#types').ICondition | null}
  */
 ConditionalEventDefinition.prototype.getCondition = function getCondition(index) {
   const behaviour = this.behaviour;

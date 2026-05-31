@@ -11,19 +11,9 @@ exports.ProcessBroker = ProcessBroker;
 var _smqp = require("smqp");
 var _Errors = require("./error/Errors.js");
 /**
- * @typedef {object} BrokerApi Shape of the bound event helpers exposed by an EventBroker
- * (and inherited by every element class that destructures from one).
- * @property {(eventName: string, callback: CallableFunction, eventOptions?: { once?: boolean, [x: string]: any }) => import('smqp').Consumer} on
- * @property {(eventName: string, callback: CallableFunction, eventOptions?: { [x: string]: any }) => import('smqp').Consumer} once
- * @property {(eventName: string, onMessage?: (routingKey: string, message: import('#types').ElementBrokerMessage, owner: any) => boolean) => Promise<any>} waitFor
- * @property {(eventName: string, content?: Record<string, any>, props?: any) => void} emit
- * @property {(error: Error, content?: Record<string, any>) => void} emitFatal
- */
-
-/**
  * Build the broker for an activity, including run/format/execution/api exchanges and queues.
  * @param {import('#types').Activity} activity
- * @returns {import('#types').ElementBroker<import('#types').Activity>}
+ * @returns {import('#types').EventBroker<import('#types').Activity>}
  */
 function ActivityBroker(activity) {
   const executionBroker = ExecutionBroker(activity, 'activity');
@@ -33,7 +23,7 @@ function ActivityBroker(activity) {
 /**
  * Build the broker for a process, with an additional api-q bound to all api routing keys.
  * @param {import('#types').Process} owner
- * @returns {import('#types').ElementBroker<import('#types').Process>}
+ * @returns {import('#types').EventBroker<import('#types').Process>}
  */
 function ProcessBroker(owner) {
   const executionBroker = ExecutionBroker(owner, 'process');
@@ -49,7 +39,7 @@ function ProcessBroker(owner) {
  * Build the broker for a definition. Optionally registers a custom return-message handler.
  * @param {import('#types').Definition} owner
  * @param {(message: import('#types').ElementBrokerMessage) => void} [onBrokerReturn]
- * @returns {import('#types').ElementBroker<import('#types').Definition>}
+ * @returns {import('#types').EventBroker<import('#types').Definition>}
  */
 function DefinitionBroker(owner, onBrokerReturn) {
   return ExecutionBroker(owner, 'definition', onBrokerReturn);
@@ -58,7 +48,7 @@ function DefinitionBroker(owner, onBrokerReturn) {
 /**
  * Build the broker for a message flow with a durable message exchange and message-q.
  * @param {import('./flows/MessageFlow.js').MessageFlow} owner
- * @returns {import('#types').ElementBroker<import('./flows/MessageFlow.js').MessageFlow>}
+ * @returns {import('#types').EventBroker<import('./flows/MessageFlow.js').MessageFlow>}
  */
 function MessageFlowBroker(owner) {
   const eventBroker = new EventBroker(owner, {
@@ -132,23 +122,16 @@ function EventBroker(brokerOwner, options, onBrokerReturn) {
   const broker = this.broker = new _smqp.Broker(brokerOwner);
   broker.assertExchange('event', 'topic', options);
   broker.on('return', onBrokerReturn ? onBrokerReturn.bind(brokerOwner) : this._onBrokerReturnFn.bind(this));
-
-  /** @type {BrokerApi['on']} */
   this.on = this.on.bind(this);
-  /** @type {BrokerApi['once']} */
   this.once = this.once.bind(this);
-  /** @type {BrokerApi['waitFor']} */
   this.waitFor = this.waitFor.bind(this);
-  /** @type {BrokerApi['emit']} */
   this.emit = this.emit.bind(this);
-  /** @type {BrokerApi['emitFatal']} */
   this.emitFatal = this.emitFatal.bind(this);
 }
 
 /**
  * Subscribe to a prefixed event. Errors are unwrapped via `makeErrorFromMessage`,
  * other events resolve to the owner's Api wrapper.
- * @type {BrokerApi['on']}
  */
 EventBroker.prototype.on = function on(eventName, callback, eventOptions = {
   once: false
@@ -167,7 +150,6 @@ EventBroker.prototype.on = function on(eventName, callback, eventOptions = {
 
 /**
  * Subscribe to the next occurrence of an event.
- * @type {BrokerApi['once']}
  */
 EventBroker.prototype.once = function once(eventName, callback, eventOptions) {
   return this.on(eventName, callback, {
@@ -178,7 +160,6 @@ EventBroker.prototype.once = function once(eventName, callback, eventOptions) {
 
 /**
  * Promise-style wait for an event. Rejects on a mandatory `*.error` message.
- * @type {BrokerApi['waitFor']}
  */
 EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
   const key = this._getEventRoutingKey(eventName);
@@ -208,7 +189,6 @@ EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
 
 /**
  * Publish a prefixed event message.
- * @type {BrokerApi['emit']}
  */
 EventBroker.prototype.emit = function emit(eventName, content, props) {
   this.broker.publish('event', `${this.eventPrefix}.${eventName}`, {
@@ -221,7 +201,6 @@ EventBroker.prototype.emit = function emit(eventName, content, props) {
 
 /**
  * Emit a mandatory error event. Surfaces via `on('error', ...)` or causes a return message to throw.
- * @type {BrokerApi['emitFatal']}
  */
 EventBroker.prototype.emitFatal = function emitFatal(error, content) {
   this.emit('error', {

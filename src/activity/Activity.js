@@ -38,6 +38,7 @@ export function Activity(Behaviour, activityDef, context) {
   this.id = id;
   this.type = type;
   this.name = name;
+  /** @type {import('moddle-context-serializer').ActivityBehaviour} */
   this.behaviour = { ...behaviour, eventDefinitions };
   this.Behaviour = Behaviour;
   /** @type {import('moddle-context-serializer').Parent} */
@@ -46,7 +47,7 @@ export function Activity(Behaviour, activityDef, context) {
   this.logger = context.environment.Logger(type.toLowerCase());
   this.environment = context.environment;
   this.context = context;
-  /** @type {import('#types').ActivityRunStatus} */
+  /** @type {import('#types').ActivityStatus | undefined} */
   this.status = undefined;
 
   this[K_COUNTERS] = {
@@ -390,6 +391,7 @@ Activity.prototype.resume = function resume() {
 /**
  * Discard the activity. Stops execution if running and discards outbound flows.
  * @param {Record<string, any>} [discardContent] Optional content propagated with the discard
+ * @returns {void}
  */
 Activity.prototype.discard = function discard(discardContent) {
   if (!this.status) return this._runDiscard(discardContent);

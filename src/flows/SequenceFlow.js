@@ -162,7 +162,7 @@ SequenceFlow.prototype.shake = function shake(message) {
 /**
  * Resolve the flow's condition (script or expression). Returns null when no condition is set.
  * Emits a fatal error when the script language is missing or unsupported.
- * @returns {import('#types').ISequenceFlowCondition | null}
+ * @returns {import('#types').ICondition | null}
  */
 SequenceFlow.prototype.getCondition = function getCondition() {
   const conditionExpression = this.behaviour.conditionExpression;

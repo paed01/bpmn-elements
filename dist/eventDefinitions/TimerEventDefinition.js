@@ -213,8 +213,9 @@ TimerEventDefinition.prototype._stop = function stop() {
 
 /**
  * Parse timer
- * @param {string} timerType
+ * @param {import('#types').TimerType} timerType
  * @param {string} value
+ * @returns {import('#types').parsedTimer}
  */
 TimerEventDefinition.prototype.parse = function parse(timerType, value) {
   let repeat, delay, expireAt;

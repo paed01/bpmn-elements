@@ -8,16 +8,6 @@ import { Scripts as JavaScripts } from '../helpers/JavaScripts.js';
 const lanesSource = factory.resource('lanes.bpmn');
 
 describe('Definition', () => {
-  describe('#ctor', () => {
-    it('can be invoked without new', () => {
-      const newNewDefinition = Definition({
-        id: 'Def_1',
-        environment: new Environment(),
-      });
-      expect(newNewDefinition.run).to.be.a('function');
-    });
-  });
-
   describe('requirements', () => {
     it('requires a context with id and environment', () => {
       const definition = new Definition({

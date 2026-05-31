@@ -14,7 +14,7 @@ export function ErrorEventDefinition(activity, eventDefinition) {
   this.id = id;
   this.type = type;
 
-  /** @type {import('#types').EventDefinitionReference} */
+  /** @type {import('#types').EventReference} */
   this.reference = {
     name: 'anonymous',
     ...behaviour.errorRef,

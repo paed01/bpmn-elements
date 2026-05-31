@@ -21,7 +21,7 @@ function CancelEventDefinition(activity, eventDefinition) {
   const type = eventDefinition.type;
   this.id = id;
   this.type = type;
-  /** @type {import('#types').EventDefinitionReference} */
+  /** @type {import('#types').EventReference} */
   this.reference = {
     referenceType: 'cancel'
   };

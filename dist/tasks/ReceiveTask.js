@@ -37,15 +37,19 @@ function ReceiveTaskBehaviour(activity) {
   } = activity;
   this.id = id;
   this.type = type;
-  const reference = this.reference = {
+
+  /** @type {import('#types').EventReference} */
+  this.reference = {
     name: 'anonymous',
     ...behaviour.messageRef,
     referenceType: 'message'
   };
+
+  /** @type {import('./LoopCharacteristics.js').LoopCharacteristics | undefined } */
   this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
   this.broker = activity.broker;
-  this[_constants.K_REFERENCE_ELEMENT] = reference.id && activity.getActivityById(reference.id);
+  this[_constants.K_REFERENCE_ELEMENT] = this.reference.id && activity.getActivityById(this.reference.id);
 }
 
 /**

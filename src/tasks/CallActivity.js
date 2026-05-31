@@ -20,7 +20,7 @@ export function CallActivityBehaviour(activity) {
   this.id = id;
   this.type = type;
   this.calledElement = behaviour.calledElement;
-  /** @type {import('./LoopCharacteristics.js').LoopCharacteristics} */
+  /** @type {import('./LoopCharacteristics.js').LoopCharacteristics | undefined} */
   this.loopCharacteristics =
     behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;

@@ -31,6 +31,8 @@ function ScriptTaskBehaviour(activity) {
   this.id = id;
   this.type = type;
   this.scriptFormat = behaviour.scriptFormat;
+
+  /** @type {import('./LoopCharacteristics.js').LoopCharacteristics | undefined} */
   this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
   const environment = this.environment = activity.environment;

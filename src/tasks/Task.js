@@ -18,6 +18,7 @@ export function TaskBehaviour(activity) {
   const { id, type, behaviour, broker } = activity;
   this.id = id;
   this.type = type;
+  /** @type {import('./LoopCharacteristics.js').LoopCharacteristics | undefined} */
   this.loopCharacteristics =
     behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.broker = broker;

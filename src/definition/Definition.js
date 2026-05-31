@@ -22,7 +22,6 @@ import {
  * @param {import('#types').EnvironmentOptions} [options] When provided, environment is cloned and settings merged
  */
 export function Definition(context, options) {
-  if (!(this instanceof Definition)) return new Definition(context, options);
   if (!context) throw new Error('No context');
 
   const { id, name, type = 'definition' } = context;
@@ -59,7 +58,6 @@ export function Definition(context, options) {
   };
 
   const { broker, on, once, waitFor, emit, emitFatal } = DefinitionBroker(this, onBrokerReturn);
-  /** @type {import('smqp').Broker} */
   this.broker = broker;
 
   this.on = on;

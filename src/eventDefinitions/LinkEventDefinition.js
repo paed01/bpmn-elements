@@ -14,7 +14,7 @@ export function LinkEventDefinition(activity, eventDefinition) {
   this.id = id;
   this.type = type;
 
-  /** @type {import('#types').EventDefinitionReference} */
+  /** @type {import('#types').EventReference} */
   this.reference = {
     id: behaviour.name,
     linkName: behaviour.name,

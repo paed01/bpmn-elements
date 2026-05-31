@@ -7,6 +7,24 @@ declare module 'bpmn-elements' {
 	get owner(): T;
   }
 
+  /**
+   * Wrapper returned by `ActivityBroker`, `ProcessBroker`, `DefinitionBroker`,
+   * `MessageFlowBroker`, and `new EventBroker(owner, options)`. Owns an underlying
+   * smqp Broker and exposes bound, prefixed event helpers.
+   *
+   * @template T Broker owner element type (Activity, Process, Definition, ...).
+   */
+  export interface EventBroker<T> {
+	options: { prefix: string; autoDelete?: boolean; durable?: boolean };
+	eventPrefix: string;
+	broker: ElementBroker<T>;
+	on(eventName: string, callback: CallableFunction, eventOptions?: { once?: boolean; [x: string]: any }): Consumer;
+	once(eventName: string, callback: CallableFunction, eventOptions?: { [x: string]: any }): Consumer;
+	waitFor(eventName: string, onMessage?: (routingKey: string, message: ElementBrokerMessage, owner: T) => boolean): Promise<IApi<T>>;
+	emit(eventName: string, content?: Record<string, any>, props?: any): void;
+	emitFatal(error: Error, content?: Record<string, any>): void;
+  }
+
   export type signalMessage = {
 	/**
 	 * Optional signal id
@@ -82,33 +100,9 @@ declare module 'bpmn-elements' {
 	get logger(): ILogger;
   }
 
-  export class Element<T> extends ElementBase {
-	get broker(): ElementBroker<T>;
-	stop(): void;
-	resume(): void;
-	getApi(message?: ElementBrokerMessage): IApi<T>;
-	on(eventName: string, callback: CallableFunction, options?: any): any;
-	once(eventName: string, callback: CallableFunction, options?: any): any;
-	waitFor(eventName: string, options?: any): Promise<IApi<T>>;
-  }
-
-  export class MessageElement {
-	get id(): string;
-	get type(): string;
-	get name(): string;
-	get parent(): ElementParent;
-	resolve(executionMessage: ElementBrokerMessage): {
-	  parent: ElementParent;
-	  name: string;
-	  id: string;
-	  type: string;
-	  messageType: string;
-	};
-  }
-
   // --- Event definitions --------------------------------------------------------
 
-  export interface EventDefinitionReference {
+  export interface EventReference {
 	id?: string;
 	name?: string;
 	referenceType: string;
@@ -125,16 +119,20 @@ declare module 'bpmn-elements' {
 	get activity(): Activity;
 	get broker(): Broker;
 	get logger(): ILogger;
-	get reference(): EventDefinitionReference;
+	get reference(): EventReference;
 	[x: string]: any;
 	execute(executeMessage: ElementBrokerMessage): void;
   }
 
-  export enum TimerType {
+  /** Supported BPMN timer event definition types. */
+  export enum TimerTypeValue {
 	TimeCycle = 'timeCycle',
 	TimeDuration = 'timeDuration',
 	TimeDate = 'timeDate',
   }
+
+  /** Accepts either a `TimerTypeValue` enum member or its underlying string literal. */
+  export type TimerType = TimerTypeValue | `${TimerTypeValue}`;
 
   export type parsedTimer = {
 	/** Expires at date time */
@@ -151,18 +149,12 @@ declare module 'bpmn-elements' {
 	/** Condition type */
 	get type(): string;
 	[x: string]: any;
-	execute(message: ElementBrokerMessage, callback: CallableFunction): void;
-  }
-
-  export interface ISequenceFlowCondition {
-	/** Condition type, e.g. script or expression */
-	get type(): string;
 	/**
-	 * Execute sequence flow condition
+	 * Execute condition
 	 * @param message Source element execution message
 	 * @param callback Callback with truthy result if flow should be taken
 	 */
-	execute(message: ElementBrokerMessage, callback: (err: Error, result: any) => void): void;
+	execute(message: ElementBrokerMessage, callback: CallableFunction): void;
   }
 
   // --- Activity behaviour & extensions ------------------------------------------
@@ -176,10 +168,8 @@ declare module 'bpmn-elements' {
 	execute(executeMessage: ElementBrokerMessage): void;
   }
 
-  // Custom activity behaviour factory signature.
-  export function ActivityBehaviour(activityDef: SerializableElement, context: ContextInstance): Activity;
-
   export type Extension = (activity: any, context: any) => IExtension;
+
   export interface IExtension {
 	activate(message: ElementBrokerMessage): void;
 	deactivate(message: ElementBrokerMessage): void;
@@ -243,56 +233,82 @@ declare module 'bpmn-elements' {
 
   // --- Run-status enums ---------------------------------------------------------
 
-  export enum DefinitionRunStatus {
+  /**
+   * Definition status values. Covers both the entity (`Definition.status`) and
+   * the execution (`DefinitionExecution.status`) lifecycles.
+   */
+  export enum DefinitionStatusValue {
+	/** DefinitionExecution constructed, not yet started */
+	Init = 'init',
+	/** Definition run entered */
 	Entered = 'entered',
+	/** Definition run started */
 	Start = 'start',
+	/** Definition is executing */
 	Executing = 'executing',
+	/** Definition run ended */
 	End = 'end',
+	/** Definition run discarded */
 	Discarded = 'discarded',
+	/** Definition execution completed successfully */
+	Completed = 'completed',
+	/** Definition execution failed */
+	Error = 'error',
   }
 
-  export enum ProcessRunStatus {
-	Entered = 'entered',
-	Start = 'start',
-	Executing = 'executing',
-	Errored = 'errored',
-	End = 'end',
-	Discarded = 'discarded',
-  }
+  /** Accepts either a `DefinitionStatusValue` enum member or its string literal. */
+  export type DefinitionStatus = DefinitionStatusValue | `${DefinitionStatusValue}`;
 
   /**
-   * Activity status
-   * Can be used to decide when to save states, Timer and Wait is recommended.
+   * Process status values. Covers both the entity (`Process.status`) and the
+   * execution (`ProcessExecution.status`) lifecycles.
    */
-  export enum ActivityStatus {
+  export enum ProcessStatusValue {
+	/** ProcessExecution constructed, not yet started */
+	Init = 'init',
+	/** Process run entered */
+	Entered = 'entered',
+	/** Process run started */
+	Start = 'start',
+	/** Process is executing */
+	Executing = 'executing',
+	/** Process run errored */
+	Errored = 'errored',
+	/** Process run ended */
+	End = 'end',
+	/** Process run discarded */
+	Discarded = 'discarded',
+	/** Process execution discard in progress */
+	Discard = 'discard',
+	/** Process execution cancelled */
+	Cancel = 'cancel',
+	/** Process execution completed successfully */
+	Completed = 'completed',
+	/** Process execution failed */
+	Error = 'error',
+	/** Process execution terminated by a terminate end event */
+	Terminated = 'terminated',
+  }
+
+  /** Accepts either a `ProcessStatusValue` enum member or its string literal. */
+  export type ProcessStatus = ProcessStatusValue | `${ProcessStatusValue}`;
+
+  /**
+   * Activity status values. Covers both the per-activity run lifecycle and the
+   * rollup states surfaced by Process/Definition `activityStatus` getters. Save
+   * point candidates are `Timer` and `Wait`.
+   */
+  export enum ActivityStatusValue {
 	/** Idle, not running anything */
 	Idle = 'idle',
-	/**
-	 * At least one activity is executing,
-	 * e.g. a service task making a asynchronous request
-	 */
-	Executing = 'executing',
-	/**
-	 * At least one activity is waiting for a timer to complete,
-	 * usually only TimerEventDefinition's
-	 */
-	Timer = 'timer',
-	/**
-	 * At least one activity is waiting for a signal of some sort,
-	 * e.g. user tasks, intermediate catch events, etc
-	 */
-	Wait = 'wait',
-  }
-
-  /**
-   * Activity run status
-   */
-  export enum ActivityRunStatus {
 	/** Run entered, triggered by taken inbound flow */
 	Entered = 'entered',
 	/** Run started */
 	Started = 'started',
-	/** Executing activity behaviour */
+	/**
+	 * At least one activity is executing,
+	 * e.g. a service task making a asynchronous request
+	 */
 	Executing = 'executing',
 	/** Activity behaviour execution completed successfully */
 	Executed = 'executed',
@@ -306,7 +322,24 @@ declare module 'bpmn-elements' {
 	Error = 'error',
 	/** Formatting next run message */
 	Formatting = 'formatting',
+	/**
+	 * At least one activity is waiting for a timer to complete,
+	 * usually only TimerEventDefinition's
+	 */
+	Timer = 'timer',
+	/**
+	 * At least one activity is waiting for a signal of some sort,
+	 * e.g. user tasks, intermediate catch events, etc
+	 */
+	Wait = 'wait',
   }
+
+  /**
+   * Accepts either an `ActivityStatusValue` enum member or its underlying string
+   * literal, so JSDoc-typed assignments like `this.status = 'entered'` keep
+   * type-checking.
+   */
+  export type ActivityStatus = ActivityStatusValue | `${ActivityStatusValue}`;
 
   // --- State snapshots ----------------------------------------------------------
 
@@ -331,7 +364,7 @@ declare module 'bpmn-elements' {
   }
 
   export interface ActivityState extends ElementState {
-	status?: string;
+	status?: ActivityStatus;
 	executionId: string;
 	stopped: boolean;
 	counters: { taken: number; discarded: number };
@@ -354,7 +387,7 @@ declare module 'bpmn-elements' {
 	executionId: string;
 	stopped: boolean;
 	completed: boolean;
-	status: string;
+	status: ProcessStatus;
 	children: ActivityState[];
 	flows?: SequenceFlowState[];
 	messageFlows?: MessageFlowState[];
@@ -362,7 +395,7 @@ declare module 'bpmn-elements' {
   }
 
   export interface ProcessState extends ElementState {
-	status: string;
+	status: ProcessStatus;
 	stopped: boolean;
 	executionId?: string;
 	counters: completedCounters;
@@ -374,25 +407,17 @@ declare module 'bpmn-elements' {
 	executionId: string;
 	stopped: boolean;
 	completed: boolean;
-	status: string;
+	status: DefinitionStatus;
 	processes: ProcessState[];
   }
 
   export interface DefinitionState extends ElementState {
-	status: string;
+	status: DefinitionStatus;
 	stopped: boolean;
 	executionId?: string;
 	counters: completedCounters;
 	environment: EnvironmentState;
 	execution?: DefinitionExecutionState;
-  }
-
-  // --- Flow references ----------------------------------------------------------
-
-  export interface MessageFlowReference {
-	/** activity id */
-	get id(): string;
-	get processId(): string;
   }
 
   // --- Logging ------------------------------------------------------------------
@@ -533,9 +558,8 @@ declare module 'bpmn-elements' {
 		id: string | undefined;
 		type: string;
 		name: string | undefined;
-		behaviour: {
-			eventDefinitions: any;
-		};
+		
+		behaviour: import("moddle-context-serializer").ActivityBehaviour;
 		Behaviour: IActivityBehaviour;
 		
 		parent: import("moddle-context-serializer").Parent;
@@ -544,14 +568,17 @@ declare module 'bpmn-elements' {
 		environment: Environment;
 		context: ContextInstance;
 		
-		status: ActivityRunStatus;
-		broker: any;
-		on: (eventName: string, callback: (event: {
-			name: string;
-		} & Record<string, any>) => void, options?: import("smqp").ConsumeOptions) => import("smqp").Consumer;
-		once: any;
-		waitFor: any;
-		emitFatal: any;
+		status: ActivityStatus | undefined;
+		broker: ElementBroker<Activity>;
+		on: (eventName: string, callback: CallableFunction, eventOptions?: {
+			once?: boolean;
+			[x: string]: any;
+		}) => import("smqp").Consumer;
+		once: (eventName: string, callback: CallableFunction, eventOptions?: {
+			[x: string]: any;
+		}) => import("smqp").Consumer;
+		waitFor: (eventName: string, onMessage?: ((routingKey: string, message: ElementBrokerMessage, owner: Activity) => boolean) | undefined) => Promise<IApi<Activity>>;
+		emitFatal: (error: Error, content?: Record<string, any>) => void;
 		/**
 		 * Subscribe to inbound flows and start consuming the inbound queue.
 		 * */
@@ -591,8 +618,8 @@ declare module 'bpmn-elements' {
 		/**
 		 * Discard the activity. Stops execution if running and discards outbound flows.
 		 * @param discardContent Optional content propagated with the discard
-		 */
-		discard(discardContent?: Record<string, any>): any;
+		 * */
+		discard(discardContent?: Record<string, any>): void;
 		/**
 		 * Subscribe to inbound triggers (sequence flows, attached activity, or compensation associations).
 		 * @returns count of subscribed triggers
@@ -605,7 +632,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Stop the activity. If not currently running, just cancels the inbound consumer.
 		 */
-		stop(): any;
+		stop(): boolean | void;
 		/**
 		 * Advance one run-step when the environment runs in step mode. No-op otherwise.
 		 */
@@ -669,13 +696,13 @@ declare module 'bpmn-elements' {
 		activity: Activity;
 		context: ContextInstance;
 		id: string | undefined;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		get completed(): boolean;
 		/**
 		 * Begin executing the activity behaviour. Resumes if the message is redelivered.
 		 * @throws {Error} when message or executionId is missing
 		 */
-		execute(executeMessage: ElementBrokerMessage): any;
+		execute(executeMessage: ElementBrokerMessage): number | undefined;
 		executionId: string | undefined;
 		source: IActivityBehaviour | undefined;
 		/**
@@ -859,22 +886,24 @@ declare module 'bpmn-elements' {
 		 * @param options When provided, environment is cloned and settings merged
 		 */
 		constructor(context: ContextInstance, options?: EnvironmentOptions);
-		id: string | undefined;
+		id: string;
 		
 		type: string;
-		name: string | undefined;
+		name: string;
 		
 		environment: Environment;
-		context: ContextInstance | undefined;
-		
-		broker: import("smqp").Broker;
-		on: ((eventName: string, callback: (event: {
-			name: string;
-		} & Record<string, any>) => void, options?: import("smqp").ConsumeOptions) => import("smqp").Consumer) | undefined;
-		once: any;
-		waitFor: any;
-		emit: any;
-		emitFatal: any;
+		context: ContextInstance;
+		broker: ElementBroker<Definition>;
+		on: (eventName: string, callback: CallableFunction, eventOptions?: {
+			once?: boolean;
+			[x: string]: any;
+		}) => import("smqp").Consumer;
+		once: (eventName: string, callback: CallableFunction, eventOptions?: {
+			[x: string]: any;
+		}) => import("smqp").Consumer;
+		waitFor: (eventName: string, onMessage?: ((routingKey: string, message: ElementBrokerMessage, owner: Definition) => boolean) | undefined) => Promise<IApi<Definition>>;
+		emit: (eventName: string, content?: Record<string, any>, props?: any) => void;
+		emitFatal: (error: Error, content?: Record<string, any>) => void;
 		
 		logger: ILogger;
 		/**
@@ -963,9 +992,9 @@ declare module 'bpmn-elements' {
 		get execution(): DefinitionExecution | undefined;
 		get executionId(): string | undefined;
 		get isRunning(): boolean;
-		get status(): string | undefined;
+		get status(): DefinitionStatus | undefined;
 		get stopped(): boolean;
-		get activityStatus(): string;
+		get activityStatus(): ActivityStatus;
 	}
 	/**
 	 * Drives the execution of a Definition. Activates executable processes, routes inter-process
@@ -977,9 +1006,9 @@ declare module 'bpmn-elements' {
 		 * delegate messages and call activity hand-offs, and rolls completion up to the Definition.
 		 * */
 		constructor(definition: Definition, context: ContextInstance);
-		id: string | undefined;
+		id: string;
 		type: string;
-		broker: import("smqp").Broker;
+		broker: ElementBroker<Definition>;
 		environment: Environment;
 		context: ContextInstance;
 		executionId: string | undefined;
@@ -1035,11 +1064,11 @@ declare module 'bpmn-elements' {
 		getPostponed(...args: any[]): IApi<Activity>;
 		get stopped(): boolean;
 		get completed(): boolean;
-		get status(): string;
+		get status(): DefinitionStatus;
 		get processes(): Process[];
 		get postponedCount(): number;
 		get isRunning(): boolean;
-		get activityStatus(): string;
+		get activityStatus(): ActivityStatus;
 	}
 	/**
 	 * Placeholder activity for non-executable elements (text annotations, groups, categories).
@@ -1235,7 +1264,7 @@ declare module 'bpmn-elements' {
 			dataOutputs?: import("moddle-context-serializer").IElement[];
 		};
 		activity: Activity;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		context: ContextInstance;
 		
 		activate(message?: ElementBrokerMessage): void;
@@ -1260,7 +1289,7 @@ declare module 'bpmn-elements' {
 		
 		behaviour: Record<string, any>;
 		environment: Environment;
-		broker: any;
+		broker: ElementBroker<Process>;
 		context: ContextInstance;
 		logger: ILogger;
 		get process(): Process;
@@ -1304,7 +1333,7 @@ declare module 'bpmn-elements' {
 		message: ElementBrokerMessage;
 		type: string;
 		id: string | undefined;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		parentExecutionId: string | undefined;
 		
 		isSequential: boolean;
@@ -1389,12 +1418,15 @@ declare module 'bpmn-elements' {
 		isExecutable: any;
 		environment: Environment;
 		context: ContextInstance;
-		broker: any;
-		on: (eventName: string, callback: (event: {
-			name: string;
-		} & Record<string, any>) => void, options?: import("smqp").ConsumeOptions) => import("smqp").Consumer;
-		once: any;
-		waitFor: any;
+		broker: ElementBroker<Process>;
+		on: (eventName: string, callback: CallableFunction, eventOptions?: {
+			once?: boolean;
+			[x: string]: any;
+		}) => import("smqp").Consumer;
+		once: (eventName: string, callback: CallableFunction, eventOptions?: {
+			[x: string]: any;
+		}) => import("smqp").Consumer;
+		waitFor: (eventName: string, onMessage?: ((routingKey: string, message: ElementBrokerMessage, owner: Process) => boolean) | undefined) => Promise<IApi<Process>>;
 		logger: ILogger;
 		/**
 		 * Allocate an executionId and emit init event without starting the run.
@@ -1480,8 +1512,8 @@ declare module 'bpmn-elements' {
 		get isRunning(): boolean;
 		get executionId(): string | undefined;
 		get execution(): ProcessExecution | undefined;
-		get status(): string | undefined;
-		get activityStatus(): string;
+		get status(): ProcessStatus | undefined;
+		get activityStatus(): ActivityStatus;
 	}
 	/**
 	 * Activity properties behaviour. Resolves bound data input/output references during the run.
@@ -1499,7 +1531,7 @@ declare module 'bpmn-elements' {
 			values: import("moddle-context-serializer").IElement[];
 		}, context: ContextInstance);
 		activity: Activity;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		
 		activate(message: ElementBrokerMessage): void;
 		deactivate(): void;
@@ -1587,7 +1619,7 @@ declare module 'bpmn-elements' {
 		type: string;
 		isSubProcess: any;
 		isTransaction: any;
-		broker: any;
+		broker: ElementBroker<Process> | ElementBroker<Activity>;
 		environment: Environment;
 		context: ContextInstance;
 		executionId: string | undefined;
@@ -1650,10 +1682,10 @@ declare module 'bpmn-elements' {
 		getApi(message?: ElementBrokerMessage): IApi<Process>;
 		get stopped(): boolean;
 		get completed(): boolean;
-		get status(): string;
+		get status(): ProcessStatus;
 		get postponedCount(): number;
 		get isRunning(): boolean;
-		get activityStatus(): string;
+		get activityStatus(): ActivityStatus;
 	}
 	/**
 	 * Sequence flow connecting two activities. Owns its broker and publishes take/discard/looped
@@ -1678,15 +1710,10 @@ declare module 'bpmn-elements' {
 		environment: Environment;
 		logger: ILogger;
 		broker: import("smqp").Broker;
-		on: (eventName: string, callback: CallableFunction, eventOptions?: {
-			once?: boolean;
-			[x: string]: any;
-		}) => import("smqp").Consumer;
-		once: (eventName: string, callback: CallableFunction, eventOptions?: {
-			[x: string]: any;
-		}) => import("smqp").Consumer;
-		waitFor: (eventName: string, onMessage?: (routingKey: string, message: ElementBrokerMessage, owner: any) => boolean) => Promise<any>;
-		emitFatal: (error: Error, content?: Record<string, any>) => void;
+		on: any;
+		once: any;
+		waitFor: any;
+		emitFatal: any;
 		get counters(): {
 			take: number;
 			discard: number;
@@ -1729,7 +1756,7 @@ declare module 'bpmn-elements' {
 		 * Resolve the flow's condition (script or expression). Returns null when no condition is set.
 		 * Emits a fatal error when the script language is missing or unsupported.
 		 * */
-		getCondition(): ISequenceFlowCondition | null;
+		getCondition(): ICondition | null;
 		/**
 		 * Build a flow event message body, optionally merging override content.
 		 * */
@@ -1784,14 +1811,9 @@ declare module 'bpmn-elements' {
 		environment: Environment;
 		logger: ILogger;
 		broker: import("smqp").Broker;
-		on: (eventName: string, callback: CallableFunction, eventOptions?: {
-			once?: boolean;
-			[x: string]: any;
-		}) => import("smqp").Consumer;
-		once: (eventName: string, callback: CallableFunction, eventOptions?: {
-			[x: string]: any;
-		}) => import("smqp").Consumer;
-		waitFor: (eventName: string, onMessage?: (routingKey: string, message: ElementBrokerMessage, owner: any) => boolean) => Promise<any>;
+		on: any;
+		once: any;
+		waitFor: any;
 		get counters(): {
 			take: number;
 			discard: number;
@@ -1846,13 +1868,16 @@ declare module 'bpmn-elements' {
 		behaviour: Record<string, any>;
 		environment: Environment;
 		context: ContextInstance;
-		broker: any;
-		on: (eventName: string, callback: (event: {
-			name: string;
-		} & Record<string, any>) => void, options?: import("smqp").ConsumeOptions) => import("smqp").Consumer;
-		once: any;
-		emit: any;
-		waitFor: any;
+		broker: ElementBroker<MessageFlow>;
+		on: (eventName: string, callback: CallableFunction, eventOptions?: {
+			once?: boolean;
+			[x: string]: any;
+		}) => import("smqp").Consumer;
+		once: (eventName: string, callback: CallableFunction, eventOptions?: {
+			[x: string]: any;
+		}) => import("smqp").Consumer;
+		emit: (eventName: string, content?: Record<string, any>, props?: any) => void;
+		waitFor: (eventName: string, onMessage?: ((routingKey: string, message: ElementBrokerMessage, owner: MessageFlow) => boolean) | undefined) => Promise<IApi<MessageFlow>>;
 		logger: ILogger;
 		get counters(): {
 			messages: number;
@@ -1896,9 +1921,9 @@ declare module 'bpmn-elements' {
 		attachedTo: Activity | null;
 		activity: Activity;
 		environment: Environment;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		get executionId(): string | undefined;
-		get cancelActivity(): unknown;
+		get cancelActivity(): any;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 	}
@@ -1916,7 +1941,7 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 	}
@@ -1934,7 +1959,7 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 	}
@@ -1952,7 +1977,7 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 	}
@@ -1971,7 +1996,7 @@ declare module 'bpmn-elements' {
 		id: string | undefined;
 		type: string;
 		activity: Activity;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		get executionId(): string | undefined;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
@@ -1991,7 +2016,7 @@ declare module 'bpmn-elements' {
 		id: string | undefined;
 		type: string;
 		activity: Activity;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		context: ContextInstance;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
@@ -2010,7 +2035,7 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		
 		execute({ content }: ElementBrokerMessage): void;
 	}
@@ -2028,7 +2053,7 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		
 		execute({ content }: ElementBrokerMessage): void;
 	}
@@ -2053,13 +2078,13 @@ declare module 'bpmn-elements' {
 		id: string | undefined;
 		type: string;
 		activity: Activity;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		inbound: Set<any>;
 		isConverging: boolean;
 		get executionId(): any;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
-		setup(executeMessage: any): any;
+		setup(executeMessage: any): number | undefined;
 		peerMonitor: PeerMonitor | undefined;
 	}
 		class PeerMonitor {
@@ -2096,9 +2121,9 @@ declare module 'bpmn-elements' {
 		type: string;
 		calledElement: any;
 		
-		loopCharacteristics: MultiInstanceLoopCharacteristics;
+		loopCharacteristics: MultiInstanceLoopCharacteristics | undefined;
 		activity: Activity;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		environment: Environment;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
@@ -2117,10 +2142,12 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		reference: any;
-		loopCharacteristics: any;
+		
+		reference: EventReference;
+		
+		loopCharacteristics: MultiInstanceLoopCharacteristics | undefined;
 		activity: Activity;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 	}
@@ -2138,8 +2165,9 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		scriptFormat: any;
-		loopCharacteristics: any;
+		scriptFormat: string | undefined;
+		
+		loopCharacteristics: MultiInstanceLoopCharacteristics | undefined;
 		activity: Activity;
 		environment: Environment;
 		
@@ -2159,10 +2187,11 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		loopCharacteristics: any;
+		
+		loopCharacteristics: MultiInstanceLoopCharacteristics | undefined;
 		activity: Activity;
 		environment: Environment;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 		service: any;
@@ -2182,9 +2211,10 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		loopCharacteristics: any;
+		
+		loopCharacteristics: MultiInstanceLoopCharacteristics | undefined;
 		activity: Activity;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 	}
@@ -2202,11 +2232,12 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity, context: ContextInstance);
 		id: string | undefined;
 		type: string;
-		loopCharacteristics: any;
+		
+		loopCharacteristics: MultiInstanceLoopCharacteristics | undefined;
 		activity: Activity;
 		context: ContextInstance;
 		environment: Environment;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		executionId: string | undefined;
 		get execution(): any;
 		get executions(): any[];
@@ -2231,8 +2262,9 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		loopCharacteristics: any;
-		broker: any;
+		
+		loopCharacteristics: MultiInstanceLoopCharacteristics | undefined;
+		broker: ElementBroker<Activity>;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 	}
@@ -2251,11 +2283,11 @@ declare module 'bpmn-elements' {
 		id: string | undefined;
 		type: string | undefined;
 		
-		reference: EventDefinitionReference;
+		reference: EventReference;
 		isThrowing: boolean;
 		activity: Activity;
 		environment: Environment;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		logger: ILogger;
 		get executionId(): string;
 		
@@ -2276,18 +2308,18 @@ declare module 'bpmn-elements' {
 		id: string | undefined;
 		type: string | undefined;
 		
-		reference: EventDefinitionReference;
+		reference: EventReference;
 		isThrowing: boolean;
 		activity: Activity;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): any;
+		execute(executeMessage: ElementBrokerMessage): number | import("smqp").Consumer | undefined;
 		
-		executeCatch(executeMessage: ElementBrokerMessage): any;
+		executeCatch(executeMessage: ElementBrokerMessage): import("smqp").Consumer | undefined;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): any;
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
 	/**
 	 * Conditional event definition
@@ -2304,9 +2336,9 @@ declare module 'bpmn-elements' {
 		behaviour: {};
 		activity: Activity;
 		environment: Environment;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		logger: ILogger;
-		condition: ScriptCondition | ExpressionCondition | null;
+		condition: ICondition | null;
 		get executionId(): string;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
@@ -2319,12 +2351,12 @@ declare module 'bpmn-elements' {
 		 * @param err Condition evaluation error
 		 * @param result Result from evaluated condition, completes execution if truthy
 		 */
-		evaluateCallback(err: Error | null, result: any): any;
+		evaluateCallback(err: Error | null, result: any): number | undefined;
 		/**
 		 * Get condition
 		 * @param index Eventdefinition sequence number, used to name registered script
 		 * */
-		getCondition(index: number): ExpressionCondition | ScriptCondition | null;
+		getCondition(index: number): ICondition | null;
 	}
 	/**
 	 * Error event definition
@@ -2337,19 +2369,19 @@ declare module 'bpmn-elements' {
 		id: string | undefined;
 		type: string;
 		
-		reference: EventDefinitionReference;
+		reference: EventReference;
 		isThrowing: boolean;
 		activity: Activity;
 		environment: Environment;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): any;
+		execute(executeMessage: ElementBrokerMessage): number | void;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): any;
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
 	/**
 	 * Escalation event definition
@@ -2362,18 +2394,18 @@ declare module 'bpmn-elements' {
 		id: string | undefined;
 		type: string | undefined;
 		
-		reference: EventDefinitionReference;
+		reference: EventReference;
 		isThrowing: boolean;
 		activity: Activity;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): any;
+		execute(executeMessage: ElementBrokerMessage): number | void;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): any;
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
 	/**
 	 * Link event definition
@@ -2386,18 +2418,18 @@ declare module 'bpmn-elements' {
 		id: string | undefined;
 		type: string;
 		
-		reference: EventDefinitionReference;
+		reference: EventReference;
 		isThrowing: boolean;
 		activity: Activity;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): any;
+		execute(executeMessage: ElementBrokerMessage): number | undefined;
 		
-		executeCatch(executeMessage: ElementBrokerMessage): any;
+		executeCatch(executeMessage: ElementBrokerMessage): number | undefined;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): any;
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
 	/**
 	 * Message event definition
@@ -2410,18 +2442,18 @@ declare module 'bpmn-elements' {
 		id: string | undefined;
 		type: string;
 		
-		reference: EventDefinitionReference;
+		reference: EventReference;
 		isThrowing: boolean;
 		activity: Activity;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): any;
+		execute(executeMessage: ElementBrokerMessage): number | void;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): any;
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
 	/**
 	 * Signal event definition
@@ -2434,18 +2466,18 @@ declare module 'bpmn-elements' {
 		id: string | undefined;
 		type: string | undefined;
 		
-		reference: EventDefinitionReference;
+		reference: EventReference;
 		isThrowing: boolean;
 		activity: Activity;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): any;
+		execute(executeMessage: ElementBrokerMessage): number | void;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): any;
+		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
 	}
 	/**
 	 * Terminate event definition
@@ -2458,7 +2490,7 @@ declare module 'bpmn-elements' {
 		id: string | undefined;
 		type: string;
 		activity: Activity;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		logger: ILogger;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
@@ -2478,7 +2510,7 @@ declare module 'bpmn-elements' {
 		timeDuration: string | undefined;
 		timeCycle: string | undefined;
 		timeDate: string | undefined;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		logger: ILogger;
 		get executionId(): string;
 		get stopped(): boolean;
@@ -2490,11 +2522,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Parse timer
 		 * */
-		parse(timerType: string, value: string): {
-			expireAt: Date | undefined;
-			repeat: number | undefined;
-			delay: number | undefined;
-		};
+		parse(timerType: TimerType, value: string): parsedTimer;
 	}
 	/**
 	 * Event definition execution orchestrator. Drives a sequence of event definitions for the
@@ -2510,43 +2538,13 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity, eventDefinitions: EventDefinition[], completedRoutingKey?: string);
 		id: string | undefined;
 		activity: Activity;
-		broker: any;
+		broker: ElementBroker<Activity>;
 		eventDefinitions: EventDefinition[];
 		completedRoutingKey: string;
 		get completed(): boolean;
 		get stopped(): boolean;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
-	}
-	/**
-	 * Script condition
-	 * */
-		class ScriptCondition {
-		/**
-		 * Script condition
-		 * */
-		constructor(owner: ElementBase, script: any, language: string);
-		type: string;
-		language: string;
-		/**
-		 * Execute
-		 * */
-		execute(message: any, callback: CallableFunction): any;
-	}
-	/**
-	 * Expression condition
-	 * */
-		class ExpressionCondition {
-		/**
-		 * Expression condition
-		 * */
-		constructor(owner: ElementBase, expression: string);
-		type: string;
-		expression: string;
-		/**
-		 * Execute
-		 * */
-		execute(message: ElementBrokerMessage, callback: CallableFunction): any;
 	}
 
 	export { Consumer, MessageFields, MessageProperties, SerializableContext, SerializableElement };

@@ -23,6 +23,7 @@ export function ScriptTaskBehaviour(activity) {
   this.type = type;
   this.scriptFormat = behaviour.scriptFormat;
 
+  /** @type {import('./LoopCharacteristics.js').LoopCharacteristics | undefined} */
   this.loopCharacteristics =
     behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
