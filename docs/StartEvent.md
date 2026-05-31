@@ -10,7 +10,7 @@ If a form property is available when start event is executed, the event will wai
 import * as elements from 'bpmn-elements';
 import { BpmnModdle } from 'bpmn-moddle';
 
-import { default as serialize, TypeResolver } from 'moddle-context-serializer';
+import { Serializer, TypeResolver } from 'moddle-context-serializer';
 
 const { Context, Definition } = elements;
 const typeResolver = TypeResolver(elements);
@@ -51,7 +51,7 @@ const moddleOptions = {
 async function run() {
   const moddleContext = await getModdleContext(source);
 
-  const context = new Context(serialize(moddleContext, typeResolver));
+  const context = new Context(Serializer(moddleContext, typeResolver));
   const definition = new Definition(context, {
     Logger,
     variables: {

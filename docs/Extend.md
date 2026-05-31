@@ -40,7 +40,7 @@ Example with bpmn-moddle:
 import * as elements from 'bpmn-elements';
 import { BpmnModdle } from 'bpmn-moddle';
 import MyStartEvent from './extend/MyStartEvent';
-import { default as serialize, TypeResolver } from 'moddle-context-serializer';
+import { Serializer, TypeResolver } from 'moddle-context-serializer';
 
 const myOwnElements = {
   ...elements,
@@ -69,7 +69,7 @@ async function run(source) {
       },
     },
   };
-  const context = new Context(serialize(moddleContext, typeResolver));
+  const context = new Context(Serializer(moddleContext, typeResolver));
 
   const definition = new Definition(context, options);
   definition.run();
@@ -88,6 +88,8 @@ Define your own event definition type function.
 The behaviour function will receive the Activity instance and the workflow context when the activity executes.
 
 To complete execution the broker must publish an `execute.completed` or an `execute.error` message.
+
+Note: `Escalation` and `EscalationEventDefinition` ship with `bpmn-elements` and do not need to be supplied. The example below is illustrative — replace with the event definition type you actually need to support.
 
 ```js
 export default function EscalateEventDefinition(activity, eventDefinition = {}) {
@@ -129,7 +131,7 @@ import IntermediateThrowEvent from './extend/IntermediateThrowEvent';
 import * as elements from 'bpmn-elements';
 import { BpmnModdle } from 'bpmn-moddle';
 
-import { default as serialize, TypeResolver } from 'moddle-context-serializer';
+import { Serializer, TypeResolver } from 'moddle-context-serializer';
 
 const { Context, Definition } = elements;
 const typeResolver = TypeResolver(elements, (activityTypes) => {
@@ -160,7 +162,7 @@ async function run(source) {
       },
     },
   };
-  const context = new Context(serialize(moddleContext, typeResolver));
+  const context = new Context(Serializer(moddleContext, typeResolver));
 
   const definition = new Definition(context, options);
   definition.run();

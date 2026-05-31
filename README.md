@@ -30,6 +30,7 @@ The following elements are tested and supported.
 - ErrorEventDefinition
   - throw
   - catch
+- [Escalation](/docs/MessageElements.md)
 - EscalationEventDefinition
   - throw
   - catch
@@ -42,6 +43,7 @@ The following elements are tested and supported.
 - LinkEventDefinition
   - throw
   - catch
+- [Message](/docs/MessageElements.md)
 - MessageEventDefinition
   - throw
   - catch
@@ -58,7 +60,7 @@ The following elements are tested and supported.
 - [ServiceTask](/docs/ServiceTask.md)
   - BusinessRuleTask: Same behaviour as ServiceTask
   - SendTask: Same behaviour as ServiceTask
-- Signal
+- [Signal](/docs/MessageElements.md)
 - SignalEventDefinition
   - throw
   - catch

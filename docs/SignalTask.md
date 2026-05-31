@@ -7,7 +7,7 @@ import * as elements from 'bpmn-elements';
 
 import { BpmnModdle } from 'bpmn-moddle';
 
-import { default as serialize, TypeResolver } from 'moddle-context-serializer';
+import { Serializer, TypeResolver } from 'moddle-context-serializer';
 
 const { Context, Definition } = elements;
 const typeResolver = TypeResolver(elements);
@@ -32,7 +32,7 @@ async function run() {
   const options = {
     Logger,
   };
-  const context = new Context(serialize(moddleContext, typeResolver));
+  const context = new Context(Serializer(moddleContext, typeResolver));
 
   const definition = new Definition(context, options);
   definition.run();
