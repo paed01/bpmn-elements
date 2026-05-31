@@ -1,6 +1,10 @@
 // Hand-written entry for dts-buddy. Re-exports the runtime classes once each
 // and the shared interfaces in one place so the emitted bundle has a single
 // declaration per name (no `_1` aliases, no per-module duplicates).
+//
+// Submodule type entries (`bpmn-elements/events`, `…/tasks`, etc.) are
+// emitted as trivial re-export blocks by `scripts/build-types.js`, so every
+// public name needs a home here.
 export * from './interfaces.js';
 
 export { Activity } from '../src/activity/Activity.js';
@@ -29,21 +33,52 @@ export { Signal } from '../src/activity/Signal.js';
 export { StandardLoopCharacteristics } from '../src/tasks/StandardLoopCharacteristics.js';
 
 export { Association, MessageFlow, SequenceFlow } from '../src/flows/index.js';
-export { BoundaryEvent, EndEvent, IntermediateCatchEvent, IntermediateThrowEvent, StartEvent } from '../src/events/index.js';
-export { EventBasedGateway, ExclusiveGateway, InclusiveGateway, ParallelGateway } from '../src/gateways/index.js';
+export {
+  BoundaryEvent,
+  BoundaryEventBehaviour,
+  EndEvent,
+  EndEventBehaviour,
+  IntermediateCatchEvent,
+  IntermediateCatchEventBehaviour,
+  IntermediateThrowEvent,
+  IntermediateThrowEventBehaviour,
+  StartEvent,
+  StartEventBehaviour,
+} from '../src/events/index.js';
+export {
+  EventBasedGateway,
+  EventBasedGatewayBehaviour,
+  ExclusiveGateway,
+  ExclusiveGatewayBehaviour,
+  InclusiveGateway,
+  InclusiveGatewayBehaviour,
+  ParallelGateway,
+  ParallelGatewayBehaviour,
+} from '../src/gateways/index.js';
+// dts-buddy collapses multi-aliased exports to a single name (the last in source
+// order), so the canonical name must come *after* its aliases — otherwise the
+// alias wins and the root module loses the canonical name that the
+// `bpmn-elements/tasks` re-export depends on.
 export {
   CallActivity,
+  CallActivityBehaviour,
   ReceiveTask,
-  ServiceTask,
+  ReceiveTaskBehaviour,
   ServiceTask as BusinessRuleTask,
   ServiceTask as SendTask,
+  ServiceTask,
+  ServiceTaskBehaviour,
   ScriptTask,
-  SignalTask,
+  ScriptTaskBehaviour,
   SignalTask as ManualTask,
   SignalTask as UserTask,
-  SubProcess,
+  SignalTask,
+  SignalTaskBehaviour,
   SubProcess as AdHocSubProcess,
+  SubProcess,
+  SubProcessBehaviour,
   Task,
+  TaskBehaviour,
   Transaction,
 } from '../src/tasks/index.js';
 export {
