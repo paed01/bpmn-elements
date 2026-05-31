@@ -1,4 +1,4 @@
-import { IoSpecification as InputOutputSpecification } from '../../src/io/InputOutputSpecification.js';
+import { InputOutputSpecification } from 'bpmn-elements';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 

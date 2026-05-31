@@ -1,6 +1,5 @@
-import { Message } from '../../src/activity/Message.js';
-import { MessageEventDefinition } from '../../src/eventDefinitions/MessageEventDefinition.js';
-import { Environment } from '../../src/Environment.js';
+import { Environment, Message } from 'bpmn-elements';
+import { MessageEventDefinition } from 'bpmn-elements/eventDefinitions';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { Logger } from '../helpers/testHelpers.js';
 

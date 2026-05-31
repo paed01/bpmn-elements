@@ -48,7 +48,8 @@
   "scripts": {
     "test": "mocha -R @bonniernews/hot-bev -p -t 3000",
     "posttest": "npm run lint && npm run dist",
-    "lint": "eslint . --cache && prettier . --check --cache",
+    "lint": "eslint . --cache && prettier . --check --cache && npm run typecheck",
+    "typecheck": "tsc --noEmit",
     "prepack": "npm run dist",
     "test:md": "texample ./docs/Examples.md,./docs/StartEvent.md,./docs/Extension.md,./docs/ConditionalEventDefinition.md",
     "cov:html": "c8 -r html -r text mocha -R @bonniernews/hot-bev -p -t 3000",

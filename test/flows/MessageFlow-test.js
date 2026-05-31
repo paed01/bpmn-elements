@@ -1,6 +1,6 @@
-import { Environment } from '../../src/Environment.js';
+import { Environment } from 'bpmn-elements';
+import { MessageFlow } from 'bpmn-elements/flows';
 import factory from '../helpers/factory.js';
-import { MessageFlow } from '../../src/flows/MessageFlow.js';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 

@@ -23,6 +23,7 @@ var _Errors = require("./error/Errors.js");
 /**
  * Build the broker for an activity, including run/format/execution/api exchanges and queues.
  * @param {import('#types').Activity} activity
+ * @returns {import('#types').ElementBroker<import('#types').Activity>}
  */
 function ActivityBroker(activity) {
   const executionBroker = ExecutionBroker(activity, 'activity');
@@ -32,6 +33,7 @@ function ActivityBroker(activity) {
 /**
  * Build the broker for a process, with an additional api-q bound to all api routing keys.
  * @param {import('#types').Process} owner
+ * @returns {import('#types').ElementBroker<import('#types').Process>}
  */
 function ProcessBroker(owner) {
   const executionBroker = ExecutionBroker(owner, 'process');
@@ -47,6 +49,7 @@ function ProcessBroker(owner) {
  * Build the broker for a definition. Optionally registers a custom return-message handler.
  * @param {import('#types').Definition} owner
  * @param {(message: import('#types').ElementBrokerMessage) => void} [onBrokerReturn]
+ * @returns {import('#types').ElementBroker<import('#types').Definition>}
  */
 function DefinitionBroker(owner, onBrokerReturn) {
   return ExecutionBroker(owner, 'definition', onBrokerReturn);
@@ -54,7 +57,8 @@ function DefinitionBroker(owner, onBrokerReturn) {
 
 /**
  * Build the broker for a message flow with a durable message exchange and message-q.
- * @param {import('#types').MessageFlow} owner
+ * @param {import('./flows/MessageFlow.js').MessageFlow} owner
+ * @returns {import('#types').ElementBroker<import('./flows/MessageFlow.js').MessageFlow>}
  */
 function MessageFlowBroker(owner) {
   const eventBroker = new EventBroker(owner, {

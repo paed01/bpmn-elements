@@ -1,5 +1,4 @@
-import { Environment } from '../src/Environment.js';
-import { Timers } from '../src/Timers.js';
+import { Environment, Timers } from 'bpmn-elements';
 
 describe('Environment', () => {
   describe('ctor', () => {

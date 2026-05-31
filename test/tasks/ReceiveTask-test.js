@@ -1,5 +1,5 @@
-import { Message } from '../../src/activity/Message.js';
-import { ReceiveTask } from '../../src/tasks/ReceiveTask.js';
+import { Message } from 'bpmn-elements';
+import { ReceiveTask } from 'bpmn-elements/tasks';
 import testHelpers from '../helpers/testHelpers.js';
 
 describe('ReceiveTask', () => {

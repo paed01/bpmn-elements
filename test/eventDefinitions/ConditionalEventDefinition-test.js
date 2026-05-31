@@ -1,5 +1,5 @@
-import { ConditionalEventDefinition } from '../../src/eventDefinitions/ConditionalEventDefinition.js';
-import { Environment } from '../../src/Environment.js';
+import { Environment } from 'bpmn-elements';
+import { ConditionalEventDefinition } from 'bpmn-elements/eventDefinitions';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { ActivityApi } from '../../src/Api.js';

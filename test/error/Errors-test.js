@@ -1,4 +1,4 @@
-import { ActivityError, BpmnError, makeErrorFromMessage } from '../../src/error/Errors.js';
+import { ActivityError, BpmnError, makeErrorFromMessage } from 'bpmn-elements/errors';
 
 describe('Errors', () => {
   describe('ActivityError', () => {

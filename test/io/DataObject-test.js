@@ -1,5 +1,4 @@
-import { EnvironmentDataObject as DataObject } from '../../src/io/EnvironmentDataObject.js';
-import { Environment } from '../../src/Environment.js';
+import { DataObject, Environment } from 'bpmn-elements';
 import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('DataObject', () => {

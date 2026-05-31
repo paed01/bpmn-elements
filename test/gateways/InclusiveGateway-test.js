@@ -1,5 +1,5 @@
+import { ActivityError } from 'bpmn-elements/errors';
 import testHelpers from '../helpers/testHelpers.js';
-import { ActivityError } from '../../src/error/Errors.js';
 
 describe('InclusiveGateway', () => {
   describe('behavior', () => {

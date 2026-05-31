@@ -1,6 +1,5 @@
 import * as ck from 'chronokinesis';
-
-import { Timers } from '../src/Timers.js';
+import { Timers } from 'bpmn-elements';
 
 describe('Timers', () => {
   describe('setTimeout', () => {

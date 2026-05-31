@@ -1,5 +1,4 @@
-import { Environment } from '../../src/Environment.js';
-import { Properties } from '../../src/io/Properties.js';
+import { Environment, Properties } from 'bpmn-elements';
 import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('Properties', () => {

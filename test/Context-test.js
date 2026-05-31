@@ -1,5 +1,4 @@
-import { Activity } from '../src/activity/Activity.js';
-import { Context } from '../src/Context.js';
+import { Activity, Context } from 'bpmn-elements';
 import factory from './helpers/factory.js';
 import testHelpers from './helpers/testHelpers.js';
 

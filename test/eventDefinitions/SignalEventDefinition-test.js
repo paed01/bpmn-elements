@@ -1,7 +1,6 @@
-import { Environment } from '../../src/Environment.js';
-import { SignalEventDefinition } from '../../src/eventDefinitions/SignalEventDefinition.js';
+import { Environment, Signal } from 'bpmn-elements';
+import { SignalEventDefinition } from 'bpmn-elements/eventDefinitions';
 import testHelpers, { Logger } from '../helpers/testHelpers.js';
-import { Signal } from '../../src/activity/Signal.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('SignalEventDefinition', () => {

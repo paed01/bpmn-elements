@@ -1,9 +1,9 @@
-import js from '../resources/extensions/JsExtension.js';
 import nock from 'nock';
+import { Timers } from 'bpmn-elements';
+import { ActivityError } from 'bpmn-elements/errors';
+import js from '../resources/extensions/JsExtension.js';
 import testHelpers from '../helpers/testHelpers.js';
-import { ActivityError } from '../../src/error/Errors.js';
 import { Scripts } from '../helpers/JavaScripts.js';
-import { Timers } from '../../src/Timers.js';
 
 const extensions = {
   js,

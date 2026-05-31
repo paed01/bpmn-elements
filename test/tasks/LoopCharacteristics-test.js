@@ -1,8 +1,7 @@
-import { Environment } from '../../src/Environment.js';
-import { LoopCharacteristics } from '../../src/tasks/LoopCharacteristics.js';
+import { Environment, MultiInstanceLoopCharacteristics as LoopCharacteristics } from 'bpmn-elements';
+import { ActivityError } from 'bpmn-elements/errors';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { Logger } from '../helpers/testHelpers.js';
-import { ActivityError } from '../../src/error/Errors.js';
 
 describe('LoopCharacteristics', () => {
   let task;

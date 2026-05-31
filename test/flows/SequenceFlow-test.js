@@ -1,9 +1,9 @@
-import { Environment } from '../../src/Environment.js';
+import { resolveExpression } from '@aircall/expression-parser';
+import { Environment } from 'bpmn-elements';
+import { SequenceFlow } from 'bpmn-elements/flows';
 import factory from '../helpers/factory.js';
 import js from '../resources/extensions/JsExtension.js';
 import testHelpers from '../helpers/testHelpers.js';
-import { SequenceFlow } from '../../src/flows/SequenceFlow.js';
-import { resolveExpression } from '@aircall/expression-parser';
 import { Scripts } from '../helpers/JavaScripts.js';
 
 const extensions = {
@@ -70,6 +70,7 @@ describe('SequenceFlow', () => {
   });
 
   describe('discard', () => {
+    /** @type {import('bpmn-elements').ContextInstance} */
     let context;
     before(async () => {
       context = await testHelpers.context(factory.resource('multiple-multiple-inbound.bpmn'));

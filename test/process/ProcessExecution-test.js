@@ -1,16 +1,14 @@
-import { BoundaryEvent } from '../../src/events/BoundaryEvent.js';
-import { EndEvent } from '../../src/events/EndEvent.js';
-import { ErrorEventDefinition } from '../../src/eventDefinitions/ErrorEventDefinition.js';
-import { MessageEventDefinition } from '../../src/eventDefinitions/MessageEventDefinition.js';
-import { TimerEventDefinition } from '../../src/eventDefinitions/TimerEventDefinition.js';
+import { Process } from 'bpmn-elements';
+import { BoundaryEvent, EndEvent, StartEvent } from 'bpmn-elements/events';
+import {
+  ErrorEventDefinition,
+  MessageEventDefinition,
+  TerminateEventDefinition,
+  TimerEventDefinition,
+} from 'bpmn-elements/eventDefinitions';
+import { SequenceFlow } from 'bpmn-elements/flows';
+import { ServiceTask, SignalTask, SubProcess } from 'bpmn-elements/tasks';
 import { ProcessExecution } from '../../src/process/ProcessExecution.js';
-import { Process } from '../../src/process/Process.js';
-import { ServiceTask } from '../../src/tasks/ServiceTask.js';
-import { SequenceFlow } from '../../src/flows/SequenceFlow.js';
-import { SignalTask } from '../../src/tasks/SignalTask.js';
-import { StartEvent } from '../../src/events/StartEvent.js';
-import { SubProcess } from '../../src/tasks/SubProcess.js';
-import { TerminateEventDefinition } from '../../src/eventDefinitions/TerminateEventDefinition.js';
 import testHelpers from '../helpers/testHelpers.js';
 
 describe('Process execution', () => {

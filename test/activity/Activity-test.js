@@ -1,10 +1,8 @@
-import { Activity } from 'bpmn-elements';
-import { Association } from '../../src/flows/Association.js';
-import { Environment } from '../../src/Environment.js';
-import { SequenceFlow } from '../../src/flows/SequenceFlow.js';
+import { Activity, Environment } from 'bpmn-elements';
+import { Association, SequenceFlow } from 'bpmn-elements/flows';
+import { TaskBehaviour, SignalTaskBehaviour } from 'bpmn-elements/tasks';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
-import { TaskBehaviour, SignalTaskBehaviour } from '../../src/tasks/index.js';
 
 function Behaviour() {
   return {

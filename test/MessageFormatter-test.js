@@ -1,5 +1,5 @@
+import { ActivityError } from 'bpmn-elements/errors';
 import { ActivityBroker } from '../src/EventBroker.js';
-import { ActivityError } from '../src/error/Errors.js';
 import { Formatter } from '../src/MessageFormatter.js';
 import { Logger } from './helpers/testHelpers.js';
 

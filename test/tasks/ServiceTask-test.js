@@ -1,8 +1,8 @@
-import JsExtension from '../resources/extensions/JsExtension.js';
 import nock from 'nock';
-import { ServiceTask } from '../../src/tasks/ServiceTask.js';
+import { ServiceTask } from 'bpmn-elements/tasks';
+import { ActivityError } from 'bpmn-elements/errors';
+import JsExtension from '../resources/extensions/JsExtension.js';
 import testHelpers from '../helpers/testHelpers.js';
-import { ActivityError } from '../../src/error/Errors.js';
 
 describe('ServiceTask', () => {
   describe('behaviour', () => {

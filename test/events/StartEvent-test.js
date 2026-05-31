@@ -1,6 +1,6 @@
+import { StartEvent } from 'bpmn-elements/events';
+import { MessageEventDefinition } from 'bpmn-elements/eventDefinitions';
 import JsExtension from '../resources/extensions/JsExtension.js';
-import { MessageEventDefinition } from '../../src/eventDefinitions/MessageEventDefinition.js';
-import { StartEvent } from '../../src/events/StartEvent.js';
 import testHelpers from '../helpers/testHelpers.js';
 
 describe('StartEvent', () => {

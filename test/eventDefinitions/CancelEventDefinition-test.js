@@ -1,5 +1,5 @@
-import { CancelEventDefinition } from '../../src/eventDefinitions/CancelEventDefinition.js';
-import { Environment } from '../../src/Environment.js';
+import { Environment } from 'bpmn-elements';
+import { CancelEventDefinition } from 'bpmn-elements/eventDefinitions';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { Logger } from '../helpers/testHelpers.js';
 

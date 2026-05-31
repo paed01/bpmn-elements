@@ -1,11 +1,10 @@
 import * as ck from 'chronokinesis';
-import { Environment } from '../../src/Environment.js';
+import { Environment, Timers } from 'bpmn-elements';
+import { RunError } from 'bpmn-elements/errors';
+import { TimerEventDefinition } from 'bpmn-elements/eventDefinitions';
 import testHelpers from '../helpers/testHelpers.js';
-import { TimerEventDefinition } from '../../src/eventDefinitions/TimerEventDefinition.js';
 import { ActivityApi, DefinitionApi } from '../../src/Api.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
-import { Timers } from '../../src/Timers.js';
-import { RunError } from '../../src/error/Errors.js';
 
 describe('TimerEventDefinition', () => {
   let event;

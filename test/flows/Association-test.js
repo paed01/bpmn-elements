@@ -1,5 +1,5 @@
-import { Environment } from '../../src/Environment.js';
-import { Association } from '../../src/flows/Association.js';
+import { Environment } from 'bpmn-elements';
+import { Association } from 'bpmn-elements/flows';
 import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('Association', () => {

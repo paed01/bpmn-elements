@@ -1,4 +1,4 @@
-import { Environment } from '../../src/Environment.js';
+import { Environment } from 'bpmn-elements';
 import { DefinitionExecution } from '../../src/definition/DefinitionExecution.js';
 import testHelpers from '../helpers/testHelpers.js';
 import { DefinitionBroker, ProcessBroker } from '../../src/EventBroker.js';

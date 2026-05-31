@@ -1,5 +1,5 @@
-import { EndEvent } from '../../src/events/EndEvent.js';
-import { SequenceFlow } from '../../src/flows/SequenceFlow.js';
+import { EndEvent } from 'bpmn-elements/events';
+import { SequenceFlow } from 'bpmn-elements/flows';
 import testHelpers from '../helpers/testHelpers.js';
 
 describe('EndEvent', () => {

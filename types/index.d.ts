@@ -545,16 +545,13 @@ declare module 'bpmn-elements' {
 		context: ContextInstance;
 		
 		status: ActivityRunStatus;
-		broker: import("smqp").Broker;
-		on: (eventName: string, callback: CallableFunction, eventOptions?: {
-			once?: boolean;
-			[x: string]: any;
-		}) => import("smqp").Consumer;
-		once: (eventName: string, callback: CallableFunction, eventOptions?: {
-			[x: string]: any;
-		}) => import("smqp").Consumer;
-		waitFor: (eventName: string, onMessage?: (routingKey: string, message: ElementBrokerMessage, owner: any) => boolean) => Promise<any>;
-		emitFatal: (error: Error, content?: Record<string, any>) => void;
+		broker: any;
+		on: (eventName: string, callback: (event: {
+			name: string;
+		} & Record<string, any>) => void, options?: import("smqp").ConsumeOptions) => import("smqp").Consumer;
+		once: any;
+		waitFor: any;
+		emitFatal: any;
 		/**
 		 * Subscribe to inbound flows and start consuming the inbound queue.
 		 * */
@@ -608,7 +605,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Stop the activity. If not currently running, just cancels the inbound consumer.
 		 */
-		stop(): boolean | void;
+		stop(): any;
 		/**
 		 * Advance one run-step when the environment runs in step mode. No-op otherwise.
 		 */
@@ -672,13 +669,13 @@ declare module 'bpmn-elements' {
 		activity: Activity;
 		context: ContextInstance;
 		id: string | undefined;
-		broker: import("smqp").Broker;
+		broker: any;
 		get completed(): boolean;
 		/**
 		 * Begin executing the activity behaviour. Resumes if the message is redelivered.
 		 * @throws {Error} when message or executionId is missing
 		 */
-		execute(executeMessage: ElementBrokerMessage): number | undefined;
+		execute(executeMessage: ElementBrokerMessage): any;
 		executionId: string | undefined;
 		source: IActivityBehaviour | undefined;
 		/**
@@ -871,16 +868,13 @@ declare module 'bpmn-elements' {
 		context: ContextInstance | undefined;
 		
 		broker: import("smqp").Broker;
-		on: ((eventName: string, callback: CallableFunction, eventOptions?: {
-			once?: boolean;
-			[x: string]: any;
-		}) => import("smqp").Consumer) | undefined;
-		once: ((eventName: string, callback: CallableFunction, eventOptions?: {
-			[x: string]: any;
-		}) => import("smqp").Consumer) | undefined;
-		waitFor: ((eventName: string, onMessage?: (routingKey: string, message: ElementBrokerMessage, owner: any) => boolean) => Promise<any>) | undefined;
-		emit: ((eventName: string, content?: Record<string, any>, props?: any) => void) | undefined;
-		emitFatal: ((error: Error, content?: Record<string, any>) => void) | undefined;
+		on: ((eventName: string, callback: (event: {
+			name: string;
+		} & Record<string, any>) => void, options?: import("smqp").ConsumeOptions) => import("smqp").Consumer) | undefined;
+		once: any;
+		waitFor: any;
+		emit: any;
+		emitFatal: any;
 		
 		logger: ILogger;
 		/**
@@ -1241,7 +1235,7 @@ declare module 'bpmn-elements' {
 			dataOutputs?: import("moddle-context-serializer").IElement[];
 		};
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		context: ContextInstance;
 		
 		activate(message?: ElementBrokerMessage): void;
@@ -1266,7 +1260,7 @@ declare module 'bpmn-elements' {
 		
 		behaviour: Record<string, any>;
 		environment: Environment;
-		broker: import("smqp").Broker;
+		broker: any;
 		context: ContextInstance;
 		logger: ILogger;
 		get process(): Process;
@@ -1310,7 +1304,7 @@ declare module 'bpmn-elements' {
 		message: ElementBrokerMessage;
 		type: string;
 		id: string | undefined;
-		broker: import("smqp").Broker;
+		broker: any;
 		parentExecutionId: string | undefined;
 		
 		isSequential: boolean;
@@ -1395,15 +1389,12 @@ declare module 'bpmn-elements' {
 		isExecutable: any;
 		environment: Environment;
 		context: ContextInstance;
-		broker: import("smqp").Broker;
-		on: (eventName: string, callback: CallableFunction, eventOptions?: {
-			once?: boolean;
-			[x: string]: any;
-		}) => import("smqp").Consumer;
-		once: (eventName: string, callback: CallableFunction, eventOptions?: {
-			[x: string]: any;
-		}) => import("smqp").Consumer;
-		waitFor: (eventName: string, onMessage?: (routingKey: string, message: ElementBrokerMessage, owner: any) => boolean) => Promise<any>;
+		broker: any;
+		on: (eventName: string, callback: (event: {
+			name: string;
+		} & Record<string, any>) => void, options?: import("smqp").ConsumeOptions) => import("smqp").Consumer;
+		once: any;
+		waitFor: any;
 		logger: ILogger;
 		/**
 		 * Allocate an executionId and emit init event without starting the run.
@@ -1508,7 +1499,7 @@ declare module 'bpmn-elements' {
 			values: import("moddle-context-serializer").IElement[];
 		}, context: ContextInstance);
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		
 		activate(message: ElementBrokerMessage): void;
 		deactivate(): void;
@@ -1596,7 +1587,7 @@ declare module 'bpmn-elements' {
 		type: string;
 		isSubProcess: any;
 		isTransaction: any;
-		broker: import("smqp").Broker;
+		broker: any;
 		environment: Environment;
 		context: ContextInstance;
 		executionId: string | undefined;
@@ -1855,16 +1846,13 @@ declare module 'bpmn-elements' {
 		behaviour: Record<string, any>;
 		environment: Environment;
 		context: ContextInstance;
-		broker: import("smqp").Broker;
-		on: (eventName: string, callback: CallableFunction, eventOptions?: {
-			once?: boolean;
-			[x: string]: any;
-		}) => import("smqp").Consumer;
-		once: (eventName: string, callback: CallableFunction, eventOptions?: {
-			[x: string]: any;
-		}) => import("smqp").Consumer;
-		emit: (eventName: string, content?: Record<string, any>, props?: any) => void;
-		waitFor: (eventName: string, onMessage?: (routingKey: string, message: ElementBrokerMessage, owner: any) => boolean) => Promise<any>;
+		broker: any;
+		on: (eventName: string, callback: (event: {
+			name: string;
+		} & Record<string, any>) => void, options?: import("smqp").ConsumeOptions) => import("smqp").Consumer;
+		once: any;
+		emit: any;
+		waitFor: any;
 		logger: ILogger;
 		get counters(): {
 			messages: number;
@@ -1980,7 +1968,7 @@ declare module 'bpmn-elements' {
 		isThrowing: boolean;
 		activity: Activity;
 		environment: Environment;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		
@@ -2004,15 +1992,15 @@ declare module 'bpmn-elements' {
 		reference: EventDefinitionReference;
 		isThrowing: boolean;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | import("smqp").Consumer | undefined;
+		execute(executeMessage: ElementBrokerMessage): any;
 		
-		executeCatch(executeMessage: ElementBrokerMessage): import("smqp").Consumer | undefined;
+		executeCatch(executeMessage: ElementBrokerMessage): any;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): any;
 	}
 	/**
 	 * Conditional event definition
@@ -2029,7 +2017,7 @@ declare module 'bpmn-elements' {
 		behaviour: {};
 		activity: Activity;
 		environment: Environment;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		condition: ScriptCondition | ExpressionCondition | null;
 		get executionId(): string;
@@ -2044,7 +2032,7 @@ declare module 'bpmn-elements' {
 		 * @param err Condition evaluation error
 		 * @param result Result from evaluated condition, completes execution if truthy
 		 */
-		evaluateCallback(err: Error | null, result: any): number | undefined;
+		evaluateCallback(err: Error | null, result: any): any;
 		/**
 		 * Get condition
 		 * @param index Eventdefinition sequence number, used to name registered script
@@ -2066,15 +2054,15 @@ declare module 'bpmn-elements' {
 		isThrowing: boolean;
 		activity: Activity;
 		environment: Environment;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | void;
+		execute(executeMessage: ElementBrokerMessage): any;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): any;
 	}
 	/**
 	 * Escalation event definition
@@ -2090,15 +2078,15 @@ declare module 'bpmn-elements' {
 		reference: EventDefinitionReference;
 		isThrowing: boolean;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | void;
+		execute(executeMessage: ElementBrokerMessage): any;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): any;
 	}
 	/**
 	 * Link event definition
@@ -2114,15 +2102,15 @@ declare module 'bpmn-elements' {
 		reference: EventDefinitionReference;
 		isThrowing: boolean;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | undefined;
+		execute(executeMessage: ElementBrokerMessage): any;
 		
-		executeCatch(executeMessage: ElementBrokerMessage): number | undefined;
+		executeCatch(executeMessage: ElementBrokerMessage): any;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): any;
 	}
 	/**
 	 * Message event definition
@@ -2138,15 +2126,15 @@ declare module 'bpmn-elements' {
 		reference: EventDefinitionReference;
 		isThrowing: boolean;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | void;
+		execute(executeMessage: ElementBrokerMessage): any;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): any;
 	}
 	/**
 	 * Signal event definition
@@ -2162,15 +2150,15 @@ declare module 'bpmn-elements' {
 		reference: EventDefinitionReference;
 		isThrowing: boolean;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | void;
+		execute(executeMessage: ElementBrokerMessage): any;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): any;
 	}
 	/**
 	 * Terminate event definition
@@ -2183,7 +2171,7 @@ declare module 'bpmn-elements' {
 		id: string | undefined;
 		type: string;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
@@ -2203,7 +2191,7 @@ declare module 'bpmn-elements' {
 		timeDuration: string | undefined;
 		timeCycle: string | undefined;
 		timeDate: string | undefined;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		get stopped(): boolean;
@@ -2330,7 +2318,7 @@ declare module 'bpmn-elements/events' {
 		attachedTo: Activity | null;
 		activity: Activity;
 		environment: Environment;
-		broker: import("smqp").Broker;
+		broker: any;
 		get executionId(): string | undefined;
 		get cancelActivity(): unknown;
 		
@@ -2350,7 +2338,7 @@ declare module 'bpmn-elements/events' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		broker: import("smqp").Broker;
+		broker: any;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 	}
@@ -2368,7 +2356,7 @@ declare module 'bpmn-elements/events' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		broker: import("smqp").Broker;
+		broker: any;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 	}
@@ -2386,7 +2374,7 @@ declare module 'bpmn-elements/events' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		broker: import("smqp").Broker;
+		broker: any;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 	}
@@ -2405,7 +2393,7 @@ declare module 'bpmn-elements/events' {
 		id: string | undefined;
 		type: string;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		get executionId(): string | undefined;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
@@ -2424,7 +2412,7 @@ declare module 'bpmn-elements/events' {
 		constructor(activity: Activity, eventDefinitions: EventDefinition[], completedRoutingKey?: string);
 		id: string | undefined;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		eventDefinitions: EventDefinition[];
 		completedRoutingKey: string;
 		get completed(): boolean;
@@ -2446,7 +2434,7 @@ declare module 'bpmn-elements/events' {
 		type: string;
 		isSubProcess: any;
 		isTransaction: any;
-		broker: import("smqp").Broker;
+		broker: any;
 		environment: Environment;
 		context: ContextInstance;
 		executionId: string | undefined;
@@ -2559,7 +2547,7 @@ declare module 'bpmn-elements/eventDefinitions' {
 		isThrowing: boolean;
 		activity: Activity;
 		environment: Environment;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		
@@ -2583,15 +2571,15 @@ declare module 'bpmn-elements/eventDefinitions' {
 		reference: EventDefinitionReference;
 		isThrowing: boolean;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | import("smqp").Consumer | undefined;
+		execute(executeMessage: ElementBrokerMessage): any;
 		
-		executeCatch(executeMessage: ElementBrokerMessage): import("smqp").Consumer | undefined;
+		executeCatch(executeMessage: ElementBrokerMessage): any;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): any;
 	}
 	/**
 	 * Conditional event definition
@@ -2608,7 +2596,7 @@ declare module 'bpmn-elements/eventDefinitions' {
 		behaviour: {};
 		activity: Activity;
 		environment: Environment;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		condition: ScriptCondition | ExpressionCondition | null;
 		get executionId(): string;
@@ -2623,7 +2611,7 @@ declare module 'bpmn-elements/eventDefinitions' {
 		 * @param err Condition evaluation error
 		 * @param result Result from evaluated condition, completes execution if truthy
 		 */
-		evaluateCallback(err: Error | null, result: any): number | undefined;
+		evaluateCallback(err: Error | null, result: any): any;
 		/**
 		 * Get condition
 		 * @param index Eventdefinition sequence number, used to name registered script
@@ -2645,15 +2633,15 @@ declare module 'bpmn-elements/eventDefinitions' {
 		isThrowing: boolean;
 		activity: Activity;
 		environment: Environment;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | void;
+		execute(executeMessage: ElementBrokerMessage): any;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): any;
 	}
 	/**
 	 * Escalation event definition
@@ -2669,15 +2657,15 @@ declare module 'bpmn-elements/eventDefinitions' {
 		reference: EventDefinitionReference;
 		isThrowing: boolean;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | void;
+		execute(executeMessage: ElementBrokerMessage): any;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): any;
 	}
 	/**
 	 * Link event definition
@@ -2693,15 +2681,15 @@ declare module 'bpmn-elements/eventDefinitions' {
 		reference: EventDefinitionReference;
 		isThrowing: boolean;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | undefined;
+		execute(executeMessage: ElementBrokerMessage): any;
 		
-		executeCatch(executeMessage: ElementBrokerMessage): number | undefined;
+		executeCatch(executeMessage: ElementBrokerMessage): any;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): any;
 	}
 	/**
 	 * Message event definition
@@ -2717,15 +2705,15 @@ declare module 'bpmn-elements/eventDefinitions' {
 		reference: EventDefinitionReference;
 		isThrowing: boolean;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | void;
+		execute(executeMessage: ElementBrokerMessage): any;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): any;
 	}
 	/**
 	 * Signal event definition
@@ -2741,15 +2729,15 @@ declare module 'bpmn-elements/eventDefinitions' {
 		reference: EventDefinitionReference;
 		isThrowing: boolean;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | void;
+		execute(executeMessage: ElementBrokerMessage): any;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): any;
 	}
 	/**
 	 * Terminate event definition
@@ -2762,7 +2750,7 @@ declare module 'bpmn-elements/eventDefinitions' {
 		id: string | undefined;
 		type: string;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
@@ -2782,7 +2770,7 @@ declare module 'bpmn-elements/eventDefinitions' {
 		timeDuration: string | undefined;
 		timeCycle: string | undefined;
 		timeDate: string | undefined;
-		broker: import("smqp").Broker;
+		broker: any;
 		logger: ILogger;
 		get executionId(): string;
 		get stopped(): boolean;
@@ -2844,7 +2832,7 @@ declare module 'bpmn-elements/eventDefinitions' {
 		type: string;
 		isSubProcess: any;
 		isTransaction: any;
-		broker: import("smqp").Broker;
+		broker: any;
 		environment: Environment;
 		context: ContextInstance;
 		executionId: string | undefined;
@@ -3026,16 +3014,13 @@ declare module 'bpmn-elements/flows' {
 		behaviour: Record<string, any>;
 		environment: Environment;
 		context: ContextInstance;
-		broker: import("smqp").Broker;
-		on: (eventName: string, callback: CallableFunction, eventOptions?: {
-			once?: boolean;
-			[x: string]: any;
-		}) => import("smqp").Consumer;
-		once: (eventName: string, callback: CallableFunction, eventOptions?: {
-			[x: string]: any;
-		}) => import("smqp").Consumer;
-		emit: (eventName: string, content?: Record<string, any>, props?: any) => void;
-		waitFor: (eventName: string, onMessage?: (routingKey: string, message: ElementBrokerMessage, owner: any) => boolean) => Promise<any>;
+		broker: any;
+		on: (eventName: string, callback: (event: {
+			name: string;
+		} & Record<string, any>) => void, options?: import("smqp").ConsumeOptions) => import("smqp").Consumer;
+		once: any;
+		emit: any;
+		waitFor: any;
 		logger: ILogger;
 		get counters(): {
 			messages: number;
@@ -3162,7 +3147,7 @@ declare module 'bpmn-elements/flows' {
 		type: string;
 		isSubProcess: any;
 		isTransaction: any;
-		broker: import("smqp").Broker;
+		broker: any;
 		environment: Environment;
 		context: ContextInstance;
 		executionId: string | undefined;
@@ -3275,7 +3260,7 @@ declare module 'bpmn-elements/gateways' {
 		id: string | undefined;
 		type: string;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		context: ContextInstance;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
@@ -3294,7 +3279,7 @@ declare module 'bpmn-elements/gateways' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		broker: import("smqp").Broker;
+		broker: any;
 		
 		execute({ content }: ElementBrokerMessage): void;
 	}
@@ -3312,7 +3297,7 @@ declare module 'bpmn-elements/gateways' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		broker: import("smqp").Broker;
+		broker: any;
 		
 		execute({ content }: ElementBrokerMessage): void;
 	}
@@ -3337,13 +3322,13 @@ declare module 'bpmn-elements/gateways' {
 		id: string | undefined;
 		type: string;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		inbound: Set<any>;
 		isConverging: boolean;
 		get executionId(): any;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
-		setup(executeMessage: any): number | undefined;
+		setup(executeMessage: any): any;
 		peerMonitor: PeerMonitor | undefined;
 	}
 		class PeerMonitor {
@@ -3378,7 +3363,7 @@ declare module 'bpmn-elements/gateways' {
 		type: string;
 		isSubProcess: any;
 		isTransaction: any;
-		broker: import("smqp").Broker;
+		broker: any;
 		environment: Environment;
 		context: ContextInstance;
 		executionId: string | undefined;
@@ -3494,7 +3479,7 @@ declare module 'bpmn-elements/tasks' {
 		
 		loopCharacteristics: LoopCharacteristics;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		environment: Environment;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
@@ -3516,7 +3501,7 @@ declare module 'bpmn-elements/tasks' {
 		reference: any;
 		loopCharacteristics: any;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 	}
@@ -3558,7 +3543,7 @@ declare module 'bpmn-elements/tasks' {
 		loopCharacteristics: any;
 		activity: Activity;
 		environment: Environment;
-		broker: import("smqp").Broker;
+		broker: any;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 		service: any;
@@ -3580,7 +3565,7 @@ declare module 'bpmn-elements/tasks' {
 		type: string;
 		loopCharacteristics: any;
 		activity: Activity;
-		broker: import("smqp").Broker;
+		broker: any;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 	}
@@ -3602,7 +3587,7 @@ declare module 'bpmn-elements/tasks' {
 		activity: Activity;
 		context: ContextInstance;
 		environment: Environment;
-		broker: import("smqp").Broker;
+		broker: any;
 		executionId: string | undefined;
 		get execution(): any;
 		get executions(): any[];
@@ -3628,7 +3613,7 @@ declare module 'bpmn-elements/tasks' {
 		id: string | undefined;
 		type: string;
 		loopCharacteristics: any;
-		broker: import("smqp").Broker;
+		broker: any;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 	}
@@ -3675,7 +3660,7 @@ declare module 'bpmn-elements/tasks' {
 		message: ElementBrokerMessage;
 		type: string;
 		id: string | undefined;
-		broker: import("smqp").Broker;
+		broker: any;
 		parentExecutionId: string | undefined;
 		
 		isSequential: boolean;
@@ -3724,7 +3709,7 @@ declare module 'bpmn-elements/tasks' {
 		type: string;
 		isSubProcess: any;
 		isTransaction: any;
-		broker: import("smqp").Broker;
+		broker: any;
 		environment: Environment;
 		context: ContextInstance;
 		executionId: string | undefined;

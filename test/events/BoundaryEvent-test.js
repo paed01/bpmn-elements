@@ -1,9 +1,8 @@
+import { Environment } from 'bpmn-elements';
+import { BoundaryEvent, BoundaryEventBehaviour } from 'bpmn-elements/events';
+import { ErrorEventDefinition, MessageEventDefinition } from 'bpmn-elements/eventDefinitions';
+import { SignalTask } from 'bpmn-elements/tasks';
 import testHelpers from '../helpers/testHelpers.js';
-import { Environment } from '../../src/Environment.js';
-import { ErrorEventDefinition } from '../../src/eventDefinitions/ErrorEventDefinition.js';
-import { MessageEventDefinition } from '../../src/eventDefinitions/MessageEventDefinition.js';
-import { SignalTask } from '../../src/tasks/SignalTask.js';
-import { BoundaryEvent, BoundaryEventBehaviour } from '../../src/events/BoundaryEvent.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('BoundaryEvent', () => {

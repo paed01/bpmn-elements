@@ -1,6 +1,5 @@
-import { Environment } from '../../src/Environment.js';
-import { Escalation } from '../../src/activity/Escalation.js';
-import { EscalationEventDefinition } from '../../src/eventDefinitions/EscalationEventDefinition.js';
+import { Environment, Escalation } from 'bpmn-elements';
+import { EscalationEventDefinition } from 'bpmn-elements/eventDefinitions';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { Logger } from '../helpers/testHelpers.js';
 
