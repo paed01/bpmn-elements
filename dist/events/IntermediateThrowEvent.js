@@ -17,7 +17,8 @@ var _constants = require("../constants.js");
 function IntermediateThrowEvent(activityDef, context) {
   return new _Activity.Activity(IntermediateThrowEventBehaviour, {
     ...activityDef,
-    isThrowing: true
+    isThrowing: true,
+    ...context.getLinkEventDefinitionInfo(activityDef)
   }, context);
 }
 

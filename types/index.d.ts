@@ -865,6 +865,19 @@ declare module 'bpmn-elements' {
 		 */
 		getStartActivities(filterOptions?: startActivityFilterOptions, scopeId?: string): Activity[];
 		/**
+		 * Inspect an activity def for link event definitions.
+		 * */
+		getLinkEventDefinitionInfo(activityDef: import("moddle-context-serializer").Activity): {
+			linkBehaviour?: Function;
+			linkNames?: string[];
+		};
+		/**
+		 * Get activities whose event definitions include the given Behaviour with a matching name.
+		 * @param Behaviour Behaviour constructor to match against `ed.Behaviour`
+		 * @param scopeId Process or sub-process id
+		 */
+		getActivitiesByEventDefinitionBehaviour(Behaviour: Function, names: string[] | Iterable<string>, scopeId?: string): Activity[];
+		/**
 		 * Resolve user-registered extensions and the built-in BpmnIO extension for an activity.
 		 * Returns undefined when the activity has no extensions to attach.
 		 * */

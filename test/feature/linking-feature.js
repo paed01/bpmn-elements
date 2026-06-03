@@ -659,6 +659,84 @@ Feature('Linking', () => {
           expect(definition.getActivityById('end').counters).to.have.property('taken', 6);
         });
       });
+
+      Scenario('a flow with multiple named link throw and catch events', () => {
+        /** @type {Definition} */
+        let definition;
+        Given('a flow with an inclusive gateway routing to one or both link throw events', async () => {
+          const source = factory.resource('link-multiple.bpmn');
+          const context = await testHelpers.context(source);
+
+          definition = new Definition(context, {
+            variables: {
+              take1: true,
+            },
+            settings: {
+              skipDiscard,
+            },
+          });
+        });
+
+        let end;
+        When('definition is ran with condition to take LINKA only', () => {
+          end = definition.waitFor('end');
+          definition.run();
+        });
+
+        Then('run completes', () => {
+          return end;
+        });
+
+        And('LINKA end was taken once', () => {
+          expect(definition.getActivityById('end-a').counters).to.have.property('taken', 1);
+        });
+
+        And('LINKB end stayed dormant', () => {
+          expect(definition.getActivityById('end-b').counters).to.have.property('taken', 0);
+        });
+
+        When('definition is ran with condition to take LINKB only', () => {
+          end = definition.waitFor('end');
+
+          definition.environment.variables.take1 = false;
+          definition.environment.variables.take2 = true;
+
+          definition.run();
+        });
+
+        Then('run completes', () => {
+          return end;
+        });
+
+        And('LINKA end was not taken again', () => {
+          expect(definition.getActivityById('end-a').counters).to.have.property('taken', 1);
+        });
+
+        And('LINKB end was taken once', () => {
+          expect(definition.getActivityById('end-b').counters).to.have.property('taken', 1);
+        });
+
+        When('definition is ran with condition to take both links', () => {
+          end = definition.waitFor('end');
+
+          definition.environment.variables.take1 = true;
+          definition.environment.variables.take2 = true;
+
+          definition.run();
+        });
+
+        Then('run completes', () => {
+          return end;
+        });
+
+        And('LINKA end was taken again', () => {
+          expect(definition.getActivityById('end-a').counters).to.have.property('taken', 2);
+        });
+
+        And('LINKB end was taken again', () => {
+          expect(definition.getActivityById('end-b').counters).to.have.property('taken', 2);
+        });
+      });
     });
   });
 });

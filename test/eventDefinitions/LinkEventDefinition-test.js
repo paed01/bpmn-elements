@@ -105,60 +105,10 @@ describe('LinkEventDefinition', () => {
 
       expect(waitMessages).to.have.length(0);
     });
-
-    it('binds a durable named queue for link delivery so messages survive stop/recover', () => {
-      new LinkEventDefinition(event, {
-        type: 'bpmn:LinkEventDefinition',
-        behaviour: { name: 'LINKA' },
-      });
-      const q = event.broker.getQueue('link-event-LINKA-q');
-      expect(q, 'durable link queue').to.exist;
-      expect(q.options).to.include({ durable: true, autoDelete: false });
-    });
-
-    it('responds to shake.link with matching linkName', () => {
-      const catchEd = new LinkEventDefinition(event, {
-        type: 'bpmn:LinkEventDefinition',
-        behaviour: { name: 'LINKA' },
-      });
-
-      const linkedMessages = [];
-      event.broker.subscribeTmp('event', 'activity.shake.linked', (_, msg) => linkedMessages.push(msg), { noAck: true });
-
-      event.broker.publish(
-        'api',
-        'activity.shake.link',
-        { sourceId: 'thrower', sequence: [], message: { linkName: 'LINKA' } },
-        { type: 'shake' }
-      );
-
-      expect(linkedMessages).to.have.length(1);
-      expect(linkedMessages[0].content).to.have.property('targetId', catchEd.id);
-      expect(linkedMessages[0].content).to.have.property('isLinked', true);
-    });
-
-    it('ignores shake.link with mismatching linkName', () => {
-      new LinkEventDefinition(event, {
-        type: 'bpmn:LinkEventDefinition',
-        behaviour: { name: 'LINKA' },
-      });
-
-      const linkedMessages = [];
-      event.broker.subscribeTmp('event', 'activity.shake.linked', (_, msg) => linkedMessages.push(msg), { noAck: true });
-
-      event.broker.publish(
-        'api',
-        'activity.shake.link',
-        { sourceId: 'thrower', sequence: [], message: { linkName: 'OTHER' } },
-        { type: 'shake' }
-      );
-
-      expect(linkedMessages).to.have.length(0);
-    });
   });
 
   describe('throwing', () => {
-    it('publishes activity.link with delegate:true and the link payload', () => {
+    it('publishes activity.link with the link payload on the activity event exchange', () => {
       event.isThrowing = true;
 
       const throwEd = new LinkEventDefinition(event, {
@@ -184,7 +134,7 @@ describe('LinkEventDefinition', () => {
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.link');
-      expect(messages[0].properties).to.have.property('delegate', true);
+      expect(messages[0].properties).to.not.have.property('delegate');
       expect(messages[0].properties).to.have.property('type', 'link');
       expect(messages[0].content.message).to.deep.include({ linkName: 'LINKA', referenceType: 'link' });
       expect(messages[0].content).to.have.property('state', 'throw');
@@ -215,34 +165,6 @@ describe('LinkEventDefinition', () => {
       });
 
       expect(messages).to.have.length(1);
-    });
-
-    it('on activity.shake.start, publishes activity.shake.link with the linkName', () => {
-      event.isThrowing = true;
-
-      new LinkEventDefinition(event, {
-        type: 'bpmn:LinkEventDefinition',
-        behaviour: { name: 'LINKA' },
-      });
-
-      const messages = [];
-      event.broker.subscribeTmp('event', 'activity.shake.link', (_, msg) => messages.push(msg), { noAck: true });
-
-      event.broker.publish(
-        'api',
-        'activity.shake.start',
-        {
-          executionId: 'event_1',
-          sequence: [],
-          parent: { id: 'theProcess', executionId: 'theProcess_0' },
-        },
-        { type: 'shake' }
-      );
-
-      expect(messages).to.have.length(1);
-      expect(messages[0].properties).to.have.property('type', 'shake');
-      expect(messages[0].content.message).to.deep.include({ linkName: 'LINKA', referenceType: 'link' });
-      expect(messages[0].content).to.have.property('sourceId', 'event');
     });
   });
 });

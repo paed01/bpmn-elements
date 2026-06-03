@@ -173,3 +173,16 @@ function getModdleContext(sourceXml) {
   return bpmnModdle.fromXML(sourceXml.trim());
 }
 ```
+
+# Replacing `LinkEventDefinition`
+
+Link catches are wired to their matching throws at activity construction. The wiring reads each activity's `behaviour.eventDefinitions` through `context.getLinkEventDefinitionInfo(activityDef)`, which discovers the resolved link Behaviour and its link names. If you ship your own `LinkEventDefinition`, the wiring keeps working as long as the contract below holds:
+
+- The moddle entity's `type` must end with `LinkEventDefinition` (e.g. `bpmn:LinkEventDefinition`, `myns:LinkEventDefinition`). This is the only string-based check — once the first matching definition is found, all subsequent matches compare against the resolved `Behaviour` reference, so any rename is honoured.
+- Expose the link name on `behaviour.name` (the moddle default).
+- The Behaviour signature is `(activity, eventDefinition, context, index)`.
+- When throwing (`activity.isThrowing`), publish `activity.link` on the activity's `event` exchange with `content.message.linkName` set. The catch's construction-time inbound trigger listens for this and queues an `activity.relink` to drive the catch's run cycle.
+- Publish `execute.completed` on the `execution` exchange so the throwing activity terminates.
+- When catching, publish `activity.catch` on the `event` exchange and complete with `execute.completed`. `Activity` drives the rest of the lifecycle.
+
+Shake propagation (`activity.shake.link` / `activity.shake.linked`) is emitted by `Activity` from the `linkNames` exposed by `getLinkEventDefinitionInfo` — your event definition does not need to subscribe to or republish shake events.

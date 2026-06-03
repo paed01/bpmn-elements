@@ -205,6 +205,105 @@ Feature('Multiple start events', () => {
           });
         });
       });
+
+      Scenario('Two start events joined by a task followed by a parallel fork', () => {
+        const source = `<?xml version="1.0" encoding="UTF-8"?>
+        <definitions id="command-definition" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
+          <process id="multiple-start-process" isExecutable="true">
+            <startEvent id="start1">
+              <signalEventDefinition />
+            </startEvent>
+            <startEvent id="start2">
+              <signalEventDefinition signalRef="Signal2" />
+            </startEvent>
+            <sequenceFlow id="from-start1" sourceRef="start1" targetRef="task" />
+            <sequenceFlow id="from-start2" sourceRef="start2" targetRef="task" />
+            <task id="task" />
+            <sequenceFlow id="from-task" sourceRef="task" targetRef="fork" />
+            <parallelGateway id="fork" />
+            <sequenceFlow id="to-end1" sourceRef="fork" targetRef="end1" />
+            <sequenceFlow id="to-end2" sourceRef="fork" targetRef="end2" />
+            <endEvent id="end1" />
+            <endEvent id="end2" />
+          </process>
+          <signal id="Signal2" name="start2" />
+        </definitions>`;
+
+        let context;
+        /** @type {Definition} */
+        let definition;
+        Given('a process with multiple signal start events, a joining task and a subsequent fork', async () => {
+          context = await testHelpers.context(source);
+          definition = new Definition(context, {
+            settings: { skipDiscard },
+          });
+        });
+
+        And('the subsequent fork is a parallel gateway but not a parallel join', () => {
+          const fork = definition.getActivityById('fork');
+          expect(fork.isParallelGateway, 'isParallelGateway').to.be.true;
+          expect(fork.isParallelJoin, 'isParallelJoin').to.be.false;
+          expect(fork.inbound).to.have.length(1);
+          expect(fork.outbound).to.have.length(2);
+        });
+
+        let leave;
+        When('process is ran', () => {
+          leave = definition.waitFor('leave');
+          definition.run();
+        });
+
+        And('both start events are signaled', () => {
+          definition.signal();
+          definition.signal({ id: 'Signal2' });
+        });
+
+        Then('process is completed', async () => {
+          await leave;
+          expect(definition.counters).to.deep.equal({
+            completed: 1,
+            discarded: 0,
+          });
+        });
+
+        And('joining task was taken twice', () => {
+          const task = definition.getActivityById('task');
+          expect(task.counters).to.deep.equal({ taken: 2, discarded: 0 });
+        });
+
+        And('fork was aggregated to a single firing via peer monitoring', () => {
+          const fork = definition.getActivityById('fork');
+          expect(fork.counters).to.deep.equal({ taken: 1, discarded: 0 });
+        });
+
+        And('both end events were taken once', () => {
+          expect(definition.getActivityById('end1').counters).to.deep.equal({ taken: 1, discarded: 0 });
+          expect(definition.getActivityById('end2').counters).to.deep.equal({ taken: 1, discarded: 0 });
+        });
+
+        When('process is ran again', () => {
+          leave = definition.waitFor('leave');
+          definition.run();
+        });
+
+        And('both start events are signaled in the reverse order', () => {
+          definition.signal({ id: 'Signal2' });
+          definition.signal();
+        });
+
+        Then('process is completed', async () => {
+          await leave;
+          expect(definition.counters).to.deep.equal({
+            completed: 2,
+            discarded: 0,
+          });
+        });
+
+        And('fork was aggregated to a single firing per run', () => {
+          const fork = definition.getActivityById('fork');
+          expect(fork.counters).to.deep.equal({ taken: 2, discarded: 0 });
+        });
+      });
     });
   });
 });

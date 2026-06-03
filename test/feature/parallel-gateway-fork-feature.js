@@ -544,6 +544,80 @@ Feature('Parallel gateway fork', () => {
       return leave;
     });
   });
+
+  Scenario('A process with a fork but no parallel join still triggers a shake', () => {
+    const source = `
+    <?xml version="1.0" encoding="UTF-8"?>
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+      <process id="theProcess" isExecutable="true">
+        <startEvent id="start" />
+        <sequenceFlow id="to-split" sourceRef="start" targetRef="split" />
+        <parallelGateway id="split" />
+        <sequenceFlow id="to-task1" sourceRef="split" targetRef="task1" />
+        <sequenceFlow id="to-task2" sourceRef="split" targetRef="task2" />
+        <task id="task1" />
+        <task id="task2" />
+        <sequenceFlow id="from-task1" sourceRef="task1" targetRef="merge" />
+        <sequenceFlow id="from-task2" sourceRef="task2" targetRef="merge" />
+        <task id="merge" />
+        <sequenceFlow id="to-fork" sourceRef="merge" targetRef="fork" />
+        <parallelGateway id="fork" />
+        <sequenceFlow id="to-end1" sourceRef="fork" targetRef="end1" />
+        <sequenceFlow id="to-end2" sourceRef="fork" targetRef="end2" />
+        <endEvent id="end1" />
+        <endEvent id="end2" />
+      </process>
+    </definitions>`;
+
+    /** @type {Definition} */
+    let definition;
+    const convergeMessages = [];
+
+    Given('a definition with a fork (no join) and parallel upstream peers', async () => {
+      const context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let leave;
+    When('definition is ran capturing activity.converge events', () => {
+      leave = definition.waitFor('leave');
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.converge',
+        (_, msg) => {
+          convergeMessages.push(msg.content.id);
+        },
+        { noAck: true }
+      );
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return leave;
+    });
+
+    And('the fork emitted activity.converge', () => {
+      expect(convergeMessages).to.include('fork');
+    });
+
+    And('the fork discovered upstream parallel peers via shake', () => {
+      const fork = definition.getActivityById('fork');
+      const peers = fork[Symbol.for('peers')];
+      const peerIds = new Set([...peers.values()].flatMap((s) => [...s]));
+      expect(peerIds).to.include('task1');
+      expect(peerIds).to.include('task2');
+      expect(peerIds).to.include('split');
+    });
+
+    And('the fork fires once, aggregating both upstream firings via peer monitoring', () => {
+      const fork = definition.getActivityById('fork');
+      expect(fork.counters).to.deep.equal({ taken: 1, discarded: 0 });
+      const merge = definition.getActivityById('merge');
+      expect(merge.counters).to.deep.equal({ taken: 2, discarded: 0 });
+      expect(definition.getActivityById('end1').counters).to.deep.equal({ taken: 1, discarded: 0 });
+      expect(definition.getActivityById('end2').counters).to.deep.equal({ taken: 1, discarded: 0 });
+    });
+  });
 });
 
 function getTakeServices() {

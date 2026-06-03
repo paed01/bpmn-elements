@@ -9,7 +9,11 @@ import { K_EXECUTION } from '../constants.js';
  * @param {import('#types').ContextInstance} context
  */
 export function IntermediateThrowEvent(activityDef, context) {
-  return new Activity(IntermediateThrowEventBehaviour, { ...activityDef, isThrowing: true }, context);
+  return new Activity(
+    IntermediateThrowEventBehaviour,
+    { ...activityDef, isThrowing: true, ...context.getLinkEventDefinitionInfo(activityDef) },
+    context
+  );
 }
 
 /**

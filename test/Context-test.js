@@ -515,4 +515,78 @@ describe('Context', () => {
       expect(activateCount).to.equal(0);
     });
   });
+
+  describe('getActivitiesByEventDefinitionBehaviour(Behaviour, names)', () => {
+    const source = `
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+      <process id="theProcess" isExecutable="true">
+        <intermediateThrowEvent id="throwA">
+          <linkEventDefinition name="LINKA" />
+        </intermediateThrowEvent>
+        <intermediateThrowEvent id="throwB">
+          <linkEventDefinition name="LINKB" />
+        </intermediateThrowEvent>
+        <intermediateThrowEvent id="throwOther">
+          <linkEventDefinition name="OTHER" />
+        </intermediateThrowEvent>
+        <intermediateCatchEvent id="catchA">
+          <linkEventDefinition name="LINKA" />
+        </intermediateCatchEvent>
+        <intermediateCatchEvent id="catchAB">
+          <linkEventDefinition name="LINKA" />
+          <linkEventDefinition name="LINKB" />
+        </intermediateCatchEvent>
+        <task id="task1" />
+      </process>
+    </definitions>`;
+
+    function getLinkBehaviour(context) {
+      return context.getActivityById('throwA').behaviour.linkBehaviour;
+    }
+
+    it('returns activities whose ed.Behaviour matches and whose ed name is wanted', async () => {
+      const context = await testHelpers.context(source);
+      const Link = getLinkBehaviour(context);
+      const ids = context.getActivitiesByEventDefinitionBehaviour(Link, ['LINKA']).map((a) => a.id);
+      expect(ids).to.have.same.members(['throwA', 'catchA', 'catchAB']);
+    });
+
+    it('matches activities whose ed name is any of the wanted names', async () => {
+      const context = await testHelpers.context(source);
+      const Link = getLinkBehaviour(context);
+      const ids = context.getActivitiesByEventDefinitionBehaviour(Link, ['LINKA', 'LINKB']).map((a) => a.id);
+      expect(ids).to.have.same.members(['throwA', 'throwB', 'catchA', 'catchAB']);
+    });
+
+    it('returns an empty array when no Behaviour is given', async () => {
+      const context = await testHelpers.context(source);
+      expect(context.getActivitiesByEventDefinitionBehaviour(undefined, ['LINKA'])).to.deep.equal([]);
+    });
+
+    it('returns an empty array when no names are given', async () => {
+      const context = await testHelpers.context(source);
+      const Link = getLinkBehaviour(context);
+      expect(context.getActivitiesByEventDefinitionBehaviour(Link, [])).to.deep.equal([]);
+    });
+
+    it('returns an empty array when no activity has a matching name', async () => {
+      const context = await testHelpers.context(source);
+      const Link = getLinkBehaviour(context);
+      expect(context.getActivitiesByEventDefinitionBehaviour(Link, ['UNKNOWN'])).to.deep.equal([]);
+    });
+
+    it('accepts a Set of names', async () => {
+      const context = await testHelpers.context(source);
+      const Link = getLinkBehaviour(context);
+      const ids = context.getActivitiesByEventDefinitionBehaviour(Link, new Set(['LINKB'])).map((a) => a.id);
+      expect(ids).to.have.same.members(['throwB', 'catchAB']);
+    });
+
+    it('honors a custom Behaviour override — only activities resolved to the override match', async () => {
+      function CustomLink() {}
+      const overrideContext = await testHelpers.context(source, { types: { LinkEventDefinition: CustomLink } });
+      const ids = overrideContext.getActivitiesByEventDefinitionBehaviour(CustomLink, ['LINKA']).map((a) => a.id);
+      expect(ids).to.have.same.members(['throwA', 'catchA', 'catchAB']);
+    });
+  });
 });

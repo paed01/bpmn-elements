@@ -17,7 +17,8 @@ var _constants = require("../constants.js");
 function IntermediateCatchEvent(activityDef, context) {
   return new _Activity.Activity(IntermediateCatchEventBehaviour, {
     ...activityDef,
-    isCatching: true
+    isCatching: true,
+    ...context.getLinkEventDefinitionInfo(activityDef)
   }, context);
 }
 

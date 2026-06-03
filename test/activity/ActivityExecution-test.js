@@ -138,7 +138,6 @@ describe('ActivityExecution', () => {
 
     it('ignores complete message if not postponed', () => {
       const activity = createActivity();
-      activity.isParallelGateway = true;
 
       const execution = new ActivityExecution(activity);
 

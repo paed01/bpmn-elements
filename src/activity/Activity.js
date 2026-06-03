@@ -39,7 +39,11 @@ export function Activity(Behaviour, activityDef, context) {
   this.type = type;
   this.name = name;
   /** @type {import('moddle-context-serializer').ActivityBehaviour} */
-  this.behaviour = { ...behaviour, eventDefinitions };
+  this.behaviour = {
+    ...behaviour,
+    eventDefinitions,
+    ...(activityDef.linkNames && { linkNames: activityDef.linkNames, linkBehaviour: activityDef.linkBehaviour }),
+  };
   this.Behaviour = Behaviour;
   /** @type {import('moddle-context-serializer').Parent} */
   this.parent = activityDef.parent ? cloneParent(activityDef.parent) : {};
@@ -72,14 +76,8 @@ export function Activity(Behaviour, activityDef, context) {
 
   const inboundSequenceFlows = context.getInboundSequenceFlows(id);
   const inboundAssociations = context.getInboundAssociations(id);
-  let inboundTriggers;
-  if (attachedToActivity) {
-    inboundTriggers = [attachedToActivity];
-  } else if (isForCompensation) {
-    inboundTriggers = inboundAssociations.slice();
-  } else {
-    inboundTriggers = inboundSequenceFlows.slice();
-  }
+  const hasInboundTrigger = attachedToActivity ? true : isForCompensation ? !!inboundAssociations.length : !!inboundSequenceFlows.length;
+
   const outboundSequenceFlows = context.getOutboundSequenceFlows(id);
 
   const inboundSourceIds = new Set(inboundSequenceFlows.map(({ sourceId }) => sourceId));
@@ -88,14 +86,14 @@ export function Activity(Behaviour, activityDef, context) {
   this[K_FLOWS] = {
     inboundSequenceFlows,
     inboundAssociations,
-    inboundTriggers,
+    inboundTriggers: undefined,
     outboundSequenceFlows,
     outboundEvaluator: new OutboundEvaluator(this, outboundSequenceFlows),
   };
 
   this[K_FLAGS] = {
     isEnd: !outboundSequenceFlows.length,
-    isStart: !inboundTriggers.length && !behaviour.triggeredByEvent && !activityDef.isCatching,
+    isStart: !hasInboundTrigger && !behaviour.triggeredByEvent && !activityDef.isCatching,
     isSubProcess: activityDef.isSubProcess,
     isMultiInstance: !!behaviour.loopCharacteristics,
     isForCompensation,
@@ -104,6 +102,8 @@ export function Activity(Behaviour, activityDef, context) {
     isParallelJoin,
     isParallelGateway: activityDef.isParallelGateway,
     isThrowing: activityDef.isThrowing,
+    linkNames: activityDef.linkNames,
+    linkBehaviour: activityDef.linkBehaviour,
     isCatching: activityDef.isCatching,
     lane: activityDef.lane?.id,
   };
@@ -219,6 +219,11 @@ Object.defineProperties(Activity.prototype, {
       return this[K_FLAGS].isParallelJoin;
     },
   },
+  isParallelGateway: {
+    get() {
+      return this[K_FLAGS].isParallelGateway;
+    },
+  },
   triggeredByEvent: {
     get() {
       return this[K_ACTIVITY_DEF].triggeredByEvent;
@@ -264,6 +269,34 @@ Activity.prototype.activate = function activate() {
   if (this[K_ACTIVATED]) return;
   this[K_ACTIVATED] = true;
   return this.addInboundListeners() && this._consumeInbound();
+};
+
+/** @internal */
+Activity.prototype._getInboundTriggers = function _getInboundTriggers() {
+  const flows = this[K_FLOWS];
+  if (flows.inboundTriggers) return flows.inboundTriggers;
+
+  const flags = this[K_FLAGS];
+  let triggers;
+  if (flags.attachedTo) {
+    triggers = [this.context.getActivityById(flags.attachedTo)];
+  } else if (flags.isForCompensation) {
+    triggers = flows.inboundAssociations.slice();
+  } else {
+    triggers = flows.inboundSequenceFlows.slice();
+  }
+
+  const { isCatching, linkNames, linkBehaviour } = flags;
+  if (isCatching && linkNames?.length) {
+    const known = new Set(triggers.map((t) => t.id));
+    for (const source of this.context.getActivitiesByEventDefinitionBehaviour(linkBehaviour, linkNames)) {
+      if (source.id === this.id || !source.isThrowing || known.has(source.id)) continue;
+      triggers.push(source);
+      known.add(source.id);
+    }
+  }
+
+  return (flows.inboundTriggers = triggers);
 };
 
 /**
@@ -411,7 +444,7 @@ Activity.prototype.discard = function discard(discardContent) {
  * @returns {number} count of subscribed triggers
  */
 Activity.prototype.addInboundListeners = function addInboundListeners() {
-  const triggers = this[K_FLOWS].inboundTriggers;
+  const triggers = this._getInboundTriggers();
   if (triggers.length) {
     const onInboundEvent = this._onInboundEvent.bind(this);
     const triggerConsumerTag = `_inbound-${this.id}`;
@@ -432,8 +465,10 @@ Activity.prototype.addInboundListeners = function addInboundListeners() {
  * Cancel inbound trigger subscriptions added by addInboundListeners.
  */
 Activity.prototype.removeInboundListeners = function removeInboundListeners() {
+  const triggers = this[K_FLOWS].inboundTriggers;
+  if (!triggers) return;
   const triggerConsumerTag = `_inbound-${this.id}`;
-  for (const trigger of this[K_FLOWS].inboundTriggers) {
+  for (const trigger of triggers) {
     trigger.broker.cancel(triggerConsumerTag);
   }
 };
@@ -573,6 +608,17 @@ Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
 
   this.broker.publish('api', 'activity.shake.start', message.content, { persistent: false, type: 'shake' });
 
+  if (this[K_FLAGS].isThrowing && this[K_FLAGS].linkNames?.length) {
+    for (const linkName of this[K_FLAGS].linkNames) {
+      this.broker.publish(
+        'event',
+        'activity.shake.link',
+        cloneContent(message.content, { sourceId: this.id, message: { id: linkName, linkName, referenceType: 'link' } }),
+        { type: 'shake' }
+      );
+    }
+  }
+
   if (this[K_FLAGS].isEnd) {
     return this.broker.publish('event', 'activity.shake.end', cloneContent(message.content), { persistent: false, type: 'shake' });
   }
@@ -593,7 +639,7 @@ Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
 Activity.prototype._consumeInbound = function consumeInbound() {
   if (!this[K_ACTIVATED]) return;
 
-  if (this.status || !this[K_FLOWS].inboundTriggers.length) return;
+  if (this.status || !this._getInboundTriggers().length) return;
 
   const inboundQ = this.broker.getQueue('inbound-q');
   const onInbound = this[K_MESSAGE_HANDLERS].onInbound;
@@ -611,6 +657,12 @@ Activity.prototype._onInbound = function onInbound(routingKey, message) {
   const inbound = [cloneContent(content)];
 
   switch (routingKey) {
+    case 'activity.relink':
+      if (content.executionId) this[K_EXEC].set('initExecutionId', content.executionId);
+      return this.run({
+        message: content.message,
+        inbound,
+      });
     case 'association.take':
     case 'flow.take':
     case 'activity.restart':
@@ -645,6 +697,35 @@ Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message
     case 'flow.shake':
     case 'activity.shake.start':
       return this._onShakeMessage(message);
+    case 'activity.link': {
+      const linkName = content.message?.linkName;
+      if (!this[K_FLAGS].linkNames?.includes(linkName)) break;
+      const executionId = getUniqueId(this.id);
+      this.broker.publish(
+        'event',
+        'activity.enter',
+        cloneContent(content, { id: this.id, type: this.type, executionId, state: 'enter', message: { ...content.message } })
+      );
+      inboundQ.queueMessage(
+        { routingKey: 'activity.relink' },
+        cloneContent(content, { id: this.id, executionId, message: { ...content.message } }),
+        properties
+      );
+      return;
+    }
+    case 'activity.shake.link': {
+      const linkName = content.message?.linkName;
+      if (!this[K_FLAGS].linkNames?.includes(linkName)) break;
+      const linkedContent = cloneContent(content, { targetId: this.id, isLinked: true });
+      linkedContent.sequence = linkedContent.sequence || [];
+      linkedContent.sequence.push({ id: this.id, type: this.type });
+      this.broker.publish('event', 'activity.shake.linked', linkedContent, { persistent: false, type: 'shake' });
+      const outbound = this.outbound;
+      if (outbound?.length) {
+        for (const flow of outbound) flow.shake({ content: cloneContent(linkedContent) });
+      }
+      break;
+    }
     case 'association.take':
     case 'flow.take':
     case 'flow.discard':

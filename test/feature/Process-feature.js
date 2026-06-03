@@ -626,14 +626,15 @@ Feature('Process', () => {
       assertMessage('activity.end', 'decision');
       assertMessage('activity.enter', 'join');
       assertMessage('activity.start', 'join');
+      assertMessage('activity.converge', 'join');
       assertMessage('activity.leave', 'decision');
+      assertMessage('activity.leave', 'start');
       assertMessage('activity.end', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
       assertMessage('activity.leave', 'join');
-      assertMessage('activity.leave', 'start');
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
     });
@@ -839,6 +840,7 @@ Feature('Process', () => {
       assertMessage('activity.end', 'start');
       assertMessage('activity.enter', 'fork');
       assertMessage('activity.start', 'fork');
+      assertMessage('activity.converge', 'fork');
       assertMessage('activity.leave', 'start');
       assertMessage('activity.end', 'fork');
 

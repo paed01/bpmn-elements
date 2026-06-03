@@ -986,6 +986,7 @@ describe('activity', () => {
           const assertMessage = AssertMessage(context, messages, true);
           assertMessage('activity.enter');
           assertMessage('activity.start');
+          if (activityType === 'bpmn:ParallelGateway') assertMessage('activity.converge');
           assertMessage('activity.end');
           assertMessage('activity.leave');
           expect(messages, 'no more messages').to.have.length(0);

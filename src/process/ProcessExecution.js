@@ -482,7 +482,7 @@ ProcessExecution.prototype._activate = function activate() {
       startActivities.add(activity);
     }
     if (activity.triggeredByEvent || activity.isCatching) triggeredByEvent.add(activity);
-    if (activity.isParallelJoin) convergingGateways.add(activity);
+    if (activity.isParallelGateway) convergingGateways.add(activity);
   }
 
   if (startActivities.size > 1) {
@@ -596,8 +596,13 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
     this.getActivityById(aid).broker.publish('api', 'activity.shake.continue', c, { type: 'shake' });
   }
 
-  if (result.settings.skipDiscard && convergingGateways.size) {
-    result.settings.skipDiscard = false;
+  if (result.settings.skipDiscard) {
+    for (const aid of convergingGateways.keys()) {
+      if (this.getActivityById(aid).isParallelGateway) {
+        result.settings.skipDiscard = false;
+        break;
+      }
+    }
   }
 
   if (!executing) this._deactivate();

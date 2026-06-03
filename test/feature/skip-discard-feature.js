@@ -165,7 +165,7 @@ Feature('Skip discarding flows if parallel gateway is not used', () => {
     });
   });
 
-  ['engine-issue-73.bpmn', 'engine-issue-73_2.bpmn', 'issue-42-same-target-sequence-flows-with-excl-gw.bpmn'].forEach((source) => {
+  ['engine-issue-73.bpmn', 'engine-issue-73_2.bpmn'].forEach((source) => {
     Scenario(`${source} should complete as expected`, () => {
       /** @type {Definition} */
       let definition;
@@ -239,6 +239,7 @@ Feature('Skip discarding flows if parallel gateway is not used', () => {
     'join-paradox-5.bpmn',
     'join-inbound.bpmn',
     'issue-42-same-target-sequence-flows.bpmn',
+    'issue-42-same-target-sequence-flows-with-excl-gw.bpmn',
     'parallel-join-edgecase.bpmn',
   ].forEach((source) => {
     Scenario(`${source} with parallel converging gateways should complete as expected`, () => {

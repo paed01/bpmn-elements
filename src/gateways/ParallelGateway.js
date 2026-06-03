@@ -60,7 +60,7 @@ export function ParallelGatewayBehaviour(activity) {
   this.broker = activity.broker;
   this.inbound = new Set();
 
-  this.isConverging = new Set(activity.inbound.map(({ sourceId }) => sourceId)).size > 1;
+  this.isConverging = true;
   this[K_EXECUTE_MESSAGE] = undefined;
 }
 

@@ -313,6 +313,49 @@ ContextInstance.prototype.getStartActivities = function getStartActivities(filte
 };
 
 /**
+ * Inspect an activity def for link event definitions.
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ * @returns {{ linkBehaviour?: Function, linkNames?: string[] }}
+ */
+ContextInstance.prototype.getLinkEventDefinitionInfo = function getLinkEventDefinitionInfo(activityDef) {
+  const eds = activityDef.behaviour?.eventDefinitions;
+  if (!eds) return {};
+  let linkBehaviour;
+  const names = new Set();
+  for (const ed of eds) {
+    if (linkBehaviour ? ed.Behaviour === linkBehaviour : ed.type?.endsWith('LinkEventDefinition')) {
+      if (!linkBehaviour) linkBehaviour = ed.Behaviour;
+      if (ed.behaviour?.name) names.add(ed.behaviour.name);
+    }
+  }
+  if (!linkBehaviour || !names.size) return {};
+  return {
+    linkBehaviour,
+    linkNames: [...names]
+  };
+};
+
+/**
+ * Get activities whose event definitions include the given Behaviour with a matching name.
+ * @param {Function} Behaviour Behaviour constructor to match against `ed.Behaviour`
+ * @param {string[] | Iterable<string>} names
+ * @param {string} [scopeId] Process or sub-process id
+ */
+ContextInstance.prototype.getActivitiesByEventDefinitionBehaviour = function getActivitiesByEventDefinitionBehaviour(Behaviour, names, scopeId) {
+  const wanted = new Set(names);
+  if (!Behaviour || !wanted.size) return [];
+  const result = [];
+  const rawDefs = this.definitionContext.getActivities(scopeId) || [];
+  for (const rawDef of rawDefs) {
+    const eds = rawDef.behaviour?.eventDefinitions;
+    if (!eds) continue;
+    if (!eds.some(ed => ed.Behaviour === Behaviour && wanted.has(ed.behaviour?.name))) continue;
+    result.push(this.upsertActivity(rawDef));
+  }
+  return result;
+};
+
+/**
  * Resolve user-registered extensions and the built-in BpmnIO extension for an activity.
  * Returns undefined when the activity has no extensions to attach.
  * @param {import('#types').ElementBase} activity

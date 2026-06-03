@@ -9,7 +9,11 @@ import { K_EXECUTION } from '../constants.js';
  * @param {import('#types').ContextInstance} context
  */
 export function IntermediateCatchEvent(activityDef, context) {
-  return new Activity(IntermediateCatchEventBehaviour, { ...activityDef, isCatching: true }, context);
+  return new Activity(
+    IntermediateCatchEventBehaviour,
+    { ...activityDef, isCatching: true, ...context.getLinkEventDefinitionInfo(activityDef) },
+    context
+  );
 }
 
 /**

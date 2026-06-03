@@ -238,6 +238,200 @@ Feature('Link as goto', () => {
     });
   });
 
+  Scenario('two throws share a single catch — sync catch processes both', () => {
+    /** @type {Definition} */
+    let definition;
+    Given('a process where both inclusive branches throw the same link name into one catch', async () => {
+      const source = factory.resource('link-multiple-catch.bpmn');
+      const context = await testHelpers.context(source);
+      definition = new Definition(context, {
+        variables: { take1: true, take2: true },
+      });
+    });
+
+    let end;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('definition completes', () => {
+      return end;
+    });
+
+    And('both throws were taken', () => {
+      expect(definition.getActivityById('goto-a').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('goto-b').counters).to.have.property('taken', 1);
+    });
+
+    And('the shared catch ran twice', () => {
+      expect(definition.getActivityById('catch-a').counters).to.deep.equal({ taken: 2, discarded: 0 });
+    });
+
+    And('the downstream end was taken twice', () => {
+      expect(definition.getActivityById('end-a').counters).to.have.property('taken', 2);
+    });
+  });
+
+  Scenario('two throws share a single catch — async catch queues the second throw', () => {
+    /** @type {Definition} */
+    let definition;
+    Given('a process where the catch completion is held until the next tick', async () => {
+      const source = factory.resource('link-multiple-catch.bpmn');
+      const context = await testHelpers.context(source);
+      definition = new Definition(context, {
+        variables: { take1: true, take2: true },
+        extensions: {
+          asyncCatchEnd(activity) {
+            if (activity.id !== 'catch-a') return;
+
+            activity.on('end', (api) => {
+              if (api.fields.redelivered) return;
+
+              const { broker } = activity;
+              broker.publish('format', 'run.end.async', { endRoutingKey: 'run.end.async.done' });
+
+              process.nextTick(() => {
+                broker.publish('format', 'run.end.async.done', {});
+              });
+            });
+          },
+        },
+      });
+    });
+
+    let end;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('definition completes', () => {
+      return end;
+    });
+
+    And('both throws were taken', () => {
+      expect(definition.getActivityById('goto-a').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('goto-b').counters).to.have.property('taken', 1);
+    });
+
+    And('the catch ran twice — the second throw was queued until the first finished', () => {
+      expect(definition.getActivityById('catch-a').counters).to.deep.equal({ taken: 2, discarded: 0 });
+    });
+
+    And('the downstream end was taken twice', () => {
+      expect(definition.getActivityById('end-a').counters).to.have.property('taken', 2);
+    });
+  });
+
+  Scenario('two throws share a single catch — pending throw survives stop/recover/resume', () => {
+    /** @type {Definition} */
+    let definition;
+    let context, state;
+
+    const asyncCatch = {
+      asyncCatchEnd(activity) {
+        if (activity.id !== 'catch') return;
+        activity.on('end', (api) => {
+          if (api.fields.redelivered) return;
+          const broker = activity.broker;
+          broker.publish('format', 'run.end.async', { endRoutingKey: 'run.end.async.done' });
+          process.nextTick(() => broker.publish('format', 'run.end.async.done', {}));
+        });
+      },
+    };
+
+    Given('a process with two throws sharing one catch downstream of a user task', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-gw" sourceRef="start" targetRef="gw" />
+          <inclusiveGateway id="gw" />
+          <sequenceFlow id="to-throw1" sourceRef="gw" targetRef="throw1">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.take1}</conditionExpression>
+          </sequenceFlow>
+          <sequenceFlow id="to-throw2" sourceRef="gw" targetRef="throw2">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.take2}</conditionExpression>
+          </sequenceFlow>
+          <intermediateThrowEvent id="throw1">
+            <linkEventDefinition name="LINKA" />
+          </intermediateThrowEvent>
+          <intermediateThrowEvent id="throw2">
+            <linkEventDefinition name="LINKA" />
+          </intermediateThrowEvent>
+          <intermediateCatchEvent id="catch">
+            <linkEventDefinition name="LINKA" />
+          </intermediateCatchEvent>
+          <sequenceFlow id="to-userTask" sourceRef="catch" targetRef="userTask" />
+          <userTask id="userTask" />
+          <sequenceFlow id="to-end" sourceRef="userTask" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+      context = await testHelpers.context(source);
+      definition = new Definition(context, {
+        variables: { take1: true, take2: true },
+        extensions: asyncCatch,
+      });
+    });
+
+    let wait;
+    When('definition runs until the user task waits after the first catch run', async () => {
+      wait = definition.waitFor('wait');
+      definition.run();
+      await wait;
+    });
+
+    And('definition is stopped while a pending throw is still queued on the catch', () => {
+      definition.stop();
+    });
+
+    And('state is captured', () => {
+      state = JSON.parse(JSON.stringify(definition.getState()));
+    });
+
+    let end;
+    When('definition is recovered into a fresh instance and resumed', () => {
+      definition = new Definition(context, { extensions: asyncCatch }).recover(state);
+      end = definition.waitFor('end');
+      definition.resume();
+    });
+
+    let wait2;
+    And('the first waiting user task is signaled (the second wait fires from the queued throw)', async () => {
+      wait2 = definition.waitFor('wait');
+      const userTask = definition.getPostponed().find((api) => api.id === 'userTask');
+      expect(userTask, 'first userTask api').to.exist;
+      userTask.signal();
+      await wait2;
+    });
+
+    And('the second waiting user task is signaled', () => {
+      const userTask = definition.getPostponed().find((api) => api.id === 'userTask');
+      expect(userTask, 'second userTask api').to.exist;
+      userTask.signal();
+    });
+
+    Then('definition completes', () => {
+      return end;
+    });
+
+    And('both throws were taken', () => {
+      expect(definition.getActivityById('throw1').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('throw2').counters).to.have.property('taken', 1);
+    });
+
+    And('the shared catch ran twice across the lifecycle', () => {
+      expect(definition.getActivityById('catch').counters).to.deep.equal({ taken: 2, discarded: 0 });
+    });
+
+    And('the downstream end was reached twice', () => {
+      expect(definition.getActivityById('end').counters).to.have.property('taken', 2);
+    });
+  });
+
   Scenario('throw with no matching catch silently completes', () => {
     /** @type {Definition} */
     let definition;
