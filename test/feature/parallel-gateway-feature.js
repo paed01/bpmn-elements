@@ -48,8 +48,8 @@ Feature('Parallel gateway', () => {
       expect(joinGw.inbound).to.have.length(4);
     });
 
-    And('join end message inbound flows is greater then inbound sequence flows', () => {
-      expect(endMsg.content.inbound).to.have.length(6);
+    And('join end message inbound flows are only the taken inbound sequence flows', () => {
+      expect(endMsg.content.inbound).to.have.length(2);
     });
 
     And('no pending inbound exists', () => {
@@ -74,8 +74,8 @@ Feature('Parallel gateway', () => {
       expect(joinGw.inbound).to.have.length(4);
     });
 
-    And('join start message inbound flows is greater then inbound sequence flows', () => {
-      expect(endMsg.content.inbound).to.have.length(6);
+    And('join start message inbound flows are only the taken inbound sequence flows', () => {
+      expect(endMsg.content.inbound).to.have.length(2);
     });
 
     let stopped;
@@ -223,7 +223,7 @@ Feature('Parallel gateway', () => {
     });
 
     But('with expected number of inbound', () => {
-      expect(joinLeaveMsg.content.inbound).to.have.length(6);
+      expect(joinLeaveMsg.content.inbound).to.have.length(2);
     });
 
     And('and no postponed elements', () => {

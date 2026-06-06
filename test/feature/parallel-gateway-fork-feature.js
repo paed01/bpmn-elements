@@ -293,13 +293,13 @@ Feature('Parallel gateway fork', () => {
     let forkGw;
     And('parallel fork was taken twice', () => {
       forkGw = definition.getActivityById('join');
-      expect(forkGw.counters).to.deep.equal({ taken: 2, discarded: 1 });
+      expect(forkGw.counters).to.deep.equal({ taken: 2, discarded: 0 });
     });
 
     let joinGw;
     And('parallel join was taken twice', () => {
       joinGw = definition.getActivityById('join');
-      expect(joinGw.counters).to.deep.equal({ taken: 2, discarded: 1 });
+      expect(joinGw.counters).to.deep.equal({ taken: 2, discarded: 0 });
     });
 
     And('no pending inbound exists', () => {
@@ -322,7 +322,7 @@ Feature('Parallel gateway fork', () => {
 
     And('parallel join was taken twice again', () => {
       joinGw = definition.getActivityById('join');
-      expect(joinGw.counters).to.deep.equal({ taken: 4, discarded: 2 });
+      expect(joinGw.counters).to.deep.equal({ taken: 4, discarded: 0 });
     });
 
     let stopped;
@@ -455,7 +455,7 @@ Feature('Parallel gateway fork', () => {
 
     And('join was taken the expected number of times', () => {
       const joinGw = definition.getActivityById('join');
-      expect(joinGw.counters).to.deep.equal({ taken: 2, discarded: 1 });
+      expect(joinGw.counters).to.deep.equal({ taken: 2, discarded: 0 });
     });
 
     And('fork was taken the expected number of times', () => {
@@ -499,7 +499,7 @@ Feature('Parallel gateway fork', () => {
 
     And('join was taken the expected number of times', () => {
       const joinGw = definition.getActivityById('join');
-      expect(joinGw.counters).to.deep.equal({ taken: 3, discarded: 2 });
+      expect(joinGw.counters).to.deep.equal({ taken: 3, discarded: 0 });
     });
 
     And('fork was taken the expected number of times', () => {

@@ -517,23 +517,22 @@ ProcessExecution.prototype._deactivate = function deactivate() {
 /**
  * Shake on start/resume when there are converging gateways or multiple start activities.
  * Reuses already discovered parallel gateway peers to skip the graph shake on repeated runs.
+ * The shake only discovers parallel gateway peers for the peer monitor; converging joins no
+ * longer rely on discarded flows, so skipDiscard is left untouched.
  * @internal
  */
 ProcessExecution.prototype._shakeOnStart = function shakeOnStart() {
   const { startActivities, convergingGateways } = this[K_ELEMENTS];
 
   if (startActivities.size <= 1 && this._peersDiscovered()) {
-    this.environment.settings.skipDiscard = false;
-    this._debug(`reuse discovered parallel gateway peers (${convergingGateways.size}), disabling skipDiscard`);
+    this._debug(`reuse discovered parallel gateway peers (${convergingGateways.size})`);
     return;
   }
 
   if (startActivities.size <= 1 && !convergingGateways.size) return;
 
-  const skipDiscard = (this.environment.settings.skipDiscard = this._shakeElements().settings.skipDiscard);
-  this._debug(
-    !skipDiscard ? `forced shake, disabling skipDiscard due to converging gateways (${convergingGateways.size})` : 'forced shake'
-  );
+  this._shakeElements();
+  this._debug(`forced shake to discover converging gateway peers (${convergingGateways.size})`);
 };
 
 /**
@@ -562,9 +561,6 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
   const toShake = fromId ? [this.getActivityById(fromId)].filter(Boolean) : this[K_ELEMENTS].startActivities;
 
   const result = {
-    settings: {
-      skipDiscard: this.environment.settings.skipDiscard,
-    },
     sequences: new Map(),
   };
 
@@ -612,15 +608,6 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
   for (const [aid, c] of convergingGateways.entries()) {
     this._debug(`manual shake of converging gateway <${aid}>`);
     this.getActivityById(aid).broker.publish('api', 'activity.shake.continue', c, { type: 'shake' });
-  }
-
-  if (result.settings.skipDiscard) {
-    for (const aid of convergingGateways.keys()) {
-      if (this.getActivityById(aid).isParallelGateway) {
-        result.settings.skipDiscard = false;
-        break;
-      }
-    }
   }
 
   if (!executing) this._deactivate();

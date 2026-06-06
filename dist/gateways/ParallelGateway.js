@@ -34,6 +34,15 @@ function ParallelGateway(activityDef, context) {
     id: flowId,
     sourceId
   }) => [flowId, new Set([sourceId])]));
+  const cachedPeers = context.getShakenPeers(id);
+  if (cachedPeers) {
+    for (const [flowId, sourceIds] of cachedPeers) {
+      let peer = peers.get(flowId);
+      if (!peer) peers.set(flowId, peer = new Set());
+      for (const sourceId of sourceIds) peer.add(sourceId);
+    }
+    activity[K_PEERS_DISCOVERED] = true;
+  }
   return activity;
   function onApiShake(_, message) {
     const collect = new Set();
@@ -53,6 +62,7 @@ function ParallelGateway(activityDef, context) {
     }
     activity.logger.debug(`<${activity.id}> collected parallel gateway peers`);
     activity[K_PEERS_DISCOVERED] = true;
+    context.setShakenPeers(id, [...peers].map(([flowId, sourceIds]) => [flowId, [...sourceIds]]));
     activity.shake(message);
   }
 }

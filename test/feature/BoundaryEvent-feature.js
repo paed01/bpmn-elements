@@ -110,7 +110,7 @@ Feature('BoundaryEvent', () => {
     });
 
     And('user task was taken', () => {
-      expect(bp.getActivityById('task').counters).to.have.property('discarded', bp.environment.settings.skipDiscard ? 0 : 1);
+      expect(bp.getActivityById('task').counters).to.have.property('discarded', 1);
       expect(bp.getActivityById('task').counters).to.have.property('taken', 1);
     });
 

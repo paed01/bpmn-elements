@@ -2273,12 +2273,9 @@ Feature('Process', () => {
       return timeout;
     });
 
-    Then('process execution is looped back to user task', () => {
+    Then('the loop branch is taken and execution loops back to user task', () => {
+      assertMessage('flow.take', 'toLoop');
       assertMessage('activity.wait', 'userTask1');
-    });
-
-    And('end event is discarded', () => {
-      assertMessage('activity.discard', 'theEnd');
     });
 
     When('user task is signaled again', () => {
@@ -2296,20 +2293,9 @@ Feature('Process', () => {
       return timeout;
     });
 
-    Then('looped flow is discarded', () => {
-      assertMessage('flow.discard', 'toLoop');
-    });
-
-    And('user task is discarded', () => {
-      assertMessage('activity.discard', 'userTask1');
-    });
-
-    And('end event completes', () => {
+    Then('the final branch is taken and end event completes', () => {
+      assertMessage('flow.take', 'toFinal');
       assertMessage('activity.end', 'theEnd');
-    });
-
-    And('flow loop is detected', () => {
-      assertMessage('flow.looped', 'toDecision');
     });
 
     And('process execution is completed', () => {
@@ -2435,7 +2421,8 @@ Feature('Process', () => {
       return timeout;
     });
 
-    Then('process execution is looped back to user task', () => {
+    Then('the loop branch is taken and execution loops back to user task', () => {
+      assertMessage('flow.take', 'toLoop');
       assertMessage('activity.wait', 'userTask1');
     });
 
@@ -2452,20 +2439,9 @@ Feature('Process', () => {
       return timeout;
     });
 
-    Then('looped flow is discarded', () => {
-      assertMessage('flow.discard', 'toLoop');
-    });
-
-    And('user task is discarded', () => {
-      assertMessage('activity.discard', 'userTask1');
-    });
-
-    And('end event completes', () => {
+    Then('the final branch is taken and end event completes', () => {
+      assertMessage('flow.take', 'toFinal');
       assertMessage('activity.end', 'theEnd');
-    });
-
-    And('flow loop is detected', () => {
-      assertMessage('flow.looped', 'toDecision');
     });
 
     And('process execution is completed', () => {

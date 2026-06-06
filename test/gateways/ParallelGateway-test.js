@@ -106,11 +106,11 @@ describe('ParallelGateway', () => {
         expect(join.outbound[0].counters).to.have.property('discard', 0);
       });
 
-      it('discards outbound when all three branches skip their task (all inbound discarded)', async () => {
+      it('leaves the join untouched when all three branches skip their task (all inbound discarded)', async () => {
         const join = await runWith([false, false, false]);
-        expect(join.counters).to.deep.equal({ taken: 0, discarded: 1 });
+        expect(join.counters).to.deep.equal({ taken: 0, discarded: 0 });
         expect(join.outbound[0].counters).to.have.property('take', 0);
-        expect(join.outbound[0].counters).to.have.property('discard', 1);
+        expect(join.outbound[0].counters).to.have.property('discard', 0);
       });
 
       it('takes outbound when at least one branch takes (one discarded, two taken)', async () => {
@@ -221,14 +221,14 @@ describe('ParallelGateway', () => {
       expect(join1.inbound[0].counters).to.have.property('take', 1);
       expect(join1.inbound[0].counters).to.have.property('discard', 0);
       expect(join1.inbound[1].counters).to.have.property('take', 0);
-      expect(join1.inbound[1].counters).to.have.property('discard', 1);
+      expect(join1.inbound[1].counters).to.have.property('discard', 0);
       expect(join1.outbound[0].counters).to.have.property('take', 1);
       expect(join1.outbound[0].counters).to.have.property('discard', 0);
 
       const join2 = bp.getActivityById('join2');
 
       expect(join2.inbound[0].counters).to.have.property('take', 0);
-      expect(join2.inbound[0].counters).to.have.property('discard', 1);
+      expect(join2.inbound[0].counters).to.have.property('discard', 0);
       expect(join2.inbound[1].counters).to.have.property('take', 1);
       expect(join2.inbound[1].counters).to.have.property('discard', 0);
       expect(join2.outbound[0].counters).to.have.property('take', 1);
@@ -278,7 +278,7 @@ describe('ParallelGateway', () => {
       expect(join.inbound[0].counters).to.have.property('take', 1);
       expect(join.inbound[0].counters).to.have.property('discard', 0);
       expect(join.inbound[1].counters).to.have.property('take', 0);
-      expect(join.inbound[1].counters).to.have.property('discard', 1);
+      expect(join.inbound[1].counters).to.have.property('discard', 0);
       expect(join.outbound[0].counters).to.have.property('take', 1);
       expect(join.outbound[0].counters).to.have.property('discard', 0);
     });

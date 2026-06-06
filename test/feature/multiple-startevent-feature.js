@@ -169,9 +169,9 @@ Feature('Multiple start events', () => {
           });
         });
 
-        Then('first end event is discarded', () => {
+        Then('first end event is not taken', () => {
           const endEvent = definition.getActivityById('end');
-          expect(endEvent.counters).to.deep.equal({ taken: 0, discarded: 1 });
+          expect(endEvent.counters).to.deep.equal({ taken: 0, discarded: 0 });
         });
 
         And('second end event is taken', () => {
@@ -188,9 +188,9 @@ Feature('Multiple start events', () => {
           definition.signal({ id: 'Message_1' });
         });
 
-        Then('first end event is discarded', () => {
+        Then('first end event is not taken', () => {
           const endEvent = definition.getActivityById('end');
-          expect(endEvent.counters).to.deep.equal({ taken: 0, discarded: 2 });
+          expect(endEvent.counters).to.deep.equal({ taken: 0, discarded: 0 });
         });
 
         And('second end event is taken', () => {

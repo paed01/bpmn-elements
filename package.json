@@ -114,7 +114,7 @@
     "globals": "^17.0.0",
     "mocha": "^11.0.1",
     "mocha-cakes-2": "^3.3.0",
-    "moddle-context-serializer": "^5.0.0",
+    "moddle-context-serializer": "^6.0.0",
     "nock": "^14.0.0",
     "prettier": "^3.2.5",
     "texample": "^1.0.1"

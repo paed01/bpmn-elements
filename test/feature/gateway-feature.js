@@ -313,10 +313,10 @@ Feature('Gateway', () => {
       expect(denied.counters).to.have.property('discarded', 0);
     });
 
-    And('script flow was discarded', () => {
+    And('script flow was not taken', () => {
       const accepted = definition.getActivityById('accepted');
       expect(accepted.counters).to.have.property('taken', 0);
-      expect(accepted.counters).to.have.property('discarded', 1);
+      expect(accepted.counters).to.have.property('discarded', 0);
     });
 
     When('definition is ran again', () => {
@@ -332,16 +332,16 @@ Feature('Gateway', () => {
       return end;
     });
 
-    And('default flow was discarded', () => {
+    And('default flow was not taken again', () => {
       const denied = definition.getActivityById('denied');
       expect(denied.counters).to.have.property('taken', 1);
-      expect(denied.counters).to.have.property('discarded', 1);
+      expect(denied.counters).to.have.property('discarded', 0);
     });
 
     And('script flow was taken', () => {
       const accepted = definition.getActivityById('accepted');
       expect(accepted.counters).to.have.property('taken', 1);
-      expect(accepted.counters).to.have.property('discarded', 1);
+      expect(accepted.counters).to.have.property('discarded', 0);
     });
   });
 

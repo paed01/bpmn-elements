@@ -767,13 +767,15 @@ declare module 'bpmn-elements' {
 	/**
 	 * Per-execution registry that lazily upserts activities, flows, and processes from the parsed BPMN definition.
 	 * @param owner Process or sub-process activity that owns this context
+	 * @param peersCache Shared converging parallel gateway peer cache; created at the root and propagated to every clone
 	 */
 		export class ContextInstance {
 		/**
 		 * Per-execution registry that lazily upserts activities, flows, and processes from the parsed BPMN definition.
 		 * @param owner Process or sub-process activity that owns this context
+		 * @param peersCache Shared converging parallel gateway peer cache; created at the root and propagated to every clone
 		 */
-		constructor(definitionContext: import("moddle-context-serializer").SerializableContext, environment: Environment, owner?: Process | Activity);
+		constructor(definitionContext: import("moddle-context-serializer").SerializableContext, environment: Environment, owner?: Process | Activity, peersCache?: Map<string, any>);
 		id: string;
 		name: string;
 		type: string;
@@ -781,6 +783,8 @@ declare module 'bpmn-elements' {
 		sid: string;
 		definitionContext: import("moddle-context-serializer").SerializableContext;
 		environment: Environment;
+		/** Discovered parallel gateway peers, keyed by gateway id, shared with all clones. Runtime-only, not serialized. */
+		peersCache: Map<any, any>;
 		
 		extensionsMapper: IExtensionsMapper;
 		get owner(): Activity | Process | undefined;
@@ -830,6 +834,14 @@ declare module 'bpmn-elements' {
 		 * 
 		 */
 		clone(newEnvironment?: Environment, newOwner?: Process | Activity): ContextInstance;
+		/**
+		 * Cached converging parallel gateway peers discovered by an earlier shake.
+		 * */
+		getShakenPeers(gatewayId: string): Array<[string, string[]]> | undefined;
+		/**
+		 * Store converging parallel gateway peers so subsequent runs can skip the graph shake.
+		 * */
+		setShakenPeers(gatewayId: string, peers: Array<[string, string[]]>): void;
 		/**
 		 * Get or create the process instance for the given id. Each process gets its own cloned environment.
 		 * */

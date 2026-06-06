@@ -20,8 +20,9 @@ export function Context(definitionContext, environment) {
  * @param {import('moddle-context-serializer').SerializableContext} definitionContext
  * @param {import('#types').Environment} environment
  * @param {import('#types').Process | import('#types').Activity} [owner] Process or sub-process activity that owns this context
+ * @param {Map<string, any>} [peersCache] Shared converging parallel gateway peer cache; created at the root and propagated to every clone
  */
-export function ContextInstance(definitionContext, environment, owner) {
+export function ContextInstance(definitionContext, environment, owner, peersCache) {
   const { id = 'Def', name, type = 'context' } = definitionContext;
   this.id = id;
   this.name = name;
@@ -30,6 +31,8 @@ export function ContextInstance(definitionContext, environment, owner) {
   this.sid = getUniqueId(id);
   this.definitionContext = definitionContext;
   this.environment = environment;
+  /** Discovered parallel gateway peers, keyed by gateway id, shared with all clones. Runtime-only, not serialized. */
+  this.peersCache = peersCache || new Map();
   /** @type {import('#types').IExtensionsMapper}  */
   this.extensionsMapper = new ExtensionsMapper(this);
   /** @private */
@@ -184,7 +187,25 @@ ContextInstance.prototype.upsertAssociation = function upsertAssociation(associa
  * @param {import('#types').Process | import('#types').Activity} [newOwner]
  */
 ContextInstance.prototype.clone = function clone(newEnvironment, newOwner) {
-  return new ContextInstance(this.definitionContext, newEnvironment || this.environment, newOwner);
+  return new ContextInstance(this.definitionContext, newEnvironment || this.environment, newOwner, this.peersCache);
+};
+
+/**
+ * Cached converging parallel gateway peers discovered by an earlier shake.
+ * @param {string} gatewayId
+ * @returns {Array<[string, string[]]> | undefined}
+ */
+ContextInstance.prototype.getShakenPeers = function getShakenPeers(gatewayId) {
+  return this.peersCache.get(gatewayId);
+};
+
+/**
+ * Store converging parallel gateway peers so subsequent runs can skip the graph shake.
+ * @param {string} gatewayId
+ * @param {Array<[string, string[]]>} peers
+ */
+ContextInstance.prototype.setShakenPeers = function setShakenPeers(gatewayId, peers) {
+  this.peersCache.set(gatewayId, peers);
 };
 
 /**

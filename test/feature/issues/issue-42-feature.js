@@ -33,8 +33,8 @@ Feature('Issue 42 - discard loops due to multiple outbound flows to same target'
       return end;
     });
 
-    And('target activity is discarded twice due to loop back flow', () => {
-      expect(definition.getActivityById('task2').counters).to.deep.equal({ taken: 0, discarded: 2 });
+    And('target activity is neither taken nor discarded', () => {
+      expect(definition.getActivityById('task2').counters).to.deep.equal({ taken: 0, discarded: 0 });
     });
   });
 
@@ -54,7 +54,7 @@ Feature('Issue 42 - discard loops due to multiple outbound flows to same target'
     let task;
     And('target activity is taken once', () => {
       task = definition.getActivityById('task2');
-      expect(task.counters).to.deep.equal({ taken: 1, discarded: 1 });
+      expect(task.counters).to.deep.equal({ taken: 1, discarded: 0 });
     });
 
     And('sequence flow 1 is taken', () => {
@@ -74,11 +74,11 @@ Feature('Issue 42 - discard loops due to multiple outbound flows to same target'
     });
 
     And('target activity is taken once', () => {
-      expect(task.counters).to.deep.equal({ taken: 2, discarded: 2 });
+      expect(task.counters).to.deep.equal({ taken: 2, discarded: 0 });
     });
 
     And('sequence flow 2 is taken', () => {
-      expect(task.inbound.find((f) => f.id === 'to-task2-2').counters).to.deep.equal({ take: 1, discard: 2, looped: 0 });
+      expect(task.inbound.find((f) => f.id === 'to-task2-2').counters).to.deep.equal({ take: 1, discard: 0, looped: 0 });
     });
   });
 
@@ -96,7 +96,7 @@ Feature('Issue 42 - discard loops due to multiple outbound flows to same target'
     });
 
     And('target activity is taken once', () => {
-      expect(definition.getActivityById('task2').counters).to.deep.equal({ taken: 1, discarded: 1 });
+      expect(definition.getActivityById('task2').counters).to.deep.equal({ taken: 1, discarded: 0 });
     });
   });
 
