@@ -102,7 +102,7 @@ OutboundEvaluator.prototype.completed = function completed(err) {
   } = this.evaluateArgs;
   this.broker.cancel(`_flow-evaluation-${evaluationId}`);
   if (err) return callback(err);
-  if (!takenCount && this.outboundFlows.length) {
+  if (!takenCount && this.outboundFlows.length && fromMessage.content.requireOutbound) {
     const nonTakenError = new _Errors.ActivityError(`<${this.activity.id}> no conditional flow taken`, fromMessage);
     return callback(nonTakenError);
   }

@@ -35,3 +35,37 @@ Sequence flows:
 - `to-task3`: unconditional. Flow is taken
 - `to-task4`: script condition. Callback (next) is called with environment variable as result. If result is truthy the flow is taken, otherwise discarded
 - `to-task5`: expression condition. Expression will be evaluated and passed as result. If result is truthy the flow is taken, otherwise discarded
+
+## Service function conditions
+
+An expression condition can resolve to a service function instead of a plain value. The function then produces the take/discard result, which makes per-flow state and asynchronous conditions possible. There are two forms, and they receive **different** arguments:
+
+- `${environment.services.takeOnce}` (no call) — the expression resolves to the function itself and the sequence flow invokes it with the flow [execution scope](/docs/ExecutionScope.md) as the first argument (and as `this`). The scope exposes the flow `id`, the source activity `content`, and the `environment`. Return a value synchronously, or declare a second `callback` parameter to resolve asynchronously:
+
+  ```js
+  // synchronous — return the result
+  function takeOnce(scope) {
+    const taken = (scope.environment.variables.takenFlows ??= new Set());
+    if (taken.has(scope.id)) return false; // scope.id is the sequence flow id
+    taken.add(scope.id);
+    return true;
+  }
+
+  // asynchronous — resolve through the callback
+  function isAllowed(scope, callback) {
+    checkRemotely(scope.content, (err, ok) => callback(err, ok));
+  }
+  ```
+
+- `${environment.services.takeFlow(content.id)}` (called) — the expression calls the function and the flow uses the returned value. Arguments are resolved by the [expression handler](/docs/Expression.md); note that **empty** parentheses `takeFlow()` pass the resolution context `{ environment, ...message }` as the single argument (not zero arguments).
+
+> The flow id is only reachable through the no-call form, via `scope.id`. The called form receives the **source activity** in `content` (`content.id` is the activity, not the flow).
+
+## When no conditional flow is taken
+
+If every conditional outbound flow evaluates to falsy, the behaviour depends on the element:
+
+- a diverging **exclusive or inclusive gateway** takes its `default` flow when declared, otherwise it raises an `<id> no conditional flow taken` error — these gateways require exactly one (exclusive) or at least one (inclusive) outbound to be taken;
+- any **other activity** (task, event, …) simply discards its outbound — the branch ends, no error is raised.
+
+> With the default `skipDiscard` setting the discards are not published, so the outbound flow `discard` counters stay at `0`. Set `skipDiscard` to `false` to observe the discards.

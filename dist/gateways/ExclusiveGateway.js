@@ -39,6 +39,7 @@ ExclusiveGatewayBehaviour.prototype.execute = function execute({
   content
 }) {
   this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
-    outboundTakeOne: true
+    outboundTakeOne: true,
+    requireOutbound: true
   }));
 };

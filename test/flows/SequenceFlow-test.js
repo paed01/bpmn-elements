@@ -202,6 +202,138 @@ describe('SequenceFlow', () => {
       expect(activity.outbound[1].counters).to.have.property('take', 0);
     });
 
+    it('calls a service expression that resolves to a function with the flow as scope', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="theStart" />
+          <inclusiveGateway id="decision" default="flow2" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+          <endEvent id="end3" />
+          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
+          <sequenceFlow id="flow2" sourceRef="decision" targetRef="end1" />
+          <sequenceFlow id="flow3" sourceRef="decision" targetRef="end2">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.services.cond}</conditionExpression>
+          </sequenceFlow>
+          <sequenceFlow id="flow4" sourceRef="decision" targetRef="end3">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.services.cond}</conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const ctx = await testHelpers.context(source);
+      const scopes = [];
+      ctx.environment.addService('cond', function cond(scope) {
+        scopes.push(scope.id);
+        return scope.id === 'flow3';
+      });
+
+      const activity = ctx.getActivityById('decision');
+      activity.run();
+
+      expect(scopes, 'function called once per conditional flow with the flow id').to.have.members(['flow3', 'flow4']);
+
+      expect(activity.outbound.find((f) => f.id === 'flow3').counters).to.deep.include({ take: 1, discard: 0 });
+      expect(activity.outbound.find((f) => f.id === 'flow4').counters).to.deep.include({ take: 0 });
+    });
+
+    it('resolves an asynchronous function-valued service expression via its callback', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="theStart" />
+          <inclusiveGateway id="decision" default="flow2" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
+          <sequenceFlow id="flow2" sourceRef="decision" targetRef="end1" />
+          <sequenceFlow id="flow3" sourceRef="decision" targetRef="end2">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.services.cond}</conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const ctx = await testHelpers.context(source);
+      ctx.environment.addService('cond', function cond(scope, next) {
+        process.nextTick(next, null, scope.id === 'flow3');
+      });
+
+      const activity = ctx.getActivityById('decision');
+      const left = activity.waitFor('leave');
+      activity.run();
+      await left;
+
+      expect(activity.outbound.find((f) => f.id === 'flow3').counters).to.deep.include({ take: 1, discard: 0 });
+    });
+
+    it('does not error a non-gateway activity when every outbound condition is falsy', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="theStart" />
+          <task id="task" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="task" />
+          <sequenceFlow id="flow2" sourceRef="task" targetRef="end1">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.never}</conditionExpression>
+          </sequenceFlow>
+          <sequenceFlow id="flow3" sourceRef="task" targetRef="end2">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.never}</conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const ctx = await testHelpers.context(source);
+
+      const activity = ctx.getActivityById('task');
+      const errors = [];
+      activity.broker.subscribeTmp('event', 'activity.error', (_, msg) => errors.push(msg), { noAck: true });
+
+      const leave = activity.waitFor('leave');
+      activity.run();
+      await leave;
+
+      expect(errors, 'unlike a gateway, no error is raised').to.have.length(0);
+      expect(activity.counters, 'activity is taken').to.include({ taken: 1 });
+      expect(activity.outbound.find((f) => f.id === 'flow2').counters).to.include({ take: 0 });
+      expect(activity.outbound.find((f) => f.id === 'flow3').counters).to.include({ take: 0 });
+    });
+
+    it('discards the outbound of a non-gateway activity with falsy conditions when skipDiscard is off', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="theStart" />
+          <task id="task" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="task" />
+          <sequenceFlow id="flow2" sourceRef="task" targetRef="end1">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.never}</conditionExpression>
+          </sequenceFlow>
+          <sequenceFlow id="flow3" sourceRef="task" targetRef="end2">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.never}</conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const ctx = await testHelpers.context(source, { settings: { skipDiscard: false } });
+
+      const activity = ctx.getActivityById('task');
+      const leave = activity.waitFor('leave');
+      activity.run();
+      await leave;
+
+      expect(activity.outbound.find((f) => f.id === 'flow2').counters).to.include({ take: 0, discard: 1 });
+      expect(activity.outbound.find((f) => f.id === 'flow3').counters).to.include({ take: 0, discard: 1 });
+    });
+
     it('can handle external resource condition with custom script handler', async () => {
       const source = `
       <?xml version="1.0" encoding="UTF-8"?>

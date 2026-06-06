@@ -55,6 +55,13 @@ ExpressionCondition.prototype.execute = function execute(message, callback) {
   const owner = this._owner;
   try {
     const result = owner.environment.resolveExpression(this.expression, message);
+    if (typeof result === 'function') {
+      const scope = (0, _ExecutionScope.ExecutionScope)(owner, message);
+      if (callback && result.length > 1) return result.call(owner, scope, callback);
+      const conditionResult = result.call(owner, scope);
+      if (callback) return callback(null, conditionResult);
+      return conditionResult;
+    }
     if (callback) return callback(null, result);
     return result;
   } catch (err) {

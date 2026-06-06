@@ -10,6 +10,7 @@ Refactor parallel converging and forking gateways.
 - shake sequence has changed
 - IntermediateCatchEvent cannot be used as a starting element, or it can but will not be started by default
 - `Definition` must be called with `new`
+- non-gateway activities discard their outbound when all conditional flows are falsy instead of throwing; only exclusive and inclusive gateways still require a taken or default flow
 
 ### Additions
 
@@ -18,6 +19,7 @@ Refactor parallel converging and forking gateways.
 - new activity event `activity.converge` published when parallel gateway is executed
 - fix link event definition shaking
 - fix `Activity.recover()` to return the activity when called without state
+- a condition expression resolving to a service function is now invoked with the flow execution scope, supporting sync (return) and async (callback) results
 
 ### Types
 

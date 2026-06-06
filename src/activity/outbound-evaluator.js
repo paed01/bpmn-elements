@@ -99,7 +99,7 @@ OutboundEvaluator.prototype.completed = function completed(err) {
 
   if (err) return callback(err);
 
-  if (!takenCount && this.outboundFlows.length) {
+  if (!takenCount && this.outboundFlows.length && fromMessage.content.requireOutbound) {
     const nonTakenError = new ActivityError(`<${this.activity.id}> no conditional flow taken`, fromMessage);
     return callback(nonTakenError);
   }

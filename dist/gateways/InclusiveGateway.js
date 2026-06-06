@@ -38,5 +38,7 @@ function InclusiveGatewayBehaviour(activity) {
 InclusiveGatewayBehaviour.prototype.execute = function execute({
   content
 }) {
-  this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content));
+  this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
+    requireOutbound: true
+  }));
 };

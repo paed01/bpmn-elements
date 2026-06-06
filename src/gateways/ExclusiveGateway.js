@@ -26,5 +26,5 @@ export function ExclusiveGatewayBehaviour(activity) {
  * @returns {void}
  */
 ExclusiveGatewayBehaviour.prototype.execute = function execute({ content }) {
-  this.broker.publish('execution', 'execute.completed', cloneContent(content, { outboundTakeOne: true }));
+  this.broker.publish('execution', 'execute.completed', cloneContent(content, { outboundTakeOne: true, requireOutbound: true }));
 };
