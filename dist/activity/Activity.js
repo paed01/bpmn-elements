@@ -630,17 +630,25 @@ Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
     persistent: false,
     type: 'shake'
   });
-  if (this[K_FLAGS].isThrowing && this[K_FLAGS].linkNames?.length) {
-    for (const linkName of this[K_FLAGS].linkNames) {
-      this.broker.publish('event', 'activity.shake.link', (0, _messageHelper.cloneContent)(message.content, {
+  const flags = this[K_FLAGS];
+  if (flags.isThrowing && flags.linkNames?.length) {
+    for (const target of this.context.getActivitiesByEventDefinitionBehaviour(flags.linkBehaviour, flags.linkNames)) {
+      if (target.id === this.id || !target.isCatching) continue;
+      const linkedContent = (0, _messageHelper.cloneContent)(message.content, {
         sourceId: this.id,
-        message: {
-          id: linkName,
-          linkName,
-          referenceType: 'link'
-        }
-      }), {
+        targetId: target.id,
+        isLinked: true
+      });
+      linkedContent.sequence = linkedContent.sequence.concat({
+        id: target.id,
+        type: target.type
+      });
+      target.broker.publish('event', 'activity.shake.linked', linkedContent, {
+        persistent: false,
         type: 'shake'
+      });
+      for (const flow of target.outbound) flow.shake({
+        content: (0, _messageHelper.cloneContent)(linkedContent)
       });
     }
   }
@@ -751,31 +759,6 @@ Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message
           }
         }), properties);
         return;
-      }
-    case 'activity.shake.link':
-      {
-        const linkName = content.message?.linkName;
-        if (!this[K_FLAGS].linkNames?.includes(linkName)) break;
-        const linkedContent = (0, _messageHelper.cloneContent)(content, {
-          targetId: this.id,
-          isLinked: true
-        });
-        linkedContent.sequence = linkedContent.sequence || [];
-        linkedContent.sequence.push({
-          id: this.id,
-          type: this.type
-        });
-        this.broker.publish('event', 'activity.shake.linked', linkedContent, {
-          persistent: false,
-          type: 'shake'
-        });
-        const outbound = this.outbound;
-        if (outbound?.length) {
-          for (const flow of outbound) flow.shake({
-            content: (0, _messageHelper.cloneContent)(linkedContent)
-          });
-        }
-        break;
       }
     case 'association.take':
     case 'flow.take':

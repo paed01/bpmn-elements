@@ -6,7 +6,7 @@ const STATE_MONTITORING = 'monitoring';
 const STATE_SETUP = 'setup';
 
 const K_PEERS = Symbol.for('peers');
-const K_INBOUND_SOURCE_IDS = Symbol.for('inbound peers');
+const K_PEERS_DISCOVERED = Symbol.for('peers discovered');
 
 /**
  * Parallel gateway
@@ -44,6 +44,8 @@ export function ParallelGateway(activityDef, context) {
     }
 
     activity.logger.debug(`<${activity.id}> collected parallel gateway peers`);
+
+    activity[K_PEERS_DISCOVERED] = true;
 
     activity.shake(message);
   }
@@ -100,7 +102,7 @@ ParallelGatewayBehaviour.prototype.setup = function setup(executeMessage) {
   const peerIds = new Set([...this.activity[K_PEERS].values()].map((v) => [...v]).flat());
   this[K_TARGETS] = new Map([...peerIds].map((pid) => [pid, this.activity.getActivityById(pid)]));
 
-  this.peerMonitor = new PeerMonitor(this.activity, this.activity[K_INBOUND_SOURCE_IDS], this[K_TARGETS]);
+  this.peerMonitor = new PeerMonitor(this.activity, this[K_TARGETS]);
 
   const message = (this[K_EXECUTE_MESSAGE] = cloneMessage(executeMessage));
   const executeContent = message.content;
@@ -185,7 +187,7 @@ ParallelGatewayBehaviour.prototype._stop = function stop() {
   this.peerMonitor.stop();
 };
 
-function PeerMonitor(activity, peers, targets) {
+function PeerMonitor(activity, targets) {
   this.activity = activity;
   this.id = activity.id;
   this.broker = activity.broker;
@@ -194,7 +196,6 @@ function PeerMonitor(activity, peers, targets) {
   this.discarded = 0;
   this.running = new Map();
   this.watching = new Map();
-  this.peers = peers;
   this.targets = targets;
   this.touched = new Set();
   this.inbound = [];

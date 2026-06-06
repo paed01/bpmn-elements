@@ -3,6 +3,7 @@ import testHelpers from '../../helpers/testHelpers.js';
 import factory from '../../helpers/factory.js';
 
 const source = factory.resource('issue-42-same-target-sequence-flows.bpmn');
+const originalSource = factory.resource('issue-42-original.bpmn');
 
 Feature('Issue 42 - discard loops due to multiple outbound flows to same target', () => {
   function takeFlow(index, vars) {
@@ -98,11 +99,7 @@ Feature('Issue 42 - discard loops due to multiple outbound flows to same target'
       expect(definition.getActivityById('task2').counters).to.deep.equal({ taken: 1, discarded: 1 });
     });
   });
-});
 
-const originalSource = factory.resource('issue-42-original.bpmn');
-
-Feature('Issue 42 - reconstructed diagram with takeOnce conditional flows', () => {
   /**
    * Take each conditional sequence flow at most once per run.
    * The condition expression resolves to this function, so it is called with the
@@ -120,33 +117,34 @@ Feature('Issue 42 - reconstructed diagram with takeOnce conditional flows', () =
     ['synchronous', (scope, next) => next()],
     ['asynchronous', (scope, next) => process.nextTick(next)],
   ].forEach(([kind, serviceTask]) => {
-    Scenario(`every task completes with a ${kind} service task implementation`, () => {
-      let context, definition;
-      Given('a definition where conditional flows resolve to the takeOnce service function', async () => {
-        context = await testHelpers.context(originalSource);
-        definition = new Definition(context, { services: { takeOnce, serviceTask } });
-      });
+    [true, false].forEach((skipDiscard) => {
+      Scenario(`every task completes with a ${kind} service task implementation and skipDiscard ${skipDiscard}`, () => {
+        Given('a definition where conditional flows resolve to the takeOnce service function', async () => {
+          context = await testHelpers.context(originalSource);
+          definition = new Definition(context, { settings: { skipDiscard }, services: { takeOnce, serviceTask } });
+        });
 
-      let left;
-      When('definition is ran', () => {
-        left = definition.waitFor('leave');
-        definition.run();
-      });
+        let left;
+        When('definition is ran', () => {
+          left = definition.waitFor('leave');
+          definition.run();
+        });
 
-      Then('it completes without error', () => {
-        return left;
-      });
+        Then('it completes without error', () => {
+          return left;
+        });
 
-      And('all twenty service tasks completed at least once', () => {
-        for (let n = 1; n <= 20; n++) {
-          expect(definition.getActivityById(`task${n}`).counters, `task${n}`)
-            .to.have.property('taken')
-            .above(0);
-        }
-      });
+        And('all twenty service tasks completed at least once', () => {
+          for (let n = 1; n <= 20; n++) {
+            expect(definition.getActivityById(`task${n}`).counters, `task${n}`)
+              .to.have.property('taken')
+              .above(0);
+          }
+        });
 
-      And('the end event was reached', () => {
-        expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
+        And('the end event was reached', () => {
+          expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
+        });
       });
     });
   });

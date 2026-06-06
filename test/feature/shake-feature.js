@@ -696,6 +696,68 @@ Feature('Shaking', () => {
     });
   });
 
+  Scenario('a converging parallel gateway discovers its peers once and reuses them', () => {
+    let definition;
+    Given('a process with a parallel fork and join', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-fork" sourceRef="start" targetRef="fork" />
+          <parallelGateway id="fork" />
+          <sequenceFlow id="to-t1" sourceRef="fork" targetRef="t1" />
+          <sequenceFlow id="to-t2" sourceRef="fork" targetRef="t2" />
+          <task id="t1" />
+          <task id="t2" />
+          <sequenceFlow id="from-t1" sourceRef="t1" targetRef="join" />
+          <sequenceFlow id="from-t2" sourceRef="t2" targetRef="join" />
+          <parallelGateway id="join" />
+          <sequenceFlow id="to-end" sourceRef="join" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+      definition = new Definition(await testHelpers.context(source));
+    });
+
+    let shakes;
+    function countShakes() {
+      shakes = 0;
+      definition.broker.subscribeTmp('event', 'activity.shake.end', () => (shakes += 1), { noAck: true, consumerTag: '_test-shakes' });
+    }
+
+    When('definition is ran the first time', async () => {
+      countShakes();
+      const left = definition.waitFor('leave');
+      definition.run();
+      await left;
+      definition.broker.cancel('_test-shakes');
+    });
+
+    Then('the converging gateway discovered its peers by shaking', () => {
+      expect(shakes, 'shake on first run').to.be.above(0);
+    });
+
+    And('the parallel join completed', () => {
+      expect(definition.getActivityById('join').counters).to.have.property('taken', 1);
+    });
+
+    When('the same definition is ran again', async () => {
+      countShakes();
+      const left = definition.waitFor('leave');
+      definition.run();
+      await left;
+      definition.broker.cancel('_test-shakes');
+    });
+
+    Then('the cached peers are reused without shaking again', () => {
+      expect(shakes, 'no shake on second run').to.equal(0);
+    });
+
+    And('the parallel join completed again', () => {
+      expect(definition.getActivityById('join').counters).to.have.property('taken', 2);
+    });
+  });
+
   // [
   //   'join-paradox-1.bpmn',
   //   'join-paradox-2.bpmn',

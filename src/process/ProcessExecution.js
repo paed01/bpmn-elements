@@ -8,6 +8,7 @@ const K_ACTIVITY_Q = Symbol.for('activityQ');
 const K_ELEMENTS = Symbol.for('elements');
 const K_PARENT = Symbol.for('parent');
 const K_TRACKER = Symbol.for('activity tracker');
+const K_PEERS_DISCOVERED = Symbol.for('peers discovered');
 
 /**
  * Drives the execution of a single process or sub-process: activates children, routes activity
@@ -133,14 +134,8 @@ ProcessExecution.prototype.resume = function resume() {
 
   this._activate();
 
-  const { startActivities, postponed, detachedActivities, convergingGateways } = this[K_ELEMENTS];
-  if (startActivities.size > 1 || convergingGateways.size) {
-    const result = this._shakeElements();
-    const skipDiscard = (this.environment.settings.skipDiscard = result.settings.skipDiscard);
-    this._debug(
-      !skipDiscard ? `forced shake, disabling skipDiscard due to converging gateways (${convergingGateways.size})` : 'forced shake'
-    );
-  }
+  const { postponed, detachedActivities } = this[K_ELEMENTS];
+  this._shakeOnStart();
 
   postponed.clear();
   detachedActivities.clear();
@@ -394,14 +389,8 @@ ProcessExecution.prototype._start = function start() {
 
   this.broker.publish(this._exchangeName, 'execute.start', cloneContent(executeContent));
 
-  const { startActivities, postponed, detachedActivities, convergingGateways } = this[K_ELEMENTS];
-  if (startActivities.size > 1 || convergingGateways.size) {
-    const result = this._shakeElements();
-    const skipDiscard = (this.environment.settings.skipDiscard = result.settings.skipDiscard);
-    this._debug(
-      !skipDiscard ? `forced shake, disabling skipDiscard due to converging gateways (${convergingGateways.size})` : 'forced shake'
-    );
-  }
+  const { startActivities, postponed, detachedActivities } = this[K_ELEMENTS];
+  this._shakeOnStart();
 
   for (const a of startActivities) a.init();
   this[K_STATUS] = 'executing';
@@ -525,6 +514,42 @@ ProcessExecution.prototype._deactivate = function deactivate() {
   this[K_ACTIVATED] = false;
 };
 
+/**
+ * Shake on start/resume when there are converging gateways or multiple start activities.
+ * Reuses already discovered parallel gateway peers to skip the graph shake on repeated runs.
+ * @internal
+ */
+ProcessExecution.prototype._shakeOnStart = function shakeOnStart() {
+  const { startActivities, convergingGateways } = this[K_ELEMENTS];
+
+  if (startActivities.size <= 1 && this._peersDiscovered()) {
+    this.environment.settings.skipDiscard = false;
+    this._debug(`reuse discovered parallel gateway peers (${convergingGateways.size}), disabling skipDiscard`);
+    return;
+  }
+
+  if (startActivities.size <= 1 && !convergingGateways.size) return;
+
+  const skipDiscard = (this.environment.settings.skipDiscard = this._shakeElements().settings.skipDiscard);
+  this._debug(
+    !skipDiscard ? `forced shake, disabling skipDiscard due to converging gateways (${convergingGateways.size})` : 'forced shake'
+  );
+};
+
+/**
+ * Whether every converging parallel gateway has discovered its peers in this runtime instance.
+ * Peers are a runtime cache and absent after recover, so a changed source is reshaken.
+ * @internal
+ */
+ProcessExecution.prototype._peersDiscovered = function peersDiscovered() {
+  const convergingGateways = this[K_ELEMENTS].convergingGateways;
+  if (!convergingGateways.size) return false;
+  for (const gateway of convergingGateways) {
+    if (!gateway[K_PEERS_DISCOVERED]) return false;
+  }
+  return true;
+};
+
 /** @internal */
 ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
   let executing = true;
@@ -553,13 +578,6 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
       if (content.parent.id !== this.id) return;
 
       switch (routingKey) {
-        case 'activity.shake.link': {
-          for (const a of this[K_ELEMENTS].triggeredByEvent) {
-            if (!a.isCatching) continue;
-            a.broker.publish('api', routingKey, cloneContent(content), { type: 'shake' });
-          }
-          break;
-        }
         case 'activity.shake.join': {
           const join = convergingGateways.get(content.join);
           if (!join) {

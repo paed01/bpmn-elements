@@ -529,6 +529,60 @@ Feature('Linking', () => {
         });
       });
 
+      Scenario('a parallel join waits for a peer reached through a link', () => {
+        let definition;
+        Given('a fork where one branch reaches the join directly and the other via a waiting task and a link', async () => {
+          const source = `
+          <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+            <process id="theProcess" isExecutable="true">
+              <startEvent id="start" />
+              <sequenceFlow id="to-fork" sourceRef="start" targetRef="fork" />
+              <parallelGateway id="fork" />
+              <sequenceFlow id="to-direct" sourceRef="fork" targetRef="direct" />
+              <sequenceFlow id="to-waiting" sourceRef="fork" targetRef="waiting" />
+              <task id="direct" />
+              <userTask id="waiting" />
+              <sequenceFlow id="direct-to-join" sourceRef="direct" targetRef="join" />
+              <sequenceFlow id="waiting-to-throw" sourceRef="waiting" targetRef="throw" />
+              <intermediateThrowEvent id="throw"><linkEventDefinition name="LINKA" /></intermediateThrowEvent>
+              <intermediateCatchEvent id="catch"><linkEventDefinition name="LINKA" /></intermediateCatchEvent>
+              <sequenceFlow id="catch-to-join" sourceRef="catch" targetRef="join" />
+              <parallelGateway id="join" />
+              <sequenceFlow id="to-end" sourceRef="join" targetRef="end" />
+              <endEvent id="end" />
+            </process>
+          </definitions>`;
+          definition = new Definition(await testHelpers.context(source), { settings: { skipDiscard } });
+        });
+
+        let end;
+        When('definition is ran', () => {
+          end = definition.waitFor('end');
+          definition.run();
+        });
+
+        Then('the join discovered the link-fed peer and is not taken until it arrives', () => {
+          expect(definition.getActivityById('join').counters).to.have.property('taken', 0);
+          expect(definition.getPostponed().some((a) => a.id === 'waiting')).to.be.true;
+        });
+
+        When('the waiting task on the link branch is signalled', () => {
+          definition.signal({ id: 'waiting' });
+        });
+
+        Then('run completes', () => {
+          return end;
+        });
+
+        And('the join was taken exactly once', () => {
+          expect(definition.getActivityById('join').counters).to.have.property('taken', 1);
+        });
+
+        And('end was taken once', () => {
+          expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
+        });
+      });
+
       Scenario('a flow with link event to bypass logic', () => {
         let context, definition;
         Given('a flow with link event definition to bypass major part of logic', async () => {

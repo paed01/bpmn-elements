@@ -20,6 +20,7 @@ Refactor parallel converging and forking gateways.
 - fix link event definition shaking
 - fix `Activity.recover()` to return the activity when called without state
 - a condition expression resolving to a service function is now invoked with the flow execution scope, supporting sync (return) and async (callback) results
+- converging parallel gateways cache their discovered peers per runtime instance, skipping the start-up shake on repeated runs (loops, stop/resume); the cache is rebuilt on recover
 
 ### Types
 

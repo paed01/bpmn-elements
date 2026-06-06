@@ -269,6 +269,31 @@ describe('SequenceFlow', () => {
       expect(activity.outbound.find((f) => f.id === 'flow3').counters).to.deep.include({ take: 1, discard: 0 });
     });
 
+    it('returns the function result synchronously when the condition is executed without a callback', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="theStart" />
+          <task id="task" />
+          <endEvent id="end" />
+          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="task" />
+          <sequenceFlow id="flow2" sourceRef="task" targetRef="end">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.services.cond}</conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const ctx = await testHelpers.context(source);
+      ctx.environment.addService('cond', (scope) => scope.id === 'flow2');
+
+      const flow = ctx.getActivityById('task').outbound.find((f) => f.id === 'flow2');
+      const condition = flow.getCondition();
+      const result = condition.execute({ fields: {}, content: { id: 'task' }, properties: {} });
+
+      expect(result).to.be.true;
+    });
+
     it('does not error a non-gateway activity when every outbound condition is falsy', async () => {
       const source = `
       <?xml version="1.0" encoding="UTF-8"?>

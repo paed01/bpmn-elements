@@ -2101,7 +2101,7 @@ declare module 'bpmn-elements' {
 		peerMonitor: PeerMonitor | undefined;
 	}
 		class PeerMonitor {
-		constructor(activity: any, peers: any, targets: any);
+		constructor(activity: any, targets: any);
 		activity: any;
 		id: any;
 		broker: any;
@@ -2109,7 +2109,6 @@ declare module 'bpmn-elements' {
 		index: number;
 		discarded: number;
 		watching: Map<any, any>;
-		peers: any;
 		targets: any;
 		touched: Set<any>;
 		inbound: any[];
