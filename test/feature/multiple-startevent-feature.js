@@ -145,7 +145,9 @@ Feature('Multiple start events', () => {
           });
         });
 
+        let leave;
         When('process is ran', () => {
+          leave = definition.waitFor('leave');
           definition.run();
         });
 
@@ -153,56 +155,35 @@ Feature('Multiple start events', () => {
           definition.signal();
         });
 
-        Then('parallel join is pending', () => {
-          const join = definition.getActivityById('join');
-          expect(join.counters).to.deep.equal({ taken: 0, discarded: 0 });
+        Then('the second start event is discarded as an alternative entry point', () => {
+          expect(definition.getActivityById('start2').counters).to.include({ taken: 0, discarded: 1 });
         });
 
-        When('second start event is signaled', () => {
-          definition.signal({ id: 'Message_1' });
+        And('the parallel join fires once with the single token', () => {
+          expect(definition.getActivityById('join').counters).to.include({ taken: 1 });
         });
 
-        Then('process is completed', () => {
-          expect(definition.counters).to.deep.equal({
-            completed: 1,
-            discarded: 0,
-          });
+        And('the default end event is taken and the process is completed', async () => {
+          await leave;
+          expect(definition.getActivityById('end').counters).to.include({ taken: 1 });
+          expect(definition.getActivityById('named-end').counters).to.include({ taken: 0 });
+          expect(definition.counters).to.include({ completed: 1 });
         });
 
-        Then('first end event is not taken', () => {
-          const endEvent = definition.getActivityById('end');
-          expect(endEvent.counters).to.deep.equal({ taken: 0, discarded: 0 });
-        });
-
-        And('second end event is taken', () => {
-          const endEvent = definition.getActivityById('named-end');
-          expect(endEvent.counters).to.deep.equal({ taken: 1, discarded: 0 });
-        });
-
-        When('process is ran again', () => {
+        When('process is ran again and the second start event is signaled first', () => {
+          leave = definition.waitFor('leave');
           definition.run();
-        });
-
-        And('start events are signaled', () => {
-          definition.signal();
           definition.signal({ id: 'Message_1' });
         });
 
-        Then('first end event is not taken', () => {
-          const endEvent = definition.getActivityById('end');
-          expect(endEvent.counters).to.deep.equal({ taken: 0, discarded: 0 });
+        Then('the first start event is now discarded as the alternative', () => {
+          expect(definition.getActivityById('start1').counters).to.include({ discarded: 1 });
         });
 
-        And('second end event is taken', () => {
-          const endEvent = definition.getActivityById('named-end');
-          expect(endEvent.counters).to.deep.equal({ taken: 2, discarded: 0 });
-        });
-
-        And('process is completed', () => {
-          expect(definition.counters).to.deep.equal({
-            completed: 2,
-            discarded: 0,
-          });
+        And('the named end event is taken and the process is completed', async () => {
+          await leave;
+          expect(definition.getActivityById('named-end').counters).to.include({ taken: 1 });
+          expect(definition.counters).to.include({ completed: 2 });
         });
       });
 
@@ -253,57 +234,315 @@ Feature('Multiple start events', () => {
           definition.run();
         });
 
-        And('both start events are signaled', () => {
+        And('the first start event is signaled', () => {
           definition.signal();
-          definition.signal({ id: 'Signal2' });
         });
 
-        Then('process is completed', async () => {
+        Then('the second start event is discarded as an alternative entry point', () => {
+          expect(definition.getActivityById('start2').counters).to.include({ taken: 0, discarded: 1 });
+        });
+
+        And('the joining task was taken once', () => {
+          expect(definition.getActivityById('task').counters).to.include({ taken: 1 });
+        });
+
+        And('the fork fired once and both end events were taken once, completing the process', async () => {
           await leave;
-          expect(definition.counters).to.deep.equal({
-            completed: 1,
-            discarded: 0,
-          });
+          expect(definition.getActivityById('fork').counters).to.include({ taken: 1 });
+          expect(definition.getActivityById('end1').counters).to.include({ taken: 1 });
+          expect(definition.getActivityById('end2').counters).to.include({ taken: 1 });
+          expect(definition.counters).to.include({ completed: 1 });
         });
 
-        And('joining task was taken twice', () => {
-          const task = definition.getActivityById('task');
-          expect(task.counters).to.deep.equal({ taken: 2, discarded: 0 });
-        });
-
-        And('fork was aggregated to a single firing via peer monitoring', () => {
-          const fork = definition.getActivityById('fork');
-          expect(fork.counters).to.deep.equal({ taken: 1, discarded: 0 });
-        });
-
-        And('both end events were taken once', () => {
-          expect(definition.getActivityById('end1').counters).to.deep.equal({ taken: 1, discarded: 0 });
-          expect(definition.getActivityById('end2').counters).to.deep.equal({ taken: 1, discarded: 0 });
-        });
-
-        When('process is ran again', () => {
+        When('process is ran again and the second start event is signaled', () => {
           leave = definition.waitFor('leave');
           definition.run();
-        });
-
-        And('both start events are signaled in the reverse order', () => {
           definition.signal({ id: 'Signal2' });
-          definition.signal();
         });
 
-        Then('process is completed', async () => {
+        Then('the first start event is now discarded as the alternative', () => {
+          expect(definition.getActivityById('start1').counters).to.include({ discarded: 1 });
+        });
+
+        And('the process is completed and the task was taken once more', async () => {
           await leave;
-          expect(definition.counters).to.deep.equal({
-            completed: 2,
-            discarded: 0,
-          });
-        });
-
-        And('fork was aggregated to a single firing per run', () => {
-          const fork = definition.getActivityById('fork');
-          expect(fork.counters).to.deep.equal({ taken: 2, discarded: 0 });
+          expect(definition.getActivityById('task').counters).to.include({ taken: 2 });
+          expect(definition.getActivityById('fork').counters).to.include({ taken: 2 });
+          expect(definition.counters).to.include({ completed: 2 });
         });
       });
+    });
+  });
+
+  const startAndReceiveSource = `<?xml version="1.0" encoding="UTF-8"?>
+    <definitions id="def" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" targetNamespace="http://bpmn.io/schema/bpmn">
+      <process id="start-and-receive" isExecutable="true">
+        <startEvent id="start1">
+          <signalEventDefinition signalRef="Signal1" />
+        </startEvent>
+        <startEvent id="start2">
+          <signalEventDefinition signalRef="Signal2" />
+        </startEvent>
+        <receiveTask id="receive" messageRef="Message1" />
+        <sequenceFlow id="from-start1" sourceRef="start1" targetRef="end1" />
+        <sequenceFlow id="from-start2" sourceRef="start2" targetRef="end2" />
+        <sequenceFlow id="from-receive" sourceRef="receive" targetRef="end3" />
+        <endEvent id="end1" />
+        <endEvent id="end2" />
+        <endEvent id="end3" />
+      </process>
+      <signal id="Signal1" name="signal 1" />
+      <signal id="Signal2" name="signal 2" />
+      <message id="Message1" name="message 1" />
+    </definitions>`;
+
+  Scenario('Two signal start events combined with a starting receive task', () => {
+    const source = startAndReceiveSource;
+
+    let definition;
+    Given('a process with two signal start events and a starting receive task', async () => {
+      const context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let leave;
+    When('process is ran', () => {
+      leave = definition.waitFor('leave');
+      definition.run();
+    });
+
+    Then('both start events and the receive task are armed', () => {
+      expect(definition.getPostponed().map(({ id }) => id)).to.have.members(['start1', 'start2', 'receive']);
+    });
+
+    When('the first start event is signaled', () => {
+      definition.signal({ id: 'Signal1' });
+    });
+
+    Then('the first start event ran to its end event', () => {
+      expect(definition.getActivityById('start1').counters).to.include({ taken: 1 });
+      expect(definition.getActivityById('end1').counters).to.include({ taken: 1 });
+    });
+
+    And('the second start event was discarded as an alternative entry point', () => {
+      expect(definition.getActivityById('start2').counters).to.include({ taken: 0, discarded: 1 });
+    });
+
+    But('the receive task is left armed, since it is a real token that must be signaled', () => {
+      expect(definition.getActivityById('receive').counters).to.include({ taken: 0, discarded: 0 });
+      expect(definition.getPostponed().map(({ id }) => id)).to.deep.equal(['receive']);
+    });
+
+    And('the process is still running', () => {
+      expect(definition.isRunning).to.be.true;
+    });
+
+    When('the receive task is signaled with its message', () => {
+      definition.sendMessage({ id: 'Message1' });
+    });
+
+    Then('the receive task ran to its end event', () => {
+      expect(definition.getActivityById('receive').counters).to.include({ taken: 1 });
+      expect(definition.getActivityById('end3').counters).to.include({ taken: 1 });
+    });
+
+    And('the process completed', async () => {
+      await leave;
+      expect(definition.counters).to.include({ completed: 1 });
+    });
+  });
+
+  Scenario('Stop and resume while all start events are armed', () => {
+    let definition;
+    Given('a process with two signal start events and a starting receive task', async () => {
+      const context = await testHelpers.context(startAndReceiveSource);
+      definition = new Definition(context);
+    });
+
+    let leave;
+    When('process is ran', () => {
+      leave = definition.waitFor('leave');
+      definition.run();
+    });
+
+    Then('both start events and the receive task are armed', () => {
+      expect(definition.getPostponed().map(({ id }) => id)).to.have.members(['start1', 'start2', 'receive']);
+    });
+
+    When('process is stopped', () => {
+      definition.stop();
+    });
+
+    Then('it is stopped with all entry points still armed', () => {
+      expect(definition.stopped).to.be.true;
+      expect(definition.getPostponed().map(({ id }) => id)).to.have.members(['start1', 'start2', 'receive']);
+    });
+
+    When('process is resumed', () => {
+      leave = definition.waitFor('leave');
+      definition.resume();
+    });
+
+    Then('all entry points are armed again', () => {
+      expect(definition.isRunning).to.be.true;
+      expect(definition.getPostponed().map(({ id }) => id)).to.have.members(['start1', 'start2', 'receive']);
+    });
+
+    When('the first start event is signaled after resume', () => {
+      definition.signal({ id: 'Signal1' });
+    });
+
+    Then('the second start event is still discarded as an alternative entry point', () => {
+      expect(definition.getActivityById('start1').counters).to.include({ taken: 1 });
+      expect(definition.getActivityById('start2').counters).to.include({ taken: 0, discarded: 1 });
+    });
+
+    And('the receive task is left armed', () => {
+      expect(definition.getPostponed().map(({ id }) => id)).to.deep.equal(['receive']);
+    });
+
+    When('the receive task is signaled with its message', () => {
+      definition.sendMessage({ id: 'Message1' });
+    });
+
+    Then('the process completed', async () => {
+      await leave;
+      expect(definition.counters).to.include({ completed: 1 });
+    });
+  });
+
+  Scenario('Get state, recover, and resume while all start events are armed', () => {
+    let definition;
+    Given('a process with two signal start events and a starting receive task', async () => {
+      const context = await testHelpers.context(startAndReceiveSource);
+      definition = new Definition(context);
+    });
+
+    When('process is ran', () => {
+      definition.run();
+    });
+
+    Then('both start events and the receive task are armed', () => {
+      expect(definition.getPostponed().map(({ id }) => id)).to.have.members(['start1', 'start2', 'receive']);
+    });
+
+    let state;
+    When('process is stopped and state is saved', () => {
+      definition.stop();
+      state = definition.getState();
+    });
+
+    let recovered, leave;
+    Given('the state is recovered into a new definition and resumed', async () => {
+      const context = await testHelpers.context(startAndReceiveSource);
+      recovered = new Definition(context).recover(JSON.parse(JSON.stringify(state)));
+      leave = recovered.waitFor('leave');
+      recovered.resume();
+    });
+
+    Then('all entry points are armed in the recovered definition', () => {
+      expect(recovered.isRunning).to.be.true;
+      expect(recovered.getPostponed().map(({ id }) => id)).to.have.members(['start1', 'start2', 'receive']);
+    });
+
+    When('the second start event is signaled in the recovered definition', () => {
+      recovered.signal({ id: 'Signal2' });
+    });
+
+    Then('the first start event is discarded as an alternative entry point', () => {
+      expect(recovered.getActivityById('start2').counters).to.include({ taken: 1 });
+      expect(recovered.getActivityById('start1').counters).to.include({ taken: 0, discarded: 1 });
+    });
+
+    And('the receive task is left armed', () => {
+      expect(recovered.getPostponed().map(({ id }) => id)).to.deep.equal(['receive']);
+    });
+
+    When('the receive task is signaled with its message', () => {
+      recovered.sendMessage({ id: 'Message1' });
+    });
+
+    Then('the recovered process completed', async () => {
+      await leave;
+      expect(recovered.counters).to.include({ completed: 1 });
+    });
+  });
+
+  Scenario('A timer start event combined with a signal start event', () => {
+    const source = `<?xml version="1.0" encoding="UTF-8"?>
+    <definitions id="def" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
+      <process id="timer-and-signal" isExecutable="true">
+        <startEvent id="timerStart">
+          <timerEventDefinition>
+            <timeDuration>PT1H</timeDuration>
+          </timerEventDefinition>
+        </startEvent>
+        <startEvent id="signalStart">
+          <signalEventDefinition signalRef="Signal1" />
+        </startEvent>
+        <sequenceFlow id="from-timer" sourceRef="timerStart" targetRef="timerEnd" />
+        <sequenceFlow id="from-signal" sourceRef="signalStart" targetRef="signalEnd" />
+        <endEvent id="timerEnd" />
+        <endEvent id="signalEnd" />
+      </process>
+      <signal id="Signal1" name="signal 1" />
+    </definitions>`;
+
+    let definition;
+    Given('a process with a timer start event and a signal start event', async () => {
+      const context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let leave;
+    When('process is ran', () => {
+      leave = definition.waitFor('leave');
+      definition.run();
+    });
+
+    Then('both start events are armed', () => {
+      expect(definition.getPostponed().map(({ id }) => id)).to.have.members(['timerStart', 'signalStart']);
+      expect(definition.environment.timers.executing).to.have.length(1);
+    });
+
+    When('the timer start event is cancelled', () => {
+      definition.cancelActivity({ id: 'timerStart' });
+    });
+
+    Then('the timer start event completes', () => {
+      expect(definition.getActivityById('timerStart').counters).to.include({ taken: 1, discarded: 0 });
+      expect(definition.getActivityById('timerEnd').counters).to.include({ taken: 1 });
+    });
+
+    And('the signal start event is discarded as an alternative entry point', () => {
+      expect(definition.getActivityById('signalStart').counters).to.include({ taken: 0, discarded: 1 });
+    });
+
+    And('the process completed with no timer left executing', async () => {
+      await leave;
+      expect(definition.counters).to.include({ completed: 1 });
+      expect(definition.environment.timers.executing).to.have.length(0);
+    });
+
+    When('process is ran again and the signal start event is signaled', () => {
+      leave = definition.waitFor('leave');
+      definition.run();
+      definition.signal({ id: 'Signal1' });
+    });
+
+    Then('the signal start event completes', () => {
+      expect(definition.getActivityById('signalStart').counters).to.include({ taken: 1 });
+      expect(definition.getActivityById('signalEnd').counters).to.include({ taken: 1 });
+    });
+
+    And('the timer start event is discarded and its timer torn down', () => {
+      expect(definition.getActivityById('timerStart').counters).to.include({ discarded: 1 });
+      expect(definition.environment.timers.executing).to.have.length(0);
+    });
+
+    And('the process completed again', async () => {
+      await leave;
+      expect(definition.counters).to.include({ completed: 2 });
     });
   });
 });

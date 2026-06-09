@@ -15,7 +15,10 @@ var _constants = require("../constants.js");
  * @param {import('#types').ContextInstance} context
  */
 function StartEvent(activityDef, context) {
-  return new _Activity.Activity(StartEventBehaviour, activityDef, context);
+  return new _Activity.Activity(StartEventBehaviour, {
+    ...activityDef,
+    isStartEvent: true
+  }, context);
 }
 
 /**

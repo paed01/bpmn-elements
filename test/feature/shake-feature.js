@@ -30,9 +30,9 @@ Feature('Shaking', () => {
     When('definition is ran', () => {
       definition.broker.subscribeTmp(
         'event',
-        'activity.shake.end',
-        (_, msg) => {
-          messages.push(msg);
+        '*.shake.*',
+        (routingKey) => {
+          messages.push(routingKey);
         },
         { noAck: true }
       );
@@ -40,24 +40,10 @@ Feature('Shaking', () => {
       definition.run();
     });
 
-    Then('the start events are shaken', () => {
-      expect(messages).to.have.length(2);
-    });
-
-    And('execution sequence is presented in messages', () => {
-      expect(messages[0].content).to.have.property('sequence').that.is.an('array');
-      const sequence1 = messages[0].content.sequence;
-      expect(sequence1[0]).to.have.property('id', 'start1');
-      expect(sequence1[1]).to.have.property('id', 'from12end');
-      expect(sequence1[2]).to.have.property('id', 'end');
-      expect(sequence1).to.have.length(3);
-
-      expect(messages[1].content).to.have.property('sequence').that.is.an('array');
-      const sequence2 = messages[1].content.sequence;
-      expect(sequence2[0]).to.have.property('id', 'start2');
-      expect(sequence2[1]).to.have.property('id', 'from22end');
-      expect(sequence2[2]).to.have.property('id', 'end');
-      expect(sequence2).to.have.length(3);
+    // Multiple start events no longer trigger a graph shake on run; they are torn down on
+    // completion directly. The shake remains available on demand.
+    Then('the start events are not shaken on run', () => {
+      expect(messages, messages.join()).to.have.length(0);
     });
 
     let start1, start2;
@@ -65,6 +51,25 @@ Feature('Shaking', () => {
       [start1, start2] = definition.getPostponed();
       expect(start1).to.have.property('id', 'start1');
       expect(start2).to.have.property('id', 'start2');
+    });
+
+    let result;
+    When('definition is shaken on demand', () => {
+      result = definition.shake();
+    });
+
+    Then('execution sequence is presented for each start event', () => {
+      const sequence1 = result.start1[0].sequence;
+      expect(sequence1[0]).to.have.property('id', 'start1');
+      expect(sequence1[1]).to.have.property('id', 'from12end');
+      expect(sequence1[2]).to.have.property('id', 'end');
+      expect(sequence1).to.have.length(3);
+
+      const sequence2 = result.start2[0].sequence;
+      expect(sequence2[0]).to.have.property('id', 'start2');
+      expect(sequence2[1]).to.have.property('id', 'from22end');
+      expect(sequence2[2]).to.have.property('id', 'end');
+      expect(sequence2).to.have.length(3);
     });
   });
 
@@ -103,18 +108,9 @@ Feature('Shaking', () => {
     When('definition is ran', () => {
       definition.broker.subscribeTmp(
         'event',
-        'activity.shake.end',
-        (_, msg) => {
-          messages.push(msg);
-        },
-        { noAck: true }
-      );
-
-      definition.broker.subscribeTmp(
-        'event',
-        'flow.shake.loop',
-        (_, msg) => {
-          messages.push(msg);
+        '*.shake.*',
+        (routingKey) => {
+          messages.push(routingKey);
         },
         { noAck: true }
       );
@@ -122,21 +118,26 @@ Feature('Shaking', () => {
       definition.run();
     });
 
-    Then('execution sequence is presented in first start event shake end message', () => {
-      expect(messages).to.have.length(3);
-      expect(messages[0].content).to.have.property('sequence').that.is.an('array');
-      const sequence = messages[0].content.sequence;
+    Then('the start events are not shaken on run', () => {
+      expect(messages, messages.join()).to.have.length(0);
+    });
+
+    let result;
+    When('definition is shaken on demand', () => {
+      result = definition.shake();
+    });
+
+    Then('execution sequence is presented for the first start event', () => {
+      const sequence = result.start1[0].sequence;
       expect(sequence[0]).to.have.property('id', 'start1');
       expect(sequence[1]).to.have.property('id', 'from12end');
       expect(sequence[2]).to.have.property('id', 'end');
       expect(sequence).to.have.length(3);
     });
 
-    And('execution sequence is presented in second start event shake end message', () => {
-      expect(messages).to.have.length(3);
-
-      expect(messages[1].content).to.have.property('sequence').that.is.an('array');
-      const sequence = messages[1].content.sequence;
+    And('execution sequence is presented for the second start event', () => {
+      expect(result.start2[0]).to.have.property('isLooped', false);
+      const sequence = result.start2[0].sequence;
       expect(sequence[0]).to.have.property('id', 'start2');
       expect(sequence[1]).to.have.property('id', 'from22Task');
       expect(sequence[2]).to.have.property('id', 'task');
@@ -147,9 +148,9 @@ Feature('Shaking', () => {
       expect(sequence).to.have.length(7);
     });
 
-    And('second start event loop sequence is presented in shake loop message', () => {
-      expect(messages[2].content).to.have.property('sequence').that.is.an('array');
-      const sequence = messages[2].content.sequence;
+    And('second start event loop sequence is presented', () => {
+      expect(result.start2[1]).to.have.property('isLooped', true);
+      const sequence = result.start2[1].sequence;
 
       expect(sequence).to.have.length(7);
       expect(sequence[0]).to.have.property('id', 'start2');

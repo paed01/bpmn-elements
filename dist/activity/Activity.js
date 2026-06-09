@@ -107,6 +107,7 @@ function Activity(Behaviour, activityDef, context) {
     isTransaction: activityDef.isTransaction,
     isParallelJoin,
     isParallelGateway: activityDef.isParallelGateway,
+    isStartEvent: !!activityDef.isStartEvent,
     isThrowing: activityDef.isThrowing,
     linkNames: activityDef.linkNames,
     linkBehaviour: activityDef.linkBehaviour,
@@ -228,6 +229,11 @@ Object.defineProperties(Activity.prototype, {
   isParallelGateway: {
     get() {
       return this[K_FLAGS].isParallelGateway;
+    }
+  },
+  isStartEvent: {
+    get() {
+      return this[K_FLAGS].isStartEvent;
     }
   },
   triggeredByEvent: {

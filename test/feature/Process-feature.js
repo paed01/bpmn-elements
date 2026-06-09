@@ -328,9 +328,10 @@ Feature('Process', () => {
       start2.signal();
     });
 
-    Then('the process completes', () => {
-      expect(bp.isRunning).to.be.false;
-      return completed;
+    // Both user tasks have no incoming flow, so per BPMN 2.0 they are independent tokens that must
+    // both complete - neither is an alternative entry point to be discarded (that is start events).
+    Then('the process is still running', () => {
+      expect(bp.isRunning).to.be.true;
     });
 
     And('second user task was taken', () => {
@@ -338,9 +339,23 @@ Feature('Process', () => {
       expect(start2.owner.counters).to.have.property('discarded', 0);
     });
 
-    And('first user task was discarded', () => {
-      expect(start1.owner.counters).to.have.property('discarded', 1);
-      expect(start1.owner.counters).to.have.property('taken', 0);
+    When('first user task is signaled', () => {
+      start1.signal();
+    });
+
+    Then('the process completes', () => {
+      expect(bp.isRunning).to.be.false;
+      return completed;
+    });
+
+    And('first user task was taken', () => {
+      expect(start1.owner.counters).to.have.property('taken', 1);
+      expect(start1.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('end event was taken twice', () => {
+      expect(bp.getActivityById('end').counters).to.have.property('taken', 2);
+      expect(bp.getActivityById('end').counters).to.have.property('discarded', 0);
     });
 
     Given('a process with two user tasks both arriving at a join', async () => {

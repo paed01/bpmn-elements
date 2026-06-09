@@ -676,6 +676,8 @@ declare module 'bpmn-elements' {
 		get isCatching(): boolean;
 		get isForCompensation(): boolean;
 		get isParallelJoin(): boolean;
+		get isParallelGateway(): boolean;
+		get isStartEvent(): boolean;
 		get triggeredByEvent(): boolean;
 		get attachedTo(): Activity | null;
 		get lane(): Lane | undefined;
@@ -1654,8 +1656,7 @@ declare module 'bpmn-elements' {
 		 */
 		execute(executeMessage: ElementBrokerMessage): true | void;
 		/**
-		 * Resume after recover. Reshakes elements when there are converging gateways or multiple
-		 * start activities, then resumes any postponed children.
+		 * Resume after recover, resuming any postponed children.
 		 */
 		resume(): void;
 		/**

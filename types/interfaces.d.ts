@@ -39,6 +39,8 @@ declare module '../src/activity/Activity.js' {
     get isCatching(): boolean;
     get isForCompensation(): boolean;
     get isParallelJoin(): boolean;
+    get isParallelGateway(): boolean;
+    get isStartEvent(): boolean;
     get triggeredByEvent(): boolean;
     get attachedTo(): Activity | null;
     get lane(): Lane | undefined;

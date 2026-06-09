@@ -35,10 +35,10 @@ export function ProcessExecution(parentActivity, context) {
     flows: context.getSequenceFlows(id),
     outboundMessageFlows: context.getMessageFlows(id),
     startActivities: new Set(),
+    startEventCount: 0,
     triggeredByEvent: new Set(),
     detachedActivities: new Set(),
     convergingGateways: new Set(),
-    startSequences: new Map(),
   };
 
   const exchangeName = (this._exchangeName = isSubProcess ? 'subprocess-execution' : 'execution');
@@ -124,8 +124,7 @@ ProcessExecution.prototype.execute = function execute(executeMessage) {
 };
 
 /**
- * Resume after recover. Reshakes elements when there are converging gateways or multiple
- * start activities, then resumes any postponed children.
+ * Resume after recover, resuming any postponed children.
  */
 ProcessExecution.prototype.resume = function resume() {
   this._debug(`resume process execution at ${this.status}`);
@@ -428,8 +427,7 @@ ProcessExecution.prototype._activate = function activate() {
     });
   }
 
-  const { outboundMessageFlows, flows, associations, startActivities, startSequences, triggeredByEvent, convergingGateways, children } =
-    this[K_ELEMENTS];
+  const { outboundMessageFlows, flows, associations, startActivities, triggeredByEvent, convergingGateways, children } = this[K_ELEMENTS];
 
   for (const flow of outboundMessageFlows) {
     flow.activate();
@@ -459,6 +457,7 @@ ProcessExecution.prototype._activate = function activate() {
   startActivities.clear();
   triggeredByEvent.clear();
 
+  let startEventCount = 0;
   for (const activity of children) {
     if (activity.placeholder) continue;
     activity.activate(this);
@@ -469,17 +468,13 @@ ProcessExecution.prototype._activate = function activate() {
     });
     if (activity.isStart) {
       startActivities.add(activity);
+      if (activity.isStartEvent) startEventCount++;
     }
     if (activity.triggeredByEvent || activity.isCatching) triggeredByEvent.add(activity);
     if (activity.isParallelGateway) convergingGateways.add(activity);
   }
 
-  if (startActivities.size > 1) {
-    for (const activity of startActivities) {
-      startSequences.set(activity.id, new Set());
-    }
-  }
-
+  this[K_ELEMENTS].startEventCount = startEventCount;
   this[K_ACTIVATED] = true;
 };
 
@@ -515,21 +510,17 @@ ProcessExecution.prototype._deactivate = function deactivate() {
 };
 
 /**
- * Shake on start/resume when there are converging gateways or multiple start activities.
- * Reuses already discovered parallel gateway peers to skip the graph shake on repeated runs.
- * The shake only discovers parallel gateway peers for the peer monitor; converging joins no
- * longer rely on discarded flows, so skipDiscard is left untouched.
+ * Discover converging parallel gateway peers for the peer monitor, reusing already discovered ones.
  * @internal
  */
 ProcessExecution.prototype._shakeOnStart = function shakeOnStart() {
-  const { startActivities, convergingGateways } = this[K_ELEMENTS];
+  const convergingGateways = this[K_ELEMENTS].convergingGateways;
+  if (!convergingGateways.size) return;
 
-  if (startActivities.size <= 1 && this._peersDiscovered()) {
+  if (this._peersDiscovered()) {
     this._debug(`reuse discovered parallel gateway peers (${convergingGateways.size})`);
     return;
   }
-
-  if (startActivities.size <= 1 && !convergingGateways.size) return;
 
   this._shakeElements();
   this._debug(`forced shake to discover converging gateway peers (${convergingGateways.size})`);
@@ -542,7 +533,6 @@ ProcessExecution.prototype._shakeOnStart = function shakeOnStart() {
  */
 ProcessExecution.prototype._peersDiscovered = function peersDiscovered() {
   const convergingGateways = this[K_ELEMENTS].convergingGateways;
-  if (!convergingGateways.size) return false;
   for (const gateway of convergingGateways) {
     if (!gateway[K_PEERS_DISCOVERED]) return false;
   }
@@ -667,7 +657,7 @@ ProcessExecution.prototype._onActivityEvent = function onActivityEvent(routingKe
 
   this[K_TRACKER].track(routingKey, message);
   this.broker.publish('event', routingKey, content, { ...properties, delegate, mandatory: false });
-  if (shaking) return this._onShakeMessage(message);
+  if (shaking) return;
   if (!isDirectChild) return;
 
   switch (routingKey) {
@@ -748,6 +738,20 @@ ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey,
 
       break;
     }
+    case 'activity.end': {
+      if (!content.isStartEvent) break;
+      const elements = this[K_ELEMENTS];
+      if (elements.startEventCount <= 1) break;
+
+      const startPeers = new Set();
+      for (const msg of elements.postponed) {
+        const peerId = msg.content.id;
+        if (peerId !== content.id && msg.content.isStartEvent) startPeers.add(msg);
+      }
+      elements.startEventCount = 0;
+      for (const msg of startPeers) this._getChildApi(msg).discard();
+      break;
+    }
     case 'activity.error': {
       let eventCaughtBy;
       for (const msg of this[K_ELEMENTS].postponed) {
@@ -814,7 +818,7 @@ ProcessExecution.prototype._onChildCompleted = function onChildCompleted(message
   this._stateChangeMessage(message, false);
   if (message.fields.redelivered) return message.ack();
 
-  const { id, type, isEnd, isParallelGateway } = message.content;
+  const { id, type, isParallelGateway } = message.content;
 
   if (isParallelGateway) {
     for (const inb of message.content.inbound) {
@@ -822,7 +826,7 @@ ProcessExecution.prototype._onChildCompleted = function onChildCompleted(message
     }
   }
 
-  const { postponed, detachedActivities, startActivities } = this[K_ELEMENTS];
+  const { postponed, detachedActivities } = this[K_ELEMENTS];
   const postponedCount = postponed.size;
 
   if (!postponedCount) {
@@ -844,19 +848,6 @@ ProcessExecution.prototype._onChildCompleted = function onChildCompleted(message
       },
       { type: 'cancel' }
     );
-  }
-
-  if (isEnd && startActivities.size) {
-    const startSequences = this[K_ELEMENTS].startSequences;
-    for (const msg of postponed) {
-      const postponedId = msg.content.id;
-      const startSequence = startSequences.get(postponedId);
-      if (!startSequence) continue;
-
-      if (startSequence.has(id)) {
-        this._getChildApi(msg).discard();
-      }
-    }
   }
 };
 
@@ -1082,18 +1073,6 @@ ProcessExecution.prototype._getChildApi = function getChildApi(message) {
   for (const pp of content.parent.path) {
     child = this._getChildById(pp.id, message);
     if (child) return child.getApi(message);
-  }
-};
-
-/** @internal */
-ProcessExecution.prototype._onShakeMessage = function onShakeMessage(message) {
-  if (message.fields.routingKey !== 'activity.shake.end') return;
-  let seq;
-  if (!(seq = this[K_ELEMENTS].startSequences.get(message.content.id))) return;
-
-  for (const s of message.content.sequence) {
-    if (s.isSequenceFlow) continue;
-    seq.add(s.id);
   }
 };
 

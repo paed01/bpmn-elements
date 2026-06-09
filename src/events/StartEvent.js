@@ -9,7 +9,7 @@ import { K_EXECUTE_MESSAGE, K_EXECUTION } from '../constants.js';
  * @param {import('#types').ContextInstance} context
  */
 export function StartEvent(activityDef, context) {
-  return new Activity(StartEventBehaviour, activityDef, context);
+  return new Activity(StartEventBehaviour, { ...activityDef, isStartEvent: true }, context);
 }
 
 /**

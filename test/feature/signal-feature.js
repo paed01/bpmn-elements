@@ -409,12 +409,10 @@ Feature('Signals', () => {
     });
   });
 
-  Scenario('Process with end throwing signal and a start event waiting for signal', () => {
+  Scenario('A none start event discards a waiting signal start event at instantiation', () => {
     let definition;
-    Given(
-      'a process with two flows with user input, the first flow ends with signal, the second expects signal and then user input',
-      async () => {
-        const source = `
+    Given('a process with two flows, the first started by a none start event, the second by a signal start event', async () => {
+      const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="signalProcess" isExecutable="true">
           <startEvent id="start1" />
@@ -433,23 +431,21 @@ Feature('Signals', () => {
         </process>
       </definitions>`;
 
-        const context = await testHelpers.context(source);
-        definition = new Definition(context);
-      }
-    );
+      const context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
 
     When('definition is ran', () => {
       definition.run();
     });
 
-    let task1, start2;
-    Then('first user task is waiting for input and second start event waits for signal', () => {
+    let task1;
+    Then('the none start event fired and discarded the waiting signal start event', () => {
       const postponed = definition.getPostponed();
-      expect(postponed).to.have.length(2);
-      [task1, start2] = postponed;
-      expect(task1).to.be.ok;
+      expect(postponed).to.have.length(1);
+      [task1] = postponed;
       expect(task1).to.have.property('id', 'task1');
-      expect(start2).to.have.property('id', 'start2');
+      expect(definition.getActivityById('start2').counters).to.include({ taken: 0, discarded: 1 });
     });
 
     When('first user task receives input', () => {
@@ -460,24 +456,11 @@ Feature('Signals', () => {
       expect(definition.getActivityById('end1').counters).to.have.property('taken', 1);
     });
 
-    And('second flow is continued', () => {
-      expect(start2.owner.counters).to.have.property('taken', 1);
+    But('the second flow never ran, since its start event was discarded at instantiation', () => {
+      expect(definition.getActivityById('task2').counters).to.include({ taken: 0 });
     });
 
-    let task2;
-    And('second user task is awaiting input', () => {
-      const postponed = definition.getPostponed();
-      expect(postponed).to.have.length(1);
-      [task2] = postponed;
-      expect(task2).to.be.ok;
-      expect(task2).to.have.property('id', 'task2');
-    });
-
-    When('second user task receives input', () => {
-      task2.signal();
-    });
-
-    Then('run completes', () => {
+    And('run completes', () => {
       expect(definition.counters).to.have.property('completed', 1);
     });
   });
