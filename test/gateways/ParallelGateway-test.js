@@ -20,7 +20,7 @@ describe('ParallelGateway', () => {
 
     let context;
     beforeEach(async () => {
-      context = await testHelpers.context(source, { settings: { skipDiscard: false } });
+      context = await testHelpers.context(source);
     });
 
     it('takes all outbound', async () => {
@@ -39,7 +39,7 @@ describe('ParallelGateway', () => {
       expect(activity.outbound[1].counters).to.have.property('discard', 0);
     });
 
-    it('leaves and discards all outbound if inbound was discarded', async () => {
+    it('leaves without taking any outbound if inbound was discarded', async () => {
       const activity = context.getActivityById('fork');
 
       activity.activate();
@@ -49,10 +49,11 @@ describe('ParallelGateway', () => {
 
       await leave;
 
+      expect(activity.counters).to.deep.equal({ taken: 0, discarded: 1 });
       expect(activity.outbound[0].counters).to.have.property('take', 0);
-      expect(activity.outbound[0].counters).to.have.property('discard', 1);
+      expect(activity.outbound[0].counters).to.have.property('discard', 0);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
+      expect(activity.outbound[1].counters).to.have.property('discard', 0);
     });
   });
 
@@ -149,7 +150,7 @@ describe('ParallelGateway', () => {
 
       let context;
       beforeEach(async () => {
-        context = await testHelpers.context(sourceSameSourceId, { settings: { skipDiscard: false } });
+        context = await testHelpers.context(sourceSameSourceId);
       });
 
       it('waits for one inbound', async () => {
@@ -169,7 +170,7 @@ describe('ParallelGateway', () => {
         expect(outboundFlow.counters).to.have.property('discard', 0);
       });
 
-      it('discards outbound if one inbound were discarded', async () => {
+      it('leaves without taking outbound if one inbound were discarded', async () => {
         const activity = context.getActivityById('join');
 
         activity.activate();
@@ -179,8 +180,9 @@ describe('ParallelGateway', () => {
 
         await leave;
 
+        expect(activity.counters).to.deep.equal({ taken: 0, discarded: 1 });
         const outboundFlow = activity.outbound[0];
-        expect(outboundFlow.counters).to.have.property('discard', 1);
+        expect(outboundFlow.counters).to.have.property('discard', 0);
         expect(outboundFlow.counters).to.have.property('take', 0);
       });
 

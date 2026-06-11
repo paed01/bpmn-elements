@@ -117,34 +117,32 @@ Feature('Issue 42 - discard loops due to multiple outbound flows to same target'
     ['synchronous', (scope, next) => next()],
     ['asynchronous', (scope, next) => process.nextTick(next)],
   ].forEach(([kind, serviceTask]) => {
-    [true, false].forEach((skipDiscard) => {
-      Scenario(`every task completes with a ${kind} service task implementation and skipDiscard ${skipDiscard}`, () => {
-        Given('a definition where conditional flows resolve to the takeOnce service function', async () => {
-          context = await testHelpers.context(originalSource);
-          definition = new Definition(context, { settings: { skipDiscard }, services: { takeOnce, serviceTask } });
-        });
+    Scenario(`every task completes with a ${kind} service task implementation`, () => {
+      Given('a definition where conditional flows resolve to the takeOnce service function', async () => {
+        context = await testHelpers.context(originalSource);
+        definition = new Definition(context, { services: { takeOnce, serviceTask } });
+      });
 
-        let left;
-        When('definition is ran', () => {
-          left = definition.waitFor('leave');
-          definition.run();
-        });
+      let left;
+      When('definition is ran', () => {
+        left = definition.waitFor('leave');
+        definition.run();
+      });
 
-        Then('it completes without error', () => {
-          return left;
-        });
+      Then('it completes without error', () => {
+        return left;
+      });
 
-        And('all twenty service tasks completed at least once', () => {
-          for (let n = 1; n <= 20; n++) {
-            expect(definition.getActivityById(`task${n}`).counters, `task${n}`)
-              .to.have.property('taken')
-              .above(0);
-          }
-        });
+      And('all twenty service tasks completed at least once', () => {
+        for (let n = 1; n <= 20; n++) {
+          expect(definition.getActivityById(`task${n}`).counters, `task${n}`)
+            .to.have.property('taken')
+            .above(0);
+        }
+      });
 
-        And('the end event was reached', () => {
-          expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
-        });
+      And('the end event was reached', () => {
+        expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
       });
     });
   });

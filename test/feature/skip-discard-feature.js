@@ -5,7 +5,7 @@ import testHelpers from '../helpers/testHelpers.js';
 import factory from '../helpers/factory.js';
 import CamundaExtension from '../resources/extensions/CamundaExtension.js';
 
-Feature('Skip discarding flows if parallel gateway is not used', () => {
+Feature('Skip discarding sequence flows', () => {
   after(ck.reset);
 
   Scenario('A process with task splits', () => {
@@ -18,7 +18,7 @@ Feature('Skip discarding flows if parallel gateway is not used', () => {
           js: JsExtension,
         },
       });
-      definition = new Definition(context, { settings: { skipDiscard: true } });
+      definition = new Definition(context);
     });
 
     const discardedFlows = [];
@@ -67,7 +67,7 @@ Feature('Skip discarding flows if parallel gateway is not used', () => {
           js: JsExtension,
         },
       });
-      definition = new Definition(context, { settings: { skipDiscard: true }, variables: { input: 0 } });
+      definition = new Definition(context, { variables: { input: 0 } });
     });
 
     const discardedFlows = [];
@@ -115,7 +115,7 @@ Feature('Skip discarding flows if parallel gateway is not used', () => {
           js: JsExtension,
         },
       });
-      definition = new Definition(context, { settings: { skipDiscard: true }, variables: { input: 0 } });
+      definition = new Definition(context, { variables: { input: 0 } });
     });
 
     const discardedFlows = [];
@@ -176,7 +176,6 @@ Feature('Skip discarding flows if parallel gateway is not used', () => {
           },
         });
         definition = new Definition(context, {
-          settings: { skipDiscard: true },
           variables: { input: 0 },
           services: {
             takeFlow() {
@@ -252,7 +251,6 @@ Feature('Skip discarding flows if parallel gateway is not used', () => {
           },
         });
         definition = new Definition(context, {
-          settings: { skipDiscard: true },
           variables: { input: 0 },
           services: {
             takeFlow() {

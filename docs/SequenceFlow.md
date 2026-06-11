@@ -66,6 +66,6 @@ An expression condition can resolve to a service function instead of a plain val
 If every conditional outbound flow evaluates to falsy, the behaviour depends on the element:
 
 - a diverging **exclusive or inclusive gateway** takes its `default` flow when declared, otherwise it raises an `<id> no conditional flow taken` error — these gateways require exactly one (exclusive) or at least one (inclusive) outbound to be taken;
-- any **other activity** (task, event, …) simply discards its outbound — the branch ends, no error is raised.
+- any **other activity** (task, event, …) simply ends the branch, no error is raised.
 
-> With the default `skipDiscard` setting the discards are not published, so the outbound flow `discard` counters stay at `0`. Set `skipDiscard` to `false` to observe the discards.
+> The runtime no longer publishes outbound flow discards, so outbound flow `discard` counters stay at `0`.

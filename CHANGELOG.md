@@ -1,19 +1,19 @@
 # Changelog
 
-## v18.0.0 - 2026-05-31
+## v18.0.0 - 2026-06-11
 
-Refactor parallel converging and forking gateways, and treat multiple start events as mutually exclusive entry points.
+Refactor parallel converging and forking gateways, and treat multiple start events as mutually exclusive entry points. As a result of the parallel gateway keeping track of peers there is no need for discarding a sequence flows.
 
 ### Breaking
 
-- parallel gateways now enter execution as soon as the first inbound sequence flow is touched
-- shake sequence has changed
-- IntermediateCatchEvent cannot be used as a starting element, or it can but will not be started by default
 - `Definition` must be called with `new`
-- non-gateway activities discard their outbound when all conditional flows are falsy instead of throwing; only exclusive and inclusive gateways still require a taken or default flow
+- parallel gateways now enter execution as soon as the first inbound sequence flow is touched
+- removed discarding of outbound sequence flows altogether — activities no longer publish flow discards, so sequence flow and downstream activity `discarded` counters stay at `0`
+- IntermediateCatchEvent cannot be used as a starting element, or it can but will not be started by default
+- non-gateway activities end the branch when all conditional outbound flows are falsy instead of throwing; only exclusive and inclusive gateways still require a taken or default flow
 - multiple start events are mutually exclusive entry points — the first start event to fire discards the others still waiting to be triggered, so two start events can no longer both run (e.g. into a parallel join, or a joining task taken twice)
 - start activities that are not start events (e.g. a starting receive task, or an activity without an inbound flow) are no longer auto-discarded; they are genuine tokens that must be signalled or completed
-- multiple start events no longer trigger a graph shake on run/resume; only converging parallel gateways do, and the shake remains available on demand via `shake()`
+- shake sequence has changed
 
 ### Additions
 
@@ -28,7 +28,7 @@ Refactor parallel converging and forking gateways, and treat multiple start even
 
 ### Types
 
-- runtime types are now generated from JSDoc and bundled with [dts-buddy](https://github.com/Rich-Harris/dts-buddy); status enums (`ActivityStatus`, `DefinitionStatus`, `ProcessStatus`) and `TimerType` accept both enum members and their string literals.
+- runtime types are now generated from JSDoc and bundled with [dts-buddy](https://github.com/Rich-Harris/dts-buddy)
 - expose `isStartEvent` and `isParallelGateway` on the `Activity` interface
 
 ## v17.3.0 - 2025-12-03

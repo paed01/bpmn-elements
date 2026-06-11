@@ -758,43 +758,4 @@ Feature('Shaking', () => {
       expect(definition.getActivityById('join').counters).to.have.property('taken', 2);
     });
   });
-
-  // [
-  //   'join-paradox-1.bpmn',
-  //   'join-paradox-2.bpmn',
-  //   'join-paradox-3.bpmn',
-  //   'join-inbound.bpmn',
-  //   'issue-42-same-target-sequence-flows.bpmn',
-  // ].forEach((source) => {
-  //   Scenario(`${source} with parallel join gateways should shake as expected`, () => {
-  //     /** @type {Definition} */
-  //     let definition;
-  //     Given('a process matching scenario', async () => {
-  //       const context = await testHelpers.context(factory.resource(source));
-
-  //       definition = new Definition(context, {
-  //         settings: { skipDiscard: true },
-  //         variables: { input: 0 },
-  //         services: {
-  //           takeFlow() {
-  //             return true;
-  //           },
-  //           takeOnce({ environment }) {
-  //             const count = environment.variables[environment.variables.content.executionId] ?? 0;
-  //             environment.variables[environment.variables.content.executionId] = count + 1;
-  //             return count === 0;
-  //           },
-  //         },
-  //       });
-  //     });
-
-  //     When('shook', () => {
-  //       console.log('---SHAKE', definition.shake());
-  //     });
-
-  //     Then('join parallel gateway has expected inbound', () => {
-  //       console.log(definition.getProcesses()[0].getActivityById('join').expectedInboundSources);
-  //     });
-  //   });
-  // });
 });

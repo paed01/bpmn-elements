@@ -280,8 +280,8 @@ Feature('BoundaryEvent', () => {
       expect(initTask.counters).to.have.property('taken', 2);
     });
 
-    And('end was discarded', () => {
-      expect(bp.getActivityById('end').counters).to.have.property('discarded', bp.environment.settings.skipDiscard ? 0 : 1);
+    And('end was not discarded', () => {
+      expect(bp.getActivityById('end').counters).to.have.property('discarded', 0);
       expect(bp.getActivityById('end').counters).to.have.property('taken', 0);
     });
 
@@ -302,8 +302,8 @@ Feature('BoundaryEvent', () => {
       expect(bound.owner.counters).to.have.property('discarded', 1);
     });
 
-    And('init task is discarded', () => {
-      expect(initTask.counters).to.have.property('discarded', bp.environment.settings.skipDiscard ? 0 : 1);
+    And('init task is not discarded', () => {
+      expect(initTask.counters).to.have.property('discarded', 0);
       expect(initTask.counters).to.have.property('taken', 2);
     });
 
@@ -314,7 +314,7 @@ Feature('BoundaryEvent', () => {
 
     And('end was taken', () => {
       expect(bp.getActivityById('end').counters).to.have.property('taken', 1);
-      expect(bp.getActivityById('end').counters).to.have.property('discarded', bp.environment.settings.skipDiscard ? 0 : 1);
+      expect(bp.getActivityById('end').counters).to.have.property('discarded', 0);
     });
 
     And('process completes', () => {

@@ -744,7 +744,6 @@ Activity.prototype._pauseRunQ = function pauseRunQ() {
 Activity.prototype._onRunMessage = function onRunMessage(routingKey, message, messageProperties) {
   switch (routingKey) {
     case 'run.execute.passthrough':
-    case 'run.outbound.discard':
     case 'run.outbound.take':
     case 'run.next':
       return this._continueRunMessage(routingKey, message, messageProperties);
@@ -881,11 +880,6 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
       message.ack();
       return flow.take(content.flow);
     }
-    case 'run.outbound.discard': {
-      const flow = this._getOutboundSequenceFlowById(content.flow.id);
-      message.ack();
-      return flow.discard(content.flow);
-    }
     case 'run.leave': {
       this.status = undefined;
 
@@ -994,11 +988,6 @@ Activity.prototype._doOutbound = function doOutbound(fromMessage, isDiscarded, c
 
   const fromContent = fromMessage.content;
 
-  let discardSequence = fromContent.discardSequence;
-  if (isDiscarded && !discardSequence && this[K_FLAGS].attachedTo && fromContent.inbound?.[0]) {
-    discardSequence = [fromContent.inbound[0].id];
-  }
-
   let outboundFlows;
   if (isDiscarded) {
     outboundFlows = outboundSequenceFlows.map((flow) => formatFlowAction(flow, { action: 'discard' }));
@@ -1007,21 +996,21 @@ Activity.prototype._doOutbound = function doOutbound(fromMessage, isDiscarded, c
   }
 
   if (outboundFlows) {
-    this._doRunOutbound(outboundFlows, fromContent, discardSequence);
+    this._doRunOutbound(outboundFlows, fromContent);
     return callback(null, outboundFlows);
   }
 
   return this.evaluateOutbound(fromMessage, fromContent.outboundTakeOne, (err, evaluatedOutbound) => {
     if (err) return callback(new ActivityError(err.message, fromMessage, err));
-    const outbound = this._doRunOutbound(evaluatedOutbound, fromContent, discardSequence);
+    const outbound = this._doRunOutbound(evaluatedOutbound, fromContent);
     return callback(null, outbound);
   });
 };
 
 /** @internal */
-Activity.prototype._doRunOutbound = function doRunOutbound(outboundList, content, discardSequence) {
+Activity.prototype._doRunOutbound = function doRunOutbound(outboundList, content) {
   if (outboundList.length === 1) {
-    this._publishRunOutbound(outboundList[0], content, discardSequence);
+    this._publishRunOutbound(outboundList[0], content);
   } else {
     const targets = new Map();
 
@@ -1035,7 +1024,7 @@ Activity.prototype._doRunOutbound = function doRunOutbound(outboundList, content
     }
 
     for (const outboundFlow of targets.values()) {
-      this._publishRunOutbound(outboundFlow, content, discardSequence);
+      this._publishRunOutbound(outboundFlow, content);
     }
   }
 
@@ -1043,10 +1032,10 @@ Activity.prototype._doRunOutbound = function doRunOutbound(outboundList, content
 };
 
 /** @internal */
-Activity.prototype._publishRunOutbound = function publishRunOutbound(outboundFlow, content, discardSequence) {
+Activity.prototype._publishRunOutbound = function publishRunOutbound(outboundFlow, content) {
   const { id: flowId, action, result } = outboundFlow;
 
-  if (action === 'discard' && this.environment.settings.skipDiscard) {
+  if (action === 'discard') {
     return;
   }
 
@@ -1058,7 +1047,6 @@ Activity.prototype._publishRunOutbound = function publishRunOutbound(outboundFlo
         ...(result && typeof result === 'object' && result),
         ...outboundFlow,
         sequenceId: getUniqueId(`${flowId}_${action}`),
-        ...(discardSequence && { discardSequence: discardSequence.slice() }),
       },
     })
   );

@@ -53,7 +53,7 @@ Feature('Environment', () => {
     });
 
     And('settings', () => {
-      expect(task.environment.settings).to.deep.equal({ strict: true, skipDiscard: true });
+      expect(task.environment.settings).to.deep.equal({ strict: true });
     });
 
     And('differs from definition', () => {
@@ -70,7 +70,7 @@ Feature('Environment', () => {
     });
 
     And('settings', () => {
-      expect(runningBp.environment.settings).to.deep.equal({ strict: true, skipDiscard: true });
+      expect(runningBp.environment.settings).to.deep.equal({ strict: true });
     });
 
     When('definition completes', () => {
@@ -102,7 +102,7 @@ Feature('Environment', () => {
     });
 
     And('settings', () => {
-      expect(runningBp.environment.settings).to.deep.equal({ strict: false, skipDiscard: true });
+      expect(runningBp.environment.settings).to.deep.equal({ strict: false });
     });
 
     But('differs from definition', () => {
@@ -120,7 +120,7 @@ Feature('Environment', () => {
     });
 
     And('settings', () => {
-      expect(runningBp.environment.settings).to.deep.equal({ strict: false, skipDiscard: true });
+      expect(runningBp.environment.settings).to.deep.equal({ strict: false });
     });
 
     When('definition completes', () => {

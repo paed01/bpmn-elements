@@ -24,7 +24,7 @@ export function Environment(options = {}) {
   /** @type {import('#types').ITimers} */
   this.timers = options.timers || new Timers();
   /** @type {import('#types').EnvironmentSettings} */
-  this.settings = { skipDiscard: true, ...options.settings };
+  this.settings = { ...options.settings };
   /** @type {import('#types').LoggerFactory} */
   this.Logger = options.Logger || DummyLogger;
   this[K_SERVICES] = options.services || {};

@@ -117,7 +117,7 @@ describe('SubProcess', () => {
     });
 
     it('discarded child activity still completes sub process', async () => {
-      context = await testHelpers.context(subProcessSource, { settings: { skipDiscard: false } });
+      context = await testHelpers.context(subProcessSource);
       const subProcess = context.getActivityById('subProcess');
       subProcess.activate();
 
@@ -147,8 +147,6 @@ describe('SubProcess', () => {
       assertMessage('activity.enter', 'subUserTask');
       assertMessage('activity.start', 'subUserTask');
       assertMessage('activity.wait', 'subUserTask');
-      assertMessage('activity.discard', 'subScriptTask');
-      assertMessage('activity.leave', 'subScriptTask');
       assertMessage('activity.leave', 'subUserTask');
       assertMessage('activity.end', 'subProcess');
       assertMessage('activity.leave', 'subProcess');

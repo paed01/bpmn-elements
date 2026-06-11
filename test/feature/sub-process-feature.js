@@ -155,9 +155,6 @@ Feature('Sub-process', () => {
     let leave;
     When('running definition with instruction to loop back', () => {
       definition = new Definition(context, {
-        settings: {
-          skipDiscard: true,
-        },
         variables: {
           cardinality: 10,
           loopback: true,
@@ -283,7 +280,7 @@ Feature('Sub-process', () => {
       And('sub process is taken twice', () => {
         sub = definition.getActivityById('sub');
         expect(sub.counters).to.have.property('taken', 2);
-        expect(sub.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 1);
+        expect(sub.counters).to.have.property('discarded', 0);
       });
 
       And('leaves no lingering references', () => {
@@ -374,10 +371,10 @@ Feature('Sub-process', () => {
       }).timeout(10000);
 
       let sub;
-      And('sub process was taken twice and discarded once by gateway', () => {
+      And('sub process was taken twice and not discarded', () => {
         sub = definition.getActivityById('sub');
         expect(sub.counters).to.have.property('taken', 2);
-        expect(sub.counters).to.have.property('discarded', definition.environment.settings.skipDiscard ? 0 : 1);
+        expect(sub.counters).to.have.property('discarded', 0);
       });
 
       And('leaves no lingering references', () => {

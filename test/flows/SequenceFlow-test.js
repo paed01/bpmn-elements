@@ -329,7 +329,7 @@ describe('SequenceFlow', () => {
       expect(activity.outbound.find((f) => f.id === 'flow3').counters).to.include({ take: 0 });
     });
 
-    it('discards the outbound of a non-gateway activity with falsy conditions when skipDiscard is off', async () => {
+    it('neither takes nor discards the outbound of a non-gateway activity with falsy conditions', async () => {
       const source = `
       <?xml version="1.0" encoding="UTF-8"?>
       <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -348,15 +348,15 @@ describe('SequenceFlow', () => {
         </process>
       </definitions>`;
 
-      const ctx = await testHelpers.context(source, { settings: { skipDiscard: false } });
+      const ctx = await testHelpers.context(source);
 
       const activity = ctx.getActivityById('task');
       const leave = activity.waitFor('leave');
       activity.run();
       await leave;
 
-      expect(activity.outbound.find((f) => f.id === 'flow2').counters).to.include({ take: 0, discard: 1 });
-      expect(activity.outbound.find((f) => f.id === 'flow3').counters).to.include({ take: 0, discard: 1 });
+      expect(activity.outbound.find((f) => f.id === 'flow2').counters).to.include({ take: 0, discard: 0 });
+      expect(activity.outbound.find((f) => f.id === 'flow3').counters).to.include({ take: 0, discard: 0 });
     });
 
     it('can handle external resource condition with custom script handler', async () => {

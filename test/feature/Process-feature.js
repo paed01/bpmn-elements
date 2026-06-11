@@ -240,7 +240,7 @@ Feature('Process', () => {
     const messages = [];
     let processInstance, assertMessage;
     Given('a process', async () => {
-      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
+      const context = await testHelpers.context(source);
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, true);
     });
@@ -285,8 +285,6 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'decision');
       assertMessage('activity.start', 'decision');
       assertMessage('activity.end', 'decision');
-      assertMessage('activity.discard', 'end1');
-      assertMessage('activity.leave', 'end1');
       assertMessage('activity.enter', 'end2');
       assertMessage('activity.start', 'end2');
       assertMessage('activity.end', 'end2');
@@ -511,7 +509,7 @@ Feature('Process', () => {
     const messages = [];
     let processInstance, assertMessage;
     Given('a process', async () => {
-      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
+      const context = await testHelpers.context(source);
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, true);
     });
@@ -682,7 +680,7 @@ Feature('Process', () => {
     const messages = [];
     let processInstance, assertMessage;
     Given('a process', async () => {
-      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
+      const context = await testHelpers.context(source);
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, true);
     });
@@ -756,20 +754,7 @@ Feature('Process', () => {
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
 
-      assertMessage('flow.discard', 'back-to-activity1');
-
       assertMessage('activity.leave', 'decision');
-      assertMessage('activity.leave', 'activity2');
-      assertMessage('activity.leave', 'activity1');
-
-      assertMessage('activity.discard', 'activity1');
-
-      assertMessage('flow.discard', 'to-activity2');
-
-      assertMessage('activity.discard', 'activity2');
-
-      assertMessage('flow.looped', 'to-decision');
-
       assertMessage('activity.leave', 'activity2');
       assertMessage('activity.leave', 'activity1');
 
@@ -987,7 +972,7 @@ Feature('Process', () => {
     const messages = [];
     let bp, assertMessage;
     Given('a process', async () => {
-      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
+      const context = await testHelpers.context(source);
       bp = context.getProcessById('theProcess');
       bp.environment.variables.condition1 = true;
       assertMessage = AssertMessage(context, messages, true);
@@ -1277,7 +1262,7 @@ Feature('Process', () => {
     const messages = [];
     let bp, assertMessage, serviceComplete;
     Given('a process', async () => {
-      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
+      const context = await testHelpers.context(source);
       bp = context.getProcessById('theProcess');
       bp.environment.addService('get', get);
       assertMessage = AssertMessage(context, messages, false);
@@ -1334,8 +1319,8 @@ Feature('Process', () => {
       assertMessage('activity.end', 'end1');
     });
 
-    And('boundary event flow is discarded', () => {
-      assertMessage('activity.discard', 'end2');
+    And('boundary event is discarded without taking its flow', () => {
+      assertMessage('activity.leave', 'attached');
     });
 
     And('service task has left', () => {
@@ -1379,8 +1364,8 @@ Feature('Process', () => {
       assertMessage('activity.catch', 'attached');
     });
 
-    And('the service flows is discarded', () => {
-      assertMessage('activity.discard', 'end1');
+    And('the service task errors without taking its flow', () => {
+      assertMessage('activity.error', 'service');
     });
 
     And('the boundary event flow is taken', () => {
@@ -1411,7 +1396,7 @@ Feature('Process', () => {
     const messages = [];
     let processInstance, assertMessage, serviceComplete;
     Given('a process', async () => {
-      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
+      const context = await testHelpers.context(source);
       processInstance = context.getProcessById('theProcess');
       processInstance.environment.variables.timeout = 'PT1S';
       processInstance.environment.addService('get', get);
@@ -1472,9 +1457,7 @@ Feature('Process', () => {
       assertMessage('activity.leave', 'end1');
     });
 
-    And('boundary event flow is discarded', () => {
-      assertMessage('activity.discard', 'end2');
-      assertMessage('activity.leave', 'end2');
+    And('boundary event is discarded without taking its flow', () => {
       assertMessage('activity.leave', 'attached');
     });
 
@@ -1519,12 +1502,7 @@ Feature('Process', () => {
       assertMessage('activity.timeout', 'attached');
     });
 
-    And('the service task flow was discarded', () => {
-      assertMessage('activity.discard', 'end1');
-      assertMessage('activity.leave', 'end1');
-    });
-
-    And('the service task was discarded', () => {
+    And('the service task is discarded without taking its flow', () => {
       assertMessage('activity.leave', 'service');
     });
 
@@ -1562,7 +1540,7 @@ Feature('Process', () => {
     const messages = [];
     let processInstance, assertMessage, serviceComplete;
     Given('a process', async () => {
-      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
+      const context = await testHelpers.context(source);
       processInstance = context.getProcessById('theProcess');
       processInstance.environment.variables.timeout = 'PT1S';
       processInstance.environment.addService('get', get);
@@ -1620,9 +1598,7 @@ Feature('Process', () => {
       assertMessage('activity.leave', 'end1');
     });
 
-    And('boundary event flow was discarded', () => {
-      assertMessage('activity.discard', 'end2');
-      assertMessage('activity.leave', 'end2');
+    And('boundary event is discarded without taking its flow', () => {
       assertMessage('activity.leave', 'attached');
     });
 
@@ -1691,7 +1667,7 @@ Feature('Process', () => {
     const messages = [];
     let context, processInstance, assertMessage;
     Given('a process with a user task', async () => {
-      context = await testHelpers.context(source, { settings: { skipDiscard: false } });
+      context = await testHelpers.context(source);
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, false);
     });
@@ -1775,7 +1751,7 @@ Feature('Process', () => {
     const messages = [];
     let context, processInstance, assertMessage;
     Given('a process', async () => {
-      context = await testHelpers.context(source, { settings: { skipDiscard: false } });
+      context = await testHelpers.context(source);
       processInstance = context.getProcessById('theProcess');
       processInstance.environment.variables.timeout = 'PT1S';
       assertMessage = AssertMessage(context, messages, false);
@@ -1855,9 +1831,8 @@ Feature('Process', () => {
       assertMessage('activity.leave', 'end1');
     });
 
-    And('boundary event flow were discarded', () => {
-      assertMessage('activity.discard', 'end2');
-      assertMessage('activity.leave', 'end2');
+    And('boundary event is discarded without taking its flow', () => {
+      assertMessage('activity.leave', 'attached');
       assertMessage('activity.leave', 'userInput');
       expect(messages.length, 'no more messages').to.equal(0);
     });
@@ -1892,7 +1867,7 @@ Feature('Process', () => {
     const messages = [];
     let processInstance, assertMessage;
     Given('a process with user task and timer', async () => {
-      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
+      const context = await testHelpers.context(source);
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, true);
     });
@@ -2007,25 +1982,7 @@ Feature('Process', () => {
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
 
-      assertMessage('flow.discard', 'back-to-activity0');
-
-      assertMessage('activity.discard', 'activity0');
-
-      assertMessage('flow.discard', 'to-activity1');
-
-      assertMessage('activity.leave', 'activity0');
-
       assertMessage('activity.leave', 'decision');
-      assertMessage('activity.leave', 'activity2');
-      assertMessage('activity.leave', 'activity1');
-
-      assertMessage('activity.discard', 'activity1');
-
-      assertMessage('flow.discard', 'to-activity2');
-
-      assertMessage('activity.discard', 'activity2');
-      assertMessage('flow.looped', 'to-decision');
-
       assertMessage('activity.leave', 'activity2');
       assertMessage('activity.leave', 'activity1');
 
@@ -2148,7 +2105,7 @@ Feature('Process', () => {
     const messages = [];
     let context, processInstance, assertMessage;
     Given('a process with a task and bound timer event both leading to end event', async () => {
-      context = await testHelpers.context(source, { settings: { skipDiscard: false } });
+      context = await testHelpers.context(source);
       processInstance = context.getProcessById('theProcess');
       assertMessage = AssertMessage(context, messages, true);
     });
@@ -2209,13 +2166,7 @@ Feature('Process', () => {
       assertMessage('activity.execution.discard', 'bound');
     });
 
-    And('bound flow is discarded', () => {
-      assertMessage('flow.discard', 'fromBoundaryEvent');
-    });
-
-    And('end event is discarded', () => {
-      assertMessage('activity.discard', 'end');
-      assertMessage('activity.leave', 'end');
+    And('bound event leaves without taking its flow', () => {
       assertMessage('activity.leave', 'bound');
     });
 

@@ -29,7 +29,6 @@ function Environment(options = {}) {
   this.timers = options.timers || new _Timers.Timers();
   /** @type {import('#types').EnvironmentSettings} */
   this.settings = {
-    skipDiscard: true,
     ...options.settings
   };
   /** @type {import('#types').LoggerFactory} */

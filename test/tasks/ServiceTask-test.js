@@ -15,7 +15,7 @@ describe('ServiceTask', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, { settings: { skipDiscard: false, enableDummyService: false } });
+      const context = await testHelpers.context(source, { settings: { enableDummyService: false } });
       const task = context.getActivityById('task');
 
       let error;
@@ -290,7 +290,7 @@ describe('ServiceTask', () => {
         </process>
       </definitions>`;
 
-      context = await testHelpers.context(source, { settings: { skipDiscard: false } });
+      context = await testHelpers.context(source);
       context.environment.addService('postMessage', (ctx, next) => {
         next(null, true);
       });
@@ -349,7 +349,7 @@ describe('ServiceTask', () => {
 
       await errored;
 
-      expect(task.outbound[0].counters).to.have.property('discard', 1);
+      expect(task.outbound[0].counters).to.have.property('discard', 0);
     });
 
     it('caught error discards other boundary events', async () => {
@@ -385,7 +385,7 @@ describe('ServiceTask', () => {
 
       await errored;
 
-      expect(task.outbound[0].counters).to.have.property('discard', 1);
+      expect(task.outbound[0].counters).to.have.property('discard', 0);
     });
 
     it('times out if bound timeout event if callback is not called within timeout duration', () => {

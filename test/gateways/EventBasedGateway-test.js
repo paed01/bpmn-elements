@@ -66,7 +66,7 @@ describe('EventBasedGateway', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, { settings: { skipDiscard: false } });
+      const context = await testHelpers.context(source);
       const [bp] = context.getProcesses();
       const gateway = bp.getActivityById('decision');
       const usertask = bp.getActivityById('usertask');
@@ -98,11 +98,11 @@ describe('EventBasedGateway', () => {
 
       expect(bp.counters).to.have.property('completed', 1);
       expect(gateway.counters, 'gateway').to.have.property('taken', 3);
-      expect(gateway.counters, 'gateway').to.have.property('discarded', 1);
+      expect(gateway.counters, 'gateway').to.have.property('discarded', 0);
       expect(usertask.counters, 'usertask').to.have.property('taken', 2);
       expect(usertask.counters, 'usertask').to.have.property('discarded', 1);
       expect(receive.counters, 'receive').to.have.property('taken', 1);
-      expect(receive.counters, 'receive').to.have.property('discarded', 3);
+      expect(receive.counters, 'receive').to.have.property('discarded', 2);
     });
   });
 
