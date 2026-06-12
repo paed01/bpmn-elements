@@ -177,20 +177,16 @@ ParallelGatewayBehaviour.prototype._onPeerEnterMessage = function onPeerEnterMes
 };
 
 ParallelGatewayBehaviour.prototype._complete = function complete() {
-  const take = this.peerMonitor.inbound.some(({ action }) => action === 'take');
-
   this.broker.cancel('_converging-inbound', false);
 
   this._stop();
 
-  const state = take ? 'completed' : 'discard';
+  this.activity.logger.debug(`<${this.executionId} (${this.id})> completed monitoring`);
 
-  this.activity.logger.debug(`<${this.executionId} (${this.id})> completed monitoring with state: ${state}`);
-
-  const content = cloneContent(this[K_EXECUTE_MESSAGE].content, { isRootScope: true, state });
+  const content = cloneContent(this[K_EXECUTE_MESSAGE].content, { isRootScope: true, state: 'completed' });
   content.inbound = this.peerMonitor.inbound;
 
-  return this.broker.publish('execution', `execute.${state}`, content);
+  return this.broker.publish('execution', 'execute.completed', content);
 };
 
 ParallelGatewayBehaviour.prototype._stop = function stop() {

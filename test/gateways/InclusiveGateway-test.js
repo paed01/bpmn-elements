@@ -99,18 +99,16 @@ describe('InclusiveGateway', () => {
       expect(activity.outbound[2].counters).to.have.property('discard', 0);
     });
 
-    it('discards all outbound if inbound was discarded', async () => {
+    it('ignores a discarded inbound and takes no outbound', () => {
       const activity = context.getActivityById('decisions');
       context.environment.variables.condition1 = true;
       context.environment.variables.condition2 = true;
 
       activity.activate();
 
-      const leave = activity.waitFor('leave');
       activity.inbound[0].discard();
 
-      await leave;
-
+      expect(activity.counters).to.deep.include({ taken: 0, discarded: 0 });
       expect(activity.outbound[0].counters).to.have.property('take', 0);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
       expect(activity.outbound[2].counters).to.have.property('take', 0);

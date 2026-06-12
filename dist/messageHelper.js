@@ -17,7 +17,6 @@ exports.unshiftParent = unshiftParent;
  */
 function cloneContent(content, extend) {
   const {
-    discardSequence,
     inbound,
     outbound,
     parent,
@@ -31,9 +30,6 @@ function cloneContent(content, extend) {
   };
   if (parent) {
     clone.parent = cloneParent(parent);
-  }
-  if (discardSequence) {
-    clone.discardSequence = discardSequence.slice();
   }
   if (inbound) {
     clone.inbound = inbound.map(c => cloneContent(c));

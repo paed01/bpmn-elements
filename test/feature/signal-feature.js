@@ -1241,6 +1241,42 @@ Feature('Signals', () => {
       expect(output).to.have.property('namedMessageEvent').with.property('input', 1);
     });
   });
+
+  Scenario('a thrown signal in a process with a text annotation', () => {
+    let definition;
+    Given('a process that throws a signal from an annotated throw event', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+        <signal id="sig" name="go" />
+        <process id="p" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="f1" sourceRef="start" targetRef="throw" />
+          <intermediateThrowEvent id="throw">
+            <signalEventDefinition signalRef="sig" />
+          </intermediateThrowEvent>
+          <sequenceFlow id="f2" sourceRef="throw" targetRef="end" />
+          <endEvent id="end" />
+          <textAnnotation id="note"><text>broadcasts a signal</text></textAnnotation>
+          <association id="note-association" sourceRef="throw" targetRef="note" />
+        </process>
+      </definitions>`;
+      definition = new Definition(await testHelpers.context(source));
+    });
+
+    let leave;
+    When('ran', () => {
+      leave = definition.waitFor('leave');
+      definition.run();
+    });
+
+    Then('the run completes, delegating the thrown signal past the annotation placeholder', () => {
+      return leave;
+    });
+
+    And('the signal was thrown', () => {
+      expect(definition.getActivityById('throw').counters).to.include({ taken: 1 });
+    });
+  });
 });
 
 async function prepareSource() {

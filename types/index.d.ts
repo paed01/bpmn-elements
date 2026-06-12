@@ -611,7 +611,7 @@ declare module 'bpmn-elements' {
 		 */
 		resume(): void;
 		/**
-		 * Discard the activity. Stops execution if running and discards outbound flows.
+		 * Discard the activity. Stops execution if running; the activity leaves without taking any outbound flow.
 		 * @param discardContent Optional content propagated with the discard
 		 * */
 		discard(discardContent?: Record<string, any>): void;
@@ -1746,8 +1746,9 @@ declare module 'bpmn-elements' {
 		 */
 		take(content?: Record<string, any>): boolean;
 		/**
-		 * Discard the flow and publish flow.discard. Detects loops via discardSequence and emits
-		 * flow.looped instead when the target id is already in the sequence.
+		 * Discard the flow and publish flow.discard.
+		 *
+		 * @deprecated The execution runtime no longer discards sequence flows, so this is a no-op during a run. It will be removed in a future version.
 		 * 
 		 */
 		discard(content?: Record<string, any>): void;

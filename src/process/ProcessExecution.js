@@ -710,7 +710,6 @@ ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey,
       if (!prevMsg) return message.ack();
       break;
     }
-    case 'flow.looped':
     case 'activity.leave':
       return this._onChildCompleted(message);
   }

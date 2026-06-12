@@ -971,6 +971,46 @@ Feature('Call activity', () => {
       return end;
     });
   });
+
+  Scenario('discard a called process that holds an association', () => {
+    let definition;
+    Given('a process whose call activity references a process with an annotated task', async () => {
+      const source = `
+      <definitions id="Def" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+          <callActivity id="call-activity" calledElement="called-process" />
+          <sequenceFlow id="to-end" sourceRef="call-activity" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+        <process id="called-process" isExecutable="false">
+          <userTask id="task" />
+          <textAnnotation id="note"><text>do the task</text></textAnnotation>
+          <association id="note-association" sourceRef="task" targetRef="note" />
+        </process>
+      </definitions>`;
+      definition = new Definition(await testHelpers.context(source));
+    });
+
+    let end;
+    When('ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('the call activity started the called process', () => {
+      expect(definition.getRunningProcesses()).to.have.length(2);
+    });
+
+    When('the called process is discarded', () => {
+      definition.getRunningProcesses()[1].getApi().discard();
+    });
+
+    Then('the run completes, stopping the association along the way', () => {
+      return end;
+    });
+  });
 });
 
 function processOutput(elm) {

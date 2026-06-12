@@ -5,7 +5,7 @@
  * @returns cloned content
  */
 export function cloneContent(content, extend) {
-  const { discardSequence, inbound, outbound, parent, sequence } = content;
+  const { inbound, outbound, parent, sequence } = content;
 
   /** @type {import('#types').ElementMessageContent} */
   const clone = {
@@ -15,9 +15,6 @@ export function cloneContent(content, extend) {
 
   if (parent) {
     clone.parent = cloneParent(parent);
-  }
-  if (discardSequence) {
-    clone.discardSequence = discardSequence.slice();
   }
   if (inbound) {
     clone.inbound = inbound.map((c) => cloneContent(c));

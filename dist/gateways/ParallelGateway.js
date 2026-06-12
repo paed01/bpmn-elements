@@ -37,8 +37,7 @@ function ParallelGateway(activityDef, context) {
   const cachedPeers = context.getShakenPeers(id);
   if (cachedPeers) {
     for (const [flowId, sourceIds] of cachedPeers) {
-      let peer = peers.get(flowId);
-      if (!peer) peers.set(flowId, peer = new Set());
+      const peer = peers.get(flowId);
       for (const sourceId of sourceIds) peer.add(sourceId);
     }
     activity[K_PEERS_DISCOVERED] = true;
@@ -162,19 +161,15 @@ ParallelGatewayBehaviour.prototype._onPeerEnterMessage = function onPeerEnterMes
   if (peer) this.peerMonitor.running.set(message.content.id, peer);
 };
 ParallelGatewayBehaviour.prototype._complete = function complete() {
-  const take = this.peerMonitor.inbound.some(({
-    action
-  }) => action === 'take');
   this.broker.cancel('_converging-inbound', false);
   this._stop();
-  const state = take ? 'completed' : 'discard';
-  this.activity.logger.debug(`<${this.executionId} (${this.id})> completed monitoring with state: ${state}`);
+  this.activity.logger.debug(`<${this.executionId} (${this.id})> completed monitoring`);
   const content = (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content, {
     isRootScope: true,
-    state
+    state: 'completed'
   });
   content.inbound = this.peerMonitor.inbound;
-  return this.broker.publish('execution', `execute.${state}`, content);
+  return this.broker.publish('execution', 'execute.completed', content);
 };
 ParallelGatewayBehaviour.prototype._stop = function stop() {
   this.broker.cancel('_converging-inbound');

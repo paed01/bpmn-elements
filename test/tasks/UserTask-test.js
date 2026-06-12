@@ -77,7 +77,7 @@ describe('UserTask', () => {
 
       const left = task.waitFor('leave');
       task.activate();
-      task.inbound[0].discard();
+      task.discard();
 
       await left;
 
@@ -215,7 +215,7 @@ describe('UserTask', () => {
 
       const left = task.waitFor('leave');
       task.activate();
-      task.inbound[0].discard();
+      task.discard();
 
       await left;
 
@@ -434,7 +434,7 @@ describe('UserTask', () => {
 
       const left = task.waitFor('leave');
       task.activate();
-      task.inbound[0].discard();
+      task.discard();
 
       await left;
 

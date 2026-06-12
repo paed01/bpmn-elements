@@ -428,7 +428,7 @@ Activity.prototype.resume = function resume() {
 };
 
 /**
- * Discard the activity. Stops execution if running and discards outbound flows.
+ * Discard the activity. Stops execution if running; the activity leaves without taking any outbound flow.
  * @param {Record<string, any>} [discardContent] Optional content propagated with the discard
  * @returns {void}
  */
@@ -677,12 +677,8 @@ Activity.prototype._onInbound = function onInbound(routingKey, message) {
         message: content.message,
         inbound,
       });
-    case 'flow.discard':
     case 'activity.discard': {
-      let discardSequence;
-      if (content.discardSequence) discardSequence = content.discardSequence.slice();
-      const context = { inbound, discardSequence };
-      return this[K_FLAGS].isParallelGateway ? this.run(context) : this._runDiscard(context);
+      return this._runDiscard({ inbound });
     }
   }
 };
@@ -721,7 +717,6 @@ Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message
     }
     case 'association.take':
     case 'flow.take':
-    case 'flow.discard':
       return inboundQ.queueMessage(fields, cloneContent(content), properties);
   }
 };
@@ -918,7 +913,7 @@ Activity.prototype._onExecutionMessage = function onExecutionMessage(routingKey,
 
   switch (routingKey) {
     case 'execution.outbound.take': {
-      return this._doOutbound(message, false, (err, outbound) => {
+      return this._doOutbound(message, (err, outbound) => {
         message.ack();
         if (err) return this.emitFatal(err, content);
         broker.publish('run', 'run.execute.passthrough', cloneContent(content, { outbound }));
@@ -958,12 +953,12 @@ Activity.prototype._ackRunExecuteMessage = function ackRunExecuteMessage() {
 Activity.prototype._doRunLeave = function doRunLeave(message, isDiscarded, onOutbound) {
   const { content, properties } = message;
   const correlationId = properties.correlationId;
-  if (content.ignoreOutbound) {
+  if (isDiscarded || content.ignoreOutbound) {
     this.broker.publish('run', 'run.leave', cloneContent(content), { correlationId });
     return onOutbound();
   }
 
-  return this._doOutbound(cloneMessage(message), isDiscarded, (err, outbound) => {
+  return this._doOutbound(cloneMessage(message), (err, outbound) => {
     if (err) {
       return this._publishEvent('error', { ...content, error: err }, { correlationId });
     }
@@ -982,16 +977,14 @@ Activity.prototype._doRunLeave = function doRunLeave(message, isDiscarded, onOut
 };
 
 /** @internal */
-Activity.prototype._doOutbound = function doOutbound(fromMessage, isDiscarded, callback) {
+Activity.prototype._doOutbound = function doOutbound(fromMessage, callback) {
   const outboundSequenceFlows = this[K_FLOWS].outboundSequenceFlows;
   if (!outboundSequenceFlows.length) return callback(null, []);
 
   const fromContent = fromMessage.content;
 
   let outboundFlows;
-  if (isDiscarded) {
-    outboundFlows = outboundSequenceFlows.map((flow) => formatFlowAction(flow, { action: 'discard' }));
-  } else if (fromContent.outbound?.length) {
+  if (fromContent.outbound?.length) {
     outboundFlows = outboundSequenceFlows.map((flow) => formatFlowAction(flow, fromContent.outbound.filter((f) => f.id === flow.id).pop()));
   }
 

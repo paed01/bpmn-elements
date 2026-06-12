@@ -39,21 +39,16 @@ describe('ParallelGateway', () => {
       expect(activity.outbound[1].counters).to.have.property('discard', 0);
     });
 
-    it('leaves without taking any outbound if inbound was discarded', async () => {
+    it('ignores a discarded inbound and takes no outbound', () => {
       const activity = context.getActivityById('fork');
 
       activity.activate();
 
-      const leave = activity.waitFor('leave');
       activity.inbound[0].discard();
 
-      await leave;
-
-      expect(activity.counters).to.deep.equal({ taken: 0, discarded: 1 });
-      expect(activity.outbound[0].counters).to.have.property('take', 0);
-      expect(activity.outbound[0].counters).to.have.property('discard', 0);
-      expect(activity.outbound[1].counters).to.have.property('take', 0);
-      expect(activity.outbound[1].counters).to.have.property('discard', 0);
+      expect(activity.counters).to.deep.include({ taken: 0, discarded: 0 });
+      expect(activity.outbound[0].counters).to.include({ take: 0, discard: 0 });
+      expect(activity.outbound[1].counters).to.include({ take: 0, discard: 0 });
     });
   });
 
@@ -170,20 +165,16 @@ describe('ParallelGateway', () => {
         expect(outboundFlow.counters).to.have.property('discard', 0);
       });
 
-      it('leaves without taking outbound if one inbound were discarded', async () => {
+      it('ignores a discarded inbound and takes no outbound', () => {
         const activity = context.getActivityById('join');
 
         activity.activate();
 
-        const leave = activity.waitFor('leave');
         activity.inbound[0].discard();
 
-        await leave;
-
-        expect(activity.counters).to.deep.equal({ taken: 0, discarded: 1 });
+        expect(activity.counters).to.deep.include({ taken: 0, discarded: 0 });
         const outboundFlow = activity.outbound[0];
-        expect(outboundFlow.counters).to.have.property('discard', 0);
-        expect(outboundFlow.counters).to.have.property('take', 0);
+        expect(outboundFlow.counters).to.include({ take: 0, discard: 0 });
       });
 
       it('takes outbound if one inbound is taken', async () => {

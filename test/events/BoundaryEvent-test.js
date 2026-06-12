@@ -864,7 +864,7 @@ describe('BoundaryEvent', () => {
 
         event.activate();
         task.activate();
-        task.inbound[0].discard();
+        task.discard();
 
         await leave;
 
@@ -1019,7 +1019,7 @@ describe('BoundaryEvent', () => {
 
         event.activate();
         task.activate();
-        task.inbound[0].discard();
+        task.discard();
 
         await leave;
 
@@ -1118,7 +1118,7 @@ describe('BoundaryEvent', () => {
 
         event.activate();
         task.activate();
-        task.inbound[0].discard();
+        task.discard();
 
         await leave;
 
@@ -1220,7 +1220,7 @@ describe('BoundaryEvent', () => {
 
         event.activate();
         task.activate();
-        task.inbound[0].discard();
+        task.discard();
 
         await leave;
 
@@ -1319,7 +1319,7 @@ describe('BoundaryEvent', () => {
         expect(task.counters).to.have.property('taken', 1);
       });
 
-      it('is discarded if attached inbound is discarded', async () => {
+      it('is discarded when attached is discarded', async () => {
         const task = context.getActivityById('service');
         const event = context.getActivityById('conditionalEvent');
 
@@ -1327,7 +1327,7 @@ describe('BoundaryEvent', () => {
 
         event.activate();
         task.activate();
-        task.inbound[0].discard();
+        task.discard();
 
         await leave;
 

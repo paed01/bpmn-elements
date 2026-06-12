@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_1cy7qf0" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.18.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bioc="http://bpmn.io/schema/bpmn/biocolor/1.0" xmlns:color="http://www.omg.org/spec/BPMN/non-normative/color/1.0" id="Definitions_1cy7qf0" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.47.0">
   <bpmn:process id="ActivityLifecycle" name="Activity Lifecycle" isExecutable="true">
     <bpmn:sequenceFlow id="toQueueInbound" sourceRef="inboundStart" targetRef="queueInbound" />
     <bpmn:sendTask id="activityEnter" name="activity.enter">
@@ -46,8 +46,8 @@
       <bpmn:incoming>toEnd</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:sequenceFlow id="toEnd" sourceRef="hasQueuedInbound" targetRef="waitForNextInbound" />
-    <bpmn:sequenceFlow id="isDiscarded" name="flow.discard" sourceRef="inboundType" targetRef="activityDiscard" />
-    <bpmn:sendTask id="activityDiscard" name="activity.discard">
+    <bpmn:sequenceFlow id="isDiscarded" name="flow.discard (&#60; 18)" sourceRef="inboundType" targetRef="activityDiscard" />
+    <bpmn:sendTask id="activityDiscard" name="activity.discard&#10;(&#60; v18)">
       <bpmn:incoming>isDiscarded</bpmn:incoming>
       <bpmn:outgoing>Flow_0qy9l2f</bpmn:outgoing>
     </bpmn:sendTask>
@@ -82,7 +82,7 @@
       <bpmn:incoming>toTakeOutbound</bpmn:incoming>
       <bpmn:outgoing>fromTakeOutbound</bpmn:outgoing>
     </bpmn:serviceTask>
-    <bpmn:serviceTask id="discardOutbound" name="discard outbound">
+    <bpmn:serviceTask id="discardOutbound" name="discard outbound&#10;(&#60; v18)">
       <bpmn:incoming>Flow_0qy9l2f</bpmn:incoming>
       <bpmn:incoming>Flow_0jt910d</bpmn:incoming>
       <bpmn:outgoing>fromDiscardOutbound</bpmn:outgoing>
@@ -138,6 +138,10 @@
           <dc:Bounds x="1671" y="288" width="60" height="27" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="SendTask_0iqy4fu_di" bpmnElement="activityDiscard" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="669" y="380" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="ParallelGateway_05ps6l4_di" bpmnElement="pendingLeave">
         <dc:Bounds x="1325" y="238" width="50" height="50" />
       </bpmndi:BPMNShape>
@@ -159,15 +163,13 @@
       <bpmndi:BPMNShape id="ServiceTask_1d4hgyx_di" bpmnElement="takeOutbound">
         <dc:Bounds x="1190" y="170" width="100" height="80" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="ServiceTask_18p83tx_di" bpmnElement="discardOutbound" bioc:stroke="#6b3c00" bioc:fill="#ffe0b2" color:background-color="#ffe0b2" color:border-color="#6b3c00">
+        <dc:Bounds x="1190" y="380" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0yzebwa_di" bpmnElement="activityError">
         <dc:Bounds x="930" y="300" width="100" height="80" />
         <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="SendTask_0iqy4fu_di" bpmnElement="activityDiscard">
-        <dc:Bounds x="669" y="380" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="ServiceTask_18p83tx_di" bpmnElement="discardOutbound">
-        <dc:Bounds x="1190" y="380" width="100" height="80" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_1qviybd_di" bpmnElement="Event_1jx865f">
         <dc:Bounds x="962" y="232" width="36" height="36" />
@@ -223,12 +225,12 @@
           <dc:Bounds x="1640" y="245" width="29" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="SequenceFlow_0cbegl4_di" bpmnElement="isDiscarded">
+      <bpmndi:BPMNEdge id="SequenceFlow_0cbegl4_di" bpmnElement="isDiscarded" bioc:stroke="#831311" color:border-color="#831311">
         <di:waypoint x="569" y="235" />
         <di:waypoint x="569" y="420" />
         <di:waypoint x="669" y="420" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="590" y="383" width="58" height="14" />
+          <dc:Bounds x="585" y="307" width="90" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="SequenceFlow_00ijgdj_di" bpmnElement="toActivityLeave">
@@ -260,13 +262,13 @@
         <di:waypoint x="980" y="268" />
         <di:waypoint x="980" y="300" />
       </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0qy9l2f_di" bpmnElement="Flow_0qy9l2f" bioc:stroke="#831311" color:border-color="#831311">
+        <di:waypoint x="769" y="420" />
+        <di:waypoint x="1190" y="420" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0jt910d_di" bpmnElement="Flow_0jt910d">
         <di:waypoint x="980" y="380" />
         <di:waypoint x="980" y="420" />
-        <di:waypoint x="1190" y="420" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0qy9l2f_di" bpmnElement="Flow_0qy9l2f">
-        <di:waypoint x="769" y="420" />
         <di:waypoint x="1190" y="420" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>

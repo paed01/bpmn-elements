@@ -339,4 +339,129 @@ Feature('Recover resume', () => {
       return leave;
     });
   });
+
+  Scenario('recover a converging parallel gateway with an updated source', () => {
+    const forkJoinSource = `<?xml version="1.0" encoding="UTF-8"?>
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+      <process id="migrate" isExecutable="true">
+        <startEvent id="start" />
+        <sequenceFlow id="to-fork" sourceRef="start" targetRef="fork" />
+        <parallelGateway id="fork" />
+        <sequenceFlow id="to-t1" sourceRef="fork" targetRef="t1" />
+        <sequenceFlow id="to-t2" sourceRef="fork" targetRef="t2" />
+        <userTask id="t1" />
+        <userTask id="t2" />
+        <sequenceFlow id="from-t1" sourceRef="t1" targetRef="join" />
+        <sequenceFlow id="from-t2" sourceRef="t2" targetRef="join" />
+        <parallelGateway id="join" />
+        <sequenceFlow id="to-end" sourceRef="join" targetRef="end" />
+        <endEvent id="end" />
+      </process>
+    </definitions>`;
+
+    let context, definition;
+    Given('a process forking to two user tasks and joining on a parallel gateway', async () => {
+      context = await testHelpers.context(forkJoinSource);
+      definition = new Definition(context);
+    });
+
+    When('ran', () => {
+      definition.run();
+    });
+
+    let state;
+    And('both parallel branches are waiting and state is saved', () => {
+      expect(definition.getPostponed().map((p) => p.id)).to.have.members(['t1', 't2']);
+      state = definition.getState();
+      definition.stop();
+    });
+
+    let leave;
+    const waiting = [];
+    When('recovered and resumed with an updated source that adds a task after the join', async () => {
+      const updatedSource = forkJoinSource.replace(
+        '<sequenceFlow id="to-end" sourceRef="join" targetRef="end" />',
+        `<sequenceFlow id="to-review" sourceRef="join" targetRef="review" />
+        <userTask id="review" />
+        <sequenceFlow id="review-end" sourceRef="review" targetRef="end" />`
+      );
+
+      context = await testHelpers.context(updatedSource);
+      definition = new Definition(context).recover(state);
+
+      leave = definition.waitFor('leave');
+      definition.on('wait', (api) => waiting.push(api.content.id));
+      definition.resume();
+    });
+
+    And('both waiting tasks are signalled', () => {
+      definition.signal({ id: 't1' });
+      definition.signal({ id: 't2' });
+    });
+
+    Then('the recovered parallel gateway converges and the run reaches the added task', () => {
+      expect(definition.getActivityById('join').counters).to.include({ taken: 1 });
+      expect(waiting, 'reached the task added in the updated source').to.include('review');
+    });
+
+    When('the added task is signalled', () => {
+      definition.signal({ id: 'review' });
+    });
+
+    Then('resumed run completes', () => {
+      return leave;
+    });
+  });
+
+  Scenario('recover a process whose association is removed in the updated source', () => {
+    const annotatedSource = `<?xml version="1.0" encoding="UTF-8"?>
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+      <process id="annotated" isExecutable="true">
+        <startEvent id="start" />
+        <sequenceFlow id="to-task" sourceRef="start" targetRef="task" />
+        <userTask id="task" />
+        <sequenceFlow id="to-end" sourceRef="task" targetRef="end" />
+        <endEvent id="end" />
+        <textAnnotation id="note"><text>review carefully</text></textAnnotation>
+        <association id="note-association" sourceRef="task" targetRef="note" />
+      </process>
+    </definitions>`;
+
+    let context, definition, state;
+    Given('a process with a task annotated through an association', async () => {
+      context = await testHelpers.context(annotatedSource);
+      definition = new Definition(context);
+    });
+
+    When('ran to the waiting task', () => {
+      definition.run();
+    });
+
+    And('state is saved with the association', () => {
+      expect(definition.getPostponed().map((p) => p.id)).to.include('task');
+      state = definition.getState();
+      definition.stop();
+    });
+
+    let leave;
+    When('recovered and resumed with a source where the annotation and association are removed', async () => {
+      const strippedSource = annotatedSource
+        .replace('<textAnnotation id="note"><text>review carefully</text></textAnnotation>', '')
+        .replace('<association id="note-association" sourceRef="task" targetRef="note" />', '');
+
+      context = await testHelpers.context(strippedSource);
+      definition = new Definition(context).recover(state);
+
+      leave = definition.waitFor('leave');
+      definition.resume();
+    });
+
+    And('the waiting task is signalled', () => {
+      definition.signal({ id: 'task' });
+    });
+
+    Then('resumed run completes despite the missing association', () => {
+      return leave;
+    });
+  });
 });

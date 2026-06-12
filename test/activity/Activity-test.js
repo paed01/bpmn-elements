@@ -238,7 +238,7 @@ describe('Activity', () => {
       expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 0);
     });
 
-    it('publishes activity discard with discarded flow', () => {
+    it('ignores a discarded inbound flow', () => {
       const sequenceFlows = [];
       const context = getContext({
         getInboundSequenceFlows() {
@@ -270,13 +270,8 @@ describe('Activity', () => {
 
       sequenceFlow.discard();
 
-      expect(message).to.be.ok;
-      expect(message.content.inbound).to.have.length(1);
-      expect(message.content.inbound[0]).to.include({
-        id: 'flow',
-        type: 'sequenceflow',
-        action: 'discard',
-      });
+      expect(message, 'no activity.discard').to.not.be.ok;
+      expect(activity.counters).to.have.property('discarded', 0);
       expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 0);
     });
 
@@ -388,7 +383,7 @@ describe('Activity', () => {
       expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 0);
     });
 
-    it('postponed activity starts next run when first two were discarded', () => {
+    it('postponed activity starts run on taken inbound, ignoring earlier discards', () => {
       const sequenceFlows = [];
       const context = getContext({
         getInboundSequenceFlows() {
@@ -430,7 +425,7 @@ describe('Activity', () => {
       expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 0);
     });
 
-    it('discards next run when completed with first', () => {
+    it('ignores discarded inbound after completing with first', () => {
       const sequenceFlows = [];
       const context = getContext({
         getInboundSequenceFlows() {
@@ -461,7 +456,7 @@ describe('Activity', () => {
       sequenceFlow.discard();
 
       expect(activity.counters).to.have.property('taken', 1);
-      expect(activity.counters).to.have.property('discarded', 3);
+      expect(activity.counters).to.have.property('discarded', 0);
     });
 
     it('forwards message from inbound to execution', () => {
@@ -865,29 +860,22 @@ describe('Activity', () => {
       await leave;
     });
 
-    it('next run can be discarded by discard', async () => {
+    it('running activity can be discarded by discard', () => {
       const activity = getActivity(undefined, behaviours.Behaviour);
 
       activity.activate();
 
-      const leave = activity.waitFor('leave');
-
-      activity.inbound[0].discard();
       activity.inbound[0].take();
 
-      await leave;
-
       expect(activity).to.have.property('status', 'executing');
-      expect(activity.counters).to.have.property('discarded', 1);
-
       expect(activity.broker.getExchange('api')).to.have.property('bindingCount', 2);
 
       activity.discard();
 
-      expect(activity.counters).to.have.property('discarded', 2);
+      expect(activity.counters).to.have.property('discarded', 1);
     });
 
-    it('next run can be discarded by api', async () => {
+    it('running activity can be discarded by api', () => {
       let executeMessage;
       function SpecialBehaviour() {
         return {
@@ -900,21 +888,14 @@ describe('Activity', () => {
 
       activity.activate();
 
-      const leave = activity.waitFor('leave');
-
-      activity.inbound[0].discard();
       activity.inbound[0].take();
 
-      await leave;
-
       expect(activity).to.have.property('status', 'executing');
-      expect(activity.counters).to.have.property('discarded', 1);
-
       expect(activity.broker.getExchange('api')).to.have.property('bindingCount', 2);
 
       activity.getApi(executeMessage).discard();
 
-      expect(activity.counters).to.have.property('discarded', 2);
+      expect(activity.counters).to.have.property('discarded', 1);
     });
   });
 
@@ -988,20 +969,14 @@ describe('Activity', () => {
       expect(activity.broker.consumerCount, 'no consumers').to.equal(0);
     });
 
-    it('next run can be stopped', async () => {
+    it('running activity can be stopped', () => {
       const activity = getActivity(undefined, behaviours.Behaviour);
 
       activity.activate();
 
-      const leave = activity.waitFor('leave');
-
-      activity.inbound[0].discard();
       activity.inbound[0].take();
 
-      await leave;
-
       expect(activity).to.have.property('status', 'executing');
-      expect(activity.counters).to.have.property('discarded', 1);
 
       expect(activity.broker.getExchange('api')).to.have.property('bindingCount', 2);
 
@@ -1012,7 +987,7 @@ describe('Activity', () => {
       expect(activity.broker.getQueue('format-run-q')).to.have.property('consumerCount', 0);
     });
 
-    it('next run can be stopped by api', async () => {
+    it('running activity can be stopped by api', () => {
       let executeMessage;
       function SpecialBehaviour() {
         return {
@@ -1025,15 +1000,9 @@ describe('Activity', () => {
 
       activity.activate();
 
-      const leave = activity.waitFor('leave');
-
-      activity.inbound[0].discard();
       activity.inbound[0].take();
 
-      await leave;
-
       expect(activity).to.have.property('status', 'executing');
-      expect(activity.counters).to.have.property('discarded', 1);
 
       expect(activity.broker.getExchange('api')).to.have.property('bindingCount', 2);
 
@@ -1711,7 +1680,7 @@ describe('Activity', () => {
       expect(activity.broker.getQueue('inbound-q')).to.have.property('messageCount', 0);
     });
 
-    it('discards activity with discard sequence if attachedTo is discarded', () => {
+    it('discards activity if attachedTo is discarded', () => {
       const attachedTo = {
         id: 'task',
         parent: {
@@ -1750,11 +1719,10 @@ describe('Activity', () => {
         message = msg;
       });
 
-      attachedTo.broker.publish('event', 'activity.discard', { id: 'task', type: 'bpmn:ServiceTask', discardSequence: ['start'] });
+      attachedTo.broker.publish('event', 'activity.discard', { id: 'task', type: 'bpmn:ServiceTask' });
 
       expect(message).to.be.ok;
       expect(message.content.inbound).to.have.length(1);
-      expect(message.content.discardSequence).to.eql(['start']);
       expect(message.content.inbound[0]).to.include({
         id: 'task',
         type: 'bpmn:ServiceTask',

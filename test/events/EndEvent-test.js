@@ -112,7 +112,7 @@ describe('EndEvent', () => {
   });
 
   describe('with multiple inbounds', () => {
-    it('publish enter or discard on each inbound', () => {
+    it('publishes enter only on taken inbound, ignoring discarded inbound', () => {
       const parent = { id: 'process' };
       const context = testHelpers.emptyContext({
         getInboundSequenceFlows() {
@@ -170,17 +170,13 @@ describe('EndEvent', () => {
       context.getInboundSequenceFlows()[2].discard();
 
       expect(event.counters).to.have.property('taken', 1);
-      expect(event.counters).to.have.property('discarded', 2);
+      expect(event.counters).to.have.property('discarded', 0);
 
-      expect(messages).to.have.length(3);
+      expect(messages).to.have.length(1);
 
       expect(messages[0].content).to.have.property('inbound').with.length(1);
-      expect(messages[0].content.inbound[0]).to.have.property('id', 'flow1');
-      expect(messages[0].content.inbound[0]).to.have.property('action', 'discard');
-      expect(messages[1].content.inbound[0]).to.have.property('id', 'flow2');
-      expect(messages[1].content.inbound[0]).to.have.property('action', 'take');
-      expect(messages[2].content.inbound[0]).to.have.property('id', 'flow3');
-      expect(messages[2].content.inbound[0]).to.have.property('action', 'discard');
+      expect(messages[0].content.inbound[0]).to.have.property('id', 'flow2');
+      expect(messages[0].content.inbound[0]).to.have.property('action', 'take');
     });
   });
 });

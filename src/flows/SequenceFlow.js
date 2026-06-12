@@ -68,8 +68,9 @@ SequenceFlow.prototype.take = function take(content) {
 };
 
 /**
- * Discard the flow and publish flow.discard. Detects loops via discardSequence and emits
- * flow.looped instead when the target id is already in the sequence.
+ * Discard the flow and publish flow.discard.
+ *
+ * @deprecated The execution runtime no longer discards sequence flows, so this is a no-op during a run. It will be removed in a future version.
  * @param {Record<string, any>} [content]
  */
 SequenceFlow.prototype.discard = function discard(content = {}) {

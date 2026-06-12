@@ -887,7 +887,7 @@ describe('activity', () => {
 
           const stopped = activity.waitFor('stop');
           activity.activate();
-          activity.inbound[0].discard();
+          activity.discard();
 
           await stopped;
 
@@ -929,7 +929,7 @@ describe('activity', () => {
 
           const stopped = activity.waitFor('stop');
           activity.activate();
-          activity.inbound[0].discard();
+          activity.discard();
 
           await stopped;
 
@@ -992,7 +992,7 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        it('discards if inbound discarded', async function discards() {
+        it('ignores a discarded inbound', function discards() {
           if (activityType === 'bpmn:ParallelGateway') return this.skip();
 
           const messages = [];
@@ -1006,17 +1006,11 @@ describe('activity', () => {
             { noAck: true }
           );
 
-          const completed = activity.waitFor('leave');
-
           activity.activate();
           activity.inbound[0].discard();
 
-          await completed;
-
-          const assertMessage = AssertMessage(context, messages, true);
-          assertMessage('activity.discard');
-          assertMessage('activity.leave');
-          expect(messages, 'no more messages').to.have.length(0);
+          expect(messages, 'no activity messages').to.have.length(0);
+          expect(activity.counters).to.deep.include({ taken: 0, discarded: 0 });
         });
       });
     });
@@ -1062,7 +1056,7 @@ describe('activity', () => {
             expect(messages, 'no more messages').to.have.length(0);
           });
 
-          it('discards if first inbound discarded', async () => {
+          it('ignores a discarded first inbound', () => {
             const messages = [];
             activity.broker.subscribeTmp(
               'event',
@@ -1074,17 +1068,11 @@ describe('activity', () => {
               { noAck: true }
             );
 
-            const completed = activity.waitFor('leave');
-
             activity.activate();
             activity.inbound[0].discard();
 
-            await completed;
-
-            const assertMessage = AssertMessage(context, messages, true);
-            assertMessage('activity.discard');
-            assertMessage('activity.leave');
-            expect(messages, 'no more messages').to.have.length(0);
+            expect(messages, 'no activity messages').to.have.length(0);
+            expect(activity.counters).to.deep.include({ taken: 0, discarded: 0 });
           });
         });
       });
