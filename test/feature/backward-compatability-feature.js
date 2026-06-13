@@ -89,4 +89,25 @@ Feature('Backward compatability', () => {
       return leave;
     });
   });
+
+  Scenario('State is stamped with a state version', () => {
+    let context;
+    before(async () => {
+      context = await testHelpers.context(motherOfAllSource);
+    });
+
+    let definition, state;
+    Given('a running definition', () => {
+      definition = new Definition(context);
+      definition.run();
+    });
+
+    When('state is saved', () => {
+      state = definition.getState();
+    });
+
+    Then('it is stamped with a positive state version', () => {
+      expect(state.stateVersion).to.be.a('number').that.is.above(0);
+    });
+  });
 });

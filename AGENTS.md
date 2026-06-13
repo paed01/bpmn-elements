@@ -6,6 +6,7 @@ This file provides guidance to coding agents (Claude Code, and any tool that rea
 
 - **TDD is the default.** Red → green → refactor: write or adjust a failing test before changing implementation. Don't delete or weaken existing assertions to land a change — extend them.
 - **Performance and coverage are the project's USP.** Avoid regressions in either. On hot paths (broker dispatch, flow traversal, activity activation, joins, multi-instance loops), prefer existing `Context` Maps/refs over rebuilt scans, and avoid per-message allocations/closures where they can be hoisted.
+- **JSDoc is concise.** Short intent descriptions are fine; never describe internal implementation.
 - Before declaring done: `npm test` (full suite + lint + `dist` rebuild). For coverage-sensitive work, also `npm run cov:html`.
 
 ## Commands
@@ -46,6 +47,8 @@ An element type like `ServiceTask` is not a class. It is a factory function that
 
 When an activity is activated, `ActivityExecution` instantiates the Behaviour and calls its `execute`. To replace an element type entirely, supply a new Behaviour — see `docs/Extend.md`.
 
+To identify an element's kind at runtime, compare its `Behaviour` (`entity.Behaviour === StartEvent`) rather than the `type` string — type strings can be customized via the `types` extension.
+
 ### `Context` and `Environment`
 
 - `src/Context.js` is a per-execution **registry and lazy factory**. It stores activities, flows, and processes in `refs` Maps and instantiates them on first access via `upsertActivity` / `upsertSequenceFlow` / `upsertProcess`. It bridges the parsed moddle context (from `bpmn-moddle` via `moddle-context-serializer`) to runtime instances and wires extensions through `ExtensionsMapper`. Contexts are cheap to clone and are isolated per execution scope.
@@ -62,6 +65,12 @@ Documented in `docs/Extend.md` and `docs/Extension.md`:
 1. **Replace a Behaviour** by passing `{ types: { 'bpmn:StartEvent': MyStartEvent } }` to `Definition`. Use when you need full control over an element's execution.
 2. **Non-invasive extension hooks** via `{ extensions: { myExt(activity, context) { … } } }`. Each extension runs once per activity after instantiation and typically attaches listeners or publishes format messages — used for cross-cutting concerns (forms, logging, output capture).
 
+### State & behavioral invariants
+
+- **No flow discards.** Outbound sequence flows are never discarded; flow and activity `discarded` counters stay `0`. There is no `skipDiscard` setting. Parallel joins rely on cached gateway peers, not on discarded flows.
+- **Multiple start events are mutually exclusive entry points.** The first start event to fire discards the others still armed, so two start branches can never both run.
+- **`stateVersion`.** `Definition.getState()` stamps `stateVersion` (the package major, hardcoded in `src/constants.js`); recovering an older major triggers migrations (e.g. start event reconciliation on resume). Unstamped legacy states are treated as version `0`. Bump the constant on each major release.
+
 ## Testing patterns
 
 - Framework: mocha + `mocha-cakes-2` BDD UI. `Feature` / `Scenario` / `Given` / `When` / `Then` / `And` / `But` are globals in test files (declared in `eslint.config.js`). Chai `expect` is registered globally via `test/helpers/setup.js`.
@@ -69,3 +78,4 @@ Documented in `docs/Extend.md` and `docs/Extension.md`:
 - BPMN sources: raw XML templates in `test/helpers/factory.js` (helpers like `factory.valid()`, `factory.userTask()`, `factory.resource('name')`) plus `.bpmn` files under `test/resources/`.
 - Primary helper: `test/helpers/testHelpers.js` — `context(source, options)` parses BPMN via `bpmn-moddle`, serializes via `moddle-context-serializer`, and returns a runtime `Context`. Also exposes `Logger`, `emptyContext`, and `AssertMessage` for asserting broker message sequences.
 - `test/helpers/JavaScripts.js` is a mock Scripts engine for isolating ScriptTask tests.
+- Don't assert on logging — captured `logger.warn`/`debug` output is not part of the tested contract.

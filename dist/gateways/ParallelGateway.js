@@ -37,7 +37,8 @@ function ParallelGateway(activityDef, context) {
   const cachedPeers = context.getShakenPeers(id);
   if (cachedPeers) {
     for (const [flowId, sourceIds] of cachedPeers) {
-      const peer = peers.get(flowId);
+      let peer = peers.get(flowId);
+      if (!peer) peers.set(flowId, peer = new Set());
       for (const sourceId of sourceIds) peer.add(sourceId);
     }
     activity[K_PEERS_DISCOVERED] = true;

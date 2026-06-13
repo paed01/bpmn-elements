@@ -190,10 +190,11 @@ Process.prototype.getState = function getState() {
 /**
  * Restore process state captured by getState.
  * @param {import('#types').ProcessState} [state]
+ * @param {number} [recoveredVersion] State version
  * @returns {this}
  * @throws {Error} when called on a running process
  */
-Process.prototype.recover = function recover(state) {
+Process.prototype.recover = function recover(state, recoveredVersion) {
   if (this.isRunning) throw new Error(`cannot recover running process <${this.id}>`);
   if (!state) return this;
 
@@ -205,7 +206,7 @@ Process.prototype.recover = function recover(state) {
   this.environment.recover(state.environment);
 
   if (state.execution) {
-    exec.set('execution', new ProcessExecution(this, this.context).recover(state.execution));
+    exec.set('execution', new ProcessExecution(this, this.context).recover(state.execution, recoveredVersion));
   }
 
   this.broker.recover(state.broker);

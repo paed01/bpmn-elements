@@ -407,6 +407,8 @@ declare module 'bpmn-elements' {
   }
 
   export interface DefinitionState extends ElementState {
+	/** State version. Absent on states saved before versioning. */
+	stateVersion?: number;
 	status: DefinitionStatus;
 	stopped: boolean;
 	executionId?: string;
@@ -1046,8 +1048,9 @@ declare module 'bpmn-elements' {
 		resume(): number | undefined;
 		/**
 		 * Restore execution state captured by getState. Reinstates running processes from the snapshot.
+		 * @param recoveredVersion State version
 		 * */
-		recover(state?: DefinitionExecutionState): this;
+		recover(state?: DefinitionExecutionState, recoveredVersion?: number): this;
 		/**
 		 * Stop the running execution via the api.
 		 */
@@ -1472,9 +1475,10 @@ declare module 'bpmn-elements' {
 		getState(): ProcessState;
 		/**
 		 * Restore process state captured by getState.
+		 * @param recoveredVersion State version
 		 * @throws {Error} when called on a running process
 		 */
-		recover(state?: ProcessState): this;
+		recover(state?: ProcessState, recoveredVersion?: number): this;
 		/**
 		 * Walk activity graph from the given start id, or every start activity when omitted.
 		 * */
@@ -1660,8 +1664,9 @@ declare module 'bpmn-elements' {
 		getState(): ProcessExecutionState;
 		/**
 		 * Restore execution state captured by getState.
+		 * @param recoveredVersion State version
 		 * */
-		recover(state?: ProcessExecutionState): this;
+		recover(state?: ProcessExecutionState, recoveredVersion?: number): this;
 		/**
 		 * Walk activity graph from the given start id, or every start activity when omitted.
 		 * */

@@ -2,13 +2,14 @@ import { ProcessApi } from '../Api.js';
 import { cloneContent, cloneMessage, pushParent } from '../messageHelper.js';
 import { getUniqueId } from '../shared.js';
 import { ActivityTracker } from '../Tracker.js';
-import { K_ACTIVATED, K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_HANDLERS, K_STATUS, K_STOPPED } from '../constants.js';
+import { K_ACTIVATED, K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_HANDLERS, K_STATUS, K_STOPPED, STATE_VERSION } from '../constants.js';
 
 const K_ACTIVITY_Q = Symbol.for('activityQ');
 const K_ELEMENTS = Symbol.for('elements');
 const K_PARENT = Symbol.for('parent');
 const K_TRACKER = Symbol.for('activity tracker');
 const K_PEERS_DISCOVERED = Symbol.for('peers discovered');
+const K_RECOVERED_VERSION = Symbol.for('recovered version');
 
 /**
  * Drives the execution of a single process or sub-process: activates children, routes activity
@@ -166,6 +167,10 @@ ProcessExecution.prototype.resume = function resume() {
 
   if (this[K_COMPLETED]) return;
 
+  this._reconcileStartEvents();
+
+  if (this[K_COMPLETED]) return;
+
   if (!postponed.size && status === 'executing') return this._complete('completed');
 };
 
@@ -204,11 +209,13 @@ ProcessExecution.prototype.getState = function getState() {
 /**
  * Restore execution state captured by getState.
  * @param {import('#types').ProcessExecutionState} [state]
+ * @param {number} [recoveredVersion] State version
  * @returns {this}
  */
-ProcessExecution.prototype.recover = function recover(state) {
+ProcessExecution.prototype.recover = function recover(state, recoveredVersion) {
   if (!state) return this;
   this.executionId = state.executionId;
+  this[K_RECOVERED_VERSION] = recoveredVersion;
 
   this[K_STOPPED] = state.stopped;
   this[K_COMPLETED] = state.completed;
@@ -738,17 +745,9 @@ ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey,
       break;
     }
     case 'activity.end': {
-      if (!content.isStartEvent) break;
-      const elements = this[K_ELEMENTS];
-      if (elements.startEventCount <= 1) break;
-
-      const startPeers = new Set();
-      for (const msg of elements.postponed) {
-        const peerId = msg.content.id;
-        if (peerId !== content.id && msg.content.isStartEvent) startPeers.add(msg);
-      }
-      elements.startEventCount = 0;
-      for (const msg of startPeers) this._getChildApi(msg).discard();
+      if (!(content.isStartEvent || this.getActivityById(content.id)?.isStartEvent)) break;
+      if (this[K_ELEMENTS].startEventCount <= 1) break;
+      this._discardArmedStartEvents(content.id);
       break;
     }
     case 'activity.error': {
@@ -1053,6 +1052,43 @@ ProcessExecution.prototype._getMessageFlowById = function getMessageFlowById(flo
 /** @internal */
 ProcessExecution.prototype._getChildById = function getChildById(childId) {
   return this.getActivityById(childId) || this._getFlowById(childId);
+};
+
+/**
+ * Discard the other armed start events once one mutually exclusive entry point wins.
+ * Resolves the start-event flag from the live activity so recovered pre-flag state is handled.
+ * @internal
+ */
+ProcessExecution.prototype._discardArmedStartEvents = function discardArmedStartEvents(winnerId) {
+  const elements = this[K_ELEMENTS];
+  const startPeers = [];
+  for (const msg of elements.postponed) {
+    const peerId = msg.content.id;
+    if (peerId === winnerId) continue;
+    if (this.getActivityById(peerId)?.isStartEvent) startPeers.push(msg);
+  }
+  if (!startPeers.length) return;
+  elements.startEventCount = 0;
+  for (const msg of startPeers) this._getChildApi(msg).discard();
+};
+
+/**
+ * On resume of a state from an older major, discard start events left armed when another entry
+ * point already won before recovery. The winning start event's `activity.end` cannot replay, so
+ * the live discard trigger never fires.
+ * @internal
+ */
+ProcessExecution.prototype._reconcileStartEvents = function reconcileStartEvents() {
+  const elements = this[K_ELEMENTS];
+  if (elements.startEventCount <= 1) return;
+  if (!(this[K_RECOVERED_VERSION] < STATE_VERSION)) return;
+
+  for (const child of elements.children) {
+    if (child.isStartEvent && child.counters.taken) {
+      this._discardArmedStartEvents();
+      return;
+    }
+  }
 };
 
 /** @internal */

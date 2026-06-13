@@ -1,5 +1,15 @@
 # Changelog
 
+## v18.0.1 - 2026-06-13
+
+### Fixes
+
+- enforce mutually exclusive start events on recover: a recovered state where one entry point already won, or a legacy state serialized before the `isStartEvent` flag existed, now correctly discards the start events still left armed instead of resuming them as live entry points
+
+### Additions
+
+- serialized definition state is stamped with a `stateVersion` tracking the package major; recovering an older major (legacy unstamped states are treated as version `0`) triggers migrations such as the start event reconciliation above
+
 ## v18.0.0 - 2026-06-11
 
 Refactor parallel converging and forking gateways, and treat multiple start events as mutually exclusive entry points. As a result of the parallel gateway keeping track of peers there is no need for discarding a sequence flows.

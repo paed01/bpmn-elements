@@ -176,6 +176,7 @@ Definition.prototype.resume = function resume(callback) {
  */
 Definition.prototype.getState = function getState() {
   return this._createMessage({
+    stateVersion: _constants.STATE_VERSION,
     status: this.status,
     stopped: this.stopped,
     counters: this.counters,
@@ -194,6 +195,10 @@ Definition.prototype.getState = function getState() {
 Definition.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error('cannot recover running definition');
   if (!state) return this;
+  const recoveredVersion = state.stateVersion || 0;
+  if (recoveredVersion !== _constants.STATE_VERSION) {
+    this.logger.debug(`<${this.id}> recover state version ${recoveredVersion} into runtime state version ${_constants.STATE_VERSION}`);
+  }
   this[_constants.K_STOPPED] = !!state.stopped;
   this[_constants.K_STATUS] = state.status;
   const exec = this[_constants.K_EXECUTION];
@@ -206,7 +211,7 @@ Definition.prototype.recover = function recover(state) {
   }
   this.environment.recover(state.environment);
   if (state.execution) {
-    exec.set('execution', new _DefinitionExecution.DefinitionExecution(this, this.context).recover(state.execution));
+    exec.set('execution', new _DefinitionExecution.DefinitionExecution(this, this.context).recover(state.execution, recoveredVersion));
   }
   this.broker.recover(state.broker);
   return this;

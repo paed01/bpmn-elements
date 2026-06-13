@@ -454,6 +454,121 @@ Feature('Multiple start events', () => {
     });
   });
 
+  Scenario('Recover a pre-flag state where the start events are still armed', () => {
+    // State saved before the isStartEvent flag existed lacks it on persisted messages.
+    function stripStartEventFlag(value) {
+      if (Array.isArray(value)) return value.forEach(stripStartEventFlag);
+      if (value && typeof value === 'object') {
+        delete value.isStartEvent;
+        for (const key of Object.keys(value)) stripStartEventFlag(value[key]);
+      }
+    }
+
+    let state;
+    Given('a stopped process state without the isStartEvent flag while all entry points are armed', async () => {
+      const definition = new Definition(await testHelpers.context(startAndReceiveSource));
+      definition.run();
+      definition.stop();
+      state = JSON.parse(JSON.stringify(definition.getState()));
+      stripStartEventFlag(state);
+      delete state.stateVersion;
+    });
+
+    let recovered, leave;
+    When('the legacy state is recovered and resumed', async () => {
+      recovered = new Definition(await testHelpers.context(startAndReceiveSource)).recover(state);
+      leave = recovered.waitFor('leave');
+      recovered.resume();
+    });
+
+    Then('all entry points are armed in the recovered definition', () => {
+      expect(recovered.getPostponed().map(({ id }) => id)).to.have.members(['start1', 'start2', 'receive']);
+    });
+
+    When('the first start event is signaled after resume', () => {
+      recovered.signal({ id: 'Signal1' });
+    });
+
+    Then('the first start event ran and the second is discarded as an alternative entry point', () => {
+      expect(recovered.getActivityById('start1').counters).to.include({ taken: 1 });
+      expect(recovered.getActivityById('start2').counters).to.include({ taken: 0, discarded: 1 });
+    });
+
+    And('only the receive task is left armed', () => {
+      expect(recovered.getPostponed().map(({ id }) => id)).to.deep.equal(['receive']);
+    });
+
+    When('the receive task is signaled with its message', () => {
+      recovered.sendMessage({ id: 'Message1' });
+    });
+
+    Then('the recovered process completed', async () => {
+      await leave;
+      expect(recovered.counters).to.include({ completed: 1 });
+    });
+  });
+
+  Scenario('Recover a state where one entry point already won before recovery', () => {
+    let state;
+    Given('a stopped process state where the first start event already ran but the second is still armed', async () => {
+      // Pre-mutual-exclusion behaviour left alternative entry points concurrently armed.
+      // Reconstruct it: the winning start event has left, the losing start event is still armed.
+      const armedDefinition = new Definition(await testHelpers.context(startAndReceiveSource));
+      armedDefinition.run();
+      armedDefinition.stop();
+      const armed = JSON.parse(JSON.stringify(armedDefinition.getState()));
+
+      const advancedDefinition = new Definition(await testHelpers.context(startAndReceiveSource));
+      advancedDefinition.run();
+      advancedDefinition.signal({ id: 'Signal1' });
+      advancedDefinition.stop();
+      state = JSON.parse(JSON.stringify(advancedDefinition.getState()));
+
+      const armedProc = armed.execution.processes[0];
+      const proc = state.execution.processes[0];
+
+      const armedStart2 = armedProc.execution.children.find((c) => c.id === 'start2');
+      const children = proc.execution.children;
+      children[children.findIndex((c) => c.id === 'start2')] = armedStart2;
+
+      const armedQueue = armedProc.broker.queues.find((q) => /execute-/.test(q.name));
+      const queue = proc.broker.queues.find((q) => /execute-/.test(q.name));
+      queue.messages = queue.messages.filter((m) => m.content?.id !== 'start2');
+      queue.messages.push(armedQueue.messages.find((m) => m.content.id === 'start2'));
+
+      // This shape only arises from a major before start events became mutually exclusive.
+      delete state.stateVersion;
+    });
+
+    let recovered, leave;
+    When('the state is recovered and resumed', async () => {
+      recovered = new Definition(await testHelpers.context(startAndReceiveSource)).recover(JSON.parse(JSON.stringify(state)));
+      leave = recovered.waitFor('leave');
+      recovered.resume();
+    });
+
+    Then('the start event that already won is kept', () => {
+      expect(recovered.getActivityById('start1').counters).to.include({ taken: 1 });
+    });
+
+    And('the start event still armed is discarded as an alternative entry point', () => {
+      expect(recovered.getActivityById('start2').counters).to.include({ taken: 0, discarded: 1 });
+    });
+
+    And('only the receive task is left armed', () => {
+      expect(recovered.getPostponed().map(({ id }) => id)).to.deep.equal(['receive']);
+    });
+
+    When('the receive task is signaled with its message', () => {
+      recovered.sendMessage({ id: 'Message1' });
+    });
+
+    Then('the recovered process completed', async () => {
+      await leave;
+      expect(recovered.counters).to.include({ completed: 1 });
+    });
+  });
+
   Scenario('A timer start event combined with a signal start event', () => {
     const source = `<?xml version="1.0" encoding="UTF-8"?>
     <definitions id="def" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">

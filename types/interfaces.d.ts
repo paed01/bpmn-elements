@@ -505,6 +505,8 @@ export interface DefinitionExecutionState {
 }
 
 export interface DefinitionState extends ElementState {
+  /** State version. Absent on states saved before versioning. */
+  stateVersion?: number;
   status: DefinitionStatus;
   stopped: boolean;
   executionId?: string;

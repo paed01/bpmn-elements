@@ -13,3 +13,9 @@ export const K_STATE_MESSAGE = Symbol.for('stateMessage');
 export const K_STATUS = Symbol.for('status');
 export const K_STOPPED = Symbol.for('stopped');
 export const K_TARGETS = Symbol.for('targets');
+
+/**
+ * State version. Tracks the package major; bump on each major. Recovering an older major triggers
+ * migrations. Unstamped legacy states are treated as version 0.
+ */
+export const STATE_VERSION = 18;

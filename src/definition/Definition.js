@@ -13,6 +13,7 @@ import {
   K_STATE_MESSAGE,
   K_STATUS,
   K_STOPPED,
+  STATE_VERSION,
 } from '../constants.js';
 
 /**
@@ -181,6 +182,7 @@ Definition.prototype.resume = function resume(callback) {
  */
 Definition.prototype.getState = function getState() {
   return this._createMessage({
+    stateVersion: STATE_VERSION,
     status: this.status,
     stopped: this.stopped,
     counters: this.counters,
@@ -200,6 +202,11 @@ Definition.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error('cannot recover running definition');
   if (!state) return this;
 
+  const recoveredVersion = state.stateVersion || 0;
+  if (recoveredVersion !== STATE_VERSION) {
+    this.logger.debug(`<${this.id}> recover state version ${recoveredVersion} into runtime state version ${STATE_VERSION}`);
+  }
+
   this[K_STOPPED] = !!state.stopped;
   this[K_STATUS] = state.status;
 
@@ -212,7 +219,7 @@ Definition.prototype.recover = function recover(state) {
   this.environment.recover(state.environment);
 
   if (state.execution) {
-    exec.set('execution', new DefinitionExecution(this, this.context).recover(state.execution));
+    exec.set('execution', new DefinitionExecution(this, this.context).recover(state.execution, recoveredVersion));
   }
 
   this.broker.recover(state.broker);

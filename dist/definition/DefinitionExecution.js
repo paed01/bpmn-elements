@@ -186,9 +186,10 @@ DefinitionExecution.prototype.resume = function resume() {
 /**
  * Restore execution state captured by getState. Reinstates running processes from the snapshot.
  * @param {import('#types').DefinitionExecutionState} [state]
+ * @param {number} [recoveredVersion] State version
  * @returns {this}
  */
-DefinitionExecution.prototype.recover = function recover(state) {
+DefinitionExecution.prototype.recover = function recover(state, recoveredVersion) {
   if (!state) return this;
   this.executionId = state.executionId;
   this[_constants.K_STOPPED] = state.stopped;
@@ -208,7 +209,7 @@ DefinitionExecution.prototype.recover = function recover(state) {
     }
     if (!bp) continue;
     ids.add(bpid);
-    bp.recover(bpState);
+    bp.recover(bpState, recoveredVersion);
     running.add(bp);
   }
   return this;
