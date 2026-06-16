@@ -44,9 +44,9 @@ Object.defineProperty(BoundaryEventBehaviour.prototype, 'executionId', {
   }
 });
 Object.defineProperty(BoundaryEventBehaviour.prototype, 'cancelActivity', {
+  /** @returns {boolean} */
   get() {
-    const behaviour = this.activity.behaviour || {};
-    return 'cancelActivity' in behaviour ? behaviour.cancelActivity : true;
+    return this.activity.behaviour?.cancelActivity ?? true;
   }
 });
 

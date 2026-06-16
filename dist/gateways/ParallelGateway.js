@@ -76,11 +76,15 @@ function ParallelGatewayBehaviour(activity) {
   this.type = activity.type;
   this.activity = activity;
   this.broker = activity.broker;
+  /**
+   * Inbound taken sequence flow sequences
+   * @type {Set<import('#types').ElementMessageContent}
+   */
   this.inbound = new Set();
-  this.isConverging = true;
   this[_constants.K_EXECUTE_MESSAGE] = undefined;
 }
 Object.defineProperty(ParallelGatewayBehaviour.prototype, 'executionId', {
+  /** @returns {string | undefined} */
   get() {
     return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }
@@ -110,6 +114,12 @@ ParallelGatewayBehaviour.prototype.execute = function execute(executeMessage) {
     }
   }
 };
+
+/**
+ * Setup peer monitor
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 ParallelGatewayBehaviour.prototype.setup = function setup(executeMessage) {
   const peerIds = new Set([...this.activity[K_PEERS].values()].map(v => [...v]).flat());
   this[_constants.K_TARGETS] = new Map([...peerIds].map(pid => [pid, this.activity.getActivityById(pid)]));
@@ -142,9 +152,7 @@ ParallelGatewayBehaviour.prototype.setup = function setup(executeMessage) {
     exclusive: true,
     prefetch: 10000
   });
-  if (this.isConverging) {
-    this.broker.publish('event', 'activity.converge', (0, _messageHelper.cloneContent)(executeContent));
-  }
+  this.broker.publish('event', 'activity.converge', (0, _messageHelper.cloneContent)(executeContent));
   return this.broker.publish('execution', 'execute.start', (0, _messageHelper.cloneContent)(executeMessage.content, {
     preventComplete: true,
     state: STATE_SETUP
@@ -179,17 +187,19 @@ ParallelGatewayBehaviour.prototype._stop = function stop() {
   this.broker.cancel('_parallel-execution-peer-enter-tag');
   this.peerMonitor.stop();
 };
+
+/**
+ * Peer monitor
+ * @param {import('#types').Activity} activity parallel gateway activity
+ * @param {Map<string, import('#types').Activity} targets parallel gateway peer target activities
+ */
 function PeerMonitor(activity, targets) {
   this.activity = activity;
   this.id = activity.id;
   this.broker = activity.broker;
-  this.running = 0;
-  this.index = 0;
-  this.discarded = 0;
   this.running = new Map();
   this.watching = new Map();
   this.targets = targets;
-  this.touched = new Set();
   this.inbound = [];
 }
 Object.defineProperty(PeerMonitor.prototype, 'isRunning', {
@@ -197,6 +207,12 @@ Object.defineProperty(PeerMonitor.prototype, 'isRunning', {
     return this.running.size > 0;
   }
 });
+
+/**
+ * Execute peer monitor
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {number} number of running peers
+ */
 PeerMonitor.prototype.execute = function execute(executeMessage) {
   const message = (0, _messageHelper.cloneMessage)(executeMessage);
   const inbound = message.content.inbound.pop();
@@ -208,12 +224,16 @@ PeerMonitor.prototype.execute = function execute(executeMessage) {
     state: STATE_MONTITORING,
     preventComplete: true
   });
-  this.touched.add(inbound.sourceId);
   for (const target of this.targets.values()) {
     this.monitor(target);
   }
   return this.running.size;
 };
+
+/**
+ * Monitor peer activity
+ * @param {import('#types').Activity} peerActivity
+ */
 PeerMonitor.prototype.monitor = function monitor(peerActivity) {
   if (this.watching.has(peerActivity.id)) return;
   this.activity.logger.debug(`<${this.id}> monitor <${peerActivity.id}> with status: ${peerActivity.status}`);

@@ -1950,7 +1950,7 @@ declare module 'bpmn-elements' {
 		environment: Environment;
 		broker: ElementBroker<Activity>;
 		get executionId(): string | undefined;
-		get cancelActivity(): any;
+		get cancelActivity(): boolean;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 	}
@@ -2106,29 +2106,48 @@ declare module 'bpmn-elements' {
 		type: string;
 		activity: Activity;
 		broker: ElementBroker<Activity>;
-		inbound: Set<any>;
-		isConverging: boolean;
-		get executionId(): any;
+		/**
+		 * Inbound taken sequence flow sequences
+		 * */
+		inbound: Set<ElementMessageContent>;
+		get executionId(): string | undefined;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
-		setup(executeMessage: any): number | undefined;
+		/**
+		 * Setup peer monitor
+		 * */
+		setup(executeMessage: ElementBrokerMessage): void;
 		peerMonitor: PeerMonitor | undefined;
 	}
+	/**
+	 * Peer monitor
+	 * @param activity parallel gateway activity
+	 * @param targets parallel gateway peer target activities
+	 */
 		class PeerMonitor {
-		constructor(activity: any, targets: any);
-		activity: any;
-		id: any;
-		broker: any;
+		/**
+		 * Peer monitor
+		 * @param activity parallel gateway activity
+		 * @param targets parallel gateway peer target activities
+		 */
+		constructor(activity: Activity, targets: Map<string, Activity>);
+		activity: Activity;
+		id: string | undefined;
+		broker: ElementBroker<Activity>;
 		running: Map<any, any>;
-		index: number;
-		discarded: number;
 		watching: Map<any, any>;
-		targets: any;
-		touched: Set<any>;
+		targets: Map<string, Activity>;
 		inbound: any[];
 		get isRunning(): boolean;
-		execute(executeMessage: any): number;
-		monitor(peerActivity: any): void;
+		/**
+		 * Execute peer monitor
+		 * @returns number of running peers
+		 */
+		execute(executeMessage: ElementBrokerMessage): number;
+		/**
+		 * Monitor peer activity
+		 * */
+		monitor(peerActivity: Activity): void;
 		stop(): void;
 	}
 	/**
