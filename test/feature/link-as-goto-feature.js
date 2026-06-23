@@ -34,7 +34,19 @@ Feature('Link as goto', () => {
     });
 
     let end;
+    const linkCatch = [];
     When('definition is ran', () => {
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.start',
+        (_, msg) => {
+          if (msg.content.id === 'catch') {
+            linkCatch.push(msg);
+          }
+        },
+        { noAck: true }
+      );
+
       end = definition.waitFor('end');
       definition.run();
     });
@@ -49,6 +61,12 @@ Feature('Link as goto', () => {
 
     And('catch event was taken once', () => {
       expect(definition.getActivityById('catch').counters).to.deep.equal({ taken: 1, discarded: 0 });
+    });
+
+    And('catch event has throw event as inbound', () => {
+      expect(linkCatch, 'catch start events').to.have.length(1);
+      expect(linkCatch[0].content.inbound, 'inbound length').to.have.length(1);
+      expect(linkCatch[0]?.content.inbound[0]).to.deep.include({ id: 'throw' });
     });
 
     And('downstream end after catch was reached', () => {

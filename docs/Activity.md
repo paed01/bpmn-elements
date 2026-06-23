@@ -97,11 +97,12 @@ Get activity state. If `environment.settings.disableTrackState === true` the sta
 
 ### `init([initContent])`
 
-Initialize the activity without running. Publishes an `activity.init` event with an execution id reserved for the next run.
+Initialize the activity without running. Publishes an `activity.init` event with an execution id reserved for the next run, and queues a non-persistent `activity.init` message on the activity's inbound queue. When the inbound queue is consumed the activity runs with that reserved id. This is how start activities and link catch events are armed.
 
 Arguments:
 
 - `initContent`: optional object merged into the init message content
+- `properties`: optional message properties merged into the queued inbound message
 
 ### `addInboundListeners()`
 

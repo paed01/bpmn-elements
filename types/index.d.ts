@@ -587,8 +587,9 @@ declare module 'bpmn-elements' {
 		/**
 		 * Initialise activity executionId and emit init event without starting the run.
 		 * @param initContent Optional content merged into the init message
+		 * @param properties Optional message properties merged into the init message properties
 		 */
-		init(initContent?: Record<string, any>): void;
+		init(initContent?: Record<string, any>, properties?: import("smqp").MessageProperties): void;
 		/**
 		 * Start running the activity by publishing run.enter and run.start.
 		 * @param runContent Optional content merged into the run message

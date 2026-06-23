@@ -1,5 +1,9 @@
 # Changelog
 
+## v18.0.2 - 2026-06-24
+
+- Refactor catching `LinkEventDefinition` trigger and start event init handling. Both publishes `activity.init` to reserve process attention and queues messages on inbound queue that are eventually handled
+
 ## v18.0.1 - 2026-06-13
 
 ### Fixes

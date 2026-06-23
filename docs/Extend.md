@@ -181,7 +181,7 @@ Link catches are wired to their matching throws at activity construction. The wi
 - The moddle entity's `type` must end with `LinkEventDefinition` (e.g. `bpmn:LinkEventDefinition`, `myns:LinkEventDefinition`). This is the only string-based check — once the first matching definition is found, all subsequent matches compare against the resolved `Behaviour` reference, so any rename is honoured.
 - Expose the link name on `behaviour.name` (the moddle default).
 - The Behaviour signature is `(activity, eventDefinition, context, index)`.
-- When throwing (`activity.isThrowing`), publish `activity.link` on the activity's `event` exchange with `content.message.linkName` set. The catch's construction-time inbound trigger listens for this and queues an `activity.relink` to drive the catch's run cycle.
+- When throwing (`activity.isThrowing`), publish `activity.link` on the activity's `event` exchange with `content.message.linkName` set. The catch's construction-time inbound trigger listens for this and calls the catch's `init()`, which queues an `activity.init` message on the catch's inbound queue to drive its run cycle.
 - Publish `execute.completed` on the `execution` exchange so the throwing activity terminates.
 - When catching, publish `activity.catch` on the `event` exchange and complete with `execute.completed`. `Activity` drives the rest of the lifecycle.
 

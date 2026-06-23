@@ -268,7 +268,7 @@ Object.defineProperties(Activity.prototype, {
   },
   initialized: {
     get() {
-      return !!this[K_EXEC]?.get('initExecutionId');
+      return this[K_EXEC].get('initialized') > 0;
     }
   }
 });
@@ -280,7 +280,8 @@ Object.defineProperties(Activity.prototype, {
 Activity.prototype.activate = function activate() {
   if (this[_constants.K_ACTIVATED]) return;
   this[_constants.K_ACTIVATED] = true;
-  return this.addInboundListeners() && this._consumeInbound();
+  this.addInboundListeners();
+  return this._consumeInbound();
 };
 
 /** @internal */
@@ -326,17 +327,28 @@ Activity.prototype.deactivate = function deactivate() {
 /**
  * Initialise activity executionId and emit init event without starting the run.
  * @param {Record<string, any>} [initContent] Optional content merged into the init message
+ * @param {import('smqp').MessageProperties} [properties] Optional message properties merged into the init message properties
  */
-Activity.prototype.init = function init(initContent) {
+Activity.prototype.init = function init(initContent, properties) {
   const id = this.id;
   const exec = this[K_EXEC];
-  const executionId = exec.has('initExecutionId') ? exec.get('initExecutionId') : (0, _shared.getUniqueId)(id);
-  exec.set('initExecutionId', executionId);
+  exec.set('initialized', (exec.get('initialized') || 0) + 1);
+  const executionId = (0, _shared.getUniqueId)(id);
   this.logger.debug(`<${id}> initialized with executionId <${executionId}>`);
   this._publishEvent('init', this._createMessage({
     ...initContent,
     executionId
   }));
+  this.broker.getQueue('inbound-q').queueMessage({
+    routingKey: 'activity.init'
+  }, {
+    ...initContent,
+    id,
+    executionId
+  }, {
+    persistent: false,
+    ...properties
+  });
 };
 
 /**
@@ -347,13 +359,15 @@ Activity.prototype.init = function init(initContent) {
 Activity.prototype.run = function run(runContent) {
   const id = this.id;
   if (this.isRunning) throw new Error(`activity <${id}> is already running`);
-  const exec = this[K_EXEC];
-  const executionId = exec.get('initExecutionId') || (0, _shared.getUniqueId)(id);
-  exec.set('executionId', executionId);
-  exec.delete('initExecutionId');
+  const {
+    initExecutionId,
+    ...runMessage
+  } = runContent || {};
+  const executionId = runMessage?.id === id && initExecutionId ? initExecutionId : (0, _shared.getUniqueId)(id);
+  this[K_EXEC].set('executionId', executionId);
   this._consumeApi();
   const content = this._createMessage({
-    ...runContent,
+    ...runMessage,
     executionId
   });
   const broker = this.broker;
@@ -558,10 +572,8 @@ Activity.prototype.getActivityById = function getActivityById(elementId) {
 
 /** @internal */
 Activity.prototype._runDiscard = function runDiscard(discardContent) {
-  const exec = this[K_EXEC];
-  const executionId = exec.get('initExecutionId') || (0, _shared.getUniqueId)(this.id);
-  exec.set('executionId', executionId);
-  exec.delete('initExecutionId');
+  const executionId = (0, _shared.getUniqueId)(this.id);
+  this[K_EXEC].set('executionId', executionId);
   this._consumeApi();
   const content = this._createMessage({
     ...discardContent,
@@ -677,8 +689,9 @@ Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
 /** @internal */
 Activity.prototype._consumeInbound = function consumeInbound() {
   if (!this[_constants.K_ACTIVATED]) return;
-  if (this.status || !this._getInboundTriggers().length) return;
+  if (this.status) return;
   const inboundQ = this.broker.getQueue('inbound-q');
+  if (!inboundQ.messageCount && !this._getInboundTriggers().length) return;
   const onInbound = this[_constants.K_MESSAGE_HANDLERS].onInbound;
   return inboundQ.assertConsumer(onInbound, {
     consumerTag: '_run-on-inbound'
@@ -691,26 +704,32 @@ Activity.prototype._onInbound = function onInbound(routingKey, message) {
   const broker = this.broker;
   broker.cancel('_run-on-inbound');
   const content = message.content;
-  const inbound = [(0, _messageHelper.cloneContent)(content)];
   switch (routingKey) {
-    case 'activity.relink':
-      if (content.executionId) this[K_EXEC].set('initExecutionId', content.executionId);
-      return this.run({
-        message: content.message,
-        inbound
-      });
+    case 'activity.init':
+      {
+        const exec = this[K_EXEC];
+        exec.set('initialized', (exec.get('initialized') || 0) - 1);
+        return this.run({
+          initExecutionId: content.executionId,
+          id: content.id,
+          message: content.message,
+          ...(content.inbound?.length && {
+            inbound: content.inbound
+          })
+        });
+      }
     case 'association.take':
     case 'flow.take':
     case 'activity.restart':
     case 'activity.enter':
       return this.run({
         message: content.message,
-        inbound
+        inbound: [(0, _messageHelper.cloneContent)(content)]
       });
     case 'activity.discard':
       {
         return this._runDiscard({
-          inbound
+          inbound: [(0, _messageHelper.cloneContent)(content)]
         });
       }
   }
@@ -740,26 +759,9 @@ Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message
       {
         const linkName = content.message?.linkName;
         if (!this[K_FLAGS].linkNames?.includes(linkName)) break;
-        const executionId = (0, _shared.getUniqueId)(this.id);
-        this.broker.publish('event', 'activity.enter', (0, _messageHelper.cloneContent)(content, {
-          id: this.id,
-          type: this.type,
-          executionId,
-          state: 'enter',
-          message: {
-            ...content.message
-          }
-        }));
-        inboundQ.queueMessage({
-          routingKey: 'activity.relink'
-        }, (0, _messageHelper.cloneContent)(content, {
-          id: this.id,
-          executionId,
-          message: {
-            ...content.message
-          }
-        }), properties);
-        return;
+        return this.init({
+          inbound: [(0, _messageHelper.cloneContent)(content)]
+        });
       }
     case 'association.take':
     case 'flow.take':

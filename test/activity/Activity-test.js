@@ -1083,7 +1083,7 @@ describe('Activity', () => {
       return initialized;
     });
 
-    it('runs with execution id from init', async () => {
+    it('activate runs with execution id from init', async () => {
       let executionId;
       function SpecialBehaviour() {
         return {
@@ -1096,7 +1096,7 @@ describe('Activity', () => {
 
       const initialized = activity.waitFor('init');
       activity.init();
-      activity.run();
+      activity.activate();
       const init = await initialized;
 
       expect(init.content.executionId).to.be.ok;
@@ -1129,8 +1129,9 @@ describe('Activity', () => {
       expect(messages[0].fields).to.have.property('routingKey', 'activity.init');
       expect(messages[0].content).to.have.property('executionId').that.is.ok;
       expect(messages[1].fields).to.have.property('routingKey', 'activity.init');
-      expect(messages[1].content).to.have.property('executionId').that.is.ok.and.equal(messages[0].content.executionId);
+      expect(messages[1].content).to.have.property('executionId').that.is.ok.and.not.equal(messages[0].content.executionId);
       expect(messages[2].fields).to.have.property('routingKey', 'activity.init');
+      expect(messages[2].content).to.have.property('executionId').that.is.ok.and.not.equal(messages[1].content.executionId);
     });
   });
 

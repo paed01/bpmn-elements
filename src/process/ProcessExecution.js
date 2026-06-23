@@ -400,7 +400,7 @@ ProcessExecution.prototype._start = function start() {
 
   for (const a of startActivities) a.init();
   this[K_STATUS] = 'executing';
-  for (const a of startActivities) a.run();
+  for (const a of startActivities) a._consumeInbound();
 
   if (!startActivities.size) {
     for (const a of this[K_ELEMENTS].triggeredByEvent) {
