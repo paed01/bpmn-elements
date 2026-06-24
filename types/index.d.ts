@@ -581,6 +581,11 @@ declare module 'bpmn-elements' {
 		 * */
 		activate(): void;
 		/**
+		 * Assert the inbound queue consumer when the activity has a trigger or is initialized.
+		 * Idempotent: asserting the consumer again while one is active is a no-op.
+		 * */
+		consumeInbound(): void;
+		/**
 		 * Cancel inbound subscriptions and any pending run/format consumers.
 		 */
 		deactivate(): void;

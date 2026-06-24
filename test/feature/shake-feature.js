@@ -695,6 +695,22 @@ Feature('Shaking', () => {
       const sequenceIds = result.start.map((s) => s.sequence.map((e) => e.id));
       expect(sequenceIds.some((ids) => ids.includes('throw') && ids.includes('catch') && ids.includes('end'))).to.be.true;
     });
+
+    And('the throwing link event is not marked as an end', () => {
+      expect(definition.getActivityById('throw')).to.have.property('isEnd', false);
+    });
+
+    And('the throw does not terminate a shake sequence as a dead end', () => {
+      for (const msg of shakeEndMessages) {
+        const ids = msg.content.sequence.map((s) => s.id);
+        expect(ids[ids.length - 1], ids.join()).to.not.equal('throw');
+      }
+      const resultIds = result.start.map((s) => s.sequence.map((e) => e.id));
+      expect(
+        resultIds.every((ids) => ids[ids.length - 1] !== 'throw'),
+        resultIds.join(' | ')
+      ).to.be.true;
+    });
   });
 
   Scenario('a converging parallel gateway discovers its peers once and reuses them', () => {
@@ -756,6 +772,50 @@ Feature('Shaking', () => {
 
     And('the parallel join completed again', () => {
       expect(definition.getActivityById('join').counters).to.have.property('taken', 2);
+    });
+  });
+
+  Scenario('a shaken converging parallel gateway emits activity.shake.converge', () => {
+    let definition;
+    Given('a process with a parallel fork and join', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-fork" sourceRef="start" targetRef="fork" />
+          <parallelGateway id="fork" />
+          <sequenceFlow id="to-t1" sourceRef="fork" targetRef="t1" />
+          <sequenceFlow id="to-t2" sourceRef="fork" targetRef="t2" />
+          <task id="t1" />
+          <task id="t2" />
+          <sequenceFlow id="from-t1" sourceRef="t1" targetRef="join" />
+          <sequenceFlow id="from-t2" sourceRef="t2" targetRef="join" />
+          <parallelGateway id="join" />
+          <sequenceFlow id="to-end" sourceRef="join" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+      definition = new Definition(await testHelpers.context(source));
+    });
+
+    const convergeMessages = [];
+    When('definition is shaken from start', () => {
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.shake.converge',
+        (_, msg) => {
+          convergeMessages.push(msg);
+        },
+        { noAck: true }
+      );
+
+      definition.shake('start');
+    });
+
+    Then('each parallel gateway emitted a shake converge event identified by its own id', () => {
+      const joins = convergeMessages.map((m) => m.content.join);
+      expect(joins, joins.join()).to.include('fork');
+      expect(joins, joins.join()).to.include('join');
     });
   });
 });

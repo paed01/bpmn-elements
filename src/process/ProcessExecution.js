@@ -400,7 +400,7 @@ ProcessExecution.prototype._start = function start() {
 
   for (const a of startActivities) a.init();
   this[K_STATUS] = 'executing';
-  for (const a of startActivities) a._consumeInbound();
+  for (const a of startActivities) a.consumeInbound();
 
   if (!startActivities.size) {
     for (const a of this[K_ELEMENTS].triggeredByEvent) {
@@ -571,7 +571,7 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
       if (content.parent.id !== this.id) return;
 
       switch (routingKey) {
-        case 'activity.shake.join': {
+        case 'activity.shake.converge': {
           const join = convergingGateways.get(content.join);
           if (!join) {
             convergingGateways.set(content.join, content);

@@ -91,8 +91,10 @@ export function Activity(Behaviour, activityDef, context) {
     outboundEvaluator: new OutboundEvaluator(this, outboundSequenceFlows),
   };
 
+  const isThrowingLink = activityDef.isThrowing && activityDef.linkNames?.length;
+
   this[K_FLAGS] = {
-    isEnd: !outboundSequenceFlows.length,
+    isEnd: !outboundSequenceFlows.length && !isThrowingLink,
     isStart: !hasInboundTrigger && !behaviour.triggeredByEvent && !activityDef.isCatching,
     isSubProcess: activityDef.isSubProcess,
     isMultiInstance: !!behaviour.loopCharacteristics,
@@ -275,7 +277,24 @@ Activity.prototype.activate = function activate() {
   if (this[K_ACTIVATED]) return;
   this[K_ACTIVATED] = true;
   this.addInboundListeners();
-  return this._consumeInbound();
+  return this.consumeInbound();
+};
+
+/**
+ * Assert the inbound queue consumer when the activity has a trigger or is initialized.
+ * Idempotent: asserting the consumer again while one is active is a no-op.
+ * @returns {void}
+ */
+Activity.prototype.consumeInbound = function consumeInbound() {
+  if (!this[K_ACTIVATED]) return;
+
+  if (this.status) return;
+
+  if (!this._getInboundTriggers().length && !this.initialized) return;
+
+  const onInbound = this[K_MESSAGE_HANDLERS].onInbound;
+
+  return this.broker.getQueue('inbound-q').assertConsumer(onInbound, { consumerTag: '_run-on-inbound' });
 };
 
 /** @internal */
@@ -596,7 +615,7 @@ Activity.prototype._onShakeMessage = function _onShakeMessage(sourceMessage) {
   if (this[K_FLAGS].isParallelGateway) {
     const message = cloneMessage(sourceMessage, { join: this.id });
     message.content.sequence.push({ id: this.id, type: this.type });
-    return this.broker.publish('event', 'activity.shake.join', message.content, {
+    return this.broker.publish('event', 'activity.shake.converge', message.content, {
       persistent: false,
       type: 'shake',
     });
@@ -641,20 +660,6 @@ Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
   }
 
   for (const t of targets.values()) t.shake(message);
-};
-
-/** @internal */
-Activity.prototype._consumeInbound = function consumeInbound() {
-  if (!this[K_ACTIVATED]) return;
-
-  if (this.status) return;
-
-  const inboundQ = this.broker.getQueue('inbound-q');
-  if (!inboundQ.messageCount && !this._getInboundTriggers().length) return;
-
-  const onInbound = this[K_MESSAGE_HANDLERS].onInbound;
-
-  return inboundQ.assertConsumer(onInbound, { consumerTag: '_run-on-inbound' });
 };
 
 /** @internal */
@@ -886,7 +891,7 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
     case 'run.next':
       message.ack();
       this._pauseRunQ();
-      return this._consumeInbound();
+      return this.consumeInbound();
   }
 
   if (!step) message.ack();

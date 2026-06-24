@@ -3,6 +3,8 @@
 ## v18.0.2 - 2026-06-24
 
 - Refactor catching `LinkEventDefinition` trigger and start event init handling. Both publishes `activity.init` to reserve process attention and queues messages on inbound queue that are eventually handled
+- a throwing link `IntermediateThrowEvent` is no longer marked as an end (`isEnd`); it has no outbound sequence flows but continues at its catch, so a shake no longer records it as a dead-end sequence
+- a converging parallel gateway now publishes `activity.shake.converge` during a shake (previously `activity.shake.join`), matching the runtime `activity.converge` event
 
 ## v18.0.1 - 2026-06-13
 
