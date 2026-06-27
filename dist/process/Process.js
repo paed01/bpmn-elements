@@ -8,10 +8,12 @@ var _ProcessExecution = require("./ProcessExecution.js");
 var _shared = require("../shared.js");
 var _Api = require("../Api.js");
 var _EventBroker = require("../EventBroker.js");
+var _MessageFormatter = require("../MessageFormatter.js");
 var _messageHelper = require("../messageHelper.js");
 var _Errors = require("../error/Errors.js");
 var _constants = require("../constants.js");
 const K_LANES = Symbol.for('lanes');
+const K_FORMATTER = Symbol.for('formatter');
 
 /**
  * Owns one `<bpmn:process>`. Wraps the structural definition and orchestrates flow traversal,
@@ -49,12 +51,14 @@ function Process(processDef, context) {
     broker,
     on,
     once,
-    waitFor
+    waitFor,
+    emitFatal
   } = (0, _EventBroker.ProcessBroker)(this);
   this.broker = broker;
   this.on = on;
   this.once = once;
   this.waitFor = waitFor;
+  this.emitFatal = emitFatal;
   this[_constants.K_MESSAGE_HANDLERS] = {
     onApiMessage: this._onApiMessage.bind(this),
     onRunMessage: this._onRunMessage.bind(this),
@@ -82,6 +86,14 @@ Object.defineProperties(Process.prototype, {
   extensions: {
     get() {
       return this[_constants.K_EXTENSIONS];
+    }
+  },
+  formatter: {
+    get() {
+      let formatter = this[K_FORMATTER];
+      if (formatter) return formatter;
+      formatter = this[K_FORMATTER] = new _MessageFormatter.Formatter(this);
+      return formatter;
     }
   },
   stopped: {
@@ -292,14 +304,28 @@ Process.prototype._deactivateRunConsumers = function deactivateRunConsumers() {
 };
 
 /** @internal */
-Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
+Process.prototype._onRunMessage = function onRunMessage(routingKey, message, messageProperties) {
+  if (routingKey === 'run.resume') {
+    return this._onResumeMessage(message);
+  }
+  const preStatus = this[_constants.K_STATUS];
+  this[_constants.K_STATUS] = 'formatting';
+  return this.formatter.format(message, (err, formattedContent, formatted) => {
+    this[_constants.K_STATUS] = preStatus;
+    if (err) {
+      return this.emitFatal(err, message.content);
+    }
+    if (formatted) message.content = formattedContent;
+    this._continueRunMessage(routingKey, message, messageProperties);
+  });
+};
+
+/** @internal */
+Process.prototype._continueRunMessage = function continueRunMessage(routingKey, message) {
   const {
     content,
     fields
   } = message;
-  if (routingKey === 'run.resume') {
-    return this._onResumeMessage(message);
-  }
   this[_constants.K_STATE_MESSAGE] = message;
   switch (routingKey) {
     case 'run.enter':

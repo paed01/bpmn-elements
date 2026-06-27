@@ -261,6 +261,8 @@ declare module 'bpmn-elements' {
   export enum ProcessStatusValue {
 	/** ProcessExecution constructed, not yet started */
 	Init = 'init',
+	/** Formatting next run message */
+	Formatting = 'formatting',
 	/** Process run entered */
 	Entered = 'entered',
 	/** Process run started */
@@ -1458,6 +1460,7 @@ declare module 'bpmn-elements' {
 			[x: string]: any;
 		}) => import("smqp").Consumer;
 		waitFor: (eventName: string, onMessage?: ((routingKey: string, message: ElementBrokerMessage, owner: Process) => boolean) | undefined) => Promise<IApi<Process>>;
+		emitFatal: (error: Error, content?: Record<string, any>) => void;
 		logger: ILogger;
 		/**
 		 * Allocate an executionId and emit init event without starting the run.

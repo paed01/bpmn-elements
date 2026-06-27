@@ -35,6 +35,8 @@ In some cases it may be required to add some extra data when an activity execute
 
 The basic flow is to publish a formatting message on the activity format queue.
 
+The same mechanism works on the **process**: publish a `format` message (optionally with an `endRoutingKey`) in response to a `process.*` event, and the process run pauses at the next transition until the matching end key is published — see the asynchronous example below, which applies equally to process events.
+
 ```javascript
 import * as elements from 'bpmn-elements';
 import { BpmnModdle } from 'bpmn-moddle';

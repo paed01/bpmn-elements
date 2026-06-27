@@ -2,6 +2,7 @@ import { ProcessExecution } from './ProcessExecution.js';
 import { getUniqueId } from '../shared.js';
 import { ProcessApi } from '../Api.js';
 import { ProcessBroker } from '../EventBroker.js';
+import { Formatter } from '../MessageFormatter.js';
 import { cloneMessage, cloneContent, cloneParent } from '../messageHelper.js';
 import { makeErrorFromMessage } from '../error/Errors.js';
 import {
@@ -17,6 +18,7 @@ import {
 } from '../constants.js';
 
 const K_LANES = Symbol.for('lanes');
+const K_FORMATTER = Symbol.for('formatter');
 
 /**
  * Owns one `<bpmn:process>`. Wraps the structural definition and orchestrates flow traversal,
@@ -47,11 +49,12 @@ export function Process(processDef, context) {
   this[K_STATUS] = undefined;
   this[K_STOPPED] = false;
 
-  const { broker, on, once, waitFor } = ProcessBroker(this);
+  const { broker, on, once, waitFor, emitFatal } = ProcessBroker(this);
   this.broker = broker;
   this.on = on;
   this.once = once;
   this.waitFor = waitFor;
+  this.emitFatal = emitFatal;
 
   this[K_MESSAGE_HANDLERS] = {
     onApiMessage: this._onApiMessage.bind(this),
@@ -81,6 +84,14 @@ Object.defineProperties(Process.prototype, {
   extensions: {
     get() {
       return this[K_EXTENSIONS];
+    },
+  },
+  formatter: {
+    get() {
+      let formatter = this[K_FORMATTER];
+      if (formatter) return formatter;
+      formatter = this[K_FORMATTER] = new Formatter(this);
+      return formatter;
     },
   },
   stopped: {
@@ -278,12 +289,27 @@ Process.prototype._deactivateRunConsumers = function deactivateRunConsumers() {
 };
 
 /** @internal */
-Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
-  const { content, fields } = message;
-
+Process.prototype._onRunMessage = function onRunMessage(routingKey, message, messageProperties) {
   if (routingKey === 'run.resume') {
     return this._onResumeMessage(message);
   }
+
+  const preStatus = this[K_STATUS];
+  this[K_STATUS] = 'formatting';
+
+  return this.formatter.format(message, (err, formattedContent, formatted) => {
+    this[K_STATUS] = preStatus;
+    if (err) {
+      return this.emitFatal(err, message.content);
+    }
+    if (formatted) message.content = formattedContent;
+    this._continueRunMessage(routingKey, message, messageProperties);
+  });
+};
+
+/** @internal */
+Process.prototype._continueRunMessage = function continueRunMessage(routingKey, message) {
+  const { content, fields } = message;
 
   this[K_STATE_MESSAGE] = message;
 

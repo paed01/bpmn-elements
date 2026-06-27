@@ -5,6 +5,7 @@
 ### Additions
 
 - process extensions are now activated and deactivated accordingly
+- process run messages can be formatted, including asynchronously, the same way as activities
 
 ## v18.0.2 - 2026-06-24
 

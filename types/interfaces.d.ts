@@ -359,6 +359,8 @@ export type DefinitionStatus = DefinitionStatusValue | `${DefinitionStatusValue}
 export const enum ProcessStatusValue {
   /** ProcessExecution constructed, not yet started */
   Init = 'init',
+  /** Formatting next run message */
+  Formatting = 'formatting',
   /** Process run entered */
   Entered = 'entered',
   /** Process run started */
