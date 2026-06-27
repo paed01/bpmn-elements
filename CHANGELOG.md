@@ -1,5 +1,11 @@
 # Changelog
 
+## v18.0.3 - 2026-06-27
+
+### Additions
+
+- process extensions are now activated and deactivated accordingly
+
 ## v18.0.2 - 2026-06-24
 
 - Refactor catching `LinkEventDefinition` trigger and start event init handling. Both publishes `activity.init` to reserve process attention and queues messages on inbound queue that are eventually handled

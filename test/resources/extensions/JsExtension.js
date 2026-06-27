@@ -11,17 +11,20 @@ export default {
 function Js(activity, context) {
   const resultVariable = ResultVariableIo(activity, context);
   const formKey = FormKey(activity, context);
+  const versionTag = VersionTag(activity, context);
 
   return {
     type: 'js:extension',
-    extensions: { resultVariable, formKey },
+    extensions: { resultVariable, formKey, versionTag },
     activate(msg) {
       if (resultVariable) resultVariable.activate(msg);
       if (formKey) formKey.activate(msg);
+      if (versionTag) versionTag.activate(msg);
     },
     deactivate() {
       if (resultVariable) resultVariable.deactivate();
       if (formKey) formKey.deactivate();
+      if (versionTag) versionTag.deactivate();
     },
   };
 }
@@ -96,5 +99,37 @@ function FormKey(activity, context) {
         key: formKeyValue,
       },
     });
+  }
+}
+
+function VersionTag(element) {
+  if (element.type !== 'bpmn:Process') return;
+
+  const { versionTag } = element.behaviour;
+  if (!versionTag) return;
+
+  const { id, logger, broker, environment } = element;
+
+  const type = 'js:versiontag';
+  let processConsumer;
+
+  return {
+    type,
+    activate,
+    deactivate,
+  };
+
+  function deactivate() {
+    if (processConsumer) processConsumer = processConsumer.cancel();
+  }
+
+  function activate() {
+    if (processConsumer) return;
+    processConsumer = broker.subscribeTmp('event', 'process.end', onProcessEnd, { noAck: true });
+  }
+
+  function onProcessEnd() {
+    logger.debug(`<${id}> js:extension capture version tag "${versionTag}"`);
+    environment.output[id] = { versionTag };
   }
 }

@@ -4,12 +4,14 @@ The element behaviours in this project only support elements and attributed defi
 
 ## `extension(activity, context)`
 
-All activities will call extension functions when instantiated.
+Activities and processes call extension functions when instantiated.
 
 Arguments:
 
-- `activity`: instance of [activity](/docs/Activity.md)
+- `activity`: instance of [activity](/docs/Activity.md) — or the owning process
 - `context`: shared [context](/docs/Context.md)
+
+An extension may return an object with optional `activate(message)` and `deactivate(message)` lifecycle hooks. They run when the owner enters/resumes its run (`activate`) and when it leaves or is stopped (`deactivate`), letting an extension set up and tear down per-run state. Return nothing to only subscribe to events, as below.
 
 Example:
 

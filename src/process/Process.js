@@ -295,6 +295,7 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
       if (fields.redelivered) break;
 
       this[K_EXECUTION].delete('execution');
+      if (this.extensions) this.extensions.activate(cloneMessage(message));
       this._publishEvent('enter', content);
 
       break;
@@ -308,6 +309,7 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
     case 'run.execute': {
       const exec = this[K_EXECUTION];
       this[K_STATUS] = 'executing';
+      if (fields.redelivered && this.extensions) this.extensions.activate(cloneMessage(message));
       const executeMessage = cloneMessage(message);
       let execution = exec.get('execution');
       if (fields.redelivered && !execution) {
@@ -360,6 +362,7 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
     }
     case 'run.leave': {
       this[K_STATUS] = undefined;
+      if (this.extensions) this.extensions.deactivate(cloneMessage(message));
       message.ack();
       this._deactivateRunConsumers();
       const { output, ...rest } = content;
@@ -388,6 +391,8 @@ Process.prototype._onResumeMessage = function onResumeMessage(message) {
   }
 
   if (!stateMessage.fields.redelivered) return;
+
+  if (this.extensions) this.extensions.activate(cloneMessage(stateMessage));
 
   this._debug(`resume from ${this.status}`);
 
@@ -518,6 +523,7 @@ Process.prototype._onApiMessage = function onApiMessage(routingKey, message) {
 Process.prototype._onStop = function onStop() {
   this[K_STOPPED] = true;
   this._deactivateRunConsumers();
+  if (this.extensions) this.extensions.deactivate(cloneMessage(this[K_STATE_MESSAGE]));
   return this._publishEvent('stop');
 };
 

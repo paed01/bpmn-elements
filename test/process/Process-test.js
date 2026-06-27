@@ -1842,6 +1842,125 @@ describe('Process', () => {
       expect(bp.counters).to.have.property('completed', 1);
     });
   });
+
+  describe('extensions', () => {
+    function extendedProcess(stub) {
+      const context = testHelpers.emptyContext();
+      context.loadExtensions = () => stub;
+      return new Process({ id: 'theProcess', type: 'bpmn:Process', parent: { id: 'def' } }, context);
+    }
+
+    it('are activated on enter', () => {
+      let active = false;
+      const bp = extendedProcess({
+        activate() {
+          active = true;
+        },
+        deactivate() {
+          active = false;
+        },
+      });
+
+      const states = [];
+      bp.on('enter', () => states.push(active));
+
+      bp.run();
+
+      expect(states).to.eql([true]);
+    });
+
+    it('are deactivated on leave', () => {
+      let active = false;
+      const bp = extendedProcess({
+        activate() {
+          active = true;
+        },
+        deactivate() {
+          active = false;
+        },
+      });
+
+      const states = [];
+      bp.on('enter', () => states.push(active));
+      bp.on('leave', () => states.push(active));
+
+      bp.run();
+
+      expect(states).to.eql([true, false]);
+    });
+
+    it('are deactivated on stop', () => {
+      let active = false;
+      const bp = extendedProcess({
+        activate() {
+          active = true;
+        },
+        deactivate() {
+          active = false;
+        },
+      });
+
+      const states = [];
+      bp.on('enter', (api) => {
+        states.push(active);
+        api.stop();
+      });
+      bp.on('stop', () => states.push(active));
+
+      bp.run();
+
+      expect(states).to.eql([true, false]);
+    });
+
+    it('are reactivated on next run', () => {
+      let active = false;
+      const bp = extendedProcess({
+        activate() {
+          active = true;
+        },
+        deactivate() {
+          active = false;
+        },
+      });
+
+      const states = [];
+      bp.on('enter', () => states.push(active));
+
+      bp.run();
+      bp.run();
+
+      expect(states).to.eql([true, true]);
+    });
+
+    it('are activated when run.resume is triggered after recover', () => {
+      const context1 = Context();
+      context1.loadExtensions = () => ({ activate() {}, deactivate() {} });
+      const bp1 = new Process({ id: 'theProcess' }, context1);
+      bp1.once('enter', (api) => api.stop());
+      bp1.run();
+
+      expect(bp1.status).to.equal('entered');
+
+      let active = false;
+      const context2 = Context();
+      context2.loadExtensions = () => ({
+        activate() {
+          active = true;
+        },
+        deactivate() {
+          active = false;
+        },
+      });
+      const bp2 = new Process({ id: 'theProcess' }, context2);
+      bp2.recover(bp1.getState());
+
+      expect(active, 'activated on recover').to.be.false;
+
+      bp2.resume();
+
+      expect(active, 'activated on run.resume').to.be.true;
+    });
+  });
 });
 
 function Context() {

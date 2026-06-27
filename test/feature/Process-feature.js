@@ -1,5 +1,6 @@
 import testHelpers from '../helpers/testHelpers.js';
 import factory from '../helpers/factory.js';
+import js from '../resources/extensions/JsExtension.js';
 
 const AssertMessage = testHelpers.AssertMessage;
 
@@ -2460,6 +2461,80 @@ Feature('Process', () => {
 
     And('running activity was discarded', () => {
       expect(bp.getActivityById('activity').counters).to.deep.equal({ discarded: 1, taken: 0 });
+    });
+  });
+
+  Scenario('Process with a js:extension', () => {
+    const source = `
+    <?xml version="1.0" encoding="UTF-8"?>
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
+      <process id="theProcess" isExecutable="true" js:versionTag="2">
+        <startEvent id="start" />
+        <sequenceFlow id="to-task" sourceRef="start" targetRef="task" />
+        <userTask id="task" />
+        <sequenceFlow id="to-end" sourceRef="task" targetRef="end" />
+        <endEvent id="end" />
+      </process>
+    </definitions>`;
+
+    let context, bp;
+    Given('a process with a js:versionTag and a waiting user task', async () => {
+      context = await testHelpers.context(source, { extensions: { js } });
+      bp = context.getProcessById('theProcess');
+    });
+
+    And('the js:extension is loaded on the process', () => {
+      expect(bp.extensions.extensions.find((e) => e.type === 'js:extension')).to.be.ok;
+    });
+
+    let waiting;
+    When('process is ran', () => {
+      waiting = bp.getActivityById('task').waitFor('wait');
+      bp.run();
+      return waiting;
+    });
+
+    Then('the process is waiting for the user task', () => {
+      expect(bp.getPostponed().map((a) => a.id)).to.include('task');
+    });
+
+    let state;
+    When('the process is stopped', () => {
+      bp.stop();
+    });
+
+    Then('the extension was deactivated on stop', () => {
+      expect(bp.stopped).to.be.true;
+    });
+
+    And('state is saved', () => {
+      state = JSON.parse(JSON.stringify(bp.getState()));
+    });
+
+    When('the process is recovered into a new instance', () => {
+      bp = context.clone().getProcessById('theProcess').recover(state);
+    });
+
+    let leave;
+    And('execution is resumed', () => {
+      waiting = bp.getActivityById('task').waitFor('wait');
+      leave = bp.waitFor('leave');
+      bp.resume();
+      return waiting;
+    });
+
+    And('the user task is signaled', async () => {
+      const task = await waiting;
+      task.signal();
+      return leave;
+    });
+
+    Then('the process completes', () => {
+      return leave;
+    });
+
+    And('the version tag was captured, proving the extension reactivated on resume', () => {
+      expect(bp.environment.output).to.have.property('theProcess').that.deep.equal({ versionTag: '2' });
     });
   });
 });

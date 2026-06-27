@@ -308,6 +308,7 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
         this[_constants.K_STATUS] = 'entered';
         if (fields.redelivered) break;
         this[_constants.K_EXECUTION].delete('execution');
+        if (this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(message));
         this._publishEvent('enter', content);
         break;
       }
@@ -322,6 +323,7 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
       {
         const exec = this[_constants.K_EXECUTION];
         this[_constants.K_STATUS] = 'executing';
+        if (fields.redelivered && this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(message));
         const executeMessage = (0, _messageHelper.cloneMessage)(message);
         let execution = exec.get('execution');
         if (fields.redelivered && !execution) {
@@ -366,6 +368,7 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
     case 'run.leave':
       {
         this[_constants.K_STATUS] = undefined;
+        if (this.extensions) this.extensions.deactivate((0, _messageHelper.cloneMessage)(message));
         message.ack();
         this._deactivateRunConsumers();
         const {
@@ -394,6 +397,7 @@ Process.prototype._onResumeMessage = function onResumeMessage(message) {
       return;
   }
   if (!stateMessage.fields.redelivered) return;
+  if (this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(stateMessage));
   this._debug(`resume from ${this.status}`);
   return this.broker.publish('run', stateMessage.fields.routingKey, (0, _messageHelper.cloneContent)(stateMessage.content), stateMessage.properties);
 };
@@ -530,6 +534,7 @@ Process.prototype._onApiMessage = function onApiMessage(routingKey, message) {
 Process.prototype._onStop = function onStop() {
   this[_constants.K_STOPPED] = true;
   this._deactivateRunConsumers();
+  if (this.extensions) this.extensions.deactivate((0, _messageHelper.cloneMessage)(this[_constants.K_STATE_MESSAGE]));
   return this._publishEvent('stop');
 };
 
