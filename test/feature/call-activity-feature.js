@@ -1,6 +1,7 @@
 import * as ck from 'chronokinesis';
 import { Definition } from 'bpmn-elements';
 
+import js from '../resources/extensions/JsExtension.js';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 
@@ -1011,7 +1012,178 @@ Feature('Call activity', () => {
       return end;
     });
   });
+
+  Scenario('call activity passes input to the called process', () => {
+    let definition;
+    const capturedInput = [];
+    Given('a process whose call activity formats input, calling a process that records its input', async () => {
+      const source = `
+      <definitions id="Def" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+          <callActivity id="call-activity" calledElement="called-process" />
+          <sequenceFlow id="to-end" sourceRef="call-activity" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+        <process id="called-process" isExecutable="false">
+          <serviceTask id="task" implementation="\${environment.services.recordInput}" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source, {
+        services: {
+          recordInput(scope, callback) {
+            capturedInput.push(scope.environment.variables.input);
+            callback();
+          },
+        },
+        extensions: {
+          callInput: { extension: callInput },
+        },
+      });
+      definition = new Definition(context);
+    });
+
+    let end;
+    When('ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('the called process execution received the call input as variables.input', () => {
+      expect(capturedInput).to.deep.equal([{ shoeSize: 42 }]);
+    });
+  });
+
+  Scenario('multi-instance call activity passes the loop context as input', () => {
+    let definition;
+    const capturedInput = [];
+    Given('a process whose call activity loops over a collection, calling a process that records its input', async () => {
+      const source = `
+      <definitions id="Def" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+          <callActivity id="call-activity" calledElement="called-process">
+            <multiInstanceLoopCharacteristics isSequential="false" js:collection="\${environment.variables.items}" />
+          </callActivity>
+          <sequenceFlow id="to-end" sourceRef="call-activity" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+        <process id="called-process" isExecutable="false">
+          <serviceTask id="task" implementation="\${environment.services.recordInput}" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source, {
+        variables: { items: ['one', 'two', 'three'] },
+        services: {
+          recordInput(scope, callback) {
+            capturedInput.push(scope.environment.variables.input);
+            callback();
+          },
+        },
+        extensions: { js },
+      });
+      definition = new Definition(context);
+    });
+
+    let end;
+    When('ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('each called process received its loop context as variables.input', () => {
+      expect(capturedInput.slice().sort((a, b) => a.index - b.index)).to.deep.equal([
+        { isSequential: false, index: 0, cardinality: 3, item: 'one' },
+        { isSequential: false, index: 1, cardinality: 3, item: 'two' },
+        { isSequential: false, index: 2, cardinality: 3, item: 'three' },
+      ]);
+    });
+  });
+
+  Scenario('multi-instance call activity incorporates formatted input with the loop context', () => {
+    let definition;
+    const capturedInput = [];
+    Given('a process whose call activity formats input and loops over a collection', async () => {
+      const source = `
+      <definitions id="Def" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-call-activity" sourceRef="start" targetRef="call-activity" />
+          <callActivity id="call-activity" calledElement="called-process">
+            <multiInstanceLoopCharacteristics isSequential="false" js:collection="\${environment.variables.items}" />
+          </callActivity>
+          <sequenceFlow id="to-end" sourceRef="call-activity" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+        <process id="called-process" isExecutable="false">
+          <serviceTask id="task" implementation="\${environment.services.recordInput}" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source, {
+        variables: { items: ['one', 'two', 'three'] },
+        services: {
+          recordInput(scope, callback) {
+            capturedInput.push(scope.environment.variables.input);
+            callback();
+          },
+        },
+        extensions: {
+          js,
+          callInput: { extension: callInput },
+        },
+      });
+      definition = new Definition(context);
+    });
+
+    let end;
+    When('ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('each called process received the formatted input merged with its loop context', () => {
+      expect(capturedInput.slice().sort((a, b) => a.index - b.index)).to.deep.equal([
+        { shoeSize: 42, isSequential: false, index: 0, cardinality: 3, item: 'one' },
+        { shoeSize: 42, isSequential: false, index: 1, cardinality: 3, item: 'two' },
+        { shoeSize: 42, isSequential: false, index: 2, cardinality: 3, item: 'three' },
+      ]);
+    });
+  });
 });
+
+function callInput(elm) {
+  if (elm.id !== 'call-activity') return;
+  return {
+    activate() {
+      elm.broker.subscribeTmp(
+        'event',
+        'activity.enter',
+        (_, message) => {
+          const input = { ...message.content.input, shoeSize: 42 };
+          elm.broker.getQueue('format-run-q').queueMessage({ routingKey: 'run.input.format' }, { input }, { persistent: false });
+        },
+        { noAck: true, consumerTag: '_call-input' }
+      );
+    },
+    deactivate() {
+      elm.broker.cancel('_call-input');
+    },
+  };
+}
 
 function processOutput(elm) {
   if (elm.type === 'bpmn:Definitions') return;

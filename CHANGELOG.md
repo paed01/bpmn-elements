@@ -1,5 +1,11 @@
 # Changelog
 
+## v18.0.4 - 2026-06-28
+
+### Additions
+
+- called processes and sub processes are seeded with `environment.variables.input` from their input. A multi-instance call activity or sub process passes its loop context (`isSequential`, `index`, `cardinality` and the item under the `elementVariable` name) as `input`
+
 ## v18.0.3 - 2026-06-27
 
 ### Additions

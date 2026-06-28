@@ -1,6 +1,6 @@
 import { Activity } from '../activity/Activity.js';
 import { ProcessExecution } from '../process/ProcessExecution.js';
-import { cloneContent } from '../messageHelper.js';
+import { cloneContent, cloneMessage } from '../messageHelper.js';
 
 const K_EXECUTIONS = Symbol.for('executions');
 const K_ON_EXECUTION_COMPLETED = Symbol.for('execution completed handler');
@@ -81,8 +81,24 @@ SubProcessBehaviour.prototype.execute = function execute(executeMessage) {
     return loopCharacteristics.execute(executeMessage);
   }
 
-  const processExecution = this._upsertExecution(executeMessage);
-  return processExecution.execute(executeMessage);
+  // Forward the multi-instance loop context as input to the sub process execution; any current content input takes precedence.
+  let message = executeMessage;
+  const content = executeMessage.content;
+  if (content.isMultiInstance) {
+    const input = {
+      isSequential: content.isSequential,
+      index: content.index,
+      cardinality: content.loopCardinality,
+    };
+    const elementVariable = loopCharacteristics?.elementVariable;
+    if (elementVariable && elementVariable in content) {
+      input[elementVariable] = content[elementVariable];
+    }
+    message = cloneMessage(executeMessage, { input: { ...input, ...content.input } });
+  }
+
+  const processExecution = this._upsertExecution(message);
+  return processExecution.execute(message);
 };
 
 SubProcessBehaviour.prototype.getState = function getState() {

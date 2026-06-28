@@ -112,6 +112,15 @@ ProcessExecution.prototype.execute = function execute(executeMessage) {
   this[K_STOPPED] = false;
 
   this.environment.assignVariables(executeMessage);
+
+  // Seed input from the execute content (sub process) or a single inbound trigger (call activity forwarding its formatted input).
+  const content = executeMessage.content;
+  const inbound = content.inbound;
+  const input = content.input ?? (inbound?.length === 1 && inbound[0].input);
+  if (input) {
+    this.environment.assignVariables({ input });
+  }
+
   this[K_ACTIVITY_Q] = this.broker.assertQueue(`execute-${executionId}-q`, { durable: true, autoDelete: false });
 
   if (executeMessage.fields.redelivered) {

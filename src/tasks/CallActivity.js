@@ -80,17 +80,28 @@ CallActivityBehaviour.prototype.execute = function execute(executeMessage) {
     consumerTag: `_api-delegated-cancel-${executionId}`,
   });
 
-  broker.publish(
-    'event',
-    'activity.call',
-    cloneContent(executeContent, {
-      state: 'wait',
-      calledElement,
-    }),
-    {
-      type: 'call',
+  const callContent = {
+    state: 'wait',
+    calledElement,
+  };
+
+  // Forward the multi-instance loop context as input to the called process; any current content input takes precedence.
+  if (executeContent.isMultiInstance) {
+    const input = {
+      isSequential: executeContent.isSequential,
+      index: executeContent.index,
+      cardinality: executeContent.loopCardinality,
+    };
+    const elementVariable = loopCharacteristics?.elementVariable;
+    if (elementVariable && elementVariable in executeContent) {
+      input[elementVariable] = executeContent[elementVariable];
     }
-  );
+    callContent.input = Object.assign(input, executeContent.input);
+  }
+
+  broker.publish('event', 'activity.call', cloneContent(executeContent, callContent), {
+    type: 'call',
+  });
 };
 
 CallActivityBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMessage(

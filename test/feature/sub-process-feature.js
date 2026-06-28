@@ -425,4 +425,115 @@ Feature('Sub-process', () => {
       });
     });
   });
+
+  Scenario('sub process receives input as variables.input', () => {
+    let definition;
+    const capturedInput = [];
+    Given('a process whose sub process formats input and records it', async () => {
+      const source = `
+      <definitions id="Def" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-sub" sourceRef="start" targetRef="sub" />
+          <subProcess id="sub">
+            <serviceTask id="task" implementation="\${environment.services.recordInput}" />
+          </subProcess>
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source, {
+        services: {
+          recordInput(scope, callback) {
+            capturedInput.push(scope.environment.variables.input);
+            callback();
+          },
+        },
+        extensions: {
+          subInput: { extension: subInput },
+        },
+      });
+      definition = new Definition(context);
+    });
+
+    let end;
+    When('ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('the sub process execution received the formatted input as variables.input', () => {
+      expect(capturedInput).to.deep.equal([{ shoeSize: 42 }]);
+    });
+  });
+
+  Scenario('multi-instance sub process passes the loop context as input', () => {
+    let definition;
+    const capturedInput = [];
+    Given('a process with a sub process looping over a collection that records its input', async () => {
+      const source = `
+      <definitions id="Def" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-sub" sourceRef="start" targetRef="sub" />
+          <subProcess id="sub">
+            <multiInstanceLoopCharacteristics isSequential="false" js:collection="\${environment.variables.items}" />
+            <serviceTask id="task" implementation="\${environment.services.recordInput}" />
+          </subProcess>
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source, {
+        variables: { items: ['one', 'two', 'three'] },
+        services: {
+          recordInput(scope, callback) {
+            capturedInput.push(scope.environment.variables.input);
+            callback();
+          },
+        },
+        extensions: { js },
+      });
+      definition = new Definition(context);
+    });
+
+    let end;
+    When('ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('each sub process iteration received its loop context as variables.input', () => {
+      expect(capturedInput.slice().sort((a, b) => a.index - b.index)).to.deep.equal([
+        { isSequential: false, index: 0, cardinality: 3, item: 'one' },
+        { isSequential: false, index: 1, cardinality: 3, item: 'two' },
+        { isSequential: false, index: 2, cardinality: 3, item: 'three' },
+      ]);
+    });
+  });
 });
+
+function subInput(elm) {
+  if (elm.id !== 'sub') return;
+  return {
+    activate() {
+      elm.broker.subscribeTmp(
+        'event',
+        'activity.enter',
+        () => {
+          elm.broker
+            .getQueue('format-run-q')
+            .queueMessage({ routingKey: 'run.input.format' }, { input: { shoeSize: 42 } }, { persistent: false });
+        },
+        { noAck: true, consumerTag: '_sub-input' }
+      );
+    },
+    deactivate() {
+      elm.broker.cancel('_sub-input');
+    },
+  };
+}
