@@ -442,10 +442,15 @@ function Extensions(activity, context, extensions) {
   const result = (this.extensions = []);
   for (const Extension of extensions) {
     const extension = Extension(activity, context);
-    if (extension) result.push(extension);
+    if (!extension) continue;
+    if (typeof extension.activate !== 'function') extension.activate = noop;
+    if (typeof extension.deactivate !== 'function') extension.deactivate = noop;
+    result.push(extension);
   }
   this[K_ACTIVATED] = false;
 }
+
+function noop() {}
 
 Object.defineProperty(Extensions.prototype, 'count', {
   get() {

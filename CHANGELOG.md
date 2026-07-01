@@ -1,5 +1,12 @@
 # Changelog
 
+## v18.0.5 - 2026-07-01
+
+### Additions
+
+- extension lifecycle hooks `activate` and `deactivate` are now optional; an extension that returns an object without either receives a no-op stub, so returning only one hook — or an object with neither — no longer throws
+- the shared `resolve` function on signal-, message-, and escalation reference elements now declares an exported `ResolvedReference` return type
+
 ## v18.0.4 - 2026-06-28
 
 ### Additions

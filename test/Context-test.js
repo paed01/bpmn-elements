@@ -514,6 +514,56 @@ describe('Context', () => {
 
       expect(activateCount).to.equal(0);
     });
+
+    it('extension without deactivate receives a dummy deactivate', async () => {
+      let activateCount = 0;
+
+      const context = await testHelpers.context(motherOfAllSource, {
+        extensions: {
+          coverage: {
+            extension() {
+              return {
+                activate() {
+                  ++activateCount;
+                },
+              };
+            },
+          },
+        },
+      });
+
+      const extensions = context.loadExtensions(context.getActivities()[0]);
+
+      extensions.activate();
+      expect(activateCount).to.equal(1);
+
+      expect(() => extensions.deactivate()).to.not.throw();
+    });
+
+    it('extension without activate receives a dummy activate', async () => {
+      let deactivateCount = 0;
+
+      const context = await testHelpers.context(motherOfAllSource, {
+        extensions: {
+          coverage: {
+            extension() {
+              return {
+                deactivate() {
+                  ++deactivateCount;
+                },
+              };
+            },
+          },
+        },
+      });
+
+      const extensions = context.loadExtensions(context.getActivities()[0]);
+
+      expect(() => extensions.activate()).to.not.throw();
+
+      extensions.deactivate();
+      expect(deactivateCount).to.equal(1);
+    });
   });
 
   describe('getActivitiesByEventDefinitionBehaviour(Behaviour, names)', () => {

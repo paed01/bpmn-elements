@@ -177,7 +177,7 @@ declare module 'bpmn-elements' {
 	execute(executeMessage: ElementBrokerMessage): void;
   }
 
-  export type Extension = (activity: any, context: any) => IExtension;
+  export type Extension = (activity: any, context: any) => Partial<IExtension> | void;
 
   export interface IExtension {
 	activate(message: ElementBrokerMessage): void;
