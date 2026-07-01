@@ -63,6 +63,15 @@ declare module 'bpmn-elements' {
 	path?: Omit<ElementParent, 'path'>[];
   }
 
+  /** Resolved signal-, message-, or escalation reference, shared by their `resolve` functions. */
+  export interface ResolvedReference {
+	id?: string;
+	type?: string;
+	messageType: string;
+	name?: string;
+	parent: ElementParent;
+  }
+
   // --- Shake results ------------------------------------------------------------
 
   /** A single hop (activity or sequence flow) recorded during a shake walk. */
@@ -757,13 +766,8 @@ declare module 'bpmn-elements' {
 		type: string | undefined;
 		name: string;
 		errorCode: any;
-		resolve: (executionMessage: ElementBrokerMessage, error?: Error) => {
-			id?: string;
-			type?: string;
-			messageType: string;
-			name: string;
-			code: string | undefined;
-			inner?: Error;
+		resolve: (executionMessage: ElementBrokerMessage, error?: Error) => ResolvedReference & {
+			code?: string;
 		};
 	};
 	/**
@@ -1206,9 +1210,9 @@ declare module 'bpmn-elements' {
 		parent: import("moddle-context-serializer").Parent | undefined;
 		environment: Environment;
 		
-		read(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): number | undefined;
+		read(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): void;
 		
-		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): number | undefined;
+		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): void;
 	}
 	/**
 	 * Builtin data store. Reads from / writes to `environment.variables._data`.
@@ -1227,9 +1231,9 @@ declare module 'bpmn-elements' {
 		parent: import("moddle-context-serializer").Parent | undefined;
 		environment: Environment;
 		
-		read(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): number | undefined;
+		read(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): void;
 		
-		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): number | undefined;
+		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): void;
 	}
 	/**
 	 * Builtin data store reference. Reads from / writes to `environment.variables._data`.
@@ -1248,9 +1252,9 @@ declare module 'bpmn-elements' {
 		parent: import("moddle-context-serializer").Parent | undefined;
 		environment: Environment;
 		
-		read(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): number | undefined;
+		read(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): void;
 		
-		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): number | undefined;
+		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): void;
 	}
 	/**
 	 * Escalation reference element. Resolves the escalation name expression against the execution message.
@@ -1269,18 +1273,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Resolve escalation reference for the given execution message.
 		 * */
-		resolve(executionMessage: ElementBrokerMessage): {
-			id: string | undefined;
-			type: string | undefined;
-			messageType: string;
-			name: any;
-			parent: {
-				id: string;
-				type: string;
-				executionId: string;
-				path?: Omit<ElementParent, "path">[];
-			};
-		};
+		resolve(executionMessage: ElementBrokerMessage): ResolvedReference;
 	}
 	/**
 	 * Activity ioSpecification behaviour. Reads bound data objects on enter and writes them on completion.
@@ -1418,18 +1411,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Resolve message reference for the given execution message.
 		 * */
-		resolve(executionMessage: ElementBrokerMessage): {
-			parent: {
-				id: string;
-				type: string;
-				executionId: string;
-				path?: Omit<ElementParent, "path">[];
-			};
-			name?: any;
-			id: string | undefined;
-			type: string | undefined;
-			messageType: string;
-		};
+		resolve(executionMessage: ElementBrokerMessage): ResolvedReference;
 	}
 	/**
 	 * Owns one `<bpmn:process>`. Wraps the structural definition and orchestrates flow traversal,
@@ -1601,18 +1583,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Resolve signal reference for the given execution message.
 		 * */
-		resolve(executionMessage: ElementBrokerMessage): {
-			parent: {
-				id: string;
-				type: string;
-				executionId: string;
-				path?: Omit<ElementParent, "path">[];
-			};
-			name?: any;
-			id: string | undefined;
-			type: string | undefined;
-			messageType: string;
-		};
+		resolve(executionMessage: ElementBrokerMessage): ResolvedReference;
 	}
 	/**
 	 * Standard loop characteristics
@@ -2293,14 +2264,23 @@ declare module 'bpmn-elements' {
 		environment: Environment;
 		broker: ElementBroker<Activity>;
 		executionId: string | undefined;
-		get execution(): any;
-		get executions(): any[];
+		get execution(): ProcessExecution | undefined;
+		get executions(): ProcessExecution[];
 		
 		execute(executeMessage: ElementBrokerMessage): void;
-		getState(): any;
-		recover(state: any): this | undefined;
-		getPostponed(): any[];
-		getApi(apiMessage: any): any;
+		/**
+		 * Get SubProcess state
+		 * */
+		getState(): ProcessExecutionState[];
+		/**
+		 * Recover SubProcess
+		 * 
+		 */
+		recover(state?: ProcessExecutionState[]): void;
+		
+		getPostponed(): ReturnType<ProcessExecution["getPostponed"]>;
+		
+		getApi(apiMessage: ElementBrokerMessage): IApi<this> | undefined;
 	}
 	/**
 	 * Task
@@ -2369,11 +2349,11 @@ declare module 'bpmn-elements' {
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | import("smqp").Consumer | undefined;
+		execute(executeMessage: ElementBrokerMessage): void;
 		
-		executeCatch(executeMessage: ElementBrokerMessage): import("smqp").Consumer | undefined;
+		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): void;
 	}
 	/**
 	 * Conditional event definition
@@ -2399,13 +2379,13 @@ declare module 'bpmn-elements' {
 		/**
 		 * Evaluate condition
 		 * */
-		evaluate(message: ElementBrokerMessage, callback: CallableFunction): any;
+		evaluate(message: ElementBrokerMessage, callback: CallableFunction): void;
 		/**
 		 * Handle evaluate result or error
 		 * @param err Condition evaluation error
 		 * @param result Result from evaluated condition, completes execution if truthy
-		 */
-		evaluateCallback(err: Error | null, result: any): number | undefined;
+		 * */
+		evaluateCallback(err: Error | null, result: any): void;
 		/**
 		 * Get condition
 		 * @param index Eventdefinition sequence number, used to name registered script
@@ -2431,11 +2411,11 @@ declare module 'bpmn-elements' {
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | void;
+		execute(executeMessage: ElementBrokerMessage): void;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): void;
 	}
 	/**
 	 * Escalation event definition
@@ -2455,11 +2435,11 @@ declare module 'bpmn-elements' {
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | void;
+		execute(executeMessage: ElementBrokerMessage): void;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): void;
 	}
 	/**
 	 * Link event definition
@@ -2479,11 +2459,11 @@ declare module 'bpmn-elements' {
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | undefined;
+		execute(executeMessage: ElementBrokerMessage): void;
 		
-		executeCatch(executeMessage: ElementBrokerMessage): number | undefined;
+		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): void;
 	}
 	/**
 	 * Message event definition
@@ -2503,11 +2483,11 @@ declare module 'bpmn-elements' {
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | void;
+		execute(executeMessage: ElementBrokerMessage): void;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): void;
 	}
 	/**
 	 * Signal event definition
@@ -2527,11 +2507,11 @@ declare module 'bpmn-elements' {
 		logger: ILogger;
 		get executionId(): string;
 		
-		execute(executeMessage: ElementBrokerMessage): number | void;
+		execute(executeMessage: ElementBrokerMessage): void;
 		
 		executeCatch(executeMessage: ElementBrokerMessage): void;
 		
-		executeThrow(executeMessage: ElementBrokerMessage): number | undefined;
+		executeThrow(executeMessage: ElementBrokerMessage): void;
 	}
 	/**
 	 * Terminate event definition

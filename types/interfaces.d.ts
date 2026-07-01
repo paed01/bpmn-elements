@@ -161,6 +161,15 @@ export interface ElementParent {
   path?: Omit<ElementParent, 'path'>[];
 }
 
+/** Resolved signal-, message-, or escalation reference, shared by their `resolve` functions. */
+export interface ResolvedReference {
+  id?: string;
+  type?: string;
+  messageType: string;
+  name?: string;
+  parent: ElementParent;
+}
+
 // --- Shake results ------------------------------------------------------------
 
 /** A single hop (activity or sequence flow) recorded during a shake walk. */

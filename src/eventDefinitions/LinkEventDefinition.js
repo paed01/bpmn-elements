@@ -64,7 +64,7 @@ LinkEventDefinition.prototype.executeCatch = function executeCatch(executeMessag
 
   broker.publish('event', 'activity.catch', catchContent, { type: 'catch' });
 
-  return broker.publish('execution', 'execute.completed', cloneContent(executeContent, { output: linkMessage, state: 'catch' }));
+  broker.publish('execution', 'execute.completed', cloneContent(executeContent, { output: linkMessage, state: 'catch' }));
 };
 
 /**
@@ -87,5 +87,5 @@ LinkEventDefinition.prototype.executeThrow = function executeThrow(executeMessag
 
   broker.publish('event', 'activity.link', linkContent, { type: 'link' });
 
-  return broker.publish('execution', 'execute.completed', cloneContent(executeContent));
+  broker.publish('execution', 'execute.completed', cloneContent(executeContent));
 };

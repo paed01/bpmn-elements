@@ -650,16 +650,7 @@ Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
     return this.broker.publish('event', 'activity.shake.end', cloneContent(message.content), { persistent: false, type: 'shake' });
   }
 
-  const targets = new Map();
-
-  for (const outboundFlow of this[K_FLOWS].outboundSequenceFlows) {
-    const prevTarget = targets.get(outboundFlow.targetId);
-    if (!prevTarget) {
-      targets.set(outboundFlow.targetId, outboundFlow);
-    }
-  }
-
-  for (const t of targets.values()) t.shake(message);
+  for (const [, targetFlows] of this[K_FLOWS].outboundEvaluator.targets) targetFlows[0].shake(message);
 };
 
 /** @internal */
@@ -984,12 +975,11 @@ Activity.prototype._doOutbound = function doOutbound(fromMessage, callback) {
 
   const fromContent = fromMessage.content;
 
-  let outboundFlows;
   if (fromContent.outbound?.length) {
-    outboundFlows = outboundSequenceFlows.map((flow) => formatFlowAction(flow, fromContent.outbound.filter((f) => f.id === flow.id).pop()));
-  }
+    const outboundFlows = outboundSequenceFlows.map((flow) =>
+      formatFlowAction(flow, fromContent.outbound.filter((f) => f.id === flow.id).pop())
+    );
 
-  if (outboundFlows) {
     this._doRunOutbound(outboundFlows, fromContent);
     return callback(null, outboundFlows);
   }

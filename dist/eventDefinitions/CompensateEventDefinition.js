@@ -68,6 +68,7 @@ CompensateEventDefinition.prototype.execute = function execute(executeMessage) {
 
 /**
  * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
  */
 CompensateEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
@@ -126,7 +127,7 @@ CompensateEventDefinition.prototype.executeThrow = function executeThrow(execute
     type: 'compensate',
     delegate: true
   });
-  return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
+  broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
 CompensateEventDefinition.prototype._onCollect = function onCollect(routingKey, message) {
   switch (routingKey) {

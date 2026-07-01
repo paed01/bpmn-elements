@@ -79,7 +79,7 @@ LinkEventDefinition.prototype.executeCatch = function executeCatch(executeMessag
   broker.publish('event', 'activity.catch', catchContent, {
     type: 'catch'
   });
-  return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent, {
+  broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent, {
     output: linkMessage,
     state: 'catch'
   }));
@@ -108,5 +108,5 @@ LinkEventDefinition.prototype.executeThrow = function executeThrow(executeMessag
   broker.publish('event', 'activity.link', linkContent, {
     type: 'link'
   });
-  return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
+  broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };

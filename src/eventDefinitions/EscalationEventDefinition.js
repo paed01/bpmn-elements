@@ -109,7 +109,7 @@ EscalationEventDefinition.prototype.executeThrow = function executeThrow(execute
 
   broker.publish('event', 'activity.escalate', throwContent, { type: 'escalate', delegate: true });
 
-  return broker.publish('execution', 'execute.completed', cloneContent(executeContent));
+  broker.publish('execution', 'execute.completed', cloneContent(executeContent));
 };
 
 EscalationEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
@@ -134,7 +134,7 @@ EscalationEventDefinition.prototype._onCatchMessage = function onCatchMessage(ro
   const broker = this.broker;
   broker.publish('event', 'activity.catch', catchContent, { type: 'catch' });
 
-  return broker.publish('execution', 'execute.completed', cloneContent(executeContent, { output, state: 'catch' }));
+  broker.publish('execution', 'execute.completed', cloneContent(executeContent, { output, state: 'catch' }));
 };
 
 EscalationEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {

@@ -30,6 +30,7 @@ function Escalation(escalationDef, context) {
 /**
  * Resolve escalation reference for the given execution message.
  * @param {import('#types').ElementBrokerMessage} executionMessage
+ * @returns {import('#types').ResolvedReference}
  */
 Escalation.prototype.resolve = function resolve(executionMessage) {
   const {

@@ -1,14 +1,31 @@
 import { ActivityError } from '../error/Errors.js';
 import { cloneMessage } from '../messageHelper.js';
 
+/**
+ * Outbound evaluator
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').SequenceFlow[]} outboundFlows
+ */
 export function OutboundEvaluator(activity, outboundFlows) {
   this.activity = activity;
   this.broker = activity.broker;
   const flows = (this.outboundFlows = outboundFlows.slice());
-  const defaultFlowIdx = flows.findIndex(({ isDefault }) => isDefault);
-  if (defaultFlowIdx > -1) {
-    const [defaultFlow] = flows.splice(defaultFlowIdx, 1);
-    flows.push(defaultFlow);
+  const targets = (this.targets = new Map());
+
+  if (outboundFlows.length === 1) {
+    targets.set(outboundFlows[0].targetId, [flows[0]]);
+  } else if (outboundFlows.length > 1) {
+    for (const flow of outboundFlows) {
+      if (flow.isDefault) {
+        flows.splice(flows.indexOf(flow), 1);
+        flows.push(flow);
+      }
+      if (!targets.has(flow.targetId)) {
+        targets.set(flow.targetId, [flow]);
+      } else {
+        targets.get(flow.targetId).push(flow);
+      }
+    }
   }
 
   this._onEvaluated = this.onEvaluated.bind(this);

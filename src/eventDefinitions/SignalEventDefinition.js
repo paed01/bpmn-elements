@@ -120,7 +120,7 @@ SignalEventDefinition.prototype.executeThrow = function executeThrow(executeMess
   const broker = this.broker;
   broker.publish('event', 'activity.signal', throwContent, { type: 'signal', delegate: true });
 
-  return broker.publish('execution', 'execute.completed', cloneContent(executeContent));
+  broker.publish('execution', 'execute.completed', cloneContent(executeContent));
 };
 
 SignalEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {

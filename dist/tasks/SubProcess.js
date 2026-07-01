@@ -70,11 +70,13 @@ function SubProcessBehaviour(activity, context) {
   this[K_ON_EXECUTION_COMPLETED] = this._onExecutionCompleted.bind(this);
 }
 Object.defineProperty(SubProcessBehaviour.prototype, 'execution', {
+  /** @return {import('../process/ProcessExecution.js').ProcessExecution | undefined} */
   get() {
     return [...this[K_EXECUTIONS]][0];
   }
 });
 Object.defineProperty(SubProcessBehaviour.prototype, 'executions', {
+  /** @return {import('../process/ProcessExecution.js').ProcessExecution[]} */
   get() {
     return [...this[K_EXECUTIONS]];
   }
@@ -120,6 +122,11 @@ SubProcessBehaviour.prototype.execute = function execute(executeMessage) {
   const processExecution = this._upsertExecution(message);
   return processExecution.execute(message);
 };
+
+/**
+ * Get SubProcess state
+ * @returns {import('#types').ProcessExecutionState[]}
+ */
 SubProcessBehaviour.prototype.getState = function getState() {
   const states = [];
   for (const pe of this[K_EXECUTIONS]) {
@@ -134,6 +141,11 @@ SubProcessBehaviour.prototype.getState = function getState() {
   }
   return states[0];
 };
+
+/**
+ * Recover SubProcess
+ * @param {import('#types').ProcessExecutionState[]} [state]
+ */
 SubProcessBehaviour.prototype.recover = function recover(state) {
   if (!state) return;
   const executions = this[K_EXECUTIONS];
@@ -152,14 +164,34 @@ SubProcessBehaviour.prototype.recover = function recover(state) {
   const subContext = this.context.clone(subEnvironment, this.activity);
   const execution = new _ProcessExecution.ProcessExecution(this.activity, subContext).recover(state);
   executions.add(execution);
-  return execution;
 };
+
+/**
+ * @returns {ReturnType<import('../process/ProcessExecution.js').ProcessExecution['getPostponed']>}
+ */
 SubProcessBehaviour.prototype.getPostponed = function getPostponed() {
   let postponed = [];
   for (const pe of this[K_EXECUTIONS]) {
     postponed = postponed.concat(pe.getPostponed());
   }
   return postponed;
+};
+
+/**
+ * @param {import('#types').ElementBrokerMessage} apiMessage
+ * @returns {import('#types').IApi<this> | undefined}
+ */
+SubProcessBehaviour.prototype.getApi = function getApi(apiMessage) {
+  const content = apiMessage.content;
+  if (content.id === this.id) return;
+  let execution;
+  if (execution = this._getExecutionById(content.parent.executionId)) {
+    return execution.getApi(apiMessage);
+  }
+  if (!content.parent.path) return;
+  for (const pp of content.parent.path) {
+    if (execution = this._getExecutionById(pp.executionId)) return execution.getApi(apiMessage);
+  }
 };
 SubProcessBehaviour.prototype._upsertExecution = function upsertExecution(executeMessage) {
   const content = executeMessage.content;
@@ -216,18 +248,6 @@ SubProcessBehaviour.prototype._completeExecution = function completeExecution(co
     this[K_EXECUTIONS].delete(execution);
   }
   this.broker.publish('execution', completeRoutingKey, (0, _messageHelper.cloneContent)(content));
-};
-SubProcessBehaviour.prototype.getApi = function getApi(apiMessage) {
-  const content = apiMessage.content;
-  if (content.id === this.id) return;
-  let execution;
-  if (execution = this._getExecutionById(content.parent.executionId)) {
-    return execution.getApi(apiMessage);
-  }
-  if (!content.parent.path) return;
-  for (const pp of content.parent.path) {
-    if (execution = this._getExecutionById(pp.executionId)) return execution.getApi(apiMessage);
-  }
 };
 SubProcessBehaviour.prototype._getExecutionById = function getExecutionById(executionId) {
   for (const pe of this[K_EXECUTIONS]) {

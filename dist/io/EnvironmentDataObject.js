@@ -40,7 +40,7 @@ EnvironmentDataObject.prototype.read = function read(broker, exchange, routingKe
   const environment = this.environment;
   const value = environment.variables._data?.[this.id];
   const content = this._createContent(value);
-  return broker.publish(exchange, `${routingKeyPrefix}response`, content, messageProperties);
+  broker.publish(exchange, `${routingKeyPrefix}response`, content, messageProperties);
 };
 
 /**
@@ -55,7 +55,7 @@ EnvironmentDataObject.prototype.write = function write(broker, exchange, routing
   environment.variables._data = environment.variables._data || {};
   environment.variables._data[this.id] = value;
   const content = this._createContent(value);
-  return broker.publish(exchange, `${routingKeyPrefix}response`, content, messageProperties);
+  broker.publish(exchange, `${routingKeyPrefix}response`, content, messageProperties);
 };
 
 /**

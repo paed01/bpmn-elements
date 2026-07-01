@@ -140,7 +140,7 @@ ErrorEventDefinition.prototype.executeThrow = function executeThrow(executeMessa
     type: 'throw',
     delegate: true
   });
-  return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent, {
+  broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent, {
     message: {
       ...info.message
     }

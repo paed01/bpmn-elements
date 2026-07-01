@@ -30,6 +30,7 @@ function BpmnErrorActivity(errorDef, context) {
   /**
    * @param {import('#types').ElementBrokerMessage} executionMessage
    * @param {Error} [error]
+   * @returns {import('#types').ResolvedReference & {code?:string}}
    */
   function resolve(executionMessage, error) {
     const resolveCtx = {

@@ -119,7 +119,7 @@ MessageEventDefinition.prototype.executeThrow = function executeThrow(executeMes
 
   broker.publish('event', 'activity.message', throwContent, { type: 'message', delegate: true });
 
-  return broker.publish('execution', 'execute.completed', cloneContent(executeContent));
+  broker.publish('execution', 'execute.completed', cloneContent(executeContent));
 };
 
 MessageEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {

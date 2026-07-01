@@ -30,6 +30,7 @@ function Message(messageDef, context) {
 /**
  * Resolve message reference for the given execution message.
  * @param {import('#types').ElementBrokerMessage} executionMessage
+ * @returns {import('#types').ResolvedReference}
  */
 Message.prototype.resolve = function resolve(executionMessage) {
   const {

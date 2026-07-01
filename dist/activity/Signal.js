@@ -30,6 +30,7 @@ function Signal(signalDef, context) {
 /**
  * Resolve signal reference for the given execution message.
  * @param {import('#types').ElementBrokerMessage} executionMessage
+ * @returns {import('#types').ResolvedReference}
  */
 Signal.prototype.resolve = function resolve(executionMessage) {
   const {

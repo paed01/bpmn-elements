@@ -137,7 +137,7 @@ SignalEventDefinition.prototype.executeThrow = function executeThrow(executeMess
     type: 'signal',
     delegate: true
   });
-  return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
+  broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
 SignalEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
   const info = this[_constants.K_REFERENCE_INFO];

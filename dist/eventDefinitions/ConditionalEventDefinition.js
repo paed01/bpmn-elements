@@ -89,6 +89,7 @@ ConditionalEventDefinition.prototype._setup = function setup(executeMessage) {
  * Evaluate condition
  * @param {import('#types').ElementBrokerMessage} message
  * @param {CallableFunction} callback
+ * @returns {void}
  */
 ConditionalEventDefinition.prototype.evaluate = function evaluate(message, callback) {
   const condition = this.condition;
@@ -103,6 +104,7 @@ ConditionalEventDefinition.prototype.evaluate = function evaluate(message, callb
  * Handle evaluate result or error
  * @param {Error|null} err Condition evaluation error
  * @param {any} result Result from evaluated condition, completes execution if truthy
+ * @returns {void}
  */
 ConditionalEventDefinition.prototype.evaluateCallback = function evaluateCallback(err, result) {
   const broker = this.broker;

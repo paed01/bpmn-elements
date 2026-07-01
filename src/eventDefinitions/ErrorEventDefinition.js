@@ -129,7 +129,7 @@ ErrorEventDefinition.prototype.executeThrow = function executeThrow(executeMessa
 
   this.broker.publish('event', 'activity.throw', throwContent, { type: 'throw', delegate: true });
 
-  return broker.publish(
+  broker.publish(
     'execution',
     'execute.completed',
     cloneContent(executeContent, {

@@ -136,7 +136,7 @@ MessageEventDefinition.prototype.executeThrow = function executeThrow(executeMes
     type: 'message',
     delegate: true
   });
-  return broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
+  broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
 MessageEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
   if ((0, _getPropertyValue.getPropertyValue)(message, 'content.message.id') !== this[_constants.K_REFERENCE_INFO].message.id) return;
