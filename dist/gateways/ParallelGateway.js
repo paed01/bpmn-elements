@@ -95,22 +95,18 @@ Object.defineProperty(ParallelGatewayBehaviour.prototype, 'executionId', {
  * @returns {void}
  */
 ParallelGatewayBehaviour.prototype.execute = function execute(executeMessage) {
-  const routingKey = executeMessage.fields.routingKey;
-  const isRedelivered = executeMessage.fields.redelivered;
   const executeContent = executeMessage.content;
   if (executeContent.isRootScope) {
     this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
-    switch (routingKey) {
-      case 'execute.start':
-        {
-          if (!isRedelivered && executeContent.state === STATE_SETUP && !this.peerMonitor.isRunning) {
-            return this._complete();
-          }
-          if (executeContent.state !== 'start' && !isRedelivered) {
-            return;
-          }
-          return this.setup(executeMessage);
-        }
+    if (executeMessage.fields.routingKey === 'execute.start') {
+      const isRedelivered = executeMessage.fields.redelivered;
+      if (!isRedelivered && executeContent.state === STATE_SETUP && !this.peerMonitor.isRunning) {
+        return this._complete();
+      }
+      if (executeContent.state !== 'start' && !isRedelivered) {
+        return;
+      }
+      return this.setup(executeMessage);
     }
   }
 };
@@ -118,7 +114,6 @@ ParallelGatewayBehaviour.prototype.execute = function execute(executeMessage) {
 /**
  * Setup peer monitor
  * @param {import('#types').ElementBrokerMessage} executeMessage
- * @returns {void}
  */
 ParallelGatewayBehaviour.prototype.setup = function setup(executeMessage) {
   const peerIds = new Set([...this.activity[K_PEERS].values()].map(v => [...v]).flat());
@@ -153,7 +148,7 @@ ParallelGatewayBehaviour.prototype.setup = function setup(executeMessage) {
     prefetch: 10000
   });
   this.broker.publish('event', 'activity.converge', (0, _messageHelper.cloneContent)(executeContent));
-  return this.broker.publish('execution', 'execute.start', (0, _messageHelper.cloneContent)(executeMessage.content, {
+  this.broker.publish('execution', 'execute.start', (0, _messageHelper.cloneContent)(executeMessage.content, {
     preventComplete: true,
     state: STATE_SETUP
   }));

@@ -1,5 +1,9 @@
 # Changelog
 
+## v18.0.6 - 2026-07-02
+
+- no functional change, just tydying up
+
 ## v18.0.5 - 2026-07-01
 
 ### Additions

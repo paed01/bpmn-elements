@@ -2131,6 +2131,10 @@ declare module 'bpmn-elements' {
 		stop(): void;
 	}
 	/**
+	 * Transaction
+	 * */
+	export function Transaction(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
 	 * Call activity
 	 * */
 	export function CallActivity(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
@@ -2302,10 +2306,6 @@ declare module 'bpmn-elements' {
 		
 		execute(executeMessage: ElementBrokerMessage): void;
 	}
-	/**
-	 * Transaction
-	 * */
-	export function Transaction(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
 	/**
 	 * Cancel event definition
 	 * */
