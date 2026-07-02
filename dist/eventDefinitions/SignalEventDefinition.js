@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.SignalEventDefinition = SignalEventDefinition;
-var _getPropertyValue = require("../getPropertyValue.js");
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
@@ -141,7 +140,7 @@ SignalEventDefinition.prototype.executeThrow = function executeThrow(executeMess
 };
 SignalEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
   const info = this[_constants.K_REFERENCE_INFO];
-  if ((0, _getPropertyValue.getPropertyValue)(message, 'content.message.id') !== info.message.id) return;
+  if (message.content?.message?.id !== info.message.id) return;
   this[_constants.K_COMPLETED] = true;
   this._stop();
   const {

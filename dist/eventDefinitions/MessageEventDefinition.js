@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.MessageEventDefinition = MessageEventDefinition;
-var _getPropertyValue = require("../getPropertyValue.js");
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
@@ -139,7 +138,7 @@ MessageEventDefinition.prototype.executeThrow = function executeThrow(executeMes
   broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
 MessageEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
-  if ((0, _getPropertyValue.getPropertyValue)(message, 'content.message.id') !== this[_constants.K_REFERENCE_INFO].message.id) return;
+  if (message.content?.message?.id !== this[_constants.K_REFERENCE_INFO].message.id) return;
   const {
     type,
     correlationId

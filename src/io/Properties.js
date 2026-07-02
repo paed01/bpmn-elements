@@ -1,4 +1,3 @@
-import { getPropertyValue } from '../getPropertyValue.js';
 import { K_CONSUMING } from '../constants.js';
 
 const K_PROPERTIES = Symbol.for('properties');
@@ -28,10 +27,10 @@ export function Properties(activity, propertiesDef, context) {
     };
     props.properties.add(source);
 
-    const inputDataObjectId = getPropertyValue(def, 'behaviour.dataInput.association.source.dataObject.id');
-    const outputDataObjectId = getPropertyValue(def, 'behaviour.dataOutput.association.target.dataObject.id');
-    const inputDataStoreId = getPropertyValue(def, 'behaviour.dataInput.association.source.dataStore.id');
-    const outputDataStoreId = getPropertyValue(def, 'behaviour.dataOutput.association.target.dataStore.id');
+    const inputDataObjectId = def.behaviour?.dataInput?.association?.source?.dataObject?.id;
+    const outputDataObjectId = def.behaviour?.dataOutput?.association?.target?.dataObject?.id;
+    const inputDataStoreId = def.behaviour?.dataInput?.association?.source?.dataStore?.id;
+    const outputDataStoreId = def.behaviour?.dataOutput?.association?.target?.dataStore?.id;
 
     if (inputDataObjectId) {
       const reference = context.getDataObjectById(inputDataObjectId);
@@ -127,7 +126,7 @@ Properties.prototype._formatOnEnter = function formatOnEnter(message) {
 Properties.prototype._formatOnComplete = function formatOnComplete(message) {
   const startRoutingKey = 'run.end.bpmn-properties';
 
-  const messageOutput = getPropertyValue(message, 'content.output.properties') || {};
+  const messageOutput = message.content?.output?.properties || {};
   const outputProperties = this._getProperties(message, messageOutput);
 
   const dataOutputObjects = this[K_PROPERTIES].dataOutputObjects;

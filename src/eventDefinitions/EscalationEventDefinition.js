@@ -1,4 +1,3 @@
-import { getPropertyValue } from '../getPropertyValue.js';
 import { brokerSafeId } from '../shared.js';
 import { cloneContent, shiftParent } from '../messageHelper.js';
 import { K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_Q, K_REFERENCE_ELEMENT } from '../constants.js';
@@ -114,7 +113,7 @@ EscalationEventDefinition.prototype.executeThrow = function executeThrow(execute
 
 EscalationEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
   const info = this[K_REFERENCE];
-  if (getPropertyValue(message, 'content.message.id') !== info.message.id) return;
+  if (message.content?.message?.id !== info.message.id) return;
 
   const output = message.content.message;
   this[K_COMPLETED] = true;

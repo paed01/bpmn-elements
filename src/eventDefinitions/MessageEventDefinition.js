@@ -1,4 +1,3 @@
-import { getPropertyValue } from '../getPropertyValue.js';
 import { brokerSafeId } from '../shared.js';
 import { cloneContent, shiftParent } from '../messageHelper.js';
 import { K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_Q, K_REFERENCE_ELEMENT, K_REFERENCE_INFO } from '../constants.js';
@@ -123,7 +122,7 @@ MessageEventDefinition.prototype.executeThrow = function executeThrow(executeMes
 };
 
 MessageEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
-  if (getPropertyValue(message, 'content.message.id') !== this[K_REFERENCE_INFO].message.id) return;
+  if (message.content?.message?.id !== this[K_REFERENCE_INFO].message.id) return;
 
   const { type, correlationId } = message.properties;
   this.broker.publish(

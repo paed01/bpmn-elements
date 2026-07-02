@@ -4,7 +4,6 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.EscalationEventDefinition = EscalationEventDefinition;
-var _getPropertyValue = require("../getPropertyValue.js");
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
@@ -128,7 +127,7 @@ EscalationEventDefinition.prototype.executeThrow = function executeThrow(execute
 };
 EscalationEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
   const info = this[K_REFERENCE];
-  if ((0, _getPropertyValue.getPropertyValue)(message, 'content.message.id') !== info.message.id) return;
+  if (message.content?.message?.id !== info.message.id) return;
   const output = message.content.message;
   this[_constants.K_COMPLETED] = true;
   this._stop();

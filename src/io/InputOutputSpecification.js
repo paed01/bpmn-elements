@@ -1,4 +1,3 @@
-import { getPropertyValue } from '../getPropertyValue.js';
 import { brokerSafeId } from '../shared.js';
 import { K_CONSUMING } from '../constants.js';
 
@@ -70,7 +69,7 @@ IoSpecification.prototype._onFormatEnter = function onFormatOnEnter() {
       };
       result.sources.push(source);
 
-      const dataObjectId = getPropertyValue(ioSource, 'behaviour.association.source.dataObject.id');
+      const dataObjectId = ioSource.behaviour?.association?.source?.dataObject?.id;
       if (!dataObjectId) return result;
       const dataObject = this.context.getDataObjectById(dataObjectId);
       if (!dataObject) return result;
@@ -117,8 +116,8 @@ IoSpecification.prototype._onFormatEnter = function onFormatOnEnter() {
 
 IoSpecification.prototype._onFormatComplete = function formatOnComplete(message) {
   const safeType = brokerSafeId(this.type).toLowerCase();
-  const messageInputs = getPropertyValue(message, 'content.ioSpecification.dataInputs');
-  const messageOutputs = getPropertyValue(message, 'content.output.ioSpecification.dataOutputs') || [];
+  const messageInputs = message.content?.ioSpecification?.dataInputs;
+  const messageOutputs = message.content?.output?.ioSpecification?.dataOutputs || [];
   const dataOutputs = this.behaviour.dataOutputs;
   const broker = this.broker;
   const context = this.context;
@@ -134,7 +133,7 @@ IoSpecification.prototype._onFormatComplete = function formatOnComplete(message)
       };
       result.sources.push(source);
 
-      const dataObjectId = getPropertyValue(ioSource, 'behaviour.association.target.dataObject.id');
+      const dataObjectId = ioSource.behaviour?.association?.target?.dataObject?.id;
       if (!dataObjectId) return result;
       const dataObject = context.getDataObjectById(dataObjectId);
       if (!dataObject) return result;
