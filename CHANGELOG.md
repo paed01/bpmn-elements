@@ -1,8 +1,12 @@
 # Changelog
 
-## v18.0.6 - 2026-07-02
+## Unreleased
 
-- no functional change, just tydying up
+## v18.0.6 - 2026-07-06
+
+### Bug fixes
+
+- seeding `environment.variables.input` for a sub process or called process now merges onto any inherited `input` instead of replacing it, so a nested or multi-instance sub process no longer clobbers the parent's `input` namespace (e.g. an inner loop can still resolve `${environment.variables.input.collection}` after the outer loop seeds its context)
 
 ## v18.0.5 - 2026-07-01
 

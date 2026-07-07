@@ -114,11 +114,14 @@ ProcessExecution.prototype.execute = function execute(executeMessage) {
   this.environment.assignVariables(executeMessage);
 
   // Seed input from the execute content (sub process) or a single inbound trigger (call activity forwarding its formatted input).
+  // Merge onto any inherited input so a nested or looping scope does not clobber the parent's input namespace.
   const content = executeMessage.content;
   const inbound = content.inbound;
   const input = content.input ?? (inbound?.length === 1 && inbound[0].input);
   if (input) {
-    this.environment.assignVariables({ input });
+    const currentInput = this.environment.variables.input;
+    const mergeable = input.constructor === Object && currentInput && currentInput.constructor === Object;
+    this.environment.assignVariables({ input: mergeable ? { ...currentInput, ...input } : input });
   }
 
   this[K_ACTIVITY_Q] = this.broker.assertQueue(`execute-${executionId}-q`, { durable: true, autoDelete: false });

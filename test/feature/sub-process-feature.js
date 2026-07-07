@@ -515,6 +515,58 @@ Feature('Sub-process', () => {
       ]);
     });
   });
+
+  Scenario('nested multi-instance sub processes looping over the same input variable', () => {
+    let definition;
+    const captured = [];
+    Given('a sub process whose nested sub process loops over the same top-level input.collection', async () => {
+      const source = `
+      <definitions id="Def" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
+        <process id="main-process" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-sub" sourceRef="start" targetRef="sub" />
+          <subProcess id="sub">
+            <multiInstanceLoopCharacteristics isSequential="true" js:collection="\${environment.variables.input.collection}" js:elementVariable="outer" />
+            <subProcess id="subsub">
+              <multiInstanceLoopCharacteristics isSequential="false" js:collection="\${environment.variables.input.collection}" js:elementVariable="inner" />
+              <serviceTask id="task" implementation="\${environment.services.recordInput}" />
+            </subProcess>
+          </subProcess>
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source, {
+        variables: { input: { collection: ['a', 'b'] } },
+        services: {
+          recordInput(scope, callback) {
+            const input = scope.environment.variables.input;
+            captured.push({ outer: input.outer, inner: input.inner, collection: input.collection, isSequential: input.isSequential });
+            callback();
+          },
+        },
+        extensions: { js },
+      });
+      definition = new Definition(context);
+    });
+
+    let end;
+    When('ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('run completes', () => {
+      return end;
+    });
+
+    And('the inner loop still resolved its collection from the untouched top-level input', () => {
+      expect(captured).to.deep.equal([
+        { outer: 'a', inner: 'a', collection: ['a', 'b'], isSequential: false },
+        { outer: 'a', inner: 'b', collection: ['a', 'b'], isSequential: false },
+        { outer: 'b', inner: 'a', collection: ['a', 'b'], isSequential: false },
+        { outer: 'b', inner: 'b', collection: ['a', 'b'], isSequential: false },
+      ]);
+    });
+  });
 });
 
 function subInput(elm) {
