@@ -6,6 +6,9 @@ Object.defineProperty(exports, "__esModule", {
 exports.EventDefinitionExecution = EventDefinitionExecution;
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
+const K_PARALLEL = Symbol.for('parallel multiple');
+const K_COMPLETED_DEFS = Symbol.for('completed definitions');
+
 /**
  * Event definition execution orchestrator. Drives a sequence of event definitions for the
  * activity and publishes the completed routing key when the last definition completes.
@@ -22,6 +25,9 @@ function EventDefinitionExecution(activity, eventDefinitions, completedRoutingKe
   this[_constants.K_COMPLETED] = false;
   this[_constants.K_STOPPED] = false;
   this[_constants.K_EXECUTE_MESSAGE] = null;
+  // ParallelMultiple event: complete only once every event definition has fired.
+  this[K_PARALLEL] = eventDefinitions.length > 1 && !!activity.behaviour?.parallelMultiple;
+  this[K_COMPLETED_DEFS] = new Set();
 }
 Object.defineProperty(EventDefinitionExecution.prototype, 'completed', {
   get() {
@@ -44,6 +50,11 @@ EventDefinitionExecution.prototype.execute = function execute(executeMessage) {
   const broker = this.broker;
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   const executionId = content.executionId;
+
+  // On resume the redelivered root carries the definitions that completed before the stop.
+  if (this[K_PARALLEL] && Array.isArray(content.completedDefinitions)) {
+    for (const completedIndex of content.completedDefinitions) this[K_COMPLETED_DEFS].add(completedIndex);
+  }
   broker.subscribeTmp('execution', 'execute.#', this._onExecuteMessage.bind(this), {
     noAck: true,
     consumerTag: '_eventdefinition-execution-execute-tag',
@@ -89,6 +100,7 @@ EventDefinitionExecution.prototype._onExecuteMessage = function onExecuteMessage
   switch (routingKey) {
     case 'execute.completed':
       {
+        if (message.content.isDefinitionScope && this[K_PARALLEL]) return this._onDefinitionCompleted(message);
         this._stop();
         if (message.content.isDefinitionScope) return this._complete(message);
         break;
@@ -108,6 +120,26 @@ EventDefinitionExecution.prototype._onExecuteMessage = function onExecuteMessage
         break;
       }
   }
+};
+
+/**
+ * ParallelMultiple: track fired definitions and complete only once all have fired.
+ * @param {import('#types').ElementBrokerMessage} message
+ */
+EventDefinitionExecution.prototype._onDefinitionCompleted = function onDefinitionCompleted(message) {
+  const completed = this[K_COMPLETED_DEFS];
+  const index = message.content.index;
+  if (completed.has(index)) return;
+  completed.add(index);
+  if (completed.size < this.eventDefinitions.length) {
+    // Persist progress onto the still-postponed root scope so a stop/resume resumes the wait.
+    return this.broker.publish('execution', 'execute.update', (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content, {
+      preventComplete: true,
+      completedDefinitions: [...completed]
+    }));
+  }
+  this._stop();
+  return this._complete(message);
 };
 EventDefinitionExecution.prototype._complete = function complete(message) {
   const {

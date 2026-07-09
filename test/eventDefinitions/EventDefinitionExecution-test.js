@@ -766,6 +766,133 @@ describe('EventDefinitionExecution', () => {
     expect(messages).to.have.length(0);
   });
 
+  describe('parallelMultiple', () => {
+    it('does not complete until every event definition completes', () => {
+      const event = getActivity();
+      event.behaviour = { parallelMultiple: true };
+      const execution = new EventDefinitionExecution(event, [
+        { type: 'bpmn:TimerEventDefinition', execute() {} },
+        { type: 'bpmn:MessageEventDefinition', execute() {} },
+      ]);
+
+      let completeMessage;
+      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => msg.content.isRootScope && (completeMessage = msg), {
+        noAck: true,
+      });
+
+      const starts = [];
+      event.broker.subscribeTmp('execution', 'execute.start', (_, msg) => starts.push(msg), { noAck: true });
+
+      execution.execute({
+        fields: {},
+        content: { id: event.id, isRootScope: true, executionId: 'root-execution-id', parent: { id: 'theProcess' } },
+      });
+
+      expect(starts, 'starts all definitions').to.have.length(2);
+
+      event.broker.publish('execution', 'execute.completed', { ...cloneContent(starts[0].content), output: 1 });
+      expect(completeMessage, 'does not complete on first definition').to.not.be.ok;
+      expect(execution.completed).to.be.false;
+
+      event.broker.publish('execution', 'execute.completed', { ...cloneContent(starts[1].content), output: 2 });
+      expect(completeMessage, 'completes once all definitions complete').to.be.ok;
+      expect(completeMessage.content).to.have.property('isRootScope', true);
+      expect(execution.completed).to.be.true;
+    });
+
+    it('ignores a redelivered duplicate definition completion', () => {
+      const event = getActivity();
+      event.behaviour = { parallelMultiple: true };
+      const execution = new EventDefinitionExecution(event, [
+        { type: 'bpmn:TimerEventDefinition', execute() {} },
+        { type: 'bpmn:MessageEventDefinition', execute() {} },
+      ]);
+
+      let completeMessage;
+      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => msg.content.isRootScope && (completeMessage = msg), {
+        noAck: true,
+      });
+
+      const starts = [];
+      event.broker.subscribeTmp('execution', 'execute.start', (_, msg) => starts.push(msg), { noAck: true });
+
+      execution.execute({
+        fields: {},
+        content: { id: event.id, isRootScope: true, executionId: 'root-execution-id', parent: { id: 'theProcess' } },
+      });
+
+      event.broker.publish('execution', 'execute.completed', { ...cloneContent(starts[0].content), output: 1 });
+      event.broker.publish('execution', 'execute.completed', { ...cloneContent(starts[0].content), output: 1 });
+      expect(completeMessage, 'a duplicate of the same definition does not satisfy the wait').to.not.be.ok;
+
+      event.broker.publish('execution', 'execute.completed', { ...cloneContent(starts[1].content), output: 2 });
+      expect(completeMessage).to.be.ok;
+    });
+
+    it('persists completed definition indices on the root scope for recovery', () => {
+      const event = getActivity();
+      event.behaviour = { parallelMultiple: true };
+      const execution = new EventDefinitionExecution(event, [
+        { type: 'bpmn:TimerEventDefinition', execute() {} },
+        { type: 'bpmn:MessageEventDefinition', execute() {} },
+      ]);
+
+      const updates = [];
+      event.broker.subscribeTmp('execution', 'execute.update', (_, msg) => updates.push(msg), { noAck: true });
+
+      const starts = [];
+      event.broker.subscribeTmp('execution', 'execute.start', (_, msg) => starts.push(msg), { noAck: true });
+
+      execution.execute({
+        fields: {},
+        content: { id: event.id, isRootScope: true, executionId: 'root-execution-id', parent: { id: 'theProcess' } },
+      });
+
+      event.broker.publish('execution', 'execute.completed', { ...cloneContent(starts[0].content), output: 1 });
+
+      const lastUpdate = updates[updates.length - 1];
+      expect(lastUpdate.content).to.have.property('preventComplete', true);
+      expect(lastUpdate.content).to.have.property('completedDefinitions').that.eql([0]);
+    });
+
+    it('seeds already completed definitions from the root content on redelivery', () => {
+      const event = getActivity();
+      event.behaviour = { parallelMultiple: true };
+      const execution = new EventDefinitionExecution(event, [
+        { type: 'bpmn:TimerEventDefinition', execute() {} },
+        { type: 'bpmn:MessageEventDefinition', execute() {} },
+      ]);
+
+      let completeMessage;
+      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => msg.content.isRootScope && (completeMessage = msg), {
+        noAck: true,
+      });
+
+      // Resume: index 0 already fired before the stop, redelivered root carries it.
+      execution.execute({
+        fields: { redelivered: true },
+        content: {
+          id: event.id,
+          isRootScope: true,
+          executionId: 'root-execution-id',
+          completedDefinitions: [0],
+          parent: { id: 'theProcess' },
+        },
+      });
+
+      event.broker.publish('execution', 'execute.completed', {
+        executionId: 'root-execution-id_1',
+        type: 'bpmn:MessageEventDefinition',
+        isDefinitionScope: true,
+        index: 1,
+        output: 2,
+      });
+
+      expect(completeMessage, 'completes once the remaining definition fires after resume').to.be.ok;
+      expect(execution.completed).to.be.true;
+    });
+  });
+
   it('parent complete message stops execution', () => {
     const event = getActivity();
 
