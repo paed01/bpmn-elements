@@ -87,6 +87,8 @@ describe('package exports', () => {
     it('exports expected', async () => {
       const modules = await import(resolve(cwd, pkg.exports['./tasks'].import));
       expect(Object.keys(modules)).to.deep.equal([
+        'AdHocSubProcess',
+        'AdHocSubProcessBehaviour',
         'CallActivity',
         'CallActivityBehaviour',
         'ReceiveTask',

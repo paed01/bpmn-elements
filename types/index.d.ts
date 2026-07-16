@@ -1625,6 +1625,7 @@ declare module 'bpmn-elements' {
 		type: string;
 		isSubProcess: any;
 		isTransaction: any;
+		isAdHoc: any;
 		broker: ElementBroker<Process> | ElementBroker<Activity>;
 		environment: Environment;
 		context: ContextInstance;
@@ -1686,6 +1687,10 @@ declare module 'bpmn-elements' {
 		 * Resolve a process or child Api for the given message.
 		 * */
 		getApi(message?: ElementBrokerMessage): IApi<Process>;
+		/**
+		 * List the process's start activities (isStart children) as their runtime instances.
+		 * */
+		getStartActivities(): Activity[];
 		get stopped(): boolean;
 		get completed(): boolean;
 		get status(): ProcessStatus;
@@ -2135,6 +2140,36 @@ declare module 'bpmn-elements' {
 	 * */
 	export function Transaction(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
 	/**
+	 * Ad-hoc sub process
+	 * */
+	export function AdHocSubProcess(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Ad-hoc sub process behaviour. Reuses {@link SubProcessBehaviour} for execution and adds
+	 * ad-hoc policy — inner-activity ordering, completion condition and cancellation of remaining
+	 * instances. It subscribes to the sub process event topic and arms/cancels inner activities
+	 * through public API only, so it can be subclassed or replaced without execution internals.
+	 */
+	export class AdHocSubProcessBehaviour extends SubProcessBehaviour {
+		sequential: boolean;
+		cancelRemaining: boolean;
+		completionCondition: any;
+		/**
+		 * Arm the inner start activities of the given execution — all in parallel, or the first when
+		 * sequential. Override to customise ad-hoc ordering.
+		 * 
+		 */
+		startInner(execution?: ProcessExecution): void;
+		/**
+		 * Sequential ordering: arm the next not-yet-run inner start activity. Returns whether one was armed.
+		 * */
+		armNext(execution?: ProcessExecution): boolean;
+		/**
+		 * Evaluate the completion condition against the inner activity that just left. Override to
+		 * customise ad-hoc completion.
+		 * */
+		completionMet(message: ElementBrokerMessage, execution: ProcessExecution): boolean;
+	}
+	/**
 	 * Call activity
 	 * */
 	export function CallActivity(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
@@ -2249,8 +2284,9 @@ declare module 'bpmn-elements' {
 	}
 	/**
 	 * Sub process
-	 * */
-	export function SubProcess(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	 * @param Behaviour behaviour class, defaults to {@link SubProcessBehaviour}
+	 */
+	export function SubProcess(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance, Behaviour?: CallableFunction): Activity;
 	/**
 	 * Sub process behaviour
 	 * */
@@ -2586,7 +2622,6 @@ declare module 'bpmn-elements' {
 	export const SendTask: typeof ServiceTask;
 	export const ManualTask: typeof SignalTask;
 	export const UserTask: typeof SignalTask;
-	export const AdHocSubProcess: typeof SubProcess;
 }
 
 declare module 'bpmn-elements/errors' {
@@ -2640,5 +2675,5 @@ declare module 'bpmn-elements/gateways' {
 }
 
 declare module 'bpmn-elements/tasks' {
-	export { CallActivity, CallActivityBehaviour, ReceiveTask, ReceiveTaskBehaviour, ScriptTask, ScriptTaskBehaviour, ServiceTask, ServiceTaskBehaviour, SignalTask, SignalTaskBehaviour, SubProcess, SubProcessBehaviour, Task, TaskBehaviour, Transaction } from 'bpmn-elements';
+	export { AdHocSubProcess, AdHocSubProcessBehaviour, CallActivity, CallActivityBehaviour, ReceiveTask, ReceiveTaskBehaviour, ScriptTask, ScriptTaskBehaviour, ServiceTask, ServiceTaskBehaviour, SignalTask, SignalTaskBehaviour, SubProcess, SubProcessBehaviour, Task, TaskBehaviour, Transaction } from 'bpmn-elements';
 }

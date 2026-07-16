@@ -60,6 +60,8 @@ export {
 // alias wins and the root module loses the canonical name that the
 // `bpmn-elements/tasks` re-export depends on.
 export {
+  AdHocSubProcess,
+  AdHocSubProcessBehaviour,
   CallActivity,
   CallActivityBehaviour,
   ReceiveTask,
@@ -74,7 +76,6 @@ export {
   SignalTask as UserTask,
   SignalTask,
   SignalTaskBehaviour,
-  SubProcess as AdHocSubProcess,
   SubProcess,
   SubProcessBehaviour,
   Task,

@@ -106,6 +106,7 @@ function Activity(Behaviour, activityDef, context) {
     isForCompensation,
     attachedTo,
     isTransaction: activityDef.isTransaction,
+    isAdHoc: activityDef.isAdHoc,
     isParallelJoin,
     isParallelGateway: activityDef.isParallelGateway,
     isStartEvent: !!activityDef.isStartEvent,
@@ -200,6 +201,11 @@ Object.defineProperties(Activity.prototype, {
   isTransaction: {
     get() {
       return this[K_FLAGS].isTransaction;
+    }
+  },
+  isAdHoc: {
+    get() {
+      return this[K_FLAGS].isAdHoc;
     }
   },
   isMultiInstance: {

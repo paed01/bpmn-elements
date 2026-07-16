@@ -3,6 +3,18 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+Object.defineProperty(exports, "AdHocSubProcess", {
+  enumerable: true,
+  get: function () {
+    return _AdHocSubProcess.AdHocSubProcess;
+  }
+});
+Object.defineProperty(exports, "AdHocSubProcessBehaviour", {
+  enumerable: true,
+  get: function () {
+    return _AdHocSubProcess.AdHocSubProcessBehaviour;
+  }
+});
 Object.defineProperty(exports, "CallActivity", {
   enumerable: true,
   get: function () {
@@ -93,6 +105,7 @@ Object.defineProperty(exports, "Transaction", {
     return _Transaction.Transaction;
   }
 });
+var _AdHocSubProcess = require("./AdHocSubProcess.js");
 var _CallActivity = require("./CallActivity.js");
 var _ReceiveTask = require("./ReceiveTask.js");
 var _ScriptTask = require("./ScriptTask.js");

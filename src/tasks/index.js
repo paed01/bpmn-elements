@@ -1,3 +1,4 @@
+export { AdHocSubProcess, AdHocSubProcessBehaviour } from './AdHocSubProcess.js';
 export { CallActivity, CallActivityBehaviour } from './CallActivity.js';
 export { ReceiveTask, ReceiveTaskBehaviour } from './ReceiveTask.js';
 export { ScriptTask, ScriptTaskBehaviour } from './ScriptTask.js';

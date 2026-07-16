@@ -20,7 +20,17 @@ import { StandardLoopCharacteristics } from './tasks/StandardLoopCharacteristics
 import { Association, MessageFlow, SequenceFlow } from './flows/index.js';
 import { BoundaryEvent, EndEvent, IntermediateCatchEvent, IntermediateThrowEvent, StartEvent } from './events/index.js';
 import { EventBasedGateway, ExclusiveGateway, InclusiveGateway, ParallelGateway } from './gateways/index.js';
-import { CallActivity, ReceiveTask, ServiceTask, ScriptTask, SubProcess, SignalTask, Task, Transaction } from './tasks/index.js';
+import {
+  AdHocSubProcess,
+  CallActivity,
+  ReceiveTask,
+  ServiceTask,
+  ScriptTask,
+  SubProcess,
+  SignalTask,
+  Task,
+  Transaction,
+} from './tasks/index.js';
 import {
   CancelEventDefinition,
   CompensateEventDefinition,
@@ -38,7 +48,7 @@ import { Timers } from './Timers.js';
 export { ActivityError, RunError } from './error/Errors.js';
 
 export {
-  SubProcess as AdHocSubProcess,
+  AdHocSubProcess,
   Association,
   Activity,
   BoundaryEvent,

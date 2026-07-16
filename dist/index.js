@@ -18,7 +18,7 @@ Object.defineProperty(exports, "ActivityError", {
 Object.defineProperty(exports, "AdHocSubProcess", {
   enumerable: true,
   get: function () {
-    return _index4.SubProcess;
+    return _index4.AdHocSubProcess;
   }
 });
 Object.defineProperty(exports, "Association", {

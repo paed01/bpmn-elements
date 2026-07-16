@@ -18,13 +18,15 @@ const K_RECOVERED_VERSION = Symbol.for('recovered version');
  * @param {import('#types').ContextInstance} context
  */
 export function ProcessExecution(parentActivity, context) {
-  const { id, type, broker, isSubProcess, isTransaction } = parentActivity;
+  const { id, type, broker, isSubProcess, isTransaction, isAdHoc } = parentActivity;
 
   this[K_PARENT] = parentActivity;
   this.id = id;
   this.type = type;
   this.isSubProcess = isSubProcess;
   this.isTransaction = isSubProcess && isTransaction;
+  // Ad-hoc sub processes arm their own inner start activities (see AdHocSubProcessBehaviour).
+  this.isAdHoc = isSubProcess && isAdHoc;
   this.broker = broker;
   this.environment = context.environment;
   this.context = context;
@@ -183,7 +185,9 @@ ProcessExecution.prototype.resume = function resume() {
 
   if (this[K_COMPLETED]) return;
 
-  if (!postponed.size && status === 'executing') return this._complete('completed');
+  if (!postponed.size && status === 'executing') {
+    return this._complete('completed');
+  }
 };
 
 /**
@@ -410,9 +414,14 @@ ProcessExecution.prototype._start = function start() {
   const { startActivities, postponed, detachedActivities } = this[K_ELEMENTS];
   this._shakeOnStart();
 
-  for (const a of startActivities) a.init();
-  this[K_STATUS] = 'executing';
-  for (const a of startActivities) a.consumeInbound();
+  if (this.isAdHoc) {
+    // Ad-hoc sub processes arm their own inner start activities (parallel or sequential).
+    this[K_STATUS] = 'executing';
+  } else {
+    for (const a of startActivities) a.init();
+    this[K_STATUS] = 'executing';
+    for (const a of startActivities) a.consumeInbound();
+  }
 
   if (!startActivities.size) {
     for (const a of this[K_ELEMENTS].triggeredByEvent) {
@@ -1101,6 +1110,14 @@ ProcessExecution.prototype._reconcileStartEvents = function reconcileStartEvents
       return;
     }
   }
+};
+
+/**
+ * List the process's start activities (isStart children) as their runtime instances.
+ * @returns {import('#types').Activity[]}
+ */
+ProcessExecution.prototype.getStartActivities = function getStartActivities() {
+  return [...this[K_ELEMENTS].startActivities];
 };
 
 /** @internal */

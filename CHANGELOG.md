@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v18.0.7 - 2026-07-16
+
+### Additions
+
+- `AdHocSubProcess` is now executed by a dedicated `AdHocSubProcessBehaviour`. Honours `ordering` — Parallel (default) or Sequential, arming one inner start branch at a time — and a `completionCondition` that completes the sub process and cancels the still-running instances, unless `cancelRemainingInstances` is `false`
+- catch, boundary, and start events with `parallelMultiple="true"` now wait for **all** their event definitions to fire before completing
+
 ## v18.0.6 - 2026-07-06
 
 ### Bug fixes

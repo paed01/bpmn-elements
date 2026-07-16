@@ -15,10 +15,11 @@ const K_ON_EXECUTION_COMPLETED = Symbol.for('execution completed handler');
  * Sub process
  * @param {import('moddle-context-serializer').Activity} activityDef
  * @param {import('#types').ContextInstance} context
+ * @param {CallableFunction} [Behaviour] behaviour class, defaults to {@link SubProcessBehaviour}
  */
-function SubProcess(activityDef, context) {
+function SubProcess(activityDef, context, Behaviour = SubProcessBehaviour) {
   const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
-  const subProcess = new _Activity.Activity(SubProcessBehaviour, {
+  const subProcess = new _Activity.Activity(Behaviour, {
     ...activityDef,
     isSubProcess: true,
     triggeredByEvent
