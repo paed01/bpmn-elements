@@ -428,4 +428,48 @@ Feature('Ad-hoc subprocess', () => {
       return end;
     });
   });
+
+  Scenario('Ad-hoc subprocess containing a sub process', () => {
+    let context, definition;
+    Given('an ad-hoc subprocess whose only start activity is a sub process with an inner user task', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-adhoc" sourceRef="start" targetRef="adhoc" />
+          <adHocSubProcess id="adhoc">
+            <subProcess id="inner">
+              <startEvent id="innerStart" />
+              <sequenceFlow id="to-innerTask" sourceRef="innerStart" targetRef="innerTask" />
+              <userTask id="innerTask" />
+            </subProcess>
+          </adHocSubProcess>
+          <sequenceFlow id="to-end" sourceRef="adhoc" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+      context = await testHelpers.context(source);
+    });
+
+    const waits = [];
+    let end;
+    When('running', () => {
+      definition = new Definition(context);
+      definition.broker.subscribeTmp('event', 'activity.wait', (_, msg) => waits.push(msg.content), { noAck: true });
+      end = definition.waitFor('leave');
+      definition.run();
+    });
+
+    Then('the inner sub process user task is waiting', () => {
+      expect(waits.map((w) => w.id)).to.deep.equal(['innerTask']);
+    });
+
+    When('the inner user task is signaled', () => {
+      definition.signal({ executionId: waits[0].executionId });
+    });
+
+    Then('the definition completes once the inner sub process drains', () => {
+      return end;
+    });
+  });
 });

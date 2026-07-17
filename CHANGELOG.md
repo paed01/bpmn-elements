@@ -6,6 +6,7 @@
 
 ### Fixes
 
+- drop legacy in-flight `flow.discard`/`flow.looped` tokens on recover. States saved before the "no flow discards" change could carry a discarded-flow token on the process activity queue; the current runtime never pops it from `postponed`, so recovering such a state stranded process completion
 - Type declare Definition run function properly
 
 ## v18.0.7 - 2026-07-16
