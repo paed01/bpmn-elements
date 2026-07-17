@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "18.0.7",
+  "version": "18.0.8",
   "description": "Executable workflow elements based on BPMN 2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -86,9 +86,6 @@
     ]
   },
   "overrides": {
-    "c8": {
-      "yargs": "^18.0.0"
-    },
     "mocha": {
       "yargs": "^18.0.0"
     }
@@ -104,7 +101,7 @@
     "@types/bpmn-moddle": "^10.0.0",
     "@types/node": "^20.19.40",
     "bpmn-moddle": "^10.0.0",
-    "c8": "^11.0.0",
+    "c8": "^12.0.0",
     "camunda-bpmn-moddle": "^7.0.1",
     "chai": "^6.2.1",
     "chronokinesis": "^8.0.0",

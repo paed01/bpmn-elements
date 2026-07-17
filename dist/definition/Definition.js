@@ -114,9 +114,19 @@ Object.defineProperties(Definition.prototype, {
 /**
  * Start running the definition. Accepts run options, a callback, or both.
  * The callback fires once on leave, stop, or error.
- * @param {Record<string, any> | import('#types').runCallback} [optionsOrCallback]
- * @param {import('#types').runCallback} [optionalCallback]
+ * @overload
+ * @param {Record<string, any>} [options]
  * @returns {this}
+ *
+ * @overload
+ * @param {Record<string, any>} options
+ * @param {import('#types').runCallback} callback
+ * @returns {this}
+ *
+ * @overload
+ * @param {import('#types').runCallback} callback
+ * @returns {this}
+ *
  * @throws {Error} when already running and no callback is supplied
  */
 Definition.prototype.run = function run(optionsOrCallback, optionalCallback) {

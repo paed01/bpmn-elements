@@ -947,7 +947,19 @@ declare module 'bpmn-elements' {
 		 * The callback fires once on leave, stop, or error.
 		 * @throws {Error} when already running and no callback is supplied
 		 */
-		run(optionsOrCallback?: Record<string, any> | runCallback, optionalCallback?: runCallback): this;
+		run(options?: Record<string, any> | undefined): this;
+		/**
+		 * Start running the definition. Accepts run options, a callback, or both.
+		 * The callback fires once on leave, stop, or error.
+		 * @throws {Error} when already running and no callback is supplied
+		 */
+		run(options: Record<string, any>, callback: runCallback): this;
+		/**
+		 * Start running the definition. Accepts run options, a callback, or both.
+		 * The callback fires once on leave, stop, or error.
+		 * @throws {Error} when already running and no callback is supplied
+		 */
+		run(callback: runCallback): this;
 		/**
 		 * Resume after recover by republishing the last run message. The callback fires once on
 		 * leave, stop, or error.

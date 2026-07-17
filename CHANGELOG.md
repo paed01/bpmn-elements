@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v18.0.8 - 2026-07-17
+
+### Fixes
+
+- Type declare Definition run function properly
+
 ## v18.0.7 - 2026-07-16
 
 ### Additions
