@@ -49,7 +49,15 @@ function ReceiveTaskBehaviour(activity) {
   this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
   this.broker = activity.broker;
+
+  /** @internal */
   this[_constants.K_REFERENCE_ELEMENT] = this.reference.id && activity.getActivityById(this.reference.id);
+  /** @internal */
+  this[_constants.K_COMPLETED] = false;
+  /** @internal */
+  this[_constants.K_EXECUTE_MESSAGE] = undefined;
+  /** @internal */
+  this[_constants.K_REFERENCE_INFO] = undefined;
 }
 
 /**

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v18.0.9 - 2026-07-18
+
+### Fixes
+
+- [`dts-buddy@0.8.3`](https://www.npmjs.com/package/dts-buddy) now strips internal properties, only prototyped methods remaining
+
 ## v18.0.8 - 2026-07-17
 
 ### Fixes

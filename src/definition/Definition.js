@@ -42,15 +42,27 @@ export function Definition(context, options) {
     this.context = context;
   }
 
+  /** @internal */
   this[K_COUNTERS] = {
     completed: 0,
     discarded: 0,
   };
 
+  /** @internal */
   this[K_STOPPED] = false;
+  /** @internal */
   this[K_EXECUTION] = new Map();
+  /** @internal */
+  this[K_STATUS] = undefined;
+  /** @internal */
+  this[K_CONSUMING] = false;
+  /** @internal */
+  this[K_STATE_MESSAGE] = undefined;
+  /** @internal */
+  this[K_EXECUTE_MESSAGE] = null;
 
   const onBrokerReturn = this._onBrokerReturnFn.bind(this);
+  /** @internal */
   this[K_MESSAGE_HANDLERS] = {
     onBrokerReturn,
     onApiMessage: this._onApiMessage.bind(this),

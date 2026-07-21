@@ -33,7 +33,9 @@ function Environment(options = {}) {
   };
   /** @type {import('#types').LoggerFactory} */
   this.Logger = options.Logger || DummyLogger;
+  /** @internal */
   this[K_SERVICES] = options.services || {};
+  /** @internal */
   this[K_VARIABLES] = options.variables || {};
 }
 Object.defineProperty(Environment.prototype, 'variables', {

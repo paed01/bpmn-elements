@@ -19,7 +19,6 @@ const K_EVENT_DEFINITIONS = Symbol.for('eventDefinitions');
 const K_EXEC = Symbol.for('exec');
 const K_FLAGS = Symbol.for('flags');
 const K_FLOWS = Symbol.for('flows');
-const K_FORMATTER = Symbol.for('formatter');
 
 /**
  * Activity wraps any element (task, event, gateway) and orchestrates its lifecycle through the broker.
@@ -38,6 +37,8 @@ function Activity(Behaviour, activityDef, context) {
     attachedTo: attachedToRef,
     eventDefinitions
   } = behaviour;
+
+  /** @internal */
   this[K_ACTIVITY_DEF] = activityDef;
   this.id = id;
   this.type = type;
@@ -60,6 +61,8 @@ function Activity(Behaviour, activityDef, context) {
   this.context = context;
   /** @type {import('#types').ActivityStatus | undefined} */
   this.status = undefined;
+
+  /** @internal */
   this[_constants.K_COUNTERS] = {
     taken: 0,
     discarded: 0
@@ -90,6 +93,8 @@ function Activity(Behaviour, activityDef, context) {
     sourceId
   }) => sourceId));
   const isParallelJoin = activityDef.isParallelGateway && inboundSourceIds.size > 1;
+
+  /** @internal */
   this[K_FLOWS] = {
     inboundSequenceFlows,
     inboundAssociations,
@@ -98,6 +103,8 @@ function Activity(Behaviour, activityDef, context) {
     outboundEvaluator: new _outboundEvaluator.OutboundEvaluator(this, outboundSequenceFlows)
   };
   const isThrowingLink = activityDef.isThrowing && activityDef.linkNames?.length;
+
+  /** @internal */
   this[K_FLAGS] = {
     isEnd: !outboundSequenceFlows.length && !isThrowingLink,
     isStart: !hasInboundTrigger && !behaviour.triggeredByEvent && !activityDef.isCatching,
@@ -116,7 +123,10 @@ function Activity(Behaviour, activityDef, context) {
     isCatching: activityDef.isCatching,
     lane: activityDef.lane?.id
   };
+  /** @internal */
   this[K_EXEC] = new Map();
+
+  /** @internal */
   this[_constants.K_MESSAGE_HANDLERS] = {
     onInbound: this._onInbound.bind(this),
     onRunMessage: this._onRunMessage.bind(this),
@@ -124,11 +134,22 @@ function Activity(Behaviour, activityDef, context) {
     onExecutionMessage: this._onExecutionMessage.bind(this)
   };
 
-  /** @type {import('#types').EventDefinition[] | undefined} */
+  /** @internal */
   this[K_EVENT_DEFINITIONS] = eventDefinitions?.map((ed, idx) => new ed.Behaviour(this, ed, context, idx));
+  /** @internal */
   this[_constants.K_EXTENSIONS] = context.loadExtensions(this);
+  /** @internal */
   this[_constants.K_CONSUMING] = false;
+  /** @internal */
   this[K_CONSUMING_RUN_Q] = undefined;
+  /** @internal */
+  this[_constants.K_ACTIVATED] = false;
+  this[_constants.K_CONSUMING] = false;
+  this[K_CONSUMING_RUN_Q] = false;
+  /** @internal */
+  this[_constants.K_STATE_MESSAGE] = undefined;
+  /** @internal */
+  this[_constants.K_EXECUTE_MESSAGE] = undefined;
 }
 Object.defineProperties(Activity.prototype, {
   counters: {
@@ -161,9 +182,9 @@ Object.defineProperties(Activity.prototype, {
   },
   formatter: {
     get() {
-      let formatter = this[K_FORMATTER];
+      let formatter = this[_constants.K_FORMATTER];
       if (formatter) return formatter;
-      formatter = this[K_FORMATTER] = new _MessageFormatter.Formatter(this);
+      formatter = this[_constants.K_FORMATTER] = new _MessageFormatter.Formatter(this);
       return formatter;
     }
   },

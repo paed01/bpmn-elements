@@ -34,14 +34,21 @@ function CompensateEventDefinition(activity, eventDefinition, context) {
   this.activity = activity;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
+
+  /** @internal */
+  this[_constants.K_COMPLETED] = false;
+  /** @internal */
+  this[_constants.K_EXECUTE_MESSAGE] = undefined;
   if (!isThrowing) {
-    this[_constants.K_COMPLETED] = false;
+    /** @internal */
     this[K_ASSOCIATIONS] = context.getOutboundAssociations(id);
     const messageQueueName = `${referenceType}-${(0, _shared.brokerSafeId)(id)}-q`;
+    /** @internal */
     this[_constants.K_MESSAGE_Q] = broker.assertQueue(messageQueueName, {
       autoDelete: false,
       durable: true
     });
+    /** @internal */
     this[K_COMPENSATE_Q] = broker.assertQueue('compensate-q', {
       autoDelete: false,
       durable: true

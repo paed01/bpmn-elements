@@ -24,11 +24,18 @@ export function CompensateEventDefinition(activity, eventDefinition, context) {
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
 
+  /** @internal */
+  this[K_COMPLETED] = false;
+  /** @internal */
+  this[K_EXECUTE_MESSAGE] = undefined;
+
   if (!isThrowing) {
-    this[K_COMPLETED] = false;
+    /** @internal */
     this[K_ASSOCIATIONS] = context.getOutboundAssociations(id);
     const messageQueueName = `${referenceType}-${brokerSafeId(id)}-q`;
+    /** @internal */
     this[K_MESSAGE_Q] = broker.assertQueue(messageQueueName, { autoDelete: false, durable: true });
+    /** @internal */
     this[K_COMPENSATE_Q] = broker.assertQueue('compensate-q', { autoDelete: false, durable: true });
     broker.bindQueue(messageQueueName, 'api', `*.${referenceType}.#`, { durable: true, priority: 400 });
   }

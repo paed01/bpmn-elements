@@ -80,7 +80,10 @@ export function ParallelGatewayBehaviour(activity) {
    */
   this.inbound = new Set();
 
+  /** @internal */
   this[K_EXECUTE_MESSAGE] = undefined;
+  /** @internal */
+  this[K_TARGETS] = undefined;
 }
 
 Object.defineProperty(ParallelGatewayBehaviour.prototype, 'executionId', {
@@ -127,7 +130,7 @@ ParallelGatewayBehaviour.prototype.setup = function setup(executeMessage) {
   const executeContent = message.content;
   const { executionId } = executeContent;
 
-  this.inbound.add(cloneContent(executeMessage.content.inbound[0]));
+  this.inbound.add(cloneContent(executeContent.inbound[0]));
 
   this.broker.subscribeOnce('api', `activity.stop.${executionId}`, () => this._stop(), {
     consumerTag: '_api-stop-execution',

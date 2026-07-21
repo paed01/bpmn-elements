@@ -11,7 +11,6 @@ var _Tracker = require("../Tracker.js");
 var _constants = require("../constants.js");
 const K_ACTIVITY_Q = Symbol.for('activityQ');
 const K_ELEMENTS = Symbol.for('elements');
-const K_PARENT = Symbol.for('parent');
 const K_TRACKER = Symbol.for('activity tracker');
 const K_PEERS_DISCOVERED = Symbol.for('peers discovered');
 const K_RECOVERED_VERSION = Symbol.for('recovered version');
@@ -31,7 +30,9 @@ function ProcessExecution(parentActivity, context) {
     isTransaction,
     isAdHoc
   } = parentActivity;
-  this[K_PARENT] = parentActivity;
+
+  /** @internal */
+  this[_constants.K_PARENT] = parentActivity;
   this.id = id;
   this.type = type;
   this.isSubProcess = isSubProcess;
@@ -41,6 +42,13 @@ function ProcessExecution(parentActivity, context) {
   this.broker = broker;
   this.environment = context.environment;
   this.context = context;
+  /**
+   * Process exection id
+   * @type {string}
+   */
+  this.executionId = undefined;
+
+  /** @internal */
   this[K_ELEMENTS] = {
     postponed: new Set(),
     children: context.getActivities(id),
@@ -58,18 +66,31 @@ function ProcessExecution(parentActivity, context) {
     autoDelete: false,
     durable: true
   });
+
+  /** @internal */
   this[_constants.K_COMPLETED] = false;
+  /** @internal */
   this[_constants.K_STOPPED] = false;
+  /** @internal */
   this[_constants.K_ACTIVATED] = false;
+  /** @internal */
   this[_constants.K_STATUS] = 'init';
+  /** @internal */
   this[K_TRACKER] = new _Tracker.ActivityTracker(id);
-  this.executionId = undefined;
+
+  /** @internal */
   this[_constants.K_MESSAGE_HANDLERS] = {
     onActivityEvent: this._onActivityEvent.bind(this),
     onApiMessage: this._onApiMessage.bind(this),
     onChildMessage: this._onChildMessage.bind(this),
     onMessageFlowEvent: this._onMessageFlowEvent.bind(this)
   };
+  /** @internal */
+  this[_constants.K_EXECUTE_MESSAGE] = undefined;
+  /** @internal */
+  this[K_ACTIVITY_Q] = undefined;
+  /** @internal */
+  this[K_RECOVERED_VERSION] = 0;
 }
 Object.defineProperties(ProcessExecution.prototype, {
   stopped: {
@@ -1132,5 +1153,5 @@ ProcessExecution.prototype._getChildApi = function getChildApi(message) {
 
 /** @internal */
 ProcessExecution.prototype._debug = function debugMessage(logMessage) {
-  this[K_PARENT].logger.debug(`<${this.executionId} (${this.id})> ${logMessage}`);
+  this[_constants.K_PARENT].logger.debug(`<${this.executionId} (${this.id})> ${logMessage}`);
 };

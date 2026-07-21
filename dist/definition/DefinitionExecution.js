@@ -9,7 +9,6 @@ var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
 const K_PROCESSES_Q = Symbol.for('processesQ');
-const K_PARENT = Symbol.for('definition');
 const K_PROCESSES = Symbol.for('processes');
 
 /**
@@ -20,7 +19,9 @@ const K_PROCESSES = Symbol.for('processes');
  */
 function DefinitionExecution(definition, context) {
   const broker = definition.broker;
-  this[K_PARENT] = definition;
+
+  /** @internal */
+  this[_constants.K_PARENT] = definition;
   this.id = definition.id;
   this.type = definition.type;
   this.broker = broker;
@@ -37,6 +38,8 @@ function DefinitionExecution(definition, context) {
     ids.add(bp.id);
     if (bp.isExecutable) executable.add(bp);
   }
+
+  /** @internal */
   this[K_PROCESSES] = {
     processes,
     ids,
@@ -49,11 +52,18 @@ function DefinitionExecution(definition, context) {
     durable: true
   });
   this.executionId = undefined;
+  /** @internal */
   this[_constants.K_COMPLETED] = false;
+  /** @internal */
   this[_constants.K_STOPPED] = false;
+  /** @internal */
   this[_constants.K_ACTIVATED] = false;
+  /** @internal */
   this[_constants.K_STATUS] = 'init';
+  /** @internal */
   this[K_PROCESSES_Q] = undefined;
+
+  /** @internal */
   this[_constants.K_MESSAGE_HANDLERS] = {
     onApiMessage: this._onApiMessage.bind(this),
     onCallActivity: this._onCallActivity.bind(this),
@@ -63,6 +73,8 @@ function DefinitionExecution(definition, context) {
     onMessageOutbound: this._onMessageOutbound.bind(this),
     onProcessMessage: this._onProcessMessage.bind(this)
   };
+  /** @internal */
+  this[_constants.K_EXECUTE_MESSAGE] = undefined;
 }
 Object.defineProperties(DefinitionExecution.prototype, {
   stopped: {
@@ -816,5 +828,5 @@ DefinitionExecution.prototype._getProcessApiByExecutionId = function getProcessA
 
 /** @internal */
 DefinitionExecution.prototype._debug = function debug(logMessage) {
-  this[K_PARENT].logger.debug(`<${this.executionId} (${this.id})> ${logMessage}`);
+  this[_constants.K_PARENT].logger.debug(`<${this.executionId} (${this.id})> ${logMessage}`);
 };

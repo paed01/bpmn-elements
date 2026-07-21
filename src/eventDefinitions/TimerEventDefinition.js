@@ -27,8 +27,12 @@ export function TimerEventDefinition(activity, eventDefinition) {
   this.broker = activity.broker;
   this.logger = environment.Logger(type.toLowerCase());
 
+  /** @internal */
   this[K_STOPPED] = false;
+  /** @internal */
   this[K_TIMER] = null;
+  /** @internal */
+  this[K_TIMER_CONTENT] = undefined;
 }
 
 Object.defineProperty(TimerEventDefinition.prototype, 'executionId', {

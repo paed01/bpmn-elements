@@ -47,6 +47,7 @@ function ContextInstance(definitionContext, environment, owner, peersCache) {
   this.extensionsMapper = new ExtensionsMapper(this);
   /** @private */
   this.refs = new Map([['activityRefs', new Map()], ['sequenceFlowRefs', new Map()], ['processRefs', new Map()], ['messageFlows', new Set()], ['associationRefs', new Map()], ['dataObjectRefs', new Map()], ['dataStoreRefs', new Map()]]);
+  /** @internal */
   this[K_OWNER] = owner;
 }
 Object.defineProperty(ContextInstance.prototype, 'owner', {
@@ -423,6 +424,7 @@ function Extensions(activity, context, extensions) {
     if (typeof extension.deactivate !== 'function') extension.deactivate = noop;
     result.push(extension);
   }
+  /** @internal */
   this[_constants.K_ACTIVATED] = false;
 }
 function noop() {}

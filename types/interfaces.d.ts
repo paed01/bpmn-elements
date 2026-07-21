@@ -590,6 +590,37 @@ export interface Script {
   execute(executionContext: ExecutionScope, callback: CallableFunction): void;
 }
 
+// --- Service task service -----------------------------------------------------
+
+/**
+ * Service task service instance, as returned by `ServiceTaskBehaviour#getService`.
+ *
+ * A service wraps the element-specific work (e.g. an `implementation` expression
+ * or a custom `Service` behaviour) behind a callback-style `execute`. The
+ * built-in `ServiceImplementation` and `DummyService` both satisfy this shape.
+ */
+export interface IService {
+  /** Service type, e.g. `bpmn:ServiceTask:implementation` or `dummyservice` */
+  type?: string;
+  /**
+   * Execute the service.
+   * @param executeMessage Activity execute message
+   * @param callback Completion callback `(err, output)`; a truthy `err` fails the
+   *   activity, otherwise `output` becomes the activity output
+   */
+  execute(executeMessage: ElementBrokerMessage, callback: (err?: Error | null, output?: any) => void): void;
+  /** Optional; called with the api message when the activity run is discarded */
+  discard?(message: ElementBrokerMessage): void;
+  /** Optional; called with the api message when the activity run is stopped */
+  stop?(message: ElementBrokerMessage): void;
+  [x: string]: any;
+}
+
+/** Constructs a service task service; assigned to `activity.behaviour.Service`. */
+export interface IServiceConstructor {
+  new (activity: Activity, message: ElementBrokerMessage): IService;
+}
+
 // --- Generic api shape; constructed via Activity/Process/Definition/Flow Api factories.
 
 export interface IApi<T> extends ElementBrokerMessage {

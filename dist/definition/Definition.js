@@ -38,13 +38,27 @@ function Definition(context, options) {
     this.environment = context.environment;
     this.context = context;
   }
+
+  /** @internal */
   this[_constants.K_COUNTERS] = {
     completed: 0,
     discarded: 0
   };
+
+  /** @internal */
   this[_constants.K_STOPPED] = false;
+  /** @internal */
   this[_constants.K_EXECUTION] = new Map();
+  /** @internal */
+  this[_constants.K_STATUS] = undefined;
+  /** @internal */
+  this[_constants.K_CONSUMING] = false;
+  /** @internal */
+  this[_constants.K_STATE_MESSAGE] = undefined;
+  /** @internal */
+  this[_constants.K_EXECUTE_MESSAGE] = null;
   const onBrokerReturn = this._onBrokerReturnFn.bind(this);
+  /** @internal */
   this[_constants.K_MESSAGE_HANDLERS] = {
     onBrokerReturn,
     onApiMessage: this._onApiMessage.bind(this),

@@ -26,6 +26,12 @@ export function ServiceTaskBehaviour(activity) {
   this.activity = activity;
   this.environment = activity.environment;
   this.broker = activity.broker;
+
+  /**
+   * Service function instance
+   * @type {import('#types').IService | undefined}
+   */
+  this.service = undefined;
 }
 
 /**
@@ -63,6 +69,11 @@ ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
   });
 };
 
+/**
+ * Resolve the service instance backing this run.
+ * @param {import('#types').ElementBrokerMessage} message
+ * @returns {import('#types').IService | undefined}
+ */
 ServiceTaskBehaviour.prototype.getService = function getService(message) {
   let Service = this.activity.behaviour.Service;
   if (!Service && this.environment.settings.enableDummyService) Service = DummyService;

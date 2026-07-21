@@ -25,6 +25,7 @@ export function Association(associationDef, { environment }) {
   this.environment = environment;
   const logger = (this.logger = environment.Logger(type.toLowerCase()));
 
+  /** @internal */
   this[K_COUNTERS] = {
     take: 0,
     discard: 0,

@@ -21,16 +21,23 @@ function ActivityExecution(activity, context) {
   this.context = context;
   this.id = activity.id;
   this.broker = activity.broker;
+  /** @internal */
   this[K_POSTPONED] = new Set();
+  /** @internal */
   this[_constants.K_COMPLETED] = false;
+  /** @internal */
   this[K_EXECUTE_Q] = this.broker.assertQueue('execute-q', {
     durable: true,
     autoDelete: false
   });
+
+  /** @internal */
   this[_constants.K_MESSAGE_HANDLERS] = {
     onParentApiMessage: this._onParentApiMessage.bind(this),
     onExecuteMessage: this._onExecuteMessage.bind(this)
   };
+  /** @internal */
+  this[_constants.K_EXECUTE_MESSAGE] = undefined;
 }
 Object.defineProperty(ActivityExecution.prototype, 'completed', {
   /** @returns {boolean} */

@@ -13,7 +13,6 @@ var _messageHelper = require("../messageHelper.js");
 var _Errors = require("../error/Errors.js");
 var _constants = require("../constants.js");
 const K_LANES = Symbol.for('lanes');
-const K_FORMATTER = Symbol.for('formatter');
 
 /**
  * Owns one `<bpmn:process>`. Wraps the structural definition and orchestrates flow traversal,
@@ -39,13 +38,18 @@ function Process(processDef, context) {
   this.isExecutable = behaviour.isExecutable;
   const environment = this.environment = context.environment;
   this.context = context;
+  /** @internal */
   this[_constants.K_COUNTERS] = {
     completed: 0,
     discarded: 0
   };
+  /** @internal */
   this[_constants.K_CONSUMING] = false;
+  /** @internal */
   this[_constants.K_EXECUTION] = new Map();
+  /** @internal */
   this[_constants.K_STATUS] = undefined;
+  /** @internal */
   this[_constants.K_STOPPED] = false;
   const {
     broker,
@@ -59,6 +63,8 @@ function Process(processDef, context) {
   this.once = once;
   this.waitFor = waitFor;
   this.emitFatal = emitFatal;
+
+  /** @internal */
   this[_constants.K_MESSAGE_HANDLERS] = {
     onApiMessage: this._onApiMessage.bind(this),
     onRunMessage: this._onRunMessage.bind(this),
@@ -66,9 +72,15 @@ function Process(processDef, context) {
   };
   this.logger = environment.Logger(type.toLowerCase());
   if (behaviour.lanes) {
+    /** @internal */
     this[K_LANES] = behaviour.lanes.map(lane => new lane.Behaviour(this, lane));
   }
+  /** @internal */
   this[_constants.K_EXTENSIONS] = context.loadExtensions(this);
+  /** @internal */
+  this[_constants.K_STATE_MESSAGE] = undefined;
+  /** @internal */
+  this[_constants.K_EXECUTE_MESSAGE] = undefined;
 }
 Object.defineProperties(Process.prototype, {
   counters: {
@@ -90,9 +102,9 @@ Object.defineProperties(Process.prototype, {
   },
   formatter: {
     get() {
-      let formatter = this[K_FORMATTER];
+      let formatter = this[_constants.K_FORMATTER];
       if (formatter) return formatter;
-      formatter = this[K_FORMATTER] = new _MessageFormatter.Formatter(this);
+      formatter = this[_constants.K_FORMATTER] = new _MessageFormatter.Formatter(this);
       return formatter;
     }
   },

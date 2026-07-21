@@ -17,11 +17,16 @@ export function EventDefinitionExecution(activity, eventDefinitions, completedRo
   this.broker = activity.broker;
   this.eventDefinitions = eventDefinitions;
   this.completedRoutingKey = completedRoutingKey;
+  /** @internal */
   this[K_COMPLETED] = false;
+  /** @internal */
   this[K_STOPPED] = false;
+  /** @internal */
   this[K_EXECUTE_MESSAGE] = null;
   // ParallelMultiple event: complete only once every event definition has fired.
+  /** @internal */
   this[K_PARALLEL] = eventDefinitions.length > 1 && !!activity.behaviour?.parallelMultiple;
+  /** @internal */
   this[K_COMPLETED_DEFS] = new Set();
 }
 

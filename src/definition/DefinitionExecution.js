@@ -1,10 +1,9 @@
 import { DefinitionApi } from '../Api.js';
 import { brokerSafeId } from '../shared.js';
 import { cloneContent, cloneMessage, pushParent, cloneParent } from '../messageHelper.js';
-import { K_ACTIVATED, K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_HANDLERS, K_STATUS, K_STOPPED } from '../constants.js';
+import { K_ACTIVATED, K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_HANDLERS, K_STATUS, K_STOPPED, K_PARENT } from '../constants.js';
 
 const K_PROCESSES_Q = Symbol.for('processesQ');
-const K_PARENT = Symbol.for('definition');
 const K_PROCESSES = Symbol.for('processes');
 
 /**
@@ -16,6 +15,7 @@ const K_PROCESSES = Symbol.for('processes');
 export function DefinitionExecution(definition, context) {
   const broker = definition.broker;
 
+  /** @internal */
   this[K_PARENT] = definition;
   this.id = definition.id;
   this.type = definition.type;
@@ -35,6 +35,7 @@ export function DefinitionExecution(definition, context) {
     if (bp.isExecutable) executable.add(bp);
   }
 
+  /** @internal */
   this[K_PROCESSES] = {
     processes,
     ids,
@@ -46,12 +47,18 @@ export function DefinitionExecution(definition, context) {
   broker.assertExchange('execution', 'topic', { autoDelete: false, durable: true });
 
   this.executionId = undefined;
+  /** @internal */
   this[K_COMPLETED] = false;
+  /** @internal */
   this[K_STOPPED] = false;
+  /** @internal */
   this[K_ACTIVATED] = false;
+  /** @internal */
   this[K_STATUS] = 'init';
+  /** @internal */
   this[K_PROCESSES_Q] = undefined;
 
+  /** @internal */
   this[K_MESSAGE_HANDLERS] = {
     onApiMessage: this._onApiMessage.bind(this),
     onCallActivity: this._onCallActivity.bind(this),
@@ -61,6 +68,8 @@ export function DefinitionExecution(definition, context) {
     onMessageOutbound: this._onMessageOutbound.bind(this),
     onProcessMessage: this._onProcessMessage.bind(this),
   };
+  /** @internal */
+  this[K_EXECUTE_MESSAGE] = undefined;
 }
 
 Object.defineProperties(DefinitionExecution.prototype, {

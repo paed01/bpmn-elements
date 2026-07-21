@@ -32,8 +32,13 @@ function TimerEventDefinition(activity, eventDefinition) {
   if (timeDate) this.timeDate = /** @type {string} */timeDate;
   this.broker = activity.broker;
   this.logger = environment.Logger(type.toLowerCase());
+
+  /** @internal */
   this[_constants.K_STOPPED] = false;
+  /** @internal */
   this[K_TIMER] = null;
+  /** @internal */
+  this[K_TIMER_CONTENT] = undefined;
 }
 Object.defineProperty(TimerEventDefinition.prototype, 'executionId', {
   /** @returns {string} */

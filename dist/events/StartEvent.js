@@ -30,9 +30,13 @@ function StartEventBehaviour(activity) {
   this.type = activity.type;
   this.activity = activity;
   this.broker = activity.broker;
+  /** @internal */
   this[_constants.K_EXECUTION] = activity.eventDefinitions && new _EventDefinitionExecution.EventDefinitionExecution(activity, activity.eventDefinitions);
+  /** @internal */
+  this[_constants.K_EXECUTE_MESSAGE] = undefined;
 }
 Object.defineProperty(StartEventBehaviour.prototype, 'executionId', {
+  /** @returns {string | undefined} */
   get() {
     return this[_constants.K_EXECUTE_MESSAGE]?.content.executionId;
   }

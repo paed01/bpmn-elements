@@ -38,6 +38,8 @@ function Association(associationDef, {
   this.isAssociation = true;
   this.environment = environment;
   const logger = this.logger = environment.Logger(type.toLowerCase());
+
+  /** @internal */
   this[_constants.K_COUNTERS] = {
     take: 0,
     discard: 0

@@ -22,7 +22,10 @@ export function EventBasedGatewayBehaviour(activity, context) {
   this.activity = activity;
   this.broker = activity.broker;
   this.context = context;
+  /** @internal */
   this[K_TARGETS] = new Set(activity.outbound.map((flow) => context.getActivityById(flow.targetId)));
+  /** @internal */
+  this[K_COMPLETED] = false;
 }
 
 /**

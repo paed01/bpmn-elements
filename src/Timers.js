@@ -13,12 +13,15 @@ export function Timers(options) {
     clearTimeout,
     ...options,
   };
+  /** @internal */
   this[K_EXECUTING] = new Set();
   this.setTimeout = this.setTimeout.bind(this);
   this.clearTimeout = this.clearTimeout.bind(this);
 }
 
+/** Executing timers */
 Object.defineProperty(Timers.prototype, 'executing', {
+  /** @returns {import('#types').Timer[]} */
   get() {
     return [...this[K_EXECUTING]];
   },
@@ -55,11 +58,13 @@ Timers.prototype._setTimeout = function setTimeout(owner, callback, delay, ...ar
   }
 };
 
+/** @internal */
 Timers.prototype._getReference = function getReference(owner, callback, delay, args) {
   return new Timer(owner, `timer_${this.count++}`, callback, delay, args);
 };
 
 function RegisteredTimers(timersApi, owner) {
+  /** @internal */
   this[K_TIMER_API] = timersApi;
   this.owner = owner;
   this.setTimeout = this.setTimeout.bind(this);

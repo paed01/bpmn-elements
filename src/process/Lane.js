@@ -1,4 +1,4 @@
-const K_PROCESS = Symbol.for('process');
+import { K_PARENT } from '../constants.js';
 
 /**
  * Process lane. Wraps a `<bpmn:lane>` definition and points back to its owning process;
@@ -10,7 +10,8 @@ export function Lane(process, laneDefinition) {
   const { broker, environment } = process;
   const { id, type, behaviour } = laneDefinition;
 
-  this[K_PROCESS] = process;
+  /** @internal */
+  this[K_PARENT] = process;
 
   this.id = id;
   this.type = type;
@@ -32,6 +33,6 @@ export function Lane(process, laneDefinition) {
 Object.defineProperty(Lane.prototype, 'process', {
   /** @returns {import('#types').Process} */
   get() {
-    return this[K_PROCESS];
+    return this[K_PARENT];
   },
 });

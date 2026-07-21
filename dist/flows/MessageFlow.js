@@ -38,6 +38,8 @@ function MessageFlow(flowDef, context) {
   this.behaviour = behaviour;
   this.environment = context.environment;
   this.context = context;
+
+  /** @internal */
   this[_constants.K_COUNTERS] = {
     messages: 0
   };
@@ -53,6 +55,8 @@ function MessageFlow(flowDef, context) {
   this.once = once;
   this.emit = emit;
   this.waitFor = waitFor;
+
+  /** @internal */
   this[K_SOURCE_ELEMENT] = context.getActivityById(source.id) || context.getProcessById(source.processId);
   this.logger = context.environment.Logger(type.toLowerCase());
 }

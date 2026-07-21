@@ -26,11 +26,19 @@ export function SignalEventDefinition(activity, eventDefinition) {
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
 
-  const referenceElement = (this[K_REFERENCE_ELEMENT] = this.reference.id && activity.getActivityById(this.reference.id));
+  /** @internal */
+  this[K_REFERENCE_ELEMENT] = this.reference.id && activity.getActivityById(this.reference.id);
   if (!isThrowing && isStart) {
+    const referenceElement = this[K_REFERENCE_ELEMENT];
+    /** @internal */
     this[K_COMPLETED] = false;
+    /** @internal */
+    this[K_EXECUTE_MESSAGE] = undefined;
+    /** @internal */
+    this[K_REFERENCE_INFO] = undefined;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${this.reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(referenceId)}-q`;
+    /** @internal */
     this[K_MESSAGE_Q] = broker.assertQueue(messageQueueName, { autoDelete: false, durable: true });
     broker.bindQueue(messageQueueName, 'api', `*.${this.reference.referenceType}.#`, { durable: true });
   }

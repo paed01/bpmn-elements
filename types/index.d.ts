@@ -492,6 +492,37 @@ declare module 'bpmn-elements' {
 	execute(executionContext: ExecutionScope, callback: CallableFunction): void;
   }
 
+  // --- Service task service -----------------------------------------------------
+
+  /**
+   * Service task service instance, as returned by `ServiceTaskBehaviour#getService`.
+   *
+   * A service wraps the element-specific work (e.g. an `implementation` expression
+   * or a custom `Service` behaviour) behind a callback-style `execute`. The
+   * built-in `ServiceImplementation` and `DummyService` both satisfy this shape.
+   */
+  export interface IService {
+	/** Service type, e.g. `bpmn:ServiceTask:implementation` or `dummyservice` */
+	type?: string;
+	/**
+	 * Execute the service.
+	 * @param executeMessage Activity execute message
+	 * @param callback Completion callback `(err, output)`; a truthy `err` fails the
+	 *   activity, otherwise `output` becomes the activity output
+	 */
+	execute(executeMessage: ElementBrokerMessage, callback: (err?: Error | null, output?: any) => void): void;
+	/** Optional; called with the api message when the activity run is discarded */
+	discard?(message: ElementBrokerMessage): void;
+	/** Optional; called with the api message when the activity run is stopped */
+	stop?(message: ElementBrokerMessage): void;
+	[x: string]: any;
+  }
+
+  /** Constructs a service task service; assigned to `activity.behaviour.Service`. */
+  export interface IServiceConstructor {
+	new (activity: Activity, message: ElementBrokerMessage): IService;
+  }
+
   // --- Generic api shape; constructed via Activity/Process/Definition/Flow Api factories.
 
   export interface IApi<T> extends ElementBrokerMessage {
@@ -1641,7 +1672,10 @@ declare module 'bpmn-elements' {
 		broker: ElementBroker<Process> | ElementBroker<Activity>;
 		environment: Environment;
 		context: ContextInstance;
-		executionId: string | undefined;
+		/**
+		 * Process exection id
+		 * */
+		executionId: string;
 		/**
 		 * Activate children and start the process execution. Resumes if the message is redelivered.
 		 * @throws {Error} when message or executionId is missing
@@ -2268,10 +2302,16 @@ declare module 'bpmn-elements' {
 		activity: Activity;
 		environment: Environment;
 		broker: ElementBroker<Activity>;
+		/**
+		 * Service function instance
+		 * */
+		service: IService | undefined;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
-		service: any;
-		getService(message: any): any;
+		/**
+		 * Resolve the service instance backing this run.
+		 * */
+		getService(message: ElementBrokerMessage): IService | undefined;
 	}
 	/**
 	 * Signal task
@@ -2605,28 +2645,6 @@ declare module 'bpmn-elements' {
 		 * Parse timer
 		 * */
 		parse(timerType: TimerType, value: string): parsedTimer;
-	}
-	/**
-	 * Event definition execution orchestrator. Drives a sequence of event definitions for the
-	 * activity and publishes the completed routing key when the last definition completes.
-	 * @param completedRoutingKey Routing key to publish on completion, defaults to `execute.completed`
-	 */
-		class EventDefinitionExecution {
-		/**
-		 * Event definition execution orchestrator. Drives a sequence of event definitions for the
-		 * activity and publishes the completed routing key when the last definition completes.
-		 * @param completedRoutingKey Routing key to publish on completion, defaults to `execute.completed`
-		 */
-		constructor(activity: Activity, eventDefinitions: EventDefinition[], completedRoutingKey?: string);
-		id: string | undefined;
-		activity: Activity;
-		broker: ElementBroker<Activity>;
-		eventDefinitions: EventDefinition[];
-		completedRoutingKey: string;
-		get completed(): boolean;
-		get stopped(): boolean;
-		
-		execute(executeMessage: ElementBrokerMessage): void;
 	}
 
 	export { Consumer, MessageFields, MessageProperties, SerializableContext, SerializableElement };

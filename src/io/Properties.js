@@ -13,11 +13,13 @@ export function Properties(activity, propertiesDef, context) {
   this.activity = activity;
   this.broker = activity.broker;
 
-  const props = (this[K_PROPERTIES] = {
+  /** @internal */
+  this[K_PROPERTIES] = {
     properties: new Set(),
     dataInputObjects: new Set(),
     dataOutputObjects: new Set(),
-  });
+  };
+  const props = this[K_PROPERTIES];
 
   for (const { id, ...def } of propertiesDef.values) {
     const source = {
@@ -61,6 +63,8 @@ export function Properties(activity, propertiesDef, context) {
       };
     }
   }
+  /** @internal */
+  this[K_CONSUMING] = undefined;
 }
 
 /**

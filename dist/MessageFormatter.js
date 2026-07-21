@@ -27,7 +27,10 @@ function Formatter(element) {
   this.id = id;
   this.broker = broker;
   this.logger = logger;
+  /** @internal */
   this[K_ON_MESSAGE] = this._onMessage.bind(this);
+  /** @internal */
+  this[_constants.K_EXECUTION] = undefined;
 }
 
 /**

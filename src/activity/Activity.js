@@ -14,6 +14,7 @@ import {
   K_EXTENSIONS,
   K_MESSAGE_HANDLERS,
   K_STATE_MESSAGE,
+  K_FORMATTER,
 } from '../constants.js';
 
 const K_ACTIVITY_DEF = Symbol.for('activityDefinition');
@@ -22,7 +23,6 @@ const K_EVENT_DEFINITIONS = Symbol.for('eventDefinitions');
 const K_EXEC = Symbol.for('exec');
 const K_FLAGS = Symbol.for('flags');
 const K_FLOWS = Symbol.for('flows');
-const K_FORMATTER = Symbol.for('formatter');
 
 /**
  * Activity wraps any element (task, event, gateway) and orchestrates its lifecycle through the broker.
@@ -34,6 +34,7 @@ export function Activity(Behaviour, activityDef, context) {
   const { id, type = 'activity', name, behaviour = {} } = activityDef;
   const { attachedTo: attachedToRef, eventDefinitions } = behaviour;
 
+  /** @internal */
   this[K_ACTIVITY_DEF] = activityDef;
   this.id = id;
   this.type = type;
@@ -54,6 +55,7 @@ export function Activity(Behaviour, activityDef, context) {
   /** @type {import('#types').ActivityStatus | undefined} */
   this.status = undefined;
 
+  /** @internal */
   this[K_COUNTERS] = {
     taken: 0,
     discarded: 0,
@@ -83,6 +85,7 @@ export function Activity(Behaviour, activityDef, context) {
   const inboundSourceIds = new Set(inboundSequenceFlows.map(({ sourceId }) => sourceId));
   const isParallelJoin = activityDef.isParallelGateway && inboundSourceIds.size > 1;
 
+  /** @internal */
   this[K_FLOWS] = {
     inboundSequenceFlows,
     inboundAssociations,
@@ -93,6 +96,7 @@ export function Activity(Behaviour, activityDef, context) {
 
   const isThrowingLink = activityDef.isThrowing && activityDef.linkNames?.length;
 
+  /** @internal */
   this[K_FLAGS] = {
     isEnd: !outboundSequenceFlows.length && !isThrowingLink,
     isStart: !hasInboundTrigger && !behaviour.triggeredByEvent && !activityDef.isCatching,
@@ -111,8 +115,10 @@ export function Activity(Behaviour, activityDef, context) {
     isCatching: activityDef.isCatching,
     lane: activityDef.lane?.id,
   };
+  /** @internal */
   this[K_EXEC] = new Map();
 
+  /** @internal */
   this[K_MESSAGE_HANDLERS] = {
     onInbound: this._onInbound.bind(this),
     onRunMessage: this._onRunMessage.bind(this),
@@ -120,11 +126,22 @@ export function Activity(Behaviour, activityDef, context) {
     onExecutionMessage: this._onExecutionMessage.bind(this),
   };
 
-  /** @type {import('#types').EventDefinition[] | undefined} */
+  /** @internal */
   this[K_EVENT_DEFINITIONS] = eventDefinitions?.map((ed, idx) => new ed.Behaviour(this, ed, context, idx));
+  /** @internal */
   this[K_EXTENSIONS] = context.loadExtensions(this);
+  /** @internal */
   this[K_CONSUMING] = false;
+  /** @internal */
   this[K_CONSUMING_RUN_Q] = undefined;
+  /** @internal */
+  this[K_ACTIVATED] = false;
+  this[K_CONSUMING] = false;
+  this[K_CONSUMING_RUN_Q] = false;
+  /** @internal */
+  this[K_STATE_MESSAGE] = undefined;
+  /** @internal */
+  this[K_EXECUTE_MESSAGE] = undefined;
 }
 
 Object.defineProperties(Activity.prototype, {

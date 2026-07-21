@@ -67,7 +67,10 @@ function SubProcessBehaviour(activity, context) {
   this.environment = activity.environment;
   this.broker = activity.broker;
   this.executionId = undefined;
+
+  /** @internal */
   this[K_EXECUTIONS] = new Set();
+  /** @internal */
   this[K_ON_EXECUTION_COMPLETED] = this._onExecutionCompleted.bind(this);
 }
 Object.defineProperty(SubProcessBehaviour.prototype, 'execution', {

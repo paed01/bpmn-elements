@@ -37,11 +37,20 @@ function SignalEventDefinition(activity, eventDefinition) {
   this.activity = activity;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
-  const referenceElement = this[_constants.K_REFERENCE_ELEMENT] = this.reference.id && activity.getActivityById(this.reference.id);
+
+  /** @internal */
+  this[_constants.K_REFERENCE_ELEMENT] = this.reference.id && activity.getActivityById(this.reference.id);
   if (!isThrowing && isStart) {
+    const referenceElement = this[_constants.K_REFERENCE_ELEMENT];
+    /** @internal */
     this[_constants.K_COMPLETED] = false;
+    /** @internal */
+    this[_constants.K_EXECUTE_MESSAGE] = undefined;
+    /** @internal */
+    this[_constants.K_REFERENCE_INFO] = undefined;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${this.reference.referenceType}-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(referenceId)}-q`;
+    /** @internal */
     this[_constants.K_MESSAGE_Q] = broker.assertQueue(messageQueueName, {
       autoDelete: false,
       durable: true

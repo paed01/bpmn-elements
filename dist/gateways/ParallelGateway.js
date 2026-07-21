@@ -81,7 +81,11 @@ function ParallelGatewayBehaviour(activity) {
    * @type {Set<import('#types').ElementMessageContent}
    */
   this.inbound = new Set();
+
+  /** @internal */
   this[_constants.K_EXECUTE_MESSAGE] = undefined;
+  /** @internal */
+  this[_constants.K_TARGETS] = undefined;
 }
 Object.defineProperty(ParallelGatewayBehaviour.prototype, 'executionId', {
   /** @returns {string | undefined} */
@@ -124,7 +128,7 @@ ParallelGatewayBehaviour.prototype.setup = function setup(executeMessage) {
   const {
     executionId
   } = executeContent;
-  this.inbound.add((0, _messageHelper.cloneContent)(executeMessage.content.inbound[0]));
+  this.inbound.add((0, _messageHelper.cloneContent)(executeContent.inbound[0]));
   this.broker.subscribeOnce('api', `activity.stop.${executionId}`, () => this._stop(), {
     consumerTag: '_api-stop-execution'
   });

@@ -27,7 +27,9 @@ export function Environment(options = {}) {
   this.settings = { ...options.settings };
   /** @type {import('#types').LoggerFactory} */
   this.Logger = options.Logger || DummyLogger;
+  /** @internal */
   this[K_SERVICES] = options.services || {};
+  /** @internal */
   this[K_VARIABLES] = options.variables || {};
 }
 

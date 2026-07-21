@@ -33,6 +33,9 @@ function ConditionalEventDefinition(activity, eventDefinition, _context, index) 
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
   this.condition = this.getCondition(index);
+
+  /** @internal */
+  this[_constants.K_EXECUTE_MESSAGE] = undefined;
 }
 Object.defineProperty(ConditionalEventDefinition.prototype, 'executionId', {
   /** @returns {string} */

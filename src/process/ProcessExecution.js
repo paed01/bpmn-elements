@@ -2,11 +2,19 @@ import { ProcessApi } from '../Api.js';
 import { cloneContent, cloneMessage, pushParent } from '../messageHelper.js';
 import { getUniqueId } from '../shared.js';
 import { ActivityTracker } from '../Tracker.js';
-import { K_ACTIVATED, K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_HANDLERS, K_STATUS, K_STOPPED, STATE_VERSION } from '../constants.js';
+import {
+  K_ACTIVATED,
+  K_COMPLETED,
+  K_EXECUTE_MESSAGE,
+  K_MESSAGE_HANDLERS,
+  K_STATUS,
+  K_STOPPED,
+  STATE_VERSION,
+  K_PARENT,
+} from '../constants.js';
 
 const K_ACTIVITY_Q = Symbol.for('activityQ');
 const K_ELEMENTS = Symbol.for('elements');
-const K_PARENT = Symbol.for('parent');
 const K_TRACKER = Symbol.for('activity tracker');
 const K_PEERS_DISCOVERED = Symbol.for('peers discovered');
 const K_RECOVERED_VERSION = Symbol.for('recovered version');
@@ -20,6 +28,7 @@ const K_RECOVERED_VERSION = Symbol.for('recovered version');
 export function ProcessExecution(parentActivity, context) {
   const { id, type, broker, isSubProcess, isTransaction, isAdHoc } = parentActivity;
 
+  /** @internal */
   this[K_PARENT] = parentActivity;
   this.id = id;
   this.type = type;
@@ -30,7 +39,13 @@ export function ProcessExecution(parentActivity, context) {
   this.broker = broker;
   this.environment = context.environment;
   this.context = context;
+  /**
+   * Process exection id
+   * @type {string}
+   */
+  this.executionId = undefined;
 
+  /** @internal */
   this[K_ELEMENTS] = {
     postponed: new Set(),
     children: context.getActivities(id),
@@ -47,19 +62,30 @@ export function ProcessExecution(parentActivity, context) {
   const exchangeName = (this._exchangeName = isSubProcess ? 'subprocess-execution' : 'execution');
   broker.assertExchange(exchangeName, 'topic', { autoDelete: false, durable: true });
 
+  /** @internal */
   this[K_COMPLETED] = false;
+  /** @internal */
   this[K_STOPPED] = false;
+  /** @internal */
   this[K_ACTIVATED] = false;
+  /** @internal */
   this[K_STATUS] = 'init';
+  /** @internal */
   this[K_TRACKER] = new ActivityTracker(id);
-  this.executionId = undefined;
 
+  /** @internal */
   this[K_MESSAGE_HANDLERS] = {
     onActivityEvent: this._onActivityEvent.bind(this),
     onApiMessage: this._onApiMessage.bind(this),
     onChildMessage: this._onChildMessage.bind(this),
     onMessageFlowEvent: this._onMessageFlowEvent.bind(this),
   };
+  /** @internal */
+  this[K_EXECUTE_MESSAGE] = undefined;
+  /** @internal */
+  this[K_ACTIVITY_Q] = undefined;
+  /** @internal */
+  this[K_RECOVERED_VERSION] = 0;
 }
 
 Object.defineProperties(ProcessExecution.prototype, {

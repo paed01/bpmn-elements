@@ -7,8 +7,6 @@ exports.EscalationEventDefinition = EscalationEventDefinition;
 var _shared = require("../shared.js");
 var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
-const K_REFERENCE = Symbol.for('reference');
-
 /**
  * Escalation event definition
  * @param {import('#types').Activity} activity
@@ -38,11 +36,20 @@ function EscalationEventDefinition(activity, eventDefinition) {
   this.activity = activity;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
-  const referenceElement = this[_constants.K_REFERENCE_ELEMENT] = this.reference.id && activity.getActivityById(this.reference.id);
+
+  /** @internal */
+  this[_constants.K_REFERENCE_ELEMENT] = this.reference.id && activity.getActivityById(this.reference.id);
+  const referenceElement = this[_constants.K_REFERENCE_ELEMENT];
   if (!isThrowing) {
+    /** @internal */
     this[_constants.K_COMPLETED] = false;
+    /** @internal */
+    this[_constants.K_EXECUTE_MESSAGE] = undefined;
+    /** @internal */
+    this[_constants.K_REFERENCE_INFO] = undefined;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
     const messageQueueName = `${this.reference.referenceType}-${(0, _shared.brokerSafeId)(id)}-${(0, _shared.brokerSafeId)(referenceId)}-q`;
+    /** @internal */
     this[_constants.K_MESSAGE_Q] = broker.assertQueue(messageQueueName, {
       autoDelete: false,
       durable: true
@@ -78,7 +85,7 @@ EscalationEventDefinition.prototype.executeCatch = function executeCatch(execute
     executionId,
     parent
   } = executeContent;
-  const info = this[K_REFERENCE] = this._getReferenceInfo(executeMessage);
+  const info = this[_constants.K_REFERENCE_INFO] = this._getReferenceInfo(executeMessage);
   const broker = this.broker;
   this[_constants.K_MESSAGE_Q].consume(this._onCatchMessage.bind(this), {
     noAck: true,
@@ -126,7 +133,7 @@ EscalationEventDefinition.prototype.executeThrow = function executeThrow(execute
   broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
 EscalationEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
-  const info = this[K_REFERENCE];
+  const info = this[_constants.K_REFERENCE_INFO];
   if (message.content?.message?.id !== info.message.id) return;
   const output = message.content.message;
   this[_constants.K_COMPLETED] = true;

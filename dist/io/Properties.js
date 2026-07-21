@@ -17,11 +17,14 @@ const K_PROPERTIES = Symbol.for('properties');
 function Properties(activity, propertiesDef, context) {
   this.activity = activity;
   this.broker = activity.broker;
-  const props = this[K_PROPERTIES] = {
+
+  /** @internal */
+  this[K_PROPERTIES] = {
     properties: new Set(),
     dataInputObjects: new Set(),
     dataOutputObjects: new Set()
   };
+  const props = this[K_PROPERTIES];
   for (const {
     id,
     ...def
@@ -77,6 +80,8 @@ function Properties(activity, propertiesDef, context) {
       };
     }
   }
+  /** @internal */
+  this[_constants.K_CONSUMING] = undefined;
 }
 
 /**

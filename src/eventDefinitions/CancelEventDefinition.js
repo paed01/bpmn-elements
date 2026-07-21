@@ -19,6 +19,11 @@ export function CancelEventDefinition(activity, eventDefinition) {
   this.environment = environment;
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
+
+  /** @internal */
+  this[K_EXECUTE_MESSAGE] = undefined;
+  /** @internal */
+  this[K_COMPLETED] = false;
 }
 
 Object.defineProperty(CancelEventDefinition.prototype, 'executionId', {

@@ -27,6 +27,7 @@ export function SequenceFlow(flowDef, { environment }) {
   this.environment = environment;
   const logger = (this.logger = environment.Logger(type.toLowerCase()));
 
+  /** @internal */
   this[K_COUNTERS] = {
     looped: 0,
     take: 0,

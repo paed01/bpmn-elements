@@ -38,6 +38,7 @@ IoSpecification.prototype.activate = function activate(message) {
   if (message?.fields.redelivered && message.fields.routingKey === 'run.end') {
     this._onFormatComplete(message);
   }
+  /** @internal */
   this[_constants.K_CONSUMING] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {
     noAck: true
   });

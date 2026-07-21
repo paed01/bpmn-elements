@@ -51,9 +51,11 @@ createBundle({
     // for type-level constructor checks (`Foo extends new (...args) => any`), so strip it.
     bundle = bundle.replace(/^(\s*)(?:export )?function (\w+)\([^)]*\)[^;]*;\n(\s*)((?:export )?class \2\b)/gm, '$1$3$4');
 
-    // dts-buddy's stripInternal only catches `PropertySignature` (interface members),
-    // not class members. Walk class declarations and remove members marked `@internal`
-    // or `private` so they don't leak into the public bundle.
+    // dts-buddy's stripInternal removes `@internal` declarations, properties, and accessors.
+    // The symbol-keyed slots are tagged at their usage (`/** @internal */ this[K_FOO] = …`), so
+    // dts-buddy drops the property and then tree-shakes the now-unreferenced `K_FOO` symbol const —
+    // no need to tag the const itself. It does not strip `@internal` *methods*, `private`, or
+    // underscore-named members, so walk class declarations and remove those here.
     bundle = stripClassMembers(bundle);
 
     // The errors module redeclares ActivityError / RunError that already live in the
@@ -126,18 +128,12 @@ function stripClassMembers(source) {
   const ast = ts.createSourceFile('bundle.d.ts', source, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS);
   const magic = new MagicString(source);
 
-  const referencedSymbols = new Set();
-
   /** @param {ts.Node} node */
   function visit(node) {
     if (ts.isClassDeclaration(node) || ts.isClassExpression(node)) {
       for (const member of node.members) {
-        if (isInternalMember(member) || hasPrivateModifier(member) || hasUnderscoreName(member) || hasComputedSymbolName(member)) {
+        if (hasPrivateModifier(member) || hasUnderscoreName(member)) {
           magic.remove(member.getFullStart(), member.getEnd());
-        } else {
-          // surviving members may reference symbol constants; record them so the
-          // orphan-declaration sweep below doesn't drop those.
-          recordSymbolReferences(member, referencedSymbols);
         }
       }
     }
@@ -145,38 +141,7 @@ function stripClassMembers(source) {
   }
   ts.forEachChild(ast, visit);
 
-  // Symbol-keyed slots are inherently private storage; any `const K_FOO: unique symbol;`
-  // left without references is dead weight in the public bundle.
-  /** @param {ts.Node} node */
-  function dropOrphanSymbols(node) {
-    if (ts.isVariableStatement(node)) {
-      const decls = node.declarationList.declarations;
-      if (decls.length === 1) {
-        const decl = decls[0];
-        if (
-          ts.isIdentifier(decl.name) &&
-          decl.type &&
-          (decl.type.kind === ts.SyntaxKind.UniqueKeyword) === false &&
-          ts.isTypeOperatorNode(decl.type) &&
-          decl.type.operator === ts.SyntaxKind.UniqueKeyword
-        ) {
-          if (!referencedSymbols.has(decl.name.text)) {
-            magic.remove(node.getFullStart(), node.getEnd());
-          }
-        }
-      }
-    }
-    ts.forEachChild(node, dropOrphanSymbols);
-  }
-  ts.forEachChild(ast, dropOrphanSymbols);
-
   return magic.toString();
-}
-
-/** @param {ts.Node} node */
-function isInternalMember(node) {
-  const jsdoc = ts.getJSDocTags(node);
-  return jsdoc.some((tag) => tag.tagName.escapedText === 'internal');
 }
 
 /** @param {ts.Node} node */
@@ -190,27 +155,6 @@ function hasUnderscoreName(node) {
   const name = node.name;
   if (!name || !ts.isIdentifier(name)) return false;
   return name.text.startsWith('_');
-}
-
-/** @param {ts.ClassElement} node */
-function hasComputedSymbolName(node) {
-  const name = node.name;
-  return !!name && ts.isComputedPropertyName(name) && ts.isIdentifier(name.expression);
-}
-
-/**
- * @param {ts.Node} root
- * @param {Set<string>} out
- */
-function recordSymbolReferences(root, out) {
-  /** @param {ts.Node} node */
-  function visit(node) {
-    if (ts.isIdentifier(node) && /^K_[A-Z0-9_]+$/.test(node.text)) {
-      out.add(node.text);
-    }
-    ts.forEachChild(node, visit);
-  }
-  visit(root);
 }
 
 /**

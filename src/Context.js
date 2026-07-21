@@ -45,6 +45,7 @@ export function ContextInstance(definitionContext, environment, owner, peersCach
     ['dataObjectRefs', new Map()],
     ['dataStoreRefs', new Map()],
   ]);
+  /** @internal */
   this[K_OWNER] = owner;
 }
 
@@ -447,6 +448,7 @@ function Extensions(activity, context, extensions) {
     if (typeof extension.deactivate !== 'function') extension.deactivate = noop;
     result.push(extension);
   }
+  /** @internal */
   this[K_ACTIVATED] = false;
 }
 

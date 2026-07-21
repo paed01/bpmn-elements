@@ -39,7 +39,14 @@ export function ReceiveTaskBehaviour(activity) {
   this.activity = activity;
   this.broker = activity.broker;
 
+  /** @internal */
   this[K_REFERENCE_ELEMENT] = this.reference.id && activity.getActivityById(this.reference.id);
+  /** @internal */
+  this[K_COMPLETED] = false;
+  /** @internal */
+  this[K_EXECUTE_MESSAGE] = undefined;
+  /** @internal */
+  this[K_REFERENCE_INFO] = undefined;
 }
 
 /**

@@ -15,10 +15,10 @@ import {
   K_STATE_MESSAGE,
   K_STATUS,
   K_STOPPED,
+  K_FORMATTER,
 } from '../constants.js';
 
 const K_LANES = Symbol.for('lanes');
-const K_FORMATTER = Symbol.for('formatter');
 
 /**
  * Owns one `<bpmn:process>`. Wraps the structural definition and orchestrates flow traversal,
@@ -40,13 +40,18 @@ export function Process(processDef, context) {
 
   const environment = (this.environment = context.environment);
   this.context = context;
+  /** @internal */
   this[K_COUNTERS] = {
     completed: 0,
     discarded: 0,
   };
+  /** @internal */
   this[K_CONSUMING] = false;
+  /** @internal */
   this[K_EXECUTION] = new Map();
+  /** @internal */
   this[K_STATUS] = undefined;
+  /** @internal */
   this[K_STOPPED] = false;
 
   const { broker, on, once, waitFor, emitFatal } = ProcessBroker(this);
@@ -56,6 +61,7 @@ export function Process(processDef, context) {
   this.waitFor = waitFor;
   this.emitFatal = emitFatal;
 
+  /** @internal */
   this[K_MESSAGE_HANDLERS] = {
     onApiMessage: this._onApiMessage.bind(this),
     onRunMessage: this._onRunMessage.bind(this),
@@ -65,9 +71,15 @@ export function Process(processDef, context) {
   this.logger = environment.Logger(type.toLowerCase());
 
   if (behaviour.lanes) {
+    /** @internal */
     this[K_LANES] = behaviour.lanes.map((lane) => new lane.Behaviour(this, lane));
   }
+  /** @internal */
   this[K_EXTENSIONS] = context.loadExtensions(this);
+  /** @internal */
+  this[K_STATE_MESSAGE] = undefined;
+  /** @internal */
+  this[K_EXECUTE_MESSAGE] = undefined;
 }
 
 Object.defineProperties(Process.prototype, {

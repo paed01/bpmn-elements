@@ -28,13 +28,21 @@ export function BoundaryEventBehaviour(activity) {
   this.activity = activity;
   this.environment = activity.environment;
   this.broker = activity.broker;
+  /** @internal */
   this[K_EXECUTION] =
     activity.eventDefinitions && new EventDefinitionExecution(activity, activity.eventDefinitions, 'execute.bound.completed');
+  /** @internal */
   this[K_SHOVELS] = new Set();
+  /** @internal */
   this[K_ATTACHED_TAGS] = new Set();
+  /** @internal */
+  this[K_EXECUTE_MESSAGE] = undefined;
+  /** @internal */
+  this[K_COMPLETE_CONTENT] = undefined;
 }
 
 Object.defineProperty(BoundaryEventBehaviour.prototype, 'executionId', {
+  /** @returns {string | undefined} */
   get() {
     return this[K_EXECUTE_MESSAGE]?.content.executionId;
   },

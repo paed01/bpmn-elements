@@ -41,6 +41,8 @@ function SequenceFlow(flowDef, {
   this.isSequenceFlow = true;
   this.environment = environment;
   const logger = this.logger = environment.Logger(type.toLowerCase());
+
+  /** @internal */
   this[_constants.K_COUNTERS] = {
     looped: 0,
     take: 0,
