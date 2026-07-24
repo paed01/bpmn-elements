@@ -306,10 +306,23 @@ export interface EnvironmentSettings {
   [x: string]: any;
 }
 
+/**
+ * Injected `environment.services` function.
+ *
+ * In the no-call resolution forms — a service task `implementation`
+ * (`${environment.services.fn}`) or a sequence-flow service condition — the
+ * function is invoked with the calling element as its call context, so `this`
+ * is the {@link Activity} (or flow's owning activity) and the
+ * {@link ExecutionScope} is passed as the first argument. Args are left open so
+ * the *called* expression form (`${environment.services.fn()}`), which instead
+ * receives the resolution context, still typechecks.
+ */
+export type ServiceFunction = (this: Activity, ...args: any[]) => any;
+
 export interface EnvironmentOptions {
   settings?: EnvironmentSettings;
   variables?: Record<string, any>;
-  services?: Record<string, CallableFunction>;
+  services?: Record<string, ServiceFunction>;
   Logger?: LoggerFactory;
   timers?: ITimers;
   scripts?: IScripts;

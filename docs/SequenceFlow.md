@@ -40,7 +40,7 @@ Sequence flows:
 
 An expression condition can resolve to a service function instead of a plain value. The function then produces the take/discard result, which makes per-flow state and asynchronous conditions possible. There are two forms, and they receive **different** arguments:
 
-- `${environment.services.takeOnce}` (no call) — the expression resolves to the function itself and the sequence flow invokes it with the flow [execution scope](/docs/ExecutionScope.md) as the first argument (and as `this`). The scope exposes the flow `id`, the source activity `content`, and the `environment`. Return a value synchronously, or declare a second `callback` parameter to resolve asynchronously:
+- `${environment.services.takeOnce}` (no call) — the expression resolves to the function itself and the sequence flow invokes it with the flow [execution scope](/docs/ExecutionScope.md) as the first argument; `this` is bound to the owning sequence flow. The scope exposes the flow `id`, the source activity `content`, and the `environment`. Return a value synchronously, or declare a second `callback` parameter to resolve asynchronously:
 
   ```js
   // synchronous — return the result

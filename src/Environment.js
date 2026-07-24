@@ -41,7 +41,7 @@ Object.defineProperty(Environment.prototype, 'variables', {
 });
 
 Object.defineProperty(Environment.prototype, 'services', {
-  /** @returns {Record<string, CallableFunction>} */
+  /** @returns {Record<string, import('#types').ServiceFunction>} */
   get() {
     return this[K_SERVICES];
   },
@@ -157,6 +157,7 @@ Environment.prototype.registerScript = function registerScript(...args) {
 /**
  * Lookup a registered service by name.
  * @param {string} serviceName
+ * @returns {import('#types').ServiceFunction | undefined}
  */
 Environment.prototype.getServiceByName = function getServiceByName(serviceName) {
   return this[K_SERVICES][serviceName];
@@ -180,7 +181,7 @@ Environment.prototype.resolveExpression = function resolveExpression(expression,
 /**
  * Register a service callable by name.
  * @param {string} name service function name
- * @param {CallableFunction} fn service function
+ * @param {import('#types').ServiceFunction} fn service function
  */
 Environment.prototype.addService = function addService(name, fn) {
   this[K_SERVICES][name] = fn;

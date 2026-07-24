@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v18.0.10 - 2026-07-23
+
+### Additions
+
+- new exported `ServiceFunction` type declares injected `environment.services` functions with the calling element as `this`, e.g. `services: { myService(this) { return this.id; } }`. `EnvironmentOptions.services`, the `Environment#services` accessor, `getServiceByName`, and `addService` now use it
+
 ## v18.0.9 - 2026-07-18
 
 ### Fixes

@@ -208,10 +208,23 @@ declare module 'bpmn-elements' {
 	[x: string]: any;
   }
 
+  /**
+   * Injected `environment.services` function.
+   *
+   * In the no-call resolution forms — a service task `implementation`
+   * (`${environment.services.fn}`) or a sequence-flow service condition — the
+   * function is invoked with the calling element as its call context, so `this`
+   * is the {@link Activity} (or flow's owning activity) and the
+   * {@link ExecutionScope} is passed as the first argument. Args are left open so
+   * the *called* expression form (`${environment.services.fn()}`), which instead
+   * receives the resolution context, still typechecks.
+   */
+  export type ServiceFunction = (this: Activity, ...args: any[]) => any;
+
   export interface EnvironmentOptions {
 	settings?: EnvironmentSettings;
 	variables?: Record<string, any>;
-	services?: Record<string, CallableFunction>;
+	services?: Record<string, ServiceFunction>;
 	Logger?: LoggerFactory;
 	timers?: ITimers;
 	scripts?: IScripts;
@@ -1187,8 +1200,8 @@ declare module 'bpmn-elements' {
 		
 		Logger: LoggerFactory;
 		get variables(): Record<string, any>;
-		set services(value: Record<string, CallableFunction>);
-		get services(): Record<string, CallableFunction>;
+		set services(value: Record<string, ServiceFunction>);
+		get services(): Record<string, ServiceFunction>;
 		/**
 		 * Snapshot environment state for recover.
 		 * */
@@ -1222,7 +1235,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Lookup a registered service by name.
 		 * */
-		getServiceByName(serviceName: string): CallableFunction;
+		getServiceByName(serviceName: string): ServiceFunction | undefined;
 		/**
 		 * Resolve an expression with the environment as scope, optionally extended by an element message.
 		 * @param message Element message merged onto the resolution scope
@@ -1234,7 +1247,7 @@ declare module 'bpmn-elements' {
 		 * @param name service function name
 		 * @param fn service function
 		 */
-		addService(name: string, fn: CallableFunction): void;
+		addService(name: string, fn: ServiceFunction): void;
 	}
 	/**
 	 * Builtin data object. Reads from / writes to `environment.variables._data`.
