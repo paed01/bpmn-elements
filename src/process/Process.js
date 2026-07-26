@@ -540,7 +540,7 @@ Process.prototype.getLaneById = function getLaneById(laneId) {
 
 /**
  * List currently postponed activities as Api wrappers.
- * @param {import('#types').filterPostponed} [filterFn]
+ * @param {Parameters<import('./ProcessExecution.js').ProcessExecution['getPostponed']>} args
  */
 Process.prototype.getPostponed = function getPostponed(...args) {
   return this.execution?.getPostponed(...args) || [];

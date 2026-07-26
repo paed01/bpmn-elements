@@ -338,8 +338,8 @@ DefinitionExecution.prototype.getApi = function getApi(apiMessage) {
 
 /**
  * List currently postponed activities across every running process.
- * @param {import('#types').filterPostponed} [filterFn]
- * @returns {import('#types').IApi<import('#types').Activity>}
+ * @param  {Parameters<import('#types').Process['getPostponed']>} args
+ * @returns {import('#types').IApi<import('#types').Activity>[]}
  */
 DefinitionExecution.prototype.getPostponed = function getPostponed(...args) {
   let result = [];

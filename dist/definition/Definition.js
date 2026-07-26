@@ -341,7 +341,7 @@ Definition.prototype.getElementById = function getElementById(elementId) {
 
 /**
  * List currently postponed activities as Api wrappers.
- * @param {import('#types').filterPostponed} [filterFn]
+ * @param {Parameters<import('./DefinitionExecution.js').DefinitionExecution['getPostponed']>} args
  */
 Definition.prototype.getPostponed = function getPostponed(...args) {
   return this.execution?.getPostponed(...args) || [];

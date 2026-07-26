@@ -28,6 +28,7 @@ const rootAliases = {
   ServiceTask: ['BusinessRuleTask', 'SendTask'],
   SignalTask: ['ManualTask', 'UserTask'],
   SubProcess: ['AdHocSubProcess'],
+  Dummy: ['TextAnnotation', 'Group', 'Category'],
 };
 
 // Point dts-buddy at hand-written bundle entries that re-export the runtime

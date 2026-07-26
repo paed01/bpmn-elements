@@ -553,7 +553,7 @@ export interface ILogger {
 // --- Timers -------------------------------------------------------------------
 
 export type wrappedSetTimeout = (handler: CallableFunction, delay: number, ...args: any[]) => Timer;
-export type wrappedClearTimeout = (ref: any) => void;
+export type wrappedClearTimeout = (ref: Timer | ReturnType<typeof setTimeout>) => void;
 
 export interface Timer {
   /** The function to call when the timer elapses */
@@ -567,7 +567,7 @@ export interface Timer {
   /** Timer Id */
   readonly timerId: string;
   /** Timeout, return from setTimeout */
-  readonly timerRef: any;
+  readonly timerRef: ReturnType<typeof setTimeout>;
   [x: string]: any;
 }
 
@@ -651,7 +651,7 @@ export interface IApi<T> extends ElementBrokerMessage {
   stop(): void;
   resolveExpression(expression: string): any;
   sendApiMessage(action: string, content?: signalMessage, options?: any): void;
-  getPostponed(...args: any[]): any[];
+  getPostponed(...args: Parameters<Process['getPostponed']>): IApi<Activity>[];
   createMessage(content?: Record<string, any>): any;
   getExecuting(): IApi<T>[];
 }

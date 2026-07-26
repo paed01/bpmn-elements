@@ -455,7 +455,7 @@ declare module 'bpmn-elements' {
   // --- Timers -------------------------------------------------------------------
 
   export type wrappedSetTimeout = (handler: CallableFunction, delay: number, ...args: any[]) => Timer;
-  export type wrappedClearTimeout = (ref: any) => void;
+  export type wrappedClearTimeout = (ref: Timer | ReturnType<typeof setTimeout>) => void;
 
   export interface Timer {
 	/** The function to call when the timer elapses */
@@ -469,7 +469,7 @@ declare module 'bpmn-elements' {
 	/** Timer Id */
 	readonly timerId: string;
 	/** Timeout, return from setTimeout */
-	readonly timerRef: any;
+	readonly timerRef: ReturnType<typeof setTimeout>;
 	[x: string]: any;
   }
 
@@ -553,7 +553,7 @@ declare module 'bpmn-elements' {
 	stop(): void;
 	resolveExpression(expression: string): any;
 	sendApiMessage(action: string, content?: signalMessage, options?: any): void;
-	getPostponed(...args: any[]): any[];
+	getPostponed(...args: Parameters<Process['getPostponed']>): IApi<Activity>[];
 	createMessage(content?: Record<string, any>): any;
 	getExecuting(): IApi<T>[];
   }
@@ -1047,9 +1047,8 @@ declare module 'bpmn-elements' {
 		getElementById(elementId: string): Activity | null;
 		/**
 		 * List currently postponed activities as Api wrappers.
-		 * 
-		 */
-		getPostponed(...args: any[]): never[] | IApi<Activity>;
+		 * */
+		getPostponed(filterFn?: filterPostponed | undefined): IApi<Activity>[];
 		/**
 		 * Resolve a Definition Api wrapper, preferring the running execution if any.
 		 * @throws {Error} when the definition is not running and no message is given
@@ -1154,7 +1153,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * List currently postponed activities across every running process.
 		 * */
-		getPostponed(...args: any[]): IApi<Activity>;
+		getPostponed(filterFn?: filterPostponed | undefined): IApi<Activity>[];
 		get stopped(): boolean;
 		get completed(): boolean;
 		get status(): DefinitionStatus;
@@ -1166,7 +1165,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * Placeholder activity for non-executable elements (text annotations, groups, categories).
 	 * */
-	export function Category(activityDef: import("moddle-context-serializer").Activity): {
+	export function Dummy(activityDef: import("moddle-context-serializer").Activity): {
 		id: string;
 		type: string;
 		name: string | undefined;
@@ -1572,9 +1571,8 @@ declare module 'bpmn-elements' {
 		getLaneById(laneId: string): Lane | undefined;
 		/**
 		 * List currently postponed activities as Api wrappers.
-		 * 
-		 */
-		getPostponed(...args: any[]): IApi<Activity>[];
+		 * */
+		getPostponed(filterFn?: filterPostponed | undefined): IApi<Activity>[];
 		get counters(): {
 			completed: number;
 			discarded: number;
@@ -1645,6 +1643,36 @@ declare module 'bpmn-elements' {
 	 * Standard loop characteristics
 	 * */
 	export function StandardLoopCharacteristics(activity: Activity, loopCharacteristics: import("moddle-context-serializer").SerializableElement): MultiInstanceLoopCharacteristics;
+	/**
+	 * Default timers handler
+	 * 
+	 */
+		export class Timers {
+		/**
+		 * Default timers handler
+		 * 
+		 */
+		constructor(options?: TimersOptions);
+		count: number;
+		
+		options: Required<TimersOptions>;
+		
+		setTimeout: wrappedSetTimeout;
+		
+		clearTimeout: wrappedClearTimeout;
+		get executing(): Timer[];
+		register(owner: any): RegisteredTimers;
+	}
+
+		class RegisteredTimers {
+		
+		constructor(timersApi: Timers, owner: any);
+		owner: any;
+		
+		setTimeout: wrappedSetTimeout;
+		
+		clearTimeout: wrappedClearTimeout;
+	}
 	export class ActivityError extends Error {
 		
 		constructor(description: string, sourceMessage?: ElementBrokerMessage, inner?: Error | {
@@ -2665,6 +2693,9 @@ declare module 'bpmn-elements' {
 	export const SendTask: typeof ServiceTask;
 	export const ManualTask: typeof SignalTask;
 	export const UserTask: typeof SignalTask;
+	export const TextAnnotation: typeof Dummy;
+	export const Group: typeof Dummy;
+	export const Category: typeof Dummy;
 }
 
 declare module 'bpmn-elements/errors' {

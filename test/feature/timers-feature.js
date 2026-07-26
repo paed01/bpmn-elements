@@ -20,7 +20,10 @@ Feature('Timers', () => {
     });
     after(ck.reset);
 
-    let context, definition;
+    /** @type {import('bpmn-elements').ContextInstance} */
+    let context;
+    /** @type {Definition} */
+    let definition;
     after(() => {
       expect(definition?.environment.timers.executing).to.have.length(0);
     });

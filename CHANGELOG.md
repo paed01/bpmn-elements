@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v18.0.11 - 2026-07-25
+
+### Fixes
+
+- add missing root type exports for `Timers`, `Dummy`, `TextAnnotation`, and `Group`
+- `Definition#getPostponed` and `DefinitionExecution#getPostponed` now type their return as `IApi<Activity>[]` instead of a single `IApi<Activity>`
+
 ## v18.0.10 - 2026-07-23
 
 ### Additions

@@ -13,10 +13,13 @@ export { BpmnErrorActivity as BpmnError } from '../src/error/BpmnError.js';
 export { Context } from '../src/Context.js';
 export { Definition } from '../src/definition/Definition.js';
 export { DefinitionExecution } from '../src/definition/DefinitionExecution.js';
-export { DummyActivity as Dummy } from '../src/activity/Dummy.js';
+// dts-buddy collapses multi-aliased exports to a single name (the last in source
+// order), so the canonical `Dummy` must come *after* its aliases; the collapsed
+// aliases are restored onto the root module by `scripts/build-types.js`.
 export { DummyActivity as TextAnnotation } from '../src/activity/Dummy.js';
 export { DummyActivity as Group } from '../src/activity/Dummy.js';
 export { DummyActivity as Category } from '../src/activity/Dummy.js';
+export { DummyActivity as Dummy } from '../src/activity/Dummy.js';
 export { Environment } from '../src/Environment.js';
 export { EnvironmentDataObject as DataObject } from '../src/io/EnvironmentDataObject.js';
 export { EnvironmentDataStore as DataStore } from '../src/io/EnvironmentDataStore.js';
@@ -31,6 +34,7 @@ export { Properties } from '../src/io/Properties.js';
 export { ServiceImplementation } from '../src/tasks/ServiceImplementation.js';
 export { Signal } from '../src/activity/Signal.js';
 export { StandardLoopCharacteristics } from '../src/tasks/StandardLoopCharacteristics.js';
+export { Timers } from '../src/Timers.js';
 
 export { Association, MessageFlow, SequenceFlow } from '../src/flows/index.js';
 export {
