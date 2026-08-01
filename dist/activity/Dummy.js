@@ -3,7 +3,10 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.Category = Category;
 exports.DummyActivity = DummyActivity;
+exports.Group = Group;
+exports.TextAnnotation = TextAnnotation;
 var _messageHelper = require("../messageHelper.js");
 /**
  * Placeholder activity for non-executable elements (text annotations, groups, categories).
@@ -28,4 +31,28 @@ function DummyActivity(activityDef) {
     parent: (0, _messageHelper.cloneParent)(parent),
     placeholder: true
   };
+}
+
+/**
+ * Text annotation placeholder. Distinct factory identity sharing the dummy implementation.
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ */
+function TextAnnotation(activityDef) {
+  return DummyActivity(activityDef);
+}
+
+/**
+ * Group placeholder. Distinct factory identity sharing the dummy implementation.
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ */
+function Group(activityDef) {
+  return DummyActivity(activityDef);
+}
+
+/**
+ * Category placeholder. Distinct factory identity sharing the dummy implementation.
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ */
+function Category(activityDef) {
+  return DummyActivity(activityDef);
 }

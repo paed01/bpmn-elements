@@ -78,6 +78,9 @@
     "dist",
     "src",
     "types",
+    "!types/bundle.d.ts",
+    "!types/bundle-errors.d.ts",
+    "!types/interfaces.d.ts",
     "*.d.ts"
   ],
   "c8": {

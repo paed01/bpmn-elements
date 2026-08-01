@@ -89,12 +89,18 @@ describe('package exports', () => {
       expect(Object.keys(modules)).to.deep.equal([
         'AdHocSubProcess',
         'AdHocSubProcessBehaviour',
+        'BusinessRuleTask',
+        'BusinessRuleTaskBehaviour',
         'CallActivity',
         'CallActivityBehaviour',
+        'ManualTask',
+        'ManualTaskBehaviour',
         'ReceiveTask',
         'ReceiveTaskBehaviour',
         'ScriptTask',
         'ScriptTaskBehaviour',
+        'SendTask',
+        'SendTaskBehaviour',
         'ServiceTask',
         'ServiceTaskBehaviour',
         'SignalTask',
@@ -104,6 +110,8 @@ describe('package exports', () => {
         'Task',
         'TaskBehaviour',
         'Transaction',
+        'UserTask',
+        'UserTaskBehaviour',
       ]);
     });
   });

@@ -13,13 +13,7 @@ export { BpmnErrorActivity as BpmnError } from '../src/error/BpmnError.js';
 export { Context } from '../src/Context.js';
 export { Definition } from '../src/definition/Definition.js';
 export { DefinitionExecution } from '../src/definition/DefinitionExecution.js';
-// dts-buddy collapses multi-aliased exports to a single name (the last in source
-// order), so the canonical `Dummy` must come *after* its aliases; the collapsed
-// aliases are restored onto the root module by `scripts/build-types.js`.
-export { DummyActivity as TextAnnotation } from '../src/activity/Dummy.js';
-export { DummyActivity as Group } from '../src/activity/Dummy.js';
-export { DummyActivity as Category } from '../src/activity/Dummy.js';
-export { DummyActivity as Dummy } from '../src/activity/Dummy.js';
+export { DummyActivity as Dummy, TextAnnotation, Group, Category } from '../src/activity/Dummy.js';
 export { Environment } from '../src/Environment.js';
 export { EnvironmentDataObject as DataObject } from '../src/io/EnvironmentDataObject.js';
 export { EnvironmentDataStore as DataStore } from '../src/io/EnvironmentDataStore.js';
@@ -59,25 +53,23 @@ export {
   ParallelGateway,
   ParallelGatewayBehaviour,
 } from '../src/gateways/index.js';
-// dts-buddy collapses multi-aliased exports to a single name (the last in source
-// order), so the canonical name must come *after* its aliases — otherwise the
-// alias wins and the root module loses the canonical name that the
-// `bpmn-elements/tasks` re-export depends on.
 export {
   AdHocSubProcess,
   AdHocSubProcessBehaviour,
+  BusinessRuleTask,
+  BusinessRuleTaskBehaviour,
   CallActivity,
   CallActivityBehaviour,
+  ManualTask,
+  ManualTaskBehaviour,
   ReceiveTask,
   ReceiveTaskBehaviour,
-  ServiceTask as BusinessRuleTask,
-  ServiceTask as SendTask,
+  SendTask,
+  SendTaskBehaviour,
   ServiceTask,
   ServiceTaskBehaviour,
   ScriptTask,
   ScriptTaskBehaviour,
-  SignalTask as ManualTask,
-  SignalTask as UserTask,
   SignalTask,
   SignalTaskBehaviour,
   SubProcess,
@@ -85,6 +77,8 @@ export {
   Task,
   TaskBehaviour,
   Transaction,
+  UserTask,
+  UserTaskBehaviour,
 } from '../src/tasks/index.js';
 export {
   CancelEventDefinition,

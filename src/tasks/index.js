@@ -1,9 +1,13 @@
 export { AdHocSubProcess, AdHocSubProcessBehaviour } from './AdHocSubProcess.js';
+export { BusinessRuleTask, BusinessRuleTaskBehaviour } from './BusinessRuleTask.js';
 export { CallActivity, CallActivityBehaviour } from './CallActivity.js';
+export { ManualTask, ManualTaskBehaviour } from './ManualTask.js';
 export { ReceiveTask, ReceiveTaskBehaviour } from './ReceiveTask.js';
 export { ScriptTask, ScriptTaskBehaviour } from './ScriptTask.js';
+export { SendTask, SendTaskBehaviour } from './SendTask.js';
 export { ServiceTask, ServiceTaskBehaviour } from './ServiceTask.js';
 export { SignalTask, SignalTaskBehaviour } from './SignalTask.js';
 export { SubProcess, SubProcessBehaviour } from './SubProcess.js';
 export { Task, TaskBehaviour } from './Task.js';
 export { Transaction } from './Transaction.js';
+export { UserTask, UserTaskBehaviour } from './UserTask.js';

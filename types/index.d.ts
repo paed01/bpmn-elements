@@ -1174,6 +1174,39 @@ declare module 'bpmn-elements' {
 		placeholder: true;
 	};
 	/**
+	 * Text annotation placeholder. Distinct factory identity sharing the dummy implementation.
+	 * */
+	export function TextAnnotation(activityDef: import("moddle-context-serializer").Activity): {
+		id: string;
+		type: string;
+		name: string | undefined;
+		behaviour: Record<string, any>;
+		parent: ElementParent;
+		placeholder: true;
+	};
+	/**
+	 * Group placeholder. Distinct factory identity sharing the dummy implementation.
+	 * */
+	export function Group(activityDef: import("moddle-context-serializer").Activity): {
+		id: string;
+		type: string;
+		name: string | undefined;
+		behaviour: Record<string, any>;
+		parent: ElementParent;
+		placeholder: true;
+	};
+	/**
+	 * Category placeholder. Distinct factory identity sharing the dummy implementation.
+	 * */
+	export function Category(activityDef: import("moddle-context-serializer").Activity): {
+		id: string;
+		type: string;
+		name: string | undefined;
+		behaviour: Record<string, any>;
+		parent: ElementParent;
+		placeholder: true;
+	};
+	/**
 	 * Holds global execution config: variables, injected services, timers, scripts engine,
 	 * expressions, Logger factory, and settings such as `batchSize`. Cloned and merged per Definition.
 	 * 
@@ -2257,6 +2290,25 @@ declare module 'bpmn-elements' {
 		completionMet(message: ElementBrokerMessage, execution: ProcessExecution): boolean;
 	}
 	/**
+	 * Business rule task
+	 * */
+	export function BusinessRuleTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Business rule task behaviour
+	 *
+	 * Shares the service task implementation but owns its own prototype so consumers
+	 * can override it without affecting `ServiceTaskBehaviour` or its sibling behaviours.
+	 * */
+		export class BusinessRuleTaskBehaviour {
+		/**
+		 * Business rule task behaviour
+		 *
+		 * Shares the service task implementation but owns its own prototype so consumers
+		 * can override it without affecting `ServiceTaskBehaviour` or its sibling behaviours.
+		 * */
+		constructor(activity: Activity);
+	}
+	/**
 	 * Call activity
 	 * */
 	export function CallActivity(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
@@ -2278,6 +2330,25 @@ declare module 'bpmn-elements' {
 		environment: Environment;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
+	}
+	/**
+	 * Manual task
+	 * */
+	export function ManualTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Manual task behaviour
+	 *
+	 * Shares the signal task implementation but owns its own prototype so consumers
+	 * can override it without affecting `SignalTaskBehaviour` or its sibling behaviours.
+	 * */
+		export class ManualTaskBehaviour {
+		/**
+		 * Manual task behaviour
+		 *
+		 * Shares the signal task implementation but owns its own prototype so consumers
+		 * can override it without affecting `SignalTaskBehaviour` or its sibling behaviours.
+		 * */
+		constructor(activity: Activity);
 	}
 	/**
 	 * Receive task
@@ -2323,6 +2394,25 @@ declare module 'bpmn-elements' {
 		environment: Environment;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
+	}
+	/**
+	 * Send task
+	 * */
+	export function SendTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * Send task behaviour
+	 *
+	 * Shares the service task implementation but owns its own prototype so consumers
+	 * can override it without affecting `ServiceTaskBehaviour` or its sibling behaviours.
+	 * */
+		export class SendTaskBehaviour {
+		/**
+		 * Send task behaviour
+		 *
+		 * Shares the service task implementation but owns its own prototype so consumers
+		 * can override it without affecting `ServiceTaskBehaviour` or its sibling behaviours.
+		 * */
+		constructor(activity: Activity);
 	}
 	/**
 	 * Service task
@@ -2434,6 +2524,25 @@ declare module 'bpmn-elements' {
 		broker: ElementBroker<Activity>;
 		
 		execute(executeMessage: ElementBrokerMessage): void;
+	}
+	/**
+	 * User task
+	 * */
+	export function UserTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	/**
+	 * User task behaviour
+	 *
+	 * Shares the signal task implementation but owns its own prototype so consumers
+	 * can override it without affecting `SignalTaskBehaviour` or its sibling behaviours.
+	 * */
+		export class UserTaskBehaviour {
+		/**
+		 * User task behaviour
+		 *
+		 * Shares the signal task implementation but owns its own prototype so consumers
+		 * can override it without affecting `SignalTaskBehaviour` or its sibling behaviours.
+		 * */
+		constructor(activity: Activity);
 	}
 	/**
 	 * Cancel event definition
@@ -2689,13 +2798,6 @@ declare module 'bpmn-elements' {
 	}
 
 	export { Consumer, MessageFields, MessageProperties, SerializableContext, SerializableElement };
-	export const BusinessRuleTask: typeof ServiceTask;
-	export const SendTask: typeof ServiceTask;
-	export const ManualTask: typeof SignalTask;
-	export const UserTask: typeof SignalTask;
-	export const TextAnnotation: typeof Dummy;
-	export const Group: typeof Dummy;
-	export const Category: typeof Dummy;
 }
 
 declare module 'bpmn-elements/errors' {
@@ -2749,5 +2851,5 @@ declare module 'bpmn-elements/gateways' {
 }
 
 declare module 'bpmn-elements/tasks' {
-	export { AdHocSubProcess, AdHocSubProcessBehaviour, CallActivity, CallActivityBehaviour, ReceiveTask, ReceiveTaskBehaviour, ScriptTask, ScriptTaskBehaviour, ServiceTask, ServiceTaskBehaviour, SignalTask, SignalTaskBehaviour, SubProcess, SubProcessBehaviour, Task, TaskBehaviour, Transaction } from 'bpmn-elements';
+	export { AdHocSubProcess, AdHocSubProcessBehaviour, BusinessRuleTask, BusinessRuleTaskBehaviour, CallActivity, CallActivityBehaviour, ManualTask, ManualTaskBehaviour, ReceiveTask, ReceiveTaskBehaviour, ScriptTask, ScriptTaskBehaviour, SendTask, SendTaskBehaviour, ServiceTask, ServiceTaskBehaviour, SignalTask, SignalTaskBehaviour, SubProcess, SubProcessBehaviour, Task, TaskBehaviour, Transaction, UserTask, UserTaskBehaviour } from 'bpmn-elements';
 }

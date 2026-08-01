@@ -15,6 +15,18 @@ Object.defineProperty(exports, "AdHocSubProcessBehaviour", {
     return _AdHocSubProcess.AdHocSubProcessBehaviour;
   }
 });
+Object.defineProperty(exports, "BusinessRuleTask", {
+  enumerable: true,
+  get: function () {
+    return _BusinessRuleTask.BusinessRuleTask;
+  }
+});
+Object.defineProperty(exports, "BusinessRuleTaskBehaviour", {
+  enumerable: true,
+  get: function () {
+    return _BusinessRuleTask.BusinessRuleTaskBehaviour;
+  }
+});
 Object.defineProperty(exports, "CallActivity", {
   enumerable: true,
   get: function () {
@@ -25,6 +37,18 @@ Object.defineProperty(exports, "CallActivityBehaviour", {
   enumerable: true,
   get: function () {
     return _CallActivity.CallActivityBehaviour;
+  }
+});
+Object.defineProperty(exports, "ManualTask", {
+  enumerable: true,
+  get: function () {
+    return _ManualTask.ManualTask;
+  }
+});
+Object.defineProperty(exports, "ManualTaskBehaviour", {
+  enumerable: true,
+  get: function () {
+    return _ManualTask.ManualTaskBehaviour;
   }
 });
 Object.defineProperty(exports, "ReceiveTask", {
@@ -49,6 +73,18 @@ Object.defineProperty(exports, "ScriptTaskBehaviour", {
   enumerable: true,
   get: function () {
     return _ScriptTask.ScriptTaskBehaviour;
+  }
+});
+Object.defineProperty(exports, "SendTask", {
+  enumerable: true,
+  get: function () {
+    return _SendTask.SendTask;
+  }
+});
+Object.defineProperty(exports, "SendTaskBehaviour", {
+  enumerable: true,
+  get: function () {
+    return _SendTask.SendTaskBehaviour;
   }
 });
 Object.defineProperty(exports, "ServiceTask", {
@@ -105,12 +141,28 @@ Object.defineProperty(exports, "Transaction", {
     return _Transaction.Transaction;
   }
 });
+Object.defineProperty(exports, "UserTask", {
+  enumerable: true,
+  get: function () {
+    return _UserTask.UserTask;
+  }
+});
+Object.defineProperty(exports, "UserTaskBehaviour", {
+  enumerable: true,
+  get: function () {
+    return _UserTask.UserTaskBehaviour;
+  }
+});
 var _AdHocSubProcess = require("./AdHocSubProcess.js");
+var _BusinessRuleTask = require("./BusinessRuleTask.js");
 var _CallActivity = require("./CallActivity.js");
+var _ManualTask = require("./ManualTask.js");
 var _ReceiveTask = require("./ReceiveTask.js");
 var _ScriptTask = require("./ScriptTask.js");
+var _SendTask = require("./SendTask.js");
 var _ServiceTask = require("./ServiceTask.js");
 var _SignalTask = require("./SignalTask.js");
 var _SubProcess = require("./SubProcess.js");
 var _Task = require("./Task.js");
 var _Transaction = require("./Transaction.js");
+var _UserTask = require("./UserTask.js");

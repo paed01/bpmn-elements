@@ -4,10 +4,16 @@
 
 ## v18.0.11 - 2026-07-25
 
+### Additions
+
+- `UserTask`, `ManualTask`, `SendTask`, `BusinessRuleTask` (and `TextAnnotation`, `Group`, `Category`) are now distinct exports with their own behaviour instead of aliases of `SignalTask`/`ServiceTask`/`Dummy`. Each spec-named behaviour owns its prototype and inherits the shared base (`UserTaskBehaviour`/`ManualTaskBehaviour` from `SignalTaskBehaviour`; `SendTaskBehaviour`/`BusinessRuleTaskBehaviour` from `ServiceTaskBehaviour`), so overriding one no longer leaks into its base or siblings
+
 ### Fixes
 
 - add missing root type exports for `Timers`, `Dummy`, `TextAnnotation`, and `Group`
 - `Definition#getPostponed` and `DefinitionExecution#getPostponed` now type their return as `IApi<Activity>[]` instead of a single `IApi<Activity>`
+- drop redundant root `index.d.ts`; the bare `bpmn-elements` import resolves through the package `types` field in every resolution mode
+- stop publishing the hand-written type sources (`types/bundle.d.ts`, `types/bundle-errors.d.ts`, `types/interfaces.d.ts`); their declarations are already bundled into the shipped `types/index.d.ts`
 
 ## v18.0.10 - 2026-07-23
 

@@ -16,3 +16,27 @@ export function DummyActivity(activityDef) {
     placeholder: true,
   };
 }
+
+/**
+ * Text annotation placeholder. Distinct factory identity sharing the dummy implementation.
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ */
+export function TextAnnotation(activityDef) {
+  return DummyActivity(activityDef);
+}
+
+/**
+ * Group placeholder. Distinct factory identity sharing the dummy implementation.
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ */
+export function Group(activityDef) {
+  return DummyActivity(activityDef);
+}
+
+/**
+ * Category placeholder. Distinct factory identity sharing the dummy implementation.
+ * @param {import('moddle-context-serializer').Activity} activityDef
+ */
+export function Category(activityDef) {
+  return DummyActivity(activityDef);
+}

@@ -5,7 +5,7 @@ import { EnvironmentDataObject as DataObject } from './io/EnvironmentDataObject.
 import { EnvironmentDataStore as DataStore } from './io/EnvironmentDataStore.js';
 import { EnvironmentDataStoreReference as DataStoreReference } from './io/EnvironmentDataStoreReference.js';
 import { Definition } from './definition/Definition.js';
-import { DummyActivity as Dummy } from './activity/Dummy.js';
+import { DummyActivity as Dummy, TextAnnotation, Group, Category } from './activity/Dummy.js';
 import { Environment } from './Environment.js';
 import { Escalation } from './activity/Escalation.js';
 import { IoSpecification as InputOutputSpecification } from './io/InputOutputSpecification.js';
@@ -22,14 +22,18 @@ import { BoundaryEvent, EndEvent, IntermediateCatchEvent, IntermediateThrowEvent
 import { EventBasedGateway, ExclusiveGateway, InclusiveGateway, ParallelGateway } from './gateways/index.js';
 import {
   AdHocSubProcess,
+  BusinessRuleTask,
   CallActivity,
+  ManualTask,
   ReceiveTask,
+  SendTask,
   ServiceTask,
   ScriptTask,
   SubProcess,
   SignalTask,
   Task,
   Transaction,
+  UserTask,
 } from './tasks/index.js';
 import {
   CancelEventDefinition,
@@ -53,6 +57,7 @@ export {
   Activity,
   BoundaryEvent,
   BpmnError,
+  BusinessRuleTask,
   CallActivity,
   CancelEventDefinition,
   CompensateEventDefinition,
@@ -63,9 +68,9 @@ export {
   DataStoreReference,
   Definition,
   Dummy,
-  Dummy as TextAnnotation,
-  Dummy as Group,
-  Dummy as Category,
+  TextAnnotation,
+  Group,
+  Category,
   EndEvent,
   Environment,
   ErrorEventDefinition,
@@ -86,17 +91,15 @@ export {
   ParallelGateway,
   Process,
   Properties,
+  ManualTask,
   ReceiveTask,
   ScriptTask,
+  SendTask,
   SequenceFlow,
   ServiceImplementation,
-  ServiceTask as SendTask,
-  ServiceTask as BusinessRuleTask,
   ServiceTask,
   Signal,
   SignalEventDefinition,
-  SignalTask as ManualTask,
-  SignalTask as UserTask,
   SignalTask,
   StandardLoopCharacteristics,
   StartEvent,
@@ -106,4 +109,5 @@ export {
   TimerEventDefinition,
   Transaction,
   Timers,
+  UserTask,
 };

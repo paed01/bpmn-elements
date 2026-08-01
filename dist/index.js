@@ -42,7 +42,7 @@ Object.defineProperty(exports, "BpmnError", {
 Object.defineProperty(exports, "BusinessRuleTask", {
   enumerable: true,
   get: function () {
-    return _index4.ServiceTask;
+    return _index4.BusinessRuleTask;
   }
 });
 Object.defineProperty(exports, "CallActivity", {
@@ -60,7 +60,7 @@ Object.defineProperty(exports, "CancelEventDefinition", {
 Object.defineProperty(exports, "Category", {
   enumerable: true,
   get: function () {
-    return _Dummy.DummyActivity;
+    return _Dummy.Category;
   }
 });
 Object.defineProperty(exports, "CompensateEventDefinition", {
@@ -156,7 +156,7 @@ Object.defineProperty(exports, "ExclusiveGateway", {
 Object.defineProperty(exports, "Group", {
   enumerable: true,
   get: function () {
-    return _Dummy.DummyActivity;
+    return _Dummy.Group;
   }
 });
 Object.defineProperty(exports, "InclusiveGateway", {
@@ -198,7 +198,7 @@ Object.defineProperty(exports, "LinkEventDefinition", {
 Object.defineProperty(exports, "ManualTask", {
   enumerable: true,
   get: function () {
-    return _index4.SignalTask;
+    return _index4.ManualTask;
   }
 });
 Object.defineProperty(exports, "Message", {
@@ -264,7 +264,7 @@ Object.defineProperty(exports, "ScriptTask", {
 Object.defineProperty(exports, "SendTask", {
   enumerable: true,
   get: function () {
-    return _index4.ServiceTask;
+    return _index4.SendTask;
   }
 });
 Object.defineProperty(exports, "SequenceFlow", {
@@ -336,7 +336,7 @@ Object.defineProperty(exports, "TerminateEventDefinition", {
 Object.defineProperty(exports, "TextAnnotation", {
   enumerable: true,
   get: function () {
-    return _Dummy.DummyActivity;
+    return _Dummy.TextAnnotation;
   }
 });
 Object.defineProperty(exports, "TimerEventDefinition", {
@@ -360,7 +360,7 @@ Object.defineProperty(exports, "Transaction", {
 Object.defineProperty(exports, "UserTask", {
   enumerable: true,
   get: function () {
-    return _index4.SignalTask;
+    return _index4.UserTask;
   }
 });
 var _Activity = require("./activity/Activity.js");

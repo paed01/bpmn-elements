@@ -20,16 +20,13 @@ const reexportSubmodules = [
 ];
 
 // dts-buddy collapses multiple `export X as Y` aliases of the same source export
-// to a single name (the last in source order). We keep the canonical name in
-// `bundle.d.ts` and inject the lost BPMN-spec aliases back into the root module
-// after the bundle is emitted, so consumers can still
-// `import { SendTask } from 'bpmn-elements'`.
-const rootAliases = {
-  ServiceTask: ['BusinessRuleTask', 'SendTask'],
-  SignalTask: ['ManualTask', 'UserTask'],
-  SubProcess: ['AdHocSubProcess'],
-  Dummy: ['TextAnnotation', 'Group', 'Category'],
-};
+// to a single name (the last in source order). When that happens we keep the
+// canonical name in `bundle.d.ts` and inject the lost BPMN-spec aliases back into
+// the root module here (canonical name -> alias names) so consumers can still
+// `import { Alias } from 'bpmn-elements'`. Currently empty: every BPMN-spec task
+// type has its own source export (distinct behaviour prototype), so nothing
+// collapses. Kept as the seam for any future single-source alias.
+const rootAliases = {};
 
 // Point dts-buddy at hand-written bundle entries that re-export the runtime
 // classes from `src/*.js`. The root entry carries every public name so the
