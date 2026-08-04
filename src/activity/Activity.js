@@ -356,7 +356,7 @@ Activity.prototype.deactivate = function deactivate() {
   const broker = this.broker;
   this.removeInboundListeners();
   broker.cancel('_run-on-inbound');
-  broker.cancel('_format-consumer');
+  if (this[K_FORMATTER]) this[K_FORMATTER].reset();
 };
 
 /**
@@ -817,6 +817,9 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
       if (!isRedelivered) {
         this.broker.publish('run', 'run.execute', content, { correlationId });
         this._publishEvent('start', content, { correlationId });
+      } else if (this.extensions) {
+        // Resume rested at 'started' (e.g. step mode): re-activate extensions the stop deactivated.
+        this.extensions.activate(cloneMessage(message));
       }
       break;
     }
@@ -1106,7 +1109,7 @@ Activity.prototype._onStop = function onStop(message) {
   broker.cancel('_activity-api');
   broker.cancel('_activity-execution');
   broker.cancel('_run-on-inbound');
-  broker.cancel('_format-consumer');
+  if (this[K_FORMATTER]) this[K_FORMATTER].reset();
 
   if (this.extensions) this.extensions.deactivate(cloneMessage(message));
 

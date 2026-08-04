@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v18.0.12
+
+### Fixes
+
+- same-instance `resume()` after a stop taken mid-format no longer deadlocks at status `formatting`; stop/deactivate now `reset()`s the formatter so a stale `_formatter-<correlationId>` consumer can't steal and ack the resumed run's formatting message
+- resuming a run that rested at status `started` (e.g. step mode) now re-activates extensions on the redelivered `run.start`, so an activate-driven io output mapping is no longer silently dropped
+
 ## v18.0.11 - 2026-07-25
 
 ### Additions

@@ -94,6 +94,20 @@ Formatter.prototype._onMessage = function onMessage(routingKey, message) {
   }
 };
 
+/**
+ * Cancel any in-flight formatting consumer and drop its execution state.
+ * Called when the element is stopped or deactivated mid-format so a later resume
+ * restarts formatting cleanly instead of a stale consumer stealing the new run's
+ * formatting messages.
+ * @returns {void}
+ */
+Formatter.prototype.reset = function reset() {
+  const execution = this[K_EXECUTION];
+  if (!execution) return;
+  this[K_EXECUTION] = null;
+  this.broker.cancel('_formatter-' + execution.correlationId);
+};
+
 /** @internal */
 Formatter.prototype._complete = function complete(message, isError) {
   const { runMessage, formatKey, callback, formatted, executeMessage } = this[K_EXECUTION];

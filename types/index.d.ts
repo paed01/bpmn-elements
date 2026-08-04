@@ -1920,6 +1920,13 @@ declare module 'bpmn-elements' {
 		 * formatting completes; `formatted` is true when content was actually enriched.
 		 * */
 		format(message: ElementBrokerMessage, callback: (err: Error | null, content?: ElementMessageContent, formatted?: boolean) => void): void;
+		/**
+		 * Cancel any in-flight formatting consumer and drop its execution state.
+		 * Called when the element is stopped or deactivated mid-format so a later resume
+		 * restarts formatting cleanly instead of a stale consumer stealing the new run's
+		 * formatting messages.
+		 * */
+		reset(): void;
 	}
 	/**
 	 * Association connecting a source and target activity. Used to drive compensation —

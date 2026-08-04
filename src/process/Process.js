@@ -297,6 +297,7 @@ Process.prototype._deactivateRunConsumers = function deactivateRunConsumers() {
   broker.cancel('_process-api');
   broker.cancel('_process-run');
   broker.cancel('_process-execution');
+  if (this[K_FORMATTER]) this[K_FORMATTER].reset();
   this[K_CONSUMING] = false;
 };
 
