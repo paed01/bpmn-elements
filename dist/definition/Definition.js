@@ -332,11 +332,11 @@ Definition.prototype.getActivityById = function getActivityById(childId) {
 };
 
 /**
- * Lookup any element (activity, flow, etc.) in the parsed definition by id.
+ * Lookup any element (activity, sequence flow, message flow, or association) in the parsed definition by id.
  * @param {string} elementId
  */
 Definition.prototype.getElementById = function getElementById(elementId) {
-  return this.context.getActivityById(elementId);
+  return this.context.getActivityById(elementId) || this.context.getSequenceFlowById(elementId) || this.context.getMessageFlowById(elementId) || this.context.getAssociationById(elementId);
 };
 
 /**

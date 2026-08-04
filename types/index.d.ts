@@ -885,6 +885,10 @@ declare module 'bpmn-elements' {
 		
 		upsertAssociation(associationDefinition: import("moddle-context-serializer").SerializableElement): Association;
 		/**
+		 * Get or create the association instance for the given id.
+		 * */
+		getAssociationById(associationId: string): Association | null;
+		/**
 		 * Create a new context that shares the parsed definition but optionally swaps environment and owner.
 		 * 
 		 */
@@ -918,6 +922,10 @@ declare module 'bpmn-elements' {
 		 * @param sourceId Source process id
 		 * */
 		getMessageFlows(sourceId: string): MessageFlow[];
+		/**
+		 * Get or create the message flow instance for the given id.
+		 * */
+		getMessageFlowById(messageFlowId: string): MessageFlow | null;
 		/**
 		 * Get or create a data object instance for the given reference id.
 		 * */
@@ -1042,9 +1050,9 @@ declare module 'bpmn-elements' {
 		 * */
 		getActivityById(childId: string): Activity | null;
 		/**
-		 * Lookup any element (activity, flow, etc.) in the parsed definition by id.
+		 * Lookup any element (activity, sequence flow, message flow, or association) in the parsed definition by id.
 		 * */
-		getElementById(elementId: string): Activity | null;
+		getElementById(elementId: string): Activity | MessageFlow | SequenceFlow | Association | null;
 		/**
 		 * List currently postponed activities as Api wrappers.
 		 * */

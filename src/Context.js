@@ -183,6 +183,20 @@ ContextInstance.prototype.upsertAssociation = function upsertAssociation(associa
 };
 
 /**
+ * Get or create the association instance for the given id.
+ * @param {string} associationId
+ * @returns {import('./flows/Association.js').Association | null}
+ */
+ContextInstance.prototype.getAssociationById = function getAssociationById(associationId) {
+  const instance = this.refs.get('associationRefs').get(associationId);
+  if (instance) return instance;
+
+  const associationDef = this.definitionContext.getAssociationById(associationId);
+  if (!associationDef) return null;
+  return this.upsertAssociation(associationDef);
+};
+
+/**
  * Create a new context that shares the parsed definition but optionally swaps environment and owner.
  * @param {import('#types').Environment} [newEnvironment]
  * @param {import('#types').Process | import('#types').Activity} [newOwner]
@@ -286,6 +300,24 @@ ContextInstance.prototype.getMessageFlows = function getMessageFlows(sourceId) {
   }
 
   return result;
+};
+
+/**
+ * Get or create the message flow instance for the given id.
+ * @param {string} messageFlowId
+ * @returns {import('./flows/MessageFlow.js').MessageFlow | null}
+ */
+ContextInstance.prototype.getMessageFlowById = function getMessageFlowById(messageFlowId) {
+  const messageFlowRefs = this.refs.get('messageFlows');
+  if (!messageFlowRefs.size) {
+    for (const msgFlow of this.definitionContext.getMessageFlows() || []) {
+      messageFlowRefs.add(new msgFlow.Behaviour(msgFlow, this));
+    }
+  }
+  for (const flow of messageFlowRefs) {
+    if (flow.id === messageFlowId) return flow;
+  }
+  return null;
 };
 
 /**

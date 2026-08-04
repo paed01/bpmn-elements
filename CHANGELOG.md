@@ -6,6 +6,7 @@
 
 ### Fixes
 
+- `Definition#getElementById` now resolves sequence flows, message flows, and associations in addition to activities, matching its documented "any element" contract (previously it delegated only to `context.getActivityById` and returned `null` for anything that wasn't an activity). Adds `Context#getMessageFlowById` and `Context#getAssociationById`
 - same-instance `resume()` after a stop taken mid-format no longer deadlocks at status `formatting`; stop/deactivate now `reset()`s the formatter so a stale `_formatter-<correlationId>` consumer can't steal and ack the resumed run's formatting message
 - resuming a run that rested at status `started` (e.g. step mode) now re-activates extensions on the redelivered `run.start`, so an activate-driven io output mapping is no longer silently dropped
 

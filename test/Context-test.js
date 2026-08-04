@@ -639,4 +639,12 @@ describe('Context', () => {
       expect(ids).to.have.same.members(['throwA', 'catchA', 'catchAB']);
     });
   });
+
+  describe('getMessageFlowById', () => {
+    it('empty message flows returns null', () => {
+      const ctx = testHelpers.emptyContext();
+
+      expect(ctx.getMessageFlowById('meme')).to.be.null;
+    });
+  });
 });

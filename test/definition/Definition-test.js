@@ -1754,6 +1754,59 @@ describe('Definition', () => {
     });
   });
 
+  describe('getElementById()', () => {
+    const source = `
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="def">
+      <collaboration id="collab">
+        <participant id="p1" processRef="process1" />
+        <participant id="p2" processRef="process2" />
+        <messageFlow id="messageFlow1" sourceRef="task1" targetRef="task2" />
+      </collaboration>
+      <process id="process1" isExecutable="true">
+        <startEvent id="start" />
+        <sequenceFlow id="flow1" sourceRef="start" targetRef="task1" />
+        <userTask id="task1" />
+        <textAnnotation id="annotation1"><text>note</text></textAnnotation>
+        <association id="association1" sourceRef="task1" targetRef="annotation1" />
+      </process>
+      <process id="process2" isExecutable="true">
+        <userTask id="task2" />
+      </process>
+    </definitions>`;
+
+    let context;
+    before(async () => {
+      context = await testHelpers.context(source);
+    });
+
+    it('returns activity by id', () => {
+      const definition = new Definition(context);
+      expect(definition.getElementById('task1')).to.have.property('id', 'task1');
+    });
+
+    it('returns sequence flow by id', () => {
+      const definition = new Definition(context);
+      expect(definition.getElementById('flow1')).to.have.property('id', 'flow1');
+    });
+
+    it('returns message flow by id', () => {
+      const definition = new Definition(context);
+      expect(definition.getElementById('messageFlow1')).to.have.property('id', 'messageFlow1');
+    });
+
+    it('returns association by id', () => {
+      const definition = new Definition(context);
+      const flow = definition.getElementById('association1');
+      expect(flow).to.have.property('id', 'association1');
+      expect(definition.getElementById('association1'), 'same instance').to.equal(flow);
+    });
+
+    it('returns null if element is not found', () => {
+      const definition = new Definition(context);
+      expect(definition.getElementById('whoAmI')).to.be.null;
+    });
+  });
+
   describe('getPostponed()', () => {
     let context;
     beforeEach(async () => {

@@ -48,7 +48,7 @@ Get activity by id.
 
 ### `getElementById(elementId)`
 
-Get any element (activity, flow, etc.) in the parsed definition by id.
+Get any element (activity, sequence flow, message flow, or association) in the parsed definition by id.
 
 ### `getRunningProcesses()`
 
