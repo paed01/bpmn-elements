@@ -47,7 +47,7 @@ describe('Activity', () => {
 
       expect(activity).to.have.property('isEnd', true);
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       activity = new Activity(
@@ -171,7 +171,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const activity = new Activity(
@@ -204,7 +204,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const activity = new Activity(
@@ -220,6 +220,8 @@ describe('Activity', () => {
       );
 
       activity.activate();
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
       let message;
       activity.broker.subscribeOnce('event', 'activity.enter', (_, msg) => {
@@ -246,7 +248,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const activity = new Activity(
@@ -262,6 +264,8 @@ describe('Activity', () => {
       );
 
       activity.activate();
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
       let message;
       activity.broker.subscribeOnce('event', 'activity.discard', (_, msg) => {
@@ -283,7 +287,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const activity = new Activity(
@@ -315,7 +319,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const activity = new Activity(
@@ -346,7 +350,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const executeMessages = [];
@@ -391,7 +395,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const executeMessages = [];
@@ -433,7 +437,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const activity = new Activity(
@@ -467,7 +471,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       let executeMessage;
@@ -507,7 +511,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const activity = new Activity(
@@ -544,7 +548,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const activity = new Activity(
@@ -585,7 +589,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const activity = new Activity(
@@ -617,7 +621,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const activity = new Activity(
@@ -651,7 +655,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const activity = new Activity(
@@ -694,7 +698,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const activity = new Activity(
@@ -724,7 +728,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       function SpecialBehaviour(parent) {
@@ -761,7 +765,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       function SpecialBehaviour() {
@@ -796,7 +800,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const activity = new Activity(
@@ -834,7 +838,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const activity = new Activity(
@@ -1198,6 +1202,8 @@ describe('Activity', () => {
 
       const activity = getActivity(undefined, SpecialBehaviour);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let message;
       activity.broker.subscribeOnce('event', 'activity.error', (_, msg) => {
         message = msg;
@@ -1229,7 +1235,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       const activity = new Activity(
@@ -1265,7 +1271,7 @@ describe('Activity', () => {
         },
       });
 
-      const sequenceFlow = new SequenceFlow({ id: 'flow', parent: { id: 'process1' } }, context);
+      const sequenceFlow = new SequenceFlow(/** @type {any} */ ({ id: 'flow', parent: { id: 'process1' } }), context);
       sequenceFlows.push(sequenceFlow);
 
       function SpecialBehaviour({ broker }) {
@@ -1318,11 +1324,11 @@ describe('Activity', () => {
       });
 
       const sequenceFlow1 = new SequenceFlow(
-        { id: 'flow1', sourceId: 'source1', targetId: 'target1', parent: { id: 'process1' } },
+        /** @type {any} */ ({ id: 'flow1', sourceId: 'source1', targetId: 'target1', parent: { id: 'process1' } }),
         context
       );
       const sequenceFlow2 = new SequenceFlow(
-        { id: 'flow2', sourceId: 'source2', targetId: 'target2', parent: { id: 'process1' } },
+        /** @type {any} */ ({ id: 'flow2', sourceId: 'source2', targetId: 'target2', parent: { id: 'process1' } }),
         context
       );
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
@@ -1362,11 +1368,11 @@ describe('Activity', () => {
       });
 
       const sequenceFlow1 = new SequenceFlow(
-        { id: 'flow1', sourceId: 'source1', targetId: 'target1', parent: { id: 'process1' } },
+        /** @type {any} */ ({ id: 'flow1', sourceId: 'source1', targetId: 'target1', parent: { id: 'process1' } }),
         context
       );
       const sequenceFlow2 = new SequenceFlow(
-        { id: 'flow2', sourceId: 'source2', targetId: 'target2', parent: { id: 'process1' } },
+        /** @type {any} */ ({ id: 'flow2', sourceId: 'source2', targetId: 'target2', parent: { id: 'process1' } }),
         context
       );
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
@@ -1425,11 +1431,11 @@ describe('Activity', () => {
       });
 
       const sequenceFlow1 = new SequenceFlow(
-        { id: 'flow1', sourceId: 'source1', targetId: 'target1', parent: { id: 'process1' } },
+        /** @type {any} */ ({ id: 'flow1', sourceId: 'source1', targetId: 'target1', parent: { id: 'process1' } }),
         context
       );
       const sequenceFlow2 = new SequenceFlow(
-        { id: 'flow2', sourceId: 'source2', targetId: 'target2', parent: { id: 'process1' } },
+        /** @type {any} */ ({ id: 'flow2', sourceId: 'source2', targetId: 'target2', parent: { id: 'process1' } }),
         context
       );
       sequenceFlows.push(sequenceFlow1, sequenceFlow2);
@@ -1483,8 +1489,10 @@ describe('Activity', () => {
 
   describe('extensions', () => {
     it('activates extensions on enter', () => {
-      const attachedTo = ActivityBroker();
+      const attachedTo = /** @type {any} */ (ActivityBroker());
       attachedTo.id = 'task';
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
       let activateMessage;
       const context = getContext({
@@ -1518,8 +1526,10 @@ describe('Activity', () => {
     });
 
     it('activates extensions on discard', () => {
-      const attachedTo = ActivityBroker();
+      const attachedTo = /** @type {any} */ (ActivityBroker());
       attachedTo.id = 'task';
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
       let activateMessage;
       const context = getContext({
@@ -1552,8 +1562,10 @@ describe('Activity', () => {
     });
 
     it('activates extensions on resume', () => {
-      const attachedTo = ActivityBroker();
+      const attachedTo = /** @type {any} */ (ActivityBroker());
       attachedTo.id = 'task';
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
       let activateMessage;
       const context = getContext({
@@ -1665,6 +1677,8 @@ describe('Activity', () => {
 
       activity.activate();
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let message;
       activity.broker.subscribeOnce('event', 'activity.enter', (_, msg) => {
         message = msg;
@@ -1715,6 +1729,8 @@ describe('Activity', () => {
 
       activity.activate();
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let message;
       activity.broker.subscribeOnce('event', 'activity.discard', (_, msg) => {
         message = msg;
@@ -1760,6 +1776,8 @@ describe('Activity', () => {
       );
 
       activity.activate();
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
       let message;
       activity.broker.subscribeOnce('event', 'activity.enter', (_, msg) => {
@@ -2196,7 +2214,9 @@ describe('Activity', () => {
 
       expect(activity.status).to.equal('executing');
 
-      const recovered = getActivity(undefined, SignalTaskBehaviour).recover(state);
+      const recovered = /** @type {import('bpmn-elements').Activity} */ (
+        /** @type {any} */ (getActivity(undefined, SignalTaskBehaviour).recover(state))
+      );
 
       recovered.activate();
       recovered.resume();
@@ -2212,7 +2232,9 @@ describe('Activity', () => {
 
       expect(activity.status).to.equal('executing');
 
-      const recovered = getActivity(undefined, SignalTaskBehaviour).recover(state);
+      const recovered = /** @type {import('bpmn-elements').Activity} */ (
+        /** @type {any} */ (getActivity(undefined, SignalTaskBehaviour).recover(state))
+      );
 
       recovered.activate();
       recovered.resume();
@@ -2228,7 +2250,9 @@ describe('Activity', () => {
 
       expect(activity.status).to.equal('executing');
 
-      const recovered = getActivity(undefined, SignalTaskBehaviour).recover(state);
+      const recovered = /** @type {import('bpmn-elements').Activity} */ (
+        /** @type {any} */ (getActivity(undefined, SignalTaskBehaviour).recover(state))
+      );
 
       recovered.activate();
       recovered.resume();
@@ -2280,9 +2304,9 @@ describe('Activity', () => {
       );
 
       activity.evaluateOutbound(
-        {
+        /** @type {any} */ ({
           content: {},
-        },
+        }),
         false,
         done
       );
@@ -2298,7 +2322,7 @@ describe('Activity', () => {
         },
       });
 
-      const association = new Association({ id: 'association', parent: { id: 'process1' } }, context);
+      const association = new Association(/** @type {any} */ ({ id: 'association', parent: { id: 'process1' } }), context);
       associations.push(association);
 
       const activity = new Activity(
@@ -2331,7 +2355,7 @@ describe('Activity', () => {
         },
       });
 
-      const association = new Association({ id: 'association', parent: { id: 'process1' } }, context);
+      const association = new Association(/** @type {any} */ ({ id: 'association', parent: { id: 'process1' } }), context);
       associations.push(association);
 
       const activity = new Activity(
@@ -2365,7 +2389,7 @@ describe('Activity', () => {
         },
       });
 
-      const association = new Association({ id: 'association', parent: { id: 'process1' } }, context);
+      const association = new Association(/** @type {any} */ ({ id: 'association', parent: { id: 'process1' } }), context);
       associations.push(association);
 
       const activity = new Activity(
@@ -2463,6 +2487,10 @@ describe('Activity', () => {
   });
 });
 
+/**
+ * @param {any} [override]
+ * @param {import('bpmn-elements').IActivityBehaviour} [OBehaviour]
+ */
 function getActivity(override = {}, OBehaviour = TaskBehaviour) {
   const activity = new Activity(
     OBehaviour,
@@ -2489,7 +2517,14 @@ function getContext(override) {
     },
     getInboundSequenceFlows(id) {
       if (id !== 'activity') return [];
-      return [new SequenceFlow({ id: 'flow', sourceId: 'start', targetId: 'activity', parent: { id: 'process1' } }, { environment })];
+      return [
+        new SequenceFlow(
+          /** @type {any} */ ({ id: 'flow', sourceId: 'start', targetId: 'activity', parent: { id: 'process1' } }),
+          /** @type {any} */ ({
+            environment,
+          })
+        ),
+      ];
     },
     getOutboundMessageFlows() {
       return [];

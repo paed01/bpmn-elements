@@ -9,7 +9,7 @@ var _constants = require("../constants.js");
  * Process lane. Wraps a `<bpmn:lane>` definition and points back to its owning process;
  * activities reference their lane through `Activity.lane`.
  * @param {import('#types').Process} process
- * @param {import('moddle-context-serializer').SerializableElement} laneDefinition
+ * @param {import('#types').SerializableElement} laneDefinition
  */
 function Lane(process, laneDefinition) {
   const {
@@ -28,7 +28,7 @@ function Lane(process, laneDefinition) {
   this.type = type;
   /** @type {string} */
   this.name = behaviour.name;
-  /** @type {import('moddle-context-serializer').Parent} */
+  /** @type {import('#types').ElementParentRef} */
   this.parent = {
     id: process.id,
     type: process.type

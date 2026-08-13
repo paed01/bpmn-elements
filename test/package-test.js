@@ -45,7 +45,7 @@ describe('package exports', () => {
 
     it('commonjs exports expected', async () => {
       const modules = await import(resolve(cwd, pkg.exports['./eventDefinitions'].require));
-      expect(Object.keys(modules)).to.deep.include(
+      expect(Object.keys(modules)).to.include.members([
         'CancelEventDefinition',
         'CompensateEventDefinition',
         'ConditionalEventDefinition',
@@ -55,8 +55,8 @@ describe('package exports', () => {
         'MessageEventDefinition',
         'SignalEventDefinition',
         'TerminateEventDefinition',
-        'TimerEventDefinition'
-      );
+        'TimerEventDefinition',
+      ]);
     });
   });
 

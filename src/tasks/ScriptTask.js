@@ -5,7 +5,7 @@ import { cloneContent, cloneMessage } from '../messageHelper.js';
 
 /**
  * Script task
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function ScriptTask(activityDef, context) {
@@ -45,6 +45,7 @@ ScriptTaskBehaviour.prototype.execute = function execute(executeMessage) {
 
   const activity = this.activity;
   const scriptFormat = this.scriptFormat;
+  // @ts-ignore
   const script = this.environment.getScript(scriptFormat, activity, cloneMessage(executeMessage));
   if (!script) {
     return activity.emitFatal(
@@ -53,6 +54,7 @@ ScriptTaskBehaviour.prototype.execute = function execute(executeMessage) {
     );
   }
 
+  // @ts-ignore
   return script.execute(ExecutionScope(activity, executeMessage), scriptCallback);
 
   function scriptCallback(err, output) {
@@ -61,7 +63,12 @@ ScriptTaskBehaviour.prototype.execute = function execute(executeMessage) {
       return activity.broker.publish(
         'execution',
         'execute.error',
-        cloneContent(executeContent, { error: new ActivityError(err.message, executeMessage, err) }, { mandatory: true })
+        cloneContent(
+          executeContent,
+          { error: new ActivityError(err.message, executeMessage, err) },
+          // @ts-ignore
+          { mandatory: true }
+        )
       );
     }
     return activity.broker.publish('execution', 'execute.completed', cloneContent(executeContent, { output }));

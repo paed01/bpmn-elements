@@ -13,9 +13,9 @@ const K_ON_EXECUTION_COMPLETED = Symbol.for('execution completed handler');
 
 /**
  * Sub process
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
- * @param {CallableFunction} [Behaviour] behaviour class, defaults to {@link SubProcessBehaviour}
+ * @param {import('#types').IActivityBehaviour} [Behaviour] behaviour class, defaults to {@link SubProcessBehaviour}
  */
 function SubProcess(activityDef, context, Behaviour = SubProcessBehaviour) {
   const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
@@ -24,6 +24,8 @@ function SubProcess(activityDef, context, Behaviour = SubProcessBehaviour) {
     isSubProcess: true,
     triggeredByEvent
   }, context);
+
+  // @ts-ignore
   subProcess.getStartActivities = function getStartActivities(filterOptions) {
     return context.getStartActivities(filterOptions, activityDef.id);
   };
@@ -140,6 +142,7 @@ SubProcessBehaviour.prototype.getState = function getState() {
   }
   if (this.loopCharacteristics) {
     return {
+      // @ts-ignore
       executions: states
     };
   }
@@ -154,8 +157,10 @@ SubProcessBehaviour.prototype.recover = function recover(state) {
   if (!state) return;
   const executions = this[K_EXECUTIONS];
   const loopCharacteristics = this.loopCharacteristics;
+  // @ts-ignore
   if (loopCharacteristics && state.executions) {
     executions.clear();
+    // @ts-ignore
     for (const se of state.executions) {
       this.recover(se);
     }
@@ -164,8 +169,12 @@ SubProcessBehaviour.prototype.recover = function recover(state) {
   if (!loopCharacteristics) {
     executions.clear();
   }
+
+  // @ts-ignore
   const subEnvironment = this.environment.clone().recover(state.environment);
   const subContext = this.context.clone(subEnvironment, this.activity);
+
+  // @ts-ignore
   const execution = new _ProcessExecution.ProcessExecution(this.activity, subContext).recover(state);
   executions.add(execution);
 };

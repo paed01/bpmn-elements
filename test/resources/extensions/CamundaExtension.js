@@ -1,6 +1,6 @@
 import fs from 'fs';
 
-const camundaBpmnModdle = JSON.parse(fs.readFileSync('./node_modules/camunda-bpmn-moddle/resources/camunda.json'));
+const camundaBpmnModdle = JSON.parse(/** @type {any} */ (fs.readFileSync('./node_modules/camunda-bpmn-moddle/resources/camunda.json')));
 
 export default {
   extension: Camunda,

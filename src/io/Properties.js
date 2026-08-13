@@ -5,7 +5,7 @@ const K_PROPERTIES = Symbol.for('properties');
 /**
  * Activity properties behaviour. Resolves bound data input/output references during the run.
  * @param {import('#types').Activity} activity
- * @param {{ type: 'properties', values: import('moddle-context-serializer').IElement[] }} propertiesDef
+ * @param {{ type: 'properties', values: import('#types').SerializableElement[] }} propertiesDef
  * @param {import('#types').ContextInstance} context
  * @satisfies {import('#types').IExtension}
  */
@@ -189,7 +189,7 @@ function read(broker, dataReferences, callback) {
     reference.read(broker, 'data', 'data.read.', { correlationId: propertyId });
   }
 
-  function onDataReadResponse(routingKey, message) {
+  function onDataReadResponse(_routingKey, message) {
     responses[message.properties.correlationId] = { ...message.content };
 
     if (++count < dataReferences.length) return;
@@ -209,7 +209,7 @@ function write(broker, dataReferences, properties, callback) {
     reference.write(broker, 'data', 'data.write.', value, { correlationId: propertyId });
   }
 
-  function onDataWriteResponse(routingKey, message) {
+  function onDataWriteResponse(_routingKey, message) {
     responses[message.properties.correlationId] = { ...message.content };
 
     if (++count < dataReferences.length) return;

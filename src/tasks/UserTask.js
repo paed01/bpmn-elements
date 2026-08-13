@@ -3,10 +3,11 @@ import { SignalTaskBehaviour } from './SignalTask.js';
 
 /**
  * User task
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function UserTask(activityDef, context) {
+  // @ts-ignore
   return new Activity(UserTaskBehaviour, activityDef, context);
 }
 

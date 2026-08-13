@@ -5,7 +5,7 @@ import { K_EXECUTION } from '../constants.js';
 
 /**
  * Intermediate throw event
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function IntermediateThrowEvent(activityDef, context) {
@@ -38,5 +38,6 @@ IntermediateThrowEventBehaviour.prototype.execute = function execute(executeMess
     return execution.execute(executeMessage);
   }
 
+  // @ts-ignore
   return this.broker.publish('execution', 'execute.completed', cloneContent(executeMessage.content));
 };

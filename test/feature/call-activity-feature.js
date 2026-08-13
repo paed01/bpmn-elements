@@ -96,7 +96,7 @@ Feature('Call activity', () => {
 
       When('definition is recovered and resumed from state', async () => {
         const context = await testHelpers.context(factory.resource('call-activity-signal.bpmn'));
-        signalDefinition = new Definition(context).recover(state).resume();
+        signalDefinition = /** @type {any} */ (new Definition(context).recover(state).resume());
       });
 
       And('recovered call activity is cancelled by definition', () => {

@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.EnvironmentDataStore = EnvironmentDataStore;
 /**
  * Builtin data store. Reads from / writes to `environment.variables._data`.
- * @param {import('moddle-context-serializer').DataStore} dataStoreDef
+ * @param {import('#types').SerializableElement} dataStoreDef
  * @param {import('#types').ContextInstance} context
  * @satisfies {import('#types').IIOData}
  */
@@ -25,7 +25,7 @@ function EnvironmentDataStore(dataStoreDef, {
   this.name = name;
   /** @type {Record<string, any>} */
   this.behaviour = behaviour;
-  /** @type {import('moddle-context-serializer').Parent | undefined} */
+  /** @type {import('#types').ElementParentRef | undefined} */
   this.parent = parent;
   this.environment = environment;
 }

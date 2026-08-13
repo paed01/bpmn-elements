@@ -34,7 +34,7 @@ Feature('Definition', () => {
       definition.broker.subscribeTmp(
         'event',
         '#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -91,7 +91,7 @@ Feature('Definition', () => {
       definition.broker.subscribeTmp(
         'event',
         '#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }

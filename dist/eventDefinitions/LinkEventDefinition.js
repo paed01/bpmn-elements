@@ -9,7 +9,7 @@ var _constants = require("../constants.js");
 /**
  * Link event definition
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ * @param {import('#types').SerializableElement} eventDefinition
  */
 function LinkEventDefinition(activity, eventDefinition) {
   const {

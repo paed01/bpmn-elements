@@ -9,7 +9,7 @@ var _constants = require("../constants.js");
 /**
  * Cancel event definition
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ * @param {import('#types').SerializableElement} eventDefinition
  */
 function CancelEventDefinition(activity, eventDefinition) {
   const {
@@ -79,6 +79,7 @@ CancelEventDefinition.prototype.executeCatch = function executeCatch(executeMess
   }));
   const waitContent = (0, _messageHelper.cloneContent)(executeContent, {
     executionId: parentExecutionId,
+    // @ts-ignore
     condition: this.condition,
     expect: 'cancel'
   });
@@ -122,7 +123,7 @@ CancelEventDefinition.prototype._complete = function complete(output) {
   });
   return this.broker.publish('execution', 'execute.completed', content);
 };
-CancelEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+CancelEventDefinition.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   switch (message.properties.type) {
     case 'discard':
       {

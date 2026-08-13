@@ -13,7 +13,7 @@ var _constants = require("../constants.js");
 /**
  * Sequence flow connecting two activities. Owns its broker and publishes take/discard/looped
  * events; activities subscribe to drive their inbound queue.
- * @param {import('moddle-context-serializer').SequenceFlow} flowDef
+ * @param {import('#types').SequenceFlowDefinition} flowDef
  * @param {import('#types').ContextInstance} context
  */
 function SequenceFlow(flowDef, {
@@ -139,6 +139,7 @@ SequenceFlow.prototype.recover = function recover(state) {
  * @returns {import('#types').IApi<this>}
  */
 SequenceFlow.prototype.getApi = function getApi(message) {
+  // @ts-ignore
   return (0, _Api.FlowApi)(this.broker, message || {
     content: this.createMessage()
   });
@@ -189,7 +190,7 @@ SequenceFlow.prototype.shake = function shake(message) {
 /**
  * Resolve the flow's condition (script or expression). Returns null when no condition is set.
  * Emits a fatal error when the script language is missing or unsupported.
- * @returns {import('#types').ICondition | null}
+ * @returns {import('#types').ICondition | null | undefined}
  */
 SequenceFlow.prototype.getCondition = function getCondition() {
   const conditionExpression = this.behaviour.conditionExpression;
@@ -199,12 +200,15 @@ SequenceFlow.prototype.getCondition = function getCondition() {
   } = conditionExpression;
   const script = this.environment.getScript(language, this);
   if (script) {
+    // @ts-ignore
     return new _condition.ScriptCondition(this, script, language);
   }
   if (!conditionExpression.body) {
     const msg = language ? `Condition expression script ${language} is unsupported or was not registered` : 'Condition expression without body is unsupported';
     return this.emitFatal(new Error(msg), this.createMessage());
   }
+
+  // @ts-ignore
   return new _condition.ExpressionCondition(this, conditionExpression.body);
 };
 

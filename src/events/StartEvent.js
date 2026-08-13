@@ -5,7 +5,7 @@ import { K_EXECUTE_MESSAGE, K_EXECUTION } from '../constants.js';
 
 /**
  * Start event
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function StartEvent(activityDef, context) {
@@ -47,16 +47,19 @@ StartEventBehaviour.prototype.execute = function execute(executeMessage) {
   const content = cloneContent(executeMessage.content);
   const broker = this.broker;
   if (!content.form) {
+    // @ts-ignore
     return broker.publish('execution', 'execute.completed', content);
   }
 
   const executionId = content.executionId;
   this[K_EXECUTE_MESSAGE] = executeMessage;
+  // @ts-ignore
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(...args), {
     noAck: true,
     consumerTag: `_api-${executionId}`,
     priority: 300,
   });
+  // @ts-ignore
   broker.subscribeTmp('api', '#.signal.*', (...args) => this._onDelegatedApiMessage(...args), {
     noAck: true,
     consumerTag: `_api-delegated-${executionId}`,
@@ -64,7 +67,7 @@ StartEventBehaviour.prototype.execute = function execute(executeMessage) {
   broker.publish('event', 'activity.wait', { ...content, executionId, state: 'wait' });
 };
 
-StartEventBehaviour.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+StartEventBehaviour.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   const { type: messageType, correlationId } = message.properties;
   switch (messageType) {
     case 'stop':

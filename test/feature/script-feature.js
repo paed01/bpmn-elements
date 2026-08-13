@@ -6,7 +6,9 @@ class Scripts {
     if (!/^(javascript|js)$/i.test(behaviour.scriptFormat)) return;
   }
   compile() {}
-  getScript() {}
+  getScript() {
+    return undefined;
+  }
 }
 
 Feature('Script', () => {

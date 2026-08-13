@@ -9,7 +9,7 @@ var _messageHelper = require("../messageHelper.js");
 /**
  * Loop characteristics
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').SerializableElement} loopCharacteristics
+ * @param {import('#types').SerializableElement} loopCharacteristics
  */
 function LoopCharacteristics(activity, loopCharacteristics) {
   this.activity = activity;
@@ -88,12 +88,16 @@ SequentialLoopCharacteristics.prototype.execute = function execute(executeMessag
     startIndex = executeMessage.content.index;
   }
   chr.subscribe(this._onCompleteMessage.bind(this));
+
+  // @ts-ignore
   return this._startNext(startIndex, isRedelivered);
 };
 SequentialLoopCharacteristics.prototype._startNext = function startNext(index, ignoreIfExecuting) {
   const chr = this.characteristics;
   const content = chr.next(index);
   if (!content) return;
+
+  // @ts-ignore
   if (chr.isStartConditionMet({
     content
   })) {
@@ -234,7 +238,7 @@ ParallelLoopCharacteristics.prototype._onCompleteMessage = function onCompleteMe
 /**
  * Per-execution snapshot of resolved loop characteristics (cardinality, collection, conditions).
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').SerializableElement} loopCharacteristics
+ * @param {import('#types').SerializableElement} loopCharacteristics
  * @param {import('#types').ElementBrokerMessage} executeMessage
  */
 function Characteristics(activity, loopCharacteristics, executeMessage) {
@@ -265,7 +269,7 @@ function Characteristics(activity, loopCharacteristics, executeMessage) {
   }
   this.cardinality = this.getCardinality(collection);
 
-  /** @private */
+  // @ts-ignore
   this.onApiMessage = this.onApiMessage.bind(this);
   const environment = activity.environment;
   this.logger = environment.Logger(type.toLowerCase());
@@ -314,6 +318,7 @@ Characteristics.prototype.getCardinality = function getCardinality(collection) {
   if (!this.loopCardinality) {
     return collectionLen;
   }
+  // @ts-ignore
   const value = this.activity.environment.resolveExpression(this.loopCardinality, this.message);
   if (value !== undefined && isNaN(value) || value < 0) {
     throw new _Errors.RunError(`<${this.id}> invalid loop cardinality >${value}<`, this.message);
@@ -338,7 +343,7 @@ Characteristics.prototype.isStartConditionMet = function isStartConditionMet(mes
 };
 
 /**
- * @param {import('#types').ElementBrokerMessage} message
+ * @type {(message: import('#types').ElementBrokerMessage, loopOutput?: any[]) => boolean}
  */
 Characteristics.prototype.isCompletionConditionMet = function isCompletionConditionMet(message) {
   if (!this.completionCondition) return false;
@@ -348,12 +353,14 @@ Characteristics.prototype.isCompletionConditionMet = function isCompletionCondit
 };
 
 /**
- * @param {import('#types').ElementMessageContent} content
+ * @param {import('#types').ElementMessageContent} [content]
  * @param {boolean} [allDiscarded]
  * @returns {void}
  */
 Characteristics.prototype.complete = function complete(content, allDiscarded) {
   this.stop();
+
+  // @ts-ignore
   return this.broker.publish('execution', 'execute.' + (allDiscarded ? 'discard' : 'completed'), {
     ...content,
     ...this.getContent(),
@@ -362,13 +369,15 @@ Characteristics.prototype.complete = function complete(content, allDiscarded) {
 };
 
 /**
- * @param {import('#types').ElementBrokerMessage} onIterationCompleteMessage
+ * @param {(routingKey: string, message: import('#types').ElementBrokerMessage, ...args: any[]) => void} onIterationCompleteMessage
  */
 Characteristics.prototype.subscribe = function subscribe(onIterationCompleteMessage) {
   this.broker.subscribeTmp('api', `activity.*.${this.parentExecutionId}`, this.onApiMessage, {
     noAck: true,
     consumerTag: '_api-multi-instance-tag'
-  }, {
+  },
+  // @ts-ignore
+  {
     priority: 400
   });
   this.broker.subscribeTmp('execution', 'execute.*', onComplete, {
@@ -388,6 +397,7 @@ Characteristics.prototype.subscribe = function subscribe(onIterationCompleteMess
 };
 
 /** @internal */
+// @ts-ignore
 Characteristics.prototype.onApiMessage = function onApiMessage(_, message) {
   switch (message.properties.type) {
     case 'stop':

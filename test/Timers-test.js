@@ -1,4 +1,5 @@
 import * as ck from 'chronokinesis';
+import * as nodeTimers from 'node:timers';
 import { Timers } from 'bpmn-elements';
 
 describe('Timers', () => {
@@ -58,6 +59,51 @@ describe('Timers', () => {
       timers.clearTimeout(timer);
 
       expect(timer.timerRef).to.be.undefined;
+    });
+  });
+
+  describe('options', () => {
+    it('accepts any setTimeout and clearTimeout function', () => {
+      /** @type {{delay: number, args: any[]}[]} */
+      const calls = [];
+      const timers = new Timers({
+        setTimeout(_callback, delay, ...args) {
+          calls.push({ delay, args });
+          return calls.length;
+        },
+        clearTimeout() {
+          calls.pop();
+        },
+      });
+
+      const timer = timers.setTimeout(() => {}, 60000, 1);
+
+      expect(calls).to.have.length(1);
+      expect(calls[0]).to.deep.equal({ delay: 60000, args: [1] });
+
+      timers.clearTimeout(timer);
+
+      expect(calls).to.have.length(0);
+    });
+
+    it('accepts builtin timers module', () => {
+      const timers = new Timers(nodeTimers);
+
+      const timer = timers.setTimeout(() => {}, 60000);
+
+      expect(timer.timerRef).to.be.ok;
+
+      timers.clearTimeout(timer);
+    });
+
+    it('accepts builtin setTimeout and clearTimeout', () => {
+      const timers = new Timers({ setTimeout, clearTimeout });
+
+      const timer = timers.setTimeout(() => {}, 60000);
+
+      expect(timer.timerRef).to.be.ok;
+
+      timers.clearTimeout(timer);
     });
   });
 });

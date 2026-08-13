@@ -4,7 +4,7 @@ import { K_COMPLETED, K_EXECUTE_MESSAGE, K_REFERENCE_ELEMENT, K_REFERENCE_INFO }
 
 /**
  * Receive task
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function ReceiveTask(activityDef, context) {
@@ -107,7 +107,7 @@ ReceiveTaskExecution.prototype.execute = function execute(executeMessage) {
   broker.publish('event', 'activity.wait', cloneContent(executeContent, { message: { ...info.message } }));
 };
 
-ReceiveTaskExecution.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
+ReceiveTaskExecution.prototype._onCatchMessage = function onCatchMessage(_routingKey, message) {
   const content = message.content;
 
   const { id: signalId, executionId: signalExecutionId } = content.message || {};
@@ -138,7 +138,7 @@ ReceiveTaskExecution.prototype._onCatchMessage = function onCatchMessage(routing
   this._complete(message.content.message, { correlationId });
 };
 
-ReceiveTaskExecution.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+ReceiveTaskExecution.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   const { type: messageType, correlationId } = message.properties;
   switch (messageType) {
     case 'message':

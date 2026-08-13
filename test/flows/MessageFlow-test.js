@@ -14,7 +14,7 @@ describe('MessageFlow', () => {
       },
     };
     const flow = new MessageFlow(
-      {
+      /** @type {any} */ ({
         id: 'message',
         parent: {},
         source: {
@@ -23,8 +23,8 @@ describe('MessageFlow', () => {
         target: {
           id: 'task1',
         },
-      },
-      context
+      }),
+      /** @type {any} */ (context)
     );
 
     expect(flow).to.have.property('type', 'messageflow');
@@ -39,7 +39,7 @@ describe('MessageFlow', () => {
       },
     };
     const flow = new MessageFlow(
-      {
+      /** @type {any} */ ({
         id: 'message',
         type: 'messageflow',
         parent: {},
@@ -49,8 +49,8 @@ describe('MessageFlow', () => {
         target: {
           id: 'task1',
         },
-      },
-      context
+      }),
+      /** @type {any} */ (context)
     );
 
     flow.activate();
@@ -124,7 +124,7 @@ describe('MessageFlow', () => {
     };
 
     const flow = new MessageFlow(
-      {
+      /** @type {any} */ ({
         id: 'message',
         type: 'messageflow',
         parent: {},
@@ -134,8 +134,8 @@ describe('MessageFlow', () => {
         target: {
           id: 'task1',
         },
-      },
-      context
+      }),
+      /** @type {any} */ (context)
     );
 
     const api = flow.getApi();
@@ -152,7 +152,7 @@ describe('MessageFlow', () => {
     };
 
     const flow = new MessageFlow(
-      {
+      /** @type {any} */ ({
         id: 'message',
         type: 'messageflow',
         parent: {},
@@ -162,11 +162,11 @@ describe('MessageFlow', () => {
         target: {
           id: 'task1',
         },
-      },
-      context
+      }),
+      /** @type {any} */ (context)
     );
 
-    const api = flow.getApi({ content: { id: 'foo' } });
+    const api = flow.getApi(/** @type {any} */ ({ content: { id: 'foo' } }));
     expect(api).to.have.property('id', 'foo');
   });
 });

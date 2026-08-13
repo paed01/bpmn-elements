@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+## v18.0.13
+
+### Fixes
+
+- `EnvironmentOptions` now declares an index signature: arbitrary consumer options are kept as is on environment options, e.g. bpmn-engine stores `listener` and the serialized source context on `environment.options`
+- `IScripts.register` may return `void` and `IScripts.getScript` may return `undefined`, matching custom script handlers that return nothing for non-script activities
+- `IActivityBehaviour` no longer conflates constructor and instance (an instance with a `new` method); it is now a union of a behaviour class and the documented plain-factory pattern `function Behaviour(activity) { return { execute }; }`, both returning the new `IActivityBehaviourInstance`. The constructor half is exported as `IActivityBehaviourConstructor`. `ActivityExecution.source` is typed as `IActivityBehaviourInstance | undefined`
+- `IExtensionsMapper.get` returns the single extensions aggregate, not an array
+- `ResolvedReference.parent` is optional; the error reference resolved by `BpmnError` carries no parent
+- `UserTaskBehaviour`, `ManualTaskBehaviour`, `SendTaskBehaviour`, and `BusinessRuleTaskBehaviour` now declare their prototype-chain heritage, so the shipped types include the inherited behaviour members (e.g. `execute`)
+- assorted declaration accuracy fixes surfaced by type-checking the test suite: optional params that the runtime tolerates (`ActivityBroker(activity?)`, `new ActivityExecution(activity[, context])`, `ActivityError`/`BpmnError` description, `Environment#assignVariables`/`assignSettings`, `ConditionalEventDefinition` context/index, `shiftParent`), `ProcessExecution#getSequenceFlows` returns an array, `SequenceFlow#getCondition` may return undefined after emitting fatal
+
+### Additions
+
+- the test suite is type-checked: `npm run typecheck` (part of lint) now also runs `tsc --noEmit -p test` with `checkJs`, covering `src/` and `test/` against the declarations
+
 ## v18.0.12
 
 ### Fixes

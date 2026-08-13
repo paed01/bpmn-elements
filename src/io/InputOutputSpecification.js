@@ -4,7 +4,7 @@ import { K_CONSUMING } from '../constants.js';
 /**
  * Activity ioSpecification behaviour. Reads bound data objects on enter and writes them on completion.
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').IoSpecification} ioSpecificationDef
+ * @param {import('#types').SerializableElement} ioSpecificationDef
  * @param {import('#types').ContextInstance} context
  * @satisfies {import('#types').IExtension}
  */
@@ -29,7 +29,7 @@ IoSpecification.prototype.activate = function activate(message) {
   if (message?.fields.redelivered && message.fields.routingKey === 'run.end') {
     this._onFormatComplete(message);
   }
-  /** @internal */
+  /** @internal @type {import('smqp').Consumer | void} */
   this[K_CONSUMING] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), { noAck: true });
 };
 
@@ -206,7 +206,7 @@ function read(broker, dataObjectRefs, callback) {
     dataObject.read(broker, 'data', 'data.read.');
   }
 
-  function onDataObjectResponse(routingKey, message) {
+  function onDataObjectResponse(_routingKey, message) {
     const { index } = dataObjectRefs.find(({ dataObject }) => dataObject.id === message.content.id);
     responses.push({ ...message.content, index });
 
@@ -228,7 +228,7 @@ function write(broker, dataObjectRefs, callback) {
     dataObject.write(broker, 'data', 'data.write.', value);
   }
 
-  function onDataObjectResponse(routingKey, message) {
+  function onDataObjectResponse(_routingKey, message) {
     const idx = dataObjectRefs.findIndex(({ dataObject }) => dataObject.id === message.content.id);
     responses[idx] = { index: idx, ...message.content };
 

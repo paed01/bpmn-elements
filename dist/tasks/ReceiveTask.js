@@ -10,7 +10,7 @@ var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
 /**
  * Receive task
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 function ReceiveTask(activityDef, context) {
@@ -116,7 +116,7 @@ ReceiveTaskExecution.prototype.execute = function execute(executeMessage) {
     }
   }));
 };
-ReceiveTaskExecution.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
+ReceiveTaskExecution.prototype._onCatchMessage = function onCatchMessage(_routingKey, message) {
   const content = message.content;
   const {
     id: signalId,
@@ -157,7 +157,7 @@ ReceiveTaskExecution.prototype._onCatchMessage = function onCatchMessage(routing
     correlationId
   });
 };
-ReceiveTaskExecution.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+ReceiveTaskExecution.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   const {
     type: messageType,
     correlationId

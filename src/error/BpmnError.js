@@ -1,6 +1,6 @@
 /**
  * BPMN error.
- * @param {import('moddle-context-serializer').SerializableElement} errorDef
+ * @param {import('#types').SerializableElement} errorDef
  * @param {import('#types').ContextInstance} context
  */
 export function BpmnErrorActivity(errorDef, context) {
@@ -32,6 +32,6 @@ export function BpmnErrorActivity(errorDef, context) {
     };
 
     if (error) result.inner = error;
-    return result;
+    return /** @type {import('#types').ResolvedReference & {code?:string}} */ (result);
   }
 }

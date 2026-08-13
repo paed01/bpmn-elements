@@ -11,7 +11,7 @@ var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
 /**
  * Start event
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 function StartEvent(activityDef, context) {
@@ -54,15 +54,18 @@ StartEventBehaviour.prototype.execute = function execute(executeMessage) {
   const content = (0, _messageHelper.cloneContent)(executeMessage.content);
   const broker = this.broker;
   if (!content.form) {
+    // @ts-ignore
     return broker.publish('execution', 'execute.completed', content);
   }
   const executionId = content.executionId;
   this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
+  // @ts-ignore
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(...args), {
     noAck: true,
     consumerTag: `_api-${executionId}`,
     priority: 300
   });
+  // @ts-ignore
   broker.subscribeTmp('api', '#.signal.*', (...args) => this._onDelegatedApiMessage(...args), {
     noAck: true,
     consumerTag: `_api-delegated-${executionId}`
@@ -73,7 +76,7 @@ StartEventBehaviour.prototype.execute = function execute(executeMessage) {
     state: 'wait'
   });
 };
-StartEventBehaviour.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+StartEventBehaviour.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   const {
     type: messageType,
     correlationId

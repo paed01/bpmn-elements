@@ -89,7 +89,7 @@ describe('ScriptTask', () => {
           getScript(_, { id }) {
             if (id !== 'scriptTask') return;
             return {
-              execute(executionContext, callback) {
+              execute(_executionContext, callback) {
                 return callback(null, { input: 3 });
               },
             };
@@ -283,6 +283,7 @@ describe('ScriptTask', () => {
         </process>
       </definitions>`;
 
+      /** @type {() => void} */
       let callback;
 
       const context = await testHelpers.context(source, {

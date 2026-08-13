@@ -26,12 +26,15 @@ describe('ConditionalEventDefinition', () => {
     it('publishes wait event on parent broker', () => {
       event.attachedTo = task;
 
-      const condition = new ConditionalEventDefinition(event, {
-        type: 'bpmn:ConditionalEventDefinition',
-        behaviour: {
-          expression: '${content.output.value}',
-        },
-      });
+      const condition = new ConditionalEventDefinition(
+        event,
+        /** @type {any} */ ({
+          type: 'bpmn:ConditionalEventDefinition',
+          behaviour: {
+            expression: '${content.output.value}',
+          },
+        })
+      );
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -43,23 +46,25 @@ describe('ConditionalEventDefinition', () => {
         { noAck: true }
       );
 
-      condition.execute({
-        fields: {},
-        content: {
-          executionId: 'event_1_0',
-          index: 0,
-          parent: {
-            id: 'event',
-            executionId: 'event_1',
-            path: [
-              {
-                id: 'theProcess',
-                executionId: 'theProcess_0',
-              },
-            ],
+      condition.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            executionId: 'event_1_0',
+            index: 0,
+            parent: {
+              id: 'event',
+              executionId: 'event_1',
+              path: [
+                {
+                  id: 'theProcess',
+                  executionId: 'theProcess_0',
+                },
+              ],
+            },
           },
-        },
-      });
+        })
+      );
 
       expect(messages).to.have.length(2);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.condition');
@@ -77,10 +82,14 @@ describe('ConditionalEventDefinition', () => {
     it('ignores condition if expression is empty', () => {
       event.attachedTo = task;
 
-      const condition = new ConditionalEventDefinition(event, {
-        type: 'bpmn:ConditionalEventDefinition',
-      });
+      const condition = new ConditionalEventDefinition(
+        event,
+        /** @type {any} */ ({
+          type: 'bpmn:ConditionalEventDefinition',
+        })
+      );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       event.broker.subscribeOnce('event', 'activity.condition', (_, msg) => {
         message = msg;
@@ -90,17 +99,19 @@ describe('ConditionalEventDefinition', () => {
         throw new Error("Shouldn't publish on execution exchange");
       });
 
-      condition.execute({
-        fields: {},
-        content: {
-          executionId: 'event_0_0',
-          index: 0,
-          parent: {
-            id: 'event',
-            executionId: 'event_0',
+      condition.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            executionId: 'event_0_0',
+            index: 0,
+            parent: {
+              id: 'event',
+              executionId: 'event_0',
+            },
           },
-        },
-      });
+        })
+      );
 
       event.broker.publish('api', 'activity.signal.event_0_0', {}, { type: 'signal' });
 
@@ -110,13 +121,17 @@ describe('ConditionalEventDefinition', () => {
     it('publishes condition message with condition result as output if condition is met', () => {
       event.attachedTo = task;
 
-      const condition = new ConditionalEventDefinition(event, {
-        type: 'bpmn:ConditionalEventDefinition',
-        behaviour: {
-          expression: '${content.message}',
-        },
-      });
+      const condition = new ConditionalEventDefinition(
+        event,
+        /** @type {any} */ ({
+          type: 'bpmn:ConditionalEventDefinition',
+          behaviour: {
+            expression: '${content.message}',
+          },
+        })
+      );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let conditionMessage;
       event.broker.subscribeTmp(
         'event',
@@ -127,12 +142,13 @@ describe('ConditionalEventDefinition', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let completedMessage;
       event.broker.subscribeOnce('execution', '#', (_, msg) => {
         completedMessage = msg;
       });
 
-      const executeMessage = {
+      const executeMessage = /** @type {any} */ ({
         fields: {},
         content: {
           executionId: 'event_0_0',
@@ -142,7 +158,7 @@ describe('ConditionalEventDefinition', () => {
             executionId: 'event_0',
           },
         },
-      };
+      });
 
       condition.execute(executeMessage);
 
@@ -165,28 +181,34 @@ describe('ConditionalEventDefinition', () => {
         throw new Error('Unexpected');
       });
 
-      const condition = new ConditionalEventDefinition(event, {
-        behaviour: {
-          expression: '${environment.services.badService()}',
-        },
-      });
+      const condition = new ConditionalEventDefinition(
+        event,
+        /** @type {any} */ ({
+          behaviour: {
+            expression: '${environment.services.badService()}',
+          },
+        })
+      );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       event.broker.subscribeOnce('execution', 'execute.error', (_, msg) => {
         message = msg;
       });
 
-      condition.execute({
-        fields: {},
-        content: {
-          executionId: 'event_0_0',
-          index: 0,
-          parent: {
-            id: 'event',
-            executionId: 'event_0',
+      condition.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            executionId: 'event_0_0',
+            index: 0,
+            parent: {
+              id: 'event',
+              executionId: 'event_0',
+            },
           },
-        },
-      });
+        })
+      );
 
       event.broker.publish(
         'api',
@@ -207,11 +229,15 @@ describe('ConditionalEventDefinition', () => {
 
   describe('intermediate catch event', () => {
     it('ignores condition if expression is empty', () => {
-      const condition = new ConditionalEventDefinition(event, {
-        type: 'bpmn:ConditionalEventDefinition',
-        behaviour: {},
-      });
+      const condition = new ConditionalEventDefinition(
+        event,
+        /** @type {any} */ ({
+          type: 'bpmn:ConditionalEventDefinition',
+          behaviour: {},
+        })
+      );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       event.broker.subscribeOnce('event', 'activity.condition', (_, msg) => {
         message = msg;
@@ -221,7 +247,7 @@ describe('ConditionalEventDefinition', () => {
         throw new Error("Shouldn't publish on execution exchange");
       });
 
-      const executeMessage = {
+      const executeMessage = /** @type {any} */ ({
         fields: {},
         content: {
           executionId: 'event_0_0',
@@ -231,7 +257,7 @@ describe('ConditionalEventDefinition', () => {
             executionId: 'event_0',
           },
         },
-      };
+      });
 
       condition.execute(executeMessage);
 
@@ -241,12 +267,15 @@ describe('ConditionalEventDefinition', () => {
     });
 
     it('publishes condition message with condition result as output if condition is met', () => {
-      const condition = new ConditionalEventDefinition(event, {
-        type: 'bpmn:ConditionalEventDefinition',
-        behaviour: {
-          expression: '${content.message.value}',
-        },
-      });
+      const condition = new ConditionalEventDefinition(
+        event,
+        /** @type {any} */ ({
+          type: 'bpmn:ConditionalEventDefinition',
+          behaviour: {
+            expression: '${content.message.value}',
+          },
+        })
+      );
 
       const conditionMessages = [];
       event.broker.subscribeTmp(
@@ -258,12 +287,13 @@ describe('ConditionalEventDefinition', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let completedMessage;
       event.broker.subscribeOnce('execution', '#', (_, msg) => {
         completedMessage = msg;
       });
 
-      const executeMessage = {
+      const executeMessage = /** @type {any} */ ({
         fields: {},
         content: {
           executionId: 'event_0_0',
@@ -273,7 +303,7 @@ describe('ConditionalEventDefinition', () => {
             executionId: 'event_0',
           },
         },
-      };
+      });
 
       condition.execute(executeMessage);
 
@@ -294,16 +324,19 @@ describe('ConditionalEventDefinition', () => {
     });
 
     it('discard closes consumers and publish discard message', () => {
-      const condition = new ConditionalEventDefinition(event, {
-        type: 'bpmn:ConditionalEventDefinition',
-        behaviour: {
-          expression: '${content.output.value}',
-        },
-      });
+      const condition = new ConditionalEventDefinition(
+        event,
+        /** @type {any} */ ({
+          type: 'bpmn:ConditionalEventDefinition',
+          behaviour: {
+            expression: '${content.output.value}',
+          },
+        })
+      );
 
       expect(event.broker.getExchange('api').bindingCount).to.equal(0);
 
-      const executeMessage = {
+      const executeMessage = /** @type {any} */ ({
         fields: {},
         content: {
           executionId: 'event_0_0',
@@ -313,12 +346,13 @@ describe('ConditionalEventDefinition', () => {
             executionId: 'event_0',
           },
         },
-      };
+      });
 
       condition.execute(executeMessage);
 
       expect(event.broker.getExchange('api').bindingCount).to.equal(3);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let discardMessage;
       event.broker.subscribeOnce('execution', '#', (_, msg) => {
         discardMessage = msg;
@@ -336,26 +370,32 @@ describe('ConditionalEventDefinition', () => {
 
   describe('evaluate', () => {
     it('calls callback if condition is missing', (done) => {
-      const condition = new ConditionalEventDefinition(event, {
-        type: 'bpmn:ConditionalEventDefinition',
-      });
+      const condition = new ConditionalEventDefinition(
+        event,
+        /** @type {any} */ ({
+          type: 'bpmn:ConditionalEventDefinition',
+        })
+      );
 
-      condition.evaluate({}, done);
+      condition.evaluate(/** @type {any} */ ({}), done);
     });
   });
 
   describe('condition met', () => {
     it('wait condition closes consumers', () => {
-      const condition = new ConditionalEventDefinition(event, {
-        type: 'bpmn:ConditionalEventDefinition',
-        behaviour: {
-          expression: '${content.message.value}',
-        },
-      });
+      const condition = new ConditionalEventDefinition(
+        event,
+        /** @type {any} */ ({
+          type: 'bpmn:ConditionalEventDefinition',
+          behaviour: {
+            expression: '${content.message.value}',
+          },
+        })
+      );
 
       expect(event.broker.getExchange('api').bindingCount).to.equal(0);
 
-      const executeMessage = {
+      const executeMessage = /** @type {any} */ ({
         fields: {},
         content: {
           executionId: 'event_0_0',
@@ -365,7 +405,7 @@ describe('ConditionalEventDefinition', () => {
             executionId: 'event_0',
           },
         },
-      };
+      });
 
       condition.execute(executeMessage);
 
@@ -379,17 +419,20 @@ describe('ConditionalEventDefinition', () => {
     it('bound condition completed close consumers', () => {
       event.attachedTo = task;
 
-      const condition = new ConditionalEventDefinition(event, {
-        type: 'bpmn:ConditionalEventDefinition',
-        behaviour: {
-          expression: '${content.message.output.value}',
-        },
-      });
+      const condition = new ConditionalEventDefinition(
+        event,
+        /** @type {any} */ ({
+          type: 'bpmn:ConditionalEventDefinition',
+          behaviour: {
+            expression: '${content.message.output.value}',
+          },
+        })
+      );
 
       expect(task.broker.getExchange('execution').bindingCount).to.equal(1);
       expect(event.broker.getExchange('api').bindingCount).to.equal(0);
 
-      const executeMessage = {
+      const executeMessage = /** @type {any} */ ({
         fields: {},
         content: {
           executionId: 'event_0_0',
@@ -399,7 +442,7 @@ describe('ConditionalEventDefinition', () => {
             executionId: 'event_0',
           },
         },
-      };
+      });
 
       condition.execute(executeMessage);
 
@@ -419,16 +462,19 @@ describe('ConditionalEventDefinition', () => {
 
   describe('stop', () => {
     it('wait condition stop closes consumers', () => {
-      const condition = new ConditionalEventDefinition(event, {
-        type: 'bpmn:ConditionalEventDefinition',
-        behaviour: {
-          expression: '${content.output.value}',
-        },
-      });
+      const condition = new ConditionalEventDefinition(
+        event,
+        /** @type {any} */ ({
+          type: 'bpmn:ConditionalEventDefinition',
+          behaviour: {
+            expression: '${content.output.value}',
+          },
+        })
+      );
 
       expect(event.broker.getExchange('api').bindingCount).to.equal(0);
 
-      const executeMessage = {
+      const executeMessage = /** @type {any} */ ({
         fields: {},
         content: {
           executionId: 'event_0_0',
@@ -438,7 +484,7 @@ describe('ConditionalEventDefinition', () => {
             executionId: 'event_0',
           },
         },
-      };
+      });
 
       condition.execute(executeMessage);
 
@@ -452,17 +498,20 @@ describe('ConditionalEventDefinition', () => {
     it('bound condition stop closes consumers', () => {
       event.attachedTo = task;
 
-      const condition = new ConditionalEventDefinition(event, {
-        type: 'bpmn:ConditionalEventDefinition',
-        behaviour: {
-          expression: '${content.output.value}',
-        },
-      });
+      const condition = new ConditionalEventDefinition(
+        event,
+        /** @type {any} */ ({
+          type: 'bpmn:ConditionalEventDefinition',
+          behaviour: {
+            expression: '${content.output.value}',
+          },
+        })
+      );
 
       expect(task.broker.getExchange('execution').bindingCount).to.equal(1);
       expect(event.broker.getExchange('api').bindingCount).to.equal(0);
 
-      const executeMessage = {
+      const executeMessage = /** @type {any} */ ({
         fields: {},
         content: {
           executionId: 'event_0_0',
@@ -472,7 +521,7 @@ describe('ConditionalEventDefinition', () => {
             executionId: 'event_0',
           },
         },
-      };
+      });
 
       condition.execute(executeMessage);
 

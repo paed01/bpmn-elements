@@ -1,4 +1,4 @@
-import { Activity, Context } from 'bpmn-elements';
+import { Activity } from 'bpmn-elements';
 import factory from './helpers/factory.js';
 import testHelpers from './helpers/testHelpers.js';
 
@@ -6,7 +6,7 @@ const motherOfAllSource = factory.resource('mother-of-all.bpmn');
 
 describe('Context', () => {
   it('takes bpmn context instance and environment', () => {
-    const ctx = Context({
+    const ctx = testHelpers.emptyContext({
       id: 'newDef',
       name: 'New def',
       type: 'fake-context',
@@ -38,7 +38,7 @@ describe('Context', () => {
     }
 
     it('return process', () => {
-      const ctx = Context({
+      const ctx = testHelpers.emptyContext({
         id: 'newDef',
         name: 'New def',
         type: 'fake-context',
@@ -65,7 +65,7 @@ describe('Context', () => {
     });
 
     it('return null if not found', () => {
-      const ctx = Context({
+      const ctx = testHelpers.emptyContext({
         id: 'newDef',
         name: 'New def',
         type: 'fake-context',
@@ -89,7 +89,7 @@ describe('Context', () => {
     }
 
     it('return process but doesn`t add it to instance list', () => {
-      const ctx = Context({
+      const ctx = testHelpers.emptyContext({
         id: 'newDef',
         name: 'New def',
         type: 'fake-context',
@@ -134,7 +134,7 @@ describe('Context', () => {
         Behaviour,
       };
 
-      const ctx = Context({
+      const ctx = testHelpers.emptyContext({
         id: 'newDef',
         name: 'New def',
         type: 'fake-context',
@@ -247,7 +247,7 @@ describe('Context', () => {
 
     it('returns empty list as default', () => {
       function Behaviour(...args) {
-        return new Activity(this, ...args);
+        return new Activity(this, .../** @type {[any, any]} */ (args));
       }
 
       const activityDef = {
@@ -312,7 +312,7 @@ describe('Context', () => {
 
     it('returns empty list as default', () => {
       function Behaviour(...args) {
-        return new Activity(this, ...args);
+        return new Activity(this, .../** @type {[any, any]} */ (args));
       }
 
       const activityDef = {
@@ -339,7 +339,7 @@ describe('Context', () => {
   describe('getInboundAssociations(activityId)', () => {
     it('returns empty list as default', () => {
       function Behaviour(...args) {
-        return new Activity(this, ...args);
+        return new Activity(this, .../** @type {[any, any]} */ (args));
       }
 
       const activityDef = {
@@ -366,7 +366,7 @@ describe('Context', () => {
   describe('getOutboundAssociations(activityId)', () => {
     it('returns empty list as default', () => {
       function Behaviour(...args) {
-        return new Activity(this, ...args);
+        return new Activity(this, .../** @type {[any, any]} */ (args));
       }
 
       const activityDef = {

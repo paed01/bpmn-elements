@@ -5,7 +5,7 @@ import { K_EXECUTION } from '../constants.js';
 
 /**
  * End event
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function EndEvent(activityDef, context) {
@@ -34,5 +34,6 @@ EndEventBehaviour.prototype.execute = function execute(executeMessage) {
     return execution.execute(executeMessage);
   }
 
+  // @ts-ignore
   return this.broker.publish('execution', 'execute.completed', cloneContent(executeMessage.content));
 };

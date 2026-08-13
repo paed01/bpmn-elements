@@ -4,7 +4,7 @@ import { ActivityBroker } from '../../src/EventBroker.js';
 import { Logger } from '../helpers/testHelpers.js';
 
 describe('LoopCharacteristics', () => {
-  let task;
+  /** @type {any} */ let task;
   beforeEach(() => {
     task = ActivityBroker();
     task.id = 'task';
@@ -15,7 +15,7 @@ describe('LoopCharacteristics', () => {
 
   describe('constructor(activity, loopCharacteristics)', () => {
     it('returns loop characteristics api with execute function', () => {
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -34,7 +34,7 @@ describe('LoopCharacteristics', () => {
 
   describe('execute(executeMessage)', () => {
     it('throws if executeMessage is missing', () => {
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -45,7 +45,7 @@ describe('LoopCharacteristics', () => {
     });
 
     it('throws error if loopCardinality is not a number', () => {
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           loopCardinality: '3 pcs',
           isSequential: true,
@@ -75,7 +75,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -116,7 +116,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -148,7 +148,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -203,7 +203,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -256,7 +256,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -308,7 +308,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -356,7 +356,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true, consumerTag: 'completed-consumer' }
       );
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -392,7 +392,7 @@ describe('LoopCharacteristics', () => {
 
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 10,
@@ -445,7 +445,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -477,7 +477,7 @@ describe('LoopCharacteristics', () => {
     it('root api stop message drops consumers', () => {
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           isSequential: true,
           collection: '${environment.variables.items}',
@@ -509,7 +509,7 @@ describe('LoopCharacteristics', () => {
           { noAck: true }
         );
 
-        const loop = new LoopCharacteristics(task, {
+        const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -553,7 +553,7 @@ describe('LoopCharacteristics', () => {
           { noAck: true }
         );
 
-        const loop = new LoopCharacteristics(task, {
+        const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -596,7 +596,7 @@ describe('LoopCharacteristics', () => {
           { noAck: true }
         );
 
-        const loop = new LoopCharacteristics(task, {
+        const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -637,7 +637,7 @@ describe('LoopCharacteristics', () => {
           { noAck: true }
         );
 
-        const loop = new LoopCharacteristics(task, {
+        const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -702,7 +702,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           loopCardinality: 3,
         },
@@ -809,7 +809,7 @@ describe('LoopCharacteristics', () => {
 
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           collection: '${environment.variables.items}',
         },
@@ -857,7 +857,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           loopCardinality: 3,
         },
@@ -895,7 +895,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           loopCardinality: 3,
         },
@@ -944,7 +944,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           loopCardinality: 3,
           completionCondition: '${content.output.stopLoop}',
@@ -975,7 +975,7 @@ describe('LoopCharacteristics', () => {
     it('root api stop message drops consumers', () => {
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = new LoopCharacteristics(task, {
+      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
         behaviour: {
           collection: '${environment.variables.items}',
         },
@@ -1006,7 +1006,7 @@ describe('LoopCharacteristics', () => {
           { noAck: true }
         );
 
-        const loop = new LoopCharacteristics(task, {
+        const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
           behaviour: {
             loopCardinality: 3,
             completionCondition: '${content.output.stopLoop}',
@@ -1039,7 +1039,7 @@ describe('LoopCharacteristics', () => {
           { noAck: true }
         );
 
-        const loop = new LoopCharacteristics(task, {
+        const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
           behaviour: {
             loopCardinality: 3,
             completionCondition: '${content.output.stopLoop}',
@@ -1073,7 +1073,7 @@ describe('LoopCharacteristics', () => {
           { noAck: true }
         );
 
-        const loop = new LoopCharacteristics(task, {
+        const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
           behaviour: {
             loopCardinality: 3,
           },

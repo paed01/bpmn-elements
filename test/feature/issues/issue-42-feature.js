@@ -114,13 +114,13 @@ Feature('Issue 42 - discard loops due to multiple outbound flows to same target'
   }
 
   [
-    ['synchronous', (scope, next) => next()],
-    ['asynchronous', (scope, next) => process.nextTick(next)],
+    ['synchronous', (_scope, next) => next()],
+    ['asynchronous', (_scope, next) => process.nextTick(next)],
   ].forEach(([kind, serviceTask]) => {
     Scenario(`every task completes with a ${kind} service task implementation`, () => {
       Given('a definition where conditional flows resolve to the takeOnce service function', async () => {
         context = await testHelpers.context(originalSource);
-        definition = new Definition(context, { services: { takeOnce, serviceTask } });
+        definition = new Definition(context, { services: /** @type {any} */ ({ takeOnce, serviceTask }) });
       });
 
       let left;

@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.BpmnIO = BpmnIO;
 /**
  * Built-in IO extension. Composes the activity's ioSpecification and properties behaviours.
- * @param {import('#types').Activity} activity
+ * @param {import('#types').Activity | import('#types').ElementBase | import('../activity/Activity.js').Activity | import('../process/Process.js').Process} activity
  * @param {import('#types').ContextInstance} context
  * @satisfies {import('#types').IExtension}
  */

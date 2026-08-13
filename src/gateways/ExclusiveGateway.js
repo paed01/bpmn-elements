@@ -3,7 +3,7 @@ import { cloneContent } from '../messageHelper.js';
 
 /**
  * Exclusive gateway
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function ExclusiveGateway(activityDef, context) {

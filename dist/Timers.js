@@ -22,9 +22,9 @@ function Timers(options) {
   };
   /** @internal */
   this[K_EXECUTING] = new Set();
-  /** @type {import('#types').wrappedSetTimeout} */
+  // @ts-ignore
   this.setTimeout = this.setTimeout.bind(this);
-  /** @type {import('#types').wrappedClearTimeout} */
+  // @ts-ignore
   this.clearTimeout = this.clearTimeout.bind(this);
 }
 
@@ -45,16 +45,20 @@ Timers.prototype.register = function register(owner) {
  * @param  {...any} args
  * @returns {import('#types').Timer}
  */
+// @ts-ignore
 Timers.prototype.setTimeout = function wrappedSetTimeout(callback, delay, ...args) {
   return this._setTimeout(null, callback, delay, ...args);
 };
 
-/** @param {import('#types').Timer | ReturnType<setTimeout>} ref */
+/** @param {import('#types').Timer | ReturnType<typeof setTimeout>} ref */
+// @ts-ignore
 Timers.prototype.clearTimeout = function wrappedClearTimeout(ref) {
   if (this[K_EXECUTING].delete(ref)) {
+    // @ts-ignore
     ref.timerRef = this.options.clearTimeout(ref.timerRef);
     return;
   }
+  // @ts-ignore
   return this.options.clearTimeout(ref);
 };
 
@@ -64,7 +68,7 @@ Timers.prototype.clearTimeout = function wrappedClearTimeout(ref) {
  * @param {CallableFunction} callback
  * @param {number} delay
  * @param {any[]} args
- * @returns {import('#types').Timer}
+ * @returns {Timer}
  */
 Timers.prototype._setTimeout = function setTimeout(owner, callback, delay, ...args) {
   const executing = this[K_EXECUTING];
@@ -86,7 +90,7 @@ Timers.prototype._setTimeout = function setTimeout(owner, callback, delay, ...ar
  * @param {CallableFunction} callback
  * @param {number} delay
  * @param {any[]} args
- * @returns {import('#types').Timer}
+ * @returns {Timer}
  */
 Timers.prototype._getReference = function getReference(owner, callback, delay, args) {
   return new Timer(owner, `timer_${this.count++}`, callback, delay, args);
@@ -101,24 +105,22 @@ function RegisteredTimers(timersApi, owner) {
   this[K_TIMER_API] = timersApi;
   this.owner = owner;
   /** @type {import('#types').wrappedSetTimeout} */
+  // @ts-ignore
   this.setTimeout = this.setTimeout.bind(this);
   /** @type {import('#types').wrappedClearTimeout} */
+  // @ts-ignore
   this.clearTimeout = this.clearTimeout.bind(this);
 }
 
-/**
- * @internal
- * @param {CallableFunction} callback
- * @param {number} delay
- * @param {any[]} args
- * @returns {import('#types').Timer}
- */
+/** @internal */
+// @ts-ignore
 RegisteredTimers.prototype.setTimeout = function registeredSetTimeout(callback, delay, ...args) {
   const timersApi = this[K_TIMER_API];
   return timersApi._setTimeout(this.owner, callback, delay, ...args);
 };
 
-/** @param {import('#types').Timer | ReturnType<setTimeout>} ref */
+/** @internal */
+// @ts-ignore
 RegisteredTimers.prototype.clearTimeout = function registeredClearTimeout(ref) {
   this[K_TIMER_API].clearTimeout(ref);
 };

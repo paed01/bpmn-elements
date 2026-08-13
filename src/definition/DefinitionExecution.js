@@ -202,6 +202,7 @@ DefinitionExecution.prototype.resume = function resume() {
  * @returns {this}
  */
 DefinitionExecution.prototype.recover = function recover(state, recoveredVersion) {
+  // @ts-ignore
   if (!state) return this;
   this.executionId = state.executionId;
 
@@ -230,6 +231,7 @@ DefinitionExecution.prototype.recover = function recover(state, recoveredVersion
     running.add(bp);
   }
 
+  // @ts-ignore
   return this;
 };
 
@@ -323,6 +325,7 @@ DefinitionExecution.prototype.getApi = function getApi(apiMessage) {
 
   const content = apiMessage.content;
   if (content.executionId !== this.executionId) {
+    // @ts-ignore
     return this._getProcessApi(apiMessage);
   }
 
@@ -330,6 +333,7 @@ DefinitionExecution.prototype.getApi = function getApi(apiMessage) {
   const postponed = this[K_PROCESSES].postponed;
   const self = this;
 
+  // @ts-ignore
   api.getExecuting = function getExecuting() {
     const apis = [];
     for (const msg of postponed) {
@@ -339,6 +343,7 @@ DefinitionExecution.prototype.getApi = function getApi(apiMessage) {
     return apis;
   };
 
+  // @ts-ignore
   return api;
 };
 
@@ -424,12 +429,15 @@ DefinitionExecution.prototype._activateProcess = function activateProcess(bp) {
 DefinitionExecution.prototype._onChildEvent = function onChildEvent(routingKey, originalMessage) {
   const message = cloneMessage(originalMessage);
   const content = message.content;
+  // @ts-ignore
   const parent = (content.parent = content.parent || {});
 
   const isDirectChild = this[K_PROCESSES].ids.has(content.id);
   if (isDirectChild) {
+    // @ts-ignore
     parent.executionId = this.executionId;
   } else {
+    // @ts-ignore
     content.parent = pushParent(parent, this);
   }
 
@@ -636,7 +644,7 @@ DefinitionExecution.prototype._startProcessesByMessage = function startProcesses
 };
 
 /** @internal */
-DefinitionExecution.prototype._onMessageOutbound = function onMessageOutbound(routingKey, message) {
+DefinitionExecution.prototype._onMessageOutbound = function onMessageOutbound(_routingKey, message) {
   const content = message.content;
   const { target, source } = content;
 
@@ -670,7 +678,7 @@ DefinitionExecution.prototype._onMessageOutbound = function onMessageOutbound(ro
 };
 
 /** @internal */
-DefinitionExecution.prototype._onCallActivity = function onCallActivity(routingKey, message) {
+DefinitionExecution.prototype._onCallActivity = function onCallActivity(_routingKey, message) {
   const content = message.content;
   const { calledElement, id: fromId, executionId: fromExecutionId, name: fromName, parent: fromParent } = content;
   if (!calledElement) return;
@@ -680,6 +688,7 @@ DefinitionExecution.prototype._onCallActivity = function onCallActivity(routingK
     if (this.getProcessByExecutionId(bpExecutionId)) return;
   }
 
+  // @ts-ignore
   const targetProcess = this.context.getNewProcessById(calledElement, {
     settings: {
       calledFrom: cloneContent({
@@ -702,7 +711,7 @@ DefinitionExecution.prototype._onCallActivity = function onCallActivity(routingK
 };
 
 /** @internal */
-DefinitionExecution.prototype._onCancelCallActivity = function onCancelCallActivity(routingKey, message) {
+DefinitionExecution.prototype._onCancelCallActivity = function onCancelCallActivity(_routingKey, message) {
   const { calledElement, id: fromId, executionId: fromExecutionId, parent: fromParent } = message.content;
   if (!calledElement) return;
 
@@ -714,12 +723,15 @@ DefinitionExecution.prototype._onCancelCallActivity = function onCancelCallActiv
 
   if (!targetProcess.isRunning) {
     targetProcess
-      .getApi({
-        content: {
-          id: targetProcess.id,
-          executionId: targetProcess.executionId,
-        },
-      })
+      .getApi(
+        // @ts-ignore
+        {
+          content: {
+            id: targetProcess.id,
+            executionId: targetProcess.executionId,
+          },
+        }
+      )
       .discard();
   } else {
     targetProcess.getApi().discard();
@@ -727,12 +739,13 @@ DefinitionExecution.prototype._onCancelCallActivity = function onCancelCallActiv
 };
 
 /** @internal */
-DefinitionExecution.prototype._onDelegateMessage = function onDelegateMessage(routingKey, executeMessage) {
+DefinitionExecution.prototype._onDelegateMessage = function onDelegateMessage(_routingKey, executeMessage) {
   const content = executeMessage.content;
   const messageType = executeMessage.properties.type;
   const delegateMessage = executeMessage.content.message;
 
   const reference = this.context.getActivityById(delegateMessage.id);
+  // @ts-ignore
   const message = reference?.resolve(executeMessage);
 
   this._debug(
@@ -831,7 +844,10 @@ DefinitionExecution.prototype._getProcessApiByExecutionId = function getProcessA
   return processInstance.getApi(message);
 };
 
-/** @internal */
+/**
+ * @internal
+ * @type {(logMessage: string, ...args: any[]) => void}
+ */
 DefinitionExecution.prototype._debug = function debug(logMessage) {
   this[K_PARENT].logger.debug(`<${this.executionId} (${this.id})> ${logMessage}`);
 };

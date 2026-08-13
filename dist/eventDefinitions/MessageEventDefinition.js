@@ -10,7 +10,7 @@ var _constants = require("../constants.js");
 /**
  * Message event definition
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ * @param {import('#types').SerializableElement} eventDefinition
  */
 function MessageEventDefinition(activity, eventDefinition) {
   const {
@@ -29,6 +29,7 @@ function MessageEventDefinition(activity, eventDefinition) {
   /** @type {import('#types').EventReference} */
   this.reference = {
     name: 'anonymous',
+    // @ts-ignore
     ...behaviour.messageRef,
     referenceType: 'message'
   };
@@ -146,7 +147,7 @@ MessageEventDefinition.prototype.executeThrow = function executeThrow(executeMes
   });
   broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
-MessageEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
+MessageEventDefinition.prototype._onCatchMessage = function onCatchMessage(_routingKey, message) {
   if (message.content?.message?.id !== this[_constants.K_REFERENCE_INFO].message.id) return;
   const {
     type,
@@ -164,7 +165,7 @@ MessageEventDefinition.prototype._onCatchMessage = function onCatchMessage(routi
     correlationId
   });
 };
-MessageEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+MessageEventDefinition.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   const {
     type,
     correlationId
@@ -232,6 +233,7 @@ MessageEventDefinition.prototype._getReferenceInfo = function getReferenceInfo(m
     };
   }
   const result = {
+    // @ts-ignore
     message: referenceElement.resolve(message)
   };
   result.description = `${result.message.name} <${result.message.id}>`;

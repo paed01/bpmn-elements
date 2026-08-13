@@ -9,24 +9,13 @@ const output = 'types/index.d.ts';
 const repoRoot = resolvePath(dirname(fileURLToPath(import.meta.url)), '..');
 
 // Submodules emitted as trivial re-export blocks from the root 'bpmn-elements'
-// module. Every name in the source index must already be re-exported by
-// `types/bundle.d.ts`.
-const reexportSubmodules = [
-  { name: 'events', source: 'src/events/index.js' },
-  { name: 'eventDefinitions', source: 'src/eventDefinitions/index.js' },
-  { name: 'flows', source: 'src/flows/index.js' },
-  { name: 'gateways', source: 'src/gateways/index.js' },
-  { name: 'tasks', source: 'src/tasks/index.js' },
-];
-
-// dts-buddy collapses multiple `export X as Y` aliases of the same source export
-// to a single name (the last in source order). When that happens we keep the
-// canonical name in `bundle.d.ts` and inject the lost BPMN-spec aliases back into
-// the root module here (canonical name -> alias names) so consumers can still
-// `import { Alias } from 'bpmn-elements'`. Currently empty: every BPMN-spec task
-// type has its own source export (distinct behaviour prototype), so nothing
-// collapses. Kept as the seam for any future single-source alias.
-const rootAliases = {};
+// module — every package export subpath except the root and './errors', which
+// have their own dts-buddy entries below. Every name in a submodule source
+// index must already be re-exported by `types/bundle.d.ts`.
+const pkg = JSON.parse(readFileSync(resolvePath(repoRoot, 'package.json'), 'utf8'));
+const reexportSubmodules = Object.entries(pkg.exports)
+  .filter(([subpath]) => subpath !== '.' && subpath !== './errors')
+  .map(([subpath, entry]) => ({ name: subpath.slice(2), source: entry.import }));
 
 // Point dts-buddy at hand-written bundle entries that re-export the runtime
 // classes from `src/*.js`. The root entry carries every public name so the
@@ -60,9 +49,6 @@ createBundle({
     // root bundle. Hoist them so the emitted block re-imports from 'bpmn-elements'.
     bundle = hoistSharedTypes(bundle);
 
-    // Restore BPMN-spec aliases that dts-buddy collapsed away (see `rootAliases`).
-    bundle = injectRootAliases(bundle, rootAliases);
-
     // Append `declare module 'bpmn-elements/<sub>' { export { ... } from 'bpmn-elements' }`
     // for every submodule whose surface is a pure re-export of the root.
     bundle = bundle.replace(/\s*$/, '\n');
@@ -76,11 +62,37 @@ createBundle({
     bundle = bundle.replace(/\n*\/\/# sourceMappingURL=.*$/m, '\n');
     rmSync(`${output}.map`, { force: true });
 
+    assertSelfContained(bundle);
+
     writeFileSync(output, bundle);
   })
   .catch((err) => {
     throw err;
   });
+
+/**
+ * Assert the emitted bundle only references modules a consumer is guaranteed to
+ * have: the package's own runtime dependencies and the package itself. A type
+ * import of a devDependency (e.g. moddle-context-serializer) would resolve to
+ * nothing in a consuming project and silently degrade to `any`.
+ *
+ * @param {string} bundle
+ */
+function assertSelfContained(bundle) {
+  const pkgSelf = new RegExp(`^${pkg.name}(/|$)`);
+  const allowed = Object.keys(pkg.dependencies);
+
+  const offenders = new Set();
+  for (const match of bundle.matchAll(/\bimport\(["']([^"']+)["']\)|\bfrom ["']([^"']+)["']/g)) {
+    const specifier = match[1] ?? match[2];
+    if (specifier.startsWith('.') || pkgSelf.test(specifier) || allowed.includes(specifier)) continue;
+    offenders.add(specifier);
+  }
+
+  if (offenders.size) {
+    throw new Error(`emitted types reference modules outside package dependencies: ${[...offenders].join(', ')}`);
+  }
+}
 
 /**
  * Parse a JS source file and return the external names it exports, in source order.
@@ -233,50 +245,6 @@ function hoistSharedTypes(source) {
     }
   }
 
-  return magic.toString();
-}
-
-/**
- * Insert `export const Alias: typeof Canonical;` lines into the root
- * 'bpmn-elements' module, for every alias whose canonical name is exported.
- *
- * @param {string} source
- * @param {Record<string, string[]>} aliasMap canonical name → alias names
- * @returns {string}
- */
-function injectRootAliases(source, aliasMap) {
-  const ast = ts.createSourceFile('bundle.d.ts', source, ts.ScriptTarget.Latest, false, ts.ScriptKind.TS);
-
-  let root = null;
-  for (const stmt of ast.statements) {
-    if (ts.isModuleDeclaration(stmt) && ts.isStringLiteral(stmt.name) && stmt.name.text === 'bpmn-elements') {
-      root = stmt;
-      break;
-    }
-  }
-  if (!root || !root.body || !ts.isModuleBlock(root.body)) return source;
-
-  const exported = new Set();
-  for (const stmt of root.body.statements) {
-    if (!hasExportModifier(stmt)) continue;
-    const name = getDeclName(stmt);
-    if (name) exported.add(name);
-  }
-
-  const lines = [];
-  for (const [canonical, aliases] of Object.entries(aliasMap)) {
-    if (!exported.has(canonical)) continue;
-    for (const alias of aliases) {
-      if (exported.has(alias)) continue;
-      lines.push(`\texport const ${alias}: typeof ${canonical};`);
-    }
-  }
-  if (lines.length === 0) return source;
-
-  const magic = new MagicString(source);
-  // Insert immediately before the closing brace of the root module body.
-  const insertAt = root.body.getEnd() - 1;
-  magic.appendLeft(insertAt, `${lines.join('\n')}\n`);
   return magic.toString();
 }
 

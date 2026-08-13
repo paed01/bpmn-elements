@@ -83,7 +83,7 @@ describe('ServiceTask', () => {
       let stopped = false;
       let discarded = false;
       const task = ServiceTask(
-        {
+        /** @type {any} */ ({
           id: 'service',
           behaviour: {
             Service: function Service() {
@@ -98,7 +98,7 @@ describe('ServiceTask', () => {
               };
             },
           },
-        },
+        }),
         testHelpers.emptyContext()
       );
 
@@ -113,7 +113,7 @@ describe('ServiceTask', () => {
       let discarded = false;
       let stopped = false;
       const task = ServiceTask(
-        {
+        /** @type {any} */ ({
           id: 'service',
           behaviour: {
             Service: function Service() {
@@ -128,7 +128,7 @@ describe('ServiceTask', () => {
               };
             },
           },
-        },
+        }),
         testHelpers.emptyContext()
       );
 
@@ -142,7 +142,7 @@ describe('ServiceTask', () => {
     it('runs service behavior stop function on discard if no discard function', () => {
       let stopped = false;
       const task = ServiceTask(
-        {
+        /** @type {any} */ ({
           id: 'service',
           behaviour: {
             Service: function Service() {
@@ -154,7 +154,7 @@ describe('ServiceTask', () => {
               };
             },
           },
-        },
+        }),
         testHelpers.emptyContext()
       );
 
@@ -168,7 +168,7 @@ describe('ServiceTask', () => {
   describe('recover and resume', () => {
     it('run stop resume while executing service function', () => {
       const task = ServiceTask(
-        {
+        /** @type {any} */ ({
           id: 'service',
           behaviour: {
             Service: function Service() {
@@ -177,7 +177,7 @@ describe('ServiceTask', () => {
               };
             },
           },
-        },
+        }),
         testHelpers.emptyContext()
       );
 
@@ -188,7 +188,7 @@ describe('ServiceTask', () => {
 
     it('run stop recover resume while executing service function', () => {
       const task = ServiceTask(
-        {
+        /** @type {any} */ ({
           id: 'service',
           behaviour: {
             Service: function Service() {
@@ -197,7 +197,7 @@ describe('ServiceTask', () => {
               };
             },
           },
-        },
+        }),
         testHelpers.emptyContext()
       );
 
@@ -205,21 +205,23 @@ describe('ServiceTask', () => {
       task.stop();
 
       const state = task.getState();
-      const recovered = ServiceTask(
-        {
-          id: 'service',
-          behaviour: {
-            Service: function Service() {
-              return {
-                execute(...args) {
-                  args.pop()();
-                },
-              };
+      const recovered = /** @type {any} */ (
+        ServiceTask(
+          /** @type {any} */ ({
+            id: 'service',
+            behaviour: {
+              Service: function Service() {
+                return {
+                  execute(...args) {
+                    args.pop()();
+                  },
+                };
+              },
             },
-          },
-        },
-        testHelpers.emptyContext()
-      ).recover(JSON.parse(JSON.stringify(state)));
+          }),
+          testHelpers.emptyContext()
+        ).recover(JSON.parse(JSON.stringify(state)))
+      );
 
       recovered.resume();
       expect(recovered.counters).to.have.property('taken', 1);
@@ -228,7 +230,7 @@ describe('ServiceTask', () => {
     it('stop in service function, recover resume', () => {
       let state;
       const task = ServiceTask(
-        {
+        /** @type {any} */ ({
           id: 'service',
           behaviour: {
             Service: function Service(activity) {
@@ -240,27 +242,29 @@ describe('ServiceTask', () => {
               };
             },
           },
-        },
+        }),
         testHelpers.emptyContext()
       );
 
       task.run();
 
-      const recovered = ServiceTask(
-        {
-          id: 'service',
-          behaviour: {
-            Service: function Service() {
-              return {
-                execute(...args) {
-                  args.pop()();
-                },
-              };
+      const recovered = /** @type {any} */ (
+        ServiceTask(
+          /** @type {any} */ ({
+            id: 'service',
+            behaviour: {
+              Service: function Service() {
+                return {
+                  execute(...args) {
+                    args.pop()();
+                  },
+                };
+              },
             },
-          },
-        },
-        testHelpers.emptyContext()
-      ).recover(state);
+          }),
+          testHelpers.emptyContext()
+        ).recover(state)
+      );
 
       recovered.resume();
       expect(recovered.counters).to.have.property('taken', 1);
@@ -291,7 +295,7 @@ describe('ServiceTask', () => {
       </definitions>`;
 
       context = await testHelpers.context(source);
-      context.environment.addService('postMessage', (ctx, next) => {
+      context.environment.addService('postMessage', (_ctx, next) => {
         next(null, true);
       });
     });
@@ -485,7 +489,7 @@ describe('ServiceTask', () => {
       const context = await testHelpers.context(source);
 
       context.environment.addService('getService', (input) => {
-        return (executionContext, callback) => {
+        return (_executionContext, callback) => {
           callback(null, input);
         };
       });
@@ -511,7 +515,7 @@ describe('ServiceTask', () => {
       const context = await testHelpers.context(source);
 
       context.environment.addService('getService', (input) => {
-        return (executionContext, callback) => {
+        return (_executionContext, callback) => {
           callback(null, input);
         };
       });
@@ -593,7 +597,7 @@ describe('ServiceTask', () => {
         task.broker.subscribeTmp(
           'execution',
           'execute.start',
-          (routingKey, message) => {
+          (_routingKey, message) => {
             if (!message.content.isMultiInstance) return;
             const { index, item } = message.content;
 
@@ -678,7 +682,7 @@ describe('ServiceTask', () => {
         task.broker.subscribeTmp(
           'execution',
           'execute.start',
-          (routingKey, message) => {
+          (_routingKey, message) => {
             const { index, item: pathname } = message.content;
             nock('http://example.com')
               .get(`/api${pathname}?version=${index}`)

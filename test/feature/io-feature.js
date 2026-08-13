@@ -58,7 +58,7 @@ Feature('IO', () => {
     });
 
     When('second process is triggered', () => {
-      const signal = definition.getActivityById('updateSpotPrice');
+      const signal = /** @type {any} */ (definition.getActivityById('updateSpotPrice'));
       definition.signal(signal.resolve());
       approvePriceTask = definition.getPostponed()[2];
       expect(approvePriceTask.id).to.equal('approveSpotPrice');

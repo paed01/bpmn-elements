@@ -2,7 +2,7 @@ import { cloneParent } from '../messageHelper.js';
 
 /**
  * Placeholder activity for non-executable elements (text annotations, groups, categories).
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @returns {{ id: string, type: string, name: string | undefined, behaviour: Record<string, any>, parent: import('#types').ElementParent, placeholder: true }}
  */
 export function DummyActivity(activityDef) {
@@ -19,7 +19,7 @@ export function DummyActivity(activityDef) {
 
 /**
  * Text annotation placeholder. Distinct factory identity sharing the dummy implementation.
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  */
 export function TextAnnotation(activityDef) {
   return DummyActivity(activityDef);
@@ -27,7 +27,7 @@ export function TextAnnotation(activityDef) {
 
 /**
  * Group placeholder. Distinct factory identity sharing the dummy implementation.
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  */
 export function Group(activityDef) {
   return DummyActivity(activityDef);
@@ -35,7 +35,7 @@ export function Group(activityDef) {
 
 /**
  * Category placeholder. Distinct factory identity sharing the dummy implementation.
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  */
 export function Category(activityDef) {
   return DummyActivity(activityDef);

@@ -10,7 +10,7 @@ var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
 /**
  * Signal task
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 function SignalTask(activityDef, context) {
@@ -47,10 +47,12 @@ SignalTaskBehaviour.prototype.execute = function execute(executeMessage) {
   }
   const executionId = executeContent.executionId;
   const broker = this.broker;
+  // @ts-ignore
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(executeMessage, ...args), {
     noAck: true,
     consumerTag: `_api-${executionId}`
   });
+  // @ts-ignore
   broker.subscribeTmp('api', '#.signal.*', (...args) => this._onDelegatedApiMessage(executeMessage, ...args), {
     noAck: true,
     consumerTag: `_api-delegated-${executionId}`
@@ -86,7 +88,7 @@ SignalTaskBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMe
   });
   return this._onApiMessage(executeMessage, routingKey, message);
 };
-SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, routingKey, message) {
+SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, _routingKey, message) {
   const {
     type: messageType,
     correlationId
@@ -107,7 +109,9 @@ SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessa
       this._stop(executeContent.executionId);
       return this.broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(executeContent, {
         error: new _Errors.ActivityError(message.content.message, executeMessage, message.content)
-      }, {
+      },
+      // @ts-ignore
+      {
         mandatory: true,
         correlationId
       }));

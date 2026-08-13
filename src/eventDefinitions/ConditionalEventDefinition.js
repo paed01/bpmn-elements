@@ -6,9 +6,9 @@ import { K_EXECUTE_MESSAGE } from '../constants.js';
 /**
  * Conditional event definition
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
- * @param {import('#types').ContextInstance} _context
- * @param {number} index event definition index
+ * @param {import('#types').SerializableElement} eventDefinition
+ * @param {import('#types').ContextInstance} [_context]
+ * @param {number} [index] event definition index
  */
 export function ConditionalEventDefinition(activity, eventDefinition, _context, index) {
   const { id, broker, environment } = activity;
@@ -107,9 +107,11 @@ ConditionalEventDefinition.prototype.evaluateCallback = function evaluateCallbac
   const executeContent = executeMessage.content;
 
   if (err) {
+    // @ts-ignore
     return broker.publish(
       'execution',
       'execute.error',
+      // @ts-ignore
       cloneContent(executeContent, { error: new ActivityError(err.message, executeMessage, err) }, { mandatory: true })
     );
   }
@@ -127,6 +129,7 @@ ConditionalEventDefinition.prototype.evaluateCallback = function evaluateCallbac
   if (!result) return;
 
   this._stop();
+  // @ts-ignore
   return broker.publish('execution', 'execute.completed', cloneContent(executeContent, { output: result }));
 };
 
@@ -138,7 +141,9 @@ ConditionalEventDefinition.prototype.evaluateCallback = function evaluateCallbac
 ConditionalEventDefinition.prototype.getCondition = function getCondition(index) {
   const behaviour = this.behaviour;
 
+  // @ts-ignore
   if (behaviour.script) {
+    // @ts-ignore
     const { language, body, resource } = behaviour.script;
 
     const scriptId = `${this.id}/${index}`;
@@ -147,6 +152,7 @@ ConditionalEventDefinition.prototype.getCondition = function getCondition(index)
       id: scriptId,
       type: this.type,
       environment: this.environment,
+      // @ts-ignore
       behaviour: {
         scriptFormat: language,
         ...(body && { script: body }),
@@ -155,9 +161,12 @@ ConditionalEventDefinition.prototype.getCondition = function getCondition(index)
     });
 
     if (script) {
+      // @ts-ignore
       return new ScriptCondition(this, script, language);
     }
+    // @ts-ignore
   } else if (behaviour.expression) {
+    // @ts-ignore
     return new ExpressionCondition(this, behaviour.expression);
   }
 };
@@ -168,7 +177,7 @@ ConditionalEventDefinition.prototype._onDelegateApiMessage = function onDelegate
   }
 };
 
-ConditionalEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+ConditionalEventDefinition.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   const messageType = message.properties.type;
 
   switch (messageType) {

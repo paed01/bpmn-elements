@@ -5,7 +5,7 @@ import { K_EXECUTION } from '../constants.js';
 
 /**
  * Intermediate catch event
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function IntermediateCatchEvent(activityDef, context) {
@@ -46,10 +46,11 @@ IntermediateCatchEventBehaviour.prototype.execute = function execute(executeMess
     consumerTag: '_api-behaviour-execution',
   });
 
+  // @ts-ignore
   return broker.publish('event', 'activity.wait', cloneContent(executeContent));
 };
 
-IntermediateCatchEventBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, routingKey, message) {
+IntermediateCatchEventBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, _routingKey, message) {
   switch (message.properties.type) {
     case 'message':
     case 'signal': {

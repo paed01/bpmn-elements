@@ -26,7 +26,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'process.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -35,7 +35,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -98,7 +98,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'process.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -107,7 +107,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -166,7 +166,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'process.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -175,7 +175,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -519,7 +519,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'process.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -528,7 +528,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -806,7 +806,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'process.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -815,7 +815,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -902,7 +902,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -983,7 +983,7 @@ Feature('Process', () => {
       bp.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1078,7 +1078,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1211,7 +1211,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         '#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1277,7 +1277,7 @@ Feature('Process', () => {
       bp.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1412,7 +1412,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1556,7 +1556,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1677,7 +1677,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1762,7 +1762,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1794,7 +1794,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -2026,7 +2026,7 @@ Feature('Process', () => {
       bp.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -2115,7 +2115,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         '#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }

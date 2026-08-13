@@ -5,7 +5,7 @@ import { K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_Q, K_REFERENCE_ELEMENT, K_REF
 /**
  * Error event definition
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ * @param {import('#types').SerializableElement} eventDefinition
  */
 export function ErrorEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;
@@ -17,6 +17,7 @@ export function ErrorEventDefinition(activity, eventDefinition) {
   /** @type {import('#types').EventReference} */
   this.reference = {
     name: 'anonymous',
+    // @ts-ignore
     ...behaviour.errorRef,
     referenceType: 'throw',
   };
@@ -169,7 +170,7 @@ ErrorEventDefinition.prototype._onThrowApiMessage = function onThrowApiMessage(r
   return this._catchError(routingKey, message, error);
 };
 
-ErrorEventDefinition.prototype._catchError = function catchError(routingKey, message, error) {
+ErrorEventDefinition.prototype._catchError = function catchError(_routingKey, message, error) {
   this[K_COMPLETED] = true;
 
   this._stop();
@@ -203,7 +204,7 @@ ErrorEventDefinition.prototype._catchError = function catchError(routingKey, mes
   );
 };
 
-ErrorEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+ErrorEventDefinition.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   const messageType = message.properties.type;
 
   switch (messageType) {
@@ -238,6 +239,7 @@ ErrorEventDefinition.prototype._getReferenceInfo = function getReferenceInfo(mes
   }
 
   const result = {
+    // @ts-ignore
     message: referenceElement.resolve(message),
   };
 

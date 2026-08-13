@@ -1,7 +1,7 @@
 import { SubProcess } from './SubProcess.js';
 /**
  * Transaction
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function Transaction(activityDef, context) {

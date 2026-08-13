@@ -10,7 +10,7 @@ var _constants = require("../constants.js");
 /**
  * Escalation event definition
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ * @param {import('#types').SerializableElement} eventDefinition
  */
 function EscalationEventDefinition(activity, eventDefinition) {
   const {
@@ -29,6 +29,7 @@ function EscalationEventDefinition(activity, eventDefinition) {
   /** @type {import('#types').EventReference} */
   this.reference = {
     name: 'anonymous',
+    // @ts-ignore
     ...behaviour.escalationRef,
     referenceType: 'escalate'
   };
@@ -132,7 +133,7 @@ EscalationEventDefinition.prototype.executeThrow = function executeThrow(execute
   });
   broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };
-EscalationEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
+EscalationEventDefinition.prototype._onCatchMessage = function onCatchMessage(_routingKey, message) {
   const info = this[_constants.K_REFERENCE_INFO];
   if (message.content?.message?.id !== info.message.id) return;
   const output = message.content.message;
@@ -196,6 +197,7 @@ EscalationEventDefinition.prototype._getReferenceInfo = function getReferenceInf
     };
   }
   const result = {
+    // @ts-ignore
     message: referenceElement.resolve(message)
   };
   result.description = `${result.message.name} <${result.message.id}>`;

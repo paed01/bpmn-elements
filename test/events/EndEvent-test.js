@@ -137,11 +137,11 @@ describe('EndEvent', () => {
       });
 
       const event = EndEvent(
-        {
+        /** @type {any} */ ({
           type: 'bpmn:EndEvent',
           id: 'end',
           parent,
-        },
+        }),
         context
       );
 
@@ -165,9 +165,9 @@ describe('EndEvent', () => {
         { noAck: true }
       );
 
-      context.getInboundSequenceFlows()[0].discard();
-      context.getInboundSequenceFlows()[1].take();
-      context.getInboundSequenceFlows()[2].discard();
+      /** @type {any} */ (context).getInboundSequenceFlows()[0].discard();
+      /** @type {any} */ (context).getInboundSequenceFlows()[1].take();
+      /** @type {any} */ (context).getInboundSequenceFlows()[2].discard();
 
       expect(event.counters).to.have.property('taken', 1);
       expect(event.counters).to.have.property('discarded', 0);

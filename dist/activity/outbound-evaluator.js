@@ -53,7 +53,7 @@ OutboundEvaluator.prototype.evaluate = function evaluate(fromMessage, discardRes
   });
   return this.evaluateFlow(flows.shift());
 };
-OutboundEvaluator.prototype.onEvaluated = function onEvaluated(routingKey, message) {
+OutboundEvaluator.prototype.onEvaluated = function onEvaluated(_routingKey, message) {
   const content = message.content;
   const {
     id: flowId,

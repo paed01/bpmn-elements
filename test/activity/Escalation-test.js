@@ -9,13 +9,13 @@ describe('Escalation', () => {
   it('exposes id, type, name and cloned parent', () => {
     const parent = { id: 'Process_0', type: 'bpmn:Process' };
     const escalation = new Escalation(
-      {
+      /** @type {any} */ ({
         id: 'Escalation_0',
         type: 'bpmn:Escalation',
         name: 'My escalation',
         parent,
-      },
-      { environment }
+      }),
+      /** @type {any} */ ({ environment })
     );
 
     expect(escalation).to.have.property('id', 'Escalation_0');
@@ -26,7 +26,7 @@ describe('Escalation', () => {
   });
 
   it('falls back to constructing when called without new', () => {
-    const escalation = Escalation({ id: 'Escalation_0' }, { environment });
+    const escalation = /** @type {any} */ (Escalation)(/** @type {any} */ ({ id: 'Escalation_0' }), /** @type {any} */ ({ environment }));
     expect(escalation).to.be.instanceof(Escalation);
   });
 
@@ -34,15 +34,15 @@ describe('Escalation', () => {
     it('returns id, type and messageType=escalation with cloned parent', () => {
       const parent = { id: 'Process_0', type: 'bpmn:Process' };
       const escalation = new Escalation(
-        {
+        /** @type {any} */ ({
           id: 'Escalation_0',
           type: 'bpmn:Escalation',
           parent,
-        },
-        { environment }
+        }),
+        /** @type {any} */ ({ environment })
       );
 
-      const resolved = escalation.resolve({ content: { id: 'task' } });
+      const resolved = escalation.resolve(/** @type {any} */ ({ content: { id: 'task' } }));
 
       expect(resolved).to.have.property('id', 'Escalation_0');
       expect(resolved).to.have.property('type', 'bpmn:Escalation');
@@ -53,22 +53,22 @@ describe('Escalation', () => {
 
     it('resolves name expression against execution message when name is set', () => {
       const escalation = new Escalation(
-        {
+        /** @type {any} */ ({
           id: 'Escalation_0',
           name: 'Escalate ${content.id}',
-        },
-        { environment }
+        }),
+        /** @type {any} */ ({ environment })
       );
 
-      const resolved = escalation.resolve({ content: { id: 'task' } });
+      const resolved = escalation.resolve(/** @type {any} */ ({ content: { id: 'task' } }));
 
       expect(resolved).to.have.property('name', 'Escalate task');
     });
 
     it('keeps name as falsy value when escalation reference has no name', () => {
-      const escalation = new Escalation({ id: 'Escalation_0' }, { environment });
+      const escalation = new Escalation(/** @type {any} */ ({ id: 'Escalation_0' }), /** @type {any} */ ({ environment }));
 
-      const resolved = escalation.resolve({ content: { id: 'task' } });
+      const resolved = escalation.resolve(/** @type {any} */ ({ content: { id: 'task' } }));
 
       expect(resolved).to.have.property('name').that.is.undefined;
     });

@@ -5,7 +5,7 @@ import { K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_Q, K_REFERENCE_ELEMENT, K_REF
 /**
  * Message event definition
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ * @param {import('#types').SerializableElement} eventDefinition
  */
 export function MessageEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;
@@ -17,6 +17,7 @@ export function MessageEventDefinition(activity, eventDefinition) {
   /** @type {import('#types').EventReference} */
   this.reference = {
     name: 'anonymous',
+    // @ts-ignore
     ...behaviour.messageRef,
     referenceType: 'message',
   };
@@ -129,7 +130,7 @@ MessageEventDefinition.prototype.executeThrow = function executeThrow(executeMes
   broker.publish('execution', 'execute.completed', cloneContent(executeContent));
 };
 
-MessageEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
+MessageEventDefinition.prototype._onCatchMessage = function onCatchMessage(_routingKey, message) {
   if (message.content?.message?.id !== this[K_REFERENCE_INFO].message.id) return;
 
   const { type, correlationId } = message.properties;
@@ -148,7 +149,7 @@ MessageEventDefinition.prototype._onCatchMessage = function onCatchMessage(routi
   this._complete('caught', message.content.message, { correlationId });
 };
 
-MessageEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+MessageEventDefinition.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   const { type, correlationId } = message.properties;
   switch (type) {
     case 'message':
@@ -213,6 +214,7 @@ MessageEventDefinition.prototype._getReferenceInfo = function getReferenceInfo(m
   }
 
   const result = {
+    // @ts-ignore
     message: referenceElement.resolve(message),
   };
 

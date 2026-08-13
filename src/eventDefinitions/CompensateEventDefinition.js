@@ -8,7 +8,7 @@ const K_ASSOCIATIONS = Symbol.for('associations');
 /**
  * Compensate event definition
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ * @param {import('#types').SerializableElement} eventDefinition
  * @param {import('#types').ContextInstance} context
  */
 export function CompensateEventDefinition(activity, eventDefinition, context) {
@@ -65,6 +65,7 @@ CompensateEventDefinition.prototype.executeCatch = function executeCatch(execute
   if (executeMessage.fields.routingKey === 'execute.compensating') {
     this._debug('resumed at compensating');
     this[K_COMPLETED] = true;
+    // @ts-ignore
     return this._compensate();
   }
 
@@ -134,7 +135,7 @@ CompensateEventDefinition.prototype._onCollect = function onCollect(routingKey, 
   }
 };
 
-CompensateEventDefinition.prototype._onCompensateApiMessage = function onCompensateApiMessage(routingKey, message) {
+CompensateEventDefinition.prototype._onCompensateApiMessage = function onCompensateApiMessage(_routingKey, message) {
   this[K_COMPLETED] = true;
   const output = message.content.message;
   const broker = this.broker;
@@ -171,7 +172,7 @@ CompensateEventDefinition.prototype._onCollected = function onCollected(routingK
   for (const association of this[K_ASSOCIATIONS]) association.take(cloneMessage(message));
 };
 
-CompensateEventDefinition.prototype._onDiscardApiMessage = function onDiscardApiMessage(routingKey, message) {
+CompensateEventDefinition.prototype._onDiscardApiMessage = function onDiscardApiMessage(_routingKey, message) {
   this[K_COMPLETED] = true;
   this._stop();
   this[K_COMPENSATE_Q].purge();

@@ -4,7 +4,7 @@ import { K_EXECUTE_MESSAGE } from '../constants.js';
 /**
  * Link event definition
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ * @param {import('#types').SerializableElement} eventDefinition
  */
 export function LinkEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;

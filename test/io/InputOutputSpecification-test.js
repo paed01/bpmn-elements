@@ -5,13 +5,13 @@ import { ActivityBroker } from '../../src/EventBroker.js';
 describe('InputOutputSpecification', () => {
   it('listens on parent activity when activated', () => {
     const activity = ActivityBroker();
-    new InputOutputSpecification(activity, {}).activate();
+    new /** @type {any} */ (InputOutputSpecification)(activity, {}).activate();
     expect(activity.broker.consumerCount).to.equal(1);
   });
 
   it('listens only once when activated', () => {
     const activity = ActivityBroker();
-    const ioSpec = new InputOutputSpecification(activity, {});
+    const ioSpec = new /** @type {any} */ (InputOutputSpecification)(activity, {});
     ioSpec.activate();
     ioSpec.activate();
     expect(activity.broker.consumerCount).to.equal(1);
@@ -19,7 +19,7 @@ describe('InputOutputSpecification', () => {
 
   it('removes listener when deactivated', () => {
     const activity = ActivityBroker();
-    const ioSpec = new InputOutputSpecification(activity, {});
+    const ioSpec = new /** @type {any} */ (InputOutputSpecification)(activity, {});
     ioSpec.activate();
     ioSpec.deactivate();
     ioSpec.deactivate();
@@ -28,7 +28,7 @@ describe('InputOutputSpecification', () => {
 
   it('sends format start message on activity enter', () => {
     const activity = ActivityBroker();
-    new InputOutputSpecification(activity, {
+    new /** @type {any} */ (InputOutputSpecification)(activity, {
       type: 'bpmn:InputOutputSpecification',
       behaviour: {
         dataInputs: [],
@@ -43,7 +43,7 @@ describe('InputOutputSpecification', () => {
 
   it("doesn't send start message if no dataInputs", () => {
     const activity = ActivityBroker();
-    new InputOutputSpecification(activity, {
+    new /** @type {any} */ (InputOutputSpecification)(activity, {
       type: 'bpmn:InputOutputSpecification',
     }).activate();
 
@@ -54,7 +54,7 @@ describe('InputOutputSpecification', () => {
 
   it('sends format start message with input on activity start', () => {
     const activity = ActivityBroker();
-    new InputOutputSpecification(activity, {
+    new /** @type {any} */ (InputOutputSpecification)(activity, {
       type: 'bpmn:InputOutputSpecification',
       behaviour: {
         dataInputs: [],
@@ -70,7 +70,7 @@ describe('InputOutputSpecification', () => {
 
   it('fetches input data object value', () => {
     const activity = ActivityBroker();
-    new InputOutputSpecification(
+    new /** @type {any} */ (InputOutputSpecification)(
       activity,
       {
         type: 'bpmn:InputOutputSpecification',
@@ -146,7 +146,7 @@ describe('InputOutputSpecification', () => {
 
   it('publishes input without data object value if not found', () => {
     const activity = ActivityBroker();
-    new InputOutputSpecification(
+    new /** @type {any} */ (InputOutputSpecification)(
       activity,
       {
         type: 'bpmn:InputOutputSpecification',
@@ -192,7 +192,7 @@ describe('InputOutputSpecification', () => {
 
   it('publishes input without data object if unreferenced', () => {
     const activity = ActivityBroker();
-    new InputOutputSpecification(
+    new /** @type {any} */ (InputOutputSpecification)(
       activity,
       {
         type: 'bpmn:InputOutputSpecification',
@@ -230,7 +230,7 @@ describe('InputOutputSpecification', () => {
 
   it('publishes output without value if data object if unreferenced', () => {
     const activity = ActivityBroker();
-    new InputOutputSpecification(
+    new /** @type {any} */ (InputOutputSpecification)(
       activity,
       {
         type: 'bpmn:InputOutputSpecification',
@@ -428,7 +428,7 @@ describe('InputOutputSpecification', () => {
     expect(api.content.ioSpecification).to.have.property('dataInputs').with.length(1);
     expect(api.content.ioSpecification.dataInputs[0]).that.eql({ id: 'userInput', type: 'bpmn:DataInput', name: 'info' });
 
-    api.signal('no input');
+    api.signal(/** @type {any} */ ('no input'));
 
     await leave;
 
@@ -515,7 +515,7 @@ describe('InputOutputSpecification', () => {
 
     expect(api.content).to.have.property('ioSpecification');
 
-    api.signal('no input');
+    api.signal(/** @type {any} */ ('no input'));
 
     await leave;
   });
@@ -550,7 +550,7 @@ describe('InputOutputSpecification', () => {
 
     const api = await wait;
 
-    api.signal('no input');
+    api.signal(/** @type {any} */ ('no input'));
 
     await leave;
   });
@@ -583,7 +583,7 @@ describe('InputOutputSpecification', () => {
 
     const api = await wait;
 
-    api.signal('no input');
+    api.signal(/** @type {any} */ ('no input'));
 
     await leave;
   });

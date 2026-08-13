@@ -15,8 +15,11 @@ export class AdHocSubProcessBehaviour extends SubProcessBehaviour {
   constructor(activity, context) {
     super(activity, context);
     const behaviour = activity.behaviour || {};
+    // @ts-ignore
     this.sequential = behaviour.ordering === 'Sequential';
+    // @ts-ignore
     this.cancelRemaining = behaviour.cancelRemainingInstances !== false;
+    // @ts-ignore
     const completionCondition = behaviour.completionCondition;
     this.completionCondition = completionCondition
       ? typeof completionCondition === 'string'
@@ -132,7 +135,7 @@ export class AdHocSubProcessBehaviour extends SubProcessBehaviour {
 
 /**
  * Ad-hoc sub process
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function AdHocSubProcess(activityDef, context) {

@@ -29,7 +29,8 @@ function ProcessExecution(parentActivity, context) {
     isSubProcess,
     isTransaction,
     isAdHoc
-  } = parentActivity;
+  } = /** @type {import('#types').Activity & { isAdHoc?: boolean }} */
+  parentActivity;
 
   /** @internal */
   this[_constants.K_PARENT] = parentActivity;
@@ -257,6 +258,7 @@ ProcessExecution.prototype.getState = function getState() {
  * @returns {this}
  */
 ProcessExecution.prototype.recover = function recover(state, recoveredVersion) {
+  // @ts-ignore
   if (!state) return this;
   this.executionId = state.executionId;
   this[K_RECOVERED_VERSION] = recoveredVersion;
@@ -292,6 +294,8 @@ ProcessExecution.prototype.recover = function recover(state, recoveredVersion) {
       child.recover(childState);
     }
   }
+
+  // @ts-ignore
   return this;
 };
 
@@ -328,6 +332,7 @@ ProcessExecution.prototype.getPostponed = function getPostponed(filterFn) {
 
 /**
  * Queue a discard message that propagates to all running children.
+ * @type {(message?: import('#types').ElementBrokerMessage) => void}
  */
 ProcessExecution.prototype.discard = function discard() {
   this[_constants.K_STATUS] = 'discard';
@@ -344,8 +349,9 @@ ProcessExecution.prototype.discard = function discard() {
 
 /**
  * Queue a cancel message that propagates to all running children.
+ * @type {(message?: import('#types').ElementBrokerMessage) => void}
  */
-ProcessExecution.prototype.cancel = function discard() {
+ProcessExecution.prototype.cancel = function cancel() {
   this[K_ACTIVITY_Q].queueMessage({
     routingKey: 'execution.cancel'
   }, {
@@ -375,7 +381,7 @@ ProcessExecution.prototype.getActivityById = function getActivityById(activityId
 
 /**
  * Get sequence flows in the process scope.
- * @returns {import('#types').SequenceFlow}
+ * @returns {import('#types').SequenceFlow[]}
  */
 ProcessExecution.prototype.getSequenceFlows = function getSequenceFlows() {
   return this[K_ELEMENTS].flows.slice();
@@ -383,7 +389,7 @@ ProcessExecution.prototype.getSequenceFlows = function getSequenceFlows() {
 
 /**
  * Get associations in the process scope.
- * @returns {import('../flows/Association.js').Association}
+ * @returns {import('../flows/Association.js').Association[]}
  */
 ProcessExecution.prototype.getAssociations = function getAssociations() {
   return this[K_ELEMENTS].associations.slice();
@@ -395,6 +401,7 @@ ProcessExecution.prototype.getAssociations = function getAssociations() {
  * @returns {import('#types').IApi<import('#types').Process>}
  */
 ProcessExecution.prototype.getApi = function getApi(message) {
+  // @ts-ignore
   if (!message) return (0, _Api.ProcessApi)(this.broker, this[_constants.K_EXECUTE_MESSAGE]);
   const content = message.content;
   if (content.executionId !== this.executionId) {
@@ -403,6 +410,8 @@ ProcessExecution.prototype.getApi = function getApi(message) {
   const api = (0, _Api.ProcessApi)(this.broker, message);
   const postponed = this[K_ELEMENTS].postponed;
   const self = this;
+
+  // @ts-ignore
   api.getExecuting = function getExecuting() {
     const result = [];
     for (const msg of postponed) {
@@ -411,6 +420,8 @@ ProcessExecution.prototype.getApi = function getApi(message) {
     }
     return result;
   };
+
+  // @ts-ignore
   return api;
 };
 
@@ -693,8 +704,10 @@ ProcessExecution.prototype._onActivityEvent = function onActivityEvent(routingKe
   const shaking = properties.type === 'shake';
   const isDirectChild = content.parent.id === this.id;
   if (isDirectChild) {
+    // @ts-ignore
     parent.executionId = this.executionId;
   } else {
+    // @ts-ignore
     content.parent = (0, _messageHelper.pushParent)(parent, {
       id: this.id,
       type: this.type,
@@ -925,7 +938,10 @@ ProcessExecution.prototype._stopExecution = function stopExecution(message) {
   });
 };
 
-/** @internal */
+/**
+ * @internal
+ * @type {(message?: import('#types').ElementBrokerMessage) => void}
+ */
 ProcessExecution.prototype._onDiscard = function onDiscard() {
   this._deactivate();
   const postponed = this[K_ELEMENTS].postponed;
@@ -943,7 +959,10 @@ ProcessExecution.prototype._onDiscard = function onDiscard() {
   return this._complete('discard');
 };
 
-/** @internal */
+/**
+ * @internal
+ * @type {(message?: import('#types').ElementBrokerMessage) => void}
+ */
 ProcessExecution.prototype._onCancel = function onCancel() {
   const postponed = this[K_ELEMENTS].postponed;
   const running = new Set(postponed);
@@ -1087,7 +1106,10 @@ ProcessExecution.prototype._getMessageFlowById = function getMessageFlowById(flo
   return this[K_ELEMENTS].outboundMessageFlows.find(f => f.id === flowId);
 };
 
-/** @internal */
+/**
+ * @internal
+ * @type {(childId: string, message?: import('#types').ElementBrokerMessage) => any}
+ */
 ProcessExecution.prototype._getChildById = function getChildById(childId) {
   return this.getActivityById(childId) || this._getFlowById(childId);
 };

@@ -3,10 +3,11 @@ import { ServiceTaskBehaviour } from './ServiceTask.js';
 
 /**
  * Send task
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function SendTask(activityDef, context) {
+  // @ts-ignore
   return new Activity(SendTaskBehaviour, activityDef, context);
 }
 

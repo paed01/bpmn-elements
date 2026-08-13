@@ -9,13 +9,13 @@ describe('Signal', () => {
   it('exposes id, type, name and cloned parent', () => {
     const parent = { id: 'Process_0', type: 'bpmn:Process' };
     const signal = new Signal(
-      {
+      /** @type {any} */ ({
         id: 'Signal_0',
         type: 'bpmn:Signal',
         name: 'My signal',
         parent,
-      },
-      { environment }
+      }),
+      /** @type {any} */ ({ environment })
     );
 
     expect(signal).to.have.property('id', 'Signal_0');
@@ -26,12 +26,12 @@ describe('Signal', () => {
   });
 
   it('defaults type to Signal when missing', () => {
-    const signal = new Signal({ id: 'Signal_0' }, { environment });
+    const signal = new Signal(/** @type {any} */ ({ id: 'Signal_0' }), /** @type {any} */ ({ environment }));
     expect(signal).to.have.property('type', 'Signal');
   });
 
   it('falls back to constructing when called without new', () => {
-    const signal = Signal({ id: 'Signal_0' }, { environment });
+    const signal = /** @type {any} */ (Signal)(/** @type {any} */ ({ id: 'Signal_0' }), /** @type {any} */ ({ environment }));
     expect(signal).to.be.instanceof(Signal);
   });
 
@@ -39,15 +39,15 @@ describe('Signal', () => {
     it('returns id, type and messageType=signal with cloned parent', () => {
       const parent = { id: 'Process_0', type: 'bpmn:Process' };
       const signal = new Signal(
-        {
+        /** @type {any} */ ({
           id: 'Signal_0',
           type: 'bpmn:Signal',
           parent,
-        },
-        { environment }
+        }),
+        /** @type {any} */ ({ environment })
       );
 
-      const resolved = signal.resolve({ content: { id: 'task' } });
+      const resolved = signal.resolve(/** @type {any} */ ({ content: { id: 'task' } }));
 
       expect(resolved).to.have.property('id', 'Signal_0');
       expect(resolved).to.have.property('type', 'bpmn:Signal');
@@ -58,22 +58,22 @@ describe('Signal', () => {
 
     it('resolves name expression against execution message when name is set', () => {
       const signal = new Signal(
-        {
+        /** @type {any} */ ({
           id: 'Signal_0',
           name: 'Signal for ${content.id}',
-        },
-        { environment }
+        }),
+        /** @type {any} */ ({ environment })
       );
 
-      const resolved = signal.resolve({ content: { id: 'task' } });
+      const resolved = signal.resolve(/** @type {any} */ ({ content: { id: 'task' } }));
 
       expect(resolved).to.have.property('name', 'Signal for task');
     });
 
     it('omits name when signal reference has no name', () => {
-      const signal = new Signal({ id: 'Signal_0' }, { environment });
+      const signal = new Signal(/** @type {any} */ ({ id: 'Signal_0' }), /** @type {any} */ ({ environment }));
 
-      const resolved = signal.resolve({ content: { id: 'task' } });
+      const resolved = signal.resolve(/** @type {any} */ ({ content: { id: 'task' } }));
 
       expect(resolved).to.not.have.property('name');
     });

@@ -1,6 +1,6 @@
 /**
  * Builtin data store reference. Reads from / writes to `environment.variables._data`.
- * @param {import('moddle-context-serializer').DataStore} dataObjectDef
+ * @param {import('#types').SerializableElement} dataObjectDef
  * @param {import('#types').ContextInstance} context
  * @satisfies {import('#types').IIOData}
  */
@@ -11,7 +11,7 @@ export function EnvironmentDataStoreReference(dataObjectDef, { environment }) {
   this.name = name;
   /** @type {Record<string, any>} */
   this.behaviour = behaviour;
-  /** @type {import('moddle-context-serializer').Parent | undefined} */
+  /** @type {import('#types').ElementParentRef | undefined} */
   this.parent = parent;
   this.environment = environment;
 }

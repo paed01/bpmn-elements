@@ -252,10 +252,15 @@ Feature('Conditional event', () => {
     let state, stopped;
     When('run and saving state on activity condition', () => {
       definition = new Definition(context.clone());
-      definition.waitFor('activity.condition', () => {
-        state = definition.getState();
-        definition.stop();
-      });
+      definition.waitFor(
+        'activity.condition',
+        /** @type {any} */ (
+          () => {
+            state = definition.getState();
+            definition.stop();
+          }
+        )
+      );
       stopped = definition.waitFor('stop');
 
       definition.run();
@@ -269,10 +274,15 @@ Feature('Conditional event', () => {
       definition = new Definition(context.clone()).recover(state);
       definition.resume();
 
-      definition.waitFor('activity.condition', () => {
-        state = definition.getState();
-        definition.stop();
-      });
+      definition.waitFor(
+        'activity.condition',
+        /** @type {any} */ (
+          () => {
+            state = definition.getState();
+            definition.stop();
+          }
+        )
+      );
       stopped = definition.waitFor('stop');
     });
 

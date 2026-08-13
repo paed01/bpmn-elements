@@ -12,7 +12,7 @@ var _constants = require("../constants.js");
 /**
  * Association connecting a source and target activity. Used to drive compensation —
  * activities marked `isForCompensation` subscribe to inbound association events.
- * @param {import('moddle-context-serializer').Association} associationDef
+ * @param {import('#types').AssociationDefinition} associationDef
  * @param {import('#types').ContextInstance} context
  */
 function Association(associationDef, {
@@ -122,6 +122,7 @@ Association.prototype.recover = function recover(state) {
  * @returns {import('#types').IApi<this>}
  */
 Association.prototype.getApi = function getApi(message) {
+  // @ts-ignore
   return new _Api.Api('association', this.broker, message || {
     content: this._createMessageContent()
   });

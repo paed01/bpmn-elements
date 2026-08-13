@@ -13,7 +13,7 @@ describe('BoundaryEvent', () => {
           id: 'task',
           broker: ActivityBroker(this).broker,
         };
-        const behaviour = new BoundaryEventBehaviour({
+        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)({
           broker: ActivityBroker(this).broker,
           attachedTo,
         });
@@ -26,7 +26,7 @@ describe('BoundaryEvent', () => {
           id: 'task',
           broker: ActivityBroker(this).broker,
         };
-        const behaviour = new BoundaryEventBehaviour({
+        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)({
           broker: ActivityBroker(this).broker,
           attachedTo,
           behaviour: { cancelActivity: false },
@@ -42,7 +42,7 @@ describe('BoundaryEvent', () => {
           id: 'task',
           broker: ActivityBroker(this).broker,
         };
-        const behaviour = new BoundaryEventBehaviour(
+        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
           {
             id: 'event',
             broker: ActivityBroker(this).broker,
@@ -73,7 +73,7 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
-        const behaviour = new BoundaryEventBehaviour(
+        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
           {
             id: 'event',
             broker,
@@ -104,7 +104,7 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
-        const behaviour = new BoundaryEventBehaviour(
+        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
           {
             id: 'event',
             broker,
@@ -145,7 +145,7 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
-        const behaviour = new BoundaryEventBehaviour(
+        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
           {
             id: 'event',
             broker,
@@ -185,7 +185,7 @@ describe('BoundaryEvent', () => {
         };
 
         const broker = ActivityBroker().broker;
-        const behaviour = new BoundaryEventBehaviour(
+        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
           {
             id: 'event',
             broker,
@@ -229,7 +229,7 @@ describe('BoundaryEvent', () => {
         };
 
         const broker = ActivityBroker().broker;
-        const behaviour = new BoundaryEventBehaviour(
+        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
           {
             id: 'event',
             broker,
@@ -288,10 +288,16 @@ describe('BoundaryEvent', () => {
           attachedTo,
           get eventDefinitions() {
             const self = this;
-            return self._eds || (self._eds = [new ErrorEventDefinition(self, {}), new MessageEventDefinition(self, {})]);
+            return (
+              self._eds ||
+              (self._eds = [
+                new ErrorEventDefinition(/** @type {any} */ (self), /** @type {any} */ ({})),
+                new MessageEventDefinition(/** @type {any} */ (self), /** @type {any} */ ({})),
+              ])
+            );
           },
         };
-        const behaviour = new BoundaryEventBehaviour(activity, {
+        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(activity, {
           getOutboundAssociations() {},
         });
         expect(attachedTo.broker.getExchange('event')).to.have.property('bindingCount', 0);
@@ -320,7 +326,7 @@ describe('BoundaryEvent', () => {
         };
         const broker = ActivityBroker().broker;
         const environment = new Environment({ Logger: testHelpers.Logger });
-        const behaviour = new BoundaryEventBehaviour(
+        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
           {
             id: 'event',
             broker,
@@ -372,7 +378,7 @@ describe('BoundaryEvent', () => {
         };
         const broker = ActivityBroker().broker;
         const environment = new Environment({ Logger: testHelpers.Logger });
-        const behaviour = new BoundaryEventBehaviour(
+        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
           {
             id: 'event',
             broker,
@@ -424,7 +430,7 @@ describe('BoundaryEvent', () => {
         };
         const broker = ActivityBroker().broker;
         const environment = new Environment({ Logger: testHelpers.Logger });
-        const behaviour = new BoundaryEventBehaviour(
+        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
           {
             id: 'event',
             broker,
@@ -472,7 +478,7 @@ describe('BoundaryEvent', () => {
         };
         broker = ActivityBroker().broker;
         const environment = new Environment({ Logger: testHelpers.Logger });
-        behaviour = new BoundaryEventBehaviour(
+        behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
           {
             id: 'event',
             broker,
@@ -700,7 +706,7 @@ describe('BoundaryEvent', () => {
         event.broker.subscribeTmp(
           'execution',
           'execute.*',
-          (routingKey, message) => {
+          (_routingKey, message) => {
             messages.push(message);
           },
           { noAck: true }
@@ -736,7 +742,7 @@ describe('BoundaryEvent', () => {
         event.broker.subscribeTmp(
           'execution',
           'execute.*',
-          (routingKey, message) => {
+          (_routingKey, message) => {
             messages.push(message);
           },
           { noAck: true }
@@ -762,7 +768,7 @@ describe('BoundaryEvent', () => {
         event.broker.subscribeTmp(
           'execution',
           'execute.*',
-          (routingKey, message) => {
+          (_routingKey, message) => {
             messages.push(message);
           },
           { noAck: true }
@@ -812,7 +818,7 @@ describe('BoundaryEvent', () => {
       });
 
       it('completes when attached error is caught', async () => {
-        context.environment.addService('test', (arg, next) => {
+        context.environment.addService('test', (_arg, next) => {
           next(new Error('FAIL'));
         });
 
@@ -831,7 +837,7 @@ describe('BoundaryEvent', () => {
       });
 
       it('leaves when error is caught', () => {
-        context.environment.addService('test', (arg, next) => {
+        context.environment.addService('test', (_arg, next) => {
           next(new Error('FAIL'));
         });
 
@@ -890,7 +896,7 @@ describe('BoundaryEvent', () => {
       });
 
       it('completes when error is caught and attached activity is discarded by its own error', async () => {
-        context.environment.addService('test', (arg, next) => {
+        context.environment.addService('test', (_arg, next) => {
           next(new Error('FAIL'));
         });
 
@@ -966,7 +972,7 @@ describe('BoundaryEvent', () => {
 
       it('is discarded if attached activity completes', async () => {
         context.environment.variables.duration = 'PT2S';
-        context.environment.addService('test', (arg, next) => {
+        context.environment.addService('test', (_arg, next) => {
           next();
         });
 
@@ -1067,8 +1073,8 @@ describe('BoundaryEvent', () => {
       });
 
       it('leaves attached activity running when timeout occur', async () => {
-        let serviceComplete;
-        context.environment.addService('test', (arg, next) => {
+        /** @type {(...args: any[]) => void} */ let serviceComplete;
+        context.environment.addService('test', (_arg, next) => {
           serviceComplete = next;
         });
 
@@ -1093,7 +1099,7 @@ describe('BoundaryEvent', () => {
 
       it('is discarded if attached activity completes', async () => {
         context.environment.variables.duration = 'PT2S';
-        context.environment.addService('test', (arg, next) => {
+        context.environment.addService('test', (_arg, next) => {
           next();
         });
 
@@ -1298,8 +1304,8 @@ describe('BoundaryEvent', () => {
       });
 
       it('takes attached and discards if condition is not met', async () => {
-        let serviceComplete;
-        context.environment.addService('test', (arg, next) => {
+        /** @type {(...args: any[]) => void} */ let serviceComplete;
+        context.environment.addService('test', (_arg, next) => {
           serviceComplete = next;
         });
 

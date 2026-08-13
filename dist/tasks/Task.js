@@ -9,7 +9,7 @@ var _Activity = require("../activity/Activity.js");
 var _messageHelper = require("../messageHelper.js");
 /**
  * Task
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 function Task(activityDef, context) {
@@ -44,5 +44,7 @@ TaskBehaviour.prototype.execute = function execute(executeMessage) {
   if (loopCharacteristics && executeContent.isRootScope) {
     return loopCharacteristics.execute(executeMessage);
   }
+
+  // @ts-ignore
   return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeContent));
 };

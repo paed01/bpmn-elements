@@ -11,7 +11,7 @@ var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
 /**
  * Script task
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 function ScriptTask(activityDef, context) {
@@ -51,17 +51,22 @@ ScriptTaskBehaviour.prototype.execute = function execute(executeMessage) {
   }
   const activity = this.activity;
   const scriptFormat = this.scriptFormat;
+  // @ts-ignore
   const script = this.environment.getScript(scriptFormat, activity, (0, _messageHelper.cloneMessage)(executeMessage));
   if (!script) {
     return activity.emitFatal(new _Errors.ActivityError(`Script format ${scriptFormat} is unsupported or was not registered for <${activity.id}>`, executeMessage), executeContent);
   }
+
+  // @ts-ignore
   return script.execute((0, _ExecutionScope.ExecutionScope)(activity, executeMessage), scriptCallback);
   function scriptCallback(err, output) {
     if (err) {
       activity.logger.error(`<${executeContent.executionId} (${activity.id})>`, err);
       return activity.broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(executeContent, {
         error: new _Errors.ActivityError(err.message, executeMessage, err)
-      }, {
+      },
+      // @ts-ignore
+      {
         mandatory: true
       }));
     }

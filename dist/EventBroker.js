@@ -12,7 +12,7 @@ var _smqp = require("smqp");
 var _Errors = require("./error/Errors.js");
 /**
  * Build the broker for an activity, including run/format/execution/api exchanges and queues.
- * @param {import('#types').Activity} activity
+ * @param {import('#types').Activity} [activity]
  * @returns {import('#types').EventBroker<import('#types').Activity>}
  */
 function ActivityBroker(activity) {
@@ -121,11 +121,18 @@ function EventBroker(brokerOwner, options, onBrokerReturn) {
   this.eventPrefix = options.prefix;
   const broker = this.broker = new _smqp.Broker(brokerOwner);
   broker.assertExchange('event', 'topic', options);
+  // @ts-ignore
   broker.on('return', onBrokerReturn ? onBrokerReturn.bind(brokerOwner) : this._onBrokerReturnFn.bind(this));
+
+  // @ts-ignore
   this.on = this.on.bind(this);
+  // @ts-ignore
   this.once = this.once.bind(this);
+  // @ts-ignore
   this.waitFor = this.waitFor.bind(this);
+  // @ts-ignore
   this.emit = this.emit.bind(this);
+  // @ts-ignore
   this.emitFatal = this.emitFatal.bind(this);
 }
 
@@ -133,6 +140,7 @@ function EventBroker(brokerOwner, options, onBrokerReturn) {
  * Subscribe to a prefixed event. Errors are unwrapped via `makeErrorFromMessage`,
  * other events resolve to the owner's Api wrapper.
  */
+// @ts-ignore
 EventBroker.prototype.on = function on(eventName, callback, eventOptions = {
   once: false
 }) {
@@ -142,7 +150,7 @@ EventBroker.prototype.on = function on(eventName, callback, eventOptions = {
     ...eventOptions,
     noAck: true
   });
-  function eventCallback(routingKey, message, owner) {
+  function eventCallback(_routingKey, message, owner) {
     if (eventName === 'error') return callback((0, _Errors.makeErrorFromMessage)(message));
     callback(owner.getApi(message));
   }
@@ -151,6 +159,7 @@ EventBroker.prototype.on = function on(eventName, callback, eventOptions = {
 /**
  * Subscribe to the next occurrence of an event.
  */
+// @ts-ignore
 EventBroker.prototype.once = function once(eventName, callback, eventOptions) {
   return this.on(eventName, callback, {
     ...eventOptions,
@@ -161,6 +170,7 @@ EventBroker.prototype.once = function once(eventName, callback, eventOptions) {
 /**
  * Promise-style wait for an event. Rejects on a mandatory `*.error` message.
  */
+// @ts-ignore
 EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
   const key = this._getEventRoutingKey(eventName);
   return new Promise((resolve, reject) => {
@@ -174,9 +184,10 @@ EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
       unsubscribe();
       return resolve(owner.getApi(message));
     }
-    function errorCallback(routingKey, message, owner) {
+    function errorCallback(_routingKey, message, owner) {
       if (!message.properties.mandatory) return;
       unsubscribe();
+      // @ts-ignore
       return reject((0, _Errors.makeErrorFromMessage)(message, owner));
     }
     function unsubscribe() {
@@ -190,6 +201,7 @@ EventBroker.prototype.waitFor = function waitFor(eventName, onMessage) {
 /**
  * Publish a prefixed event message.
  */
+// @ts-ignore
 EventBroker.prototype.emit = function emit(eventName, content, props) {
   this.broker.publish('event', `${this.eventPrefix}.${eventName}`, {
     ...content
@@ -202,6 +214,7 @@ EventBroker.prototype.emit = function emit(eventName, content, props) {
 /**
  * Emit a mandatory error event. Surfaces via `on('error', ...)` or causes a return message to throw.
  */
+// @ts-ignore
 EventBroker.prototype.emitFatal = function emitFatal(error, content) {
   this.emit('error', {
     ...content,

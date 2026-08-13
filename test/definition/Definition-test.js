@@ -10,10 +10,12 @@ const lanesSource = factory.resource('lanes.bpmn');
 describe('Definition', () => {
   describe('requirements', () => {
     it('requires a context with id and environment', () => {
-      const definition = new Definition({
-        id: 'Def_1',
-        environment: new Environment(),
-      });
+      const definition = new Definition(
+        /** @type {any} */ ({
+          id: 'Def_1',
+          environment: new Environment(),
+        })
+      );
       expect(definition.run).to.be.a('function');
     });
 
@@ -22,20 +24,22 @@ describe('Definition', () => {
       const services = {
         myService: () => {},
       };
-      const definition = new Definition({
-        id: 'Def_1',
-        environment: new Environment({ Logger, services }),
-        getProcesses() {
-          return [];
-        },
-        getNewProcesses() {
-          return [];
-        },
-        getExecutableProcesses() {
-          return [];
-        },
-        getMessageFlows() {},
-      });
+      const definition = new Definition(
+        /** @type {any} */ ({
+          id: 'Def_1',
+          environment: new Environment({ Logger, services }),
+          getProcesses() {
+            return [];
+          },
+          getNewProcesses() {
+            return [];
+          },
+          getExecutableProcesses() {
+            return [];
+          },
+          getMessageFlows() {},
+        })
+      );
       definition.run();
       expect(definition.environment.Logger === Logger).to.be.true;
       expect(definition.environment.getServiceByName('myService')).to.equal(services.myService);
@@ -43,6 +47,7 @@ describe('Definition', () => {
 
     it('throws if without arguments', () => {
       expect(() => {
+        // @ts-expect-error context is required
         Definition();
       }).to.throw(/No context/);
     });
@@ -51,7 +56,7 @@ describe('Definition', () => {
       const scripts = new JavaScripts();
       const environment = new Environment({ Logger: testHelpers.Logger, scripts });
       const definition = new Definition(
-        {
+        /** @type {any} */ ({
           id: 'Def_1',
           environment,
           getProcesses() {},
@@ -61,7 +66,7 @@ describe('Definition', () => {
               environment: newEnvironment,
             };
           },
-        },
+        }),
         {
           services: {
             myService() {},
@@ -81,40 +86,44 @@ describe('Definition', () => {
 
   describe('run([options, callback])', () => {
     it('returns api', () => {
-      const definition = new Definition({
-        id: 'Def_1',
-        environment: new Environment({ Logger: testHelpers.Logger }),
-        getProcesses() {
-          return [];
-        },
-        getNewProcesses() {
-          return [];
-        },
-        getExecutableProcesses() {
-          return [];
-        },
-        getMessageFlows() {},
-        getDataObjects() {},
-      });
-      expect(definition.run() === definition).to.be.true;
+      const definition = new Definition(
+        /** @type {any} */ ({
+          id: 'Def_1',
+          environment: new Environment({ Logger: testHelpers.Logger }),
+          getProcesses() {
+            return [];
+          },
+          getNewProcesses() {
+            return [];
+          },
+          getExecutableProcesses() {
+            return [];
+          },
+          getMessageFlows() {},
+          getDataObjects() {},
+        })
+      );
+      expect(/** @type {any} */ (definition.run()) === definition).to.be.true;
     });
 
     it('publishes enter on run', async () => {
-      const definition = new Definition({
-        id: 'Def_1',
-        environment: new Environment({ Logger: testHelpers.Logger }),
-        getProcesses() {
-          return [];
-        },
-        getNewProcesses() {
-          return [];
-        },
-        getExecutableProcesses() {
-          return [];
-        },
-        getMessageFlows() {},
-        getDataObjects() {},
-      });
+      const definition = new Definition(
+        /** @type {any} */ ({
+          id: 'Def_1',
+          environment: new Environment({ Logger: testHelpers.Logger }),
+          getProcesses() {
+            return [];
+          },
+          getNewProcesses() {
+            return [];
+          },
+          getExecutableProcesses() {
+            return [];
+          },
+          getMessageFlows() {},
+          getDataObjects() {},
+        })
+      );
       const enter = definition.waitFor('enter');
 
       definition.run();
@@ -123,20 +132,22 @@ describe('Definition', () => {
     });
 
     it('publishes start when started', async () => {
-      const definition = new Definition({
-        id: 'Def_1',
-        environment: new Environment({ Logger: testHelpers.Logger }),
-        getProcesses() {
-          return [];
-        },
-        getNewProcesses() {
-          return [];
-        },
-        getExecutableProcesses() {
-          return [];
-        },
-        getMessageFlows() {},
-      });
+      const definition = new Definition(
+        /** @type {any} */ ({
+          id: 'Def_1',
+          environment: new Environment({ Logger: testHelpers.Logger }),
+          getProcesses() {
+            return [];
+          },
+          getNewProcesses() {
+            return [];
+          },
+          getExecutableProcesses() {
+            return [];
+          },
+          getMessageFlows() {},
+        })
+      );
 
       const start = definition.waitFor('start');
 
@@ -396,6 +407,7 @@ describe('Definition', () => {
       const definition = new Definition(context);
       definition.run();
 
+      /** @type {Error} */
       let error;
       definition.run((err) => {
         error = err;
@@ -654,7 +666,7 @@ describe('Definition', () => {
 
       const definition = new Definition(context);
       definition.run();
-      definition.sendMessage();
+      /** @type {any} */ (definition).sendMessage();
 
       expect(definition.getActivityById('start').counters).to.have.property('taken', 1);
     });
@@ -734,11 +746,13 @@ describe('Definition', () => {
     it('recovers with only counters', () => {
       const definition = new Definition(context);
 
-      definition.recover({
-        counters: {
-          completed: 1,
-        },
-      });
+      definition.recover(
+        /** @type {any} */ ({
+          counters: {
+            completed: 1,
+          },
+        })
+      );
 
       expect(definition.counters).to.have.property('completed', 1);
       expect(definition.counters).to.have.property('discarded', 0);
@@ -747,9 +761,11 @@ describe('Definition', () => {
     it('recovers with only environment', () => {
       const definition = new Definition(context);
 
-      definition.recover({
-        environment: { ...definition.environment.getState(), output: { recovered: 1 } },
-      });
+      definition.recover(
+        /** @type {any} */ ({
+          environment: { ...definition.environment.getState(), output: { recovered: 1 } },
+        })
+      );
 
       expect(definition.environment).to.have.property('output').with.property('recovered', 1);
 
@@ -763,7 +779,7 @@ describe('Definition', () => {
       definition1.run();
       definition1.stop();
 
-      const definition2 = new Definition(context.clone()).recover(definition1.getState());
+      const definition2 = /** @type {any} */ (new Definition(context.clone()).recover(definition1.getState()));
       expect(definition2).to.have.property('status', 'executing');
     });
 
@@ -941,7 +957,7 @@ describe('Definition', () => {
       startDefinition.run();
       startDefinition.stop();
 
-      const definition = new Definition(context.clone()).recover(startDefinition.getState());
+      const definition = /** @type {any} */ (new Definition(context.clone()).recover(startDefinition.getState()));
 
       definition.resume();
 
@@ -959,7 +975,7 @@ describe('Definition', () => {
       startDefinition.run();
       const state = startDefinition.getState();
 
-      const definition = new Definition(context.clone()).recover(state);
+      const definition = /** @type {any} */ (new Definition(context.clone()).recover(state));
       definition.resume();
 
       const [activity] = definition.getPostponed();
@@ -983,7 +999,7 @@ describe('Definition', () => {
 
       await stopped;
 
-      const definition = new Definition(context.clone()).recover(state);
+      const definition = /** @type {any} */ (new Definition(context.clone()).recover(state));
 
       definition.resume();
 
@@ -1007,7 +1023,7 @@ describe('Definition', () => {
 
       startDefinition.run();
 
-      const definition = new Definition(context.clone()).recover(state);
+      const definition = /** @type {any} */ (new Definition(context.clone()).recover(state));
       definition.once('wait', (api) => {
         api.signal();
       });
@@ -1046,7 +1062,7 @@ describe('Definition', () => {
       await stop;
       const state = startDefinition.getState();
 
-      const definition = new Definition(context.clone()).recover(state);
+      const definition = /** @type {any} */ (new Definition(context.clone()).recover(state));
       definition.resume();
 
       const [activity] = definition.getPostponed();
@@ -1070,7 +1086,7 @@ describe('Definition', () => {
       await stop;
       const state = startDefinition.getState();
 
-      const definition = new Definition(context.clone()).recover(state);
+      const definition = /** @type {any} */ (new Definition(context.clone()).recover(state));
       definition.resume();
 
       const [activity] = definition.getPostponed();
@@ -1100,7 +1116,7 @@ describe('Definition', () => {
       await stop;
       const state = startDefinition.getState();
 
-      const definition = new Definition(context.clone()).recover(state);
+      const definition = /** @type {any} */ (new Definition(context.clone()).recover(state));
       definition.resume();
 
       expect(definition.counters).to.have.property('completed', 1);
@@ -1242,7 +1258,7 @@ describe('Definition', () => {
       definition.once('activity.start', () => definition.stop());
       definition.run();
 
-      const recovered = new Definition(context.clone()).recover(definition.getState());
+      const recovered = /** @type {any} */ (new Definition(context.clone()).recover(definition.getState()));
       expect(recovered).to.have.property('status', 'executing');
 
       const [bp1, bp2] = definition.getProcesses();
@@ -1334,11 +1350,12 @@ describe('Definition', () => {
     it('returns undefined if message parent path is not resolved', () => {
       const definition = new Definition(context.clone());
 
+      /** @type {any} */
       let api = false;
       definition.broker.subscribeTmp(
         'event',
         'activity.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           if (message.content.id === 'task3') {
             message.content.parent.path = [];
             api = definition.getApi(message);
@@ -1361,21 +1378,23 @@ describe('Definition', () => {
     it('with unknown id return nothing', () => {
       const definition = new Definition(context.clone());
       definition.run();
-      expect(definition.getApi({ content: { id: 'who?' } })).to.not.be.ok;
+      expect(definition.getApi(/** @type {any} */ ({ content: { id: 'who?' } }))).to.not.be.ok;
     });
 
     it('with unknown parent id return nothing', () => {
       const definition = new Definition(context.clone());
       definition.run();
       expect(
-        definition.getApi({
-          content: {
-            id: 'who?',
-            parent: {
-              id: 'me?',
+        definition.getApi(
+          /** @type {any} */ ({
+            content: {
+              id: 'who?',
+              parent: {
+                id: 'me?',
+              },
             },
-          },
-        })
+          })
+        )
       ).to.not.be.ok;
     });
   });
@@ -2058,10 +2077,7 @@ describe('Definition', () => {
       expect(bps.length).to.equal(4);
 
       let postponed = definition.getPostponed();
-      expect(
-        postponed.length,
-        postponed.map(({ id }) => id)
-      ).to.equal(4);
+      expect(postponed.length, /** @type {any} */ (postponed.map(({ id }) => id))).to.equal(4);
 
       for (const task of postponed) {
         if (task.type === 'bpmn:UserTask') task.signal();

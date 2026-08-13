@@ -4,7 +4,7 @@ import { cloneMessage, cloneContent } from '../messageHelper.js';
 
 /**
  * Service task
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function ServiceTask(activityDef, context) {
@@ -50,6 +50,7 @@ ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
   if (!service) return this.activity.emitFatal(new ActivityError(`<${this.id}> service not defined`, executeMessage), executeContent);
 
   const broker = this.broker;
+  // @ts-ignore
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(executeMessage, ...args), {
     consumerTag: `_api-${executionId}`,
   });
@@ -61,7 +62,12 @@ ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
       return broker.publish(
         'execution',
         'execute.error',
-        cloneContent(executeContent, { error: new ActivityError(err.message, executeMessage, err) }, { mandatory: true })
+        cloneContent(
+          executeContent,
+          { error: new ActivityError(err.message, executeMessage, err) },
+          // @ts-ignore
+          { mandatory: true }
+        )
       );
     }
 

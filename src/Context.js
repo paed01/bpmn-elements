@@ -7,7 +7,7 @@ const K_OWNER = Symbol.for('owner');
 
 /**
  * Build a runtime Context from a parsed BPMN definition.
- * @param {import('moddle-context-serializer').SerializableContext} definitionContext
+ * @param {import('#types').SerializableContext} definitionContext
  * @param {import('#types').Environment} [environment] Existing environment to clone; a fresh one is created when omitted
  */
 export function Context(definitionContext, environment) {
@@ -17,7 +17,7 @@ export function Context(definitionContext, environment) {
 
 /**
  * Per-execution registry that lazily upserts activities, flows, and processes from the parsed BPMN definition.
- * @param {import('moddle-context-serializer').SerializableContext} definitionContext
+ * @param {import('#types').SerializableContext} definitionContext
  * @param {import('#types').Environment} environment
  * @param {import('#types').Process | import('#types').Activity} [owner] Process or sub-process activity that owns this context
  * @param {Map<string, any>} [peersCache] Shared converging parallel gateway peer cache; created at the root and propagated to every clone
@@ -33,9 +33,9 @@ export function ContextInstance(definitionContext, environment, owner, peersCach
   this.environment = environment;
   /** Discovered parallel gateway peers, keyed by gateway id, shared with all clones. Runtime-only, not serialized. */
   this.peersCache = peersCache || new Map();
-  /** @type {import('#types').IExtensionsMapper}  */
   this.extensionsMapper = new ExtensionsMapper(this);
-  /** @private */
+  /** @internal @type {Map<string, any>} */
+  // @ts-ignore
   this.refs = new Map([
     ['activityRefs', new Map()],
     ['sequenceFlowRefs', new Map()],
@@ -71,7 +71,7 @@ ContextInstance.prototype.getActivityById = function getActivityById(activityId)
 
 /**
  * Return the cached activity instance, instantiating it the first time it is referenced.
- * @param {import('moddle-context-serializer').SerializableElement} activityDef
+ * @param {import('#types').SerializableElement} activityDef
  * @returns {import('./activity/Activity.js').Activity}
  */
 ContextInstance.prototype.upsertActivity = function upsertActivity(activityDef) {
@@ -144,7 +144,7 @@ ContextInstance.prototype.getSequenceFlows = function getSequenceFlows(scopeId) 
 
 /**
  * Return the cached sequence flow, instantiating it the first time it is referenced.
- * @param {import('moddle-context-serializer').SerializableElement} flowDefinition
+ * @param {import('#types').SerializableElement} flowDefinition
  * @returns {import('./flows/SequenceFlow.js').SequenceFlow}
  */
 ContextInstance.prototype.upsertSequenceFlow = function upsertSequenceFlow(flowDefinition) {
@@ -167,7 +167,7 @@ ContextInstance.prototype.getAssociations = function getAssociations(scopeId) {
 };
 
 /**
- * @param {import('moddle-context-serializer').SerializableElement} associationDefinition
+ * @param {import('#types').SerializableElement} associationDefinition
  * @returns {import('./flows/Association.js').Association}
  */
 ContextInstance.prototype.upsertAssociation = function upsertAssociation(associationDefinition) {
@@ -388,7 +388,7 @@ ContextInstance.prototype.getStartActivities = function getStartActivities(filte
 
 /**
  * Inspect an activity def for link event definitions.
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @returns {{ linkBehaviour?: Function, linkNames?: string[] }}
  */
 ContextInstance.prototype.getLinkEventDefinitionInfo = function getLinkEventDefinitionInfo(activityDef) {
@@ -433,7 +433,7 @@ ContextInstance.prototype.getActivitiesByEventDefinitionBehaviour = function get
 /**
  * Resolve user-registered extensions and the built-in BpmnIO extension for an activity.
  * Returns undefined when the activity has no extensions to attach.
- * @param {import('#types').ElementBase} activity
+ * @param {import('#types').ElementBase | import('./activity/Activity.js').Activity | import('./process/Process.js').Process} activity
  * @returns {import('#types').IExtension | undefined}
  */
 ContextInstance.prototype.loadExtensions = function loadExtensions(activity) {
@@ -456,10 +456,15 @@ ContextInstance.prototype.getActivityParentById = function getActivityParentById
   return this.getProcessById(parentId) || this.getActivityById(parentId);
 };
 
+/** @param {ContextInstance} context */
 function ExtensionsMapper(context) {
   this.context = context;
 }
 
+/**
+ * @param {any} activity
+ * @returns {Extensions}
+ */
 ExtensionsMapper.prototype.get = function get(activity) {
   return new Extensions(activity, this.context, this._getExtensions());
 };

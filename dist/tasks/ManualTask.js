@@ -9,10 +9,11 @@ var _Activity = require("../activity/Activity.js");
 var _SignalTask = require("./SignalTask.js");
 /**
  * Manual task
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 function ManualTask(activityDef, context) {
+  // @ts-ignore
   return new _Activity.Activity(ManualTaskBehaviour, activityDef, context);
 }
 

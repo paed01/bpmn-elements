@@ -8,12 +8,12 @@ const subProcessSource = factory.resource('sub-process.bpmn');
 
 describe('SubProcess', () => {
   it('decorates activity with isSubProcess', () => {
-    const subProcess = SubProcess({ id: 'sub-process', parent: { id: 'process1' } }, testHelpers.emptyContext());
+    const subProcess = SubProcess(/** @type {any} */ ({ id: 'sub-process', parent: { id: 'process1' } }), testHelpers.emptyContext());
     expect(subProcess).to.have.property('isSubProcess', true);
   });
 
   it('runs process execution on separate exchange', () => {
-    const subProcess = SubProcess({ id: 'sub-process', parent: { id: 'process1' } }, testHelpers.emptyContext());
+    const subProcess = SubProcess(/** @type {any} */ ({ id: 'sub-process', parent: { id: 'process1' } }), testHelpers.emptyContext());
     subProcess.run();
     expect(subProcess.broker.getExchange('subprocess-execution')).to.be.ok;
   });
@@ -210,7 +210,7 @@ describe('SubProcess', () => {
   describe('stop()', () => {
     it('stops process execution and closes broker', () => {
       const subProcess = SubProcess(
-        { id: 'sub-process', parent: { id: 'process1' } },
+        /** @type {any} */ ({ id: 'sub-process', parent: { id: 'process1' } }),
         testHelpers.emptyContext({
           getActivities() {
             return [{ id: 'subTask', Behaviour: SignalTask }];
@@ -430,6 +430,7 @@ describe('SubProcess', () => {
     it('returns child api', () => {
       const subProcess = context.getActivityById('subProcess');
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       subProcess.broker.subscribeOnce('event', 'activity.wait', (_, msg) => {
         message = msg;
@@ -449,6 +450,7 @@ describe('SubProcess', () => {
       context.environment.variables.input = 1;
       const subProcess = context.getActivityById('subProcess');
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       subProcess.broker.subscribeOnce('event', 'activity.wait', (_, msg) => {
         message = msg;
@@ -464,6 +466,7 @@ describe('SubProcess', () => {
       context.environment.variables.input = 1;
       const subProcess = context.getActivityById('subProcess');
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       subProcess.broker.subscribeOnce('event', 'activity.wait', (_, msg) => {
         message = msg;
@@ -480,6 +483,7 @@ describe('SubProcess', () => {
       context.environment.variables.input = 1;
       const subProcess = context.getActivityById('subProcess');
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       subProcess.broker.subscribeOnce('event', 'activity.wait', (_, msg) => {
         message = msg;
@@ -488,7 +492,7 @@ describe('SubProcess', () => {
       subProcess.run();
 
       message.content.parent.executionId = 'foo_1';
-      message.content.parent.path = [{ executionId: 'foo_2' }];
+      message.content.parent.path = /** @type {any} */ ([{ executionId: 'foo_2' }]);
 
       expect(subProcess.execution.source.getApi(message)).to.not.be.ok;
     });
@@ -546,7 +550,7 @@ describe('SubProcess', () => {
       subProcess.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -589,7 +593,7 @@ describe('SubProcess', () => {
       subProcess.broker.subscribeTmp(
         'event',
         'activity.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }

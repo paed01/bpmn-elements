@@ -9,13 +9,15 @@ const K_POSTPONED = Symbol.for('postponed');
  * Per-run execution orchestrator for an Activity. Instantiates the element-specific behaviour
  * and drives the execute message flow over the activity broker.
  * @param {import('./Activity.js').Activity} activity
- * @param {import('../Context.js').ContextInstance} context
+ * @param {import('../Context.js').ContextInstance} [context]
  */
 export function ActivityExecution(activity, context) {
   this.activity = activity;
   this.context = context;
   this.id = activity.id;
   this.broker = activity.broker;
+  /** @type {import('#types').IActivityBehaviourInstance | undefined} */
+  this.source = undefined;
   /** @internal */
   this[K_POSTPONED] = new Set();
   /** @internal */
@@ -60,7 +62,9 @@ ActivityExecution.prototype.execute = function execute(executeMessage) {
     this[K_POSTPONED].clear();
     this._debug('resume execution');
 
-    if (!this.source) this.source = new this.activity.Behaviour(this.activity, this.context);
+    if (!this.source)
+      // @ts-ignore
+      this.source = new this.activity.Behaviour(this.activity, this.context);
 
     this.activate();
     return this.broker.publish('execution', 'execute.resume.execution', cloneContent(initMessage.content), { persistent: false });
@@ -68,6 +72,7 @@ ActivityExecution.prototype.execute = function execute(executeMessage) {
 
   this._debug('execute');
   this.activate();
+  // @ts-ignore
   this.source = new this.activity.Behaviour(this.activity, this.context);
   this.broker.publish('execution', 'execute.start', cloneContent(initMessage.content));
 };
@@ -135,6 +140,7 @@ ActivityExecution.prototype.getApi = function getApi(apiMessage) {
 
   const api = ActivityApi(self.broker, apiMessage);
 
+  // @ts-ignore
   api.getExecuting = function getExecuting() {
     const result = [];
     for (const msg of self[K_POSTPONED]) {
@@ -144,17 +150,17 @@ ActivityExecution.prototype.getApi = function getApi(apiMessage) {
     return result;
   };
 
+  // @ts-ignore
   return api;
 };
 
 /**
  * Pass an execute message straight to the behaviour, executing first if no source is set up yet.
  * @param {import('#types').ElementBrokerMessage} executeMessage
- * @returns {void}
  */
 ActivityExecution.prototype.passthrough = function passthrough(executeMessage) {
-  if (!this.source) return this.execute(executeMessage);
-  return this._sourceExecute(executeMessage);
+  if (this.source) this._sourceExecute(executeMessage);
+  else this.execute(executeMessage);
 };
 
 /**
@@ -193,6 +199,7 @@ ActivityExecution.prototype.recover = function recover(state) {
   if (!state) return this;
   if ('completed' in state) this[K_COMPLETED] = state.completed;
 
+  // @ts-ignore
   const source = (this.source = new this.activity.Behaviour(this.activity, this.context));
   if (source.recover) {
     source.recover(state);
@@ -390,7 +397,7 @@ ActivityExecution.prototype._ackPostponed = function ackPostponed(completeMessag
 };
 
 /** @internal */
-ActivityExecution.prototype._onParentApiMessage = function onParentApiMessage(routingKey, message) {
+ActivityExecution.prototype._onParentApiMessage = function onParentApiMessage(_routingKey, message) {
   switch (message.properties.type) {
     case 'error':
       return this[K_EXECUTE_Q].queueMessage({ routingKey: 'execute.error' }, { error: message.content.error });

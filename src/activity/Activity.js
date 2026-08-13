@@ -27,11 +27,12 @@ const K_FLOWS = Symbol.for('flows');
 /**
  * Activity wraps any element (task, event, gateway) and orchestrates its lifecycle through the broker.
  * @param {import('#types').IActivityBehaviour} Behaviour Element-specific behaviour constructor invoked per execution
- * @param {import('moddle-context-serializer').Activity} activityDef Parsed BPMN element definition
+ * @param {import('#types').ActivityDefinition} activityDef Parsed BPMN element definition, behaviour is optional
  * @param {import('#types').ContextInstance} context Per-execution registry and factory
  */
 export function Activity(Behaviour, activityDef, context) {
   const { id, type = 'activity', name, behaviour = {} } = activityDef;
+  // @ts-ignore
   const { attachedTo: attachedToRef, eventDefinitions } = behaviour;
 
   /** @internal */
@@ -39,14 +40,15 @@ export function Activity(Behaviour, activityDef, context) {
   this.id = id;
   this.type = type;
   this.name = name;
-  /** @type {import('moddle-context-serializer').ActivityBehaviour} */
+  /** @type {NonNullable<import('#types').ActivityDefinition['behaviour']>} */
+  // @ts-ignore
   this.behaviour = {
     ...behaviour,
     eventDefinitions,
     ...(activityDef.linkNames && { linkNames: activityDef.linkNames, linkBehaviour: activityDef.linkBehaviour }),
   };
   this.Behaviour = Behaviour;
-  /** @type {import('moddle-context-serializer').Parent} */
+  /** @type {import('#types').ElementParentRef} */
   this.parent = activityDef.parent ? cloneParent(activityDef.parent) : {};
   /** @type {import('#types').ILogger} */
   this.logger = context.environment.Logger(type.toLowerCase());
@@ -60,6 +62,7 @@ export function Activity(Behaviour, activityDef, context) {
     taken: 0,
     discarded: 0,
   };
+  // @ts-ignore
   const isForCompensation = !!behaviour.isForCompensation;
 
   let attachedToActivity, attachedTo;
@@ -99,8 +102,10 @@ export function Activity(Behaviour, activityDef, context) {
   /** @internal */
   this[K_FLAGS] = {
     isEnd: !outboundSequenceFlows.length && !isThrowingLink,
+    // @ts-ignore
     isStart: !hasInboundTrigger && !behaviour.triggeredByEvent && !activityDef.isCatching,
     isSubProcess: activityDef.isSubProcess,
+    // @ts-ignore
     isMultiInstance: !!behaviour.loopCharacteristics,
     isForCompensation,
     attachedTo,
@@ -317,7 +322,7 @@ Activity.prototype.consumeInbound = function consumeInbound() {
 
   const onInbound = this[K_MESSAGE_HANDLERS].onInbound;
 
-  return this.broker.getQueue('inbound-q').assertConsumer(onInbound, { consumerTag: '_run-on-inbound' });
+  this.broker.getQueue('inbound-q').assertConsumer(onInbound, { consumerTag: '_run-on-inbound' });
 };
 
 /** @internal */
@@ -434,6 +439,7 @@ Activity.prototype.getState = function getState() {
  */
 Activity.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error(`cannot recover running activity <${this.id}>`);
+  // @ts-ignore
   if (!state) return this;
 
   this.stopped = state.stopped;
@@ -449,6 +455,7 @@ Activity.prototype.recover = function recover(state) {
 
   this.broker.recover(state.broker);
 
+  // @ts-ignore
   return this;
 };
 
@@ -538,7 +545,7 @@ Activity.prototype.stop = function stop() {
  */
 Activity.prototype.next = function next() {
   if (!this.environment.settings.step) return;
-  /** @type {import('#types').ElementBrokerMessage} */
+  /** @type {import('smqp').Message} */
   const stateMessage = this[K_STATE_MESSAGE];
   if (!stateMessage) return;
   if (this.status === 'executing') return false;
@@ -574,6 +581,7 @@ Activity.prototype.evaluateOutbound = function evaluateOutbound(fromMessage, dis
 Activity.prototype.getApi = function getApi(message) {
   const execution = this[K_EXEC].get('execution');
   if (execution && !execution.completed) return execution.getApi(message);
+  // @ts-ignore
   return ActivityApi(this.broker, message || this[K_STATE_MESSAGE]);
 };
 
@@ -665,6 +673,7 @@ Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
       const linkedContent = cloneContent(message.content, { sourceId: this.id, targetId: target.id, isLinked: true });
       linkedContent.sequence = linkedContent.sequence.concat({ id: target.id, type: target.type });
       target.broker.publish('event', 'activity.shake.linked', linkedContent, { persistent: false, type: 'shake' });
+      // @ts-ignore
       for (const flow of target.outbound) flow.shake({ content: cloneContent(linkedContent) });
     }
   }
@@ -756,6 +765,7 @@ Activity.prototype._onRunMessage = function onRunMessage(routingKey, message, me
     case 'run.execute.passthrough':
     case 'run.outbound.take':
     case 'run.next':
+      // @ts-ignore
       return this._continueRunMessage(routingKey, message, messageProperties);
     case 'run.resume': {
       return this._onResumeMessage(message);
@@ -771,6 +781,7 @@ Activity.prototype._onRunMessage = function onRunMessage(routingKey, message, me
       return this.emitFatal(err, message.content);
     }
     if (formatted) message.content = formattedContent;
+    // @ts-ignore
     this._continueRunMessage(routingKey, message, messageProperties);
   });
 };
@@ -1132,10 +1143,10 @@ Activity.prototype._consumeApi = function consumeApi() {
 };
 
 /** @internal */
-Activity.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+Activity.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   switch (message.properties.type) {
     case 'discard': {
-      return this._discardRun(message);
+      return this._discardRun();
     }
     case 'stop': {
       return this._onStop(message);

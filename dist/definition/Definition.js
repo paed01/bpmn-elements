@@ -24,9 +24,12 @@ function Definition(context, options) {
     name,
     type = 'definition'
   } = context;
+
+  /** @type {string} */
   this.id = id;
   /** @type {string} */
   this.type = type;
+  /** @type {string} */
   this.name = name;
 
   /** @type {import('../Environment.js').Environment} */
@@ -177,10 +180,12 @@ Definition.prototype.run = function run(optionsOrCallback, optionalCallback) {
 Definition.prototype.resume = function resume(callback) {
   if (this.isRunning) {
     const err = new Error('cannot resume running definition');
+    // @ts-ignore
     if (callback) return callback(err);
     throw err;
   }
   this[_constants.K_STOPPED] = false;
+  // @ts-ignore
   if (!this.status) return this;
   if (callback) {
     addConsumerCallbacks(this, callback);
@@ -191,6 +196,7 @@ Definition.prototype.resume = function resume(callback) {
     persistent: false
   });
   this._activateRunConsumers();
+  // @ts-ignore
   return this;
 };
 
@@ -218,6 +224,7 @@ Definition.prototype.getState = function getState() {
  */
 Definition.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error('cannot recover running definition');
+  // @ts-ignore
   if (!state) return this;
   const recoveredVersion = state.stateVersion || 0;
   if (recoveredVersion !== _constants.STATE_VERSION) {
@@ -238,6 +245,8 @@ Definition.prototype.recover = function recover(state) {
     exec.set('execution', new _DefinitionExecution.DefinitionExecution(this, this.context).recover(state.execution, recoveredVersion));
   }
   this.broker.recover(state.broker);
+
+  // @ts-ignore
   return this;
 };
 
@@ -355,9 +364,11 @@ Definition.prototype.getPostponed = function getPostponed(...args) {
  */
 Definition.prototype.getApi = function getApi(message) {
   const execution = this.execution;
+  // @ts-ignore
   if (execution) return execution.getApi(message);
   message = message || this[_constants.K_STATE_MESSAGE];
   if (!message) throw new Error('Definition is not running');
+  // @ts-ignore
   return (0, _Api.DefinitionApi)(this.broker, message);
 };
 
@@ -392,7 +403,9 @@ Definition.prototype.sendMessage = function sendMessage(message) {
   };
   let messageType = 'message';
   const reference = message?.id && this.getElementById(message.id);
+  // @ts-ignore
   if (reference?.resolve) {
+    // @ts-ignore
     const resolvedReference = reference.resolve(this._createMessage({
       message
     }));
@@ -561,7 +574,7 @@ Definition.prototype._onResumeMessage = function onResumeMessage(message) {
 };
 
 /** @internal */
-Definition.prototype._onExecutionMessage = function onExecutionMessage(routingKey, message) {
+Definition.prototype._onExecutionMessage = function onExecutionMessage(_routingKey, message) {
   const {
     content,
     properties
@@ -590,7 +603,7 @@ Definition.prototype._onExecutionMessage = function onExecutionMessage(routingKe
 };
 
 /** @internal */
-Definition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+Definition.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   if (message.properties.type === 'stop') {
     const execution = this.execution;
     if (!execution || execution.completed) {

@@ -15,7 +15,7 @@ const K_SOURCE_ELEMENT = Symbol.for('sourceElement');
  * Message flow connecting a source activity (or process) to a target. Subscribes to the
  * source's `end` event and publishes `message.outbound` whenever the source completes,
  * carrying any message payload through to the target.
- * @param {import('moddle-context-serializer').MessageFlow} flowDef
+ * @param {import('#types').MessageFlowDefinition} flowDef
  * @param {import('#types').ContextInstance} context
  */
 function MessageFlow(flowDef, context) {
@@ -100,6 +100,7 @@ MessageFlow.prototype.recover = function recover(state) {
  * @returns {import('#types').IApi<this>}
  */
 MessageFlow.prototype.getApi = function getApi(message) {
+  // @ts-ignore
   return new _Api.Api('message', this.broker, message || {
     content: this._createMessageContent()
   });

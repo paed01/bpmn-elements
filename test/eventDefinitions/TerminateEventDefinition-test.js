@@ -12,7 +12,7 @@ describe('TerminateEventDefinition', () => {
   });
 
   it('publishes process terminate on parent broker and completes', () => {
-    const terminateDefinition = new TerminateEventDefinition(event, {});
+    const terminateDefinition = new TerminateEventDefinition(event, /** @type {any} */ ({}));
 
     const messages = [];
     event.broker.subscribeTmp(
@@ -32,23 +32,25 @@ describe('TerminateEventDefinition', () => {
       { noAck: true }
     );
 
-    terminateDefinition.execute({
-      content: {
-        id: 'end',
-        executionId: 'end_0_0',
-        parent: {
+    terminateDefinition.execute(
+      /** @type {any} */ ({
+        content: {
           id: 'end',
-          executionId: 'end_0',
-          type: 'bpmn:EndEvent',
-          path: [
-            {
-              id: 'theProcess',
-              executionId: 'theProcess_0',
-            },
-          ],
+          executionId: 'end_0_0',
+          parent: {
+            id: 'end',
+            executionId: 'end_0',
+            type: 'bpmn:EndEvent',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
+          },
         },
-      },
-    });
+      })
+    );
 
     expect(messages).to.have.length(2);
     expect(messages[0].fields).to.have.property('routingKey', 'process.terminate');

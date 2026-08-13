@@ -8,7 +8,7 @@ import { K_COUNTERS } from '../constants.js';
 /**
  * Sequence flow connecting two activities. Owns its broker and publishes take/discard/looped
  * events; activities subscribe to drive their inbound queue.
- * @param {import('moddle-context-serializer').SequenceFlow} flowDef
+ * @param {import('#types').SequenceFlowDefinition} flowDef
  * @param {import('#types').ContextInstance} context
  */
 export function SequenceFlow(flowDef, { environment }) {
@@ -122,6 +122,7 @@ SequenceFlow.prototype.recover = function recover(state) {
  * @returns {import('#types').IApi<this>}
  */
 SequenceFlow.prototype.getApi = function getApi(message) {
+  // @ts-ignore
   return FlowApi(this.broker, message || { content: this.createMessage() });
 };
 
@@ -164,7 +165,7 @@ SequenceFlow.prototype.shake = function shake(message) {
 /**
  * Resolve the flow's condition (script or expression). Returns null when no condition is set.
  * Emits a fatal error when the script language is missing or unsupported.
- * @returns {import('#types').ICondition | null}
+ * @returns {import('#types').ICondition | null | undefined}
  */
 SequenceFlow.prototype.getCondition = function getCondition() {
   const conditionExpression = this.behaviour.conditionExpression;
@@ -173,6 +174,7 @@ SequenceFlow.prototype.getCondition = function getCondition() {
   const { language } = conditionExpression;
   const script = this.environment.getScript(language, this);
   if (script) {
+    // @ts-ignore
     return new ScriptCondition(this, script, language);
   }
 
@@ -183,6 +185,7 @@ SequenceFlow.prototype.getCondition = function getCondition() {
     return this.emitFatal(new Error(msg), this.createMessage());
   }
 
+  // @ts-ignore
   return new ExpressionCondition(this, conditionExpression.body);
 };
 

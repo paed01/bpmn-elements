@@ -106,7 +106,7 @@ Feature('Parallel gateway', () => {
     });
 
     When('recovered and resumed from converging gateway', () => {
-      definition = new Definition(context.clone()).recover(state);
+      definition = /** @type {any} */ (new Definition(context.clone()).recover(state));
 
       leave = definition.waitFor('leave');
 
@@ -143,7 +143,7 @@ Feature('Parallel gateway', () => {
     });
 
     When('recovered and resumed from converging gateway on converge event', () => {
-      definition = new Definition(context.clone()).recover(state);
+      definition = /** @type {any} */ (new Definition(context.clone()).recover(state));
 
       leave = definition.waitFor('leave');
 
@@ -267,7 +267,7 @@ Feature('Parallel gateway', () => {
     });
 
     When('recovered and resumed from gateway', () => {
-      definition = new Definition(context.clone(), { services: getTakeServices() }).recover(state);
+      definition = /** @type {any} */ (new Definition(context.clone(), { services: getTakeServices() }).recover(state));
 
       leave = definition.waitFor('leave');
 
@@ -423,7 +423,7 @@ Feature('Parallel gateway', () => {
     });
 
     When('recovered and resumed from converging gateway on converge event', () => {
-      definition = new Definition(context.clone()).recover(state);
+      definition = /** @type {any} */ (new Definition(context.clone()).recover(state));
 
       leave = definition.waitFor('leave');
 

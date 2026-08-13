@@ -10,7 +10,7 @@ exports.TextAnnotation = TextAnnotation;
 var _messageHelper = require("../messageHelper.js");
 /**
  * Placeholder activity for non-executable elements (text annotations, groups, categories).
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @returns {{ id: string, type: string, name: string | undefined, behaviour: Record<string, any>, parent: import('#types').ElementParent, placeholder: true }}
  */
 function DummyActivity(activityDef) {
@@ -35,7 +35,7 @@ function DummyActivity(activityDef) {
 
 /**
  * Text annotation placeholder. Distinct factory identity sharing the dummy implementation.
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  */
 function TextAnnotation(activityDef) {
   return DummyActivity(activityDef);
@@ -43,7 +43,7 @@ function TextAnnotation(activityDef) {
 
 /**
  * Group placeholder. Distinct factory identity sharing the dummy implementation.
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  */
 function Group(activityDef) {
   return DummyActivity(activityDef);
@@ -51,7 +51,7 @@ function Group(activityDef) {
 
 /**
  * Category placeholder. Distinct factory identity sharing the dummy implementation.
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  */
 function Category(activityDef) {
   return DummyActivity(activityDef);

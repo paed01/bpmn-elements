@@ -7,9 +7,9 @@ import { Context, Environment } from 'bpmn-elements';
 import { Serializer, TypeResolver } from 'moddle-context-serializer';
 import { Scripts } from './JavaScripts.js';
 
-const camundaBpmnModdle = JSON.parse(fs.readFileSync('./node_modules/camunda-bpmn-moddle/resources/camunda.json'));
+const camundaBpmnModdle = JSON.parse(fs.readFileSync('./node_modules/camunda-bpmn-moddle/resources/camunda.json', 'utf-8'));
 
-const typeResolver = TypeResolver(types);
+const typeResolver = TypeResolver(/** @type {any} */ (types));
 
 export default {
   AssertMessage,
@@ -24,6 +24,7 @@ export default {
  * Context helper
  * @param {Buffer|string} source BPMN2 source
  * @param {...any} args
+ * @returns {Promise<import('bpmn-elements').ContextInstance>}
  */
 async function context(source, ...args) {
   const logger = Logger('test-helpers:context');
@@ -69,6 +70,12 @@ async function context(source, ...args) {
   return ctx;
 }
 
+/**
+ * Parse BPMN2 source into a moddle context
+ * @param {Buffer|string} source BPMN2 source
+ * @param {any} [options]
+ * @returns {Promise<any>}
+ */
 function moddleContext(source, options = {}) {
   const moddleOptions =
     options.extensions &&
@@ -90,9 +97,15 @@ export function Logger(scope) {
   };
 }
 
+/**
+ * Context helper without source, based on overridable serializable context stub
+ * @param {any} [override]
+ * @param {import('bpmn-elements').EnvironmentOptions} [options]
+ * @returns {import('bpmn-elements').ContextInstance}
+ */
 function emptyContext(override, options) {
   return Context(
-    {
+    /** @type {any} */ ({
       getActivities() {},
       getActivityExtensions() {},
       getAssociations() {},
@@ -120,7 +133,7 @@ function emptyContext(override, options) {
         };
       },
       ...override,
-    },
+    }),
     new Environment({ Logger, scripts: new Scripts(), settings: { enableDummyService: true }, ...options })
   );
 }

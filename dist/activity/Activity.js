@@ -23,7 +23,7 @@ const K_FLOWS = Symbol.for('flows');
 /**
  * Activity wraps any element (task, event, gateway) and orchestrates its lifecycle through the broker.
  * @param {import('#types').IActivityBehaviour} Behaviour Element-specific behaviour constructor invoked per execution
- * @param {import('moddle-context-serializer').Activity} activityDef Parsed BPMN element definition
+ * @param {import('#types').ActivityDefinition} activityDef Parsed BPMN element definition, behaviour is optional
  * @param {import('#types').ContextInstance} context Per-execution registry and factory
  */
 function Activity(Behaviour, activityDef, context) {
@@ -33,6 +33,7 @@ function Activity(Behaviour, activityDef, context) {
     name,
     behaviour = {}
   } = activityDef;
+  // @ts-ignore
   const {
     attachedTo: attachedToRef,
     eventDefinitions
@@ -43,7 +44,8 @@ function Activity(Behaviour, activityDef, context) {
   this.id = id;
   this.type = type;
   this.name = name;
-  /** @type {import('moddle-context-serializer').ActivityBehaviour} */
+  /** @type {NonNullable<import('#types').ActivityDefinition['behaviour']>} */
+  // @ts-ignore
   this.behaviour = {
     ...behaviour,
     eventDefinitions,
@@ -53,7 +55,7 @@ function Activity(Behaviour, activityDef, context) {
     })
   };
   this.Behaviour = Behaviour;
-  /** @type {import('moddle-context-serializer').Parent} */
+  /** @type {import('#types').ElementParentRef} */
   this.parent = activityDef.parent ? (0, _messageHelper.cloneParent)(activityDef.parent) : {};
   /** @type {import('#types').ILogger} */
   this.logger = context.environment.Logger(type.toLowerCase());
@@ -67,6 +69,7 @@ function Activity(Behaviour, activityDef, context) {
     taken: 0,
     discarded: 0
   };
+  // @ts-ignore
   const isForCompensation = !!behaviour.isForCompensation;
   let attachedToActivity, attachedTo;
   if (attachedToRef) {
@@ -107,8 +110,10 @@ function Activity(Behaviour, activityDef, context) {
   /** @internal */
   this[K_FLAGS] = {
     isEnd: !outboundSequenceFlows.length && !isThrowingLink,
+    // @ts-ignore
     isStart: !hasInboundTrigger && !behaviour.triggeredByEvent && !activityDef.isCatching,
     isSubProcess: activityDef.isSubProcess,
+    // @ts-ignore
     isMultiInstance: !!behaviour.loopCharacteristics,
     isForCompensation,
     attachedTo,
@@ -322,7 +327,7 @@ Activity.prototype.consumeInbound = function consumeInbound() {
   if (this.status) return;
   if (!this._getInboundTriggers().length && !this.initialized) return;
   const onInbound = this[_constants.K_MESSAGE_HANDLERS].onInbound;
-  return this.broker.getQueue('inbound-q').assertConsumer(onInbound, {
+  this.broker.getQueue('inbound-q').assertConsumer(onInbound, {
     consumerTag: '_run-on-inbound'
   });
 };
@@ -456,6 +461,7 @@ Activity.prototype.getState = function getState() {
  */
 Activity.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error(`cannot recover running activity <${this.id}>`);
+  // @ts-ignore
   if (!state) return this;
   this.stopped = state.stopped;
   this.status = state.status;
@@ -469,6 +475,8 @@ Activity.prototype.recover = function recover(state) {
     exec.set('execution', new _ActivityExecution.ActivityExecution(this, this.context).recover(state.execution));
   }
   this.broker.recover(state.broker);
+
+  // @ts-ignore
   return this;
 };
 
@@ -564,7 +572,7 @@ Activity.prototype.stop = function stop() {
  */
 Activity.prototype.next = function next() {
   if (!this.environment.settings.step) return;
-  /** @type {import('#types').ElementBrokerMessage} */
+  /** @type {import('smqp').Message} */
   const stateMessage = this[_constants.K_STATE_MESSAGE];
   if (!stateMessage) return;
   if (this.status === 'executing') return false;
@@ -602,6 +610,7 @@ Activity.prototype.evaluateOutbound = function evaluateOutbound(fromMessage, dis
 Activity.prototype.getApi = function getApi(message) {
   const execution = this[K_EXEC].get('execution');
   if (execution && !execution.completed) return execution.getApi(message);
+  // @ts-ignore
   return (0, _Api.ActivityApi)(this.broker, message || this[_constants.K_STATE_MESSAGE]);
 };
 
@@ -708,6 +717,7 @@ Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
         persistent: false,
         type: 'shake'
       });
+      // @ts-ignore
       for (const flow of target.outbound) flow.shake({
         content: (0, _messageHelper.cloneContent)(linkedContent)
       });
@@ -815,6 +825,7 @@ Activity.prototype._onRunMessage = function onRunMessage(routingKey, message, me
     case 'run.execute.passthrough':
     case 'run.outbound.take':
     case 'run.next':
+      // @ts-ignore
       return this._continueRunMessage(routingKey, message, messageProperties);
     case 'run.resume':
       {
@@ -829,6 +840,7 @@ Activity.prototype._onRunMessage = function onRunMessage(routingKey, message, me
       return this.emitFatal(err, message.content);
     }
     if (formatted) message.content = formattedContent;
+    // @ts-ignore
     this._continueRunMessage(routingKey, message, messageProperties);
   });
 };
@@ -1198,11 +1210,11 @@ Activity.prototype._consumeApi = function consumeApi() {
 };
 
 /** @internal */
-Activity.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+Activity.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   switch (message.properties.type) {
     case 'discard':
       {
-        return this._discardRun(message);
+        return this._discardRun();
       }
     case 'stop':
       {

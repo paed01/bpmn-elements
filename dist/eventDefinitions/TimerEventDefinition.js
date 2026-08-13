@@ -15,7 +15,7 @@ const timerTypes = new Set(['timeDuration', 'timeDate', 'timeCycle']);
 /**
  * Timer event definition
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ * @param {import('#types').SerializableElement} eventDefinition
  */
 function TimerEventDefinition(activity, eventDefinition) {
   const type = this.type = eventDefinition.type || 'TimerEventDefinition';
@@ -81,6 +81,7 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
     var resolvedTimer = this._getTimers(executeMessage);
   } catch (err) {
     this.logger.error(`<${executionId} (${this.activity.id})> failed to get timeout delay: ${err}`);
+    // @ts-ignore
     throw new _Errors.RunError(err.message, executeMessage, err);
   }
   const timerContent = this[K_TIMER_CONTENT] = (0, _messageHelper.cloneContent)(content, {
@@ -170,7 +171,7 @@ TimerEventDefinition.prototype._onDelegatedApiMessage = function onDelegatedApiM
   });
   return this._onApiMessage(routingKey, message);
 };
-TimerEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+TimerEventDefinition.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   const {
     type: messageType,
     correlationId
@@ -206,7 +207,7 @@ TimerEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey,
   }
 };
 
-/** @private */
+/** @internal */
 TimerEventDefinition.prototype._stop = function stop() {
   this[_constants.K_STOPPED] = true;
   const timer = this[K_TIMER];
@@ -238,6 +239,7 @@ TimerEventDefinition.prototype.parse = function parse(timerType, value) {
     case 'timeDate':
       {
         expireAt = (0, _piso.getDate)(value);
+        // @ts-ignore
         delay = now.getTime() - expireAt;
         break;
       }
@@ -264,7 +266,9 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
       const {
         repeat: parsedRepeat,
         expireAt: parsedExpireAt
-      } = this.parse(timerType, timerStr);
+      } = this.parse(
+      // @ts-ignore
+      timerType, timerStr);
       repeat = parsedRepeat;
       if (!parsedExpireAt || !parsedExpireAt.getTime) {
         throw new TypeError(`Parsed ${timerType} "${timerStr}" expireAt failed to resolve to a date`);
@@ -274,19 +278,25 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
       expireAtDate = now;
     }
     if (!('expireAt' in result) || result.expireAt > expireAtDate) {
+      // @ts-ignore
       result.timerType = timerType;
       result.expireAt = expireAtDate;
+      // @ts-ignore
       result.repeat = repeat;
     }
   }
   if ('expireAt' in result) {
+    // @ts-ignore
     result.timeout = result.expireAt - now.getTime();
   } else if ('timeout' in content) {
+    // @ts-ignore
     result.timeout = content.timeout;
   } else if (!Object.keys(result).length) {
+    // @ts-ignore
     result.timeout = 0;
   }
   if (content.inbound?.[0] && 'repeat' in content.inbound[0]) {
+    // @ts-ignore
     result.repeat = content.inbound[0].repeat;
   }
   return result;

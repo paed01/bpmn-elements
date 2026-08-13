@@ -1,6 +1,5 @@
 declare module 'bpmn-elements' {
 	import type { Broker, BrokerState, Consumer, MessageEnvelope, MessageFields, MessageProperties } from 'smqp';
-	import type { SerializableContext, SerializableElement } from 'moddle-context-serializer';
   // --- Broker / message contracts -----------------------------------------------
 
   export interface ElementBroker<T> extends Broker {
@@ -59,17 +58,17 @@ declare module 'bpmn-elements' {
   export interface ElementParent {
 	id: string;
 	type: string;
-	executionId: string;
-	path?: Omit<ElementParent, 'path'>[];
+	executionId?: string;
+	path?: Omit<Partial<ElementParent>, 'path'>[];
   }
 
-  /** Resolved signal-, message-, or escalation reference, shared by their `resolve` functions. */
+  /** Resolved signal-, message-, error-, or escalation reference, shared by their `resolve` functions. */
   export interface ResolvedReference {
 	id?: string;
 	type?: string;
 	messageType: string;
 	name?: string;
-	parent: ElementParent;
+	parent?: ElementParent;
   }
 
   // --- Shake results ------------------------------------------------------------
@@ -93,6 +92,94 @@ declare module 'bpmn-elements' {
 
   /** Result of shaking an activity graph, keyed by the starting activity id. */
   export type ShakeResult = Record<string, ShakenSequence[]>;
+
+  // --- Serialized definition contracts --------------------------------------------
+  // bpmn-elements is agnostic to how the BPMN source was parsed and serialized.
+  // Any object meeting these minimal structural contracts can drive an execution —
+  // moddle-context-serializer is one implementation. Every element works with a
+  // minimum definition; the constructors default what is missing.
+
+  /** Parent element reference in a serialized definition */
+  export interface ElementParentRef {
+	id?: string;
+	type?: string;
+	[x: string]: any;
+  }
+
+  /** Serialized BPMN element definition; behaviour is optional and may be partial */
+  export interface SerializableElement {
+	id?: string;
+	type?: string;
+	name?: string;
+	parent?: ElementParentRef;
+	behaviour?: Record<string, any>;
+	[x: string]: any;
+  }
+
+  /** Parsed BPMN element definition as accepted by the Activity constructor */
+  export interface ActivityDefinition extends SerializableElement {
+	behaviour?: {
+	  /** Attached-to element reference, e.g. boundary event host — only `id` is read */
+	  attachedTo?: { id: string; [x: string]: any };
+	  eventDefinitions?: SerializableElement[];
+	  [x: string]: any;
+	};
+  }
+
+  export interface ProcessDefinition extends SerializableElement {
+	behaviour?: {
+	  isExecutable?: boolean;
+	  [x: string]: any;
+	};
+  }
+
+  export interface SequenceFlowDefinition extends SerializableElement {
+	sourceId?: string;
+	targetId?: string;
+	isDefault?: boolean;
+  }
+
+  export interface AssociationDefinition extends SerializableElement {
+	sourceId?: string;
+	targetId?: string;
+  }
+
+  /** Message flow source or target endpoint */
+  export interface MessageFlowReference {
+	processId?: string;
+	id?: string;
+	[x: string]: any;
+  }
+
+  export interface MessageFlowDefinition extends SerializableElement {
+	source?: MessageFlowReference;
+	target?: MessageFlowReference;
+  }
+
+  /**
+   * Serialized definition source consumed by Context. Structurally compatible with
+   * the moddle-context-serializer output, but any implementation will do.
+   */
+  export interface SerializableContext {
+	getActivities(scopeId?: string): ActivityDefinition[];
+	getActivityById(id: string): ActivityDefinition;
+	getAssociations(scopeId?: string): AssociationDefinition[];
+	getAssociationById(id: string): AssociationDefinition;
+	getDataObjectById(id: string): SerializableElement;
+	getDataStoreById(id: string): SerializableElement;
+	getDataStoreReferenceById(id: string): SerializableElement;
+	getExecutableProcesses(): ProcessDefinition[];
+	getInboundAssociations(activityId: string): AssociationDefinition[];
+	getInboundSequenceFlows(activityId: string): SequenceFlowDefinition[];
+	getMessageFlows(scopeId?: string): MessageFlowDefinition[];
+	getOutboundAssociations(activityId: string): AssociationDefinition[];
+	getOutboundSequenceFlows(activityId: string): SequenceFlowDefinition[];
+	getProcessById(id: string): ProcessDefinition;
+	getProcesses(): ProcessDefinition[];
+	getSequenceFlowById(id: string): SequenceFlowDefinition;
+	getSequenceFlows(scopeId?: string): SequenceFlowDefinition[];
+	[x: string]: any;
+  }
 
   // --- Element abstract bases ---------------------------------------------------
 
@@ -168,20 +255,27 @@ declare module 'bpmn-elements' {
 
   // --- Activity behaviour & extensions ------------------------------------------
 
-  export interface IActivityBehaviour {
-	id: string;
-	type: string;
-	activity: Activity;
-	environment: Environment;
-	new (activity: Activity, context: ContextInstance): IActivityBehaviour;
+  /** Behaviour instance driving one activity run, as instantiated by ActivityExecution. */
+  export interface IActivityBehaviourInstance {
+	id?: string;
+	type?: string;
+	activity?: Activity;
+	environment?: Environment;
 	execute(executeMessage: ElementBrokerMessage): void;
+	[x: string]: any;
   }
+
+  export type IActivityBehaviourConstructor = new (activity: Activity, context: ContextInstance) => IActivityBehaviourInstance;
+
+  /** Element-specific behaviour: a class, or a plain factory function returning the instance. */
+  export type IActivityBehaviour =
+	IActivityBehaviourConstructor | ((activity: Activity, context: ContextInstance) => IActivityBehaviourInstance);
 
   export type Extension = (activity: any, context: any) => Partial<IExtension> | void;
 
   export interface IExtension {
-	activate(message: ElementBrokerMessage): void;
-	deactivate(message: ElementBrokerMessage): void;
+	activate(message?: ElementBrokerMessage): void;
+	deactivate(message?: ElementBrokerMessage): void;
   }
 
   export interface IExpressions {
@@ -233,6 +327,8 @@ declare module 'bpmn-elements' {
 	 * optional override expressions handler
 	 */
 	expressions?: IExpressions;
+	/** arbitrary consumer options are kept as is on environment options */
+	[x: string]: any;
   }
 
   // --- Filter / callback shapes -------------------------------------------------
@@ -487,18 +583,18 @@ declare module 'bpmn-elements' {
   }
 
   export interface TimersOptions {
-	/** Defaults to builtin setTimeout */
-	setTimeout?: typeof setTimeout;
-	/** Defaults to builtin clearTimeout */
-	clearTimeout?: typeof clearTimeout;
+	/** Any setTimeout implementation, defaults to builtin setTimeout */
+	setTimeout?: (callback: (...args: any[]) => void, delay: number, ...args: any[]) => any;
+	/** Any clearTimeout implementation, defaults to builtin clearTimeout */
+	clearTimeout?: (ref: any) => void;
 	[x: string]: any;
   }
 
   // --- Scripts ------------------------------------------------------------------
 
   export interface IScripts {
-	register(activity: Activity): Script | undefined;
-	getScript(language: string, identifier: { id: string; [x: string]: any }): Script;
+	register(activity: Activity): Script | void;
+	getScript(language: string, identifier: { id: string; [x: string]: any }): Script | undefined;
   }
 
   export interface Script {
@@ -579,7 +675,7 @@ declare module 'bpmn-elements' {
 
   // --- Context --
   export interface IExtensionsMapper {
-	get(activity: any): IExtensions[];
+	get(activity: any): IExtensions;
   }
 
   export interface IExtensions extends IExtension {
@@ -594,27 +690,164 @@ declare module 'bpmn-elements' {
 	write(broker: Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): void;
   }
 	/**
+	 * Per-run execution orchestrator for an Activity. Instantiates the element-specific behaviour
+	 * and drives the execute message flow over the activity broker.
+	 * 
+	 */
+		export class ActivityExecution {
+		/**
+		 * Per-run execution orchestrator for an Activity. Instantiates the element-specific behaviour
+		 * and drives the execute message flow over the activity broker.
+		 * 
+		 */
+		constructor(activity: Activity, context?: ContextInstance);
+		activity: Activity;
+		context: ContextInstance | undefined;
+		id: string | undefined;
+		broker: ElementBroker<Activity>;
+		
+		source: IActivityBehaviourInstance | undefined;
+		get completed(): boolean;
+		/**
+		 * Begin executing the activity behaviour. Resumes if the message is redelivered.
+		 * @throws {Error} when message or executionId is missing
+		 */
+		execute(executeMessage: ElementBrokerMessage): number | undefined;
+		executionId: string | undefined;
+		/**
+		 * Bind the execute queue and start consuming execute and api messages.
+		 */
+		activate(): void;
+		/**
+		 * Cancel execute and api consumers and unbind the execute queue.
+		 */
+		deactivate(): void;
+		/**
+		 * Discard the running execution.
+		 */
+		discard(): void;
+		/**
+		 * Resolve an Api wrapper, preferring a behaviour-specific Api when the source exposes one.
+		 * */
+		getApi(apiMessage?: ElementBrokerMessage): IApi<Activity>;
+		/**
+		 * Pass an execute message straight to the behaviour, executing first if no source is set up yet.
+		 * */
+		passthrough(executeMessage: ElementBrokerMessage): void;
+		/**
+		 * List currently postponed executions as Api wrappers, including those from sub-process behaviours.
+		 */
+		getPostponed(): IApi<Activity>[];
+		/**
+		 * Snapshot execution state, merging behaviour-specific state when the source provides it.
+		 * */
+		getState(): ActivityExecutionState;
+		/**
+		 * Restore execution state captured by getState.
+		 * */
+		recover(state?: ActivityExecutionState): this;
+		/**
+		 * Stop the execution via the activity api.
+		 */
+		stop(): void;
+	}
+	/**
+	 * Drives the execution of a Definition. Activates executable processes, routes inter-process
+	 * delegate messages and call activity hand-offs, and rolls completion up to the Definition.
+	 * */
+		export class DefinitionExecution {
+		/**
+		 * Drives the execution of a Definition. Activates executable processes, routes inter-process
+		 * delegate messages and call activity hand-offs, and rolls completion up to the Definition.
+		 * */
+		constructor(definition: Definition, context: ContextInstance);
+		id: string;
+		type: string;
+		broker: ElementBroker<Definition>;
+		environment: Environment;
+		context: ContextInstance;
+		executionId: string | undefined;
+		/**
+		 * Activate executable processes and start the definition execution. Resumes if the message
+		 * is redelivered. When `content.processId` is set, only that process is started.
+		 * @throws {Error} when message or executionId is missing
+		 */
+		execute(executeMessage: ElementBrokerMessage): number | true | undefined;
+		/**
+		 * Resume after recover by reactivating running processes.
+		 */
+		resume(): number | undefined;
+		/**
+		 * Restore execution state captured by getState. Reinstates running processes from the snapshot.
+		 * @param recoveredVersion State version
+		 * */
+		recover(state?: DefinitionExecutionState, recoveredVersion?: number): this;
+		/**
+		 * Stop the running execution via the api.
+		 */
+		stop(): void;
+		/**
+		 * Get every process in the definition (running first, then any non-running by id).
+		 * */
+		getProcesses(): Process[];
+		
+		getProcessById(processId: string): Process | undefined;
+		/**
+		 * Get every process matching the given id (call activities can spawn duplicates).
+		 * */
+		getProcessesById(processId: string): Process[];
+		
+		getProcessByExecutionId(processExecutionId: string): Process | undefined;
+		/**
+		 * Get processes that have an executionId, i.e. are currently running.
+		 * */
+		getRunningProcesses(): Process[];
+		/**
+		 * Get processes flagged executable in the definition.
+		 * */
+		getExecutableProcesses(): Process[];
+		/**
+		 * Snapshot execution state for recover.
+		 * */
+		getState(): DefinitionExecutionState;
+		/**
+		 * Resolve a Definition Api or, when the message belongs to a child process, its process Api.
+		 * */
+		getApi(apiMessage?: ElementBrokerMessage): IApi<Definition>;
+		/**
+		 * List currently postponed activities across every running process.
+		 * */
+		getPostponed(filterFn?: filterPostponed | undefined): IApi<Activity>[];
+		get stopped(): boolean;
+		get completed(): boolean;
+		get status(): DefinitionStatus;
+		get processes(): Process[];
+		get postponedCount(): number;
+		get isRunning(): boolean;
+		get activityStatus(): ActivityStatus;
+	}
+	/**
 	 * Activity wraps any element (task, event, gateway) and orchestrates its lifecycle through the broker.
 	 * @param Behaviour Element-specific behaviour constructor invoked per execution
-	 * @param activityDef Parsed BPMN element definition
+	 * @param activityDef Parsed BPMN element definition, behaviour is optional
 	 * @param context Per-execution registry and factory
 	 */
 		export class Activity {
 		/**
 		 * Activity wraps any element (task, event, gateway) and orchestrates its lifecycle through the broker.
 		 * @param Behaviour Element-specific behaviour constructor invoked per execution
-		 * @param activityDef Parsed BPMN element definition
+		 * @param activityDef Parsed BPMN element definition, behaviour is optional
 		 * @param context Per-execution registry and factory
 		 */
-		constructor(Behaviour: IActivityBehaviour, activityDef: import("moddle-context-serializer").Activity, context: ContextInstance);
+		constructor(Behaviour: IActivityBehaviour, activityDef: ActivityDefinition, context: ContextInstance);
 		id: string | undefined;
 		type: string;
 		name: string | undefined;
 		
-		behaviour: import("moddle-context-serializer").ActivityBehaviour;
+		behaviour: NonNullable<ActivityDefinition["behaviour"]>;
 		Behaviour: IActivityBehaviour;
 		
-		parent: import("moddle-context-serializer").Parent;
+		parent: ElementParentRef;
 		
 		logger: ILogger;
 		environment: Environment;
@@ -694,7 +927,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Advance one run-step when the environment runs in step mode. No-op otherwise.
 		 */
-		next(): false | ElementBrokerMessage | undefined;
+		next(): false | import("smqp").Message | undefined;
 		/**
 		 * Walk outbound flows to discover the activity graph from this point.
 		 */
@@ -744,68 +977,9 @@ declare module 'bpmn-elements' {
 		get initialized(): boolean;
 	}
 	/**
-	 * Per-run execution orchestrator for an Activity. Instantiates the element-specific behaviour
-	 * and drives the execute message flow over the activity broker.
-	 * */
-		export class ActivityExecution {
-		/**
-		 * Per-run execution orchestrator for an Activity. Instantiates the element-specific behaviour
-		 * and drives the execute message flow over the activity broker.
-		 * */
-		constructor(activity: Activity, context: ContextInstance);
-		activity: Activity;
-		context: ContextInstance;
-		id: string | undefined;
-		broker: ElementBroker<Activity>;
-		get completed(): boolean;
-		/**
-		 * Begin executing the activity behaviour. Resumes if the message is redelivered.
-		 * @throws {Error} when message or executionId is missing
-		 */
-		execute(executeMessage: ElementBrokerMessage): number | undefined;
-		executionId: string | undefined;
-		source: IActivityBehaviour | undefined;
-		/**
-		 * Bind the execute queue and start consuming execute and api messages.
-		 */
-		activate(): void;
-		/**
-		 * Cancel execute and api consumers and unbind the execute queue.
-		 */
-		deactivate(): void;
-		/**
-		 * Discard the running execution.
-		 */
-		discard(): void;
-		/**
-		 * Resolve an Api wrapper, preferring a behaviour-specific Api when the source exposes one.
-		 * */
-		getApi(apiMessage?: ElementBrokerMessage): IApi<Activity>;
-		/**
-		 * Pass an execute message straight to the behaviour, executing first if no source is set up yet.
-		 * */
-		passthrough(executeMessage: ElementBrokerMessage): void;
-		/**
-		 * List currently postponed executions as Api wrappers, including those from sub-process behaviours.
-		 */
-		getPostponed(): IApi<Activity>[];
-		/**
-		 * Snapshot execution state, merging behaviour-specific state when the source provides it.
-		 * */
-		getState(): ActivityExecutionState;
-		/**
-		 * Restore execution state captured by getState.
-		 * */
-		recover(state?: ActivityExecutionState): this;
-		/**
-		 * Stop the execution via the activity api.
-		 */
-		stop(): void;
-	}
-	/**
 	 * BPMN error.
 	 * */
-	export function BpmnError(errorDef: import("moddle-context-serializer").SerializableElement, context: ContextInstance): {
+	export function BpmnError(errorDef: SerializableElement, context: ContextInstance): {
 		id: string | undefined;
 		type: string | undefined;
 		name: string;
@@ -818,7 +992,7 @@ declare module 'bpmn-elements' {
 	 * Build a runtime Context from a parsed BPMN definition.
 	 * @param environment Existing environment to clone; a fresh one is created when omitted
 	 */
-	export function Context(definitionContext: import("moddle-context-serializer").SerializableContext, environment?: Environment): ContextInstance;
+	export function Context(definitionContext: SerializableContext, environment?: Environment): ContextInstance;
 	/**
 	 * Per-execution registry that lazily upserts activities, flows, and processes from the parsed BPMN definition.
 	 * @param owner Process or sub-process activity that owns this context
@@ -830,18 +1004,17 @@ declare module 'bpmn-elements' {
 		 * @param owner Process or sub-process activity that owns this context
 		 * @param peersCache Shared converging parallel gateway peer cache; created at the root and propagated to every clone
 		 */
-		constructor(definitionContext: import("moddle-context-serializer").SerializableContext, environment: Environment, owner?: Process | Activity, peersCache?: Map<string, any>);
-		id: string;
-		name: string;
-		type: string;
+		constructor(definitionContext: SerializableContext, environment: Environment, owner?: Process | Activity, peersCache?: Map<string, any>);
+		id: any;
+		name: any;
+		type: any;
 		/** Unique instance id */
 		sid: string;
-		definitionContext: import("moddle-context-serializer").SerializableContext;
+		definitionContext: SerializableContext;
 		environment: Environment;
 		/** Discovered parallel gateway peers, keyed by gateway id, shared with all clones. Runtime-only, not serialized. */
 		peersCache: Map<any, any>;
-		
-		extensionsMapper: IExtensionsMapper;
+		extensionsMapper: ExtensionsMapper;
 		get owner(): Activity | Process | undefined;
 		/**
 		 * Get or create the activity instance for the given id.
@@ -850,7 +1023,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Return the cached activity instance, instantiating it the first time it is referenced.
 		 * */
-		upsertActivity(activityDef: import("moddle-context-serializer").SerializableElement): Activity;
+		upsertActivity(activityDef: SerializableElement): Activity;
 		/**
 		 * Get or create the sequence flow instance for the given id.
 		 * */
@@ -876,14 +1049,14 @@ declare module 'bpmn-elements' {
 		/**
 		 * Return the cached sequence flow, instantiating it the first time it is referenced.
 		 * */
-		upsertSequenceFlow(flowDefinition: import("moddle-context-serializer").SerializableElement): SequenceFlow;
+		upsertSequenceFlow(flowDefinition: SerializableElement): SequenceFlow;
 		/**
 		 * Get association flows
 		 * @param scopeId Process or sub-process id
 		 */
 		getAssociations(scopeId?: string): Association[];
 		
-		upsertAssociation(associationDefinition: import("moddle-context-serializer").SerializableElement): Association;
+		upsertAssociation(associationDefinition: SerializableElement): Association;
 		/**
 		 * Get or create the association instance for the given id.
 		 * */
@@ -942,7 +1115,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Inspect an activity def for link event definitions.
 		 * */
-		getLinkEventDefinitionInfo(activityDef: import("moddle-context-serializer").Activity): {
+		getLinkEventDefinitionInfo(activityDef: ActivityDefinition): {
 			linkBehaviour?: Function;
 			linkNames?: string[];
 		};
@@ -956,11 +1129,89 @@ declare module 'bpmn-elements' {
 		 * Resolve user-registered extensions and the built-in BpmnIO extension for an activity.
 		 * Returns undefined when the activity has no extensions to attach.
 		 * */
-		loadExtensions(activity: ElementBase): IExtension | undefined;
+		loadExtensions(activity: ElementBase | Activity | Process): IExtension | undefined;
 		/**
 		 * Resolve the parent process or sub-process activity that owns the given activity.
 		 * */
 		getActivityParentById(activityId: string): Activity | Process | null;
+	}
+
+		class ExtensionsMapper {
+		
+		constructor(context: ContextInstance);
+		context: ContextInstance;
+		
+		get(activity: any): Extensions;
+	}
+		class Extensions {
+		constructor(activity: any, context: any, extensions: any);
+		extensions: any[];
+		get count(): number;
+		activate(message: any): void;
+		deactivate(message: any): void;
+	}
+	/**
+	 * Builtin data object. Reads from / writes to `environment.variables._data`.
+	 * */
+		export class DataObject {
+		/**
+		 * Builtin data object. Reads from / writes to `environment.variables._data`.
+		 * */
+		constructor(dataObjectDef: SerializableElement, { environment }: ContextInstance);
+		id: string | undefined;
+		type: string | undefined;
+		name: string | undefined;
+		
+		behaviour: Record<string, any>;
+		
+		parent: ElementParentRef | undefined;
+		environment: Environment;
+		
+		read(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): void;
+		
+		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): void;
+	}
+	/**
+	 * Builtin data store. Reads from / writes to `environment.variables._data`.
+	 * */
+		export class DataStore {
+		/**
+		 * Builtin data store. Reads from / writes to `environment.variables._data`.
+		 * */
+		constructor(dataStoreDef: SerializableElement, { environment }: ContextInstance);
+		id: string | undefined;
+		type: string | undefined;
+		name: string | undefined;
+		
+		behaviour: Record<string, any>;
+		
+		parent: ElementParentRef | undefined;
+		environment: Environment;
+		
+		read(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): void;
+		
+		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): void;
+	}
+	/**
+	 * Builtin data store reference. Reads from / writes to `environment.variables._data`.
+	 * */
+		export class DataStoreReference {
+		/**
+		 * Builtin data store reference. Reads from / writes to `environment.variables._data`.
+		 * */
+		constructor(dataObjectDef: SerializableElement, { environment }: ContextInstance);
+		id: string | undefined;
+		type: string | undefined;
+		name: string | undefined;
+		
+		behaviour: Record<string, any>;
+		
+		parent: ElementParentRef | undefined;
+		environment: Environment;
+		
+		read(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): void;
+		
+		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): void;
 	}
 	/**
 	 * Top-level wrapper for an executable BPMN definition. Owns its DefinitionExecution and
@@ -974,9 +1225,11 @@ declare module 'bpmn-elements' {
 		 * @param options When provided, environment is cloned and settings merged
 		 */
 		constructor(context: ContextInstance, options?: EnvironmentOptions);
+		
 		id: string;
 		
 		type: string;
+		
 		name: string;
 		
 		environment: Environment;
@@ -1052,7 +1305,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Lookup any element (activity, sequence flow, message flow, or association) in the parsed definition by id.
 		 * */
-		getElementById(elementId: string): Activity | MessageFlow | SequenceFlow | Association | null;
+		getElementById(elementId: string): MessageFlow | Activity | SequenceFlow | Association | null;
 		/**
 		 * List currently postponed activities as Api wrappers.
 		 * */
@@ -1096,84 +1349,9 @@ declare module 'bpmn-elements' {
 		get activityStatus(): ActivityStatus;
 	}
 	/**
-	 * Drives the execution of a Definition. Activates executable processes, routes inter-process
-	 * delegate messages and call activity hand-offs, and rolls completion up to the Definition.
-	 * */
-		export class DefinitionExecution {
-		/**
-		 * Drives the execution of a Definition. Activates executable processes, routes inter-process
-		 * delegate messages and call activity hand-offs, and rolls completion up to the Definition.
-		 * */
-		constructor(definition: Definition, context: ContextInstance);
-		id: string;
-		type: string;
-		broker: ElementBroker<Definition>;
-		environment: Environment;
-		context: ContextInstance;
-		executionId: string | undefined;
-		/**
-		 * Activate executable processes and start the definition execution. Resumes if the message
-		 * is redelivered. When `content.processId` is set, only that process is started.
-		 * @throws {Error} when message or executionId is missing
-		 */
-		execute(executeMessage: ElementBrokerMessage): number | true | undefined;
-		/**
-		 * Resume after recover by reactivating running processes.
-		 */
-		resume(): number | undefined;
-		/**
-		 * Restore execution state captured by getState. Reinstates running processes from the snapshot.
-		 * @param recoveredVersion State version
-		 * */
-		recover(state?: DefinitionExecutionState, recoveredVersion?: number): this;
-		/**
-		 * Stop the running execution via the api.
-		 */
-		stop(): void;
-		/**
-		 * Get every process in the definition (running first, then any non-running by id).
-		 * */
-		getProcesses(): Process[];
-		
-		getProcessById(processId: string): Process | undefined;
-		/**
-		 * Get every process matching the given id (call activities can spawn duplicates).
-		 * */
-		getProcessesById(processId: string): Process[];
-		
-		getProcessByExecutionId(processExecutionId: string): Process | undefined;
-		/**
-		 * Get processes that have an executionId, i.e. are currently running.
-		 * */
-		getRunningProcesses(): Process[];
-		/**
-		 * Get processes flagged executable in the definition.
-		 * */
-		getExecutableProcesses(): Process[];
-		/**
-		 * Snapshot execution state for recover.
-		 * */
-		getState(): DefinitionExecutionState;
-		/**
-		 * Resolve a Definition Api or, when the message belongs to a child process, its process Api.
-		 * */
-		getApi(apiMessage?: ElementBrokerMessage): IApi<Definition>;
-		/**
-		 * List currently postponed activities across every running process.
-		 * */
-		getPostponed(filterFn?: filterPostponed | undefined): IApi<Activity>[];
-		get stopped(): boolean;
-		get completed(): boolean;
-		get status(): DefinitionStatus;
-		get processes(): Process[];
-		get postponedCount(): number;
-		get isRunning(): boolean;
-		get activityStatus(): ActivityStatus;
-	}
-	/**
 	 * Placeholder activity for non-executable elements (text annotations, groups, categories).
 	 * */
-	export function Dummy(activityDef: import("moddle-context-serializer").Activity): {
+	export function Dummy(activityDef: ActivityDefinition): {
 		id: string;
 		type: string;
 		name: string | undefined;
@@ -1184,7 +1362,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * Text annotation placeholder. Distinct factory identity sharing the dummy implementation.
 	 * */
-	export function TextAnnotation(activityDef: import("moddle-context-serializer").Activity): {
+	export function TextAnnotation(activityDef: ActivityDefinition): {
 		id: string;
 		type: string;
 		name: string | undefined;
@@ -1195,7 +1373,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * Group placeholder. Distinct factory identity sharing the dummy implementation.
 	 * */
-	export function Group(activityDef: import("moddle-context-serializer").Activity): {
+	export function Group(activityDef: ActivityDefinition): {
 		id: string;
 		type: string;
 		name: string | undefined;
@@ -1206,7 +1384,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * Category placeholder. Distinct factory identity sharing the dummy implementation.
 	 * */
-	export function Category(activityDef: import("moddle-context-serializer").Activity): {
+	export function Category(activityDef: ActivityDefinition): {
 		id: string;
 		type: string;
 		name: string | undefined;
@@ -1258,20 +1436,24 @@ declare module 'bpmn-elements' {
 		clone(overrideOptions?: EnvironmentOptions): Environment;
 		/**
 		 * Merge variables into the environment. Non-objects are ignored.
-		 * */
-		assignVariables(newVars: Record<string, any>): void;
+		 * 
+		 */
+		assignVariables(newVars?: Record<string, any>): void;
 		/**
 		 * Merge settings into the environment. Non-objects are ignored.
 		 * */
-		assignSettings(newSettings: EnvironmentSettings): this;
+		assignSettings(newSettings?: EnvironmentSettings): this;
 		/**
 		 * Resolve a registered script by language and identifier.
 		 * */
-		getScript(...args: any[]): Script;
+		getScript(language: string, identifier: {
+			[x: string]: any;
+			id: string;
+		}): Script | undefined;
 		/**
 		 * Register a script for an activity, delegating to the configured scripts engine.
 		 * */
-		registerScript(...args: any[]): Script | undefined;
+		registerScript(activity: any): void | Script;
 		/**
 		 * Lookup a registered service by name.
 		 * */
@@ -1290,76 +1472,13 @@ declare module 'bpmn-elements' {
 		addService(name: string, fn: ServiceFunction): void;
 	}
 	/**
-	 * Builtin data object. Reads from / writes to `environment.variables._data`.
-	 * */
-		export class DataObject {
-		/**
-		 * Builtin data object. Reads from / writes to `environment.variables._data`.
-		 * */
-		constructor(dataObjectDef: import("moddle-context-serializer").DataObject, { environment }: ContextInstance);
-		id: string | undefined;
-		type: string | undefined;
-		name: string | undefined;
-		
-		behaviour: Record<string, any>;
-		
-		parent: import("moddle-context-serializer").Parent | undefined;
-		environment: Environment;
-		
-		read(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): void;
-		
-		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): void;
-	}
-	/**
-	 * Builtin data store. Reads from / writes to `environment.variables._data`.
-	 * */
-		export class DataStore {
-		/**
-		 * Builtin data store. Reads from / writes to `environment.variables._data`.
-		 * */
-		constructor(dataStoreDef: import("moddle-context-serializer").DataStore, { environment }: ContextInstance);
-		id: string | undefined;
-		type: string | undefined;
-		name: string | undefined;
-		
-		behaviour: Record<string, any>;
-		
-		parent: import("moddle-context-serializer").Parent | undefined;
-		environment: Environment;
-		
-		read(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): void;
-		
-		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): void;
-	}
-	/**
-	 * Builtin data store reference. Reads from / writes to `environment.variables._data`.
-	 * */
-		export class DataStoreReference {
-		/**
-		 * Builtin data store reference. Reads from / writes to `environment.variables._data`.
-		 * */
-		constructor(dataObjectDef: import("moddle-context-serializer").DataStore, { environment }: ContextInstance);
-		id: string | undefined;
-		type: string | undefined;
-		name: string | undefined;
-		
-		behaviour: Record<string, any>;
-		
-		parent: import("moddle-context-serializer").Parent | undefined;
-		environment: Environment;
-		
-		read(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, messageProperties?: Record<string, any>): void;
-		
-		write(broker: import("smqp").Broker, exchange: string, routingKeyPrefix: string, value: any, messageProperties?: Record<string, any>): void;
-	}
-	/**
 	 * Escalation reference element. Resolves the escalation name expression against the execution message.
 	 * */
 		export class Escalation {
 		/**
 		 * Escalation reference element. Resolves the escalation name expression against the execution message.
 		 * */
-		constructor(escalationDef: import("moddle-context-serializer").SerializableElement, context: ContextInstance);
+		constructor(escalationDef: SerializableElement, context: ContextInstance);
 		id: string | undefined;
 		type: string | undefined;
 		name: string | undefined;
@@ -1378,19 +1497,35 @@ declare module 'bpmn-elements' {
 		/**
 		 * Activity ioSpecification behaviour. Reads bound data objects on enter and writes them on completion.
 		 * */
-		constructor(activity: Activity, ioSpecificationDef: import("moddle-context-serializer").IoSpecification, context: ContextInstance);
+		constructor(activity: Activity, ioSpecificationDef: SerializableElement, context: ContextInstance);
 		id: string | undefined;
 		type: string;
-		behaviour: {
-			dataInputs?: import("moddle-context-serializer").IElement[];
-			dataOutputs?: import("moddle-context-serializer").IElement[];
-		};
+		behaviour: Record<string, any>;
 		activity: Activity;
 		broker: ElementBroker<Activity>;
 		context: ContextInstance;
 		
 		activate(message?: ElementBrokerMessage): void;
 		deactivate(): void;
+	}
+	/**
+	 * Message reference element. Resolves the message name expression against the execution message.
+	 * */
+		export class Message {
+		/**
+		 * Message reference element. Resolves the message name expression against the execution message.
+		 * */
+		constructor(messageDef: SerializableElement, context: ContextInstance);
+		id: string | undefined;
+		type: string | undefined;
+		name: string | undefined;
+		
+		parent: ElementParent;
+		environment: Environment | undefined;
+		/**
+		 * Resolve message reference for the given execution message.
+		 * */
+		resolve(executionMessage: ElementBrokerMessage): ResolvedReference;
 	}
 	/**
 	 * Process lane. Wraps a `<bpmn:lane>` definition and points back to its owning process;
@@ -1401,13 +1536,13 @@ declare module 'bpmn-elements' {
 		 * Process lane. Wraps a `<bpmn:lane>` definition and points back to its owning process;
 		 * activities reference their lane through `Activity.lane`.
 		 * */
-		constructor(process: Process, laneDefinition: import("moddle-context-serializer").SerializableElement);
+		constructor(process: Process, laneDefinition: SerializableElement);
 		id: string | undefined;
 		type: string | undefined;
 		
 		name: string;
 		
-		parent: import("moddle-context-serializer").Parent;
+		parent: ElementParentRef;
 		
 		behaviour: Record<string, any>;
 		environment: Environment;
@@ -1423,9 +1558,9 @@ declare module 'bpmn-elements' {
 		/**
 		 * Loop characteristics
 		 * */
-		constructor(activity: Activity, loopCharacteristics: import("moddle-context-serializer").SerializableElement);
+		constructor(activity: Activity, loopCharacteristics: SerializableElement);
 		activity: Activity;
-		loopCharacteristics: import("moddle-context-serializer").SerializableElement<Record<string, any>>;
+		loopCharacteristics: SerializableElement;
 		type: string;
 		
 		isSequential: boolean;
@@ -1449,7 +1584,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Per-execution snapshot of resolved loop characteristics (cardinality, collection, conditions).
 		 * */
-		constructor(activity: Activity, loopCharacteristics: import("moddle-context-serializer").SerializableElement, executeMessage: ElementBrokerMessage);
+		constructor(activity: Activity, loopCharacteristics: SerializableElement, executeMessage: ElementBrokerMessage);
 		activity: Activity;
 		behaviour: Record<string, any>;
 		message: ElementBrokerMessage;
@@ -1468,6 +1603,7 @@ declare module 'bpmn-elements' {
 		
 		elementVariable: string;
 		cardinality: number | undefined;
+		onApiMessage: any;
 		logger: ILogger;
 		batchSize: number;
 		
@@ -1482,32 +1618,12 @@ declare module 'bpmn-elements' {
 		getCollection(): any[] | undefined;
 		
 		isStartConditionMet(message: ElementBrokerMessage): any;
+		isCompletionConditionMet(message: ElementBrokerMessage, loopOutput?: any[]): boolean;
 		
-		isCompletionConditionMet(message: ElementBrokerMessage): any;
+		complete(content?: ElementMessageContent, allDiscarded?: boolean): void;
 		
-		complete(content: ElementMessageContent, allDiscarded?: boolean): void;
-		
-		subscribe(onIterationCompleteMessage: ElementBrokerMessage): void;
+		subscribe(onIterationCompleteMessage: (routingKey: string, message: ElementBrokerMessage, ...args: any[]) => void): void;
 		stop(): void;
-	}
-	/**
-	 * Message reference element. Resolves the message name expression against the execution message.
-	 * */
-		export class Message {
-		/**
-		 * Message reference element. Resolves the message name expression against the execution message.
-		 * */
-		constructor(messageDef: import("moddle-context-serializer").SerializableElement, context: ContextInstance);
-		id: string | undefined;
-		type: string | undefined;
-		name: string | undefined;
-		
-		parent: ElementParent;
-		environment: Environment | undefined;
-		/**
-		 * Resolve message reference for the given execution message.
-		 * */
-		resolve(executionMessage: ElementBrokerMessage): ResolvedReference;
 	}
 	/**
 	 * Owns one `<bpmn:process>`. Wraps the structural definition and orchestrates flow traversal,
@@ -1518,15 +1634,15 @@ declare module 'bpmn-elements' {
 		 * Owns one `<bpmn:process>`. Wraps the structural definition and orchestrates flow traversal,
 		 * joins, and parallel activation through ProcessExecution.
 		 * */
-		constructor(processDef: import("moddle-context-serializer").Process, context: ContextInstance);
+		constructor(processDef: ProcessDefinition, context: ContextInstance);
 		id: string | undefined;
 		type: string;
 		name: string | undefined;
 		
 		parent: ElementParent;
 		
-		behaviour: import("moddle-context-serializer").Process["behaviour"];
-		isExecutable: any;
+		behaviour: ProcessDefinition["behaviour"];
+		isExecutable: boolean | undefined;
 		environment: Environment;
 		context: ContextInstance;
 		broker: ElementBroker<Process>;
@@ -1607,13 +1723,13 @@ declare module 'bpmn-elements' {
 		/**
 		 * Get sequence flows in the process scope.
 		 */
-		getSequenceFlows(): SequenceFlow | SequenceFlow[];
+		getSequenceFlows(): SequenceFlow[];
 		
 		getLaneById(laneId: string): Lane | undefined;
 		/**
 		 * List currently postponed activities as Api wrappers.
 		 * */
-		getPostponed(filterFn?: filterPostponed | undefined): IApi<Activity>[];
+		getPostponed(filterFn?: filterPostponed | undefined): any[];
 		get counters(): {
 			completed: number;
 			discarded: number;
@@ -1630,17 +1746,13 @@ declare module 'bpmn-elements' {
 	/**
 	 * Activity properties behaviour. Resolves bound data input/output references during the run.
 	 * */
-	export function Properties(activity: Activity, propertiesDef: {
-		type: "properties";
-		values: import("moddle-context-serializer").IElement[];
-	}, context: ContextInstance): void;
-	export class Properties {
+		export class Properties {
 		/**
 		 * Activity properties behaviour. Resolves bound data input/output references during the run.
 		 * */
 		constructor(activity: Activity, propertiesDef: {
 			type: "properties";
-			values: import("moddle-context-serializer").IElement[];
+			values: SerializableElement[];
 		}, context: ContextInstance);
 		activity: Activity;
 		broker: ElementBroker<Activity>;
@@ -1668,7 +1780,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Signal reference element. Resolves the signal name expression against the execution message.
 		 * */
-		constructor(signalDef: import("moddle-context-serializer").SerializableElement, context: ContextInstance);
+		constructor(signalDef: SerializableElement, context: ContextInstance);
 		id: string | undefined;
 		type: string | undefined;
 		name: string | undefined;
@@ -1683,7 +1795,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * Standard loop characteristics
 	 * */
-	export function StandardLoopCharacteristics(activity: Activity, loopCharacteristics: import("moddle-context-serializer").SerializableElement): MultiInstanceLoopCharacteristics;
+	export function StandardLoopCharacteristics(activity: Activity, loopCharacteristics: SerializableElement): MultiInstanceLoopCharacteristics;
 	/**
 	 * Default timers handler
 	 * 
@@ -1697,10 +1809,8 @@ declare module 'bpmn-elements' {
 		count: number;
 		
 		options: Required<TimersOptions>;
-		
-		setTimeout: wrappedSetTimeout;
-		
-		clearTimeout: wrappedClearTimeout;
+		setTimeout: any;
+		clearTimeout: any;
 		get executing(): Timer[];
 		register(owner: any): RegisteredTimers;
 	}
@@ -1714,9 +1824,19 @@ declare module 'bpmn-elements' {
 		
 		clearTimeout: wrappedClearTimeout;
 	}
+		class Timer_1 {
+		constructor(owner: any, timerId: any, callback: any, delay: any, args: any);
+		callback: any;
+		delay: any;
+		args: any;
+		owner: any;
+		timerId: any;
+		expireAt: Date;
+		timerRef: any;
+	}
 	export class ActivityError extends Error {
 		
-		constructor(description: string, sourceMessage?: ElementBrokerMessage, inner?: Error | {
+		constructor(description?: string, sourceMessage?: ElementBrokerMessage, inner?: Error | {
 			name?: string;
 			code?: string | number;
 		});
@@ -1748,10 +1868,10 @@ declare module 'bpmn-elements' {
 		constructor(parentActivity: Process | Activity, context: ContextInstance);
 		id: string | undefined;
 		type: string;
-		isSubProcess: any;
-		isTransaction: any;
-		isAdHoc: any;
-		broker: ElementBroker<Process> | ElementBroker<Activity>;
+		isSubProcess: boolean;
+		isTransaction: boolean;
+		isAdHoc: boolean | undefined;
+		broker: ElementBroker<Activity>;
 		environment: Environment;
 		context: ContextInstance;
 		/**
@@ -1788,15 +1908,9 @@ declare module 'bpmn-elements' {
 		 * List currently postponed children as Api wrappers.
 		 * 
 		 */
-		getPostponed(filterFn?: filterPostponed): IApi<Activity>[];
-		/**
-		 * Queue a discard message that propagates to all running children.
-		 */
-		discard(): void;
-		/**
-		 * Queue a cancel message that propagates to all running children.
-		 */
-		cancel(): void;
+		getPostponed(filterFn?: filterPostponed): any[];
+		discard(message?: ElementBrokerMessage): void;
+		cancel(message?: ElementBrokerMessage): void;
 		/**
 		 * Get child activities in the process scope.
 		 * */
@@ -1806,11 +1920,11 @@ declare module 'bpmn-elements' {
 		/**
 		 * Get sequence flows in the process scope.
 		 * */
-		getSequenceFlows(): SequenceFlow;
+		getSequenceFlows(): SequenceFlow[];
 		/**
 		 * Get associations in the process scope.
 		 * */
-		getAssociations(): Association;
+		getAssociations(): Association[];
 		/**
 		 * Resolve a process or child Api for the given message.
 		 * */
@@ -1835,15 +1949,15 @@ declare module 'bpmn-elements' {
 		 * Sequence flow connecting two activities. Owns its broker and publishes take/discard/looped
 		 * events; activities subscribe to drive their inbound queue.
 		 * */
-		constructor(flowDef: import("moddle-context-serializer").SequenceFlow, { environment }: ContextInstance);
+		constructor(flowDef: SequenceFlowDefinition, { environment }: ContextInstance);
 		id: string | undefined;
 		type: string;
 		name: string | undefined;
 		parent: ElementParent;
 		
 		behaviour: Record<string, any>;
-		sourceId: string;
-		targetId: string;
+		sourceId: string | undefined;
+		targetId: string | undefined;
 		isDefault: boolean | undefined;
 		isSequenceFlow: boolean;
 		environment: Environment;
@@ -1896,7 +2010,7 @@ declare module 'bpmn-elements' {
 		 * Resolve the flow's condition (script or expression). Returns null when no condition is set.
 		 * Emits a fatal error when the script language is missing or unsupported.
 		 * */
-		getCondition(): ICondition | null;
+		getCondition(): ICondition | null | undefined;
 		/**
 		 * Build a flow event message body, optionally merging override content.
 		 * */
@@ -1937,124 +2051,60 @@ declare module 'bpmn-elements' {
 		reset(): void;
 	}
 	/**
-	 * Association connecting a source and target activity. Used to drive compensation —
-	 * activities marked `isForCompensation` subscribe to inbound association events.
+	 * Signal task
 	 * */
-		export class Association {
+	export function SignalTask(activityDef: ActivityDefinition, context: ContextInstance): Activity;
+	/**
+	 * Signal task behaviour
+	 * */
+		export class SignalTaskBehaviour {
 		/**
-		 * Association connecting a source and target activity. Used to drive compensation —
-		 * activities marked `isForCompensation` subscribe to inbound association events.
+		 * Signal task behaviour
 		 * */
-		constructor(associationDef: import("moddle-context-serializer").Association, { environment }: ContextInstance);
+		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		name: string | undefined;
-		parent: ElementParent;
 		
-		behaviour: Record<string, any>;
-		sourceId: string;
-		targetId: string;
-		isAssociation: boolean;
-		environment: Environment;
-		logger: ILogger;
-		broker: import("smqp").Broker;
-		on: any;
-		once: any;
-		waitFor: any;
-		get counters(): {
-			take: number;
-			discard: number;
-		};
-		/**
-		 * Take the association and publish association.take.
-		 * 
-		 */
-		take(content?: Record<string, any>): boolean;
-		/**
-		 * Discard the association and publish association.discard.
-		 * 
-		 */
-		discard(content?: Record<string, any>): boolean;
-		/**
-		 * Snapshot association state. Returns undefined when broker has no state and
-		 * `disableTrackState` is set.
-		 * */
-		getState(): AssociationState | undefined;
-		/**
-		 * Restore association state captured by getState.
-		 * */
-		recover(state: AssociationState): void;
-		/**
-		 * Resolve an association-scoped Api wrapper.
-		 * */
-		getApi(message?: ElementBrokerMessage): IApi<this>;
-		/**
-		 * Stop the association's broker.
-		 */
-		stop(): void;
+		loopCharacteristics: MultiInstanceLoopCharacteristics | undefined;
+		activity: Activity;
+		broker: ElementBroker<Activity>;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 	}
 	/**
-	 * Message flow connecting a source activity (or process) to a target. Subscribes to the
-	 * source's `end` event and publishes `message.outbound` whenever the source completes,
-	 * carrying any message payload through to the target.
+	 * Service task
 	 * */
-		export class MessageFlow {
+	export function ServiceTask(activityDef: ActivityDefinition, context: ContextInstance): Activity;
+	/**
+	 * Service task behaviour
+	 * */
+		export class ServiceTaskBehaviour {
 		/**
-		 * Message flow connecting a source activity (or process) to a target. Subscribes to the
-		 * source's `end` event and publishes `message.outbound` whenever the source completes,
-		 * carrying any message payload through to the target.
+		 * Service task behaviour
 		 * */
-		constructor(flowDef: import("moddle-context-serializer").MessageFlow, context: ContextInstance);
+		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		name: string | undefined;
-		parent: ElementParent;
-		source: import("moddle-context-serializer").MessageFlowEndpoint;
-		target: import("moddle-context-serializer").MessageFlowEndpoint;
 		
-		behaviour: Record<string, any>;
+		loopCharacteristics: MultiInstanceLoopCharacteristics | undefined;
+		activity: Activity;
 		environment: Environment;
-		context: ContextInstance;
-		broker: ElementBroker<MessageFlow>;
-		on: (eventName: string, callback: CallableFunction, eventOptions?: {
-			once?: boolean;
-			[x: string]: any;
-		}) => import("smqp").Consumer;
-		once: (eventName: string, callback: CallableFunction, eventOptions?: {
-			[x: string]: any;
-		}) => import("smqp").Consumer;
-		emit: (eventName: string, content?: Record<string, any>, props?: any) => void;
-		waitFor: (eventName: string, onMessage?: ((routingKey: string, message: ElementBrokerMessage, owner: MessageFlow) => boolean) | undefined) => Promise<IApi<MessageFlow>>;
-		logger: ILogger;
-		get counters(): {
-			messages: number;
-		};
+		broker: ElementBroker<Activity>;
 		/**
-		 * Snapshot message-flow state. Returns undefined when broker has no state and
-		 * `disableTrackState` is set.
+		 * Service function instance
 		 * */
-		getState(): MessageFlowState | undefined;
+		service: IService | undefined;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
 		/**
-		 * Restore message-flow state captured by getState.
+		 * Resolve the service instance backing this run.
 		 * */
-		recover(state: MessageFlowState): void;
-		/**
-		 * Resolve a message-scoped Api wrapper.
-		 * */
-		getApi(message?: ElementBrokerMessage): IApi<this>;
-		/**
-		 * Subscribe to the source element's message and end events to bridge the message across.
-		 */
-		activate(): void;
-		/**
-		 * Cancel the source element subscriptions added by activate.
-		 */
-		deactivate(): void;
+		getService(message: ElementBrokerMessage): IService | undefined;
 	}
 	/**
 	 * Boundary event
 	 * */
-	export function BoundaryEvent(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function BoundaryEvent(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Boundary event behaviour
 	 * */
@@ -2077,7 +2127,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * End event
 	 * */
-	export function EndEvent(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function EndEvent(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * End event behaviour
 	 * */
@@ -2095,7 +2145,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * Intermediate catch event
 	 * */
-	export function IntermediateCatchEvent(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function IntermediateCatchEvent(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Intermediate catch event behaviour
 	 * */
@@ -2113,7 +2163,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * Intermediate throw event
 	 * */
-	export function IntermediateThrowEvent(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function IntermediateThrowEvent(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Intermediate throw event behaviour
 	 * */
@@ -2131,7 +2181,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * Start event
 	 * */
-	export function StartEvent(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function StartEvent(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Start event behaviour
 	 * */
@@ -2151,7 +2201,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * Event based gateway
 	 * */
-	export function EventBasedGateway(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function EventBasedGateway(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Event based gateway behaviour
 	 * */
@@ -2171,7 +2221,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * Exclusive gateway
 	 * */
-	export function ExclusiveGateway(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function ExclusiveGateway(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Exclusive gateway behaviour
 	 * */
@@ -2189,7 +2239,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * Inclusive gateway
 	 * */
-	export function InclusiveGateway(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function InclusiveGateway(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Inclusive gateway behaviour
 	 * */
@@ -2211,7 +2261,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Parallel gateway
 		 * */
-		constructor(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance);
+		constructor(activityDef: ActivityDefinition, context: ContextInstance);
 		id: string | undefined;
 	}
 	/**
@@ -2273,11 +2323,11 @@ declare module 'bpmn-elements' {
 	/**
 	 * Transaction
 	 * */
-	export function Transaction(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function Transaction(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Ad-hoc sub process
 	 * */
-	export function AdHocSubProcess(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function AdHocSubProcess(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Ad-hoc sub process behaviour. Reuses {@link SubProcessBehaviour} for execution and adds
 	 * ad-hoc policy — inner-activity ordering, completion condition and cancellation of remaining
@@ -2307,14 +2357,14 @@ declare module 'bpmn-elements' {
 	/**
 	 * Business rule task
 	 * */
-	export function BusinessRuleTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function BusinessRuleTask(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Business rule task behaviour
 	 *
 	 * Shares the service task implementation but owns its own prototype so consumers
 	 * can override it without affecting `ServiceTaskBehaviour` or its sibling behaviours.
 	 * */
-		export class BusinessRuleTaskBehaviour {
+		export class BusinessRuleTaskBehaviour extends ServiceTaskBehaviour {
 		/**
 		 * Business rule task behaviour
 		 *
@@ -2326,7 +2376,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * Call activity
 	 * */
-	export function CallActivity(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function CallActivity(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Call activity behaviour
 	 * */
@@ -2349,14 +2399,14 @@ declare module 'bpmn-elements' {
 	/**
 	 * Manual task
 	 * */
-	export function ManualTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function ManualTask(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Manual task behaviour
 	 *
 	 * Shares the signal task implementation but owns its own prototype so consumers
 	 * can override it without affecting `SignalTaskBehaviour` or its sibling behaviours.
 	 * */
-		export class ManualTaskBehaviour {
+		export class ManualTaskBehaviour extends SignalTaskBehaviour {
 		/**
 		 * Manual task behaviour
 		 *
@@ -2368,7 +2418,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * Receive task
 	 * */
-	export function ReceiveTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function ReceiveTask(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Receive task behaviour
 	 * */
@@ -2391,7 +2441,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * Script task
 	 * */
-	export function ScriptTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function ScriptTask(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Script task behaviour
 	 * */
@@ -2402,7 +2452,7 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
-		scriptFormat: string | undefined;
+		scriptFormat: any;
 		
 		loopCharacteristics: MultiInstanceLoopCharacteristics | undefined;
 		activity: Activity;
@@ -2413,14 +2463,14 @@ declare module 'bpmn-elements' {
 	/**
 	 * Send task
 	 * */
-	export function SendTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function SendTask(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Send task behaviour
 	 *
 	 * Shares the service task implementation but owns its own prototype so consumers
 	 * can override it without affecting `ServiceTaskBehaviour` or its sibling behaviours.
 	 * */
-		export class SendTaskBehaviour {
+		export class SendTaskBehaviour extends ServiceTaskBehaviour {
 		/**
 		 * Send task behaviour
 		 *
@@ -2430,61 +2480,10 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity);
 	}
 	/**
-	 * Service task
-	 * */
-	export function ServiceTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
-	/**
-	 * Service task behaviour
-	 * */
-		export class ServiceTaskBehaviour {
-		/**
-		 * Service task behaviour
-		 * */
-		constructor(activity: Activity);
-		id: string | undefined;
-		type: string;
-		
-		loopCharacteristics: MultiInstanceLoopCharacteristics | undefined;
-		activity: Activity;
-		environment: Environment;
-		broker: ElementBroker<Activity>;
-		/**
-		 * Service function instance
-		 * */
-		service: IService | undefined;
-		
-		execute(executeMessage: ElementBrokerMessage): void;
-		/**
-		 * Resolve the service instance backing this run.
-		 * */
-		getService(message: ElementBrokerMessage): IService | undefined;
-	}
-	/**
-	 * Signal task
-	 * */
-	export function SignalTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
-	/**
-	 * Signal task behaviour
-	 * */
-		export class SignalTaskBehaviour {
-		/**
-		 * Signal task behaviour
-		 * */
-		constructor(activity: Activity);
-		id: string | undefined;
-		type: string;
-		
-		loopCharacteristics: MultiInstanceLoopCharacteristics | undefined;
-		activity: Activity;
-		broker: ElementBroker<Activity>;
-		
-		execute(executeMessage: ElementBrokerMessage): void;
-	}
-	/**
 	 * Sub process
 	 * @param Behaviour behaviour class, defaults to {@link SubProcessBehaviour}
 	 */
-	export function SubProcess(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance, Behaviour?: CallableFunction): Activity;
+	export function SubProcess(activityDef: ActivityDefinition, context: ContextInstance, Behaviour?: IActivityBehaviour): Activity;
 	/**
 	 * Sub process behaviour
 	 * */
@@ -2523,7 +2522,7 @@ declare module 'bpmn-elements' {
 	/**
 	 * Task
 	 * */
-	export function Task(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function Task(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Task behaviour
 	 * */
@@ -2543,14 +2542,14 @@ declare module 'bpmn-elements' {
 	/**
 	 * User task
 	 * */
-	export function UserTask(activityDef: import("moddle-context-serializer").Activity, context: ContextInstance): Activity;
+	export function UserTask(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * User task behaviour
 	 *
 	 * Shares the signal task implementation but owns its own prototype so consumers
 	 * can override it without affecting `SignalTaskBehaviour` or its sibling behaviours.
 	 * */
-		export class UserTaskBehaviour {
+		export class UserTaskBehaviour extends SignalTaskBehaviour {
 		/**
 		 * User task behaviour
 		 *
@@ -2560,13 +2559,128 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity);
 	}
 	/**
+	 * Association connecting a source and target activity. Used to drive compensation —
+	 * activities marked `isForCompensation` subscribe to inbound association events.
+	 * */
+		export class Association {
+		/**
+		 * Association connecting a source and target activity. Used to drive compensation —
+		 * activities marked `isForCompensation` subscribe to inbound association events.
+		 * */
+		constructor(associationDef: AssociationDefinition, { environment }: ContextInstance);
+		id: string | undefined;
+		type: string;
+		name: string | undefined;
+		parent: ElementParent;
+		
+		behaviour: Record<string, any>;
+		sourceId: string | undefined;
+		targetId: string | undefined;
+		isAssociation: boolean;
+		environment: Environment;
+		logger: ILogger;
+		broker: import("smqp").Broker;
+		on: any;
+		once: any;
+		waitFor: any;
+		get counters(): {
+			take: number;
+			discard: number;
+		};
+		/**
+		 * Take the association and publish association.take.
+		 * 
+		 */
+		take(content?: Record<string, any>): boolean;
+		/**
+		 * Discard the association and publish association.discard.
+		 * 
+		 */
+		discard(content?: Record<string, any>): boolean;
+		/**
+		 * Snapshot association state. Returns undefined when broker has no state and
+		 * `disableTrackState` is set.
+		 * */
+		getState(): AssociationState | undefined;
+		/**
+		 * Restore association state captured by getState.
+		 * */
+		recover(state: AssociationState): void;
+		/**
+		 * Resolve an association-scoped Api wrapper.
+		 * */
+		getApi(message?: ElementBrokerMessage): IApi<this>;
+		/**
+		 * Stop the association's broker.
+		 */
+		stop(): void;
+	}
+	/**
+	 * Message flow connecting a source activity (or process) to a target. Subscribes to the
+	 * source's `end` event and publishes `message.outbound` whenever the source completes,
+	 * carrying any message payload through to the target.
+	 * */
+		export class MessageFlow {
+		/**
+		 * Message flow connecting a source activity (or process) to a target. Subscribes to the
+		 * source's `end` event and publishes `message.outbound` whenever the source completes,
+		 * carrying any message payload through to the target.
+		 * */
+		constructor(flowDef: MessageFlowDefinition, context: ContextInstance);
+		id: string | undefined;
+		type: string;
+		name: string | undefined;
+		parent: ElementParent;
+		source: MessageFlowReference | undefined;
+		target: MessageFlowReference | undefined;
+		
+		behaviour: Record<string, any>;
+		environment: Environment;
+		context: ContextInstance;
+		broker: ElementBroker<MessageFlow>;
+		on: (eventName: string, callback: CallableFunction, eventOptions?: {
+			once?: boolean;
+			[x: string]: any;
+		}) => import("smqp").Consumer;
+		once: (eventName: string, callback: CallableFunction, eventOptions?: {
+			[x: string]: any;
+		}) => import("smqp").Consumer;
+		emit: (eventName: string, content?: Record<string, any>, props?: any) => void;
+		waitFor: (eventName: string, onMessage?: ((routingKey: string, message: ElementBrokerMessage, owner: MessageFlow) => boolean) | undefined) => Promise<IApi<MessageFlow>>;
+		logger: ILogger;
+		get counters(): {
+			messages: number;
+		};
+		/**
+		 * Snapshot message-flow state. Returns undefined when broker has no state and
+		 * `disableTrackState` is set.
+		 * */
+		getState(): MessageFlowState | undefined;
+		/**
+		 * Restore message-flow state captured by getState.
+		 * */
+		recover(state: MessageFlowState): void;
+		/**
+		 * Resolve a message-scoped Api wrapper.
+		 * */
+		getApi(message?: ElementBrokerMessage): IApi<this>;
+		/**
+		 * Subscribe to the source element's message and end events to bridge the message across.
+		 */
+		activate(): void;
+		/**
+		 * Cancel the source element subscriptions added by activate.
+		 */
+		deactivate(): void;
+	}
+	/**
 	 * Cancel event definition
 	 * */
 		export class CancelEventDefinition {
 		/**
 		 * Cancel event definition
 		 * */
-		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		constructor(activity: Activity, eventDefinition: SerializableElement);
 		id: string | undefined;
 		type: string | undefined;
 		
@@ -2591,7 +2705,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Compensate event definition
 		 * */
-		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition, context: ContextInstance);
+		constructor(activity: Activity, eventDefinition: SerializableElement, context: ContextInstance);
 		id: string | undefined;
 		type: string | undefined;
 		
@@ -2617,10 +2731,10 @@ declare module 'bpmn-elements' {
 		 * Conditional event definition
 		 * @param index event definition index
 		 */
-		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition, _context: ContextInstance, index: number);
+		constructor(activity: Activity, eventDefinition: SerializableElement, _context?: ContextInstance, index?: number);
 		id: string | undefined;
 		type: string;
-		behaviour: {};
+		behaviour: Record<string, any>;
 		activity: Activity;
 		environment: Environment;
 		broker: ElementBroker<Activity>;
@@ -2652,7 +2766,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Error event definition
 		 * */
-		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		constructor(activity: Activity, eventDefinition: SerializableElement);
 		id: string | undefined;
 		type: string;
 		
@@ -2677,7 +2791,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Escalation event definition
 		 * */
-		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		constructor(activity: Activity, eventDefinition: SerializableElement);
 		id: string | undefined;
 		type: string | undefined;
 		
@@ -2701,7 +2815,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Link event definition
 		 * */
-		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		constructor(activity: Activity, eventDefinition: SerializableElement);
 		id: string | undefined;
 		type: string;
 		
@@ -2725,7 +2839,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Message event definition
 		 * */
-		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		constructor(activity: Activity, eventDefinition: SerializableElement);
 		id: string | undefined;
 		type: string;
 		
@@ -2749,7 +2863,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Signal event definition
 		 * */
-		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		constructor(activity: Activity, eventDefinition: SerializableElement);
 		id: string | undefined;
 		type: string | undefined;
 		
@@ -2773,7 +2887,7 @@ declare module 'bpmn-elements' {
 		/**
 		 * Terminate event definition
 		 * */
-		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		constructor(activity: Activity, eventDefinition: SerializableElement);
 		id: string | undefined;
 		type: string;
 		activity: Activity;
@@ -2789,11 +2903,11 @@ declare module 'bpmn-elements' {
 		/**
 		 * Timer event definition
 		 * */
-		constructor(activity: Activity, eventDefinition: import("moddle-context-serializer").EventDefinition);
+		constructor(activity: Activity, eventDefinition: SerializableElement);
 		type: string;
 		activity: Activity;
 		environment: Environment;
-		eventDefinition: import("moddle-context-serializer").EventDefinition;
+		eventDefinition: SerializableElement;
 		timeDuration: string | undefined;
 		timeCycle: string | undefined;
 		timeDate: string | undefined;
@@ -2812,7 +2926,7 @@ declare module 'bpmn-elements' {
 		parse(timerType: TimerType, value: string): parsedTimer;
 	}
 
-	export { Consumer, MessageFields, MessageProperties, SerializableContext, SerializableElement };
+	export { Consumer, MessageFields, MessageProperties };
 }
 
 declare module 'bpmn-elements/errors' {
@@ -2827,7 +2941,7 @@ declare module 'bpmn-elements/errors' {
 	export function makeErrorFromMessage(errorMessage: ElementBrokerMessage): Error | ActivityError | RunError | BpmnError;
 	export class BpmnError extends Error {
 		
-		constructor(description: string, behaviour?: {
+		constructor(description?: string, behaviour?: {
 			id?: string;
 			name?: string;
 			errorCode?: string | number;

@@ -17,7 +17,7 @@ const K_LANES = Symbol.for('lanes');
 /**
  * Owns one `<bpmn:process>`. Wraps the structural definition and orchestrates flow traversal,
  * joins, and parallel activation through ProcessExecution.
- * @param {import('moddle-context-serializer').Process} processDef
+ * @param {import('#types').ProcessDefinition} processDef
  * @param {import('#types').ContextInstance} context
  */
 function Process(processDef, context) {
@@ -32,9 +32,13 @@ function Process(processDef, context) {
   this.type = type;
   this.name = name;
   /** @type {import('#types').ElementParent} */
+  // @ts-ignore
   this.parent = parent ? (0, _messageHelper.cloneParent)(parent) : {};
-  /** @type {import('moddle-context-serializer').Process['behaviour']} */
+  /** @type {import('#types').ProcessDefinition['behaviour']} */
+  // @ts-ignore
   this.behaviour = behaviour;
+
+  // @ts-ignore
   this.isExecutable = behaviour.isExecutable;
   const environment = this.environment = context.environment;
   this.context = context;
@@ -71,8 +75,11 @@ function Process(processDef, context) {
     onExecutionMessage: this._onExecutionMessage.bind(this)
   };
   this.logger = environment.Logger(type.toLowerCase());
+
+  // @ts-ignore
   if (behaviour.lanes) {
     /** @internal */
+    // @ts-ignore
     this[K_LANES] = behaviour.lanes.map(lane => new lane.Behaviour(this, lane));
   }
   /** @internal */
@@ -184,6 +191,7 @@ Process.prototype.run = function run(runContent) {
  */
 Process.prototype.resume = function resume() {
   if (this.isRunning) throw new Error(`cannot resume running process <${this.id}>`);
+  // @ts-ignore
   if (!this.status) return this;
   this[_constants.K_STOPPED] = false;
   const content = this._createMessage();
@@ -191,6 +199,7 @@ Process.prototype.resume = function resume() {
     persistent: false
   });
   this._activateRunConsumers();
+  // @ts-ignore
   return this;
 };
 
@@ -221,6 +230,7 @@ Process.prototype.getState = function getState() {
  */
 Process.prototype.recover = function recover(state, recoveredVersion) {
   if (this.isRunning) throw new Error(`cannot recover running process <${this.id}>`);
+  // @ts-ignore
   if (!state) return this;
   this[_constants.K_STOPPED] = !!state.stopped;
   this[_constants.K_STATUS] = state.status;
@@ -235,6 +245,8 @@ Process.prototype.recover = function recover(state, recoveredVersion) {
     exec.set('execution', new _ProcessExecution.ProcessExecution(this, this.context).recover(state.execution, recoveredVersion));
   }
   this.broker.recover(state.broker);
+
+  // @ts-ignore
   return this;
 };
 
@@ -263,7 +275,9 @@ Process.prototype.stop = function stop() {
  */
 Process.prototype.getApi = function getApi(message) {
   const execution = this.execution;
+  // @ts-ignore
   if (execution) return execution.getApi(message);
+  // @ts-ignore
   return (0, _Api.ProcessApi)(this.broker, message || this[_constants.K_STATE_MESSAGE]);
 };
 
@@ -323,6 +337,8 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message, mes
   }
   const preStatus = this[_constants.K_STATUS];
   this[_constants.K_STATUS] = 'formatting';
+
+  // @ts-ignore
   return this.formatter.format(message, (err, formattedContent, formatted) => {
     this[_constants.K_STATUS] = preStatus;
     if (err) {
@@ -333,7 +349,10 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message, mes
   });
 };
 
-/** @internal */
+/**
+ * @internal
+ * @type {(routingKey: string, message: any, messageProperties?: any) => void}
+ */
 Process.prototype._continueRunMessage = function continueRunMessage(routingKey, message) {
   const {
     content,
@@ -442,7 +461,7 @@ Process.prototype._onResumeMessage = function onResumeMessage(message) {
 };
 
 /** @internal */
-Process.prototype._onExecutionMessage = function onExecutionMessage(routingKey, message) {
+Process.prototype._onExecutionMessage = function onExecutionMessage(_routingKey, message) {
   const content = message.content;
   const messageType = message.properties.type;
   message.ack();
@@ -558,7 +577,7 @@ Process.prototype.getPostponed = function getPostponed(...args) {
 };
 
 /** @internal */
-Process.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+Process.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   switch (message.properties.type) {
     case 'stop':
       {

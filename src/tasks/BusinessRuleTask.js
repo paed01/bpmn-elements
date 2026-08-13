@@ -3,10 +3,11 @@ import { ServiceTaskBehaviour } from './ServiceTask.js';
 
 /**
  * Business rule task
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function BusinessRuleTask(activityDef, context) {
+  // @ts-ignore
   return new Activity(BusinessRuleTaskBehaviour, activityDef, context);
 }
 

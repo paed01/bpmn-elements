@@ -1,4 +1,5 @@
 import { getPropertyValue } from '../src/getPropertyValue.js';
+
 describe('getPropertyValue', () => {
   describe('property path', () => {
     it('returns object value', () => {
@@ -135,6 +136,7 @@ describe('getPropertyValue', () => {
     });
 
     it('returns named value', () => {
+      /** @type {any} */
       const list = [1, 2, 3];
       list.arb = 10;
       expect(

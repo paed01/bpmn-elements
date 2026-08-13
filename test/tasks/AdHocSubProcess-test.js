@@ -8,7 +8,7 @@ function createBehaviour(behaviour) {
     environment: {},
     broker: {},
   };
-  return new AdHocSubProcessBehaviour(activity, {});
+  return new AdHocSubProcessBehaviour(/** @type {any} */ (activity), /** @type {any} */ ({}));
 }
 
 describe('AdHocSubProcessBehaviour', () => {

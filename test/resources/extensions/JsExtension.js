@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { brokerSafeId } from '../../../src/shared.js';
 
-const moddleOptions = JSON.parse(fs.readFileSync('./test/resources/js-bpmn-moddle.json'));
+const moddleOptions = JSON.parse(/** @type {any} */ (fs.readFileSync('./test/resources/js-bpmn-moddle.json')));
 
 export default {
   extension: Js,
@@ -9,9 +9,9 @@ export default {
 };
 
 function Js(activity, context) {
-  const resultVariable = ResultVariableIo(activity, context);
-  const formKey = FormKey(activity, context);
-  const versionTag = VersionTag(activity, context);
+  const resultVariable = /** @type {any} */ (ResultVariableIo)(activity, context);
+  const formKey = /** @type {any} */ (FormKey)(activity, context);
+  const versionTag = /** @type {any} */ (VersionTag)(activity, context);
 
   return {
     type: 'js:extension',

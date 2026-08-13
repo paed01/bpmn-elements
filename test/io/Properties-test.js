@@ -4,7 +4,7 @@ import { ActivityBroker } from '../../src/EventBroker.js';
 describe('Properties', () => {
   it('activate twice has no effect', () => {
     const { broker } = ActivityBroker();
-    const props = new Properties(
+    const props = new /** @type {any} */ (Properties)(
       {
         id: 'input',
         broker,
@@ -26,7 +26,7 @@ describe('Properties', () => {
 
   it('deactivate twice has no effect', () => {
     const { broker } = ActivityBroker();
-    const props = new Properties(
+    const props = new /** @type {any} */ (Properties)(
       {
         id: 'input',
         broker,

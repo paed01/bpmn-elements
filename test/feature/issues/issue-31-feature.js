@@ -6,7 +6,7 @@ const source = factory.resource('issue-31.bpmn');
 const sourceParallelJoin = factory.resource('issue-31-cm.bpmn');
 
 Feature('Issue 31 - Error handling on save and resume', () => {
-  function makeRequestServiceSync(message, callback) {
+  function makeRequestServiceSync(_message, callback) {
     callback(
       {
         name: 'requestError',

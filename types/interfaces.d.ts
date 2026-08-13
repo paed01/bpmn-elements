@@ -1,5 +1,4 @@
 import type { Broker, BrokerState, Consumer, MessageEnvelope, MessageFields, MessageProperties } from 'smqp';
-import type { SerializableContext, SerializableElement } from 'moddle-context-serializer';
 import type { Activity } from '../src/activity/Activity.js';
 import type { ActivityExecution } from '../src/activity/ActivityExecution.js';
 import type { ContextInstance } from '../src/Context.js';
@@ -12,13 +11,32 @@ import type { ProcessExecution } from '../src/process/ProcessExecution.js';
 import type { SequenceFlow } from '../src/flows/SequenceFlow.js';
 import type { Formatter } from '../src/MessageFormatter.js';
 import type { ActivityError } from '../src/error/Errors.js';
+import type { SignalTaskBehaviour } from '../src/tasks/SignalTask.js';
+import type { ServiceTaskBehaviour } from '../src/tasks/ServiceTask.js';
 
 export type { Activity, ActivityExecution, ContextInstance, Definition, Environment, Lane, Process, SequenceFlow };
-export type { Consumer, MessageFields, MessageProperties, SerializableContext, SerializableElement };
+export type { Consumer, MessageFields, MessageProperties };
 
 // `Object.defineProperties(<Class>.prototype, …)` is opaque to tsc inference,
 // so we declare the getters here as augmentations and TS merges them with each
-// class at emit time.
+// class at emit time. Same for `X.prototype = Object.create(Base.prototype)`
+// inheritance — declared as interface heritage below.
+declare module '../src/tasks/UserTask.js' {
+  interface UserTaskBehaviour extends SignalTaskBehaviour {}
+}
+
+declare module '../src/tasks/ManualTask.js' {
+  interface ManualTaskBehaviour extends SignalTaskBehaviour {}
+}
+
+declare module '../src/tasks/SendTask.js' {
+  interface SendTaskBehaviour extends ServiceTaskBehaviour {}
+}
+
+declare module '../src/tasks/BusinessRuleTask.js' {
+  interface BusinessRuleTaskBehaviour extends ServiceTaskBehaviour {}
+}
+
 declare module '../src/activity/Activity.js' {
   interface Activity {
     get counters(): { taken: number; discarded: number };
@@ -157,17 +175,17 @@ export interface ElementBrokerMessage extends MessageEnvelope {
 export interface ElementParent {
   id: string;
   type: string;
-  executionId: string;
-  path?: Omit<ElementParent, 'path'>[];
+  executionId?: string;
+  path?: Omit<Partial<ElementParent>, 'path'>[];
 }
 
-/** Resolved signal-, message-, or escalation reference, shared by their `resolve` functions. */
+/** Resolved signal-, message-, error-, or escalation reference, shared by their `resolve` functions. */
 export interface ResolvedReference {
   id?: string;
   type?: string;
   messageType: string;
   name?: string;
-  parent: ElementParent;
+  parent?: ElementParent;
 }
 
 // --- Shake results ------------------------------------------------------------
@@ -191,6 +209,94 @@ export interface ShakenSequence extends ElementMessageContent {
 
 /** Result of shaking an activity graph, keyed by the starting activity id. */
 export type ShakeResult = Record<string, ShakenSequence[]>;
+
+// --- Serialized definition contracts --------------------------------------------
+// bpmn-elements is agnostic to how the BPMN source was parsed and serialized.
+// Any object meeting these minimal structural contracts can drive an execution —
+// moddle-context-serializer is one implementation. Every element works with a
+// minimum definition; the constructors default what is missing.
+
+/** Parent element reference in a serialized definition */
+export interface ElementParentRef {
+  id?: string;
+  type?: string;
+  [x: string]: any;
+}
+
+/** Serialized BPMN element definition; behaviour is optional and may be partial */
+export interface SerializableElement {
+  id?: string;
+  type?: string;
+  name?: string;
+  parent?: ElementParentRef;
+  behaviour?: Record<string, any>;
+  [x: string]: any;
+}
+
+/** Parsed BPMN element definition as accepted by the Activity constructor */
+export interface ActivityDefinition extends SerializableElement {
+  behaviour?: {
+    /** Attached-to element reference, e.g. boundary event host — only `id` is read */
+    attachedTo?: { id: string; [x: string]: any };
+    eventDefinitions?: SerializableElement[];
+    [x: string]: any;
+  };
+}
+
+export interface ProcessDefinition extends SerializableElement {
+  behaviour?: {
+    isExecutable?: boolean;
+    [x: string]: any;
+  };
+}
+
+export interface SequenceFlowDefinition extends SerializableElement {
+  sourceId?: string;
+  targetId?: string;
+  isDefault?: boolean;
+}
+
+export interface AssociationDefinition extends SerializableElement {
+  sourceId?: string;
+  targetId?: string;
+}
+
+/** Message flow source or target endpoint */
+export interface MessageFlowReference {
+  processId?: string;
+  id?: string;
+  [x: string]: any;
+}
+
+export interface MessageFlowDefinition extends SerializableElement {
+  source?: MessageFlowReference;
+  target?: MessageFlowReference;
+}
+
+/**
+ * Serialized definition source consumed by Context. Structurally compatible with
+ * the moddle-context-serializer output, but any implementation will do.
+ */
+export interface SerializableContext {
+  getActivities(scopeId?: string): ActivityDefinition[];
+  getActivityById(id: string): ActivityDefinition;
+  getAssociations(scopeId?: string): AssociationDefinition[];
+  getAssociationById(id: string): AssociationDefinition;
+  getDataObjectById(id: string): SerializableElement;
+  getDataStoreById(id: string): SerializableElement;
+  getDataStoreReferenceById(id: string): SerializableElement;
+  getExecutableProcesses(): ProcessDefinition[];
+  getInboundAssociations(activityId: string): AssociationDefinition[];
+  getInboundSequenceFlows(activityId: string): SequenceFlowDefinition[];
+  getMessageFlows(scopeId?: string): MessageFlowDefinition[];
+  getOutboundAssociations(activityId: string): AssociationDefinition[];
+  getOutboundSequenceFlows(activityId: string): SequenceFlowDefinition[];
+  getProcessById(id: string): ProcessDefinition;
+  getProcesses(): ProcessDefinition[];
+  getSequenceFlowById(id: string): SequenceFlowDefinition;
+  getSequenceFlows(scopeId?: string): SequenceFlowDefinition[];
+  [x: string]: any;
+}
 
 // --- Element abstract bases ---------------------------------------------------
 
@@ -266,20 +372,27 @@ export interface ICondition {
 
 // --- Activity behaviour & extensions ------------------------------------------
 
-export interface IActivityBehaviour {
-  id: string;
-  type: string;
-  activity: Activity;
-  environment: Environment;
-  new (activity: Activity, context: ContextInstance): IActivityBehaviour;
+/** Behaviour instance driving one activity run, as instantiated by ActivityExecution. */
+export interface IActivityBehaviourInstance {
+  id?: string;
+  type?: string;
+  activity?: Activity;
+  environment?: Environment;
   execute(executeMessage: ElementBrokerMessage): void;
+  [x: string]: any;
 }
+
+export type IActivityBehaviourConstructor = new (activity: Activity, context: ContextInstance) => IActivityBehaviourInstance;
+
+/** Element-specific behaviour: a class, or a plain factory function returning the instance. */
+export type IActivityBehaviour =
+  IActivityBehaviourConstructor | ((activity: Activity, context: ContextInstance) => IActivityBehaviourInstance);
 
 export type Extension = (activity: any, context: any) => Partial<IExtension> | void;
 
 export interface IExtension {
-  activate(message: ElementBrokerMessage): void;
-  deactivate(message: ElementBrokerMessage): void;
+  activate(message?: ElementBrokerMessage): void;
+  deactivate(message?: ElementBrokerMessage): void;
 }
 
 export interface IExpressions {
@@ -331,6 +444,8 @@ export interface EnvironmentOptions {
    * optional override expressions handler
    */
   expressions?: IExpressions;
+  /** arbitrary consumer options are kept as is on environment options */
+  [x: string]: any;
 }
 
 // --- Filter / callback shapes -------------------------------------------------
@@ -585,18 +700,18 @@ export interface ITimers {
 }
 
 export interface TimersOptions {
-  /** Defaults to builtin setTimeout */
-  setTimeout?: typeof setTimeout;
-  /** Defaults to builtin clearTimeout */
-  clearTimeout?: typeof clearTimeout;
+  /** Any setTimeout implementation, defaults to builtin setTimeout */
+  setTimeout?: (callback: (...args: any[]) => void, delay: number, ...args: any[]) => any;
+  /** Any clearTimeout implementation, defaults to builtin clearTimeout */
+  clearTimeout?: (ref: any) => void;
   [x: string]: any;
 }
 
 // --- Scripts ------------------------------------------------------------------
 
 export interface IScripts {
-  register(activity: Activity): Script | undefined;
-  getScript(language: string, identifier: { id: string; [x: string]: any }): Script;
+  register(activity: Activity): Script | void;
+  getScript(language: string, identifier: { id: string; [x: string]: any }): Script | undefined;
 }
 
 export interface Script {
@@ -677,7 +792,7 @@ export interface ExecutionScope extends ElementBrokerMessage {
 
 // --- Context --
 export interface IExtensionsMapper {
-  get(activity: any): IExtensions[];
+  get(activity: any): IExtensions;
 }
 
 export interface IExtensions extends IExtension {

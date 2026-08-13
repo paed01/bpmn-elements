@@ -1,6 +1,6 @@
 /**
  * Escalation reference element. Resolves the escalation name expression against the execution message.
- * @param {import('moddle-context-serializer').SerializableElement} escalationDef
+ * @param {import('#types').SerializableElement} escalationDef
  * @param {import('#types').ContextInstance} context
  */
 export function Escalation(escalationDef, context) {
@@ -10,6 +10,7 @@ export function Escalation(escalationDef, context) {
   this.type = type;
   this.name = name;
   /** @type {import('#types').ElementParent} */
+  // @ts-ignore
   this.parent = { ...parent };
   this.environment = context.environment;
 }

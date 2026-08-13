@@ -5,7 +5,7 @@ describe('IntermediateCatchEvent', () => {
   describe('without event definitions', () => {
     let event;
     beforeEach(() => {
-      event = IntermediateCatchEvent({ id: 'emptyEvent' }, testHelpers.emptyContext());
+      event = IntermediateCatchEvent(/** @type {any} */ ({ id: 'emptyEvent' }), testHelpers.emptyContext());
     });
 
     it('completes when signaled', async () => {
@@ -79,7 +79,7 @@ describe('IntermediateCatchEvent', () => {
       event.broker.subscribeTmp(
         'execution',
         'execute.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -107,7 +107,7 @@ describe('IntermediateCatchEvent', () => {
       event.broker.subscribeTmp(
         'execution',
         'execute.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }

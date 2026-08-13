@@ -182,7 +182,7 @@ Feature('Link as goto', () => {
     });
 
     When('definition is recovered into a fresh instance and resumed', () => {
-      definition = new Definition(context).recover(state);
+      definition = /** @type {any} */ (new Definition(context).recover(state));
       end = definition.waitFor('end');
       definition.resume();
     });
@@ -412,7 +412,7 @@ Feature('Link as goto', () => {
 
     let end;
     When('definition is recovered into a fresh instance and resumed', () => {
-      definition = new Definition(context, { extensions: asyncCatch }).recover(state);
+      definition = /** @type {any} */ (new Definition(context, { extensions: asyncCatch }).recover(state));
       end = definition.waitFor('end');
       definition.resume();
     });

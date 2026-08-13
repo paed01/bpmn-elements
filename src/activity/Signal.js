@@ -1,6 +1,6 @@
 /**
  * Signal reference element. Resolves the signal name expression against the execution message.
- * @param {import('moddle-context-serializer').SerializableElement} signalDef
+ * @param {import('#types').SerializableElement} signalDef
  * @param {import('#types').ContextInstance} context
  */
 export function Signal(signalDef, context) {
@@ -10,6 +10,7 @@ export function Signal(signalDef, context) {
   this.type = type;
   this.name = name;
   /** @type {import('#types').ElementParent} */
+  // @ts-ignore
   this.parent = { ...parent };
   this.environment = context.environment;
 }

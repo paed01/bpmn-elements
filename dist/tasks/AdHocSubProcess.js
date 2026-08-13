@@ -21,8 +21,11 @@ class AdHocSubProcessBehaviour extends _SubProcess.SubProcessBehaviour {
   constructor(activity, context) {
     super(activity, context);
     const behaviour = activity.behaviour || {};
+    // @ts-ignore
     this.sequential = behaviour.ordering === 'Sequential';
+    // @ts-ignore
     this.cancelRemaining = behaviour.cancelRemainingInstances !== false;
+    // @ts-ignore
     const completionCondition = behaviour.completionCondition;
     this.completionCondition = completionCondition ? typeof completionCondition === 'string' ? completionCondition : completionCondition.body : undefined;
     this._completing = new WeakSet();
@@ -132,7 +135,7 @@ class AdHocSubProcessBehaviour extends _SubProcess.SubProcessBehaviour {
 
 /**
  * Ad-hoc sub process
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 exports.AdHocSubProcessBehaviour = AdHocSubProcessBehaviour;

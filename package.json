@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "18.0.12",
+  "version": "18.0.13",
   "description": "Executable workflow elements based on BPMN 2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -47,9 +47,9 @@
   "sideEffects": false,
   "scripts": {
     "test": "mocha -R @bonniernews/hot-bev -p -t 3000",
-    "posttest": "npm run lint && npm run dist",
-    "lint": "eslint . --cache && prettier . --check --cache && npm run typecheck",
-    "typecheck": "tsc --noEmit",
+    "posttest": "npm run lint && npm run dist && npm run typecheck",
+    "lint": "eslint . --cache && prettier . --check --cache",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p test",
     "prepack": "npm run dist",
     "test:md": "texample ./docs/Examples.md,./docs/StartEvent.md,./docs/Extension.md,./docs/ConditionalEventDefinition.md",
     "cov:html": "c8 -r html -r text mocha -R @bonniernews/hot-bev -p -t 3000",
@@ -102,6 +102,8 @@
     "@bonniernews/hot-bev": "^0.4.0",
     "@eslint/js": "^10.0.1",
     "@types/bpmn-moddle": "^10.0.0",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
     "@types/node": "^20.19.40",
     "bpmn-moddle": "^10.0.0",
     "c8": "^12.0.0",
@@ -117,7 +119,8 @@
     "moddle-context-serializer": "^6.0.0",
     "nock": "^14.0.0",
     "prettier": "^3.2.5",
-    "texample": "^1.0.1"
+    "texample": "^1.0.1",
+    "typescript": "6.0.3"
   },
   "dependencies": {
     "@0dep/piso": "^4.0.0",

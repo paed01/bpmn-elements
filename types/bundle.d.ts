@@ -1,96 +1,19 @@
-// Hand-written entry for dts-buddy. Re-exports the runtime classes once each
-// and the shared interfaces in one place so the emitted bundle has a single
-// declaration per name (no `_1` aliases, no per-module duplicates).
+// Hand-written entry for dts-buddy. Star-exports the public runtime surface
+// once from `src/index.js` plus the shared interfaces, so the emitted bundle
+// has a single declaration per name (no `_1` aliases, no per-module
+// duplicates) and new `src/index.js` exports flow into the types
+// automatically.
 //
 // Submodule type entries (`bpmn-elements/events`, `…/tasks`, etc.) are
 // emitted as trivial re-export blocks by `scripts/build-types.js`, so every
-// public name needs a home here.
+// public name needs a home here — the events/gateways/tasks stars pick up
+// the Behaviour classes that `src/index.js` does not re-export, and the
+// execution orchestrators are typed although the runtime does not export
+// them.
+export * from '../src/index.js';
 export * from './interfaces.js';
-
-export { Activity } from '../src/activity/Activity.js';
 export { ActivityExecution } from '../src/activity/ActivityExecution.js';
-export { BpmnErrorActivity as BpmnError } from '../src/error/BpmnError.js';
-export { Context } from '../src/Context.js';
-export { Definition } from '../src/definition/Definition.js';
 export { DefinitionExecution } from '../src/definition/DefinitionExecution.js';
-export { DummyActivity as Dummy, TextAnnotation, Group, Category } from '../src/activity/Dummy.js';
-export { Environment } from '../src/Environment.js';
-export { EnvironmentDataObject as DataObject } from '../src/io/EnvironmentDataObject.js';
-export { EnvironmentDataStore as DataStore } from '../src/io/EnvironmentDataStore.js';
-export { EnvironmentDataStoreReference as DataStoreReference } from '../src/io/EnvironmentDataStoreReference.js';
-export { Escalation } from '../src/activity/Escalation.js';
-export { IoSpecification as InputOutputSpecification } from '../src/io/InputOutputSpecification.js';
-export { Lane } from '../src/process/Lane.js';
-export { LoopCharacteristics as MultiInstanceLoopCharacteristics } from '../src/tasks/LoopCharacteristics.js';
-export { Message } from '../src/activity/Message.js';
-export { Process } from '../src/process/Process.js';
-export { Properties } from '../src/io/Properties.js';
-export { ServiceImplementation } from '../src/tasks/ServiceImplementation.js';
-export { Signal } from '../src/activity/Signal.js';
-export { StandardLoopCharacteristics } from '../src/tasks/StandardLoopCharacteristics.js';
-export { Timers } from '../src/Timers.js';
-
-export { Association, MessageFlow, SequenceFlow } from '../src/flows/index.js';
-export {
-  BoundaryEvent,
-  BoundaryEventBehaviour,
-  EndEvent,
-  EndEventBehaviour,
-  IntermediateCatchEvent,
-  IntermediateCatchEventBehaviour,
-  IntermediateThrowEvent,
-  IntermediateThrowEventBehaviour,
-  StartEvent,
-  StartEventBehaviour,
-} from '../src/events/index.js';
-export {
-  EventBasedGateway,
-  EventBasedGatewayBehaviour,
-  ExclusiveGateway,
-  ExclusiveGatewayBehaviour,
-  InclusiveGateway,
-  InclusiveGatewayBehaviour,
-  ParallelGateway,
-  ParallelGatewayBehaviour,
-} from '../src/gateways/index.js';
-export {
-  AdHocSubProcess,
-  AdHocSubProcessBehaviour,
-  BusinessRuleTask,
-  BusinessRuleTaskBehaviour,
-  CallActivity,
-  CallActivityBehaviour,
-  ManualTask,
-  ManualTaskBehaviour,
-  ReceiveTask,
-  ReceiveTaskBehaviour,
-  SendTask,
-  SendTaskBehaviour,
-  ServiceTask,
-  ServiceTaskBehaviour,
-  ScriptTask,
-  ScriptTaskBehaviour,
-  SignalTask,
-  SignalTaskBehaviour,
-  SubProcess,
-  SubProcessBehaviour,
-  Task,
-  TaskBehaviour,
-  Transaction,
-  UserTask,
-  UserTaskBehaviour,
-} from '../src/tasks/index.js';
-export {
-  CancelEventDefinition,
-  CompensateEventDefinition,
-  ConditionalEventDefinition,
-  EscalationEventDefinition,
-  ErrorEventDefinition,
-  LinkEventDefinition,
-  MessageEventDefinition,
-  SignalEventDefinition,
-  TerminateEventDefinition,
-  TimerEventDefinition,
-} from '../src/eventDefinitions/index.js';
-
-export { ActivityError, RunError } from '../src/error/Errors.js';
+export * from '../src/events/index.js';
+export * from '../src/gateways/index.js';
+export * from '../src/tasks/index.js';

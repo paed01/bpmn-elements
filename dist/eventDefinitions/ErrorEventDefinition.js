@@ -10,7 +10,7 @@ var _constants = require("../constants.js");
 /**
  * Error event definition
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ * @param {import('#types').SerializableElement} eventDefinition
  */
 function ErrorEventDefinition(activity, eventDefinition) {
   const {
@@ -29,6 +29,7 @@ function ErrorEventDefinition(activity, eventDefinition) {
   /** @type {import('#types').EventReference} */
   this.reference = {
     name: 'anonymous',
+    // @ts-ignore
     ...behaviour.errorRef,
     referenceType: 'throw'
   };
@@ -171,7 +172,7 @@ ErrorEventDefinition.prototype._onThrowApiMessage = function onThrowApiMessage(r
   if (info.message.id !== error?.id) return;
   return this._catchError(routingKey, message, error);
 };
-ErrorEventDefinition.prototype._catchError = function catchError(routingKey, message, error) {
+ErrorEventDefinition.prototype._catchError = function catchError(_routingKey, message, error) {
   this[_constants.K_COMPLETED] = true;
   this._stop();
   this._debug(`caught ${this[_constants.K_REFERENCE_INFO].description}`);
@@ -197,7 +198,7 @@ ErrorEventDefinition.prototype._catchError = function catchError(routingKey, mes
     state: 'catch'
   }));
 };
-ErrorEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+ErrorEventDefinition.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   const messageType = message.properties.type;
   switch (messageType) {
     case 'discard':
@@ -232,6 +233,7 @@ ErrorEventDefinition.prototype._getReferenceInfo = function getReferenceInfo(mes
     };
   }
   const result = {
+    // @ts-ignore
     message: referenceElement.resolve(message)
   };
   result.description = `${result.message.name} <${result.message.id}>`;

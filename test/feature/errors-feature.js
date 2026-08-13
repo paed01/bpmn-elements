@@ -825,6 +825,7 @@ Feature('Errors', () => {
     });
 
     And('service encounters custom error with error code that match known error', () => {
+      /** @type {Error & { code?: number }} */
       const error = new Error('Not found');
       error.code = 404;
       serviceCallback(error);
@@ -848,6 +849,7 @@ Feature('Errors', () => {
     });
 
     And('service encounters custom error with error code that match known error', () => {
+      /** @type {Error & { code?: number }} */
       const error = new Error('Not found');
       error.code = 404;
       serviceCallback(error);

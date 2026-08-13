@@ -15,37 +15,43 @@ describe('Process execution', () => {
   describe('execute()', () => {
     it('requires message', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
       expect(execution.execute).to.throw(/requires message/i);
     });
 
     it('requires message content executionId', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
       expect(() => {
+        // @ts-expect-error content executionId is required
         execution.execute({ content: {} });
       }).to.throw(/requires execution id/i);
     });
 
     it('publishes start execute message', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('execution', 'execute.#', (_, msg) => {
         message = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'parentActivity',
-          state: 'start',
-          type: 'task',
-          executionId: 'process1_1',
-          input: 1,
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'parentActivity',
+            state: 'start',
+            type: 'task',
+            executionId: 'process1_1',
+            input: 1,
+          },
+        })
+      );
 
       expect(message).to.be.ok;
       expect(message.fields).to.have.property('routingKey', 'execute.start');
@@ -60,41 +66,48 @@ describe('Process execution', () => {
 
     it('creates execution queue', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'parentActivity',
-          state: 'start',
-          type: 'task',
-          executionId: 'process1_1',
-          input: 1,
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'parentActivity',
+            state: 'start',
+            type: 'task',
+            executionId: 'process1_1',
+            input: 1,
+          },
+        })
+      );
 
       expect(bp.broker.getQueue('execute-process1_1-q')).to.be.ok;
     });
 
     it('starts with start activities', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('event', 'activity.enter', (_, msg) => {
         message = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          state: 'start',
-          type: 'bpmn:Process',
-          executionId: 'process1_1',
-          input: 1,
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            state: 'start',
+            type: 'bpmn:Process',
+            executionId: 'process1_1',
+            input: 1,
+          },
+        })
+      );
 
       expect(message).to.be.ok;
       expect(message.fields).to.have.property('routingKey', 'activity.enter');
@@ -110,25 +123,30 @@ describe('Process execution', () => {
 
     it('publishes start message if recovered on init', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
         message = msg;
       });
 
-      execution.execute({
-        fields: {
-          redelivered: true,
-        },
-        content: {
-          id: 'parentActivity',
-          state: 'start',
-          type: 'task',
-          executionId: 'process1_1',
-          input: 1,
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {
+            redelivered: true,
+          },
+          content: {
+            id: 'parentActivity',
+            state: 'start',
+            type: 'task',
+            executionId: 'process1_1',
+            input: 1,
+          },
+        })
+      );
 
       expect(message).to.be.ok;
       expect(message.fields).to.have.property('routingKey', 'execute.start');
@@ -136,25 +154,30 @@ describe('Process execution', () => {
 
     it('completes if recovered on executing when all activities are completed', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.recover({ status: 'executing' });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.recover(/** @type {any} */ ({ status: 'executing' }));
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('execution', '#', (_, msg) => {
         message = msg;
       });
 
-      execution.execute({
-        fields: {
-          redelivered: true,
-        },
-        content: {
-          id: 'parentActivity',
-          type: 'task',
-          executionId: 'process1_1',
-          input: 1,
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {
+            redelivered: true,
+          },
+          content: {
+            id: 'parentActivity',
+            type: 'task',
+            executionId: 'process1_1',
+            input: 1,
+          },
+        })
+      );
 
       expect(message).to.be.ok;
       expect(message.fields).to.have.property('routingKey', 'execution.completed.process1_1');
@@ -162,7 +185,7 @@ describe('Process execution', () => {
 
     it('forwards activity events', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
       const messages = [];
       bp.broker.subscribeTmp(
@@ -174,16 +197,18 @@ describe('Process execution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'parentActivity',
-          state: 'start',
-          type: 'task',
-          executionId: 'process1_1',
-          input: 1,
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'parentActivity',
+            state: 'start',
+            type: 'task',
+            executionId: 'process1_1',
+            input: 1,
+          },
+        })
+      );
 
       const [, task] = execution.getActivities();
       task.broker.publish('event', 'activity.arb', { id: 'task', state: 'arb', parent: { id: bp.id } });
@@ -198,25 +223,30 @@ describe('Process execution', () => {
 
     it('forwards sequence flow events', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('event', 'flow.#', (_, msg) => {
         message = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'parentActivity',
-          state: 'start',
-          type: 'task',
-          executionId: 'process1_1',
-          input: 1,
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'parentActivity',
+            state: 'start',
+            type: 'task',
+            executionId: 'process1_1',
+            input: 1,
+          },
+        })
+      );
 
-      const [flow] = execution.getSequenceFlows();
+      const [flow] = /** @type {any} */ (execution.getSequenceFlows());
       flow.broker.publish('event', 'flow.take', { id: 'flow' });
 
       expect(message).to.be.ok;
@@ -230,7 +260,7 @@ describe('Process execution', () => {
     it('uncaught activity error throws', () => {
       const bp = createProcess();
       const activity = ServiceTask(
-        {
+        /** @type {any} */ ({
           id: 'service',
           type: 'bpmn:ServiceTask',
           parent: {
@@ -245,7 +275,7 @@ describe('Process execution', () => {
               };
             },
           },
-        },
+        }),
         bp.context
       );
 
@@ -253,20 +283,25 @@ describe('Process execution', () => {
         return [activity];
       };
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       execution.broker.subscribeOnce('execution', 'execution.error.*', (_, msg) => {
         message = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(message).to.be.ok;
       expect(message).to.have.property('fields').with.property('routingKey', 'execution.error.process1_1');
@@ -318,20 +353,22 @@ describe('Process execution', () => {
       };
       activities.push(boundEvent);
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
       let errorMessage;
       execution.broker.subscribeOnce('execution', 'execution.error.*', (_, msg) => {
         errorMessage = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(errorMessage).to.not.be.ok;
       expect(execution).to.have.property('completed', true);
@@ -382,7 +419,7 @@ describe('Process execution', () => {
       };
       activities.push(boundEvent);
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
       let errorMessage;
       execution.broker.subscribeOnce('execution', 'execution.error.*', (_, msg) => {
@@ -391,13 +428,15 @@ describe('Process execution', () => {
 
       const end = new Promise((resolve) => execution.broker.subscribeOnce('execution', 'execution.completed.*', resolve));
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       await end;
 
@@ -412,14 +451,16 @@ describe('Process execution', () => {
     it('completes immediately if no activities', () => {
       const bp = createProcess({ getActivities() {} });
 
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
       expect(execution).to.have.property('completed', true);
     });
 
@@ -440,14 +481,16 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
       const [activity] = execution.getActivities();
 
       activity.broker.publish('event', 'activity.enter', { id: 'end' });
@@ -461,14 +504,16 @@ describe('Process execution', () => {
 
       const activities = bp.getActivities();
 
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(execution).to.have.property('completed', false);
 
@@ -495,14 +540,16 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
       const [activity1, activity2] = execution.getActivities();
 
       activity1.broker.publish('event', 'activity.enter', {
@@ -536,16 +583,18 @@ describe('Process execution', () => {
     it('completes when no pending activities', () => {
       const bp = createProcess();
       const [activity1, activity2] = bp.getActivities();
-      const [sequenceflow] = bp.getSequenceFlows();
+      const [sequenceflow] = /** @type {import('bpmn-elements').SequenceFlow[]} */ (bp.getSequenceFlows());
 
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
       activity1.broker.publish('event', 'activity.enter', {
         id: activity1.id,
         executionId: activity1.executionId,
@@ -585,14 +634,16 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       const [activity1, activity2] = execution.getActivities();
 
@@ -645,15 +696,17 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(execution).to.have.property('postponedCount', 0);
       expect(execution.status).to.equal('terminated');
@@ -668,14 +721,16 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
       expect(execution).to.have.property('completed', false);
       expect(execution.getPostponed()).to.have.length(1);
 
@@ -695,7 +750,7 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
       const stop = new Promise((resolve) => {
         bp.broker.subscribeOnce('event', 'activity.wait', () => {
           execution.stop();
@@ -703,13 +758,15 @@ describe('Process execution', () => {
         });
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       await stop;
 
@@ -730,14 +787,16 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
       expect(execution).to.have.property('completed', false);
       expect(execution.getPostponed()).to.have.length(1);
 
@@ -777,7 +836,7 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
       const stop = new Promise((resolve) => {
         bp.broker.subscribeOnce('event', 'activity.wait', () => {
           execution.stop();
@@ -785,13 +844,15 @@ describe('Process execution', () => {
         });
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       await stop;
 
@@ -849,7 +910,7 @@ describe('Process execution', () => {
         getSequenceFlows() {},
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
       const stop = new Promise((resolve) => {
         bp.broker.subscribeOnce('event', 'activity.wait', () => {
           execution.stop();
@@ -857,13 +918,15 @@ describe('Process execution', () => {
         });
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       await stop;
 
@@ -899,14 +962,16 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
       expect(execution).to.have.property('completed', false);
       expect(execution.getPostponed()).to.have.length(1);
 
@@ -928,14 +993,16 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
       expect(execution).to.have.property('completed', false);
       expect(execution.getPostponed()).to.have.length(1);
 
@@ -994,7 +1061,7 @@ describe('Process execution', () => {
         getSequenceFlows() {},
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
       const discard = new Promise((resolve) => {
         bp.broker.subscribeOnce('event', 'activity.wait', () => {
           execution.discard();
@@ -1002,13 +1069,15 @@ describe('Process execution', () => {
         });
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       await discard;
 
@@ -1031,7 +1100,7 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
       const state = execution.getState();
 
       expect(state).to.have.property('children').with.length(1);
@@ -1045,7 +1114,7 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
       const state = execution.getState();
 
       expect(state).to.have.property('completed', false);
@@ -1058,14 +1127,16 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
       const state = execution.getState();
 
       expect(state).to.have.property('completed', true);
@@ -1075,44 +1146,48 @@ describe('Process execution', () => {
   describe('recover(state)', () => {
     it('is ignored if no state is passed', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context).recover();
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context)).recover();
       expect(execution).to.be.ok;
     });
 
     it('sets stopped and completed from state', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
       execution.stop();
 
       const state = execution.getState();
 
-      const recoveredExecution = new ProcessExecution(bp, bp.context).recover(state);
+      const recoveredExecution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context)).recover(state);
       expect(recoveredExecution).to.have.property('stopped', true);
       expect(recoveredExecution).to.have.property('completed', false);
     });
 
     it('recovers children and flows', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
       execution.stop();
 
       const state = execution.getState();
 
-      const recoveredExecution = new ProcessExecution(bp, bp.context).recover(state);
+      const recoveredExecution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context)).recover(state);
 
       const [start, task, end] = recoveredExecution.getActivities();
       expect(start).to.have.property('counters').with.property('taken', 1);
@@ -1121,7 +1196,7 @@ describe('Process execution', () => {
       expect(end).to.have.property('counters').with.property('taken', 0);
       expect(end.executionId).to.be.undefined;
 
-      const [flow1, flow2] = recoveredExecution.getSequenceFlows();
+      const [flow1, flow2] = /** @type {any} */ (recoveredExecution.getSequenceFlows());
       expect(flow1).to.have.property('counters').with.property('take', 1);
       expect(flow2).to.have.property('counters').with.property('take', 0);
     });
@@ -1130,28 +1205,32 @@ describe('Process execution', () => {
   describe('resume', () => {
     it('resumes if execution message is redelivered', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
       expect(execution).to.have.property('completed', false);
       expect(execution.getPostponed()).to.have.length(1);
 
       execution.stop();
 
-      execution.execute({
-        fields: {
-          redelivered: true,
-        },
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {
+            redelivered: true,
+          },
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(execution.getPostponed()).to.have.length(1);
       const [taskApi] = execution.getPostponed();
@@ -1170,7 +1249,7 @@ describe('Process execution', () => {
       expect(task).to.have.property('counters').with.property('taken', 1);
       expect(end).to.have.property('counters').with.property('taken', 1);
 
-      const [flow1, flow2] = execution.getSequenceFlows();
+      const [flow1, flow2] = /** @type {any} */ (execution.getSequenceFlows());
       expect(flow1).to.have.property('counters').with.property('take', 1);
       expect(flow2).to.have.property('counters').with.property('take', 1);
     });
@@ -1182,31 +1261,38 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(execution).to.have.property('completed', true);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('execution', '#', (_, msg) => {
         message = msg;
       });
 
-      execution.execute({
-        fields: {
-          redelivered: true,
-        },
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {
+            redelivered: true,
+          },
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(execution).to.have.property('completed', true);
 
@@ -1221,35 +1307,42 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(execution).to.have.property('completed', true);
 
       const state = execution.getState();
-      const recoveredExecution = new ProcessExecution(bp, bp.context);
+      const recoveredExecution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
       recoveredExecution.recover(state);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('execution', '#', (_, msg) => {
         message = msg;
       });
 
-      recoveredExecution.execute({
-        fields: {
-          redelivered: true,
-        },
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      recoveredExecution.execute(
+        /** @type {any} */ ({
+          fields: {
+            redelivered: true,
+          },
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(execution).to.have.property('completed', true);
 
@@ -1264,35 +1357,42 @@ describe('Process execution', () => {
         },
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(execution).to.have.property('completed', true);
 
       const state = execution.getState();
-      const recoveredExecution = new ProcessExecution(bp, bp.context);
+      const recoveredExecution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
       recoveredExecution.recover(state);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('execution', '#', (_, msg) => {
         message = msg;
       });
 
-      recoveredExecution.execute({
-        fields: {
-          redelivered: true,
-        },
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      recoveredExecution.execute(
+        /** @type {any} */ ({
+          fields: {
+            redelivered: true,
+          },
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(execution).to.have.property('completed', true);
 
@@ -1304,15 +1404,17 @@ describe('Process execution', () => {
   describe('getPostponed()', () => {
     it('returns running activity apis', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       const postponed = execution.getPostponed();
       expect(postponed).to.have.length(1);
@@ -1331,15 +1433,17 @@ describe('Process execution', () => {
       const bp = createProcess();
       const [, task] = bp.getActivities();
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       task.broker.publish('event', 'activity.made-up', {
         id: task.id,
@@ -1366,15 +1470,17 @@ describe('Process execution', () => {
   describe('getApi()', () => {
     it('without message returns process api', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       const api = execution.getApi();
       expect(api.content).to.have.property('executionId', 'process1_1');
@@ -1383,24 +1489,28 @@ describe('Process execution', () => {
 
     it('with message returns process api', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
-      const api = execution.getApi({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-          state: 'wait',
-        },
-      });
+      const api = execution.getApi(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+            state: 'wait',
+          },
+        })
+      );
 
       expect(api.content).to.have.property('executionId', 'process1_1');
       expect(api.content).to.have.property('state', 'wait');
@@ -1408,24 +1518,28 @@ describe('Process execution', () => {
 
     it('with activity message returns activity api', () => {
       const bp = createProcess();
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
-      const api = execution.getApi({
-        fields: {},
-        content: {
-          id: 'task',
-          executionId: 'task_1',
-          state: 'wait',
-        },
-      });
+      const api = execution.getApi(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'task',
+            executionId: 'task_1',
+            state: 'wait',
+          },
+        })
+      );
 
       expect(api.content).to.have.property('id', 'task');
       expect(api.content).to.have.property('executionId', 'task_1');
@@ -1463,7 +1577,7 @@ describe('Process execution', () => {
         getSequenceFlows() {},
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
       const messages = [];
       bp.broker.subscribeTmp(
         'event',
@@ -1482,13 +1596,15 @@ describe('Process execution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(messages).to.have.length(3);
       expect(messages[0]).to.have.property('fields').with.property('routingKey', 'activity.start');
@@ -1540,7 +1656,7 @@ describe('Process execution', () => {
         getSequenceFlows() {},
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
       const messages = [];
       bp.broker.subscribeTmp(
         'event',
@@ -1559,13 +1675,15 @@ describe('Process execution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(messages).to.have.length(3);
       expect(execution).to.have.property('postponedCount', 1);
@@ -1604,7 +1722,7 @@ describe('Process execution', () => {
         getSequenceFlows() {},
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
       const messages = [];
       bp.broker.subscribeTmp(
         'event',
@@ -1615,13 +1733,15 @@ describe('Process execution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(messages).to.have.length(1);
 
@@ -1667,7 +1787,7 @@ describe('Process execution', () => {
         getSequenceFlows() {},
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
       const messages = [];
       bp.broker.subscribeTmp(
         'event',
@@ -1678,13 +1798,15 @@ describe('Process execution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(messages).to.have.length(1);
 
@@ -1733,15 +1855,17 @@ describe('Process execution', () => {
         getSequenceFlows() {},
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'process1',
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'process1',
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(execution.status).to.equal('completed');
     });
@@ -1773,7 +1897,7 @@ describe('Process execution', () => {
         getSequenceFlows() {},
       });
 
-      const execution = new ProcessExecution(bp, bp.context);
+      const execution = new ProcessExecution(/** @type {any} */ (bp), /** @type {any} */ (bp.context));
 
       let completed;
       execution.broker.subscribeTmp(
@@ -1785,12 +1909,14 @@ describe('Process execution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          executionId: 'process1_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            executionId: 'process1_1',
+          },
+        })
+      );
 
       expect(completed, 'completed before second activity is complete').to.not.be.ok;
 
@@ -1844,10 +1970,10 @@ function createProcess(override, step) {
   );
 
   return new Process(
-    {
+    /** @type {any} */ ({
       id: 'process1',
       type: 'bpmn:Process',
-    },
+    }),
     context
   );
 }

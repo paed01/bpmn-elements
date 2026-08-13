@@ -9,7 +9,7 @@ var _Activity = require("../activity/Activity.js");
 var _messageHelper = require("../messageHelper.js");
 /**
  * Exclusive gateway
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 function ExclusiveGateway(activityDef, context) {

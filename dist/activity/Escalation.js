@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.Escalation = Escalation;
 /**
  * Escalation reference element. Resolves the escalation name expression against the execution message.
- * @param {import('moddle-context-serializer').SerializableElement} escalationDef
+ * @param {import('#types').SerializableElement} escalationDef
  * @param {import('#types').ContextInstance} context
  */
 function Escalation(escalationDef, context) {
@@ -21,6 +21,7 @@ function Escalation(escalationDef, context) {
   this.type = type;
   this.name = name;
   /** @type {import('#types').ElementParent} */
+  // @ts-ignore
   this.parent = {
     ...parent
   };

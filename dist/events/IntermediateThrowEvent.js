@@ -11,7 +11,7 @@ var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
 /**
  * Intermediate throw event
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 function IntermediateThrowEvent(activityDef, context) {
@@ -43,5 +43,7 @@ IntermediateThrowEventBehaviour.prototype.execute = function execute(executeMess
   if (execution) {
     return execution.execute(executeMessage);
   }
+
+  // @ts-ignore
   return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeMessage.content));
 };

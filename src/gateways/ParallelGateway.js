@@ -10,7 +10,7 @@ const K_PEERS_DISCOVERED = Symbol.for('peers discovered');
 
 /**
  * Parallel gateway
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function ParallelGateway(activityDef, context) {
@@ -61,6 +61,7 @@ export function ParallelGateway(activityDef, context) {
       [...peers].map(([flowId, sourceIds]) => [flowId, [...sourceIds]])
     );
 
+    // @ts-ignore
     activity.shake(message);
   }
 }
@@ -76,7 +77,7 @@ export function ParallelGatewayBehaviour(activity) {
   this.broker = activity.broker;
   /**
    * Inbound taken sequence flow sequences
-   * @type {Set<import('#types').ElementMessageContent}
+   * @type {Set<import('#types').ElementMessageContent>}
    */
   this.inbound = new Set();
 
@@ -106,6 +107,7 @@ ParallelGatewayBehaviour.prototype.execute = function execute(executeMessage) {
     if (executeMessage.fields.routingKey === 'execute.start') {
       const isRedelivered = executeMessage.fields.redelivered;
       if (!isRedelivered && executeContent.state === STATE_SETUP && !this.peerMonitor.isRunning) {
+        // @ts-ignore
         return this._complete();
       }
       if (executeContent.state !== 'start' && !isRedelivered) {
@@ -202,7 +204,7 @@ ParallelGatewayBehaviour.prototype._stop = function stop() {
 /**
  * Peer monitor
  * @param {import('#types').Activity} activity parallel gateway activity
- * @param {Map<string, import('#types').Activity} targets parallel gateway peer target activities
+ * @param {Map<string, import('#types').Activity>} targets parallel gateway peer target activities
  */
 function PeerMonitor(activity, targets) {
   this.activity = activity;

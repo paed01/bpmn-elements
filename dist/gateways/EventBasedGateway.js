@@ -10,7 +10,7 @@ var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
 /**
  * Event based gateway
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 function EventBasedGateway(activityDef, context) {
@@ -68,6 +68,7 @@ EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) 
   });
   this[_constants.K_COMPLETED] = false;
   if (!executeMessage.fields.redelivered) {
+    // @ts-ignore
     return broker.publish('execution', 'execute.outbound.take', (0, _messageHelper.cloneContent)(executeContent, {
       outboundTaken: true
     }));

@@ -17,12 +17,14 @@ describe('ActivityExecution', () => {
     it('requires executeMessage content', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
+      // @ts-expect-error message content is required
       expect(() => execution.execute({})).to.throw(/requires execution id/i);
     });
 
     it('requires executeMessage content executionId', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
+      // @ts-expect-error content executionId is required
       expect(() => execution.execute({ content: {} })).to.throw(/requires execution id/i);
     });
 
@@ -30,20 +32,24 @@ describe('ActivityExecution', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let message;
       activity.broker.subscribeOnce('execution', 'execute.#', (_, msg) => {
         message = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       expect(message).to.be.ok;
       expect(message.fields).to.have.property('routingKey', 'execute.start');
@@ -60,20 +66,26 @@ describe('ActivityExecution', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let startMessage;
       activity.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
         startMessage = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
       let completeMessage;
       activity.broker.subscribeOnce('execution', 'execution.#', (_, msg) => {
@@ -97,20 +109,26 @@ describe('ActivityExecution', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let startMessage;
       activity.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
         startMessage = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'gateway',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'gateway',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
       let completeMessage;
       activity.broker.subscribeOnce('execution', 'execution.#', (_, msg) => {
@@ -141,20 +159,26 @@ describe('ActivityExecution', () => {
 
       const execution = new ActivityExecution(activity);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let startMessage;
       activity.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
         startMessage = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
       let completeMessage;
       activity.broker.subscribeOnce('execution', 'execution.#', (_, msg) => {
@@ -180,20 +204,24 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let discardMessage;
       activity.broker.subscribeOnce('api', 'activity.discard.*', (_, msg) => {
         discardMessage = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       activity.broker.publish('execution', 'execute.start', {
         id: 'activity',
@@ -225,20 +253,24 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let discardMessage;
       activity.broker.subscribeOnce('api', 'activity.discard.*', (_, msg) => {
         discardMessage = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       activity.broker.publish('execution', 'execute.start', {
         id: 'activity',
@@ -270,15 +302,17 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       expect(execution.getPostponed()).to.have.length(1);
       expect(execution.getPostponed()[0]).to.have.property('content').with.property('state', 'start');
@@ -312,15 +346,17 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       activity.broker.publish('execution', 'execute.start', {
         id: 'activity',
@@ -359,15 +395,17 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       const errorMessages = [];
       activity.broker.subscribeTmp(
@@ -401,15 +439,17 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       activity.broker.publish('execution', 'execute.start', {
         id: 'activity',
@@ -450,15 +490,17 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       activity.broker.publish('execution', 'execute.start', {
         id: 'activity',
@@ -485,25 +527,58 @@ describe('ActivityExecution', () => {
     });
   });
 
+  describe('passthrough(executeMessage)', () => {
+    it('executes if called before any source is set up', () => {
+      const activity = createActivity();
+      const execution = new ActivityExecution(activity);
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      let message;
+      activity.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
+        message = msg;
+      });
+
+      execution.passthrough(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
+
+      expect(message, 'execute.start published').to.be.ok;
+      expect(execution.source, 'source instantiated').to.be.ok;
+    });
+  });
+
   describe('discard()', () => {
     it('discards execution', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
       let message;
       activity.broker.subscribeOnce('execution', 'execution.discard', (_, msg) => {
         message = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       execution.discard();
 
@@ -535,15 +610,17 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
       execution.discard();
 
       expect(execution.completed).to.be.true;
@@ -593,15 +670,17 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
       expect(execution.completed).to.be.true;
 
       execution.discard();
@@ -639,15 +718,17 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
       expect(execution.completed).to.be.false;
 
       execution.discard();
@@ -681,15 +762,17 @@ describe('ActivityExecution', () => {
 
       const executeQ = activity.broker.getQueue('execute-q');
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
       execution.stop();
 
       expect(execution.completed).to.be.false;
@@ -703,15 +786,17 @@ describe('ActivityExecution', () => {
       const execution = new ActivityExecution(activity);
       let stoppedSubExecution = false;
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
       execution.stop();
 
       expect(execution.completed).to.be.false;
@@ -756,15 +841,17 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
       expect(execution.completed).to.be.true;
 
       execution.stop();
@@ -792,16 +879,18 @@ describe('ActivityExecution', () => {
         messages.push(msg);
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-          message: 0,
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+            message: 0,
+          },
+        })
+      );
 
       expect(messages).to.have.length(1);
       expect(messages[0]).to.have.property('content').with.property('output', 1);
@@ -825,15 +914,17 @@ describe('ActivityExecution', () => {
         messages.push(msg);
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       expect(messages).to.have.length(1);
       expect(messages[0]).to.have.property('content').with.property('output', 1);
@@ -878,15 +969,17 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       expect(execution).to.have.property('completed', false);
 
@@ -924,15 +1017,17 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       activity.broker.publish('execution', 'execute.completed', messages[0].content);
 
@@ -972,15 +1067,17 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       expect(execution.getPostponed()).to.have.length(1);
       expect(execution.getPostponed()[0]).to.have.property('fields').with.property('routingKey', 'execute.start');
@@ -1022,15 +1119,17 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       const executeQ = activity.broker.getQueue('execute-q');
 
@@ -1085,15 +1184,17 @@ describe('ActivityExecution', () => {
     it('returns expected state when executing', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       expect(execution.getState()).to.eql({ completed: false });
     });
@@ -1101,15 +1202,17 @@ describe('ActivityExecution', () => {
     it('returns expected state when completed', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
       execution.getPostponed()[0].signal();
 
       expect(execution.getState()).to.eql({ completed: true });
@@ -1136,32 +1239,36 @@ describe('ActivityExecution', () => {
 
       const executeMessages = [];
 
-      execution.execute({
-        fields: {
-          routingKey: 'run.execute',
-        },
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {
+            routingKey: 'run.execute',
+          },
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       execution.stop();
 
-      execution.execute({
-        fields: {
-          routingKey: 'run.execute',
-          redelivered: true,
-        },
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {
+            routingKey: 'run.execute',
+            redelivered: true,
+          },
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       expect(executeMessages).to.have.length(2);
       expect(executeMessages[0].fields).to.have.property('routingKey', 'execute.start');
@@ -1184,32 +1291,36 @@ describe('ActivityExecution', () => {
       const execution = new ActivityExecution(activity);
 
       const executeMessages = [];
-      execution.execute({
-        fields: {
-          routingKey: 'run.execute',
-        },
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {
+            routingKey: 'run.execute',
+          },
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       execution.stop();
 
-      execution.execute({
-        fields: {
-          routingKey: 'run.execute',
-          redelivered: true,
-        },
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {
+            routingKey: 'run.execute',
+            redelivered: true,
+          },
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       expect(executeMessages).to.have.length(2);
 
@@ -1237,34 +1348,38 @@ describe('ActivityExecution', () => {
       const execution = new ActivityExecution(activity);
 
       const executeMessages = [];
-      execution.execute({
-        fields: {
-          routingKey: 'run.execute',
-        },
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {
+            routingKey: 'run.execute',
+          },
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       execution.stop();
 
       activity.broker.getQueue('execute-q').purge();
 
-      execution.execute({
-        fields: {
-          routingKey: 'run.execute',
-          redelivered: true,
-        },
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {
+            routingKey: 'run.execute',
+            redelivered: true,
+          },
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+          },
+        })
+      );
 
       expect(executeMessages).to.have.length(2);
 
@@ -1299,19 +1414,23 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeOnce('execution', 'execution.completed', (_, msg) => {
         completeMsg = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+          },
+        })
+      );
 
       expect(startMessages).to.have.length(2);
       task.broker.publish('execution', 'execute.completed', { ...startMessages.slice(-1)[0].content, output: 0 });
@@ -1358,6 +1477,8 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeTmp(
         'execution',
@@ -1368,14 +1489,16 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+          },
+        })
+      );
 
       expect(completeMsg).to.be.ok;
       expect(completeMsg.content).to.have.property('executionId', 'activity_1');
@@ -1416,19 +1539,23 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeOnce('execution', 'execution.completed', (_, msg) => {
         completeMsg = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+          },
+        })
+      );
 
       expect(startMessages).to.have.length(4);
 
@@ -1470,6 +1597,8 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeTmp(
         'execution',
@@ -1480,14 +1609,16 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+          },
+        })
+      );
 
       expect(startMessages).to.have.length(2);
 
@@ -1533,19 +1664,23 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeOnce('execution', 'execution.completed', (_, msg) => {
         completeMsg = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+          },
+        })
+      );
 
       expect(startMessages).to.have.length(4);
 
@@ -1603,19 +1738,23 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let errorMsg;
       task.broker.subscribeOnce('execution', 'execution.error', (_, msg) => {
         errorMsg = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+          },
+        })
+      );
 
       expect(startMessages).to.have.length(4);
       expect(discardMessages).to.have.length(2);
@@ -1679,19 +1818,23 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let discardMsg;
       task.broker.subscribeOnce('execution', 'execution.discard', (_, msg) => {
         discardMsg = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+          },
+        })
+      );
 
       expect(startMessages).to.have.length(4);
       expect(discardMessages).to.have.length(5);
@@ -1735,19 +1878,23 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeOnce('execution', 'execution.completed', (_, msg) => {
         completeMsg = msg;
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+          },
+        })
+      );
 
       expect(startMessages).to.have.length(4);
 
@@ -1792,14 +1939,16 @@ describe('ActivityExecution', () => {
         task.broker.publish('api', 'activity.stop.activity_1');
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+          },
+        })
+      );
 
       expect(task.broker.getQueue('execute-q')).to.have.property('messageCount', 4);
 
@@ -1840,14 +1989,16 @@ describe('ActivityExecution', () => {
         task.broker.publish('api', 'activity.stop.activity_1');
       });
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-        },
-      });
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+          },
+        })
+      );
 
       expect(task.broker.getQueue('execute-q')).to.have.property('messageCount', 4);
 
@@ -1894,6 +2045,8 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeTmp(
         'execution',
@@ -1904,17 +2057,19 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'event',
-          executionId: 'activity_1',
-          parent: {
-            id: 'theProcess',
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'event',
+            executionId: 'activity_1',
+            parent: {
+              id: 'theProcess',
+            },
           },
-        },
-      });
+        })
+      );
 
       expect(startMessages).to.have.length(2);
       expect(startMessages[0].content).to.have.property('isRootScope', true);
@@ -1930,12 +2085,15 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql(4);
 
       function Behaviour(activity) {
-        const eventDefinitionExecution = new EventDefinitionExecution(activity, [
-          {
-            type: 'messageeventdef',
-            execute() {},
-          },
-        ]);
+        const eventDefinitionExecution = new EventDefinitionExecution(
+          activity,
+          /** @type {any} */ ([
+            {
+              type: 'messageeventdef',
+              execute() {},
+            },
+          ])
+        );
 
         return {
           execute(executeMessage) {
@@ -1959,6 +2117,8 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeTmp(
         'execution',
@@ -1969,17 +2129,19 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'event',
-          executionId: 'activity_1',
-          parent: {
-            id: 'theProcess',
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'event',
+            executionId: 'activity_1',
+            parent: {
+              id: 'theProcess',
+            },
           },
-        },
-      });
+        })
+      );
 
       expect(startMessages).to.have.length(3);
       expect(startMessages[0].content).to.have.property('isRootScope', true);
@@ -1998,16 +2160,19 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql(4);
 
       function Behaviour(activity) {
-        const eventDefinitionExecution = new EventDefinitionExecution(activity, [
-          {
-            type: 'messageeventdef1',
-            execute() {},
-          },
-          {
-            type: 'messageeventdef2',
-            execute() {},
-          },
-        ]);
+        const eventDefinitionExecution = new EventDefinitionExecution(
+          activity,
+          /** @type {any} */ ([
+            {
+              type: 'messageeventdef1',
+              execute() {},
+            },
+            {
+              type: 'messageeventdef2',
+              execute() {},
+            },
+          ])
+        );
 
         return {
           execute(executeMessage) {
@@ -2031,6 +2196,8 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeTmp(
         'execution',
@@ -2041,18 +2208,20 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'event',
-          executionId: 'activity_1',
-          message: 3,
-          parent: {
-            id: 'theProcess',
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'event',
+            executionId: 'activity_1',
+            message: 3,
+            parent: {
+              id: 'theProcess',
+            },
           },
-        },
-      });
+        })
+      );
 
       expect(startMessages).to.have.length(3);
       expect(startMessages[0].content).to.have.property('isRootScope', true);
@@ -2072,16 +2241,19 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('message').that.eql(5);
 
       function Behaviour(activity) {
-        const eventDefinitionExecution = new EventDefinitionExecution(activity, [
-          {
-            type: 'messageeventdef1',
-            execute() {},
-          },
-          {
-            type: 'messageeventdef2',
-            execute() {},
-          },
-        ]);
+        const eventDefinitionExecution = new EventDefinitionExecution(
+          activity,
+          /** @type {any} */ ([
+            {
+              type: 'messageeventdef1',
+              execute() {},
+            },
+            {
+              type: 'messageeventdef2',
+              execute() {},
+            },
+          ])
+        );
 
         return {
           execute(executeMessage) {
@@ -2097,18 +2269,20 @@ describe('ActivityExecution', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-          parent: {
-            id: 'theProcess',
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+            parent: {
+              id: 'theProcess',
+            },
           },
-        },
-      });
+        })
+      );
       expect(execution.getApi().content).to.eql({
         id: 'activity',
         type: 'task',
@@ -2125,24 +2299,28 @@ describe('ActivityExecution', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
 
-      execution.execute({
-        fields: {},
-        content: {
-          id: 'activity',
-          type: 'task',
-          executionId: 'activity_1',
-          state: 'start',
-          parent: {
-            id: 'theProcess',
-          },
-        },
-      });
-      expect(
-        execution.getApi({
+      execution.execute(
+        /** @type {any} */ ({
+          fields: {},
           content: {
-            executionId: 'activity_2',
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+            state: 'start',
+            parent: {
+              id: 'theProcess',
+            },
           },
-        }).content
+        })
+      );
+      expect(
+        execution.getApi(
+          /** @type {any} */ ({
+            content: {
+              executionId: 'activity_2',
+            },
+          })
+        ).content
       ).to.eql({
         executionId: 'activity_2',
       });
@@ -2163,14 +2341,16 @@ describe('ActivityExecution', () => {
           { noAck: true }
         );
 
-        execution.execute({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-          },
-        });
+        execution.execute(
+          /** @type {any} */ ({
+            fields: {},
+            content: {
+              id: 'activity',
+              type: 'task',
+              executionId: 'activity_1',
+            },
+          })
+        );
 
         activity.broker.publish('execution', 'execute.loop.iterate', {
           id: 'activity',
@@ -2191,32 +2371,45 @@ describe('ActivityExecution', () => {
   });
 });
 
+/**
+ * @param {any} [Behaviour]
+ * @returns {import('../../src/activity/Activity.js').Activity}
+ */
 function createActivity(Behaviour) {
   const environment = new Environment({
     Logger,
   });
 
-  return new Activity(
-    Behaviour || ActivityBehaviour,
-    {
-      id: 'activity',
-      type: 'task',
-      parent: {
-        id: 'process1',
-        type: 'process',
+  return /** @type {any} */ (
+    new Activity(
+      Behaviour || ActivityBehaviour,
+      {
+        id: 'activity',
+        type: 'task',
+        parent: {
+          id: 'process1',
+          type: 'process',
+        },
       },
-    },
-    {
-      environment,
-      getInboundSequenceFlows() {
-        return [new SequenceFlow({ id: 'flow', sourceId: 'task', targetId: 'end', parent: { id: 'process1' } }, { environment })];
-      },
-      getOutboundSequenceFlows() {
-        return [];
-      },
-      loadExtensions() {},
-      getInboundAssociations() {},
-    }
+      /** @type {any} */ ({
+        environment,
+        getInboundSequenceFlows() {
+          return [
+            new SequenceFlow(
+              /** @type {any} */ ({ id: 'flow', sourceId: 'task', targetId: 'end', parent: { id: 'process1' } }),
+              /** @type {any} */ ({
+                environment,
+              })
+            ),
+          ];
+        },
+        getOutboundSequenceFlows() {
+          return [];
+        },
+        loadExtensions() {},
+        getInboundAssociations() {},
+      })
+    )
   );
 
   function ActivityBehaviour({ broker }) {

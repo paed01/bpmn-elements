@@ -220,7 +220,7 @@ Feature('Issues', () => {
         context = await testHelpers.context(source1);
         options = {
           services: {
-            async doTask1(scope, callback) {
+            async doTask1(_scope, callback) {
               await sleep(50); // calling other heavy service...
               return callback(null);
             },
@@ -394,7 +394,7 @@ Feature('Issues', () => {
         context = await testHelpers.context(source2);
         options = {
           services: {
-            async doTask1(scope, callback) {
+            async doTask1(_scope, callback) {
               await sleep(50); // calling other heavy service...
               return callback(null);
             },
@@ -508,7 +508,7 @@ Feature('Issues', () => {
         context = await testHelpers.context(source3);
         options = {
           services: {
-            async doTask1(scope, callback) {
+            async doTask1(_scope, callback) {
               await sleep(50); // calling other heavy service...
               return callback(null);
             },
@@ -1027,9 +1027,14 @@ Feature('Issues', () => {
       definition = new Definition(context, {
         extensions: { AsyncFormatting },
       });
-      definition.waitFor('activity.wait', () => {
-        state = definition.getState();
-      });
+      definition.waitFor(
+        'activity.wait',
+        /** @type {any} */ (
+          () => {
+            state = definition.getState();
+          }
+        )
+      );
       definition.run();
     });
 
@@ -1117,9 +1122,14 @@ Feature('Issues', () => {
       definition = new Definition(context.clone(), {
         extensions: { AsyncFormatting },
       });
-      definition.waitFor('activity.wait', () => {
-        state = definition.getState();
-      });
+      definition.waitFor(
+        'activity.wait',
+        /** @type {any} */ (
+          () => {
+            state = definition.getState();
+          }
+        )
+      );
       definition.run();
     });
 
@@ -1157,9 +1167,14 @@ Feature('Issues', () => {
       definition = new Definition(context.clone(), {
         extensions: { AsyncFormatting },
       });
-      definition.waitFor('activity.wait', () => {
-        state = definition.getState();
-      });
+      definition.waitFor(
+        'activity.wait',
+        /** @type {any} */ (
+          () => {
+            state = definition.getState();
+          }
+        )
+      );
       definition.run();
     });
 

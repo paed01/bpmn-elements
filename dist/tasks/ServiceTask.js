@@ -10,7 +10,7 @@ var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
 /**
  * Service task
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 function ServiceTask(activityDef, context) {
@@ -56,6 +56,7 @@ ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
   const service = this.service = this.getService(executeMessage);
   if (!service) return this.activity.emitFatal(new _Errors.ActivityError(`<${this.id}> service not defined`, executeMessage), executeContent);
   const broker = this.broker;
+  // @ts-ignore
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(executeMessage, ...args), {
     consumerTag: `_api-${executionId}`
   });
@@ -65,7 +66,9 @@ ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
       this.activity.logger.error(`<${executionId} (${this.id})>`, err);
       return broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(executeContent, {
         error: new _Errors.ActivityError(err.message, executeMessage, err)
-      }, {
+      },
+      // @ts-ignore
+      {
         mandatory: true
       }));
     }

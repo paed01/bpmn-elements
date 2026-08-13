@@ -9,10 +9,11 @@ var _Activity = require("../activity/Activity.js");
 var _ServiceTask = require("./ServiceTask.js");
 /**
  * Send task
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 function SendTask(activityDef, context) {
+  // @ts-ignore
   return new _Activity.Activity(SendTaskBehaviour, activityDef, context);
 }
 

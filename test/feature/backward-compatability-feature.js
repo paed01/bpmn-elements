@@ -14,7 +14,7 @@ Feature('Backward compatability', () => {
 
     let definition, state;
     Given('a state from version 5', async () => {
-      state = JSON.parse(await fs.readFile('./test/resources/mother-of-all-state-5.json'));
+      state = JSON.parse(/** @type {any} */ (await fs.readFile('./test/resources/mother-of-all-state-5.json')));
     });
 
     let leave;
@@ -42,7 +42,7 @@ Feature('Backward compatability', () => {
 
     let definition, state;
     Given('a state from version 17.3', async () => {
-      state = JSON.parse(await fs.readFile('./test/resources/mother-of-all-state-17.3.json'));
+      state = JSON.parse(/** @type {any} */ (await fs.readFile('./test/resources/mother-of-all-state-17.3.json')));
     });
 
     let leave;
@@ -70,7 +70,7 @@ Feature('Backward compatability', () => {
 
     let definition, state;
     Given('a state from version 18', async () => {
-      state = JSON.parse(await fs.readFile('./test/resources/mother-of-all-state-18.json'));
+      state = JSON.parse(/** @type {any} */ (await fs.readFile('./test/resources/mother-of-all-state-18.json')));
     });
 
     let leave;

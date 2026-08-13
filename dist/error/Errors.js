@@ -8,7 +8,7 @@ exports.makeErrorFromMessage = makeErrorFromMessage;
 var _messageHelper = require("../messageHelper.js");
 class ActivityError extends Error {
   /**
-   * @param {string} description
+   * @param {string} [description]
    * @param {import('#types').ElementBrokerMessage} [sourceMessage]
    * @param {Error | { name?: string; code?: string | number }} [inner]
    */
@@ -50,7 +50,7 @@ class RunError extends ActivityError {
 exports.RunError = RunError;
 class BpmnError extends Error {
   /**
-   * @param {string} description
+   * @param {string} [description]
    * @param {{ id?: string; name?: string; errorCode?: string | number; code?: string }} [behaviour]
    * @param {import('#types').ElementBrokerMessage} [sourceMessage]
    */
@@ -85,6 +85,8 @@ function makeErrorFromMessage(errorMessage) {
   const {
     content
   } = errorMessage;
+
+  // @ts-ignore
   if (isKnownError(content)) return content;
   const {
     error

@@ -272,7 +272,7 @@ Feature('Gateway', () => {
       }
 
       async function getRule(rule) {
-        const body = await fetch(new URL(rule, 'https://rules.local')).then((res) => res.json());
+        const body = /** @type {any} */ (await fetch(new URL(rule, 'https://rules.local')).then((res) => res.json()));
 
         return { rule, value: body.value };
       }
@@ -392,7 +392,7 @@ Feature('Gateway', () => {
 
     When('definition is ran with falsy second and first condition script', () => {
       definition.environment.variables.condition = { var1: false };
-      definition.environment.services.evaluateRule = function evaluateRule(name, variables, callback) {
+      definition.environment.services.evaluateRule = function evaluateRule(_name, variables, callback) {
         return new Promise((resolve) => {
           resolve(variables.condition.var1);
         })

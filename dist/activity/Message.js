@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.Message = Message;
 /**
  * Message reference element. Resolves the message name expression against the execution message.
- * @param {import('moddle-context-serializer').SerializableElement} messageDef
+ * @param {import('#types').SerializableElement} messageDef
  * @param {import('#types').ContextInstance} context
  */
 function Message(messageDef, context) {
@@ -21,6 +21,7 @@ function Message(messageDef, context) {
   this.type = type;
   this.name = name;
   /** @type {import('#types').ElementParent} */
+  // @ts-ignore
   this.parent = {
     ...parent
   };

@@ -7,10 +7,12 @@ describe('MessageFormatter', () => {
   let formatter;
   /** @type {import('smqp').Broker} */
   let broker;
+  // @ts-ignore
   beforeEach(() => {
-    const activityBroker = new ActivityBroker({ id: 'element' });
+    const activityBroker = ActivityBroker(/** @type {any} */ ({ id: 'element' }));
     broker = activityBroker.broker;
 
+    // @ts-ignore
     formatter = new Formatter({
       id: 'element',
       broker,

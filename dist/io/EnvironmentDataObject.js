@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.EnvironmentDataObject = EnvironmentDataObject;
 /**
  * Builtin data object. Reads from / writes to `environment.variables._data`.
- * @param {import('moddle-context-serializer').DataObject} dataObjectDef
+ * @param {import('#types').SerializableElement} dataObjectDef
  * @param {import('#types').ContextInstance} context
  * @satisfies {import('#types').IIOData}
  */
@@ -25,7 +25,7 @@ function EnvironmentDataObject(dataObjectDef, {
   this.name = name;
   /** @type {Record<string, any>} */
   this.behaviour = behaviour;
-  /** @type {import('moddle-context-serializer').Parent | undefined} */
+  /** @type {import('#types').ElementParentRef | undefined} */
   this.parent = parent;
   this.environment = environment;
 }
@@ -59,8 +59,8 @@ EnvironmentDataObject.prototype.write = function write(broker, exchange, routing
 };
 
 /**
- * @private
  * Create content
+ * @internal
  */
 EnvironmentDataObject.prototype._createContent = function createContent(value) {
   return {

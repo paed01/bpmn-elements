@@ -2,7 +2,7 @@ import { cloneMessage } from '../messageHelper.js';
 
 export class ActivityError extends Error {
   /**
-   * @param {string} description
+   * @param {string} [description]
    * @param {import('#types').ElementBrokerMessage} [sourceMessage]
    * @param {Error | { name?: string; code?: string | number }} [inner]
    */
@@ -42,7 +42,7 @@ export class RunError extends ActivityError {
 
 export class BpmnError extends Error {
   /**
-   * @param {string} description
+   * @param {string} [description]
    * @param {{ id?: string; name?: string; errorCode?: string | number; code?: string }} [behaviour]
    * @param {import('#types').ElementBrokerMessage} [sourceMessage]
    */
@@ -73,6 +73,7 @@ export class BpmnError extends Error {
 export function makeErrorFromMessage(errorMessage) {
   const { content } = errorMessage;
 
+  // @ts-ignore
   if (isKnownError(content)) return content;
 
   const { error } = content;

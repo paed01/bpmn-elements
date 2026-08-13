@@ -654,7 +654,7 @@ Feature('Timers', () => {
 
   Scenario('bound activity interrupting timer cycle with ISO8601 interval', () => {
     let context;
-    /** @type {import('../../types/types.js').Definition} */
+    /** @type {import('bpmn-elements').Definition} */
     let definition;
     after(() => {
       ck.reset();
@@ -1276,6 +1276,7 @@ Feature('Timers', () => {
   [null, 'foo', { expireAt: 'bar' }].forEach((parseResult) => {
     Scenario(`override TimerEventDefinition parse function and return unaccepted >${JSON.stringify(parseResult)}<`, () => {
       class ExtendedTimerEventDefinition extends TimerEventDefinition {
+        /** @returns {any} */
         parse() {
           return parseResult;
         }

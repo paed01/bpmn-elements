@@ -4,7 +4,7 @@ import { K_COMPLETED, K_TARGETS } from '../constants.js';
 
 /**
  * Event based gateway
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function EventBasedGateway(activityDef, context) {
@@ -61,6 +61,7 @@ EventBasedGatewayBehaviour.prototype.execute = function execute(executeMessage) 
   this[K_COMPLETED] = false;
 
   if (!executeMessage.fields.redelivered) {
+    // @ts-ignore
     return broker.publish('execution', 'execute.outbound.take', cloneContent(executeContent, { outboundTaken: true }));
   }
 };

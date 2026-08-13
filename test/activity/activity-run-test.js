@@ -10,22 +10,22 @@ describe('activity run', () => {
     const activity = createActivity();
     activity.run();
 
-    let current = activity.next();
+    let current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.enter');
 
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.start');
 
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.execute');
 
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.end');
 
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.leave');
 
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.next');
   });
 
@@ -38,35 +38,35 @@ describe('activity run', () => {
     });
 
     expect(activity).to.have.property('status', 'entered');
-    let current = activity.next();
+    let current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.enter');
     expect(current.content).to.have.property('input').that.eql({
       data: 1,
     });
 
     expect(activity).to.have.property('status', 'started');
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.start');
     expect(current.content).to.have.property('input').that.eql({
       data: 1,
     });
 
     expect(activity).to.have.property('status', 'executed');
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.execute');
     expect(current.content).to.have.property('input').that.eql({
       data: 1,
     });
 
     expect(activity).to.have.property('status', 'end');
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.end');
     expect(current.content).to.have.property('input').that.eql({
       data: 1,
     });
 
     expect(activity).to.have.property('status').that.is.undefined;
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.leave');
     expect(current.content).to.have.property('input').that.eql({
       data: 1,
@@ -85,7 +85,7 @@ describe('activity run', () => {
     });
 
     expect(activity).to.have.property('status', 'entered');
-    const current = activity.next();
+    const current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.enter');
     expect(current.content).to.have.property('input').that.eql({
       data: 1,
@@ -104,28 +104,28 @@ describe('activity run', () => {
     });
 
     expect(activity).to.have.property('status', 'entered');
-    let current = activity.next();
+    let current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.enter');
     expect(current.content).to.have.property('message').that.eql({ data: 1 });
     expect(current.content).to.have.property('inbound').with.length(1);
 
     expect(activity).to.have.property('status', 'started');
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.start');
     expect(current.content).to.have.property('message').that.eql({ data: 1 });
 
     expect(activity).to.have.property('status', 'executed');
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.execute');
     expect(current.content).to.have.property('message').that.eql({ data: 1 });
 
     expect(activity).to.have.property('status', 'end');
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.end');
     expect(current.content).to.have.property('message').that.eql({ data: 1 });
 
     expect(activity).to.have.property('status').that.is.undefined;
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.leave');
     expect(current.content).to.have.property('message').that.eql({ data: 1 });
   });
@@ -140,19 +140,19 @@ describe('activity run', () => {
     activity.run();
 
     expect(activity).to.have.property('status', 'entered');
-    let current = activity.next();
+    let current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.enter');
     expect(current.content.input).to.be.undefined;
 
     expect(activity).to.have.property('status', 'started');
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.start');
     expect(current.content).to.have.property('input').that.eql({
       data: 1,
     });
 
     expect(activity).to.have.property('status', 'executed');
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.execute');
     expect(current.content).to.have.property('input').that.eql({
       data: 1,
@@ -161,6 +161,8 @@ describe('activity run', () => {
 
   it('format start message stops execution until format end is published', () => {
     const activity = createActivity();
+
+    /** @type {Record<string, any>} */
 
     let formatContent;
     activity.broker.subscribeOnce('event', 'activity.start', (_, message) => {
@@ -171,12 +173,12 @@ describe('activity run', () => {
     activity.run();
 
     expect(activity).to.have.property('status', 'entered');
-    let current = activity.next();
+    let current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.enter');
     expect(current.content.input).to.be.undefined;
 
     expect(activity).to.have.property('status', 'started');
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.start');
 
     expect(activity).to.have.property('status', 'formatting');
@@ -186,7 +188,7 @@ describe('activity run', () => {
 
     expect(activity).to.have.property('status', 'executed');
 
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.content).to.have.property('input').that.eql({
       data: 1,
     });
@@ -204,12 +206,12 @@ describe('activity run', () => {
     activity.run();
 
     expect(activity).to.have.property('status', 'entered');
-    let current = activity.next();
+    let current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.enter');
     expect(current.content.input).to.be.undefined;
 
     expect(activity).to.have.property('status', 'started');
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.fields).to.have.property('routingKey', 'run.start');
 
     expect(activity).to.have.property('status', 'formatting');
@@ -225,7 +227,7 @@ describe('activity run', () => {
     activity.broker.publish('format', 'run.add-prop.end', { properties: { myProp: '2' } });
     expect(activity).to.have.property('status', 'executed');
 
-    current = activity.next();
+    current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
     expect(current.content).to.have.property('input').that.eql({
       data: 1,
     });
@@ -261,6 +263,7 @@ describe('activity run', () => {
 
   it('fundamental content is kept', async () => {
     const activity = createActivity(false);
+    /** @type {Record<string, any>} */
     let content;
     activity.broker.subscribeTmp(
       'event',
@@ -565,10 +568,15 @@ function createActivity(step = true) {
     getContext({
       environment,
       getInboundSequenceFlows() {
-        return [new SequenceFlow({ id: 'flow0', parent: { id: 'process1' } }, { environment })];
+        return [
+          new SequenceFlow(
+            /** @type {any} */ ({ id: 'flow0', sourceId: 'start', targetId: 'task', parent: { id: 'process1' } }),
+            /** @type {any} */ ({ environment })
+          ),
+        ];
       },
       getOutboundSequenceFlows() {
-        return [new SequenceFlow({ id: 'flow1', parent: { id: 'process1' } }, { environment })];
+        return [new SequenceFlow(/** @type {any} */ ({ id: 'flow1', parent: { id: 'process1' } }), /** @type {any} */ ({ environment }))];
       },
     })
   );

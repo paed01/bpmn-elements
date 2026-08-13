@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.BpmnErrorActivity = BpmnErrorActivity;
 /**
  * BPMN error.
- * @param {import('moddle-context-serializer').SerializableElement} errorDef
+ * @param {import('#types').SerializableElement} errorDef
  * @param {import('#types').ContextInstance} context
  */
 function BpmnErrorActivity(errorDef, context) {
@@ -46,6 +46,6 @@ function BpmnErrorActivity(errorDef, context) {
       code: behaviour.errorCode && environment.resolveExpression(behaviour.errorCode, resolveCtx)
     };
     if (error) result.inner = error;
-    return result;
+    return /** @type {import('#types').ResolvedReference & {code?:string}} */result;
   }
 }

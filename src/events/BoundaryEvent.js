@@ -10,7 +10,7 @@ const K_SHOVELS = Symbol.for('shovels');
 
 /**
  * Boundary event
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function BoundaryEvent(activityDef, context) {
@@ -69,6 +69,7 @@ BoundaryEventBehaviour.prototype.execute = function execute(executeMessage) {
     const broker = this.broker;
     if (executeMessage.fields.routingKey === 'execute.bound.completed') {
       this._stop();
+      // @ts-ignore
       return broker.publish('execution', 'execute.completed', executeMessage.content, executeMessage.properties);
     }
 
@@ -145,11 +146,13 @@ BoundaryEventBehaviour.prototype._onCompleted = function onCompleted(_, { conten
       'execution',
       '#',
       () => {
+        // @ts-ignore
         attachedTo.getApi({ content: attachedToContent }).discard();
       },
       { consumerTag: attachedExecuteTag }
     );
   } else {
+    // @ts-ignore
     attachedTo.getApi({ content: attachedToContent }).discard();
   }
 };

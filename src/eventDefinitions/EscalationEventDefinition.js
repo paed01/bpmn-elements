@@ -5,7 +5,7 @@ import { K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_Q, K_REFERENCE_ELEMENT, K_REF
 /**
  * Escalation event definition
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ * @param {import('#types').SerializableElement} eventDefinition
  */
 export function EscalationEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;
@@ -17,6 +17,7 @@ export function EscalationEventDefinition(activity, eventDefinition) {
   /** @type {import('#types').EventReference} */
   this.reference = {
     name: 'anonymous',
+    // @ts-ignore
     ...behaviour.escalationRef,
     referenceType: 'escalate',
   };
@@ -117,7 +118,7 @@ EscalationEventDefinition.prototype.executeThrow = function executeThrow(execute
   broker.publish('execution', 'execute.completed', cloneContent(executeContent));
 };
 
-EscalationEventDefinition.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
+EscalationEventDefinition.prototype._onCatchMessage = function onCatchMessage(_routingKey, message) {
   const info = this[K_REFERENCE_INFO];
   if (message.content?.message?.id !== info.message.id) return;
 
@@ -176,6 +177,7 @@ EscalationEventDefinition.prototype._getReferenceInfo = function getReferenceInf
   }
 
   const result = {
+    // @ts-ignore
     message: referenceElement.resolve(message),
   };
 

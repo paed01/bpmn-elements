@@ -112,7 +112,7 @@ describe('activity', () => {
           activity.broker.subscribeTmp(
             'event',
             'activity.*',
-            (routingKey, message) => {
+            (_routingKey, message) => {
               messages.push(message);
               assertApi(activity, message);
             },
@@ -143,7 +143,7 @@ describe('activity', () => {
           activity.broker.subscribeTmp(
             'event',
             'activity.*',
-            (routingKey, message) => {
+            (_routingKey, message) => {
               messages.push(message);
               assertApi(activity, message);
             },
@@ -271,7 +271,7 @@ describe('activity', () => {
           activity.broker.subscribeOnce(
             'event',
             'activity.leave',
-            (routingKey, message) => {
+            (_routingKey, message) => {
               assertApi(activity, message).discard();
             },
             { noAck: true }
@@ -301,7 +301,7 @@ describe('activity', () => {
           activity.broker.subscribeTmp(
             'event',
             'activity.*',
-            (routingKey, message) => {
+            (_routingKey, message) => {
               messages.push(message);
             },
             { noAck: true }
@@ -332,7 +332,7 @@ describe('activity', () => {
           activity.broker.subscribeTmp(
             'event',
             'activity.*',
-            (routingKey, message) => {
+            (_routingKey, message) => {
               messages.push(message);
             },
             { noAck: true }
@@ -1167,7 +1167,7 @@ describe('activity', () => {
           activity.broker.subscribeTmp(
             'execution',
             'execute.#',
-            (routingKey, message) => {
+            (_routingKey, message) => {
               assertApi(activity, message);
               messages.push(message);
             },
@@ -1549,6 +1549,8 @@ async function SimpleDefinition(activityType) {
   <definitions id="task-definitions" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
   </definitions>`;
 
+  /** @type {{ definitions: any }} */
+
   const { definitions } = await fromXML(source);
   const dataObject = moddle.create('bpmn:DataObject', { id: 'myData' });
   const dataObjectRef = moddle.create('bpmn:DataObjectReference', { id: 'myDataRef', dataObjectRef: dataObject });
@@ -1594,6 +1596,8 @@ async function SingleFlowDefinition(activityType) {
   <bpmn2:definitions id="task-definitions" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
   </bpmn2:definitions>`;
 
+  /** @type {{ definitions: any }} */
+
   const { definitions } = await fromXML(source);
 
   const flowElements = [
@@ -1603,6 +1607,8 @@ async function SingleFlowDefinition(activityType) {
     moddle.create('bpmn:EndEvent', { id: 'end2' }),
   ];
 
+  /** @type {any[]} */
+
   const [start, activity, end1, end2] = flowElements;
 
   const flows = [
@@ -1610,6 +1616,7 @@ async function SingleFlowDefinition(activityType) {
     moddle.create('bpmn:SequenceFlow', { id: 'flow2', sourceRef: activity, targetRef: end1 }),
     moddle.create('bpmn:SequenceFlow', { id: 'flow3', sourceRef: activity, targetRef: end2 }),
   ];
+  /** @type {any[]} */
   const [, flow2, flow3] = flows;
 
   if (decisionGateways.includes(activityType)) {
@@ -1637,6 +1644,8 @@ async function MultipleFlowDefinition(activityType) {
   <bpmn2:definitions id="task-definitions" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
   </bpmn2:definitions>`;
 
+  /** @type {{ definitions: any }} */
+
   const { definitions } = await fromXML(source);
 
   const flowElements = [
@@ -1647,6 +1656,8 @@ async function MultipleFlowDefinition(activityType) {
     moddle.create('bpmn:EndEvent', { id: 'end2' }),
   ];
 
+  /** @type {any[]} */
+
   const [start, decision, activity, end1, end2] = flowElements;
 
   const flows = [
@@ -1656,6 +1667,7 @@ async function MultipleFlowDefinition(activityType) {
     moddle.create('bpmn:SequenceFlow', { id: 'flow4', sourceRef: activity, targetRef: end1 }),
     moddle.create('bpmn:SequenceFlow', { id: 'flow5', sourceRef: activity, targetRef: end2 }),
   ];
+  /** @type {any[]} */
   const [, flow2, flow3, flow4, flow5] = flows;
 
   decision.set('default', flow2);
@@ -1689,6 +1701,8 @@ async function LoopDefinition(activityType, isSequential) {
   <bpmn2:definitions id="task-definitions" xmlns:bpmn2="http://www.omg.org/spec/BPMN/20100524/MODEL" targetNamespace="http://bpmn.io/schema/bpmn">
   </bpmn2:definitions>`;
 
+  /** @type {{ definitions: any }} */
+
   const { definitions } = await fromXML(source);
 
   const loopCharacteristics = moddle.create('bpmn:MultiInstanceLoopCharacteristics', {
@@ -1704,6 +1718,8 @@ async function LoopDefinition(activityType, isSequential) {
     }),
     moddle.create('bpmn:EndEvent', { id: 'end' }),
   ];
+
+  /** @type {any[]} */
 
   const [start, activity, end] = flowElements;
 

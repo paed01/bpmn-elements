@@ -4,7 +4,7 @@ import { K_COMPLETED, K_EXECUTE_MESSAGE } from '../constants.js';
 /**
  * Cancel event definition
  * @param {import('#types').Activity} activity
- * @param {import('moddle-context-serializer').EventDefinition} eventDefinition
+ * @param {import('#types').SerializableElement} eventDefinition
  */
 export function CancelEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;
@@ -77,6 +77,7 @@ CancelEventDefinition.prototype.executeCatch = function executeCatch(executeMess
 
   const waitContent = cloneContent(executeContent, {
     executionId: parentExecutionId,
+    // @ts-ignore
     condition: this.condition,
     expect: 'cancel',
   });
@@ -123,7 +124,7 @@ CancelEventDefinition.prototype._complete = function complete(output) {
   return this.broker.publish('execution', 'execute.completed', content);
 };
 
-CancelEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+CancelEventDefinition.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   switch (message.properties.type) {
     case 'discard': {
       this[K_COMPLETED] = true;

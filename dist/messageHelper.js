@@ -47,7 +47,7 @@ function cloneContent(content, extend) {
  * Clone message
  * @param {import('#types').ElementBrokerMessage} message
  * @param {Record<string, any>} [overrideContent]
- * @returns {Pick<ElementBrokerMessage, 'fields' | 'content', 'properties'>}
+ * @returns {Pick<import('#types').ElementBrokerMessage, 'fields' | 'content' | 'properties'>}
  */
 function cloneMessage(message, overrideContent) {
   return {
@@ -63,7 +63,7 @@ function cloneMessage(message, overrideContent) {
 
 /**
  * Clone parent
- * @param {import('#types').ElementParent} parent
+ * @param {import('#types').ElementParent | import('#types').ElementParentRef} parent
  * @returns {import('#types').ElementParent} cloned parent
  */
 function cloneParent(parent) {
@@ -73,18 +73,21 @@ function cloneParent(parent) {
   const clone = {
     ...parent
   };
+  // @ts-ignore
   if (!path) return clone;
   clone.path = path.map(p => {
     return {
       ...p
     };
   });
+
+  // @ts-ignore
   return clone;
 }
 
 /**
  * Add parent to top of path
- * @param {import('#types').ElementParent} parent
+ * @param {Partial<import('#types').ElementParent>} parent
  * @param {import('#types').ElementMessageContent} adoptingParent
  * @returns {import('#types').ElementParent}
  */
@@ -121,8 +124,8 @@ function unshiftParent(parent, adoptingParent) {
 
 /**
  * Remove top parent from path
- * @param {import('#types').ElementParent} parent
- * @returns {import('#types').ElementParent}
+ * @param {import('#types').ElementParent} [parent]
+ * @returns {import('#types').ElementParent | undefined}
  */
 function shiftParent(parent) {
   if (!parent) return;
@@ -142,7 +145,7 @@ function shiftParent(parent) {
 
 /**
  * Add ancestor parent at end
- * @param {import('#types').ElementParent} parent
+ * @param {Partial<import('#types').ElementParent>} parent
  * @param {import('#types').ElementMessageContent} ancestor
  * @returns {import('#types').ElementParent}
  */

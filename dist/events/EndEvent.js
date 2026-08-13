@@ -11,7 +11,7 @@ var _messageHelper = require("../messageHelper.js");
 var _constants = require("../constants.js");
 /**
  * End event
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 function EndEvent(activityDef, context) {
@@ -42,5 +42,7 @@ EndEventBehaviour.prototype.execute = function execute(executeMessage) {
   if (execution) {
     return execution.execute(executeMessage);
   }
+
+  // @ts-ignore
   return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeMessage.content));
 };

@@ -344,7 +344,7 @@ Feature('BoundaryEvent', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      context.environment.addService('volatile', (ctx, next) => {
+      context.environment.addService('volatile', (_ctx, next) => {
         serviceCallback = next;
       });
       [bp] = context.getProcesses();
@@ -466,7 +466,7 @@ Feature('BoundaryEvent', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      context.environment.addService('volatile', (ctx, next) => {
+      context.environment.addService('volatile', (_ctx, next) => {
         serviceCallback = next;
       });
       [bp] = context.getProcesses();
@@ -587,7 +587,7 @@ Feature('BoundaryEvent', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      context.environment.addService('volatile', (ctx, next) => {
+      context.environment.addService('volatile', (_ctx, next) => {
         serviceCallbacks.push(next);
       });
       [bp] = context.getProcesses();
@@ -667,7 +667,7 @@ Feature('BoundaryEvent', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      context.environment.addService('volatile', (ctx, next) => {
+      context.environment.addService('volatile', (_ctx, next) => {
         serviceCallbacks.push(next);
       });
       [bp] = context.getProcesses();

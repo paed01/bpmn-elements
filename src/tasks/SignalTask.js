@@ -4,7 +4,7 @@ import { cloneContent } from '../messageHelper.js';
 
 /**
  * Signal task
- * @param {import('moddle-context-serializer').Activity} activityDef
+ * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
 export function SignalTask(activityDef, context) {
@@ -41,10 +41,12 @@ SignalTaskBehaviour.prototype.execute = function execute(executeMessage) {
   const executionId = executeContent.executionId;
 
   const broker = this.broker;
+  // @ts-ignore
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(executeMessage, ...args), {
     noAck: true,
     consumerTag: `_api-${executionId}`,
   });
+  // @ts-ignore
   broker.subscribeTmp('api', '#.signal.*', (...args) => this._onDelegatedApiMessage(executeMessage, ...args), {
     noAck: true,
     consumerTag: `_api-delegated-${executionId}`,
@@ -79,7 +81,7 @@ SignalTaskBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMe
   return this._onApiMessage(executeMessage, routingKey, message);
 };
 
-SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, routingKey, message) {
+SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, _routingKey, message) {
   const { type: messageType, correlationId } = message.properties;
   const executeContent = executeMessage.content;
   switch (messageType) {
@@ -108,6 +110,7 @@ SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessa
           {
             error: new ActivityError(message.content.message, executeMessage, message.content),
           },
+          // @ts-ignore
           {
             mandatory: true,
             correlationId,

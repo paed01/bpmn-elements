@@ -24,6 +24,7 @@ function Environment(options = {}) {
   this.extensions = options.extensions;
   this.output = options.output || {};
   /** @type {import('#types').IScripts} */
+  // @ts-ignore
   this.scripts = options.scripts || new _Scripts.Scripts();
   /** @type {import('#types').ITimers} */
   this.timers = options.timers || new _Timers.Timers();
@@ -118,12 +119,14 @@ Environment.prototype.clone = function clone(overrideOptions) {
     ...services,
     ...overrideOptions.services
   };
+
+  // @ts-ignore
   return new this.constructor(newOptions);
 };
 
 /**
  * Merge variables into the environment. Non-objects are ignored.
- * @param {Record<string, any>} newVars
+ * @param {Record<string, any>} [newVars]
  */
 Environment.prototype.assignVariables = function assignVariables(newVars) {
   if (!newVars || typeof newVars !== 'object') return;
@@ -135,7 +138,7 @@ Environment.prototype.assignVariables = function assignVariables(newVars) {
 
 /**
  * Merge settings into the environment. Non-objects are ignored.
- * @param {import('#types').EnvironmentSettings} newSettings
+ * @param {import('#types').EnvironmentSettings} [newSettings]
  * @returns {this}
  */
 Environment.prototype.assignSettings = function assignSettings(newSettings) {
@@ -149,8 +152,7 @@ Environment.prototype.assignSettings = function assignSettings(newSettings) {
 
 /**
  * Resolve a registered script by language and identifier.
- * @param {string} language
- * @param {{ id: string, [x: string]: any }} identifier
+ * @param {[language: string, identifier: { id: string, [x: string]: any }]} args
  */
 Environment.prototype.getScript = function getScript(...args) {
   return this.scripts.getScript(...args);
@@ -158,7 +160,7 @@ Environment.prototype.getScript = function getScript(...args) {
 
 /**
  * Register a script for an activity, delegating to the configured scripts engine.
- * @param {any} activity
+ * @param {[activity: any]} args
  */
 Environment.prototype.registerScript = function registerScript(...args) {
   return this.scripts.register(...args);

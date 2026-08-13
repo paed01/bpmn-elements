@@ -64,7 +64,7 @@ Feature('Performance', () => {
           getScript() {
             return {
               execute(...args) {
-                return args.pop()();
+                return /** @type {any} */ (args.pop())();
               },
             };
           },
@@ -98,7 +98,7 @@ Feature('Performance', () => {
           getScript() {
             return {
               execute(...args) {
-                return args.pop()();
+                return /** @type {any} */ (args.pop())();
               },
             };
           },

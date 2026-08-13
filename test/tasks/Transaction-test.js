@@ -3,7 +3,7 @@ import testHelpers from '../helpers/testHelpers.js';
 
 describe('Transaction', () => {
   it('decorates activity with isTransaction', () => {
-    const transaction = Transaction({ id: 'sub-process', parent: { id: 'atomic' } }, testHelpers.emptyContext());
+    const transaction = Transaction(/** @type {any} */ ({ id: 'sub-process', parent: { id: 'atomic' } }), testHelpers.emptyContext());
     expect(transaction).to.have.property('isTransaction', true);
   });
 
