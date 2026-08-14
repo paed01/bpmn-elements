@@ -4,7 +4,8 @@ import { ActivityBroker } from '../../src/EventBroker.js';
 describe('Properties', () => {
   it('activate twice has no effect', () => {
     const { broker } = ActivityBroker();
-    const props = new /** @type {any} */ (Properties)(
+    // @ts-expect-error type coverage
+    const props = new Properties(
       {
         id: 'input',
         broker,
@@ -15,10 +16,12 @@ describe('Properties', () => {
       }
     );
     props.activate({
+      // @ts-expect-error type coverage
       fields: {},
       content: {},
     });
     props.activate({
+      // @ts-expect-error type coverage
       fields: {},
       content: {},
     });
@@ -26,7 +29,8 @@ describe('Properties', () => {
 
   it('deactivate twice has no effect', () => {
     const { broker } = ActivityBroker();
-    const props = new /** @type {any} */ (Properties)(
+    // @ts-expect-error type coverage
+    const props = new Properties(
       {
         id: 'input',
         broker,
@@ -37,6 +41,7 @@ describe('Properties', () => {
       }
     );
     props.activate({
+      // @ts-expect-error type coverage
       fields: {},
       content: {},
     });

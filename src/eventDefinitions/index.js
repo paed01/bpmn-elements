@@ -8,3 +8,4 @@ export { MessageEventDefinition } from './MessageEventDefinition.js';
 export { SignalEventDefinition } from './SignalEventDefinition.js';
 export { TerminateEventDefinition } from './TerminateEventDefinition.js';
 export { TimerEventDefinition } from './TimerEventDefinition.js';
+export { EventDefinitionExecution } from './EventDefinitionExecution.js';

@@ -64,7 +64,8 @@ Feature('Performance', () => {
           getScript() {
             return {
               execute(...args) {
-                return /** @type {any} */ (args.pop())();
+                // @ts-expect-error type coverage
+                return args.pop()();
               },
             };
           },
@@ -98,7 +99,8 @@ Feature('Performance', () => {
           getScript() {
             return {
               execute(...args) {
-                return /** @type {any} */ (args.pop())();
+                // @ts-expect-error type coverage
+                return args.pop()();
               },
             };
           },

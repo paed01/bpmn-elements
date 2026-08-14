@@ -1,21 +1,22 @@
-import { Environment, Signal } from 'bpmn-elements';
+import { Signal } from 'bpmn-elements';
+import testHelpers from '../helpers/testHelpers.js';
 
 describe('Signal', () => {
-  let environment;
+  let context;
   beforeEach(() => {
-    environment = new Environment();
+    context = testHelpers.emptyContext();
   });
 
   it('exposes id, type, name and cloned parent', () => {
     const parent = { id: 'Process_0', type: 'bpmn:Process' };
     const signal = new Signal(
-      /** @type {any} */ ({
+      {
         id: 'Signal_0',
         type: 'bpmn:Signal',
         name: 'My signal',
         parent,
-      }),
-      /** @type {any} */ ({ environment })
+      },
+      context
     );
 
     expect(signal).to.have.property('id', 'Signal_0');
@@ -26,12 +27,13 @@ describe('Signal', () => {
   });
 
   it('defaults type to Signal when missing', () => {
-    const signal = new Signal(/** @type {any} */ ({ id: 'Signal_0' }), /** @type {any} */ ({ environment }));
+    const signal = new Signal({ id: 'Signal_0' }, context);
     expect(signal).to.have.property('type', 'Signal');
   });
 
   it('falls back to constructing when called without new', () => {
-    const signal = /** @type {any} */ (Signal)(/** @type {any} */ ({ id: 'Signal_0' }), /** @type {any} */ ({ environment }));
+    // @ts-expect-error type coverage
+    const signal = Signal({ id: 'Signal_0' }, context);
     expect(signal).to.be.instanceof(Signal);
   });
 
@@ -39,15 +41,16 @@ describe('Signal', () => {
     it('returns id, type and messageType=signal with cloned parent', () => {
       const parent = { id: 'Process_0', type: 'bpmn:Process' };
       const signal = new Signal(
-        /** @type {any} */ ({
+        {
           id: 'Signal_0',
           type: 'bpmn:Signal',
           parent,
-        }),
-        /** @type {any} */ ({ environment })
+        },
+        context
       );
 
-      const resolved = signal.resolve(/** @type {any} */ ({ content: { id: 'task' } }));
+      // @ts-expect-error type coverage
+      const resolved = signal.resolve({ content: { id: 'task' } });
 
       expect(resolved).to.have.property('id', 'Signal_0');
       expect(resolved).to.have.property('type', 'bpmn:Signal');
@@ -58,22 +61,24 @@ describe('Signal', () => {
 
     it('resolves name expression against execution message when name is set', () => {
       const signal = new Signal(
-        /** @type {any} */ ({
+        {
           id: 'Signal_0',
           name: 'Signal for ${content.id}',
-        }),
-        /** @type {any} */ ({ environment })
+        },
+        context
       );
 
-      const resolved = signal.resolve(/** @type {any} */ ({ content: { id: 'task' } }));
+      // @ts-expect-error type coverage
+      const resolved = signal.resolve({ content: { id: 'task' } });
 
       expect(resolved).to.have.property('name', 'Signal for task');
     });
 
     it('omits name when signal reference has no name', () => {
-      const signal = new Signal(/** @type {any} */ ({ id: 'Signal_0' }), /** @type {any} */ ({ environment }));
+      const signal = new Signal({ id: 'Signal_0' }, context);
 
-      const resolved = signal.resolve(/** @type {any} */ ({ content: { id: 'task' } }));
+      // @ts-expect-error type coverage
+      const resolved = signal.resolve({ content: { id: 'task' } });
 
       expect(resolved).to.not.have.property('name');
     });

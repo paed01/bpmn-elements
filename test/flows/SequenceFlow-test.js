@@ -1,5 +1,4 @@
 import { resolveExpression } from '@aircall/expression-parser';
-import { Environment } from 'bpmn-elements';
 import { SequenceFlow } from 'bpmn-elements/flows';
 import factory from '../helpers/factory.js';
 import js from '../resources/extensions/JsExtension.js';
@@ -23,18 +22,17 @@ class TestScripts {
     const scriptBody = behaviour.conditionExpression.body;
     const sync = !/next\(/.test(scriptBody);
 
-    const registered = this.javaScripts.register(
-      /** @type {any} */ ({
-        id,
-        type,
-        behaviour: {
-          conditionExpression: {
-            ...behaviour.conditionExpression,
-            language: 'javascript',
-          },
+    // @ts-expect-error type coverage
+    const registered = this.javaScripts.register({
+      id,
+      type,
+      behaviour: {
+        conditionExpression: {
+          ...behaviour.conditionExpression,
+          language: 'javascript',
         },
-      })
-    );
+      },
+    });
 
     this.scripts.set(id, { sync, registered });
   }
@@ -292,7 +290,8 @@ describe('SequenceFlow', () => {
 
       const flow = ctx.getActivityById('task').outbound.find((f) => f.id === 'flow2');
       const condition = flow.getCondition();
-      const result = /** @type {any} */ (condition).execute({ fields: {}, content: { id: 'task' }, properties: {} });
+      // @ts-expect-error type coverage
+      const result = condition.execute({ fields: {}, content: { id: 'task' }, properties: {} });
 
       expect(result).to.be.true;
     });
@@ -421,11 +420,12 @@ describe('SequenceFlow', () => {
 
       const res = await new Promise((resolve, reject) => {
         flow.getCondition().execute(
-          /** @type {any} */ ({
+          {
             content: {
+              // @ts-expect-error type coverage
               parent: {},
             },
-          }),
+          },
           (err, result) => {
             if (err) return reject(err);
             return resolve(result);
@@ -480,11 +480,12 @@ describe('SequenceFlow', () => {
 
       const res = await new Promise((resolve, reject) => {
         flow.getCondition().execute(
-          /** @type {any} */ ({
+          {
             content: {
+              // @ts-expect-error type coverage
               parent: {},
             },
-          }),
+          },
           (err) => {
             if (err) return resolve(err);
             return reject(new Error('Wut?'));
@@ -514,7 +515,8 @@ describe('SequenceFlow', () => {
       const flow = context.getSequenceFlowById('flowWithExpression');
 
       expect(
-        /** @type {any} */ (flow.getCondition()).execute({
+        // @ts-expect-error type coverage
+        flow.getCondition().execute({
           content: {
             isOk: 1,
             parent: {},
@@ -524,12 +526,13 @@ describe('SequenceFlow', () => {
 
       const res = await new Promise((resolve, reject) => {
         flow.getCondition().execute(
-          /** @type {any} */ ({
+          {
             content: {
               isOk: 2,
+              // @ts-expect-error type coverage
               parent: {},
             },
-          }),
+          },
           (err, result) => {
             if (err) return reject(err);
             return resolve(result);
@@ -572,12 +575,13 @@ describe('SequenceFlow', () => {
 
       const res = await new Promise((resolve, reject) => {
         flow.getCondition().execute(
-          /** @type {any} */ ({
+          {
             content: {
               isOk: 2,
+              // @ts-expect-error type coverage
               parent: {},
             },
-          }),
+          },
           (err) => {
             if (err) return resolve(err);
             return reject(new Error('Ehhhh'));
@@ -620,8 +624,7 @@ describe('SequenceFlow', () => {
           },
         },
       };
-
-      const flow = new SequenceFlow(/** @type {any} */ (flowDef), /** @type {any} */ ({ environment: new Environment() }));
+      const flow = new SequenceFlow(flowDef, testHelpers.emptyContext(undefined, { scripts: undefined }));
 
       expect(() => {
         // @ts-expect-error executed without required callback
@@ -644,8 +647,7 @@ describe('SequenceFlow', () => {
           },
         },
       };
-
-      const flow = new SequenceFlow(/** @type {any} */ (flowDef), /** @type {any} */ ({ environment: new Environment() }));
+      const flow = new SequenceFlow(flowDef, testHelpers.emptyContext(undefined, { scripts: undefined }));
 
       expect(() => {
         // @ts-expect-error executed without required callback
@@ -803,7 +805,8 @@ describe('SequenceFlow', () => {
         message = msg;
       });
 
-      flow.shake(/** @type {any} */ ({ content: {} }));
+      // @ts-expect-error type coverage
+      flow.shake({ content: {} });
 
       expect(message.content.sequence).to.deep.equal([
         {

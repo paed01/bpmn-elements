@@ -1,16 +1,18 @@
-import { BpmnError as BpmnErrorActivity, Environment } from 'bpmn-elements';
+import { BpmnError as BpmnErrorActivity } from 'bpmn-elements';
+import testHelpers from '../helpers/testHelpers.js';
 
 describe('BpmnError', () => {
   it('returns BpmnError instanceof from error', () => {
     const bpmnError = BpmnErrorActivity(
-      /** @type {any} */ ({
+      {
         id: 'Error_0',
         name: 'TestError',
-      }),
-      /** @type {any} */ ({ environment: new Environment() })
+      },
+      testHelpers.emptyContext()
     );
 
-    const err = bpmnError.resolve(/** @type {any} */ ({}), new Error('Men'));
+    // @ts-expect-error type coverage
+    const err = bpmnError.resolve({}, new Error('Men'));
 
     expect(err).to.have.property('id', 'Error_0');
     expect(err).to.have.property('name', 'TestError');
@@ -18,22 +20,23 @@ describe('BpmnError', () => {
 
   it('resolves errorCode expression', () => {
     const bpmnError = BpmnErrorActivity(
-      /** @type {any} */ ({
+      {
         id: 'Error_0',
         name: 'TestError',
         behaviour: {
           errorCode: 'EMES',
         },
-      }),
-      /** @type {any} */ ({ environment: new Environment() })
+      },
+      testHelpers.emptyContext()
     );
 
     const err = bpmnError.resolve(
-      /** @type {any} */ ({
+      {
+        // @ts-expect-error type coverage
         resolveExpression(errorCode) {
           return errorCode;
         },
-      }),
+      },
       new Error('Men')
     );
 

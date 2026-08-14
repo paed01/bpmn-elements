@@ -9,7 +9,8 @@ import { Scripts } from './JavaScripts.js';
 
 const camundaBpmnModdle = JSON.parse(fs.readFileSync('./node_modules/camunda-bpmn-moddle/resources/camunda.json', 'utf-8'));
 
-const typeResolver = TypeResolver(/** @type {any} */ (types));
+// @ts-expect-error type coverage
+const typeResolver = TypeResolver(types);
 
 export default {
   AssertMessage,
@@ -105,7 +106,7 @@ export function Logger(scope) {
  */
 function emptyContext(override, options) {
   return Context(
-    /** @type {any} */ ({
+    {
       getActivities() {},
       getActivityExtensions() {},
       getAssociations() {},
@@ -133,7 +134,7 @@ function emptyContext(override, options) {
         };
       },
       ...override,
-    }),
+    },
     new Environment({ Logger, scripts: new Scripts(), settings: { enableDummyService: true }, ...options })
   );
 }

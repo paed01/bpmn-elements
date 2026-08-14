@@ -1,5 +1,5 @@
-import testHelpers from '../helpers/testHelpers.js';
 import { Definition } from 'bpmn-elements';
+import testHelpers from '../helpers/testHelpers.js';
 
 Feature('BoundaryEvent', () => {
   Scenario('task with boundary event followed by a join', () => {

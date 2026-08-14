@@ -1,9 +1,7 @@
-import { Activity, Environment } from 'bpmn-elements';
+import { Activity } from 'bpmn-elements';
 import { SequenceFlow } from 'bpmn-elements/flows';
 import { TaskBehaviour } from 'bpmn-elements/tasks';
 import testHelpers from '../helpers/testHelpers.js';
-
-const Logger = testHelpers.Logger;
 
 describe('activity run', () => {
   it('runs in steps', () => {
@@ -317,16 +315,18 @@ describe('activity run', () => {
             id: 'process1',
           },
         },
-        getContext({
-          loadExtensions() {
-            return {
-              activate() {
-                active = true;
-              },
-              deactivate() {
-                active = false;
-              },
-            };
+        testHelpers.emptyContext(undefined, {
+          extensions: {
+            ext() {
+              return {
+                activate() {
+                  active = true;
+                },
+                deactivate() {
+                  active = false;
+                },
+              };
+            },
           },
         })
       );
@@ -353,16 +353,18 @@ describe('activity run', () => {
             id: 'process1',
           },
         },
-        getContext({
-          loadExtensions() {
-            return {
-              activate() {
-                active = true;
-              },
-              deactivate() {
-                active = false;
-              },
-            };
+        testHelpers.emptyContext(undefined, {
+          extensions: {
+            ext() {
+              return {
+                activate() {
+                  active = true;
+                },
+                deactivate() {
+                  active = false;
+                },
+              };
+            },
           },
         })
       );
@@ -389,16 +391,18 @@ describe('activity run', () => {
             id: 'process1',
           },
         },
-        getContext({
-          loadExtensions() {
-            return {
-              activate() {
-                active = true;
-              },
-              deactivate() {
-                active = false;
-              },
-            };
+        testHelpers.emptyContext(undefined, {
+          extensions: {
+            ext() {
+              return {
+                activate() {
+                  active = true;
+                },
+                deactivate() {
+                  active = false;
+                },
+              };
+            },
           },
         })
       );
@@ -428,16 +432,18 @@ describe('activity run', () => {
             id: 'process1',
           },
         },
-        getContext({
-          loadExtensions() {
-            return {
-              activate() {
-                active = true;
-              },
-              deactivate() {
-                active = false;
-              },
-            };
+        testHelpers.emptyContext(undefined, {
+          extensions: {
+            ext() {
+              return {
+                activate() {
+                  active = true;
+                },
+                deactivate() {
+                  active = false;
+                },
+              };
+            },
           },
         })
       );
@@ -469,16 +475,18 @@ describe('activity run', () => {
             id: 'process1',
           },
         },
-        getContext({
-          loadExtensions() {
-            return {
-              activate() {
-                active = true;
-              },
-              deactivate() {
-                active = false;
-              },
-            };
+        testHelpers.emptyContext(undefined, {
+          extensions: {
+            ext() {
+              return {
+                activate() {
+                  active = true;
+                },
+                deactivate() {
+                  active = false;
+                },
+              };
+            },
           },
         })
       );
@@ -511,14 +519,16 @@ describe('activity run', () => {
             id: 'process1',
           },
         },
-        getContext({
-          loadExtensions(me) {
-            return {
-              activate(msg) {
-                states.push([msg.fields.routingKey, me.getState()]);
-              },
-              deactivate() {},
-            };
+        testHelpers.emptyContext(undefined, {
+          extensions: {
+            ext(me) {
+              return {
+                activate(msg) {
+                  states.push([msg.fields.routingKey, me.getState()]);
+                },
+                deactivate() {},
+              };
+            },
           },
         })
       );
@@ -549,13 +559,6 @@ describe('activity run', () => {
 });
 
 function createActivity(step = true) {
-  const environment = new Environment({
-    Logger,
-    settings: {
-      step,
-    },
-  });
-
   return new Activity(
     TaskBehaviour,
     {
@@ -565,41 +568,20 @@ function createActivity(step = true) {
         id: 'process1',
       },
     },
-    getContext({
-      environment,
-      getInboundSequenceFlows() {
-        return [
-          new SequenceFlow(
-            /** @type {any} */ ({ id: 'flow0', sourceId: 'start', targetId: 'task', parent: { id: 'process1' } }),
-            /** @type {any} */ ({ environment })
-          ),
-        ];
+    testHelpers.emptyContext(
+      {
+        getInboundSequenceFlows() {
+          return [{ id: 'flow0', sourceId: 'start', targetId: 'task', parent: { id: 'process1' }, Behaviour: SequenceFlow }];
+        },
+        getOutboundSequenceFlows() {
+          return [{ id: 'flow1', parent: { id: 'process1' }, Behaviour: SequenceFlow }];
+        },
       },
-      getOutboundSequenceFlows() {
-        return [new SequenceFlow(/** @type {any} */ ({ id: 'flow1', parent: { id: 'process1' } }), /** @type {any} */ ({ environment }))];
-      },
-    })
+      {
+        settings: {
+          step,
+        },
+      }
+    )
   );
-}
-
-function getContext(override) {
-  return {
-    environment: new Environment({
-      Logger,
-    }),
-    getInboundSequenceFlows() {
-      return [];
-    },
-    getOutboundSequenceFlows() {
-      return [];
-    },
-    loadExtensions() {
-      return {
-        activate() {},
-        deactivate() {},
-      };
-    },
-    getInboundAssociations() {},
-    ...override,
-  };
 }

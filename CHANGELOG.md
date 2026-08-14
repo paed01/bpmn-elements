@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+## v18.0.14
+
+### Additions
+
+- `ActivityExecution`, `ProcessExecution`, `DefinitionExecution`, and `EventDefinitionExecution` are exported from the package root (`EventDefinitionExecution` also from `bpmn-elements/eventDefinitions`), so hosts and custom behaviours no longer need deep `src/` imports
+- `Activity#associations` returns the activity's inbound associations
+- the shipped declarations are self-contained: `types/index.d.ts` no longer references `moddle-context-serializer` — a devDependency consumers may not have installed, silently degrading affected declarations to `any`. The serialized-definition surface the runtime actually consumes is declared locally and exported: `SerializableContext`, `SerializableElement`, `ActivityDefinition`, `ProcessDefinition`, `SequenceFlowDefinition`, `AssociationDefinition`, `MessageFlowDefinition`, `ElementParentRef`, and `MessageFlowReference`. The type build fails if the emitted bundle references a module outside package dependencies
+
+### Fixes
+
+- element constructors accept a minimum definition: every field of the definition contracts is optional, `behaviour` included, matching the runtime defaults — `new Activity(Behaviour, { id, type, parent }, context)` type-checks without casts
+- `TimersOptions` accepts any `setTimeout`/`clearTimeout` implementation — a fake-timers pair, the builtin functions, or the whole `node:timers` module — instead of demanding the builtins' full overloaded shape (`__promisify__` et al.)
+- types are built and validated with `typescript@6.0.3`; `scripts/build-types.js` derives the submodule re-export blocks from the package export map instead of a hand-written list
+- the test suite asserts intentional type violations with `@ts-expect-error` instead of `any`-casts, so a declaration loosened enough to make a violation legal now fails the typecheck
+
 ## v18.0.13
 
 ### Fixes

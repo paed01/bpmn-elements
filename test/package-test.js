@@ -11,7 +11,7 @@ describe('package exports', () => {
   describe('events', () => {
     it('exports expected', async () => {
       const modules = await import(resolve(cwd, pkg.exports['./events'].import));
-      expect(Object.keys(modules)).to.deep.equal([
+      expect(Object.keys(modules)).to.have.same.members([
         'BoundaryEvent',
         'BoundaryEventBehaviour',
         'EndEvent',
@@ -29,7 +29,7 @@ describe('package exports', () => {
   describe('event definitions', () => {
     it('exports expected', async () => {
       const modules = await import(resolve(cwd, pkg.exports['./eventDefinitions'].import));
-      expect(Object.keys(modules)).to.deep.equal([
+      expect(Object.keys(modules)).to.have.same.members([
         'CancelEventDefinition',
         'CompensateEventDefinition',
         'ConditionalEventDefinition',
@@ -40,6 +40,7 @@ describe('package exports', () => {
         'SignalEventDefinition',
         'TerminateEventDefinition',
         'TimerEventDefinition',
+        'EventDefinitionExecution',
       ]);
     });
 
@@ -63,14 +64,14 @@ describe('package exports', () => {
   describe('flows', () => {
     it('exports expected', async () => {
       const modules = await import(resolve(cwd, pkg.exports['./flows'].import));
-      expect(Object.keys(modules)).to.deep.equal(['Association', 'MessageFlow', 'SequenceFlow']);
+      expect(Object.keys(modules)).to.have.same.members(['Association', 'MessageFlow', 'SequenceFlow']);
     });
   });
 
   describe('gateways', () => {
     it('exports expected', async () => {
       const modules = await import(resolve(cwd, pkg.exports['./gateways'].import));
-      expect(Object.keys(modules)).to.deep.equal([
+      expect(Object.keys(modules)).to.have.same.members([
         'EventBasedGateway',
         'EventBasedGatewayBehaviour',
         'ExclusiveGateway',
@@ -86,7 +87,7 @@ describe('package exports', () => {
   describe('tasks', () => {
     it('exports expected', async () => {
       const modules = await import(resolve(cwd, pkg.exports['./tasks'].import));
-      expect(Object.keys(modules)).to.deep.equal([
+      expect(Object.keys(modules)).to.have.same.members([
         'AdHocSubProcess',
         'AdHocSubProcessBehaviour',
         'BusinessRuleTask',

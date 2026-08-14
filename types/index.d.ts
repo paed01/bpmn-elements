@@ -194,6 +194,7 @@ declare module 'bpmn-elements' {
 	/** Per-execution context registry (see `Context`/`ContextInstance` from src). */
 	get context(): ContextInstance;
 	get logger(): ILogger;
+	[x: string]: any;
   }
 
   // --- Event definitions --------------------------------------------------------
@@ -975,6 +976,7 @@ declare module 'bpmn-elements' {
 		get eventDefinitions(): EventDefinition[] | undefined;
 		get parentElement(): Activity | Process;
 		get initialized(): boolean;
+		get associations(): Association[];
 	}
 	/**
 	 * BPMN error.
@@ -1744,6 +1746,90 @@ declare module 'bpmn-elements' {
 		get activityStatus(): ActivityStatus;
 	}
 	/**
+	 * Drives the execution of a single process or sub-process: activates children, routes activity
+	 * events, and rolls completion up to the owning Process or sub-process Activity.
+	 * */
+		export class ProcessExecution {
+		/**
+		 * Drives the execution of a single process or sub-process: activates children, routes activity
+		 * events, and rolls completion up to the owning Process or sub-process Activity.
+		 * */
+		constructor(parentActivity: Process | Activity, context: ContextInstance);
+		id: string | undefined;
+		type: string;
+		isSubProcess: boolean;
+		isTransaction: boolean;
+		isAdHoc: boolean | undefined;
+		broker: ElementBroker<Activity>;
+		environment: Environment;
+		context: ContextInstance;
+		/**
+		 * Process exection id
+		 * */
+		executionId: string;
+		/**
+		 * Activate children and start the process execution. Resumes if the message is redelivered.
+		 * @throws {Error} when message or executionId is missing
+		 */
+		execute(executeMessage: ElementBrokerMessage): true | void;
+		/**
+		 * Resume after recover, resuming any postponed children.
+		 */
+		resume(): void;
+		/**
+		 * Snapshot execution state including children, flows, message flows, and associations.
+		 * */
+		getState(): ProcessExecutionState;
+		/**
+		 * Restore execution state captured by getState.
+		 * @param recoveredVersion State version
+		 * */
+		recover(state?: ProcessExecutionState, recoveredVersion?: number): this;
+		/**
+		 * Walk activity graph from the given start id, or every start activity when omitted.
+		 * */
+		shake(fromId?: string): ShakeResult;
+		/**
+		 * Stop the running process execution via the api.
+		 */
+		stop(): void;
+		/**
+		 * List currently postponed children as Api wrappers.
+		 * 
+		 */
+		getPostponed(filterFn?: filterPostponed): any[];
+		discard(message?: ElementBrokerMessage): void;
+		cancel(message?: ElementBrokerMessage): void;
+		/**
+		 * Get child activities in the process scope.
+		 * */
+		getActivities(): Activity[];
+		
+		getActivityById(activityId: string): Activity;
+		/**
+		 * Get sequence flows in the process scope.
+		 * */
+		getSequenceFlows(): SequenceFlow[];
+		/**
+		 * Get associations in the process scope.
+		 * */
+		getAssociations(): Association[];
+		/**
+		 * Resolve a process or child Api for the given message.
+		 * */
+		getApi(message?: ElementBrokerMessage): IApi<Process>;
+		/**
+		 * List the process's start activities (isStart children) as their runtime instances.
+		 * */
+		getStartActivities(): Activity[];
+		get stopped(): boolean;
+		get completed(): boolean;
+		get status(): ProcessStatus;
+		get postponedCount(): number;
+		get isRunning(): boolean;
+		get activityStatus(): ActivityStatus;
+	}
+	/**
 	 * Activity properties behaviour. Resolves bound data input/output references during the run.
 	 * */
 		export class Properties {
@@ -1857,90 +1943,6 @@ declare module 'bpmn-elements' {
 	export class RunError extends ActivityError {
 	}
 	/**
-	 * Drives the execution of a single process or sub-process: activates children, routes activity
-	 * events, and rolls completion up to the owning Process or sub-process Activity.
-	 * */
-		class ProcessExecution {
-		/**
-		 * Drives the execution of a single process or sub-process: activates children, routes activity
-		 * events, and rolls completion up to the owning Process or sub-process Activity.
-		 * */
-		constructor(parentActivity: Process | Activity, context: ContextInstance);
-		id: string | undefined;
-		type: string;
-		isSubProcess: boolean;
-		isTransaction: boolean;
-		isAdHoc: boolean | undefined;
-		broker: ElementBroker<Activity>;
-		environment: Environment;
-		context: ContextInstance;
-		/**
-		 * Process exection id
-		 * */
-		executionId: string;
-		/**
-		 * Activate children and start the process execution. Resumes if the message is redelivered.
-		 * @throws {Error} when message or executionId is missing
-		 */
-		execute(executeMessage: ElementBrokerMessage): true | void;
-		/**
-		 * Resume after recover, resuming any postponed children.
-		 */
-		resume(): void;
-		/**
-		 * Snapshot execution state including children, flows, message flows, and associations.
-		 * */
-		getState(): ProcessExecutionState;
-		/**
-		 * Restore execution state captured by getState.
-		 * @param recoveredVersion State version
-		 * */
-		recover(state?: ProcessExecutionState, recoveredVersion?: number): this;
-		/**
-		 * Walk activity graph from the given start id, or every start activity when omitted.
-		 * */
-		shake(fromId?: string): ShakeResult;
-		/**
-		 * Stop the running process execution via the api.
-		 */
-		stop(): void;
-		/**
-		 * List currently postponed children as Api wrappers.
-		 * 
-		 */
-		getPostponed(filterFn?: filterPostponed): any[];
-		discard(message?: ElementBrokerMessage): void;
-		cancel(message?: ElementBrokerMessage): void;
-		/**
-		 * Get child activities in the process scope.
-		 * */
-		getActivities(): Activity[];
-		
-		getActivityById(activityId: string): Activity;
-		/**
-		 * Get sequence flows in the process scope.
-		 * */
-		getSequenceFlows(): SequenceFlow[];
-		/**
-		 * Get associations in the process scope.
-		 * */
-		getAssociations(): Association[];
-		/**
-		 * Resolve a process or child Api for the given message.
-		 * */
-		getApi(message?: ElementBrokerMessage): IApi<Process>;
-		/**
-		 * List the process's start activities (isStart children) as their runtime instances.
-		 * */
-		getStartActivities(): Activity[];
-		get stopped(): boolean;
-		get completed(): boolean;
-		get status(): ProcessStatus;
-		get postponedCount(): number;
-		get isRunning(): boolean;
-		get activityStatus(): ActivityStatus;
-	}
-	/**
 	 * Sequence flow connecting two activities. Owns its broker and publishes take/discard/looped
 	 * events; activities subscribe to drive their inbound queue.
 	 * */
@@ -2021,6 +2023,63 @@ declare module 'bpmn-elements' {
 		 * @param callback Callback with truthy result if flow should be taken
 		 */
 		evaluate(fromMessage: ElementBrokerMessage, callback: (err: Error | null, result?: boolean | unknown) => void): void;
+	}
+	/**
+	 * Association connecting a source and target activity. Used to drive compensation —
+	 * activities marked `isForCompensation` subscribe to inbound association events.
+	 * */
+		export class Association {
+		/**
+		 * Association connecting a source and target activity. Used to drive compensation —
+		 * activities marked `isForCompensation` subscribe to inbound association events.
+		 * */
+		constructor(associationDef: AssociationDefinition, { environment }: ContextInstance);
+		id: string | undefined;
+		type: string;
+		name: string | undefined;
+		parent: ElementParent;
+		
+		behaviour: Record<string, any>;
+		sourceId: string | undefined;
+		targetId: string | undefined;
+		isAssociation: boolean;
+		environment: Environment;
+		logger: ILogger;
+		broker: import("smqp").Broker;
+		on: any;
+		once: any;
+		waitFor: any;
+		get counters(): {
+			take: number;
+			discard: number;
+		};
+		/**
+		 * Take the association and publish association.take.
+		 * 
+		 */
+		take(content?: Record<string, any>): boolean;
+		/**
+		 * Discard the association and publish association.discard.
+		 * 
+		 */
+		discard(content?: Record<string, any>): boolean;
+		/**
+		 * Snapshot association state. Returns undefined when broker has no state and
+		 * `disableTrackState` is set.
+		 * */
+		getState(): AssociationState | undefined;
+		/**
+		 * Restore association state captured by getState.
+		 * */
+		recover(state: AssociationState): void;
+		/**
+		 * Resolve an association-scoped Api wrapper.
+		 * */
+		getApi(message?: ElementBrokerMessage): IApi<this>;
+		/**
+		 * Stop the association's broker.
+		 */
+		stop(): void;
 	}
 	/**
 	 * Enriches an element run message via async format start/end messages on the `format` exchange
@@ -2559,63 +2618,6 @@ declare module 'bpmn-elements' {
 		constructor(activity: Activity);
 	}
 	/**
-	 * Association connecting a source and target activity. Used to drive compensation —
-	 * activities marked `isForCompensation` subscribe to inbound association events.
-	 * */
-		export class Association {
-		/**
-		 * Association connecting a source and target activity. Used to drive compensation —
-		 * activities marked `isForCompensation` subscribe to inbound association events.
-		 * */
-		constructor(associationDef: AssociationDefinition, { environment }: ContextInstance);
-		id: string | undefined;
-		type: string;
-		name: string | undefined;
-		parent: ElementParent;
-		
-		behaviour: Record<string, any>;
-		sourceId: string | undefined;
-		targetId: string | undefined;
-		isAssociation: boolean;
-		environment: Environment;
-		logger: ILogger;
-		broker: import("smqp").Broker;
-		on: any;
-		once: any;
-		waitFor: any;
-		get counters(): {
-			take: number;
-			discard: number;
-		};
-		/**
-		 * Take the association and publish association.take.
-		 * 
-		 */
-		take(content?: Record<string, any>): boolean;
-		/**
-		 * Discard the association and publish association.discard.
-		 * 
-		 */
-		discard(content?: Record<string, any>): boolean;
-		/**
-		 * Snapshot association state. Returns undefined when broker has no state and
-		 * `disableTrackState` is set.
-		 * */
-		getState(): AssociationState | undefined;
-		/**
-		 * Restore association state captured by getState.
-		 * */
-		recover(state: AssociationState): void;
-		/**
-		 * Resolve an association-scoped Api wrapper.
-		 * */
-		getApi(message?: ElementBrokerMessage): IApi<this>;
-		/**
-		 * Stop the association's broker.
-		 */
-		stop(): void;
-	}
-	/**
 	 * Message flow connecting a source activity (or process) to a target. Subscribes to the
 	 * source's `end` event and publishes `message.outbound` whenever the source completes,
 	 * carrying any message payload through to the target.
@@ -2925,6 +2927,28 @@ declare module 'bpmn-elements' {
 		 * */
 		parse(timerType: TimerType, value: string): parsedTimer;
 	}
+	/**
+	 * Event definition execution orchestrator. Drives a sequence of event definitions for the
+	 * activity and publishes the completed routing key when the last definition completes.
+	 * @param completedRoutingKey Routing key to publish on completion, defaults to `execute.completed`
+	 */
+		export class EventDefinitionExecution {
+		/**
+		 * Event definition execution orchestrator. Drives a sequence of event definitions for the
+		 * activity and publishes the completed routing key when the last definition completes.
+		 * @param completedRoutingKey Routing key to publish on completion, defaults to `execute.completed`
+		 */
+		constructor(activity: Activity, eventDefinitions: EventDefinition[], completedRoutingKey?: string);
+		id: string | undefined;
+		activity: Activity;
+		broker: ElementBroker<Activity>;
+		eventDefinitions: EventDefinition[];
+		completedRoutingKey: string;
+		get completed(): boolean;
+		get stopped(): boolean;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
+	}
 
 	export { Consumer, MessageFields, MessageProperties };
 }
@@ -2968,7 +2992,7 @@ declare module 'bpmn-elements/events' {
 }
 
 declare module 'bpmn-elements/eventDefinitions' {
-	export { CancelEventDefinition, CompensateEventDefinition, ConditionalEventDefinition, ErrorEventDefinition, EscalationEventDefinition, LinkEventDefinition, MessageEventDefinition, SignalEventDefinition, TerminateEventDefinition, TimerEventDefinition } from 'bpmn-elements';
+	export { CancelEventDefinition, CompensateEventDefinition, ConditionalEventDefinition, ErrorEventDefinition, EscalationEventDefinition, LinkEventDefinition, MessageEventDefinition, SignalEventDefinition, TerminateEventDefinition, TimerEventDefinition, EventDefinitionExecution } from 'bpmn-elements';
 }
 
 declare module 'bpmn-elements/flows' {

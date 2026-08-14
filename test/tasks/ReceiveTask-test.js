@@ -6,12 +6,12 @@ describe('ReceiveTask', () => {
   let task;
   beforeEach(() => {
     task = ReceiveTask(
-      /** @type {any} */ ({
+      {
         id: 'task',
         parent: {
           id: 'theProcess',
         },
-      }),
+      },
       testHelpers.emptyContext({
         getActivityById(id) {
           if (id !== 'message_1') return;

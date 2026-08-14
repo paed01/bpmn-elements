@@ -394,9 +394,9 @@ describe('StartEvent', () => {
   describe('stop', () => {
     it('on enter cancels all listeners', () => {
       const event = StartEvent(
-        /** @type {any} */ ({
+        {
           id: 'start',
-        }),
+        },
         testHelpers.emptyContext()
       );
 
@@ -409,9 +409,9 @@ describe('StartEvent', () => {
 
     it('on start cancels all listeners', () => {
       const event = StartEvent(
-        /** @type {any} */ ({
+        {
           id: 'start',
-        }),
+        },
         testHelpers.emptyContext()
       );
 
@@ -424,13 +424,13 @@ describe('StartEvent', () => {
 
     it('on wait cancels all listeners', () => {
       const event = StartEvent(
-        /** @type {any} */ ({
+        {
           id: 'start',
           type: 'startevent',
           behaviour: {
             eventDefinitions: [{ Behaviour: MessageEventDefinition }],
           },
-        }),
+        },
         testHelpers.emptyContext()
       );
 
@@ -445,9 +445,9 @@ describe('StartEvent', () => {
   describe('discard', () => {
     it('on enter discards run', () => {
       const event = StartEvent(
-        /** @type {any} */ ({
+        {
           id: 'start',
-        }),
+        },
         testHelpers.emptyContext()
       );
 
@@ -460,9 +460,9 @@ describe('StartEvent', () => {
 
     it('on start discards run', () => {
       const event = StartEvent(
-        /** @type {any} */ ({
+        {
           id: 'start',
-        }),
+        },
         testHelpers.emptyContext()
       );
 
@@ -475,13 +475,13 @@ describe('StartEvent', () => {
 
     it('discard on message wait discards run and ignores signal', () => {
       const event = StartEvent(
-        /** @type {any} */ ({
+        {
           id: 'start',
           type: 'startevent',
           behaviour: {
             eventDefinitions: [{ Behaviour: MessageEventDefinition }],
           },
-        }),
+        },
         testHelpers.emptyContext()
       );
 
@@ -498,11 +498,11 @@ describe('StartEvent', () => {
 
     it('discard on form wait discards run and ignores signal', () => {
       const event = StartEvent(
-        /** @type {any} */ ({
+        {
           id: 'start',
           type: 'startevent',
           behaviour: {},
-        }),
+        },
         testHelpers.emptyContext()
       );
 

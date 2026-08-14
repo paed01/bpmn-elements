@@ -9,6 +9,7 @@ import type { Lane } from '../src/process/Lane.js';
 import type { Process } from '../src/process/Process.js';
 import type { ProcessExecution } from '../src/process/ProcessExecution.js';
 import type { SequenceFlow } from '../src/flows/SequenceFlow.js';
+import type { Association } from '../src/flows/Association.js';
 import type { Formatter } from '../src/MessageFormatter.js';
 import type { ActivityError } from '../src/error/Errors.js';
 import type { SignalTaskBehaviour } from '../src/tasks/SignalTask.js';
@@ -65,6 +66,7 @@ declare module '../src/activity/Activity.js' {
     get eventDefinitions(): EventDefinition[] | undefined;
     get parentElement(): Activity | Process;
     get initialized(): boolean;
+    get associations(): Association[];
   }
 }
 
@@ -311,6 +313,7 @@ export abstract class ElementBase {
   /** Per-execution context registry (see `Context`/`ContextInstance` from src). */
   get context(): ContextInstance;
   get logger(): ILogger;
+  [x: string]: any;
 }
 
 // --- Event definitions --------------------------------------------------------

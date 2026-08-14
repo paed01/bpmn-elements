@@ -15,6 +15,12 @@ Object.defineProperty(exports, "ActivityError", {
     return _Errors.ActivityError;
   }
 });
+Object.defineProperty(exports, "ActivityExecution", {
+  enumerable: true,
+  get: function () {
+    return _ActivityExecution.ActivityExecution;
+  }
+});
 Object.defineProperty(exports, "AdHocSubProcess", {
   enumerable: true,
   get: function () {
@@ -105,6 +111,12 @@ Object.defineProperty(exports, "Definition", {
     return _Definition.Definition;
   }
 });
+Object.defineProperty(exports, "DefinitionExecution", {
+  enumerable: true,
+  get: function () {
+    return _DefinitionExecution.DefinitionExecution;
+  }
+});
 Object.defineProperty(exports, "Dummy", {
   enumerable: true,
   get: function () {
@@ -145,6 +157,12 @@ Object.defineProperty(exports, "EventBasedGateway", {
   enumerable: true,
   get: function () {
     return _index3.EventBasedGateway;
+  }
+});
+Object.defineProperty(exports, "EventDefinitionExecution", {
+  enumerable: true,
+  get: function () {
+    return _index5.EventDefinitionExecution;
   }
 });
 Object.defineProperty(exports, "ExclusiveGateway", {
@@ -235,6 +253,12 @@ Object.defineProperty(exports, "Process", {
   enumerable: true,
   get: function () {
     return _Process.Process;
+  }
+});
+Object.defineProperty(exports, "ProcessExecution", {
+  enumerable: true,
+  get: function () {
+    return _ProcessExecution.ProcessExecution;
   }
 });
 Object.defineProperty(exports, "Properties", {
@@ -364,12 +388,14 @@ Object.defineProperty(exports, "UserTask", {
   }
 });
 var _Activity = require("./activity/Activity.js");
+var _ActivityExecution = require("./activity/ActivityExecution.js");
 var _BpmnError = require("./error/BpmnError.js");
 var _Context = require("./Context.js");
 var _EnvironmentDataObject = require("./io/EnvironmentDataObject.js");
 var _EnvironmentDataStore = require("./io/EnvironmentDataStore.js");
 var _EnvironmentDataStoreReference = require("./io/EnvironmentDataStoreReference.js");
 var _Definition = require("./definition/Definition.js");
+var _DefinitionExecution = require("./definition/DefinitionExecution.js");
 var _Dummy = require("./activity/Dummy.js");
 var _Environment = require("./Environment.js");
 var _Escalation = require("./activity/Escalation.js");
@@ -378,6 +404,7 @@ var _Lane = require("./process/Lane.js");
 var _LoopCharacteristics = require("./tasks/LoopCharacteristics.js");
 var _Message = require("./activity/Message.js");
 var _Process = require("./process/Process.js");
+var _ProcessExecution = require("./process/ProcessExecution.js");
 var _Properties = require("./io/Properties.js");
 var _ServiceImplementation = require("./tasks/ServiceImplementation.js");
 var _Signal = require("./activity/Signal.js");

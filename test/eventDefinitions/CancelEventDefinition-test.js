@@ -16,12 +16,9 @@ describe('CancelEventDefinition', () => {
     });
 
     it('publishes wait event on parent broker', () => {
-      const catchEvent = new CancelEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:CancelEventDefinition',
-        })
-      );
+      const catchEvent = new CancelEventDefinition(event, {
+        type: 'bpmn:CancelEventDefinition',
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -33,25 +30,25 @@ describe('CancelEventDefinition', () => {
         { noAck: true }
       );
 
-      catchEvent.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      catchEvent.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.wait');
@@ -61,12 +58,9 @@ describe('CancelEventDefinition', () => {
     });
 
     it('expects cancel with cancelled routing key', () => {
-      const catchEvent = new CancelEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:CancelEventDefinition',
-        })
-      );
+      const catchEvent = new CancelEventDefinition(event, {
+        type: 'bpmn:CancelEventDefinition',
+      });
       expect(catchEvent.executionId, 'executionId').to.be.undefined;
 
       const messages = [];
@@ -79,26 +73,26 @@ describe('CancelEventDefinition', () => {
         { noAck: true }
       );
 
-      catchEvent.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
+      catchEvent.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'event_1',
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
             id: 'event_1',
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'event_1',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'transaction',
-                  executionId: 'transaction_0',
-                },
-              ],
-            },
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'transaction',
+                executionId: 'transaction_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0].content).to.have.property('executionId', 'event_1');
@@ -106,12 +100,9 @@ describe('CancelEventDefinition', () => {
     });
 
     it('completes when attached to activity is cancelled', () => {
-      const catchEvent = new CancelEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:CancelEventDefinition',
-        })
-      );
+      const catchEvent = new CancelEventDefinition(event, {
+        type: 'bpmn:CancelEventDefinition',
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -123,26 +114,26 @@ describe('CancelEventDefinition', () => {
         { noAck: true, consumerTag: '_test-tag' }
       );
 
-      catchEvent.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
+      catchEvent.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'event_1',
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
             id: 'event_1',
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'event_1',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'transaction',
-                  executionId: 'transaction_0',
-                },
-              ],
-            },
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'transaction',
+                executionId: 'transaction_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       event.broker.publish('execution', 'execute.cancelled.event_1_0', {});
 
@@ -154,34 +145,31 @@ describe('CancelEventDefinition', () => {
     });
 
     it('completes and clears listeners if stopped by api', () => {
-      const catchEvent = new CancelEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:CancelEventDefinition',
-        })
-      );
+      const catchEvent = new CancelEventDefinition(event, {
+        type: 'bpmn:CancelEventDefinition',
+      });
 
-      catchEvent.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'event_1',
-            attachedTo: 'atomic',
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'event',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      catchEvent.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'event_1',
+          attachedTo: 'atomic',
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'event',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       event.broker.publish('api', 'activity.stop.event_1_0', {}, { type: 'stop' });
 
@@ -189,34 +177,31 @@ describe('CancelEventDefinition', () => {
     });
 
     it('completes and clears listeners if parent is stopped by api', () => {
-      const catchEvent = new CancelEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:CancelEventDefinition',
-        })
-      );
+      const catchEvent = new CancelEventDefinition(event, {
+        type: 'bpmn:CancelEventDefinition',
+      });
 
-      catchEvent.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
+      catchEvent.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'event_1',
+          attachedTo: 'atomic',
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
             id: 'event_1',
-            attachedTo: 'atomic',
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'event_1',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       event.broker.publish('execution', 'execute.cancelled.event_1_0', { id: 'atomic', isTransaction: true });
       event.broker.publish('api', 'activity.stop.event_1', {}, { type: 'stop' });
@@ -240,12 +225,9 @@ describe('CancelEventDefinition', () => {
     it('publishes Cancel event on parent broker with resolved message', () => {
       event.isThrowing = true;
 
-      const definition = new CancelEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:CancelEventDefinition',
-        })
-      );
+      const definition = new CancelEventDefinition(event, {
+        type: 'bpmn:CancelEventDefinition',
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -257,26 +239,26 @@ describe('CancelEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'event_1',
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'event',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'event_1',
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'event',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.cancel');

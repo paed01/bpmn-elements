@@ -13,8 +13,10 @@ describe('BoundaryEvent', () => {
           id: 'task',
           broker: ActivityBroker(this).broker,
         };
-        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)({
+        const behaviour = new BoundaryEventBehaviour({
+          // @ts-expect-error type coverage
           broker: ActivityBroker(this).broker,
+          // @ts-expect-error type coverage
           attachedTo,
         });
 
@@ -26,8 +28,10 @@ describe('BoundaryEvent', () => {
           id: 'task',
           broker: ActivityBroker(this).broker,
         };
-        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)({
+        const behaviour = new BoundaryEventBehaviour({
+          // @ts-expect-error type coverage
           broker: ActivityBroker(this).broker,
+          // @ts-expect-error type coverage
           attachedTo,
           behaviour: { cancelActivity: false },
         });
@@ -42,12 +46,13 @@ describe('BoundaryEvent', () => {
           id: 'task',
           broker: ActivityBroker(this).broker,
         };
-        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
+        const behaviour = new BoundaryEventBehaviour(
           {
             id: 'event',
             broker: ActivityBroker(this).broker,
             attachedTo,
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
@@ -56,6 +61,7 @@ describe('BoundaryEvent', () => {
         expect(attachedTo.broker.getExchange('event')).to.have.property('bindingCount', 0);
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
@@ -73,12 +79,13 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
-        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
+        const behaviour = new BoundaryEventBehaviour(
           {
             id: 'event',
             broker,
             attachedTo,
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
@@ -87,6 +94,7 @@ describe('BoundaryEvent', () => {
         expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
@@ -104,18 +112,20 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
-        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
+        const behaviour = new BoundaryEventBehaviour(
           {
             id: 'event',
             broker,
             attachedTo,
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
         );
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
@@ -145,18 +155,20 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         const broker = ActivityBroker().broker;
-        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
+        const behaviour = new BoundaryEventBehaviour(
           {
             id: 'event',
             broker,
             attachedTo,
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
         );
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
@@ -185,18 +197,20 @@ describe('BoundaryEvent', () => {
         };
 
         const broker = ActivityBroker().broker;
-        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
+        const behaviour = new BoundaryEventBehaviour(
           {
             id: 'event',
             broker,
             attachedTo,
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
         );
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
@@ -229,7 +243,7 @@ describe('BoundaryEvent', () => {
         };
 
         const broker = ActivityBroker().broker;
-        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
+        const behaviour = new BoundaryEventBehaviour(
           {
             id: 'event',
             broker,
@@ -240,12 +254,14 @@ describe('BoundaryEvent', () => {
             environment: new Environment(),
             logger: testHelpers.Logger('boundaryevent'),
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
         );
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
@@ -288,16 +304,12 @@ describe('BoundaryEvent', () => {
           attachedTo,
           get eventDefinitions() {
             const self = this;
-            return (
-              self._eds ||
-              (self._eds = [
-                new ErrorEventDefinition(/** @type {any} */ (self), /** @type {any} */ ({})),
-                new MessageEventDefinition(/** @type {any} */ (self), /** @type {any} */ ({})),
-              ])
-            );
+            // @ts-expect-error type coverage
+            return self._eds || (self._eds = [new ErrorEventDefinition(self, {}), new MessageEventDefinition(self, {})]);
           },
         };
-        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(activity, {
+        // @ts-expect-error type coverage
+        const behaviour = new BoundaryEventBehaviour(activity, {
           getOutboundAssociations() {},
         });
         expect(attachedTo.broker.getExchange('event')).to.have.property('bindingCount', 0);
@@ -305,11 +317,13 @@ describe('BoundaryEvent', () => {
         broker.subscribeTmp('event', 'execute.start', (_, msg) => behaviour.execute(msg));
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
             executionId: 'event_1',
             isRootScope: true,
+            // @ts-expect-error type coverage
             parent: {
               id: 'theProcess',
             },
@@ -326,7 +340,7 @@ describe('BoundaryEvent', () => {
         };
         const broker = ActivityBroker().broker;
         const environment = new Environment({ Logger: testHelpers.Logger });
-        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
+        const behaviour = new BoundaryEventBehaviour(
           {
             id: 'event',
             broker,
@@ -341,17 +355,20 @@ describe('BoundaryEvent', () => {
               ],
             },
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
         );
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
             executionId: 'event_1',
             isRootScope: true,
+            // @ts-expect-error type coverage
             parent: {
               id: 'theProcess',
             },
@@ -378,7 +395,7 @@ describe('BoundaryEvent', () => {
         };
         const broker = ActivityBroker().broker;
         const environment = new Environment({ Logger: testHelpers.Logger });
-        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
+        const behaviour = new BoundaryEventBehaviour(
           {
             id: 'event',
             broker,
@@ -393,17 +410,20 @@ describe('BoundaryEvent', () => {
               ],
             },
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
         );
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
             executionId: 'event_1',
             isRootScope: true,
+            // @ts-expect-error type coverage
             parent: {
               id: 'theProcess',
             },
@@ -430,7 +450,7 @@ describe('BoundaryEvent', () => {
         };
         const broker = ActivityBroker().broker;
         const environment = new Environment({ Logger: testHelpers.Logger });
-        const behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
+        const behaviour = new BoundaryEventBehaviour(
           {
             id: 'event',
             broker,
@@ -445,17 +465,20 @@ describe('BoundaryEvent', () => {
               ],
             },
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
         );
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
             executionId: 'event_1',
             isRootScope: true,
+            // @ts-expect-error type coverage
             parent: {
               id: 'theProcess',
             },
@@ -478,7 +501,7 @@ describe('BoundaryEvent', () => {
         };
         broker = ActivityBroker().broker;
         const environment = new Environment({ Logger: testHelpers.Logger });
-        behaviour = new /** @type {any} */ (BoundaryEventBehaviour)(
+        behaviour = new BoundaryEventBehaviour(
           {
             id: 'event',
             broker,
@@ -494,6 +517,7 @@ describe('BoundaryEvent', () => {
             },
             removeInboundListeners() {},
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }

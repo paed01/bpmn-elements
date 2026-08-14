@@ -1,10 +1,11 @@
-import { Activity, Environment, MultiInstanceLoopCharacteristics as LoopCharacteristics } from 'bpmn-elements';
+import {
+  Activity,
+  ActivityExecution,
+  EventDefinitionExecution,
+  MultiInstanceLoopCharacteristics as LoopCharacteristics,
+} from 'bpmn-elements';
 import { SequenceFlow } from 'bpmn-elements/flows';
-import { ActivityExecution } from '../../src/activity/ActivityExecution.js';
-import { EventDefinitionExecution } from '../../src/eventDefinitions/EventDefinitionExecution.js';
 import testHelpers from '../helpers/testHelpers.js';
-
-const Logger = testHelpers.Logger;
 
 describe('ActivityExecution', () => {
   describe('execute(executeMessage)', () => {
@@ -39,17 +40,16 @@ describe('ActivityExecution', () => {
         message = msg;
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       expect(message).to.be.ok;
       expect(message.fields).to.have.property('routingKey', 'execute.start');
@@ -73,17 +73,16 @@ describe('ActivityExecution', () => {
         startMessage = msg;
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
@@ -116,17 +115,16 @@ describe('ActivityExecution', () => {
         startMessage = msg;
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'gateway',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'gateway',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
@@ -166,17 +164,16 @@ describe('ActivityExecution', () => {
         startMessage = msg;
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
@@ -211,17 +208,16 @@ describe('ActivityExecution', () => {
         discardMessage = msg;
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       activity.broker.publish('execution', 'execute.start', {
         id: 'activity',
@@ -260,17 +256,16 @@ describe('ActivityExecution', () => {
         discardMessage = msg;
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       activity.broker.publish('execution', 'execute.start', {
         id: 'activity',
@@ -302,17 +297,16 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       expect(execution.getPostponed()).to.have.length(1);
       expect(execution.getPostponed()[0]).to.have.property('content').with.property('state', 'start');
@@ -346,17 +340,16 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       activity.broker.publish('execution', 'execute.start', {
         id: 'activity',
@@ -395,17 +388,16 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       const errorMessages = [];
       activity.broker.subscribeTmp(
@@ -439,17 +431,16 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       activity.broker.publish('execution', 'execute.start', {
         id: 'activity',
@@ -490,17 +481,16 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       activity.broker.publish('execution', 'execute.start', {
         id: 'activity',
@@ -539,17 +529,16 @@ describe('ActivityExecution', () => {
         message = msg;
       });
 
-      execution.passthrough(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.passthrough({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       expect(message, 'execute.start published').to.be.ok;
       expect(execution.source, 'source instantiated').to.be.ok;
@@ -568,17 +557,16 @@ describe('ActivityExecution', () => {
         message = msg;
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       execution.discard();
 
@@ -610,17 +598,16 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
       execution.discard();
 
       expect(execution.completed).to.be.true;
@@ -670,17 +657,16 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
       expect(execution.completed).to.be.true;
 
       execution.discard();
@@ -718,17 +704,16 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
       expect(execution.completed).to.be.false;
 
       execution.discard();
@@ -762,17 +747,16 @@ describe('ActivityExecution', () => {
 
       const executeQ = activity.broker.getQueue('execute-q');
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
       execution.stop();
 
       expect(execution.completed).to.be.false;
@@ -786,17 +770,16 @@ describe('ActivityExecution', () => {
       const execution = new ActivityExecution(activity);
       let stoppedSubExecution = false;
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
       execution.stop();
 
       expect(execution.completed).to.be.false;
@@ -841,17 +824,16 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
       expect(execution.completed).to.be.true;
 
       execution.stop();
@@ -879,18 +861,17 @@ describe('ActivityExecution', () => {
         messages.push(msg);
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-            message: 0,
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+          message: 0,
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0]).to.have.property('content').with.property('output', 1);
@@ -914,17 +895,16 @@ describe('ActivityExecution', () => {
         messages.push(msg);
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0]).to.have.property('content').with.property('output', 1);
@@ -969,17 +949,16 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       expect(execution).to.have.property('completed', false);
 
@@ -1017,17 +996,16 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       activity.broker.publish('execution', 'execute.completed', messages[0].content);
 
@@ -1067,17 +1045,16 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       expect(execution.getPostponed()).to.have.length(1);
       expect(execution.getPostponed()[0]).to.have.property('fields').with.property('routingKey', 'execute.start');
@@ -1119,17 +1096,16 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       const executeQ = activity.broker.getQueue('execute-q');
 
@@ -1184,17 +1160,16 @@ describe('ActivityExecution', () => {
     it('returns expected state when executing', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       expect(execution.getState()).to.eql({ completed: false });
     });
@@ -1202,17 +1177,16 @@ describe('ActivityExecution', () => {
     it('returns expected state when completed', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
       execution.getPostponed()[0].signal();
 
       expect(execution.getState()).to.eql({ completed: true });
@@ -1239,36 +1213,34 @@ describe('ActivityExecution', () => {
 
       const executeMessages = [];
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {
-            routingKey: 'run.execute',
-          },
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {
+          routingKey: 'run.execute',
+        },
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       execution.stop();
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {
-            routingKey: 'run.execute',
-            redelivered: true,
-          },
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {
+          routingKey: 'run.execute',
+          redelivered: true,
+        },
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       expect(executeMessages).to.have.length(2);
       expect(executeMessages[0].fields).to.have.property('routingKey', 'execute.start');
@@ -1291,36 +1263,34 @@ describe('ActivityExecution', () => {
       const execution = new ActivityExecution(activity);
 
       const executeMessages = [];
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {
-            routingKey: 'run.execute',
-          },
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {
+          routingKey: 'run.execute',
+        },
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       execution.stop();
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {
-            routingKey: 'run.execute',
-            redelivered: true,
-          },
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {
+          routingKey: 'run.execute',
+          redelivered: true,
+        },
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       expect(executeMessages).to.have.length(2);
 
@@ -1348,38 +1318,36 @@ describe('ActivityExecution', () => {
       const execution = new ActivityExecution(activity);
 
       const executeMessages = [];
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {
-            routingKey: 'run.execute',
-          },
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {
+          routingKey: 'run.execute',
+        },
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       execution.stop();
 
       activity.broker.getQueue('execute-q').purge();
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {
-            routingKey: 'run.execute',
-            redelivered: true,
-          },
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {
+          routingKey: 'run.execute',
+          redelivered: true,
+        },
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
 
       expect(executeMessages).to.have.length(2);
 
@@ -1421,16 +1389,15 @@ describe('ActivityExecution', () => {
         completeMsg = msg;
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+        },
+      });
 
       expect(startMessages).to.have.length(2);
       task.broker.publish('execution', 'execute.completed', { ...startMessages.slice(-1)[0].content, output: 0 });
@@ -1489,16 +1456,15 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+        },
+      });
 
       expect(completeMsg).to.be.ok;
       expect(completeMsg.content).to.have.property('executionId', 'activity_1');
@@ -1546,16 +1512,15 @@ describe('ActivityExecution', () => {
         completeMsg = msg;
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+        },
+      });
 
       expect(startMessages).to.have.length(4);
 
@@ -1609,16 +1574,15 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+        },
+      });
 
       expect(startMessages).to.have.length(2);
 
@@ -1671,16 +1635,15 @@ describe('ActivityExecution', () => {
         completeMsg = msg;
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+        },
+      });
 
       expect(startMessages).to.have.length(4);
 
@@ -1745,16 +1708,15 @@ describe('ActivityExecution', () => {
         errorMsg = msg;
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+        },
+      });
 
       expect(startMessages).to.have.length(4);
       expect(discardMessages).to.have.length(2);
@@ -1825,16 +1787,15 @@ describe('ActivityExecution', () => {
         discardMsg = msg;
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+        },
+      });
 
       expect(startMessages).to.have.length(4);
       expect(discardMessages).to.have.length(5);
@@ -1885,16 +1846,15 @@ describe('ActivityExecution', () => {
         completeMsg = msg;
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+        },
+      });
 
       expect(startMessages).to.have.length(4);
 
@@ -1939,16 +1899,15 @@ describe('ActivityExecution', () => {
         task.broker.publish('api', 'activity.stop.activity_1');
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+        },
+      });
 
       expect(task.broker.getQueue('execute-q')).to.have.property('messageCount', 4);
 
@@ -1989,16 +1948,15 @@ describe('ActivityExecution', () => {
         task.broker.publish('api', 'activity.stop.activity_1');
       });
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+        },
+      });
 
       expect(task.broker.getQueue('execute-q')).to.have.property('messageCount', 4);
 
@@ -2057,19 +2015,19 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'event',
-            executionId: 'activity_1',
-            parent: {
-              id: 'theProcess',
-            },
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'event',
+          executionId: 'activity_1',
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'theProcess',
           },
-        })
-      );
+        },
+      });
 
       expect(startMessages).to.have.length(2);
       expect(startMessages[0].content).to.have.property('isRootScope', true);
@@ -2085,15 +2043,13 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql(4);
 
       function Behaviour(activity) {
-        const eventDefinitionExecution = new EventDefinitionExecution(
-          activity,
-          /** @type {any} */ ([
-            {
-              type: 'messageeventdef',
-              execute() {},
-            },
-          ])
-        );
+        const eventDefinitionExecution = new EventDefinitionExecution(activity, [
+          // @ts-expect-error type coverage
+          {
+            type: 'messageeventdef',
+            execute() {},
+          },
+        ]);
 
         return {
           execute(executeMessage) {
@@ -2129,19 +2085,19 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'event',
-            executionId: 'activity_1',
-            parent: {
-              id: 'theProcess',
-            },
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'event',
+          executionId: 'activity_1',
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'theProcess',
           },
-        })
-      );
+        },
+      });
 
       expect(startMessages).to.have.length(3);
       expect(startMessages[0].content).to.have.property('isRootScope', true);
@@ -2160,19 +2116,18 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('output').that.eql(4);
 
       function Behaviour(activity) {
-        const eventDefinitionExecution = new EventDefinitionExecution(
-          activity,
-          /** @type {any} */ ([
-            {
-              type: 'messageeventdef1',
-              execute() {},
-            },
-            {
-              type: 'messageeventdef2',
-              execute() {},
-            },
-          ])
-        );
+        const eventDefinitionExecution = new EventDefinitionExecution(activity, [
+          // @ts-expect-error type coverage
+          {
+            type: 'messageeventdef1',
+            execute() {},
+          },
+          // @ts-expect-error type coverage
+          {
+            type: 'messageeventdef2',
+            execute() {},
+          },
+        ]);
 
         return {
           execute(executeMessage) {
@@ -2208,20 +2163,20 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'event',
-            executionId: 'activity_1',
-            message: 3,
-            parent: {
-              id: 'theProcess',
-            },
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'event',
+          executionId: 'activity_1',
+          message: 3,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'theProcess',
           },
-        })
-      );
+        },
+      });
 
       expect(startMessages).to.have.length(3);
       expect(startMessages[0].content).to.have.property('isRootScope', true);
@@ -2241,19 +2196,18 @@ describe('ActivityExecution', () => {
       expect(completeMsg.content).to.have.property('message').that.eql(5);
 
       function Behaviour(activity) {
-        const eventDefinitionExecution = new EventDefinitionExecution(
-          activity,
-          /** @type {any} */ ([
-            {
-              type: 'messageeventdef1',
-              execute() {},
-            },
-            {
-              type: 'messageeventdef2',
-              execute() {},
-            },
-          ])
-        );
+        const eventDefinitionExecution = new EventDefinitionExecution(activity, [
+          // @ts-expect-error type coverage
+          {
+            type: 'messageeventdef1',
+            execute() {},
+          },
+          // @ts-expect-error type coverage
+          {
+            type: 'messageeventdef2',
+            execute() {},
+          },
+        ]);
 
         return {
           execute(executeMessage) {
@@ -2269,20 +2223,20 @@ describe('ActivityExecution', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-            parent: {
-              id: 'theProcess',
-            },
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'theProcess',
           },
-        })
-      );
+        },
+      });
       expect(execution.getApi().content).to.eql({
         id: 'activity',
         type: 'task',
@@ -2299,28 +2253,27 @@ describe('ActivityExecution', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'activity',
-            type: 'task',
-            executionId: 'activity_1',
-            state: 'start',
-            parent: {
-              id: 'theProcess',
-            },
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'theProcess',
           },
-        })
-      );
+        },
+      });
       expect(
-        execution.getApi(
-          /** @type {any} */ ({
-            content: {
-              executionId: 'activity_2',
-            },
-          })
-        ).content
+        // @ts-expect-error type coverage
+        execution.getApi({
+          content: {
+            executionId: 'activity_2',
+          },
+        }).content
       ).to.eql({
         executionId: 'activity_2',
       });
@@ -2341,16 +2294,15 @@ describe('ActivityExecution', () => {
           { noAck: true }
         );
 
-        execution.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
-              id: 'activity',
-              type: 'task',
-              executionId: 'activity_1',
-            },
-          })
-        );
+        execution.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            id: 'activity',
+            type: 'task',
+            executionId: 'activity_1',
+          },
+        });
 
         activity.broker.publish('execution', 'execute.loop.iterate', {
           id: 'activity',
@@ -2373,43 +2325,27 @@ describe('ActivityExecution', () => {
 
 /**
  * @param {any} [Behaviour]
- * @returns {import('../../src/activity/Activity.js').Activity}
+ * @returns {import('bpmn-elements').Activity}
  */
 function createActivity(Behaviour) {
-  const environment = new Environment({
-    Logger,
-  });
-
-  return /** @type {any} */ (
-    new Activity(
-      Behaviour || ActivityBehaviour,
-      {
-        id: 'activity',
-        type: 'task',
-        parent: {
-          id: 'process1',
-          type: 'process',
-        },
+  return new Activity(
+    Behaviour || ActivityBehaviour,
+    {
+      id: 'activity',
+      type: 'task',
+      parent: {
+        id: 'process1',
+        type: 'process',
       },
-      /** @type {any} */ ({
-        environment,
-        getInboundSequenceFlows() {
-          return [
-            new SequenceFlow(
-              /** @type {any} */ ({ id: 'flow', sourceId: 'task', targetId: 'end', parent: { id: 'process1' } }),
-              /** @type {any} */ ({
-                environment,
-              })
-            ),
-          ];
-        },
-        getOutboundSequenceFlows() {
-          return [];
-        },
-        loadExtensions() {},
-        getInboundAssociations() {},
-      })
-    )
+    },
+    testHelpers.emptyContext({
+      getInboundSequenceFlows() {
+        return [{ Behaviour: SequenceFlow, id: 'flow', sourceId: 'task', targetId: 'end', parent: { id: 'process1' } }];
+      },
+      getOutboundSequenceFlows() {
+        return [];
+      },
+    })
   );
 
   function ActivityBehaviour({ broker }) {

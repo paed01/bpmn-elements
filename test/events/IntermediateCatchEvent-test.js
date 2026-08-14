@@ -5,7 +5,7 @@ describe('IntermediateCatchEvent', () => {
   describe('without event definitions', () => {
     let event;
     beforeEach(() => {
-      event = IntermediateCatchEvent(/** @type {any} */ ({ id: 'emptyEvent' }), testHelpers.emptyContext());
+      event = IntermediateCatchEvent({ id: 'emptyEvent' }, testHelpers.emptyContext());
     });
 
     it('completes when signaled', async () => {

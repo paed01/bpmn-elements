@@ -1,4 +1,4 @@
-import { BpmnError, Environment } from 'bpmn-elements';
+import { BpmnError } from 'bpmn-elements';
 import { ErrorEventDefinition } from 'bpmn-elements/eventDefinitions';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
@@ -7,7 +7,8 @@ describe('ErrorEventDefinition', () => {
   describe('catching', () => {
     let event;
     beforeEach(() => {
-      const environment = new Environment({ Logger: testHelpers.Logger });
+      const context = testHelpers.emptyContext(undefined, { Logger: testHelpers.Logger });
+      const environment = context.environment;
 
       event = {
         id: 'bound',
@@ -26,19 +27,16 @@ describe('ErrorEventDefinition', () => {
                 errorCode: 'ERR_MINE',
               },
             },
-            /** @type {any} */ ({ environment })
+            context
           );
         },
       };
     });
 
     it('publishes wait event on parent broker', () => {
-      const catchError = new ErrorEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:ErrorEventDefinition',
-        })
-      );
+      const catchError = new ErrorEventDefinition(event, {
+        type: 'bpmn:ErrorEventDefinition',
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -50,25 +48,25 @@ describe('ErrorEventDefinition', () => {
         { noAck: true }
       );
 
-      catchError.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      catchError.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.wait');
@@ -78,12 +76,9 @@ describe('ErrorEventDefinition', () => {
     });
 
     it('completes and clears listeners when error is caught', () => {
-      const catchError = new ErrorEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:ErrorEventDefinition',
-        })
-      );
+      const catchError = new ErrorEventDefinition(event, {
+        type: 'bpmn:ErrorEventDefinition',
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -95,25 +90,25 @@ describe('ErrorEventDefinition', () => {
         { noAck: true, consumerTag: '_test-tag' }
       );
 
-      catchError.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      catchError.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       event.broker.publish('api', 'activity.throw.event_1', {});
 
@@ -125,12 +120,9 @@ describe('ErrorEventDefinition', () => {
     });
 
     it('completes and clears listeners if caught before execution', () => {
-      const catchError = new ErrorEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:ErrorEventDefinition',
-        })
-      );
+      const catchError = new ErrorEventDefinition(event, {
+        type: 'bpmn:ErrorEventDefinition',
+      });
 
       event.broker.publish('api', 'activity.throw.event_1', {});
 
@@ -144,25 +136,25 @@ describe('ErrorEventDefinition', () => {
         { noAck: true, consumerTag: '_test-tag' }
       );
 
-      catchError.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      catchError.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       event.broker.cancel('_test-tag');
 
@@ -172,12 +164,9 @@ describe('ErrorEventDefinition', () => {
     });
 
     it('completes and clears listeners if discarded', () => {
-      const catchError = new ErrorEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:ErrorEventDefinition',
-        })
-      );
+      const catchError = new ErrorEventDefinition(event, {
+        type: 'bpmn:ErrorEventDefinition',
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -189,25 +178,25 @@ describe('ErrorEventDefinition', () => {
         { noAck: true, consumerTag: '_test-tag' }
       );
 
-      catchError.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      catchError.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       event.broker.publish('api', 'activity.discard.event_1_0', {}, { type: 'discard' });
 
@@ -219,12 +208,9 @@ describe('ErrorEventDefinition', () => {
     });
 
     it('stops and clears listeners if stopped', () => {
-      const catchError = new ErrorEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:ErrorEventDefinition',
-        })
-      );
+      const catchError = new ErrorEventDefinition(event, {
+        type: 'bpmn:ErrorEventDefinition',
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -236,25 +222,25 @@ describe('ErrorEventDefinition', () => {
         { noAck: true, consumerTag: '_test-tag' }
       );
 
-      catchError.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      catchError.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       event.broker.publish('api', 'activity.discard.event_1_0', {}, { type: 'discard' });
 
@@ -267,17 +253,14 @@ describe('ErrorEventDefinition', () => {
 
     describe('thrown error', () => {
       it('publishes expect message with expected error and expect routingKey', () => {
-        const definition = new ErrorEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:ErrorEventDefinition',
-            behaviour: {
-              errorRef: {
-                id: 'error_1',
-              },
+        const definition = new ErrorEventDefinition(event, {
+          type: 'bpmn:ErrorEventDefinition',
+          behaviour: {
+            errorRef: {
+              id: 'error_1',
             },
-          })
-        );
+          },
+        });
 
         /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let tryMessage;
@@ -285,19 +268,19 @@ describe('ErrorEventDefinition', () => {
           tryMessage = msg;
         });
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-              },
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'bound_1',
             },
-          })
-        );
+          },
+        });
 
         expect(tryMessage).to.be.ok;
         expect(tryMessage.content).to.have.property('index', 0);
@@ -312,17 +295,14 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('redelivered execute message resends expect', () => {
-        const definition = new ErrorEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:ErrorEventDefinition',
-            behaviour: {
-              errorRef: {
-                id: 'error_1',
-              },
+        const definition = new ErrorEventDefinition(event, {
+          type: 'bpmn:ErrorEventDefinition',
+          behaviour: {
+            errorRef: {
+              id: 'error_1',
             },
-          })
-        );
+          },
+        });
 
         /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let tryMessage;
@@ -330,28 +310,28 @@ describe('ErrorEventDefinition', () => {
           tryMessage = msg;
         });
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {
-              redelivered: true,
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {
+            redelivered: true,
+          },
+          content: {
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'bound_1',
             },
-            content: {
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-              },
-              expect: {
-                id: 'error_1',
-                type: 'bpmn:Error',
-                messageType: 'throw',
-                code: 'ERR_MINE',
-                name: 'CatchError',
-              },
+            expect: {
+              id: 'error_1',
+              type: 'bpmn:Error',
+              messageType: 'throw',
+              code: 'ERR_MINE',
+              name: 'CatchError',
             },
-          })
-        );
+          },
+        });
 
         expect(tryMessage).to.be.ok;
         expect(tryMessage).to.have.property('content').with.property('expect').to.eql({
@@ -365,12 +345,9 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('publishes catch message with source and error when expected routingKey is published', () => {
-        const definition = new ErrorEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:ErrorEventDefinition',
-          })
-        );
+        const definition = new ErrorEventDefinition(event, {
+          type: 'bpmn:ErrorEventDefinition',
+        });
 
         /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let message;
@@ -378,25 +355,25 @@ describe('ErrorEventDefinition', () => {
           message = msg;
         });
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            id: 'bound',
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
               id: 'bound',
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-                path: [
-                  {
-                    id: 'process_1',
-                  },
-                ],
-              },
+              executionId: 'bound_1',
+              path: [
+                {
+                  id: 'process_1',
+                },
+              ],
             },
-          })
-        );
+          },
+        });
 
         event.broker.publish('execution', 'execute.throw.bound_1_0', {
           id: 'errorProne',
@@ -417,12 +394,9 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('without expected error catches any error and publishes activity catch message', () => {
-        const definition = new ErrorEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:ErrorEventDefinition',
-          })
-        );
+        const definition = new ErrorEventDefinition(event, {
+          type: 'bpmn:ErrorEventDefinition',
+        });
 
         const messages = [];
         event.broker.subscribeTmp(
@@ -434,19 +408,19 @@ describe('ErrorEventDefinition', () => {
           { noAck: true }
         );
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-              },
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'bound_1',
             },
-          })
-        );
+          },
+        });
 
         event.broker.publish('execution', 'execute.throw.bound_1_0', { id: 'errorProne', executionId: 'errorProne_1', error: {} });
 
@@ -454,20 +428,17 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('catches expected errorCode and publishes activity catch message', () => {
-        const definition = new ErrorEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:ErrorEventDefinition',
-            behaviour: {
-              errorRef: {
-                id: 'error_1',
-                type: 'bpmn:Error',
-                errorCode: 'ERR_MINE',
-                name: 'CatchError',
-              },
+        const definition = new ErrorEventDefinition(event, {
+          type: 'bpmn:ErrorEventDefinition',
+          behaviour: {
+            errorRef: {
+              id: 'error_1',
+              type: 'bpmn:Error',
+              errorCode: 'ERR_MINE',
+              name: 'CatchError',
             },
-          })
-        );
+          },
+        });
 
         const messages = [];
         event.broker.subscribeTmp(
@@ -479,19 +450,19 @@ describe('ErrorEventDefinition', () => {
           { noAck: true }
         );
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-              },
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'bound_1',
             },
-          })
-        );
+          },
+        });
 
         event.broker.publish('execution', 'execute.throw.bound_1_0', {
           id: 'errorProne',
@@ -505,17 +476,14 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('ignores error if code doesn´t match', () => {
-        const definition = new ErrorEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:ErrorEventDefinition',
-            behaviour: {
-              errorRef: {
-                id: 'error_1',
-              },
+        const definition = new ErrorEventDefinition(event, {
+          type: 'bpmn:ErrorEventDefinition',
+          behaviour: {
+            errorRef: {
+              id: 'error_1',
             },
-          })
-        );
+          },
+        });
 
         const messages = [];
         event.broker.subscribeTmp(
@@ -527,19 +495,19 @@ describe('ErrorEventDefinition', () => {
           { noAck: true }
         );
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-              },
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'bound_1',
             },
-          })
-        );
+          },
+        });
 
         event.broker.publish('execution', 'execute.error', {
           id: 'errorProne',
@@ -553,13 +521,10 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('catches any error if errorCode is undefined', () => {
-        const definition = new ErrorEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:ErrorEventDefinition',
-            behaviour: {},
-          })
-        );
+        const definition = new ErrorEventDefinition(event, {
+          type: 'bpmn:ErrorEventDefinition',
+          behaviour: {},
+        });
 
         const messages = [];
         event.broker.subscribeTmp(
@@ -571,19 +536,19 @@ describe('ErrorEventDefinition', () => {
           { noAck: true }
         );
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-              },
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'bound_1',
             },
-          })
-        );
+          },
+        });
 
         event.broker.publish('execution', 'execute.throw.bound_1_0', { id: 'errorProne', executionId: 'errorProne_1', error: {} });
 
@@ -591,17 +556,14 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('catches error and completes with caught error as output', () => {
-        const definition = new ErrorEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:ErrorEventDefinition',
-            behaviour: {
-              errorRef: {
-                id: 'error_1',
-              },
+        const definition = new ErrorEventDefinition(event, {
+          type: 'bpmn:ErrorEventDefinition',
+          behaviour: {
+            errorRef: {
+              id: 'error_1',
             },
-          })
-        );
+          },
+        });
 
         const messages = [];
         event.broker.subscribeTmp(
@@ -613,19 +575,19 @@ describe('ErrorEventDefinition', () => {
           { noAck: true }
         );
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-              },
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'bound_1',
             },
-          })
-        );
+          },
+        });
 
         event.broker.publish('execution', 'execute.throw.bound_1_0', {
           id: 'errorProne',
@@ -643,28 +605,25 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('releases execution and api listeners when completed', () => {
-        const definition = new ErrorEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:ErrorEventDefinition',
-          })
-        );
+        const definition = new ErrorEventDefinition(event, {
+          type: 'bpmn:ErrorEventDefinition',
+        });
 
         expect(event.broker.getExchange('execution')).to.have.property('bindingCount', 1);
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-              },
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'bound_1',
             },
-          })
-        );
+          },
+        });
         expect(event.broker.getExchange('execution')).to.have.property('bindingCount', 2);
 
         event.broker.publish('execution', 'execute.throw.bound_1_0', { id: 'errorProne', executionId: 'errorProne_1', error: {} });
@@ -673,12 +632,9 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('ignores messages after error is caught', () => {
-        const definition = new ErrorEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:ErrorEventDefinition',
-          })
-        );
+        const definition = new ErrorEventDefinition(event, {
+          type: 'bpmn:ErrorEventDefinition',
+        });
 
         const messages = [];
         event.broker.subscribeTmp(
@@ -698,19 +654,19 @@ describe('ErrorEventDefinition', () => {
           { noAck: true }
         );
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-              },
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'bound_1',
             },
-          })
-        );
+          },
+        });
 
         event.broker.publish('execution', 'execute.throw.bound_1_0', { id: 'errorProne', executionId: 'errorProne_1', error: {} });
 
@@ -722,7 +678,7 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('completes if error is caught on expect message', () => {
-        const definition = new ErrorEventDefinition(event, /** @type {any} */ ({}));
+        const definition = new ErrorEventDefinition(event, {});
 
         const messages = [];
         event.broker.subscribeOnce('execution', 'execute.expect', (_, msg) => {
@@ -746,19 +702,19 @@ describe('ErrorEventDefinition', () => {
           { noAck: true, consumerTag: '_test-tag-2' }
         );
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-              },
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'bound_1',
             },
-          })
-        );
+          },
+        });
 
         expect(messages).to.have.length(3);
 
@@ -769,16 +725,13 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('ignores expected message if error is not in expected message', () => {
-        const definition = new ErrorEventDefinition(
-          event,
-          /** @type {any} */ ({
-            behaviour: {
-              errorRef: {
-                id: 'error_1',
-              },
+        const definition = new ErrorEventDefinition(event, {
+          behaviour: {
+            errorRef: {
+              id: 'error_1',
             },
-          })
-        );
+          },
+        });
 
         const messages = [];
         event.broker.subscribeOnce('execution', 'execute.expect', (_, msg) => {
@@ -802,19 +755,19 @@ describe('ErrorEventDefinition', () => {
           { noAck: true, consumerTag: '_test-tag-2' }
         );
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-              },
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'bound_1',
             },
-          })
-        );
+          },
+        });
 
         expect(messages).to.have.length(2);
 
@@ -827,12 +780,9 @@ describe('ErrorEventDefinition', () => {
 
     describe('api', () => {
       it('publishes catch message with source and error when delegated anonymous error is published', () => {
-        const definition = new ErrorEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:ErrorEventDefinition',
-          })
-        );
+        const definition = new ErrorEventDefinition(event, {
+          type: 'bpmn:ErrorEventDefinition',
+        });
 
         /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let message;
@@ -840,25 +790,25 @@ describe('ErrorEventDefinition', () => {
           message = msg;
         });
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            id: 'bound',
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
               id: 'bound',
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-                path: [
-                  {
-                    id: 'process_1',
-                  },
-                ],
-              },
+              executionId: 'bound_1',
+              path: [
+                {
+                  id: 'process_1',
+                },
+              ],
             },
-          })
-        );
+          },
+        });
 
         event.broker.publish('api', 'activity.throw.errorProne_1', {
           id: 'errorProne',
@@ -879,17 +829,14 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('publishes catch message with source and error when delegated expected error is published', () => {
-        const definition = new ErrorEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:ErrorEventDefinition',
-            behaviour: {
-              errorRef: {
-                id: 'error_1',
-              },
+        const definition = new ErrorEventDefinition(event, {
+          type: 'bpmn:ErrorEventDefinition',
+          behaviour: {
+            errorRef: {
+              id: 'error_1',
             },
-          })
-        );
+          },
+        });
 
         /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let message;
@@ -897,25 +844,25 @@ describe('ErrorEventDefinition', () => {
           message = msg;
         });
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            id: 'bound',
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
               id: 'bound',
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-                path: [
-                  {
-                    id: 'process_1',
-                  },
-                ],
-              },
+              executionId: 'bound_1',
+              path: [
+                {
+                  id: 'process_1',
+                },
+              ],
             },
-          })
-        );
+          },
+        });
 
         event.broker.publish('api', 'activity.throw.errorProne_1', {
           id: 'errorProne',
@@ -936,17 +883,14 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('ignored when delegated error id doesn´t match', () => {
-        const definition = new ErrorEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:ErrorEventDefinition',
-            behaviour: {
-              errorRef: {
-                id: 'error_1',
-              },
+        const definition = new ErrorEventDefinition(event, {
+          type: 'bpmn:ErrorEventDefinition',
+          behaviour: {
+            errorRef: {
+              id: 'error_1',
             },
-          })
-        );
+          },
+        });
 
         /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let message;
@@ -954,25 +898,25 @@ describe('ErrorEventDefinition', () => {
           message = msg;
         });
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            id: 'bound',
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
               id: 'bound',
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-                path: [
-                  {
-                    id: 'process_1',
-                  },
-                ],
-              },
+              executionId: 'bound_1',
+              path: [
+                {
+                  id: 'process_1',
+                },
+              ],
             },
-          })
-        );
+          },
+        });
 
         event.broker.publish('api', 'activity.throw.errorProne_1', {
           id: 'errorProne',
@@ -986,17 +930,14 @@ describe('ErrorEventDefinition', () => {
       });
 
       it('ignored if exepecting known error and an anonymous error is delegated', () => {
-        const definition = new ErrorEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:ErrorEventDefinition',
-            behaviour: {
-              errorRef: {
-                id: 'error_1',
-              },
+        const definition = new ErrorEventDefinition(event, {
+          type: 'bpmn:ErrorEventDefinition',
+          behaviour: {
+            errorRef: {
+              id: 'error_1',
             },
-          })
-        );
+          },
+        });
 
         /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let message;
@@ -1004,25 +945,25 @@ describe('ErrorEventDefinition', () => {
           message = msg;
         });
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            id: 'bound',
+            executionId: 'bound_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
               id: 'bound',
-              executionId: 'bound_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'bound_1',
-                path: [
-                  {
-                    id: 'process_1',
-                  },
-                ],
-              },
+              executionId: 'bound_1',
+              path: [
+                {
+                  id: 'process_1',
+                },
+              ],
             },
-          })
-        );
+          },
+        });
 
         event.broker.publish('api', 'activity.throw.errorProne_1', {
           id: 'errorProne',
@@ -1040,7 +981,8 @@ describe('ErrorEventDefinition', () => {
   describe('throw', () => {
     let event, bpmnError;
     beforeEach(() => {
-      const environment = new Environment();
+      const context = testHelpers.emptyContext();
+      const environment = context.environment;
       bpmnError = BpmnError(
         {
           id: 'Error_0',
@@ -1051,7 +993,7 @@ describe('ErrorEventDefinition', () => {
           },
           debug() {},
         },
-        /** @type {any} */ ({ environment })
+        context
       );
 
       event = {
@@ -1069,17 +1011,14 @@ describe('ErrorEventDefinition', () => {
 
     it('publishes delegated throw event on execute', () => {
       event.environment.variables.errorCode = 'ERR_CODE';
-      const definition = new ErrorEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:ErrorEventDefinition',
-          behaviour: {
-            errorRef: {
-              id: 'Error_0',
-            },
+      const definition = new ErrorEventDefinition(event, {
+        type: 'bpmn:ErrorEventDefinition',
+        behaviour: {
+          errorRef: {
+            id: 'Error_0',
           },
-        })
-      );
+        },
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -1091,18 +1030,18 @@ describe('ErrorEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'end_1_0',
-            parent: {
-              id: 'end',
-              executionId: 'end_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'end_1_0',
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'end',
+            executionId: 'end_1',
           },
-        })
-      );
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.throw');
@@ -1113,13 +1052,10 @@ describe('ErrorEventDefinition', () => {
     });
 
     it('without error reference publishes delegated throw event on execute', () => {
-      const definition = new ErrorEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:ErrorEventDefinition',
-          behaviour: {},
-        })
-      );
+      const definition = new ErrorEventDefinition(event, {
+        type: 'bpmn:ErrorEventDefinition',
+        behaviour: {},
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -1131,18 +1067,18 @@ describe('ErrorEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'end_1_0',
-            parent: {
-              id: 'end',
-              executionId: 'end_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'end_1_0',
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'end',
+            executionId: 'end_1',
           },
-        })
-      );
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.throw');
@@ -1151,17 +1087,14 @@ describe('ErrorEventDefinition', () => {
     });
 
     it('with non-existing error reference publishes activity error on execute', () => {
-      const definition = new ErrorEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:ErrorEventDefinition',
-          behaviour: {
-            errorRef: {
-              id: 'non-existing',
-            },
+      const definition = new ErrorEventDefinition(event, {
+        type: 'bpmn:ErrorEventDefinition',
+        behaviour: {
+          errorRef: {
+            id: 'non-existing',
           },
-        })
-      );
+        },
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -1173,18 +1106,18 @@ describe('ErrorEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'end_1_0',
-            parent: {
-              id: 'end',
-              executionId: 'end_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'end_1_0',
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'end',
+            executionId: 'end_1',
           },
-        })
-      );
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.throw');

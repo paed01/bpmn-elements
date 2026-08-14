@@ -272,8 +272,9 @@ Feature('Gateway', () => {
       }
 
       async function getRule(rule) {
-        const body = /** @type {any} */ (await fetch(new URL(rule, 'https://rules.local')).then((res) => res.json()));
+        const body = await fetch(new URL(rule, 'https://rules.local')).then((res) => res.json());
 
+        // @ts-expect-error type coverage
         return { rule, value: body.value };
       }
 

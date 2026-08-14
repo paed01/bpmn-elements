@@ -1,11 +1,12 @@
-import { DataObject, Environment } from 'bpmn-elements';
+import { DataObject } from 'bpmn-elements';
 import { ActivityBroker } from '../../src/EventBroker.js';
+import testHelpers from '../helpers/testHelpers.js';
 
 describe('DataObject', () => {
   describe('read', () => {
     it('publishes message on passed broker exchange when value was read', () => {
       const { broker } = ActivityBroker();
-      const dataObject = new DataObject(/** @type {any} */ ({ id: 'input' }), /** @type {any} */ ({ environment: new Environment() }));
+      const dataObject = new DataObject({ id: 'input' }, testHelpers.emptyContext());
 
       /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
@@ -23,7 +24,7 @@ describe('DataObject', () => {
   describe('write', () => {
     it('publishes message on passed broker exchange when value was written', () => {
       const { broker } = ActivityBroker();
-      const dataObject = new DataObject(/** @type {any} */ ({ id: 'input' }), /** @type {any} */ ({ environment: new Environment() }));
+      const dataObject = new DataObject({ id: 'input' }, testHelpers.emptyContext());
 
       /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
@@ -40,9 +41,10 @@ describe('DataObject', () => {
 
   describe('builtin', () => {
     it('saves dataObject value in environment variables _data', () => {
-      const environment = new Environment();
+      const context = testHelpers.emptyContext();
+      const environment = context.environment;
       const { broker } = ActivityBroker();
-      const dataObject = new DataObject(/** @type {any} */ ({ id: 'info' }), /** @type {any} */ ({ environment }));
+      const dataObject = new DataObject({ id: 'info' }, context);
 
       dataObject.write(broker, 'format', 'test', 'me');
 

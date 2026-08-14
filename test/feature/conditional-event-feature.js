@@ -254,12 +254,12 @@ Feature('Conditional event', () => {
       definition = new Definition(context.clone());
       definition.waitFor(
         'activity.condition',
-        /** @type {any} */ (
-          () => {
-            state = definition.getState();
-            definition.stop();
-          }
-        )
+
+        // @ts-expect-error type coverage
+        () => {
+          state = definition.getState();
+          definition.stop();
+        }
       );
       stopped = definition.waitFor('stop');
 
@@ -276,12 +276,12 @@ Feature('Conditional event', () => {
 
       definition.waitFor(
         'activity.condition',
-        /** @type {any} */ (
-          () => {
-            state = definition.getState();
-            definition.stop();
-          }
-        )
+
+        // @ts-expect-error type coverage
+        () => {
+          state = definition.getState();
+          definition.stop();
+        }
       );
       stopped = definition.waitFor('stop');
     });

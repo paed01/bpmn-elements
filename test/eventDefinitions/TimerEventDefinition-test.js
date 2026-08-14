@@ -10,12 +10,14 @@ describe('TimerEventDefinition', () => {
   /** @type {import('bpmn-elements').Activity} */
   let event;
   beforeEach(() => {
-    event = /** @type {any} */ ({
+    // @ts-expect-error type coverage
+    event = {
       id: 'event',
       type: 'bpmn:Event',
       environment: new Environment({ Logger: testHelpers.Logger }),
-    });
-    event.broker = /** @type {any} */ (ActivityBroker(/** @type {any} */ (event))).broker;
+    };
+    // @ts-expect-error type coverage
+    event.broker = ActivityBroker(event).broker;
   });
   afterEach(() => {
     expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
@@ -24,15 +26,12 @@ describe('TimerEventDefinition', () => {
 
   describe('timeDuration', () => {
     it('resolves duration from event scope', () => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDuration: '${content.input.duration}',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: '${content.input.duration}',
+        },
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -44,22 +43,22 @@ describe('TimerEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
-            input: {
-              duration: 'PT0.1S',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+          input: {
+            duration: 'PT0.1S',
+          },
+        },
+      });
 
       expect(messages).to.have.length(1);
 
@@ -75,43 +74,37 @@ describe('TimerEventDefinition', () => {
     });
 
     it('completes when timed out', (done) => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDuration: 'PT0.005S',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: 'PT0.005S',
+        },
+      });
 
       event.broker.subscribeOnce('execution', 'execute.completed', () => done());
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+        },
+      });
     });
 
     it('publish timeout event when timed out', (done) => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDuration: 'PT0.01S',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: 'PT0.01S',
+        },
+      });
 
       event.broker.subscribeOnce('event', 'activity.timeout', (_, msg) => {
         expect(msg.content).to.have.property('timeout').that.is.at.least(10);
@@ -119,62 +112,56 @@ describe('TimerEventDefinition', () => {
         done();
       });
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+        },
+      });
     });
 
     it('unresolved time duration completes at once', (done) => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDuration: '${environment.variables.myDuration}',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: '${environment.variables.myDuration}',
+        },
+      });
 
       event.broker.subscribeOnce('event', 'activity.timeout', (_, msg) => {
         expect(msg.content).to.have.property('state', 'timeout');
         done();
       });
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+        },
+      });
     });
 
     it('invalid ISO duration executes throws', () => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDuration: 'Just do it in 10 secs',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: 'Just do it in 10 secs',
+        },
+      });
 
       event.broker.subscribeTmp(
         'execution',
@@ -186,19 +173,19 @@ describe('TimerEventDefinition', () => {
       );
 
       expect(() => {
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
-              executionId: 'event_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'event_1',
-              },
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            executionId: 'event_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'event_1',
             },
-          })
-        );
+          },
+        });
       }).to.throw(RunError);
 
       expect(event.environment.timers.executing).to.be.empty;
@@ -206,16 +193,13 @@ describe('TimerEventDefinition', () => {
 
     describe('resume execution', () => {
       it('recovers with message timeout', (done) => {
-        const definition = new TimerEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:TimerEventDefinition',
-            behaviour: {
-              id: 'recover_1',
-              timeDuration: 'PT0.1S',
-            },
-          })
-        );
+        const definition = new TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            id: 'recover_1',
+            timeDuration: 'PT0.1S',
+          },
+        });
 
         const broker = event.broker;
 
@@ -225,21 +209,21 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {
-              routingKey: 'execute.start',
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {
+            routingKey: 'execute.start',
+          },
+          content: {
+            executionId: 'event_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'event_1',
             },
-            content: {
-              executionId: 'event_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'event_1',
-              },
-            },
-          })
-        );
+          },
+        });
 
         setTimeout(() => {
           ActivityApi(broker, timerMessage).stop();
@@ -265,15 +249,12 @@ describe('TimerEventDefinition', () => {
       it('completes once', () => {
         ck.freeze();
 
-        const definition = new TimerEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:TimerEventDefinition',
-            behaviour: {
-              timeDuration: 'PT0.1S',
-            },
-          })
-        );
+        const definition = new TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            timeDuration: 'PT0.1S',
+          },
+        });
 
         const broker = event.broker;
 
@@ -305,21 +286,21 @@ describe('TimerEventDefinition', () => {
           timerMsgs.push(msg);
         });
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {
-              routingKey: 'execute.start',
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {
+            routingKey: 'execute.start',
+          },
+          content: {
+            executionId: 'event_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'event_1',
             },
-            content: {
-              executionId: 'event_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'event_1',
-              },
-            },
-          })
-        );
+          },
+        });
 
         expect(definition, 'timer ref is exposed').to.have.property('timer').with.property('timerId');
 
@@ -360,15 +341,12 @@ describe('TimerEventDefinition', () => {
       });
 
       it('completes immediately if timeout has passed', (done) => {
-        const definition = new TimerEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:TimerEventDefinition',
-            behaviour: {
-              timeDuration: 'PT0.1S',
-            },
-          })
-        );
+        const definition = new TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            timeDuration: 'PT0.1S',
+          },
+        });
 
         const broker = event.broker;
 
@@ -378,21 +356,21 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {
-              routingKey: 'execute.start',
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {
+            routingKey: 'execute.start',
+          },
+          content: {
+            executionId: 'event_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'event_1',
             },
-            content: {
-              executionId: 'event_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'event_1',
-              },
-            },
-          })
-        );
+          },
+        });
 
         setTimeout(() => {
           ActivityApi(broker, timerMessage).stop();
@@ -409,16 +387,13 @@ describe('TimerEventDefinition', () => {
       });
 
       it('can be stopped again', (done) => {
-        const definition = new TimerEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:TimerEventDefinition',
-            behaviour: {
-              id: 'stopped_again',
-              timeDuration: 'PT0.1S',
-            },
-          })
-        );
+        const definition = new TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            id: 'stopped_again',
+            timeDuration: 'PT0.1S',
+          },
+        });
 
         const broker = event.broker;
 
@@ -428,7 +403,8 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute(/** @type {any} */ ({ fields: {}, content: { executionId: 'def-execution-id' } }));
+        // @ts-expect-error type coverage
+        definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
         setTimeout(() => {
           ActivityApi(broker, timerMessage).stop();
@@ -447,15 +423,12 @@ describe('TimerEventDefinition', () => {
       });
 
       it('can be discarded', (done) => {
-        const definition = new TimerEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:TimerEventDefinition',
-            behaviour: {
-              timeDuration: 'PT0.1S',
-            },
-          })
-        );
+        const definition = new TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            timeDuration: 'PT0.1S',
+          },
+        });
 
         const broker = event.broker;
 
@@ -465,7 +438,8 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute(/** @type {any} */ ({ fields: {}, content: { executionId: 'def-execution-id' } }));
+        // @ts-expect-error type coverage
+        definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
         setTimeout(() => {
           ActivityApi(broker, timerMessage).stop();
@@ -491,15 +465,12 @@ describe('TimerEventDefinition', () => {
     afterEach(ck.reset);
 
     it('resolves date from event scope', () => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDate: '${content.input.date}',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDate: '${content.input.date}',
+        },
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -511,22 +482,22 @@ describe('TimerEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
-            input: {
-              date: new Date(1993, 5, 27),
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+          input: {
+            date: new Date(1993, 5, 27),
+          },
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.timer');
@@ -541,43 +512,37 @@ describe('TimerEventDefinition', () => {
     });
 
     it('completes when timed out', (done) => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDate: new Date(Date.now() + 100).toISOString(),
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDate: new Date(Date.now() + 100).toISOString(),
+        },
+      });
 
       event.broker.subscribeOnce('execution', 'execute.completed', () => done());
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+        },
+      });
     });
 
     it('completes immediately if date is due', () => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDate: '${content.input.date}',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDate: '${content.input.date}',
+        },
+      });
 
       ck.travel(1993, 5, 28);
 
@@ -591,22 +556,22 @@ describe('TimerEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
-            input: {
-              date: new Date('1993-06-27'),
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+          input: {
+            date: new Date('1993-06-27'),
+          },
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0].content).to.have.property('timeDate').that.deep.equal(new Date('1993-06-27'));
@@ -617,15 +582,12 @@ describe('TimerEventDefinition', () => {
     });
 
     it('unresolved expression completes the execution', (done) => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDate: '${environment.variables.dueDate}',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDate: '${environment.variables.dueDate}',
+        },
+      });
 
       event.broker.subscribeTmp(
         'execution',
@@ -636,33 +598,30 @@ describe('TimerEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+        },
+      });
 
       expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
     });
 
     it('invalid date throws', () => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDate: 'Last tuesday',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDate: 'Last tuesday',
+        },
+      });
 
       event.broker.subscribeTmp(
         'event',
@@ -684,19 +643,19 @@ describe('TimerEventDefinition', () => {
       );
 
       expect(() => {
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
-              executionId: 'event_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'event_1',
-              },
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            executionId: 'event_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'event_1',
             },
-          })
-        );
+          },
+        });
       }).to.throw(RunError);
 
       expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
@@ -704,15 +663,12 @@ describe('TimerEventDefinition', () => {
 
     describe('resume execution', () => {
       it('publishes timer event message with resume message timeDate', (done) => {
-        const definition = new TimerEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:TimerEventDefinition',
-            behaviour: {
-              timeDate: '1993-06-27',
-            },
-          })
-        );
+        const definition = new TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            timeDate: '1993-06-27',
+          },
+        });
 
         event.broker.subscribeOnce('event', 'activity.timer', (_, message) => {
           expect(message.content)
@@ -721,37 +677,34 @@ describe('TimerEventDefinition', () => {
           done();
         });
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {
-              routingKey: 'execute.timer',
-              redelivered: true,
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {
+            routingKey: 'execute.timer',
+            redelivered: true,
+          },
+          content: {
+            executionId: 'event_1_0',
+            index: 0,
+            timeDate: '1993-06-28',
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'event_1',
             },
-            content: {
-              executionId: 'event_1_0',
-              index: 0,
-              timeDate: '1993-06-28',
-              parent: {
-                id: 'bound',
-                executionId: 'event_1',
-              },
-            },
-          })
-        );
+          },
+        });
 
         definition.stop();
       });
 
       it('publishes timer event message with resolved timeDate as fallback', (done) => {
-        const definition = new TimerEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:TimerEventDefinition',
-            behaviour: {
-              timeDate: '1993-06-27',
-            },
-          })
-        );
+        const definition = new TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            timeDate: '1993-06-27',
+          },
+        });
 
         event.broker.subscribeOnce('event', 'activity.timer', (_, message) => {
           expect(message.content)
@@ -760,36 +713,33 @@ describe('TimerEventDefinition', () => {
           done();
         });
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {
-              routingKey: 'execute.timer',
-              redelivered: true,
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {
+            routingKey: 'execute.timer',
+            redelivered: true,
+          },
+          content: {
+            executionId: 'event_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'event_1',
             },
-            content: {
-              executionId: 'event_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'event_1',
-              },
-            },
-          })
-        );
+          },
+        });
 
         definition.stop();
       });
 
       it('completes immediately if date is due', (done) => {
-        const definition = new TimerEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:TimerEventDefinition',
-            behaviour: {
-              timeDate: '1993-06-27',
-            },
-          })
-        );
+        const definition = new TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            timeDate: '1993-06-27',
+          },
+        });
 
         const broker = event.broker;
 
@@ -799,23 +749,23 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {
-              routingKey: 'execute.start',
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {
+            routingKey: 'execute.start',
+          },
+          content: {
+            executionId: 'event_1_0',
+            index: 0,
+            timeDate: '1993-06-27',
+            startedAt: new Date(),
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'event_1',
             },
-            content: {
-              executionId: 'event_1_0',
-              index: 0,
-              timeDate: '1993-06-27',
-              startedAt: new Date(),
-              parent: {
-                id: 'bound',
-                executionId: 'event_1',
-              },
-            },
-          })
-        );
+          },
+        });
 
         ActivityApi(broker, timerMessage).stop();
 
@@ -831,15 +781,12 @@ describe('TimerEventDefinition', () => {
       });
 
       it('invalid date stalls the execution', () => {
-        const definition = new TimerEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:TimerEventDefinition',
-            behaviour: {
-              timeDate: 'Last tuesday',
-            },
-          })
-        );
+        const definition = new TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            timeDate: 'Last tuesday',
+          },
+        });
 
         event.broker.subscribeTmp(
           'event',
@@ -862,19 +809,19 @@ describe('TimerEventDefinition', () => {
         );
 
         expect(() => {
-          definition.execute(
-            /** @type {any} */ ({
-              fields: {},
-              content: {
-                executionId: 'event_1_0',
-                index: 0,
-                parent: {
-                  id: 'bound',
-                  executionId: 'event_1',
-                },
+          definition.execute({
+            // @ts-expect-error type coverage
+            fields: {},
+            content: {
+              executionId: 'event_1_0',
+              index: 0,
+              // @ts-expect-error type coverage
+              parent: {
+                id: 'bound',
+                executionId: 'event_1',
               },
-            })
-          );
+            },
+          });
         }).to.throw(RunError);
 
         expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
@@ -884,15 +831,12 @@ describe('TimerEventDefinition', () => {
 
   describe('timeCycle', () => {
     it('resolves cycle from event scope', () => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeCycle: '${content.input.cycle}',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeCycle: '${content.input.cycle}',
+        },
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -904,22 +848,22 @@ describe('TimerEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
-            input: {
-              cycle: 'R3/PT10H',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+          input: {
+            cycle: 'R3/PT10H',
+          },
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.timer');
@@ -933,88 +877,79 @@ describe('TimerEventDefinition', () => {
 
     describe('resume execution', () => {
       it('publishes timer event message with resume message timeCycle', (done) => {
-        const definition = new TimerEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:TimerEventDefinition',
-            behaviour: {
-              timeCycle: 'R5/PT12H',
-            },
-          })
-        );
+        const definition = new TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            timeCycle: 'R5/PT12H',
+          },
+        });
 
         event.broker.subscribeOnce('event', 'activity.timer', (_, message) => {
           expect(message.content).to.have.property('timeCycle', 'R3/PT10H');
           done();
         });
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {
-              routingKey: 'execute.timer',
-              redelivered: true,
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {
+            routingKey: 'execute.timer',
+            redelivered: true,
+          },
+          content: {
+            executionId: 'event_1_0',
+            index: 0,
+            timeCycle: 'R3/PT10H',
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'event_1',
             },
-            content: {
-              executionId: 'event_1_0',
-              index: 0,
-              timeCycle: 'R3/PT10H',
-              parent: {
-                id: 'bound',
-                executionId: 'event_1',
-              },
-            },
-          })
-        );
+          },
+        });
 
         definition.stop();
       });
 
       it('publishes timer event message with resolved timeCycle as fallback', (done) => {
-        const definition = new TimerEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:TimerEventDefinition',
-            behaviour: {
-              timeCycle: 'R3/PT10H',
-            },
-          })
-        );
+        const definition = new TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            timeCycle: 'R3/PT10H',
+          },
+        });
 
         event.broker.subscribeOnce('event', 'activity.timer', (_, message) => {
           expect(message.content).to.have.property('timeCycle', 'R3/PT10H');
           done();
         });
 
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {
-              routingKey: 'execute.timer',
-              redelivered: true,
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {
+            routingKey: 'execute.timer',
+            redelivered: true,
+          },
+          content: {
+            executionId: 'event_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'event_1',
             },
-            content: {
-              executionId: 'event_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'event_1',
-              },
-            },
-          })
-        );
+          },
+        });
 
         definition.stop();
       });
 
       it('can be stopped again', (done) => {
-        const definition = new TimerEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:TimerEventDefinition',
-            behaviour: {
-              timeCycle: 'R5/PT12H',
-            },
-          })
-        );
+        const definition = new TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            timeCycle: 'R5/PT12H',
+          },
+        });
 
         const broker = event.broker;
 
@@ -1024,7 +959,8 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute(/** @type {any} */ ({ fields: {}, content: { executionId: 'def-execution-id' } }));
+        // @ts-expect-error type coverage
+        definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
         ActivityApi(broker, timerMessage).stop();
 
@@ -1038,15 +974,12 @@ describe('TimerEventDefinition', () => {
       });
 
       it('can be discarded', (done) => {
-        const definition = new TimerEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:TimerEventDefinition',
-            behaviour: {
-              timeCycle: 'R5/PT12H',
-            },
-          })
-        );
+        const definition = new TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            timeCycle: 'R5/PT12H',
+          },
+        });
 
         const broker = event.broker;
 
@@ -1056,7 +989,8 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute(/** @type {any} */ ({ fields: {}, content: { executionId: 'def-execution-id' } }));
+        // @ts-expect-error type coverage
+        definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
         ActivityApi(broker, timerMessage).stop();
 
@@ -1071,15 +1005,12 @@ describe('TimerEventDefinition', () => {
       });
 
       it('can be cancelled', (done) => {
-        const definition = new TimerEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:TimerEventDefinition',
-            behaviour: {
-              timeCycle: 'R5/PT12H',
-            },
-          })
-        );
+        const definition = new TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            timeCycle: 'R5/PT12H',
+          },
+        });
 
         const broker = event.broker;
 
@@ -1089,7 +1020,8 @@ describe('TimerEventDefinition', () => {
           timerMessage = msg;
         });
 
-        definition.execute(/** @type {any} */ ({ fields: {}, content: { executionId: 'def-execution-id' } }));
+        // @ts-expect-error type coverage
+        definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
         ActivityApi(broker, timerMessage).stop();
 
@@ -1109,17 +1041,14 @@ describe('TimerEventDefinition', () => {
     it('publishes one execute timer message', () => {
       ck.freeze('1993-06-26T10:00Z');
 
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDuration: 'PT1M',
-            timeDate: '1993-06-27',
-            timeCycle: 'R3/PT10H',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: 'PT1M',
+          timeDate: '1993-06-27',
+          timeCycle: 'R3/PT10H',
+        },
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -1131,19 +1060,19 @@ describe('TimerEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+        },
+      });
 
       expect(messages).to.have.length(1);
 
@@ -1158,17 +1087,14 @@ describe('TimerEventDefinition', () => {
     });
 
     it('publishes one execute activity timer message', () => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDuration: 'PT1M',
-            timeDate: '1993-06-27T00:00Z',
-            timeCycle: 'R3/PT10H',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: 'PT1M',
+          timeDate: '1993-06-27T00:00Z',
+          timeCycle: 'R3/PT10H',
+        },
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -1180,19 +1106,19 @@ describe('TimerEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+        },
+      });
 
       expect(messages).to.have.length(1);
 
@@ -1209,17 +1135,14 @@ describe('TimerEventDefinition', () => {
     it('completes when time date is due', (done) => {
       ck.reset();
 
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDuration: 'P1Y',
-            timeDate: new Date(Date.now() + 150).toISOString(),
-            timeCycle: 'R3/PT10H',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: 'P1Y',
+          timeDate: new Date(Date.now() + 150).toISOString(),
+          timeCycle: 'R3/PT10H',
+        },
+      });
 
       event.broker.subscribeTmp(
         'execution',
@@ -1233,36 +1156,33 @@ describe('TimerEventDefinition', () => {
       );
 
       setTimeout(() => {
-        definition.execute(
-          /** @type {any} */ ({
-            fields: {},
-            content: {
-              executionId: 'event_1_0',
-              index: 0,
-              parent: {
-                id: 'bound',
-                executionId: 'event_1',
-              },
+        definition.execute({
+          // @ts-expect-error type coverage
+          fields: {},
+          content: {
+            executionId: 'event_1_0',
+            index: 0,
+            // @ts-expect-error type coverage
+            parent: {
+              id: 'bound',
+              executionId: 'event_1',
             },
-          })
-        );
+          },
+        });
       }, 60);
     });
 
     it('completes when duration expires', (done) => {
       ck.travel('1993-06-24T10:00Z');
 
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDuration: 'PT0.1S',
-            timeDate: '1993-06-27',
-            timeCycle: 'R3/PT10H',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: 'PT0.1S',
+          timeDate: '1993-06-27',
+          timeCycle: 'R3/PT10H',
+        },
+      });
 
       event.broker.subscribeTmp(
         'execution',
@@ -1275,19 +1195,19 @@ describe('TimerEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+        },
+      });
     });
   });
 
@@ -1307,15 +1227,12 @@ describe('TimerEventDefinition', () => {
       let definition;
       beforeEach(() => {
         ck.travel('1993-06-26');
-        definition = new TimerEventDefinition(
-          event,
-          /** @type {any} */ ({
-            type: 'bpmn:TimerEventDefinition',
-            behaviour: {
-              ...timer,
-            },
-          })
-        );
+        definition = new TimerEventDefinition(event, {
+          type: 'bpmn:TimerEventDefinition',
+          behaviour: {
+            ...timer,
+          },
+        });
       });
       after(ck.reset);
 
@@ -1337,19 +1254,17 @@ describe('TimerEventDefinition', () => {
             done();
           });
 
-          definition.execute(
-            /** @type {any} */ ({
-              fields: {},
-              content: {
-                executionId: 'event_1_0',
-                index: 0,
-                parent: {
-                  id: 'bound',
-                  executionId: 'event_1',
-                },
+          definition.execute({
+            fields: {},
+            content: {
+              executionId: 'event_1_0',
+              index: 0,
+              parent: {
+                id: 'bound',
+                executionId: 'event_1',
               },
-            })
-          );
+            },
+          });
 
           ActivityApi(event.broker, messages[0]).cancel();
         });
@@ -1368,19 +1283,17 @@ describe('TimerEventDefinition', () => {
             { noAck: true }
           );
 
-          definition.execute(
-            /** @type {any} */ ({
-              fields: {},
-              content: {
-                executionId: 'event_1_0',
-                index: 0,
-                parent: {
-                  id: 'bound',
-                  executionId: 'event_1',
-                },
+          definition.execute({
+            fields: {},
+            content: {
+              executionId: 'event_1_0',
+              index: 0,
+              parent: {
+                id: 'bound',
+                executionId: 'event_1',
               },
-            })
-          );
+            },
+          });
         });
 
         it('completes if cancelled on activity timer event', (done) => {
@@ -1402,19 +1315,17 @@ describe('TimerEventDefinition', () => {
             { noAck: true }
           );
 
-          definition.execute(
-            /** @type {any} */ ({
-              fields: {},
-              content: {
-                executionId: 'event_1_0',
-                index: 0,
-                parent: {
-                  id: 'bound',
-                  executionId: 'event_1',
-                },
+          definition.execute({
+            fields: {},
+            content: {
+              executionId: 'event_1_0',
+              index: 0,
+              parent: {
+                id: 'bound',
+                executionId: 'event_1',
               },
-            })
-          );
+            },
+          });
         });
 
         it('completes when delegated a cancelled with parent id', (done) => {
@@ -1433,21 +1344,20 @@ describe('TimerEventDefinition', () => {
             done();
           });
 
-          definition.execute(
-            /** @type {any} */ ({
-              fields: {},
-              content: {
-                executionId: 'event_1_0',
-                index: 0,
-                parent: {
-                  id: 'bound',
-                  executionId: 'event_1',
-                },
+          definition.execute({
+            fields: {},
+            content: {
+              executionId: 'event_1_0',
+              index: 0,
+              parent: {
+                id: 'bound',
+                executionId: 'event_1',
               },
-            })
-          );
+            },
+          });
 
-          DefinitionApi(event.broker, /** @type {any} */ ({ content: { id: 'Def_1', executionId: 'Def_1_1' } })).cancel(
+          // @ts-expect-error type coverage
+          DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel(
             {
               id: 'event',
             },
@@ -1460,21 +1370,20 @@ describe('TimerEventDefinition', () => {
             if (content.state === 'cancel') throw new Error('Should have ignored cancel');
           });
 
-          definition.execute(
-            /** @type {any} */ ({
-              fields: {},
-              content: {
-                executionId: 'event_1_0',
-                index: 0,
-                parent: {
-                  id: 'bound',
-                  executionId: 'event_1',
-                },
+          definition.execute({
+            fields: {},
+            content: {
+              executionId: 'event_1_0',
+              index: 0,
+              parent: {
+                id: 'bound',
+                executionId: 'event_1',
               },
-            })
-          );
+            },
+          });
 
-          DefinitionApi(event.broker, /** @type {any} */ ({ content: { id: 'Def_1', executionId: 'Def_1_1' } })).cancel(
+          // @ts-expect-error type coverage
+          DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel(
             {
               id: 'task',
             },
@@ -1500,21 +1409,20 @@ describe('TimerEventDefinition', () => {
             done();
           });
 
-          definition.execute(
-            /** @type {any} */ ({
-              fields: {},
-              content: {
-                executionId: 'event_1_0',
-                index: 0,
-                parent: {
-                  id: 'bound',
-                  executionId: 'event_1',
-                },
+          definition.execute({
+            fields: {},
+            content: {
+              executionId: 'event_1_0',
+              index: 0,
+              parent: {
+                id: 'bound',
+                executionId: 'event_1',
               },
-            })
-          );
+            },
+          });
 
-          DefinitionApi(event.broker, /** @type {any} */ ({ content: { id: 'Def_1', executionId: 'Def_1_1' } })).cancel(
+          // @ts-expect-error type coverage
+          DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel(
             {
               executionId: 'event_1_0',
             },
@@ -1527,29 +1435,25 @@ describe('TimerEventDefinition', () => {
             if (content.state === 'cancel') throw new Error('Should have ignored cancel');
           });
 
-          definition.execute(
-            /** @type {any} */ ({
-              fields: {},
-              content: {
-                executionId: 'event_1_0',
-                index: 0,
-                parent: {
-                  id: 'bound',
-                  executionId: 'event_1',
-                },
+          definition.execute({
+            fields: {},
+            content: {
+              executionId: 'event_1_0',
+              index: 0,
+              parent: {
+                id: 'bound',
+                executionId: 'event_1',
               },
-            })
-          );
+            },
+          });
 
-          DefinitionApi(
-            event.broker,
-            /** @type {any} */ ({
-              content: {
-                id: 'Def_1',
-                executionId: 'Def_1_1',
-              },
-            })
-          ).cancel(
+          // @ts-expect-error type coverage
+          DefinitionApi(event.broker, {
+            content: {
+              id: 'Def_1',
+              executionId: 'Def_1_1',
+            },
+          }).cancel(
             {
               id: 'event',
               executionId: 'event_1_1',
@@ -1570,19 +1474,17 @@ describe('TimerEventDefinition', () => {
             timerMessage = msg;
           });
 
-          definition.execute(
-            /** @type {any} */ ({
-              fields: {},
-              content: {
-                executionId: 'event_1_0',
-                index: 0,
-                parent: {
-                  id: 'bound',
-                  executionId: 'event_1',
-                },
+          definition.execute({
+            fields: {},
+            content: {
+              executionId: 'event_1_0',
+              index: 0,
+              parent: {
+                id: 'bound',
+                executionId: 'event_1',
               },
-            })
-          );
+            },
+          });
 
           ActivityApi(broker, timerMessage).discard();
 
@@ -1603,19 +1505,17 @@ describe('TimerEventDefinition', () => {
             { noAck: true }
           );
 
-          definition.execute(
-            /** @type {any} */ ({
-              fields: {},
-              content: {
-                executionId: 'event_1_0',
-                index: 0,
-                parent: {
-                  id: 'bound',
-                  executionId: 'event_1',
-                },
+          definition.execute({
+            fields: {},
+            content: {
+              executionId: 'event_1_0',
+              index: 0,
+              parent: {
+                id: 'bound',
+                executionId: 'event_1',
               },
-            })
-          );
+            },
+          });
         });
       });
 
@@ -1629,19 +1529,17 @@ describe('TimerEventDefinition', () => {
             ActivityApi(broker, msg).stop();
           });
 
-          definition.execute(
-            /** @type {any} */ ({
-              fields: {},
-              content: {
-                executionId: 'event_1_0',
-                index: 0,
-                parent: {
-                  id: 'bound',
-                  executionId: 'event_1',
-                },
+          definition.execute({
+            fields: {},
+            content: {
+              executionId: 'event_1_0',
+              index: 0,
+              parent: {
+                id: 'bound',
+                executionId: 'event_1',
               },
-            })
-          );
+            },
+          });
 
           expect(executeQ).to.have.property('messageCount', 1);
           expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
@@ -1659,7 +1557,7 @@ describe('TimerEventDefinition', () => {
               timerMessage = msg;
             });
 
-            definition.execute(/** @type {any} */ ({ fields: {}, content: { executionId: 'def-execution-id' } }));
+            definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
             ActivityApi(broker, timerMessage).stop();
 
@@ -1681,7 +1579,7 @@ describe('TimerEventDefinition', () => {
               timerMessage = msg;
             });
 
-            definition.execute(/** @type {any} */ ({ fields: {}, content: { executionId: 'def-execution-id' } }));
+            definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
             ActivityApi(broker, timerMessage).stop();
 
@@ -1704,7 +1602,7 @@ describe('TimerEventDefinition', () => {
               timerMessage = msg;
             });
 
-            definition.execute(/** @type {any} */ ({ fields: {}, content: { executionId: 'def-execution-id' } }));
+            definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
             ActivityApi(broker, timerMessage).stop();
 
@@ -1724,13 +1622,10 @@ describe('TimerEventDefinition', () => {
 
   describe('formatted message', () => {
     it('with timeout completes when timed out', (done) => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {},
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {},
+      });
 
       event.broker.subscribeOnce('execution', 'execute.completed', (_, msg) => {
         expect(msg.content).to.have.property('timeout', 50);
@@ -1739,30 +1634,27 @@ describe('TimerEventDefinition', () => {
         done();
       });
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            timeout: 50,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          timeout: 50,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+        },
+      });
     });
 
     it('with expireAt completes when timed out', (done) => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {},
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {},
+      });
 
       event.broker.subscribeOnce('execution', 'execute.completed', (_, msg) => {
         expect(msg.content).to.have.property('timeout').that.is.within(45, 55);
@@ -1771,31 +1663,28 @@ describe('TimerEventDefinition', () => {
         done();
       });
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            expireAt: new Date(Date.now() + 50),
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          expireAt: new Date(Date.now() + 50),
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+        },
+      });
     });
   });
 
   describe('no timer', () => {
     it('completes without any timers', (done) => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+      });
 
       event.broker.subscribeTmp(
         'execution',
@@ -1806,33 +1695,30 @@ describe('TimerEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+        },
+      });
     });
   });
 
   describe('edge cases', () => {
     it('resets timer if executed twice', () => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDuration: 'PT1M',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: 'PT1M',
+        },
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -1844,36 +1730,36 @@ describe('TimerEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+        },
+      });
 
       const timer = event.environment.timers.executing[0];
       expect(event.environment.timers.executing.length).to.equal(1);
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_1',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_1',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+        },
+      });
 
       expect(event.environment.timers.executing.length).to.equal(1);
       expect(timer === event.environment.timers.executing[0], 'new timer ref').to.be.false;
@@ -1882,35 +1768,33 @@ describe('TimerEventDefinition', () => {
     });
 
     it('cancel message from outside without delegate is ignored', () => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeCycle: 'P1Y',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeCycle: 'P1Y',
+        },
+      });
 
       event.broker.subscribeOnce('execution', 'execute.completed', () => {
         throw new Error('Should have ignored cancel');
       });
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+        },
+      });
 
-      DefinitionApi(event.broker, /** @type {any} */ ({ content: { id: 'Def_1', executionId: 'Def_1_1' } })).cancel({
+      // @ts-expect-error type coverage
+      DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel({
         id: 'event',
       });
 
@@ -1920,35 +1804,33 @@ describe('TimerEventDefinition', () => {
     it('delegated cancel message without message is ignored', () => {
       ck.travel(2024, 5, 1);
 
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeCycle: '2024-01-01/P1Y',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeCycle: '2024-01-01/P1Y',
+        },
+      });
 
       event.broker.subscribeOnce('execution', 'execute.completed', () => {
         throw new Error('Should have ignored cancel');
       });
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-        })
-      );
+        },
+      });
 
-      DefinitionApi(event.broker, /** @type {any} */ ({ content: { id: 'Def_1', executionId: 'Def_1_1' } })).cancel(undefined, {
+      // @ts-expect-error type coverage
+      DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel(undefined, {
         delegate: true,
       });
 
@@ -1956,15 +1838,12 @@ describe('TimerEventDefinition', () => {
     });
 
     it('resets timer if resumed twice due to lingering execute timer message', () => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDuration: 'PT1M',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: 'PT1M',
+        },
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -1976,41 +1855,41 @@ describe('TimerEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {
-            routingKey: 'execute.start',
-            redelivered: true,
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {
+          routingKey: 'execute.start',
+          redelivered: true,
+        },
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
-          },
-        })
-      );
+        },
+      });
 
       const timer = event.environment.timers.executing[0];
       expect(event.environment.timers.executing.length).to.equal(1);
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {
-            routingKey: 'execute.timer',
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {
+          routingKey: 'execute.timer',
+        },
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
-          },
-        })
-      );
+        },
+      });
 
       expect(event.environment.timers.executing.length).to.equal(1);
       expect(timer === event.environment.timers.executing[0], 'new timer ref').to.be.true;
@@ -2019,16 +1898,13 @@ describe('TimerEventDefinition', () => {
     });
 
     it('timeDuration without repeat and closer timeCycle with repeat sets repeat from timeCycle', () => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDuration: 'PT1M',
-            timeCycle: 'R3/PT1S',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: 'PT1M',
+          timeCycle: 'R3/PT1S',
+        },
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -2040,22 +1916,22 @@ describe('TimerEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {
-            routingKey: 'execute.start',
-            redelivered: true,
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {
+          routingKey: 'execute.start',
+          redelivered: true,
+        },
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
-          },
-        })
-      );
+        },
+      });
 
       expect(messages[0].content).to.have.property('timerType', 'timeCycle');
       expect(messages[0].content).to.have.property('repeat', 3);
@@ -2064,16 +1940,13 @@ describe('TimerEventDefinition', () => {
     });
 
     it('timeDuration with repeat and closer timeCycle without repeat resets repeat', () => {
-      const definition = new TimerEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:TimerEventDefinition',
-          behaviour: {
-            timeDuration: 'R3/PT1M',
-            timeCycle: 'PT1S',
-          },
-        })
-      );
+      const definition = new TimerEventDefinition(event, {
+        type: 'bpmn:TimerEventDefinition',
+        behaviour: {
+          timeDuration: 'R3/PT1M',
+          timeCycle: 'PT1S',
+        },
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -2085,22 +1958,22 @@ describe('TimerEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {
-            routingKey: 'execute.start',
-            redelivered: true,
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {
+          routingKey: 'execute.start',
+          redelivered: true,
+        },
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
           },
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-            },
-          },
-        })
-      );
+        },
+      });
 
       expect(messages[0].content).to.have.property('timerType', 'timeCycle');
       expect(messages[0].content.repeat).to.be.undefined;

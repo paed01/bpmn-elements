@@ -1,21 +1,23 @@
-import { Environment, Message } from 'bpmn-elements';
+import { Message } from 'bpmn-elements';
+import testHelpers from '../helpers/testHelpers.js';
 
 describe('Message', () => {
-  let environment;
+  let context, environment;
   beforeEach(() => {
-    environment = new Environment();
+    context = testHelpers.emptyContext();
+    environment = context.environment;
   });
 
   it('exposes id, type, name and cloned parent', () => {
     const parent = { id: 'Process_0', type: 'bpmn:Process' };
     const message = new Message(
-      /** @type {any} */ ({
+      {
         id: 'Message_0',
         type: 'bpmn:Message',
         name: 'My message',
         parent,
-      }),
-      /** @type {any} */ ({ environment })
+      },
+      context
     );
 
     expect(message).to.have.property('id', 'Message_0');
@@ -26,12 +28,13 @@ describe('Message', () => {
   });
 
   it('falls back to constructing when called without new', () => {
-    const message = /** @type {any} */ (Message)(
-      /** @type {any} */ ({
+    // @ts-expect-error type coverage
+    const message = Message(
+      {
         id: 'Message_0',
         type: 'bpmn:Message',
-      }),
-      /** @type {any} */ ({ environment })
+      },
+      { environment }
     );
     expect(message).to.be.instanceof(Message);
   });
@@ -40,15 +43,16 @@ describe('Message', () => {
     it('returns id, type and messageType=message with cloned parent', () => {
       const parent = { id: 'Process_0', type: 'bpmn:Process' };
       const message = new Message(
-        /** @type {any} */ ({
+        {
           id: 'Message_0',
           type: 'bpmn:Message',
           parent,
-        }),
-        /** @type {any} */ ({ environment })
+        },
+        context
       );
 
-      const resolved = message.resolve(/** @type {any} */ ({ content: { id: 'task' } }));
+      // @ts-expect-error type coverage
+      const resolved = message.resolve({ content: { id: 'task' } });
 
       expect(resolved).to.have.property('id', 'Message_0');
       expect(resolved).to.have.property('type', 'bpmn:Message');
@@ -59,22 +63,24 @@ describe('Message', () => {
 
     it('resolves name expression against execution message when name is set', () => {
       const message = new Message(
-        /** @type {any} */ ({
+        {
           id: 'Message_0',
           name: 'My ${content.id}',
-        }),
-        /** @type {any} */ ({ environment })
+        },
+        context
       );
 
-      const resolved = message.resolve(/** @type {any} */ ({ content: { id: 'task' } }));
+      // @ts-expect-error type coverage
+      const resolved = message.resolve({ content: { id: 'task' } });
 
       expect(resolved).to.have.property('name', 'My task');
     });
 
     it('omits name when message reference has no name', () => {
-      const message = new Message(/** @type {any} */ ({ id: 'Message_0' }), /** @type {any} */ ({ environment }));
+      const message = new Message({ id: 'Message_0' }, context);
 
-      const resolved = message.resolve(/** @type {any} */ ({ content: { id: 'task' } }));
+      // @ts-expect-error type coverage
+      const resolved = message.resolve({ content: { id: 'task' } });
 
       expect(resolved).to.not.have.property('name');
     });

@@ -8,12 +8,12 @@ const subProcessSource = factory.resource('sub-process.bpmn');
 
 describe('SubProcess', () => {
   it('decorates activity with isSubProcess', () => {
-    const subProcess = SubProcess(/** @type {any} */ ({ id: 'sub-process', parent: { id: 'process1' } }), testHelpers.emptyContext());
+    const subProcess = SubProcess({ id: 'sub-process', parent: { id: 'process1' } }, testHelpers.emptyContext());
     expect(subProcess).to.have.property('isSubProcess', true);
   });
 
   it('runs process execution on separate exchange', () => {
-    const subProcess = SubProcess(/** @type {any} */ ({ id: 'sub-process', parent: { id: 'process1' } }), testHelpers.emptyContext());
+    const subProcess = SubProcess({ id: 'sub-process', parent: { id: 'process1' } }, testHelpers.emptyContext());
     subProcess.run();
     expect(subProcess.broker.getExchange('subprocess-execution')).to.be.ok;
   });
@@ -210,7 +210,7 @@ describe('SubProcess', () => {
   describe('stop()', () => {
     it('stops process execution and closes broker', () => {
       const subProcess = SubProcess(
-        /** @type {any} */ ({ id: 'sub-process', parent: { id: 'process1' } }),
+        { id: 'sub-process', parent: { id: 'process1' } },
         testHelpers.emptyContext({
           getActivities() {
             return [{ id: 'subTask', Behaviour: SignalTask }];
@@ -492,7 +492,7 @@ describe('SubProcess', () => {
       subProcess.run();
 
       message.content.parent.executionId = 'foo_1';
-      message.content.parent.path = /** @type {any} */ ([{ executionId: 'foo_2' }]);
+      message.content.parent.path = [{ executionId: 'foo_2' }];
 
       expect(subProcess.execution.source.getApi(message)).to.not.be.ok;
     });

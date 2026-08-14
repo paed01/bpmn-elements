@@ -58,7 +58,8 @@ Feature('IO', () => {
     });
 
     When('second process is triggered', () => {
-      const signal = /** @type {any} */ (definition.getActivityById('updateSpotPrice'));
+      const signal = definition.getActivityById('updateSpotPrice');
+      // @ts-expect-error type coverage
       definition.signal(signal.resolve());
       approvePriceTask = definition.getPostponed()[2];
       expect(approvePriceTask.id).to.equal('approveSpotPrice');

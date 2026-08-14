@@ -9,7 +9,8 @@ describe('MessageFormatter', () => {
   let broker;
   // @ts-ignore
   beforeEach(() => {
-    const activityBroker = ActivityBroker(/** @type {any} */ ({ id: 'element' }));
+    // @ts-expect-error type coverage
+    const activityBroker = ActivityBroker({ id: 'element' });
     broker = activityBroker.broker;
 
     // @ts-ignore

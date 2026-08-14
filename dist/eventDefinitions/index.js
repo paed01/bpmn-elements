@@ -33,6 +33,12 @@ Object.defineProperty(exports, "EscalationEventDefinition", {
     return _EscalationEventDefinition.EscalationEventDefinition;
   }
 });
+Object.defineProperty(exports, "EventDefinitionExecution", {
+  enumerable: true,
+  get: function () {
+    return _EventDefinitionExecution.EventDefinitionExecution;
+  }
+});
 Object.defineProperty(exports, "LinkEventDefinition", {
   enumerable: true,
   get: function () {
@@ -73,3 +79,4 @@ var _MessageEventDefinition = require("./MessageEventDefinition.js");
 var _SignalEventDefinition = require("./SignalEventDefinition.js");
 var _TerminateEventDefinition = require("./TerminateEventDefinition.js");
 var _TimerEventDefinition = require("./TimerEventDefinition.js");
+var _EventDefinitionExecution = require("./EventDefinitionExecution.js");

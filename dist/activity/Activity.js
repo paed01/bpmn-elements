@@ -303,6 +303,11 @@ Object.defineProperties(Activity.prototype, {
     get() {
       return this[K_EXEC].get('initialized') > 0;
     }
+  },
+  associations: {
+    get() {
+      return this[K_FLOWS].inboundAssociations;
+    }
   }
 });
 

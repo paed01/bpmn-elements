@@ -1,19 +1,13 @@
-import { Environment } from 'bpmn-elements';
-import { DefinitionExecution } from '../../src/definition/DefinitionExecution.js';
+import { Definition, DefinitionExecution, Environment } from 'bpmn-elements';
 import testHelpers from '../helpers/testHelpers.js';
-import { DefinitionBroker, ProcessBroker } from '../../src/EventBroker.js';
+import { ProcessBroker } from '../../src/EventBroker.js';
 
 describe('Definition execution', () => {
   describe('execute()', () => {
     it('returns execution api', () => {
-      const definition = {
-        id: 'Def_1',
-        type: 'Definition',
-        environment: new Environment(),
-        logger: testHelpers.Logger('bpmn:definition'),
-        broker: DefinitionBroker(this).broker,
-      };
-      const execution = new DefinitionExecution(/** @type {any} */ (definition), /** @type {any} */ (testHelpers.emptyContext()));
+      const context = testHelpers.emptyContext({ id: 'Def_1', type: 'Definition' });
+      const definition = new Definition(context);
+      const execution = new DefinitionExecution(definition, context);
       expect(execution).to.have.property('id', 'Def_1');
       expect(execution).to.have.property('type', 'Definition');
       expect(execution).to.have.property('broker', definition.broker);
@@ -33,36 +27,35 @@ describe('Definition execution', () => {
     });
 
     it('throws if no message is passed', () => {
-      const definition = {
+      const context = testHelpers.emptyContext({
         id: 'Def_1',
-        environment: new Environment(),
-        logger: testHelpers.Logger('bpmn:definition'),
-        broker: DefinitionBroker(this).broker,
+        type: 'Definition',
         getProcesses() {
           return [];
         },
         getExecutableProcesses() {
           return [];
         },
-      };
-      const execution = new DefinitionExecution(/** @type {any} */ (definition), /** @type {any} */ (testHelpers.emptyContext()));
+      });
+      const definition = new Definition(context);
+      const execution = new DefinitionExecution(definition, context);
       expect(execution.execute).to.throw(/requires message/);
     });
 
     it('throws message misses content executionId', () => {
-      const definition = {
+      const context = testHelpers.emptyContext({
         id: 'Def_1',
-        environment: new Environment(),
-        logger: testHelpers.Logger('bpmn:definition'),
-        broker: DefinitionBroker(this).broker,
+        type: 'Definition',
         getProcesses() {
           return [];
         },
         getExecutableProcesses() {
           return [];
         },
-      };
-      const execution = new DefinitionExecution(/** @type {any} */ (definition), /** @type {any} */ (testHelpers.emptyContext()));
+      });
+      const definition = new Definition(context);
+      const execution = new DefinitionExecution(definition, context);
+
       // @ts-expect-error content executionId is required
       expect(() => execution.execute({ content: {} })).to.throw(/requires execution id/);
     });
@@ -115,12 +108,6 @@ describe('Definition execution', () => {
         },
       ];
 
-      const definition = {
-        id: 'Def_1',
-        environment: new Environment(),
-        logger: testHelpers.Logger('bpmn:definition'),
-        broker: DefinitionBroker(this).broker,
-      };
       const context = testHelpers.emptyContext({
         getProcessById(processId) {
           return processes.find(({ id }) => id === processId);
@@ -132,7 +119,9 @@ describe('Definition execution', () => {
           return processes;
         },
       });
-      const execution = new DefinitionExecution(/** @type {any} */ (definition), /** @type {any} */ (context));
+
+      const definition = new Definition(context);
+      const execution = new DefinitionExecution(definition, context);
 
       let completed;
       definition.broker.subscribeTmp(
@@ -144,14 +133,13 @@ describe('Definition execution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'Def_1_1',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'Def_1_1',
+        },
+      });
 
       expect(completed, 'completed before second process is complete').to.not.be.ok;
 
@@ -213,13 +201,6 @@ describe('Definition execution', () => {
         },
       ];
 
-      const definition = {
-        id: 'Def_1',
-        environment: new Environment(),
-        logger: testHelpers.Logger('bpmn:definition'),
-        broker: DefinitionBroker(this).broker,
-      };
-
       function Behaviour({ id }) {
         return processes.find((bp) => bp.id === id);
       }
@@ -244,7 +225,8 @@ describe('Definition execution', () => {
         },
       });
 
-      const execution = new DefinitionExecution(/** @type {any} */ (definition), /** @type {any} */ (context));
+      const definition = new Definition(context);
+      const execution = new DefinitionExecution(definition, context);
 
       let completed;
       definition.broker.subscribeTmp(
@@ -256,14 +238,13 @@ describe('Definition execution', () => {
         { noAck: true }
       );
 
-      execution.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'Def_1_1',
-          },
-        })
-      );
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'Def_1_1',
+        },
+      });
 
       const bps = execution.getProcesses();
       bps[0].broker.publish('event', 'process.error', {
@@ -282,31 +263,20 @@ describe('Definition execution', () => {
 
   describe('recover', () => {
     it('ignored if no state', () => {
-      const context = testHelpers.emptyContext();
-      const execution = new DefinitionExecution(
-        /** @type {any} */ ({
-          id: 'Def_1',
-          environment: context.environment,
-          broker: new /** @type {any} */ (DefinitionBroker)(this).broker,
-        }),
-        /** @type {any} */ (context)
-      );
-
-      expect(execution === /** @type {any} */ (execution.recover())).to.be.true;
+      const context = testHelpers.emptyContext({
+        id: 'Def_1',
+      });
+      const execution = new DefinitionExecution(new Definition(context), context);
+      expect(execution === execution.recover()).to.be.true;
     });
   });
 
   describe('activityStatus', () => {
     it('is idle before execute', () => {
-      const context = testHelpers.emptyContext();
-      const execution = new DefinitionExecution(
-        /** @type {any} */ ({
-          id: 'Def_1',
-          environment: context.environment,
-          broker: new /** @type {any} */ (DefinitionBroker)(this).broker,
-        }),
-        /** @type {any} */ (context)
-      );
+      const context = testHelpers.emptyContext({
+        id: 'Def_1',
+      });
+      const execution = new DefinitionExecution(new Definition(context), context);
 
       expect(execution.activityStatus).to.equal('idle');
     });

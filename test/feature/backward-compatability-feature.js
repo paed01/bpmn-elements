@@ -1,4 +1,4 @@
-import { promises as fs } from 'fs';
+import fs from 'fs/promises';
 import { Definition } from 'bpmn-elements';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
@@ -14,7 +14,8 @@ Feature('Backward compatability', () => {
 
     let definition, state;
     Given('a state from version 5', async () => {
-      state = JSON.parse(/** @type {any} */ (await fs.readFile('./test/resources/mother-of-all-state-5.json')));
+      // @ts-expect-error type coverage
+      state = JSON.parse(await fs.readFile('./test/resources/mother-of-all-state-5.json'));
     });
 
     let leave;
@@ -42,7 +43,8 @@ Feature('Backward compatability', () => {
 
     let definition, state;
     Given('a state from version 17.3', async () => {
-      state = JSON.parse(/** @type {any} */ (await fs.readFile('./test/resources/mother-of-all-state-17.3.json')));
+      // @ts-expect-error type coverage
+      state = JSON.parse(await fs.readFile('./test/resources/mother-of-all-state-17.3.json'));
     });
 
     let leave;
@@ -70,7 +72,8 @@ Feature('Backward compatability', () => {
 
     let definition, state;
     Given('a state from version 18', async () => {
-      state = JSON.parse(/** @type {any} */ (await fs.readFile('./test/resources/mother-of-all-state-18.json')));
+      // @ts-expect-error type coverage
+      state = JSON.parse(await fs.readFile('./test/resources/mother-of-all-state-18.json'));
     });
 
     let leave;

@@ -14,7 +14,7 @@ describe('MessageFlow', () => {
       },
     };
     const flow = new MessageFlow(
-      /** @type {any} */ ({
+      {
         id: 'message',
         parent: {},
         source: {
@@ -23,8 +23,9 @@ describe('MessageFlow', () => {
         target: {
           id: 'task1',
         },
-      }),
-      /** @type {any} */ (context)
+      },
+      // @ts-expect-error type coverage
+      context
     );
 
     expect(flow).to.have.property('type', 'messageflow');
@@ -39,7 +40,7 @@ describe('MessageFlow', () => {
       },
     };
     const flow = new MessageFlow(
-      /** @type {any} */ ({
+      {
         id: 'message',
         type: 'messageflow',
         parent: {},
@@ -49,8 +50,9 @@ describe('MessageFlow', () => {
         target: {
           id: 'task1',
         },
-      }),
-      /** @type {any} */ (context)
+      },
+      // @ts-expect-error type coverage
+      context
     );
 
     flow.activate();
@@ -124,7 +126,7 @@ describe('MessageFlow', () => {
     };
 
     const flow = new MessageFlow(
-      /** @type {any} */ ({
+      {
         id: 'message',
         type: 'messageflow',
         parent: {},
@@ -134,8 +136,9 @@ describe('MessageFlow', () => {
         target: {
           id: 'task1',
         },
-      }),
-      /** @type {any} */ (context)
+      },
+      // @ts-expect-error type coverage
+      context
     );
 
     const api = flow.getApi();
@@ -152,7 +155,7 @@ describe('MessageFlow', () => {
     };
 
     const flow = new MessageFlow(
-      /** @type {any} */ ({
+      {
         id: 'message',
         type: 'messageflow',
         parent: {},
@@ -162,11 +165,13 @@ describe('MessageFlow', () => {
         target: {
           id: 'task1',
         },
-      }),
-      /** @type {any} */ (context)
+      },
+      // @ts-expect-error type coverage
+      context
     );
 
-    const api = flow.getApi(/** @type {any} */ ({ content: { id: 'foo' } }));
+    // @ts-expect-error type coverage
+    const api = flow.getApi({ content: { id: 'foo' } });
     expect(api).to.have.property('id', 'foo');
   });
 });

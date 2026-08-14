@@ -1,4 +1,4 @@
-import { AdHocSubProcessBehaviour } from '../../src/tasks/AdHocSubProcess.js';
+import { AdHocSubProcessBehaviour } from 'bpmn-elements/tasks';
 
 function createBehaviour(behaviour) {
   const activity = {
@@ -8,7 +8,8 @@ function createBehaviour(behaviour) {
     environment: {},
     broker: {},
   };
-  return new AdHocSubProcessBehaviour(/** @type {any} */ (activity), /** @type {any} */ ({}));
+  // @ts-expect-error type coverage
+  return new AdHocSubProcessBehaviour(activity, {});
 }
 
 describe('AdHocSubProcessBehaviour', () => {

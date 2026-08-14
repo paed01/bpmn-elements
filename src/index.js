@@ -1,10 +1,12 @@
 import { Activity } from './activity/Activity.js';
+import { ActivityExecution } from './activity/ActivityExecution.js';
 import { BpmnErrorActivity as BpmnError } from './error/BpmnError.js';
 import { Context } from './Context.js';
 import { EnvironmentDataObject as DataObject } from './io/EnvironmentDataObject.js';
 import { EnvironmentDataStore as DataStore } from './io/EnvironmentDataStore.js';
 import { EnvironmentDataStoreReference as DataStoreReference } from './io/EnvironmentDataStoreReference.js';
 import { Definition } from './definition/Definition.js';
+import { DefinitionExecution } from './definition/DefinitionExecution.js';
 import { DummyActivity as Dummy, TextAnnotation, Group, Category } from './activity/Dummy.js';
 import { Environment } from './Environment.js';
 import { Escalation } from './activity/Escalation.js';
@@ -13,6 +15,7 @@ import { Lane } from './process/Lane.js';
 import { LoopCharacteristics } from './tasks/LoopCharacteristics.js';
 import { Message } from './activity/Message.js';
 import { Process } from './process/Process.js';
+import { ProcessExecution } from './process/ProcessExecution.js';
 import { Properties } from './io/Properties.js';
 import { ServiceImplementation } from './tasks/ServiceImplementation.js';
 import { Signal } from './activity/Signal.js';
@@ -46,7 +49,9 @@ import {
   SignalEventDefinition,
   TerminateEventDefinition,
   TimerEventDefinition,
+  EventDefinitionExecution,
 } from './eventDefinitions/index.js';
+
 import { Timers } from './Timers.js';
 
 export { ActivityError, RunError } from './error/Errors.js';
@@ -55,6 +60,7 @@ export {
   AdHocSubProcess,
   Association,
   Activity,
+  ActivityExecution,
   BoundaryEvent,
   BpmnError,
   BusinessRuleTask,
@@ -67,6 +73,7 @@ export {
   DataStore,
   DataStoreReference,
   Definition,
+  DefinitionExecution,
   Dummy,
   TextAnnotation,
   Group,
@@ -77,6 +84,7 @@ export {
   Escalation,
   EscalationEventDefinition,
   EventBasedGateway,
+  EventDefinitionExecution,
   ExclusiveGateway,
   InclusiveGateway,
   InputOutputSpecification,
@@ -90,6 +98,7 @@ export {
   LoopCharacteristics as MultiInstanceLoopCharacteristics,
   ParallelGateway,
   Process,
+  ProcessExecution,
   Properties,
   ManualTask,
   ReceiveTask,

@@ -27,7 +27,8 @@ Feature('Dummy', () => {
     });
 
     And('category can be retrieved from definition', () => {
-      expect(/** @type {any} */ (definition.getElementById('Category_1275ejz')).placeholder).to.be.true;
+      // @ts-expect-error type coverage
+      expect(definition.getElementById('Category_1275ejz').placeholder).to.be.true;
     });
   });
 });

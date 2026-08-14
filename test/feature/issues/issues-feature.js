@@ -1029,11 +1029,11 @@ Feature('Issues', () => {
       });
       definition.waitFor(
         'activity.wait',
-        /** @type {any} */ (
-          () => {
-            state = definition.getState();
-          }
-        )
+
+        // @ts-expect-error type coverage
+        () => {
+          state = definition.getState();
+        }
       );
       definition.run();
     });
@@ -1124,11 +1124,11 @@ Feature('Issues', () => {
       });
       definition.waitFor(
         'activity.wait',
-        /** @type {any} */ (
-          () => {
-            state = definition.getState();
-          }
-        )
+
+        // @ts-expect-error type coverage
+        () => {
+          state = definition.getState();
+        }
       );
       definition.run();
     });
@@ -1169,11 +1169,11 @@ Feature('Issues', () => {
       });
       definition.waitFor(
         'activity.wait',
-        /** @type {any} */ (
-          () => {
-            state = definition.getState();
-          }
-        )
+
+        // @ts-expect-error type coverage
+        () => {
+          state = definition.getState();
+        }
       );
       definition.run();
     });

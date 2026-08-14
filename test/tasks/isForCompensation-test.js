@@ -19,7 +19,7 @@ describe('isForCompensation task', () => {
     });
 
     const task = ServiceTask(
-      /** @type {any} */ ({
+      {
         id: 'service',
         type: 'servicetask',
         behaviour: {
@@ -32,12 +32,13 @@ describe('isForCompensation task', () => {
             };
           },
         },
-      }),
+      },
       context
     );
 
     task.activate();
-    /** @type {any} */ (context).getInboundAssociations()[0].take();
+    // @ts-expect-error type coverage
+    context.getInboundAssociations()[0].take();
 
     expect(task).to.have.property('counters').that.deep.equal({ taken: 1, discarded: 0 });
   });
@@ -58,7 +59,7 @@ describe('isForCompensation task', () => {
     });
 
     const task = ServiceTask(
-      /** @type {any} */ ({
+      {
         id: 'service',
         type: 'servicetask',
         behaviour: {
@@ -71,12 +72,13 @@ describe('isForCompensation task', () => {
             };
           },
         },
-      }),
+      },
       context
     );
 
     task.activate();
-    const [association] = /** @type {any} */ (context).getInboundAssociations();
+    // @ts-expect-error type coverage
+    const [association] = context.getInboundAssociations();
     association.take();
     association.take();
 
@@ -101,7 +103,7 @@ describe('isForCompensation task', () => {
 
     const serviceCalls = [];
     const task = ServiceTask(
-      /** @type {any} */ ({
+      {
         id: 'service',
         type: 'servicetask',
         behaviour: {
@@ -114,12 +116,13 @@ describe('isForCompensation task', () => {
             };
           },
         },
-      }),
+      },
       context
     );
 
     task.activate();
-    const [association] = /** @type {any} */ (context).getInboundAssociations();
+    // @ts-expect-error type coverage
+    const [association] = context.getInboundAssociations();
     association.take();
     association.take();
 
@@ -162,7 +165,7 @@ describe('isForCompensation task', () => {
     });
 
     const task = ServiceTask(
-      /** @type {any} */ ({
+      {
         id: 'service',
         type: 'servicetask',
         behaviour: {
@@ -175,12 +178,13 @@ describe('isForCompensation task', () => {
             };
           },
         },
-      }),
+      },
       context
     );
 
     task.activate();
-    for (const association of /** @type {any} */ (context).getInboundAssociations()) {
+    // @ts-expect-error type coverage
+    for (const association of context.getInboundAssociations()) {
       association.take();
     }
 
@@ -203,7 +207,7 @@ describe('isForCompensation task', () => {
     });
 
     const task = ServiceTask(
-      /** @type {any} */ ({
+      {
         id: 'service',
         type: 'servicetask',
         behaviour: {
@@ -216,12 +220,13 @@ describe('isForCompensation task', () => {
             };
           },
         },
-      }),
+      },
       context
     );
 
     task.activate();
-    const [association] = /** @type {any} */ (context).getInboundAssociations();
+    // @ts-expect-error type coverage
+    const [association] = context.getInboundAssociations();
     association.take();
     association.discard();
 
@@ -244,7 +249,7 @@ describe('isForCompensation task', () => {
     });
 
     const task = ServiceTask(
-      /** @type {any} */ ({
+      {
         id: 'service',
         type: 'servicetask',
         behaviour: {
@@ -255,7 +260,7 @@ describe('isForCompensation task', () => {
             };
           },
         },
-      }),
+      },
       context
     );
 
@@ -264,7 +269,8 @@ describe('isForCompensation task', () => {
 
     expect(task.broker.consumerCount, 'task consumers').to.equal(0);
 
-    const [association] = /** @type {any} */ (context).getInboundAssociations();
+    // @ts-expect-error type coverage
+    const [association] = context.getInboundAssociations();
     association.take();
 
     expect(task).to.have.property('counters').that.deep.equal({ taken: 0, discarded: 0 });
@@ -287,7 +293,7 @@ describe('isForCompensation task', () => {
 
     const serviceCalls = [];
     const task = ServiceTask(
-      /** @type {any} */ ({
+      {
         id: 'service',
         type: 'servicetask',
         behaviour: {
@@ -300,12 +306,13 @@ describe('isForCompensation task', () => {
             };
           },
         },
-      }),
+      },
       context
     );
 
     task.activate();
-    const [association] = /** @type {any} */ (context).getInboundAssociations();
+    // @ts-expect-error type coverage
+    const [association] = context.getInboundAssociations();
     association.take();
     association.take();
 
@@ -334,7 +341,7 @@ describe('isForCompensation task', () => {
 
     const serviceCalls = [];
     const task = ServiceTask(
-      /** @type {any} */ ({
+      {
         id: 'service',
         type: 'servicetask',
         behaviour: {
@@ -347,12 +354,13 @@ describe('isForCompensation task', () => {
             };
           },
         },
-      }),
+      },
       context
     );
 
     task.activate();
-    const [association] = /** @type {any} */ (context).getInboundAssociations();
+    // @ts-expect-error type coverage
+    const [association] = context.getInboundAssociations();
     association.take();
     association.take();
 

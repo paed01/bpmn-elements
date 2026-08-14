@@ -13,7 +13,7 @@ describe('Association', () => {
     };
 
     const flow = new Association(
-      /** @type {any} */ ({
+      {
         id: 'association',
         type: 'bpmn:Association',
         parent: {},
@@ -23,8 +23,9 @@ describe('Association', () => {
         target: {
           id: 'task1',
         },
-      }),
-      /** @type {any} */ (context)
+      },
+      // @ts-expect-error type coverage
+      context
     );
 
     expect(flow.broker.getExchange('event').stopped).to.be.false;
@@ -42,7 +43,7 @@ describe('Association', () => {
     };
 
     const flow = new Association(
-      /** @type {any} */ ({
+      {
         id: 'association',
         type: 'bpmn:Association',
         parent: {},
@@ -52,8 +53,9 @@ describe('Association', () => {
         target: {
           id: 'task1',
         },
-      }),
-      /** @type {any} */ (context)
+      },
+      // @ts-expect-error type coverage
+      context
     );
 
     const api = flow.getApi();
@@ -70,7 +72,7 @@ describe('Association', () => {
     };
 
     const flow = new Association(
-      /** @type {any} */ ({
+      {
         id: 'association',
         type: 'bpmn:Association',
         parent: {},
@@ -80,11 +82,13 @@ describe('Association', () => {
         target: {
           id: 'task1',
         },
-      }),
-      /** @type {any} */ (context)
+      },
+      // @ts-expect-error type coverage
+      context
     );
 
-    const api = flow.getApi(/** @type {any} */ ({ content: { id: 'foo' } }));
+    // @ts-expect-error type coverage
+    const api = flow.getApi({ content: { id: 'foo' } });
     expect(api).to.have.property('id', 'foo');
   });
 });

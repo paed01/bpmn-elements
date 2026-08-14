@@ -15,7 +15,7 @@ describe('LoopCharacteristics', () => {
 
   describe('constructor(activity, loopCharacteristics)', () => {
     it('returns loop characteristics api with execute function', () => {
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -34,7 +34,7 @@ describe('LoopCharacteristics', () => {
 
   describe('execute(executeMessage)', () => {
     it('throws if executeMessage is missing', () => {
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -45,7 +45,7 @@ describe('LoopCharacteristics', () => {
     });
 
     it('throws error if loopCardinality is not a number', () => {
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: '3 pcs',
           isSequential: true,
@@ -53,6 +53,7 @@ describe('LoopCharacteristics', () => {
       });
 
       expect(() => {
+        // @ts-expect-error type coverage
         loop.execute({
           content: {
             isRootScope: true,
@@ -75,7 +76,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -83,6 +84,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -116,7 +118,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
           isSequential: true,
@@ -124,6 +126,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -148,7 +151,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -156,6 +159,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'task',
@@ -203,7 +207,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -211,6 +215,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -256,7 +261,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -264,6 +269,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -308,7 +314,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -316,6 +322,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -356,7 +363,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true, consumerTag: 'completed-consumer' }
       );
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -364,6 +371,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -392,7 +400,7 @@ describe('LoopCharacteristics', () => {
 
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 10,
@@ -401,6 +409,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -445,7 +454,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           loopCardinality: 3,
@@ -454,6 +463,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -477,7 +487,7 @@ describe('LoopCharacteristics', () => {
     it('root api stop message drops consumers', () => {
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           isSequential: true,
           collection: '${environment.variables.items}',
@@ -485,6 +495,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -509,7 +520,7 @@ describe('LoopCharacteristics', () => {
           { noAck: true }
         );
 
-        const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+        const loop = new LoopCharacteristics(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -517,6 +528,7 @@ describe('LoopCharacteristics', () => {
         });
 
         loop.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.start',
             redelivered: true,
@@ -553,7 +565,7 @@ describe('LoopCharacteristics', () => {
           { noAck: true }
         );
 
-        const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+        const loop = new LoopCharacteristics(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -561,6 +573,7 @@ describe('LoopCharacteristics', () => {
         });
 
         loop.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.iteration.next',
             redelivered: true,
@@ -596,7 +609,7 @@ describe('LoopCharacteristics', () => {
           { noAck: true }
         );
 
-        const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+        const loop = new LoopCharacteristics(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -604,6 +617,7 @@ describe('LoopCharacteristics', () => {
         });
 
         loop.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.iteration.next',
             redelivered: true,
@@ -637,7 +651,7 @@ describe('LoopCharacteristics', () => {
           { noAck: true }
         );
 
-        const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+        const loop = new LoopCharacteristics(task, {
           behaviour: {
             isSequential: true,
             loopCardinality: 3,
@@ -645,6 +659,7 @@ describe('LoopCharacteristics', () => {
         });
 
         loop.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.iteration.next',
             redelivered: true,
@@ -702,13 +717,14 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
         },
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'task',
@@ -809,13 +825,14 @@ describe('LoopCharacteristics', () => {
 
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           collection: '${environment.variables.items}',
         },
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -857,13 +874,14 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
         },
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'task',
@@ -895,13 +913,14 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
         },
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -944,7 +963,7 @@ describe('LoopCharacteristics', () => {
         { noAck: true }
       );
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           loopCardinality: 3,
           completionCondition: '${content.output.stopLoop}',
@@ -952,6 +971,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -975,13 +995,14 @@ describe('LoopCharacteristics', () => {
     it('root api stop message drops consumers', () => {
       task.environment.variables.items = ['item 1', 'item 2', 'item 3', 'item 4'];
 
-      const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+      const loop = new LoopCharacteristics(task, {
         behaviour: {
           collection: '${environment.variables.items}',
         },
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -1006,7 +1027,7 @@ describe('LoopCharacteristics', () => {
           { noAck: true }
         );
 
-        const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+        const loop = new LoopCharacteristics(task, {
           behaviour: {
             loopCardinality: 3,
             completionCondition: '${content.output.stopLoop}',
@@ -1014,6 +1035,7 @@ describe('LoopCharacteristics', () => {
         });
 
         loop.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.start',
             redelivered: true,
@@ -1039,7 +1061,7 @@ describe('LoopCharacteristics', () => {
           { noAck: true }
         );
 
-        const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+        const loop = new LoopCharacteristics(task, {
           behaviour: {
             loopCardinality: 3,
             completionCondition: '${content.output.stopLoop}',
@@ -1047,6 +1069,7 @@ describe('LoopCharacteristics', () => {
         });
 
         loop.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.iteration.completed',
             redelivered: true,
@@ -1073,13 +1096,14 @@ describe('LoopCharacteristics', () => {
           { noAck: true }
         );
 
-        const loop = new /** @type {any} */ (LoopCharacteristics)(task, {
+        const loop = new LoopCharacteristics(task, {
           behaviour: {
             loopCardinality: 3,
           },
         });
 
         loop.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.iteration.completed',
             redelivered: true,

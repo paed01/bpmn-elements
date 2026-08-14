@@ -12,19 +12,16 @@ describe('SignalEventDefinition', () => {
       broker: ActivityBroker(this).broker,
       getActivityById(id) {
         if (id !== 'Signal_0') return;
-        return new Signal(/** @type {any} */ ({ id }), testHelpers.emptyContext());
+        return new Signal({ id }, testHelpers.emptyContext());
       },
     };
   });
 
   describe('catching', () => {
     it('publishes wait event on parent broker', () => {
-      const catchSignal = new SignalEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:SignalEventDefinition',
-        })
-      );
+      const catchSignal = new SignalEventDefinition(event, {
+        type: 'bpmn:SignalEventDefinition',
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -36,25 +33,25 @@ describe('SignalEventDefinition', () => {
         { noAck: true }
       );
 
-      catchSignal.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      catchSignal.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.wait');
@@ -64,12 +61,9 @@ describe('SignalEventDefinition', () => {
     });
 
     it('completes and clears listeners when signal is caught', () => {
-      const catchSignal = new SignalEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:SignalEventDefinition',
-        })
-      );
+      const catchSignal = new SignalEventDefinition(event, {
+        type: 'bpmn:SignalEventDefinition',
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -81,25 +75,25 @@ describe('SignalEventDefinition', () => {
         { noAck: true, consumerTag: '_test-tag' }
       );
 
-      catchSignal.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      catchSignal.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       event.broker.publish('api', 'activity.signal.event_1', {});
       event.broker.cancel('_test-tag');
@@ -112,9 +106,9 @@ describe('SignalEventDefinition', () => {
     it('completes and clears listeners if event is a start event and signaled before execution', () => {
       const catchSignal = new SignalEventDefinition(
         { ...event, isStart: true },
-        /** @type {any} */ ({
+        {
           type: 'bpmn:SignalEventDefinition',
-        })
+        }
       );
 
       event.broker.publish('api', 'activity.signal.event_1', {});
@@ -129,25 +123,25 @@ describe('SignalEventDefinition', () => {
         { noAck: true, consumerTag: '_test-tag' }
       );
 
-      catchSignal.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      catchSignal.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       event.broker.cancel('_test-tag');
 
@@ -157,12 +151,9 @@ describe('SignalEventDefinition', () => {
     });
 
     it('completes and clears listeners if discarded', () => {
-      const catchSignal = new SignalEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:SignalEventDefinition',
-        })
-      );
+      const catchSignal = new SignalEventDefinition(event, {
+        type: 'bpmn:SignalEventDefinition',
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -174,25 +165,25 @@ describe('SignalEventDefinition', () => {
         { noAck: true, consumerTag: '_test-tag' }
       );
 
-      catchSignal.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      catchSignal.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       event.broker.publish('api', 'activity.discard.event_1_0', {}, { type: 'discard' });
 
@@ -204,32 +195,29 @@ describe('SignalEventDefinition', () => {
     });
 
     it('stops and clears listeners if stopped', () => {
-      const catchSignal = new SignalEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:SignalEventDefinition',
-        })
-      );
+      const catchSignal = new SignalEventDefinition(event, {
+        type: 'bpmn:SignalEventDefinition',
+      });
 
-      catchSignal.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'bound',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      catchSignal.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'bound',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       event.broker.publish('api', 'activity.stop.event_1_0', {}, { type: 'stop' });
 
@@ -239,12 +227,9 @@ describe('SignalEventDefinition', () => {
     });
 
     it('completes if called with api message type signal', () => {
-      const definition = new SignalEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:SignalEventDefinition',
-        })
-      );
+      const definition = new SignalEventDefinition(event, {
+        type: 'bpmn:SignalEventDefinition',
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -256,25 +241,25 @@ describe('SignalEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'event',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'event',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       event.broker.publish('api', 'activity.sometype.event_1_0', {}, { type: 'signal' });
 
@@ -290,12 +275,9 @@ describe('SignalEventDefinition', () => {
     it('publishes signal event on parent broker', () => {
       event.isThrowing = true;
 
-      const definition = new SignalEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:SignalEventDefinition',
-        })
-      );
+      const definition = new SignalEventDefinition(event, {
+        type: 'bpmn:SignalEventDefinition',
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -307,25 +289,25 @@ describe('SignalEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'intermediate',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'intermediate',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.signal');
@@ -337,17 +319,14 @@ describe('SignalEventDefinition', () => {
     it('publishes signal with input from execution message', () => {
       event.isThrowing = true;
 
-      const definition = new SignalEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:SignalEventDefinition',
-          behaviour: {
-            signalRef: {
-              id: 'Signal_0',
-            },
+      const definition = new SignalEventDefinition(event, {
+        type: 'bpmn:SignalEventDefinition',
+        behaviour: {
+          signalRef: {
+            id: 'Signal_0',
           },
-        })
-      );
+        },
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -359,28 +338,28 @@ describe('SignalEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            executionId: 'event_1_0',
-            index: 0,
-            input: {
-              myMessage: 1,
-            },
-            parent: {
-              id: 'intermediate',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          executionId: 'event_1_0',
+          index: 0,
+          input: {
+            myMessage: 1,
           },
-        })
-      );
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'intermediate',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
+          },
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0].content).to.have.property('message').that.deep.include({
@@ -393,12 +372,9 @@ describe('SignalEventDefinition', () => {
     it('without signal reference publishes anonymous message', () => {
       event.isThrowing = true;
 
-      const definition = new SignalEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:SignalEventDefinition',
-        })
-      );
+      const definition = new SignalEventDefinition(event, {
+        type: 'bpmn:SignalEventDefinition',
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -410,26 +386,26 @@ describe('SignalEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'event_1',
-            executionId: 'event_1_0',
-            index: 0,
-            parent: {
-              id: 'event',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'event_1',
+          executionId: 'event_1_0',
+          index: 0,
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'event',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
           },
-        })
-      );
+        },
+      });
 
       expect(messages).to.have.length(1);
       expect(messages[0].fields).to.have.property('routingKey', 'activity.signal');
@@ -444,17 +420,14 @@ describe('SignalEventDefinition', () => {
     it('with unknown signal reference publishes message with unknown signal id', () => {
       event.isThrowing = true;
 
-      const definition = new SignalEventDefinition(
-        event,
-        /** @type {any} */ ({
-          type: 'bpmn:SignalEventDefinition',
-          behaviour: {
-            signalRef: {
-              id: 'Unknown_Signal',
-            },
+      const definition = new SignalEventDefinition(event, {
+        type: 'bpmn:SignalEventDefinition',
+        behaviour: {
+          signalRef: {
+            id: 'Unknown_Signal',
           },
-        })
-      );
+        },
+      });
 
       const messages = [];
       event.broker.subscribeTmp(
@@ -466,29 +439,29 @@ describe('SignalEventDefinition', () => {
         { noAck: true }
       );
 
-      definition.execute(
-        /** @type {any} */ ({
-          fields: {},
-          content: {
-            id: 'event_1',
-            executionId: 'event_1_0',
-            index: 0,
-            input: {
-              myMessage: 1,
-            },
-            parent: {
-              id: 'event',
-              executionId: 'event_1',
-              path: [
-                {
-                  id: 'theProcess',
-                  executionId: 'theProcess_0',
-                },
-              ],
-            },
+      definition.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'event_1',
+          executionId: 'event_1_0',
+          index: 0,
+          input: {
+            myMessage: 1,
           },
-        })
-      );
+          // @ts-expect-error type coverage
+          parent: {
+            id: 'event',
+            executionId: 'event_1',
+            path: [
+              {
+                id: 'theProcess',
+                executionId: 'theProcess_0',
+              },
+            ],
+          },
+        },
+      });
 
       expect(messages[0].content).to.have.property('message').that.deep.include({
         id: 'Unknown_Signal',
