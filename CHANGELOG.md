@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-## v18.0.14
+## v18.0.15 - 2026-08-15
+
+- major upgrade of [@0dep/piso@5](https://www.npmjs.com/package/@0dep/piso)
+
+## v18.0.14 - 2026-08-14
 
 ### Additions
 
@@ -17,7 +21,7 @@
 - types are built and validated with `typescript@6.0.3`; `scripts/build-types.js` derives the submodule re-export blocks from the package export map instead of a hand-written list
 - the test suite asserts intentional type violations with `@ts-expect-error` instead of `any`-casts, so a declaration loosened enough to make a violation legal now fails the typecheck
 
-## v18.0.13
+## v18.0.13 - 2026-08-13
 
 ### Fixes
 
@@ -33,7 +37,7 @@
 
 - the test suite is type-checked: `npm run typecheck` (part of lint) now also runs `tsc --noEmit -p test` with `checkJs`, covering `src/` and `test/` against the declarations
 
-## v18.0.12
+## v18.0.12 - 2026-08-04
 
 ### Fixes
 
