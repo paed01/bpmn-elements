@@ -10,6 +10,7 @@ import { DefinitionExecution } from './definition/DefinitionExecution.js';
 import { DummyActivity as Dummy, TextAnnotation, Group, Category } from './activity/Dummy.js';
 import { Environment } from './Environment.js';
 import { Escalation } from './activity/Escalation.js';
+import { Expressions } from './Expressions.js';
 import { IoSpecification as InputOutputSpecification } from './io/InputOutputSpecification.js';
 import { Lane } from './process/Lane.js';
 import { LoopCharacteristics } from './tasks/LoopCharacteristics.js';
@@ -86,6 +87,7 @@ export {
   EventBasedGateway,
   EventDefinitionExecution,
   ExclusiveGateway,
+  Expressions,
   InclusiveGateway,
   InputOutputSpecification,
   IntermediateCatchEvent,

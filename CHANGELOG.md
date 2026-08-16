@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+### Additions
+
+## v18.0.17 - 2026-08-16
+
+- `Expressions`, the default expression handler, is exported from the package root, so a consumer composing a custom `environment.expressions` no longer needs the `new Environment().expressions` detour to get at the default engine
+
 ## v18.0.16 - 2026-08-16
 
 ### Fixes

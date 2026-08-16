@@ -171,6 +171,12 @@ Object.defineProperty(exports, "ExclusiveGateway", {
     return _index3.ExclusiveGateway;
   }
 });
+Object.defineProperty(exports, "Expressions", {
+  enumerable: true,
+  get: function () {
+    return _Expressions.Expressions;
+  }
+});
 Object.defineProperty(exports, "Group", {
   enumerable: true,
   get: function () {
@@ -399,6 +405,7 @@ var _DefinitionExecution = require("./definition/DefinitionExecution.js");
 var _Dummy = require("./activity/Dummy.js");
 var _Environment = require("./Environment.js");
 var _Escalation = require("./activity/Escalation.js");
+var _Expressions = require("./Expressions.js");
 var _InputOutputSpecification = require("./io/InputOutputSpecification.js");
 var _Lane = require("./process/Lane.js");
 var _LoopCharacteristics = require("./tasks/LoopCharacteristics.js");

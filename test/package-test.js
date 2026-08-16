@@ -84,6 +84,17 @@ describe('package exports', () => {
     });
   });
 
+  describe('root', () => {
+    it('exports Expressions, the default environment expression handler', async () => {
+      const modules = await import(resolve(cwd, pkg.exports['.'].import));
+
+      expect(modules).to.have.property('Expressions').that.is.a('function');
+
+      const expressions = modules.Expressions();
+      expect(expressions.resolveExpression('${content.id}', { content: { id: 'element_1' } })).to.equal('element_1');
+    });
+  });
+
   describe('tasks', () => {
     it('exports expected', async () => {
       const modules = await import(resolve(cwd, pkg.exports['./tasks'].import));

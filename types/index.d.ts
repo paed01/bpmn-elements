@@ -1493,6 +1493,30 @@ declare module 'bpmn-elements' {
 		resolve(executionMessage: ElementBrokerMessage): ResolvedReference;
 	}
 	/**
+	 * Default expression handler
+	 */
+	export function Expressions(): {
+		resolveExpression: typeof resolveExpression;
+		isExpression: typeof isExpression;
+		hasExpression: typeof hasExpression;
+	};
+	/**
+	 * Resolve expression(s) in a templated string
+	 * @param context resolution context, e.g. an element execution message
+	 * @param expressionFnContext this-context for called expression functions
+	 */
+	function resolveExpression(templatedString: string, context?: any, expressionFnContext?: any): any;
+	/**
+	 * Text is a lone expression
+	 * 
+	 */
+	function isExpression(text?: string): boolean;
+	/**
+	 * Text contains one or more expressions
+	 * 
+	 */
+	function hasExpression(text?: string): boolean;
+	/**
 	 * Activity ioSpecification behaviour. Reads bound data objects on enter and writes them on completion.
 	 * */
 		export class InputOutputSpecification {
