@@ -53,13 +53,16 @@ Timers.prototype.setTimeout = function wrappedSetTimeout(callback, delay, ...arg
 /** @param {import('#types').Timer | ReturnType<typeof setTimeout>} ref */
 // @ts-ignore
 Timers.prototype.clearTimeout = function wrappedClearTimeout(ref) {
+  const {
+    clearTimeout
+  } = this.options;
   if (this[K_EXECUTING].delete(ref)) {
     // @ts-ignore
-    ref.timerRef = this.options.clearTimeout(ref.timerRef);
+    ref.timerRef = clearTimeout(ref.timerRef);
     return;
   }
   // @ts-ignore
-  return this.options.clearTimeout(ref);
+  return clearTimeout(ref);
 };
 
 /**
@@ -70,12 +73,15 @@ Timers.prototype.clearTimeout = function wrappedClearTimeout(ref) {
  * @param {any[]} args
  * @returns {Timer}
  */
-Timers.prototype._setTimeout = function setTimeout(owner, callback, delay, ...args) {
+Timers.prototype._setTimeout = function internalSetTimeout(owner, callback, delay, ...args) {
   const executing = this[K_EXECUTING];
   const ref = this._getReference(owner, callback, delay, args);
   executing.add(ref);
   if (delay < MAX_DELAY) {
-    ref.timerRef = this.options.setTimeout(onTimeout, ref.delay, ...ref.args);
+    const {
+      setTimeout
+    } = this.options;
+    ref.timerRef = setTimeout(onTimeout, ref.delay, ...ref.args);
   }
   return ref;
   function onTimeout(...rargs) {

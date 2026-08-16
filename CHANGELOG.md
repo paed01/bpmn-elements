@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v18.0.16 - 2026-08-16
+
+### Fixes
+
+- the default `Timers` no longer throws `Illegal invocation` in browsers: `setTimeout`/`clearTimeout` were invoked with the options object as receiver, which Node tolerates but browsers reject for `window.setTimeout`. The configured functions are now called detached, so both the captured defaults and a raw `window.setTimeout` passed as option work without the consumer having to `.bind(globalThis)`
+
 ## v18.0.15 - 2026-08-15
 
 - major upgrade of [@0dep/piso@5](https://www.npmjs.com/package/@0dep/piso)

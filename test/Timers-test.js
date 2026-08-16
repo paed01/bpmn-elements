@@ -105,5 +105,27 @@ describe('Timers', () => {
 
       timers.clearTimeout(timer);
     });
+
+    it('invokes timer functions without receiver, as browsers throw Illegal invocation if window.setTimeout is called on anything else', () => {
+      /** @param {CallableFunction} fn */
+      function browserlike(fn) {
+        return /** @this {any} */ function illegalInvocationGuard(/** @type {any[]} */ ...args) {
+          if (this !== undefined && this !== globalThis) throw new TypeError('Illegal invocation');
+          return fn(...args);
+        };
+      }
+
+      const timers = new Timers({
+        setTimeout: browserlike(() => 'ref'),
+        clearTimeout: browserlike(() => {}),
+      });
+
+      const timer = timers.setTimeout(() => {}, 60000);
+      expect(timer.timerRef).to.equal('ref');
+
+      timers.clearTimeout(timer);
+
+      expect(() => timers.clearTimeout('unknown-ref')).to.not.throw();
+    });
   });
 });
