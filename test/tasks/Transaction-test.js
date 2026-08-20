@@ -7,6 +7,61 @@ describe('Transaction', () => {
     expect(transaction).to.have.property('isTransaction', true);
   });
 
+  describe('step mode', () => {
+    it('steps to completion when transaction completes normally with armed compensation', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="Process_0" isExecutable="true">
+          <transaction id="atomic">
+            <task id="task" />
+            <boundaryEvent id="monitor" attachedToRef="task">
+              <compensateEventDefinition />
+            </boundaryEvent>
+            <association id="forward" sourceRef="monitor" targetRef="compensate" />
+            <serviceTask id="compensate" isForCompensation="true" implementation="\${environment.services.compensate}" />
+            <sequenceFlow id="to-end" sourceRef="task" targetRef="end" />
+            <endEvent id="end" />
+          </transaction>
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source, {
+        settings: { step: true },
+        services: {
+          compensate() {},
+        },
+      });
+
+      const [bp] = context.getProcesses();
+
+      bp.run();
+
+      let guard = 1000;
+      while (!bp.execution.completed && guard--) {
+        if (!stepAll(bp.execution)) break;
+      }
+
+      expect(bp.execution.completed, 'process completed').to.be.true;
+
+      const transaction = bp.execution.getActivityById('atomic');
+      expect(transaction.counters, 'transaction').to.deep.equal({ taken: 1, discarded: 0 });
+
+      const [association] = transaction.execution.source.execution.getAssociations();
+      expect(association.counters, 'association').to.deep.equal({ take: 0, discard: 0 });
+
+      /** @param {import('bpmn-elements').ProcessExecution} processExecution */
+      function stepAll(processExecution) {
+        let advanced = false;
+        for (const activity of processExecution.getActivities()) {
+          if (activity.next()) advanced = true;
+          const inner = activity.execution?.source?.execution;
+          if (inner && !inner.completed && stepAll(inner)) advanced = true;
+        }
+        return advanced;
+      }
+    });
+  });
+
   describe('compensate by api cancel transaction', () => {
     let context;
     beforeEach(async () => {
@@ -374,6 +429,9 @@ describe('Transaction', () => {
 
       const compensate = transaction.execution.source.execution.getActivityById('compensate');
       expect(compensate.counters, 'compensate task ignored').to.deep.equal({ taken: 0, discarded: 0 });
+
+      const [association] = transaction.execution.source.execution.getAssociations();
+      expect(association.counters, 'association').to.deep.equal({ take: 0, discard: 0 });
 
       expect(transaction.counters, 'transaction').to.deep.equal({ taken: 1, discarded: 0 });
       expect(transaction.execution.completed, 'transaction').to.be.true;

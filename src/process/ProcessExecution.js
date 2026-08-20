@@ -747,9 +747,11 @@ ProcessExecution.prototype._onChildMessage = function onChildMessage(routingKey,
   switch (routingKey) {
     case 'flow.discard':
     case 'flow.looped':
-      // Legacy: states saved before "no flow discards" can carry an in-flight discarded flow token
-      // on the activity queue. The current runtime never emits these and nothing pops them from
-      // postponed, so drop them on recover instead of stranding completion.
+    case 'association.discard':
+      // Legacy: states saved before "no flow discards", or before compensation associations
+      // stopped discarding, can carry an in-flight discard token on the activity queue. The
+      // current runtime never emits these and nothing pops them from postponed, so drop them
+      // on recover instead of stranding completion.
       return message.ack();
     case 'execution.stop':
       message.ack();

@@ -189,11 +189,10 @@ CompensateEventDefinition.prototype._onCollected = function onCollected(routingK
   }
   for (const association of this[K_ASSOCIATIONS]) association.take((0, _messageHelper.cloneMessage)(message));
 };
-CompensateEventDefinition.prototype._onDiscardApiMessage = function onDiscardApiMessage(_routingKey, message) {
+CompensateEventDefinition.prototype._onDiscardApiMessage = function onDiscardApiMessage() {
   this[_constants.K_COMPLETED] = true;
   this._stop();
   this[K_COMPENSATE_Q].purge();
-  for (const association of this[K_ASSOCIATIONS]) association.discard((0, _messageHelper.cloneMessage)(message));
   return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content));
 };
 CompensateEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {

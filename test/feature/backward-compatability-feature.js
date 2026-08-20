@@ -174,6 +174,76 @@ Feature('Backward compatability', () => {
     });
   });
 
+  Scenario('State with an in-flight discarded compensation association (pre v18 no association discards)', () => {
+    const source = `<?xml version="1.0" encoding="UTF-8"?>
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def_1" targetNamespace="http://bpmn.io/schema/bpmn">
+      <process id="proc" isExecutable="true">
+        <startEvent id="start" />
+        <sequenceFlow id="to_task" sourceRef="start" targetRef="task" />
+        <userTask id="task" />
+        <boundaryEvent id="monitor" attachedToRef="task">
+          <compensateEventDefinition />
+        </boundaryEvent>
+        <association id="forward" sourceRef="monitor" targetRef="compensation" />
+        <serviceTask id="compensation" isForCompensation="true" implementation="\${environment.services.compensate}" />
+        <sequenceFlow id="to_end" sourceRef="task" targetRef="end" />
+        <endEvent id="end" />
+      </process>
+    </definitions>`;
+
+    let context;
+    before(async () => {
+      context = await testHelpers.context(source, {
+        services: {
+          compensate() {},
+        },
+      });
+    });
+
+    let state;
+    Given('a running definition waiting at a user task with an armed compensation monitor', async () => {
+      const definition = new Definition(context);
+      const wait = definition.waitFor('wait');
+      definition.run();
+      await wait;
+      state = definition.getState();
+    });
+
+    And('the state carries an in-flight discarded association token on the process activity queue', () => {
+      const processState = state.execution.processes[0];
+      const executionId = processState.execution.executionId;
+      const activityQ = processState.broker.queues.find((q) => q.name.startsWith('execute-'));
+
+      activityQ.messages.push({
+        fields: { routingKey: 'association.discard', exchange: 'event', consumerTag: '_process-association-controller' },
+        content: {
+          id: 'forward',
+          type: 'bpmn:Association',
+          sourceId: 'monitor',
+          targetId: 'compensation',
+          isAssociation: true,
+          parent: { id: 'proc', type: 'bpmn:Process', executionId },
+        },
+        properties: { persistent: true, type: 'discard', messageId: 'smq.mid-legacy-association-discard', timestamp: 1 },
+      });
+    });
+
+    let definition, leave;
+    When('recovered and resumed', () => {
+      definition = new Definition(context.clone()).recover(state);
+      leave = definition.waitFor('leave');
+      definition.resume();
+    });
+
+    And('the waiting task is signaled', () => {
+      definition.signal({ id: 'task' });
+    });
+
+    Then('run completes without stranding on the orphan association discard token', () => {
+      return leave;
+    });
+  });
+
   Scenario('State is stamped with a state version', () => {
     let context;
     before(async () => {

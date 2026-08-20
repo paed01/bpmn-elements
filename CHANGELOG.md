@@ -2,9 +2,15 @@
 
 ## Unreleased
 
-### Additions
+## v18.0.18 - 2026-08-20
+
+### Fixes
+
+- compensation associations are no longer discarded: the "no flow discards" rule now covers associations, so the association `discard` counter stays `0` and no `association.discard` event is emitted when a transaction completes without compensating. The discard was a leftover from before the no-discard redesign and carried no engine semantics — a compensation target only observes `association.take` — but the token it left on the process activity queue could never be popped from postponed, stranding a stepped transaction (`settings.step = true`) at status `executing` on normal completion with an armed compensation registration (`postponedCount` 1, `getPostponed()` empty). Non-stepped runs dodged it by message ordering. In-flight `association.discard` tokens in states saved by earlier versions are acked on sight when recovered and resumed, same as the legacy `flow.discard` tokens
 
 ## v18.0.17 - 2026-08-16
+
+### Additions
 
 - `Expressions`, the default expression handler, is exported from the package root, so a consumer composing a custom `environment.expressions` no longer needs the `new Environment().expressions` detour to get at the default engine
 
