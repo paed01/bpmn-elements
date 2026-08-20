@@ -104,7 +104,7 @@ ReceiveTaskExecution.prototype.execute = function execute(executeMessage) {
 
   this._debug(`expect ${info.description}`);
 
-  broker.publish('event', 'activity.wait', cloneContent(executeContent, { message: { ...info.message } }));
+  broker.publish('event', 'activity.wait', cloneContent(executeContent, { message: { ...info.message }, accepts: ['message', 'signal'] }));
 };
 
 ReceiveTaskExecution.prototype._onCatchMessage = function onCatchMessage(_routingKey, message) {

@@ -82,7 +82,8 @@ ConditionalEventDefinition.prototype._setup = function setup(executeMessage) {
     executionId: parentExecutionId,
     ...(this.condition && {
       condition: this.condition.type
-    })
+    }),
+    accepts: ['signal']
   });
   waitContent.parent = (0, _messageHelper.shiftParent)(parent);
   broker.publish('event', 'activity.wait', waitContent);

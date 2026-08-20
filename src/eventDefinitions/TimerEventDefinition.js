@@ -87,6 +87,7 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
     ...(isResumed && { isResumed }),
     startedAt,
     state: 'timer',
+    accepts: ['cancel'],
   }));
 
   const broker = this.broker;

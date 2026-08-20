@@ -89,6 +89,7 @@ EscalationEventDefinition.prototype.executeCatch = function executeCatch(execute
     executionId: parent.executionId,
     parent: shiftParent(parent),
     escalation: { ...info.message },
+    accepts: ['escalate'],
   });
   waitContent.parent = shiftParent(parent);
 

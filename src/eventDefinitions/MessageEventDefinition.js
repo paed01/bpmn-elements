@@ -101,6 +101,7 @@ MessageEventDefinition.prototype.executeCatch = function executeCatch(executeMes
   const waitContent = cloneContent(executeContent, {
     executionId: parentExecutionId,
     message: { ...info.message },
+    accepts: ['message', 'signal'],
   });
   waitContent.parent = shiftParent(parent);
 

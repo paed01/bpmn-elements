@@ -101,6 +101,7 @@ SignalEventDefinition.prototype.executeCatch = function executeCatch(executeMess
   const waitContent = cloneContent(executeContent, {
     executionId: parent.executionId,
     signal: { ...info.message },
+    accepts: ['signal'],
   });
   waitContent.parent = shiftParent(parent);
 

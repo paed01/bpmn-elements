@@ -584,6 +584,10 @@ Feature('Signals', () => {
       expect(activity).to.have.property('id', 'start');
     });
 
+    And('start event accepts signal api call', () => {
+      expect(activity.content.accepts).to.deep.equal(['signal']);
+    });
+
     When('definition signals form start event', () => {
       definition.signal({
         id: 'start',
@@ -593,6 +597,10 @@ Feature('Signals', () => {
     Then('execution stops at first user task', () => {
       [activity] = definition.getPostponed();
       expect(activity).to.have.property('id', 'task1');
+    });
+
+    And('user task accepts signal and error api calls', () => {
+      expect(activity.content.accepts).to.deep.equal(['signal', 'error']);
     });
 
     When('definition signals without message', () => {
@@ -688,6 +696,10 @@ Feature('Signals', () => {
       expect(activity).to.have.property('id', 'receiveAnon');
     });
 
+    And('receive task accepts message and signal api calls', () => {
+      expect(activity.content.accepts).to.deep.equal(['message', 'signal']);
+    });
+
     When('definition signals without message', () => {
       definition.signal();
     });
@@ -774,6 +786,10 @@ Feature('Signals', () => {
       expect(activity).to.have.property('id', 'anonSignalEvent');
     });
 
+    And('signal event accepts signal api call', () => {
+      expect(activity.content.accepts).to.deep.equal(['signal']);
+    });
+
     When('definition signals without message', () => {
       definition.signal();
     });
@@ -831,6 +847,10 @@ Feature('Signals', () => {
     And('anonymous message event is waiting to be signaled', () => {
       [activity] = definition.getPostponed();
       expect(activity).to.have.property('id', 'anonMessageEvent');
+    });
+
+    And('message event accepts message and signal api calls', () => {
+      expect(activity.content.accepts).to.deep.equal(['message', 'signal']);
     });
 
     When('definition signals with message', () => {

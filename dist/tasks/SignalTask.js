@@ -58,7 +58,8 @@ SignalTaskBehaviour.prototype.execute = function execute(executeMessage) {
     consumerTag: `_api-delegated-${executionId}`
   });
   broker.publish('event', 'activity.wait', (0, _messageHelper.cloneContent)(executeContent, {
-    state: 'wait'
+    state: 'wait',
+    accepts: ['signal', 'error']
   }));
 };
 SignalTaskBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMessage(executeMessage, routingKey, message) {

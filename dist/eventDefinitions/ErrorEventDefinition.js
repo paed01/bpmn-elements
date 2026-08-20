@@ -121,7 +121,8 @@ ErrorEventDefinition.prototype.executeCatch = function executeCatch(executeMessa
     executionId: parentExecutionId,
     expect: {
       ...info.message
-    }
+    },
+    accepts: ['error']
   });
   waitContent.parent = (0, _messageHelper.shiftParent)(parent);
   broker.publish('event', 'activity.wait', waitContent);

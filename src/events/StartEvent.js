@@ -64,7 +64,7 @@ StartEventBehaviour.prototype.execute = function execute(executeMessage) {
     noAck: true,
     consumerTag: `_api-delegated-${executionId}`,
   });
-  broker.publish('event', 'activity.wait', { ...content, executionId, state: 'wait' });
+  broker.publish('event', 'activity.wait', { ...content, executionId, state: 'wait', accepts: ['signal'] });
 };
 
 StartEventBehaviour.prototype._onApiMessage = function onApiMessage(_routingKey, message) {

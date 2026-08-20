@@ -73,6 +73,7 @@ ConditionalEventDefinition.prototype._setup = function setup(executeMessage) {
   const waitContent = cloneContent(executeContent, {
     executionId: parentExecutionId,
     ...(this.condition && { condition: this.condition.type }),
+    accepts: ['signal'],
   });
   waitContent.parent = shiftParent(parent);
 

@@ -90,7 +90,8 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
       isResumed
     }),
     startedAt,
-    state: 'timer'
+    state: 'timer',
+    accepts: ['cancel']
   });
   const broker = this.broker;
   broker.subscribeTmp('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {

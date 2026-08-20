@@ -103,6 +103,7 @@ CallActivityBehaviour.prototype.execute = function execute(executeMessage) {
   const callContent = {
     state: 'wait',
     calledElement,
+    accepts: ['signal', 'cancel', 'error'],
   };
 
   // Forward the multi-instance loop context as input to the called process; any current content input takes precedence.

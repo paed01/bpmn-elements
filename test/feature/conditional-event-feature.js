@@ -538,6 +538,10 @@ Feature('Conditional event', () => {
       expect(event).to.have.property('id', 'start');
     });
 
+    And('conditional event accepts signal api call', () => {
+      expect(event.content.accepts).to.deep.equal(['signal']);
+    });
+
     When('start event is signaled', () => {
       event.signal();
     });

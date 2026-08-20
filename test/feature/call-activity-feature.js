@@ -227,6 +227,11 @@ Feature('Call activity', () => {
       expect(definition.getRunningProcesses()).to.have.length(2);
     });
 
+    And('call activity accepts signal, cancel, and error api calls', () => {
+      const callActivity = definition.getPostponed()[0];
+      expect(callActivity.content.accepts).to.deep.equal(['signal', 'cancel', 'error']);
+    });
+
     When('call activity is cancelled', () => {
       const callActivity = definition.getPostponed()[0];
       callActivity.cancel();

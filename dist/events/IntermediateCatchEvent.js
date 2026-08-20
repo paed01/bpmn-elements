@@ -52,7 +52,9 @@ IntermediateCatchEventBehaviour.prototype.execute = function execute(executeMess
   });
 
   // @ts-ignore
-  return broker.publish('event', 'activity.wait', (0, _messageHelper.cloneContent)(executeContent));
+  return broker.publish('event', 'activity.wait', (0, _messageHelper.cloneContent)(executeContent, {
+    accepts: ['message', 'signal']
+  }));
 };
 IntermediateCatchEventBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, _routingKey, message) {
   switch (message.properties.type) {

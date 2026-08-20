@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v18.0.19 - 2026-08-20
+
+### Additions
+
+- postponed activities now declare which api calls they act on: the published wait-, timer-, call-, and compensate detach content carries an `accepts` list with the api message types the waiting run responds to beyond the universal `stop` and `discard` — e.g. `['signal', 'error']` for a user task, `['cancel']` for a timer, `['message', 'signal']` for message catches, `['compensate', 'cancel']` for a compensation listener. The list is readable from `getPostponed()` api content (`api.content.accepts`) and from `wait`/`activity.timer` event messages, so a host can pick the proper api call without inspecting element types
+- a bound compensate event can be cancelled through the api: `cancel()` completes the detached compensation listener without running compensation, dropping any collected compensation registrations
+
 ## v18.0.18 - 2026-08-20
 
 ### Fixes

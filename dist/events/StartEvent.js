@@ -73,7 +73,8 @@ StartEventBehaviour.prototype.execute = function execute(executeMessage) {
   broker.publish('event', 'activity.wait', {
     ...content,
     executionId,
-    state: 'wait'
+    state: 'wait',
+    accepts: ['signal']
   });
 };
 StartEventBehaviour.prototype._onApiMessage = function onApiMessage(_routingKey, message) {

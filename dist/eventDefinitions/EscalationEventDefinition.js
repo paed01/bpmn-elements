@@ -103,7 +103,8 @@ EscalationEventDefinition.prototype.executeCatch = function executeCatch(execute
     parent: (0, _messageHelper.shiftParent)(parent),
     escalation: {
       ...info.message
-    }
+    },
+    accepts: ['escalate']
   });
   waitContent.parent = (0, _messageHelper.shiftParent)(parent);
   broker.publish('event', 'activity.wait', waitContent);

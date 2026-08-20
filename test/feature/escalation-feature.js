@@ -38,6 +38,10 @@ Feature('Escalate', () => {
         });
     });
 
+    And('escalation event accepts escalate api call', () => {
+      expect(escalated.content.accepts).to.deep.equal(['escalate']);
+    });
+
     And('amount above treshold is ordered', () => {
       const [, orderTask] = orderProcess.getPostponed();
       expect(orderTask).to.be.ok;

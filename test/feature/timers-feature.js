@@ -55,6 +55,11 @@ Feature('Timers', () => {
       expect(execution.content).to.have.property('timeCycle', 'R3/PT10H');
     });
 
+    And('timer accepts cancel api call', () => {
+      const [execution] = activity.getExecuting();
+      expect(execution.content.accepts).to.deep.equal(['cancel']);
+    });
+
     When('start event times out', () => {
       expect(definition.environment.timers.executing).to.have.length(1);
       definition.environment.timers.executing[0].callback();

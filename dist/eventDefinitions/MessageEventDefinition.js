@@ -114,7 +114,8 @@ MessageEventDefinition.prototype.executeCatch = function executeCatch(executeMes
     executionId: parentExecutionId,
     message: {
       ...info.message
-    }
+    },
+    accepts: ['message', 'signal']
   });
   waitContent.parent = (0, _messageHelper.shiftParent)(parent);
   broker.publish('event', 'activity.wait', waitContent);

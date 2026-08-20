@@ -48,6 +48,8 @@ declare module 'bpmn-elements' {
 	/** Element execution id */
 	executionId?: string;
 	parent?: ElementParent;
+	/** Api message types the element acts on while postponed, e.g. signal, cancel */
+	accepts?: string[];
 	[x: string]: any;
   }
 

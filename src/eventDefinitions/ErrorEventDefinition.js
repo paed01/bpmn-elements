@@ -113,6 +113,7 @@ ErrorEventDefinition.prototype.executeCatch = function executeCatch(executeMessa
   const waitContent = cloneContent(executeContent, {
     executionId: parentExecutionId,
     expect: { ...info.message },
+    accepts: ['error'],
   });
   waitContent.parent = shiftParent(parent);
 
