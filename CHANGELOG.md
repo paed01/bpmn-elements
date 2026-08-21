@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## v18.0.20 - 2026-08-20
+
+### Additions
+
+- a conditional event can be cancelled through the api: `cancel()` completes the event as if the condition was met, without evaluating it — same semantics as cancelling a timer, including delegated cancel via `definition.cancelActivity()`. Conditional wait content now declares `accepts: ['signal', 'cancel']`
+
+### Breaking
+
+- the short-lived compensate event `cancel` api from v18.0.19 is removed again — "cancel completes the listener without compensating" proved hard to motivate next to the established way of dismissing a compensation listener, `discard()`, which is also what process completion does to leftover detached listeners. The detach content declares `accepts: ['compensate']`
+
 ## v18.0.19 - 2026-08-20
 
 ### Additions

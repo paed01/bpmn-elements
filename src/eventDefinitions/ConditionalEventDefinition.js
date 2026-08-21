@@ -65,15 +65,20 @@ ConditionalEventDefinition.prototype._setup = function setup(executeMessage) {
     noAck: true,
     consumerTag: `_parent-signal-${executionId}`,
   });
-  broker.subscribeTmp('api', '#.signal.*', this._onDelegateApiMessage.bind(this), {
+  const onDelegateApiMessage = this._onDelegateApiMessage.bind(this);
+  broker.subscribeTmp('api', '#.signal.*', onDelegateApiMessage, {
     noAck: true,
     consumerTag: `_api-delegated-${executionId}`,
+  });
+  broker.subscribeTmp('api', '#.cancel.*', onDelegateApiMessage, {
+    noAck: true,
+    consumerTag: `_api-delegated-cancel-${executionId}`,
   });
 
   const waitContent = cloneContent(executeContent, {
     executionId: parentExecutionId,
     ...(this.condition && { condition: this.condition.type }),
-    accepts: ['signal'],
+    accepts: ['signal', 'cancel'],
   });
   waitContent.parent = shiftParent(parent);
 
@@ -186,6 +191,20 @@ ConditionalEventDefinition.prototype._onApiMessage = function onApiMessage(_rout
       if (!this.condition) break;
       return this.evaluate(message, (err, result) => this.evaluateCallback(err, result));
     }
+    case 'cancel': {
+      this._stop();
+      this._debug('cancelled');
+      const output = message.content.message;
+      return this.broker.publish(
+        'execution',
+        'execute.completed',
+        cloneContent(this[K_EXECUTE_MESSAGE].content, {
+          state: 'cancel',
+          ...(output && { output }),
+        }),
+        { correlationId: message.properties.correlationId }
+      );
+    }
     case 'discard': {
       this._stop();
       this._debug('discarded');
@@ -204,6 +223,7 @@ ConditionalEventDefinition.prototype._stop = function stop() {
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_parent-signal-${executionId}`);
   broker.cancel(`_api-delegated-${executionId}`);
+  broker.cancel(`_api-delegated-cancel-${executionId}`);
 };
 
 ConditionalEventDefinition.prototype._debug = function debug(msg) {

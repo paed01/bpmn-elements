@@ -85,9 +85,9 @@ Feature('Compensation', () => {
       expect(undoService).to.have.length(0);
     });
 
-    And('compensate event accepts compensate and cancel api calls', () => {
+    And('compensate event accepts compensate api call', () => {
       const [compensation] = definition.getPostponed((api) => api.id === 'compensation');
-      expect(compensation.content.accepts).to.deep.equal(['compensate', 'cancel']);
+      expect(compensation.content.accepts).to.deep.equal(['compensate']);
     });
 
     When('service completes', () => {
@@ -937,7 +937,7 @@ Feature('Compensation', () => {
     });
   });
 
-  Scenario('A bound compensate event is cancelled via api', () => {
+  Scenario('A bound compensate event is dismissed via api discard', () => {
     let definition;
     const execService = [];
     const undoService = [];
@@ -983,18 +983,18 @@ Feature('Compensation', () => {
       expect(execService).to.have.length(1);
     });
 
-    And('compensate event accepts compensate and cancel api calls', () => {
+    And('compensate event accepts compensate api call', () => {
       const [compensation] = definition.getPostponed((api) => api.id === 'compensation');
-      expect(compensation.content.accepts).to.deep.equal(['compensate', 'cancel']);
+      expect(compensation.content.accepts).to.deep.equal(['compensate']);
     });
 
-    When('compensate event is cancelled', () => {
+    When('compensate event is discarded', () => {
       const [compensation] = definition.getPostponed((api) => api.id === 'compensation');
-      compensation.cancel();
+      compensation.discard();
     });
 
-    Then('compensate event completes', () => {
-      expect(definition.getActivityById('compensation').counters).to.deep.equal({ taken: 1, discarded: 0 });
+    Then('compensate event run is discarded', () => {
+      expect(definition.getActivityById('compensation').counters).to.deep.equal({ taken: 0, discarded: 1 });
     });
 
     When('service completes', () => {

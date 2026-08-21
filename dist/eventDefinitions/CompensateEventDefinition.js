@@ -112,7 +112,7 @@ CompensateEventDefinition.prototype.executeCatch = function executeCatch(execute
     sourceExchange: 'execution',
     bindExchange: 'compensate',
     expect: 'compensate',
-    accepts: ['compensate', 'cancel']
+    accepts: ['compensate']
   }));
 };
 
@@ -190,22 +190,6 @@ CompensateEventDefinition.prototype._onCollected = function onCollected(routingK
   }
   for (const association of this[K_ASSOCIATIONS]) association.take((0, _messageHelper.cloneMessage)(message));
 };
-CompensateEventDefinition.prototype._onCancelApiMessage = function onCancelApiMessage(_routingKey, message) {
-  this[_constants.K_COMPLETED] = true;
-  this._stop();
-  this[K_COMPENSATE_Q].purge();
-  this._debug('cancelled');
-  const output = message.content.message;
-  return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content, {
-    state: 'cancel',
-    cancelActivity: false,
-    ...(output && {
-      output
-    })
-  }), {
-    correlationId: message.properties.correlationId
-  });
-};
 CompensateEventDefinition.prototype._onDiscardApiMessage = function onDiscardApiMessage() {
   this[_constants.K_COMPLETED] = true;
   this._stop();
@@ -218,10 +202,6 @@ CompensateEventDefinition.prototype._onApiMessage = function onApiMessage(routin
     case 'compensate':
       {
         return this._onCompensateApiMessage(routingKey, message);
-      }
-    case 'cancel':
-      {
-        return this._onCancelApiMessage(routingKey, message);
       }
     case 'discard':
       {

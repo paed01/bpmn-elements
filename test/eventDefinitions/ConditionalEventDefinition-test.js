@@ -336,7 +336,7 @@ describe('ConditionalEventDefinition', () => {
       // @ts-expect-error type coverage
       condition.execute(executeMessage);
 
-      expect(event.broker.getExchange('api').bindingCount).to.equal(3);
+      expect(event.broker.getExchange('api').bindingCount).to.equal(4);
 
       /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let discardMessage;
@@ -392,7 +392,7 @@ describe('ConditionalEventDefinition', () => {
       // @ts-expect-error type coverage
       condition.execute(executeMessage);
 
-      expect(event.broker.getExchange('api').bindingCount).to.equal(3);
+      expect(event.broker.getExchange('api').bindingCount).to.equal(4);
 
       // @ts-expect-error type coverage
       ActivityApi(event.broker, executeMessage, event.environment).signal({ value: true });
@@ -429,7 +429,7 @@ describe('ConditionalEventDefinition', () => {
       condition.execute(executeMessage);
 
       expect(task.broker.getExchange('execution').bindingCount).to.equal(1);
-      expect(event.broker.getExchange('api').bindingCount).to.equal(3);
+      expect(event.broker.getExchange('api').bindingCount).to.equal(4);
 
       // @ts-expect-error type coverage
       ActivityApi(event.broker, executeMessage, event.environment).signal({
@@ -469,7 +469,7 @@ describe('ConditionalEventDefinition', () => {
       // @ts-expect-error type coverage
       condition.execute(executeMessage);
 
-      expect(event.broker.getExchange('api').bindingCount).to.equal(3);
+      expect(event.broker.getExchange('api').bindingCount).to.equal(4);
 
       // @ts-expect-error type coverage
       ActivityApi(event.broker, executeMessage, event.environment).stop();
@@ -506,7 +506,7 @@ describe('ConditionalEventDefinition', () => {
       condition.execute(executeMessage);
 
       expect(task.broker.getExchange('execution').bindingCount).to.equal(1);
-      expect(event.broker.getExchange('api').bindingCount).to.equal(3);
+      expect(event.broker.getExchange('api').bindingCount).to.equal(4);
 
       // @ts-expect-error type coverage
       ActivityApi(event.broker, executeMessage, event.environment).stop();
