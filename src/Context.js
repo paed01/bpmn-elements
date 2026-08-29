@@ -1,4 +1,5 @@
 import { BpmnIO } from './io/BpmnIO.js';
+import { OutputExtension } from './io/OutputExtension.js';
 import { Environment } from './Environment.js';
 import { getUniqueId } from './shared.js';
 import { K_ACTIVATED } from './constants.js';
@@ -432,6 +433,7 @@ ContextInstance.prototype.getActivitiesByEventDefinitionBehaviour = function get
 
 /**
  * Resolve user-registered extensions and the built-in BpmnIO extension for an activity.
+ * With `settings.assignOutput` other than `off` the built-in output extension is attached to activities no user extension attached to.
  * Returns undefined when the activity has no extensions to attach.
  * @param {import('#types').ElementBase | import('./activity/Activity.js').Activity | import('./process/Process.js').Process} activity
  * @returns {import('#types').IExtension | undefined}
@@ -439,6 +441,10 @@ ContextInstance.prototype.getActivitiesByEventDefinitionBehaviour = function get
 ContextInstance.prototype.loadExtensions = function loadExtensions(activity) {
   const io = new BpmnIO(activity, this);
   const extensions = this.extensionsMapper.get(activity);
+  const assignOutput = this.environment.settings.assignOutput;
+  if (!extensions.extensions.length && assignOutput && assignOutput !== 'off' && activity.behaviour?.$type !== 'bpmn:Process') {
+    extensions.extensions.push(new OutputExtension(activity, this, assignOutput));
+  }
   if (io.hasIo) extensions.extensions.push(io);
   if (!extensions.extensions.length) return;
   return extensions;

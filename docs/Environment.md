@@ -15,6 +15,10 @@ Arguments:
     - `enableDummyService`: boolean, true returns dummy service function for service task
     - `strict`: boolean, [strict mode](#strict-mode) defaults to false
     - `batchSize`: optional positive integer to control parallel loop batch size, defaults to 50
+    - `assignOutput`: optional string, assigns activity end output to `environment.output` — but only for activities that no [extension](/docs/Extension.md#extension-and-output) attached to
+      - `off`: default, output is not assigned
+      - `id`: output is keyed by activity id
+      - `auto`: object output is assigned onto `environment.output`, other types (including arrays) are keyed by activity id
     - `disableTrackState`: optional boolean to disable tracking of element counters between recover and resume. State of idle elements are not returned when getting state. Recommended if running and recovering really large flows
   - `scripts`: [Scripts instance](/docs/Scripts.md)
   - `timers`: [Timers instance](/docs/Timers.md)

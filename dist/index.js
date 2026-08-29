@@ -249,6 +249,12 @@ Object.defineProperty(exports, "MultiInstanceLoopCharacteristics", {
     return _LoopCharacteristics.LoopCharacteristics;
   }
 });
+Object.defineProperty(exports, "OutputExtension", {
+  enumerable: true,
+  get: function () {
+    return _OutputExtension.OutputExtension;
+  }
+});
 Object.defineProperty(exports, "ParallelGateway", {
   enumerable: true,
   get: function () {
@@ -410,6 +416,7 @@ var _InputOutputSpecification = require("./io/InputOutputSpecification.js");
 var _Lane = require("./process/Lane.js");
 var _LoopCharacteristics = require("./tasks/LoopCharacteristics.js");
 var _Message = require("./activity/Message.js");
+var _OutputExtension = require("./io/OutputExtension.js");
 var _Process = require("./process/Process.js");
 var _ProcessExecution = require("./process/ProcessExecution.js");
 var _Properties = require("./io/Properties.js");

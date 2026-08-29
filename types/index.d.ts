@@ -287,6 +287,23 @@ declare module 'bpmn-elements' {
 
   // --- Environment --------------------------------------------------------------
 
+  /** Output types. */
+  export enum AssignOutputTypeValue {
+	/** It's off */
+	Off = 'off',
+	/** Assign element output keyed by activity id */
+	ById = 'id',
+	/**
+	 * Automatically save output depending on output type
+	 * - object is assigned to output
+	 * - other types are keyed by activity id
+	 */
+	Auto = 'auto',
+  }
+
+  /** Accepts either an `AssignOutputTypeValue` enum member or its underlying string literal. */
+  export type AssignOutputType = AssignOutputTypeValue | `${AssignOutputTypeValue}`;
+
   export interface EnvironmentSettings {
 	/** true returns dummy service function for service task if not found */
 	enableDummyService?: boolean;
@@ -302,6 +319,11 @@ declare module 'bpmn-elements' {
 	 * Defaults to falsy
 	 */
 	disableTrackState?: boolean;
+	/**
+	 * assign activity end output to environment.output for activities that no
+	 * user extension attached to. Defaults to `off`
+	 */
+	assignOutput?: AssignOutputType;
 	[x: string]: any;
   }
 
@@ -1131,6 +1153,7 @@ declare module 'bpmn-elements' {
 		getActivitiesByEventDefinitionBehaviour(Behaviour: Function, names: string[] | Iterable<string>, scopeId?: string): Activity[];
 		/**
 		 * Resolve user-registered extensions and the built-in BpmnIO extension for an activity.
+		 * With `settings.assignOutput` other than `off` the built-in output extension is attached to activities no user extension attached to.
 		 * Returns undefined when the activity has no extensions to attach.
 		 * */
 		loadExtensions(activity: ElementBase | Activity | Process): IExtension | undefined;
@@ -1578,6 +1601,31 @@ declare module 'bpmn-elements' {
 		context: ContextInstance;
 		logger: ILogger;
 		get process(): Process;
+	}
+	/**
+	 * Built-in output extension. Assigns activity end output to `environment.output`.
+	 * Attached by the context when `environment.settings.assignOutput` is set and no user extension attached to the activity.
+	 * @param assignType how output is assigned, defaults to `off`
+	 * */
+		export class OutputExtension {
+		/**
+		 * Built-in output extension. Assigns activity end output to `environment.output`.
+		 * Attached by the context when `environment.settings.assignOutput` is set and no user extension attached to the activity.
+		 * @param assignType how output is assigned, defaults to `off`
+		 * */
+		constructor(activity: Activity | ElementBase | Activity, context: ContextInstance, assignType?: AssignOutputType);
+		activity: Activity | ElementBase;
+		context: ContextInstance;
+		type: string;
+		assignType: AssignOutputType;
+		/** Subscribe to the activity end event for the duration of the run */
+		activate(): void;
+		/** Drop the end subscription */
+		deactivate(): void;
+		/**
+		 * Assign end message output to environment output. Override to change how output is stored.
+		 * */
+		onEnd(_routingKey: string, message: ElementBrokerMessage): void;
 	}
 	/**
 	 * Loop characteristics

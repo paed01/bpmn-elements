@@ -15,6 +15,7 @@ import { IoSpecification as InputOutputSpecification } from './io/InputOutputSpe
 import { Lane } from './process/Lane.js';
 import { LoopCharacteristics } from './tasks/LoopCharacteristics.js';
 import { Message } from './activity/Message.js';
+import { OutputExtension } from './io/OutputExtension.js';
 import { Process } from './process/Process.js';
 import { ProcessExecution } from './process/ProcessExecution.js';
 import { Properties } from './io/Properties.js';
@@ -97,6 +98,7 @@ export {
   MessageEventDefinition,
   MessageFlow,
   Lane,
+  OutputExtension,
   LoopCharacteristics as MultiInstanceLoopCharacteristics,
   ParallelGateway,
   Process,

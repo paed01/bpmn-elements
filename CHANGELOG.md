@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## v18.0.21 - 2026-08-29
+
+### Additions
+
+- new environment setting `assignOutput` (`off` | `id` | `auto`) assigns activity end output to `environment.output` for activities no user extension attached to: `id` keys output by activity id, `auto` merges object output and keys other types by activity id. The built-in extension is exported as `OutputExtension(activity, context, assignType)`
 
 ## v18.0.20 - 2026-08-20
 
@@ -179,7 +183,7 @@ Refactor parallel converging and forking gateways, and treat multiple start even
 ### Additions
 
 - expose throwable error classes via new `bpmn-elements/errors` subpath: `import { ActivityError, BpmnError, RunError } from 'bpmn-elements/errors'`
-- activity readonly property `isParallelJoin` indicating a parallel converging gateway
+- activity readonly property `isParallelGateway` indicating a parallel gateway
 - activity readonly property `isStartEvent` indicating a start event
 - new activity event `activity.converge` published when parallel gateway is executed
 - fix link event definition shaking

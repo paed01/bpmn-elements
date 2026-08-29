@@ -29,6 +29,40 @@ function saveAllOutputToEnvironmentExtension(activity, { environment }) {
 }
 ```
 
+## Extension and output
+
+Activity output is not saved to `environment.output` by default; the example above is the idiomatic way to do that. The environment setting `assignOutput` (`id` or `auto`, see [Environment](/docs/Environment.md)) attaches an equivalent built-in extension to every activity that no user extension attached to, i.e. all extension functions returned nothing for the activity. Note that an extension that only subscribes to events and returns nothing counts as not attached — return an object (`{}` will do) to tell the context that the activity is taken care of.
+
+The built-in extension is exported as `OutputExtension(activity, context)` and can be registered like any other extension, e.g. to pick elements yourself:
+
+```js
+import { Definition, OutputExtension } from 'bpmn-elements';
+
+const definition = new Definition(context, {
+  extensions: {
+    userTaskOutput(activity, context) {
+      if (activity.type !== 'bpmn:UserTask') return;
+      return new OutputExtension(activity, context);
+    },
+  },
+});
+```
+
+```js
+const definition = new Definition(context, {
+  settings: { assignOutput: 'id' },
+  extensions: {
+    myUserTaskExtension(activity, { environment }) {
+      if (activity.type !== 'bpmn:UserTask') return; // built-in output extension takes over
+      activity.on('end', (api) => {
+        environment.output[api.id] = api.content.output;
+      });
+      return {};
+    },
+  },
+});
+```
+
 ## Extension with formatting
 
 In some cases it may be required to add some extra data when an activity executes.

@@ -406,6 +406,23 @@ export interface IExpressions {
 
 // --- Environment --------------------------------------------------------------
 
+/** Output types. */
+export const enum AssignOutputTypeValue {
+  /** It's off */
+  Off = 'off',
+  /** Assign element output keyed by activity id */
+  ById = 'id',
+  /**
+   * Automatically save output depending on output type
+   * - object is assigned to output
+   * - other types are keyed by activity id
+   */
+  Auto = 'auto',
+}
+
+/** Accepts either an `AssignOutputTypeValue` enum member or its underlying string literal. */
+export type AssignOutputType = AssignOutputTypeValue | `${AssignOutputTypeValue}`;
+
 export interface EnvironmentSettings {
   /** true returns dummy service function for service task if not found */
   enableDummyService?: boolean;
@@ -421,6 +438,11 @@ export interface EnvironmentSettings {
    * Defaults to falsy
    */
   disableTrackState?: boolean;
+  /**
+   * assign activity end output to environment.output for activities that no
+   * user extension attached to. Defaults to `off`
+   */
+  assignOutput?: AssignOutputType;
   [x: string]: any;
 }
 
