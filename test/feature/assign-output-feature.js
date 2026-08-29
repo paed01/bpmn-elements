@@ -103,6 +103,27 @@ Feature('Assign output', () => {
     And('array output is keyed by activity id', () => {
       expect(definition.environment.output).to.deep.equal({ task: [1, 2] });
     });
+
+    Given('another definition with settings.assignOutput auto', async () => {
+      const context = await testHelpers.context(source);
+      definition = new Definition(context, { settings: { assignOutput: 'auto' } });
+    });
+
+    let executionId;
+    When('definition is ran and user task is signalled by delegated definition signal with routing id and execution id', () => {
+      end = definition.waitFor('end');
+      definition.run();
+      executionId = definition.getPostponed()[0].content.executionId;
+      definition.signal({ id: 'task', executionId, approved: true });
+    });
+
+    Then('definition completes', () => {
+      return end;
+    });
+
+    And('routing id and execution id are not part of assigned output', () => {
+      expect(definition.environment.output).to.deep.equal({ approved: true });
+    });
   });
 
   Scenario('Definition runs with settings.assignOutput off', () => {

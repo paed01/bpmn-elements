@@ -1,5 +1,11 @@
 # Changelog
 
+## v18.0.22 - 2026-08-29
+
+### Bug fix
+
+- a delegated `definition.signal({ id, executionId, ...rest })` caught by a signal task (user-, manual task) no longer echoes the routing keys `id` and `executionId` into the task output. Output is `rest` only, as documented. `activity.consumed` still carries the full signal message
+
 ## v18.0.21 - 2026-08-29
 
 ### Additions

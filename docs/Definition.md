@@ -74,7 +74,7 @@ Arguments:
 - `message`: optional object
   - `id`: optional task/element id to signal, also matched with Message and Signal id. If not passed only anonymous Signal- and MessageEventDefinitions will pick up the signal.
   - `executionId`: optional execution id to signal, specially for looped tasks, also works for signal tasks that are not looped
-  - `[name]*`: any other properties will be forwarded as message to activity
+  - `[name]*`: any other properties will be forwarded as message to activity. For signal tasks (user-, manual task) the forwarded message, without `id` and `executionId`, becomes the task output
 
 ### `cancelActivity(message)`
 

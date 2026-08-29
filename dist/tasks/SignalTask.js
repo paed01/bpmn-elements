@@ -71,7 +71,8 @@ SignalTaskBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMe
   const executeContent = executeMessage.content;
   const {
     id: signalId,
-    executionId: signalExecutionId
+    executionId: signalExecutionId,
+    ...signalMessage
   } = delegateContent.message;
   if (this.loopCharacteristics && signalExecutionId !== executeContent.executionId) return;
   if (signalId !== this.id && signalExecutionId !== executeContent.executionId) return;
@@ -87,7 +88,13 @@ SignalTaskBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMe
     correlationId,
     type: messageType
   });
-  return this._onApiMessage(executeMessage, routingKey, message);
+  return this._onApiMessage(executeMessage, routingKey, {
+    ...message,
+    content: {
+      ...delegateContent,
+      message: signalMessage
+    }
+  });
 };
 SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, _routingKey, message) {
   const {
