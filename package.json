@@ -59,7 +59,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https:github.com/paed01/bpmn-elements.git"
+    "url": "git+https//:github.com/paed01/bpmn-elements.git"
   },
   "homepage": "https://0dep.se/run",
   "author": {
