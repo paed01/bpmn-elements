@@ -1,5 +1,10 @@
 # Changelog
 
+## v18.0.23 - 2026-09-01
+
+- package metadata: repository url, homepage, and author url point to 0dep.se
+- dev dependency `camunda-bpmn-moddle` bumped to v8
+
 ## v18.0.22 - 2026-08-29
 
 ### Bug fix

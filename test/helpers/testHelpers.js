@@ -1,4 +1,3 @@
-import fs from 'node:fs';
 import Debug from 'debug';
 import { BpmnModdle } from 'bpmn-moddle';
 import * as types from 'bpmn-elements';
@@ -7,7 +6,7 @@ import { Context, Environment } from 'bpmn-elements';
 import { Serializer, TypeResolver } from 'moddle-context-serializer';
 import { Scripts } from './JavaScripts.js';
 
-const camundaBpmnModdle = JSON.parse(fs.readFileSync('./node_modules/camunda-bpmn-moddle/resources/camunda.json', 'utf-8'));
+import camundaBpmnModdle from 'camunda-bpmn-moddle/resources/camunda.json' with { type: 'json' };
 
 // @ts-expect-error type coverage
 const typeResolver = TypeResolver(types);

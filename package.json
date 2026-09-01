@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "18.0.22",
+  "version": "18.0.23",
   "description": "Executable workflow elements based on BPMN 2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -59,11 +59,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/paed01/bpmn-elements.git"
+    "url": "git+https:github.com/paed01/bpmn-elements.git"
   },
+  "homepage": "https://0dep.se/run",
   "author": {
     "name": "Pål Edman",
-    "url": "https://github.com/paed01"
+    "url": "https://0dep.se/about"
   },
   "license": "MIT",
   "keywords": [
@@ -107,7 +108,7 @@
     "@types/node": "^20.19.40",
     "bpmn-moddle": "^10.0.0",
     "c8": "^12.0.0",
-    "camunda-bpmn-moddle": "^7.0.1",
+    "camunda-bpmn-moddle": "^8.0.1",
     "chai": "^6.2.1",
     "chronokinesis": "^8.0.0",
     "debug": "^4.3.4",
