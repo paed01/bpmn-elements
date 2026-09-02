@@ -1,18 +1,28 @@
-const kProcess = Symbol.for('process');
+import { K_PARENT } from '../constants.js';
 
-export default function Lane(process, laneDefinition) {
+/**
+ * Process lane. Wraps a `<bpmn:lane>` definition and points back to its owning process;
+ * activities reference their lane through `Activity.lane`.
+ * @param {import('#types').Process} process
+ * @param {import('#types').SerializableElement} laneDefinition
+ */
+export function Lane(process, laneDefinition) {
   const { broker, environment } = process;
   const { id, type, behaviour } = laneDefinition;
 
-  this[kProcess] = process;
+  /** @internal */
+  this[K_PARENT] = process;
 
   this.id = id;
   this.type = type;
+  /** @type {string} */
   this.name = behaviour.name;
+  /** @type {import('#types').ElementParentRef} */
   this.parent = {
     id: process.id,
     type: process.type,
   };
+  /** @type {Record<string, any>} */
   this.behaviour = { ...behaviour };
   this.environment = environment;
   this.broker = broker;
@@ -21,7 +31,8 @@ export default function Lane(process, laneDefinition) {
 }
 
 Object.defineProperty(Lane.prototype, 'process', {
+  /** @returns {import('#types').Process} */
   get() {
-    return this[kProcess];
+    return this[K_PARENT];
   },
 });

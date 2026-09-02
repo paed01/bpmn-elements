@@ -1,5 +1,6 @@
 import fs from 'fs';
 
+// @ts-expect-error type coverage
 const camundaBpmnModdle = JSON.parse(fs.readFileSync('./node_modules/camunda-bpmn-moddle/resources/camunda.json'));
 
 export default {

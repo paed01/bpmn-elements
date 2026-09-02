@@ -1,23 +1,32 @@
-export default function Message(messageDef, context) {
-  const { id, type, name, parent: originalParent } = messageDef;
-  const { environment } = context;
-  const parent = { ...originalParent };
+/**
+ * Message reference element. Resolves the message name expression against the execution message.
+ * @param {import('#types').SerializableElement} messageDef
+ * @param {import('#types').ContextInstance} context
+ */
+export function Message(messageDef, context) {
+  if (!(this instanceof Message)) return new Message(messageDef, context);
+  const { id, type, name, parent } = messageDef;
+  this.id = id;
+  this.type = type;
+  this.name = name;
+  /** @type {import('#types').ElementParent} */
+  // @ts-ignore
+  this.parent = { ...parent };
+  this.environment = context.environment;
+}
 
+/**
+ * Resolve message reference for the given execution message.
+ * @param {import('#types').ElementBrokerMessage} executionMessage
+ * @returns {import('#types').ResolvedReference}
+ */
+Message.prototype.resolve = function resolve(executionMessage) {
+  const { id, type, name, parent } = this;
   return {
     id,
     type,
-    name,
-    parent,
-    resolve,
+    messageType: 'message',
+    ...(name && { name: this.environment.resolveExpression(name, executionMessage) }),
+    parent: { ...parent },
   };
-
-  function resolve(executionMessage) {
-    return {
-      id,
-      type,
-      messageType: 'message',
-      ...(name && { name: environment.resolveExpression(name, executionMessage) }),
-      parent: { ...parent },
-    };
-  }
-}
+};

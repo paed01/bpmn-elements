@@ -3,29 +3,46 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.EndEvent = EndEvent;
 exports.EndEventBehaviour = EndEventBehaviour;
-exports.default = EndEvent;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
-var _EventDefinitionExecution = _interopRequireDefault(require("../eventDefinitions/EventDefinitionExecution.js"));
+var _Activity = require("../activity/Activity.js");
+var _EventDefinitionExecution = require("../eventDefinitions/EventDefinitionExecution.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-const kExecution = Symbol.for('execution');
+var _constants = require("../constants.js");
+/**
+ * End event
+ * @param {import('#types').ActivityDefinition} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function EndEvent(activityDef, context) {
-  return new _Activity.default(EndEventBehaviour, {
+  return new _Activity.Activity(EndEventBehaviour, {
     ...activityDef,
     isThrowing: true
   }, context);
 }
+
+/**
+ * End event behaviour
+ * @param {import('#types').Activity} activity
+ */
 function EndEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
   this.broker = activity.broker;
-  this[kExecution] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions);
+  /** @internal */
+  this[_constants.K_EXECUTION] = activity.eventDefinitions && new _EventDefinitionExecution.EventDefinitionExecution(activity, activity.eventDefinitions);
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 EndEventBehaviour.prototype.execute = function execute(executeMessage) {
-  const execution = this[kExecution];
+  const execution = this[_constants.K_EXECUTION];
   if (execution) {
     return execution.execute(executeMessage);
   }
+
+  // @ts-ignore
   return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(executeMessage.content));
 };

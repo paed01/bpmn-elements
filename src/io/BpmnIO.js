@@ -1,4 +1,10 @@
-export default function BpmnIO(activity, context) {
+/**
+ * Built-in IO extension. Composes the activity's ioSpecification and properties behaviours.
+ * @param {import('#types').Activity | import('#types').ElementBase | import('../activity/Activity.js').Activity | import('../process/Process.js').Process} activity
+ * @param {import('#types').ContextInstance} context
+ * @satisfies {import('#types').IExtension}
+ */
+export function BpmnIO(activity, context) {
   this.activity = activity;
   this.context = context;
   this.type = 'bpmnio';
@@ -15,6 +21,9 @@ Object.defineProperty(BpmnIO.prototype, 'hasIo', {
   },
 });
 
+/**
+ * @param {import('#types').ElementBrokerMessage} message
+ */
 BpmnIO.prototype.activate = function activate(message) {
   const properties = this.properties,
     specification = this.specification;
@@ -22,6 +31,9 @@ BpmnIO.prototype.activate = function activate(message) {
   if (specification) specification.activate(message);
 };
 
+/**
+ * @param {import('#types').ElementBrokerMessage} message
+ */
 BpmnIO.prototype.deactivate = function deactivate(message) {
   const properties = this.properties,
     specification = this.specification;

@@ -1,26 +1,16 @@
-import Environment from '../../src/Environment.js';
+import { format } from 'util';
+import { Definition, Environment } from 'bpmn-elements';
+import { ActivityError } from 'bpmn-elements/errors';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
-import { ActivityError } from '../../src/error/Errors.js';
-import { Definition } from '../../src/definition/Definition.js';
-import { format } from 'util';
 import { Scripts as JavaScripts } from '../helpers/JavaScripts.js';
 
 const lanesSource = factory.resource('lanes.bpmn');
 
 describe('Definition', () => {
-  describe('#ctor', () => {
-    it('can be invoked without new', () => {
-      const newNewDefinition = Definition({
-        id: 'Def_1',
-        environment: new Environment(),
-      });
-      expect(newNewDefinition.run).to.be.a('function');
-    });
-  });
-
   describe('requirements', () => {
     it('requires a context with id and environment', () => {
+      // @ts-expect-error type coverage
       const definition = new Definition({
         id: 'Def_1',
         environment: new Environment(),
@@ -45,6 +35,7 @@ describe('Definition', () => {
         getExecutableProcesses() {
           return [];
         },
+        // @ts-expect-error type coverage
         getMessageFlows() {},
       });
       definition.run();
@@ -54,6 +45,7 @@ describe('Definition', () => {
 
     it('throws if without arguments', () => {
       expect(() => {
+        // @ts-expect-error context is required
         Definition();
       }).to.throw(/No context/);
     });
@@ -65,8 +57,11 @@ describe('Definition', () => {
         {
           id: 'Def_1',
           environment,
+          // @ts-expect-error type coverage
           getProcesses() {},
+          // @ts-expect-error type coverage
           getExecutableProcesses() {},
+          // @ts-expect-error type coverage
           clone(newEnvironment) {
             return {
               environment: newEnvironment,
@@ -104,6 +99,7 @@ describe('Definition', () => {
         getExecutableProcesses() {
           return [];
         },
+        // @ts-expect-error type coverage
         getMessageFlows() {},
         getDataObjects() {},
       });
@@ -123,6 +119,7 @@ describe('Definition', () => {
         getExecutableProcesses() {
           return [];
         },
+        // @ts-expect-error type coverage
         getMessageFlows() {},
         getDataObjects() {},
       });
@@ -146,6 +143,7 @@ describe('Definition', () => {
         getExecutableProcesses() {
           return [];
         },
+        // @ts-expect-error type coverage
         getMessageFlows() {},
       });
 
@@ -407,6 +405,7 @@ describe('Definition', () => {
       const definition = new Definition(context);
       definition.run();
 
+      /** @type {Error} */
       let error;
       definition.run((err) => {
         error = err;
@@ -665,6 +664,7 @@ describe('Definition', () => {
 
       const definition = new Definition(context);
       definition.run();
+      // @ts-expect-error type coverage
       definition.sendMessage();
 
       expect(definition.getActivityById('start').counters).to.have.property('taken', 1);
@@ -746,6 +746,7 @@ describe('Definition', () => {
       const definition = new Definition(context);
 
       definition.recover({
+        // @ts-expect-error type coverage
         counters: {
           completed: 1,
         },
@@ -758,6 +759,7 @@ describe('Definition', () => {
     it('recovers with only environment', () => {
       const definition = new Definition(context);
 
+      // @ts-expect-error type coverage
       definition.recover({
         environment: { ...definition.environment.getState(), output: { recovered: 1 } },
       });
@@ -1345,11 +1347,12 @@ describe('Definition', () => {
     it('returns undefined if message parent path is not resolved', () => {
       const definition = new Definition(context.clone());
 
+      /** @type {any} */
       let api = false;
       definition.broker.subscribeTmp(
         'event',
         'activity.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           if (message.content.id === 'task3') {
             message.content.parent.path = [];
             api = definition.getApi(message);
@@ -1372,6 +1375,7 @@ describe('Definition', () => {
     it('with unknown id return nothing', () => {
       const definition = new Definition(context.clone());
       definition.run();
+      // @ts-expect-error type coverage
       expect(definition.getApi({ content: { id: 'who?' } })).to.not.be.ok;
     });
 
@@ -1382,6 +1386,7 @@ describe('Definition', () => {
         definition.getApi({
           content: {
             id: 'who?',
+            // @ts-expect-error type coverage
             parent: {
               id: 'me?',
             },
@@ -1765,6 +1770,59 @@ describe('Definition', () => {
     });
   });
 
+  describe('getElementById()', () => {
+    const source = `
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="def">
+      <collaboration id="collab">
+        <participant id="p1" processRef="process1" />
+        <participant id="p2" processRef="process2" />
+        <messageFlow id="messageFlow1" sourceRef="task1" targetRef="task2" />
+      </collaboration>
+      <process id="process1" isExecutable="true">
+        <startEvent id="start" />
+        <sequenceFlow id="flow1" sourceRef="start" targetRef="task1" />
+        <userTask id="task1" />
+        <textAnnotation id="annotation1"><text>note</text></textAnnotation>
+        <association id="association1" sourceRef="task1" targetRef="annotation1" />
+      </process>
+      <process id="process2" isExecutable="true">
+        <userTask id="task2" />
+      </process>
+    </definitions>`;
+
+    let context;
+    before(async () => {
+      context = await testHelpers.context(source);
+    });
+
+    it('returns activity by id', () => {
+      const definition = new Definition(context);
+      expect(definition.getElementById('task1')).to.have.property('id', 'task1');
+    });
+
+    it('returns sequence flow by id', () => {
+      const definition = new Definition(context);
+      expect(definition.getElementById('flow1')).to.have.property('id', 'flow1');
+    });
+
+    it('returns message flow by id', () => {
+      const definition = new Definition(context);
+      expect(definition.getElementById('messageFlow1')).to.have.property('id', 'messageFlow1');
+    });
+
+    it('returns association by id', () => {
+      const definition = new Definition(context);
+      const flow = definition.getElementById('association1');
+      expect(flow).to.have.property('id', 'association1');
+      expect(definition.getElementById('association1'), 'same instance').to.equal(flow);
+    });
+
+    it('returns null if element is not found', () => {
+      const definition = new Definition(context);
+      expect(definition.getElementById('whoAmI')).to.be.null;
+    });
+  });
+
   describe('getPostponed()', () => {
     let context;
     beforeEach(async () => {
@@ -2018,6 +2076,7 @@ describe('Definition', () => {
       let postponed = definition.getPostponed();
       expect(
         postponed.length,
+        // @ts-expect-error type coverage
         postponed.map(({ id }) => id)
       ).to.equal(4);
 

@@ -3,24 +3,43 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.IntermediateCatchEvent = IntermediateCatchEvent;
 exports.IntermediateCatchEventBehaviour = IntermediateCatchEventBehaviour;
-exports.default = IntermediateCatchEvent;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
-var _EventDefinitionExecution = _interopRequireDefault(require("../eventDefinitions/EventDefinitionExecution.js"));
+var _Activity = require("../activity/Activity.js");
+var _EventDefinitionExecution = require("../eventDefinitions/EventDefinitionExecution.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-const kExecution = Symbol.for('execution');
+var _constants = require("../constants.js");
+/**
+ * Intermediate catch event
+ * @param {import('#types').ActivityDefinition} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function IntermediateCatchEvent(activityDef, context) {
-  return new _Activity.default(IntermediateCatchEventBehaviour, activityDef, context);
+  return new _Activity.Activity(IntermediateCatchEventBehaviour, {
+    ...activityDef,
+    isCatching: true,
+    ...context.getLinkEventDefinitionInfo(activityDef)
+  }, context);
 }
+
+/**
+ * Intermediate catch event behaviour
+ * @param {import('#types').Activity} activity
+ */
 function IntermediateCatchEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
   this.broker = activity.broker;
-  this[kExecution] = activity.eventDefinitions && new _EventDefinitionExecution.default(activity, activity.eventDefinitions);
+  /** @internal */
+  this[_constants.K_EXECUTION] = activity.eventDefinitions && new _EventDefinitionExecution.EventDefinitionExecution(activity, activity.eventDefinitions);
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 IntermediateCatchEventBehaviour.prototype.execute = function execute(executeMessage) {
-  const execution = this[kExecution];
+  const execution = this[_constants.K_EXECUTION];
   if (execution) {
     return execution.execute(executeMessage);
   }
@@ -31,9 +50,13 @@ IntermediateCatchEventBehaviour.prototype.execute = function execute(executeMess
     noAck: true,
     consumerTag: '_api-behaviour-execution'
   });
-  return broker.publish('event', 'activity.wait', (0, _messageHelper.cloneContent)(executeContent));
+
+  // @ts-ignore
+  return broker.publish('event', 'activity.wait', (0, _messageHelper.cloneContent)(executeContent, {
+    accepts: ['message', 'signal']
+  }));
 };
-IntermediateCatchEventBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, routingKey, message) {
+IntermediateCatchEventBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, _routingKey, message) {
   switch (message.properties.type) {
     case 'message':
     case 'signal':

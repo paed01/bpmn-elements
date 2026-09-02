@@ -3,15 +3,19 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Transaction;
-var _SubProcess = _interopRequireDefault(require("./SubProcess.js"));
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+exports.Transaction = Transaction;
+var _SubProcess = require("./SubProcess.js");
+/**
+ * Transaction
+ * @param {import('#types').ActivityDefinition} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function Transaction(activityDef, context) {
   const transaction = {
     type: 'transaction',
     ...activityDef,
     isTransaction: true
   };
-  const activity = (0, _SubProcess.default)(transaction, context);
+  const activity = (0, _SubProcess.SubProcess)(transaction, context);
   return activity;
 }

@@ -8,6 +8,7 @@ export function brokerSafeId(id) {
   return id.replace(safePattern, '_');
 }
 
+/** @param {string} prefix */
 export function getUniqueId(prefix) {
   return `${brokerSafeId(prefix)}_${generateId()}`;
 }

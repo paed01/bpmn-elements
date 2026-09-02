@@ -1,16 +1,18 @@
-import InputOutputSpecification from '../../src/io/InputOutputSpecification.js';
+import { InputOutputSpecification } from 'bpmn-elements';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('InputOutputSpecification', () => {
   it('listens on parent activity when activated', () => {
     const activity = ActivityBroker();
+    // @ts-expect-error type coverage
     new InputOutputSpecification(activity, {}).activate();
     expect(activity.broker.consumerCount).to.equal(1);
   });
 
   it('listens only once when activated', () => {
     const activity = ActivityBroker();
+    // @ts-expect-error type coverage
     const ioSpec = new InputOutputSpecification(activity, {});
     ioSpec.activate();
     ioSpec.activate();
@@ -19,6 +21,7 @@ describe('InputOutputSpecification', () => {
 
   it('removes listener when deactivated', () => {
     const activity = ActivityBroker();
+    // @ts-expect-error type coverage
     const ioSpec = new InputOutputSpecification(activity, {});
     ioSpec.activate();
     ioSpec.deactivate();
@@ -28,6 +31,7 @@ describe('InputOutputSpecification', () => {
 
   it('sends format start message on activity enter', () => {
     const activity = ActivityBroker();
+    // @ts-expect-error type coverage
     new InputOutputSpecification(activity, {
       type: 'bpmn:InputOutputSpecification',
       behaviour: {
@@ -43,6 +47,7 @@ describe('InputOutputSpecification', () => {
 
   it("doesn't send start message if no dataInputs", () => {
     const activity = ActivityBroker();
+    // @ts-expect-error type coverage
     new InputOutputSpecification(activity, {
       type: 'bpmn:InputOutputSpecification',
     }).activate();
@@ -54,6 +59,7 @@ describe('InputOutputSpecification', () => {
 
   it('sends format start message with input on activity start', () => {
     const activity = ActivityBroker();
+    // @ts-expect-error type coverage
     new InputOutputSpecification(activity, {
       type: 'bpmn:InputOutputSpecification',
       behaviour: {
@@ -71,6 +77,7 @@ describe('InputOutputSpecification', () => {
   it('fetches input data object value', () => {
     const activity = ActivityBroker();
     new InputOutputSpecification(
+      // @ts-expect-error type coverage
       activity,
       {
         type: 'bpmn:InputOutputSpecification',
@@ -147,6 +154,7 @@ describe('InputOutputSpecification', () => {
   it('publishes input without data object value if not found', () => {
     const activity = ActivityBroker();
     new InputOutputSpecification(
+      // @ts-expect-error type coverage
       activity,
       {
         type: 'bpmn:InputOutputSpecification',
@@ -193,6 +201,7 @@ describe('InputOutputSpecification', () => {
   it('publishes input without data object if unreferenced', () => {
     const activity = ActivityBroker();
     new InputOutputSpecification(
+      // @ts-expect-error type coverage
       activity,
       {
         type: 'bpmn:InputOutputSpecification',
@@ -231,6 +240,7 @@ describe('InputOutputSpecification', () => {
   it('publishes output without value if data object if unreferenced', () => {
     const activity = ActivityBroker();
     new InputOutputSpecification(
+      // @ts-expect-error type coverage
       activity,
       {
         type: 'bpmn:InputOutputSpecification',
@@ -428,6 +438,7 @@ describe('InputOutputSpecification', () => {
     expect(api.content.ioSpecification).to.have.property('dataInputs').with.length(1);
     expect(api.content.ioSpecification.dataInputs[0]).that.eql({ id: 'userInput', type: 'bpmn:DataInput', name: 'info' });
 
+    // @ts-expect-error type coverage
     api.signal('no input');
 
     await leave;
@@ -463,7 +474,7 @@ describe('InputOutputSpecification', () => {
 
     task.run();
 
-    let api = await wait;
+    const api = await wait;
 
     expect(api.content.ioSpecification).to.have.property('dataOutputs').with.length(1);
     expect(api.content.ioSpecification.dataOutputs[0]).that.eql({ id: 'userInput', type: 'bpmn:DataOutput', name: 'sirname' });
@@ -479,7 +490,7 @@ describe('InputOutputSpecification', () => {
       },
     });
 
-    api = await leave;
+    await leave;
 
     expect(context.environment.variables._data).to.have.property('inputFromUser', 'von Rosen');
   });
@@ -515,6 +526,7 @@ describe('InputOutputSpecification', () => {
 
     expect(api.content).to.have.property('ioSpecification');
 
+    // @ts-expect-error type coverage
     api.signal('no input');
 
     await leave;
@@ -550,6 +562,7 @@ describe('InputOutputSpecification', () => {
 
     const api = await wait;
 
+    // @ts-expect-error type coverage
     api.signal('no input');
 
     await leave;
@@ -583,6 +596,7 @@ describe('InputOutputSpecification', () => {
 
     const api = await wait;
 
+    // @ts-expect-error type coverage
     api.signal('no input');
 
     await leave;
@@ -669,7 +683,7 @@ describe('InputOutputSpecification', () => {
 
       task.run();
 
-      let api = await wait;
+      const api = await wait;
 
       api.signal({
         ioSpecification: {
@@ -682,7 +696,7 @@ describe('InputOutputSpecification', () => {
         },
       });
 
-      api = await leave;
+      await leave;
 
       expect(context.environment.variables._data).to.have.property('surname', 'von Rosen');
     });

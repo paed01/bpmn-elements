@@ -1,23 +1,43 @@
-import Activity from '../activity/Activity.js';
+import { Activity } from '../activity/Activity.js';
 import { ActivityError } from '../error/Errors.js';
 import { cloneMessage, cloneContent } from '../messageHelper.js';
 
-export default function ServiceTask(activityDef, context) {
+/**
+ * Service task
+ * @param {import('#types').ActivityDefinition} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
+export function ServiceTask(activityDef, context) {
   return new Activity(ServiceTaskBehaviour, activityDef, context);
 }
 
+/**
+ * Service task behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function ServiceTaskBehaviour(activity) {
   const { id, type, behaviour } = activity;
 
   this.id = id;
   this.type = type;
+  /** @type {import('./LoopCharacteristics.js').LoopCharacteristics | undefined} */
   this.loopCharacteristics =
     behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
   this.environment = activity.environment;
   this.broker = activity.broker;
+
+  /**
+   * Service function instance
+   * @type {import('#types').IService | undefined}
+   */
+  this.service = undefined;
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;
@@ -30,6 +50,7 @@ ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
   if (!service) return this.activity.emitFatal(new ActivityError(`<${this.id}> service not defined`, executeMessage), executeContent);
 
   const broker = this.broker;
+  // @ts-ignore
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(executeMessage, ...args), {
     consumerTag: `_api-${executionId}`,
   });
@@ -41,7 +62,12 @@ ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
       return broker.publish(
         'execution',
         'execute.error',
-        cloneContent(executeContent, { error: new ActivityError(err.message, executeMessage, err) }, { mandatory: true })
+        cloneContent(
+          executeContent,
+          { error: new ActivityError(err.message, executeMessage, err) },
+          // @ts-ignore
+          { mandatory: true }
+        )
       );
     }
 
@@ -49,6 +75,11 @@ ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
   });
 };
 
+/**
+ * Resolve the service instance backing this run.
+ * @param {import('#types').ElementBrokerMessage} message
+ * @returns {import('#types').IService | undefined}
+ */
 ServiceTaskBehaviour.prototype.getService = function getService(message) {
   let Service = this.activity.behaviour.Service;
   if (!Service && this.environment.settings.enableDummyService) Service = DummyService;

@@ -1,6 +1,211 @@
 # Changelog
 
-## Unreleased
+## v18.0.23 - 2026-09-01
+
+- package metadata: repository url, homepage, and author url point to 0dep.se
+- dev dependency `camunda-bpmn-moddle` bumped to v8
+
+## v18.0.22 - 2026-08-29
+
+### Bug fix
+
+- a delegated `definition.signal({ id, executionId, ...rest })` caught by a signal task (user-, manual task) no longer echoes the routing keys `id` and `executionId` into the task output. Output is `rest` only, as documented. `activity.consumed` still carries the full signal message
+
+## v18.0.21 - 2026-08-29
+
+### Additions
+
+- new environment setting `assignOutput` (`off` | `id` | `auto`) assigns activity end output to `environment.output` for activities no user extension attached to: `id` keys output by activity id, `auto` merges object output and keys other types by activity id. The built-in extension is exported as `OutputExtension(activity, context, assignType)`
+
+## v18.0.20 - 2026-08-20
+
+### Additions
+
+- a conditional event can be cancelled through the api: `cancel()` completes the event as if the condition was met, without evaluating it — same semantics as cancelling a timer, including delegated cancel via `definition.cancelActivity()`. Conditional wait content now declares `accepts: ['signal', 'cancel']`
+
+### Breaking
+
+- the short-lived compensate event `cancel` api from v18.0.19 is removed again — "cancel completes the listener without compensating" proved hard to motivate next to the established way of dismissing a compensation listener, `discard()`, which is also what process completion does to leftover detached listeners. The detach content declares `accepts: ['compensate']`
+
+## v18.0.19 - 2026-08-20
+
+### Additions
+
+- postponed activities now declare which api calls they act on: the published wait-, timer-, call-, and compensate detach content carries an `accepts` list with the api message types the waiting run responds to beyond the universal `stop` and `discard` — e.g. `['signal', 'error']` for a user task, `['cancel']` for a timer, `['message', 'signal']` for message catches, `['compensate', 'cancel']` for a compensation listener. The list is readable from `getPostponed()` api content (`api.content.accepts`) and from `wait`/`activity.timer` event messages, so a host can pick the proper api call without inspecting element types
+- a bound compensate event can be cancelled through the api: `cancel()` completes the detached compensation listener without running compensation, dropping any collected compensation registrations
+
+## v18.0.18 - 2026-08-20
+
+### Fixes
+
+- compensation associations are no longer discarded: the "no flow discards" rule now covers associations, so the association `discard` counter stays `0` and no `association.discard` event is emitted when a transaction completes without compensating. The discard was a leftover from before the no-discard redesign and carried no engine semantics — a compensation target only observes `association.take` — but the token it left on the process activity queue could never be popped from postponed, stranding a stepped transaction (`settings.step = true`) at status `executing` on normal completion with an armed compensation registration (`postponedCount` 1, `getPostponed()` empty). Non-stepped runs dodged it by message ordering. In-flight `association.discard` tokens in states saved by earlier versions are acked on sight when recovered and resumed, same as the legacy `flow.discard` tokens
+
+## v18.0.17 - 2026-08-16
+
+### Additions
+
+- `Expressions`, the default expression handler, is exported from the package root, so a consumer composing a custom `environment.expressions` no longer needs the `new Environment().expressions` detour to get at the default engine
+
+## v18.0.16 - 2026-08-16
+
+### Fixes
+
+- the default `Timers` no longer throws `Illegal invocation` in browsers: `setTimeout`/`clearTimeout` were invoked with the options object as receiver, which Node tolerates but browsers reject for `window.setTimeout`. The configured functions are now called detached, so both the captured defaults and a raw `window.setTimeout` passed as option work without the consumer having to `.bind(globalThis)`
+
+## v18.0.15 - 2026-08-15
+
+- major upgrade of [@0dep/piso@5](https://www.npmjs.com/package/@0dep/piso)
+
+## v18.0.14 - 2026-08-14
+
+### Additions
+
+- `ActivityExecution`, `ProcessExecution`, `DefinitionExecution`, and `EventDefinitionExecution` are exported from the package root (`EventDefinitionExecution` also from `bpmn-elements/eventDefinitions`), so hosts and custom behaviours no longer need deep `src/` imports
+- `Activity#associations` returns the activity's inbound associations
+- the shipped declarations are self-contained: `types/index.d.ts` no longer references `moddle-context-serializer` — a devDependency consumers may not have installed, silently degrading affected declarations to `any`. The serialized-definition surface the runtime actually consumes is declared locally and exported: `SerializableContext`, `SerializableElement`, `ActivityDefinition`, `ProcessDefinition`, `SequenceFlowDefinition`, `AssociationDefinition`, `MessageFlowDefinition`, `ElementParentRef`, and `MessageFlowReference`. The type build fails if the emitted bundle references a module outside package dependencies
+
+### Fixes
+
+- element constructors accept a minimum definition: every field of the definition contracts is optional, `behaviour` included, matching the runtime defaults — `new Activity(Behaviour, { id, type, parent }, context)` type-checks without casts
+- `TimersOptions` accepts any `setTimeout`/`clearTimeout` implementation — a fake-timers pair, the builtin functions, or the whole `node:timers` module — instead of demanding the builtins' full overloaded shape (`__promisify__` et al.)
+- types are built and validated with `typescript@6.0.3`; `scripts/build-types.js` derives the submodule re-export blocks from the package export map instead of a hand-written list
+- the test suite asserts intentional type violations with `@ts-expect-error` instead of `any`-casts, so a declaration loosened enough to make a violation legal now fails the typecheck
+
+## v18.0.13 - 2026-08-13
+
+### Fixes
+
+- `EnvironmentOptions` now declares an index signature: arbitrary consumer options are kept as is on environment options, e.g. bpmn-engine stores `listener` and the serialized source context on `environment.options`
+- `IScripts.register` may return `void` and `IScripts.getScript` may return `undefined`, matching custom script handlers that return nothing for non-script activities
+- `IActivityBehaviour` no longer conflates constructor and instance (an instance with a `new` method); it is now a union of a behaviour class and the documented plain-factory pattern `function Behaviour(activity) { return { execute }; }`, both returning the new `IActivityBehaviourInstance`. The constructor half is exported as `IActivityBehaviourConstructor`. `ActivityExecution.source` is typed as `IActivityBehaviourInstance | undefined`
+- `IExtensionsMapper.get` returns the single extensions aggregate, not an array
+- `ResolvedReference.parent` is optional; the error reference resolved by `BpmnError` carries no parent
+- `UserTaskBehaviour`, `ManualTaskBehaviour`, `SendTaskBehaviour`, and `BusinessRuleTaskBehaviour` now declare their prototype-chain heritage, so the shipped types include the inherited behaviour members (e.g. `execute`)
+- assorted declaration accuracy fixes surfaced by type-checking the test suite: optional params that the runtime tolerates (`ActivityBroker(activity?)`, `new ActivityExecution(activity[, context])`, `ActivityError`/`BpmnError` description, `Environment#assignVariables`/`assignSettings`, `ConditionalEventDefinition` context/index, `shiftParent`), `ProcessExecution#getSequenceFlows` returns an array, `SequenceFlow#getCondition` may return undefined after emitting fatal
+
+### Additions
+
+- the test suite is type-checked: `npm run typecheck` (part of lint) now also runs `tsc --noEmit -p test` with `checkJs`, covering `src/` and `test/` against the declarations
+
+## v18.0.12 - 2026-08-04
+
+### Fixes
+
+- `Definition#getElementById` now resolves sequence flows, message flows, and associations in addition to activities, matching its documented "any element" contract (previously it delegated only to `context.getActivityById` and returned `null` for anything that wasn't an activity). Adds `Context#getMessageFlowById` and `Context#getAssociationById`
+- same-instance `resume()` after a stop taken mid-format no longer deadlocks at status `formatting`; stop/deactivate now `reset()`s the formatter so a stale `_formatter-<correlationId>` consumer can't steal and ack the resumed run's formatting message
+- resuming a run that rested at status `started` (e.g. step mode) now re-activates extensions on the redelivered `run.start`, so an activate-driven io output mapping is no longer silently dropped
+
+## v18.0.11 - 2026-07-25
+
+### Additions
+
+- `UserTask`, `ManualTask`, `SendTask`, `BusinessRuleTask` (and `TextAnnotation`, `Group`, `Category`) are now distinct exports with their own behaviour instead of aliases of `SignalTask`/`ServiceTask`/`Dummy`. Each spec-named behaviour owns its prototype and inherits the shared base (`UserTaskBehaviour`/`ManualTaskBehaviour` from `SignalTaskBehaviour`; `SendTaskBehaviour`/`BusinessRuleTaskBehaviour` from `ServiceTaskBehaviour`), so overriding one no longer leaks into its base or siblings
+
+### Fixes
+
+- add missing root type exports for `Timers`, `Dummy`, `TextAnnotation`, and `Group`
+- `Definition#getPostponed` and `DefinitionExecution#getPostponed` now type their return as `IApi<Activity>[]` instead of a single `IApi<Activity>`
+- drop redundant root `index.d.ts`; the bare `bpmn-elements` import resolves through the package `types` field in every resolution mode
+- stop publishing the hand-written type sources (`types/bundle.d.ts`, `types/bundle-errors.d.ts`, `types/interfaces.d.ts`); their declarations are already bundled into the shipped `types/index.d.ts`
+
+## v18.0.10 - 2026-07-23
+
+### Additions
+
+- new exported `ServiceFunction` type declares injected `environment.services` functions with the calling element as `this`, e.g. `services: { myService(this) { return this.id; } }`. `EnvironmentOptions.services`, the `Environment#services` accessor, `getServiceByName`, and `addService` now use it
+
+## v18.0.9 - 2026-07-18
+
+### Fixes
+
+- [`dts-buddy@0.8.3`](https://www.npmjs.com/package/dts-buddy) now strips internal properties, only prototyped methods remaining
+
+## v18.0.8 - 2026-07-17
+
+### Fixes
+
+- drop legacy in-flight `flow.discard`/`flow.looped` tokens on recover. States saved before the "no flow discards" change could carry a discarded-flow token on the process activity queue; the current runtime never pops it from `postponed`, so recovering such a state stranded process completion
+- Type declare Definition run function properly
+
+## v18.0.7 - 2026-07-16
+
+### Additions
+
+- `AdHocSubProcess` is now executed by a dedicated `AdHocSubProcessBehaviour`. Honours `ordering` — Parallel (default) or Sequential, arming one inner start branch at a time — and a `completionCondition` that completes the sub process and cancels the still-running instances, unless `cancelRemainingInstances` is `false`
+- catch, boundary, and start events with `parallelMultiple="true"` now wait for **all** their event definitions to fire before completing
+
+## v18.0.6 - 2026-07-06
+
+### Bug fixes
+
+- seeding `environment.variables.input` for a sub process or called process now merges onto any inherited `input` instead of replacing it, so a nested or multi-instance sub process no longer clobbers the parent's `input` namespace (e.g. an inner loop can still resolve `${environment.variables.input.collection}` after the outer loop seeds its context)
+
+## v18.0.5 - 2026-07-01
+
+### Additions
+
+- extension lifecycle hooks `activate` and `deactivate` are now optional; an extension that returns an object without either receives a no-op stub, so returning only one hook — or an object with neither — no longer throws
+- the shared `resolve` function on signal-, message-, and escalation reference elements now declares an exported `ResolvedReference` return type
+
+## v18.0.4 - 2026-06-28
+
+### Additions
+
+- called processes and sub processes are seeded with `environment.variables.input` from their input. A multi-instance call activity or sub process passes its loop context (`isSequential`, `index`, `cardinality` and the item under the `elementVariable` name) as `input`
+
+## v18.0.3 - 2026-06-27
+
+### Additions
+
+- process extensions are now activated and deactivated accordingly
+- process run messages can be formatted, including asynchronously, the same way as activities
+
+## v18.0.2 - 2026-06-24
+
+- Refactor catching `LinkEventDefinition` trigger and start event init handling. Both publishes `activity.init` to reserve process attention and queues messages on inbound queue that are eventually handled
+- a throwing link `IntermediateThrowEvent` is no longer marked as an end (`isEnd`); it has no outbound sequence flows but continues at its catch, so a shake no longer records it as a dead-end sequence
+- a converging parallel gateway now publishes `activity.shake.converge` during a shake (previously `activity.shake.join`), matching the runtime `activity.converge` event
+
+## v18.0.1 - 2026-06-13
+
+### Fixes
+
+- enforce mutually exclusive start events on recover: a recovered state where one entry point already won, or a legacy state serialized before the `isStartEvent` flag existed, now correctly discards the start events still left armed instead of resuming them as live entry points
+
+### Additions
+
+- serialized definition state is stamped with a `stateVersion` tracking the package major; recovering an older major (legacy unstamped states are treated as version `0`) triggers migrations such as the start event reconciliation above
+
+## v18.0.0 - 2026-06-11
+
+Refactor parallel converging and forking gateways, and treat multiple start events as mutually exclusive entry points. As a result of the parallel gateway keeping track of peers there is no need for discarding a sequence flows.
+
+### Breaking
+
+- `Definition` must be called with `new`
+- parallel gateways now enter execution as soon as the first inbound sequence flow is touched
+- removed discarding of outbound sequence flows altogether — activities no longer publish flow discards, so sequence flow and downstream activity `discarded` counters stay at `0`
+- IntermediateCatchEvent cannot be used as a starting element, or it can but will not be started by default
+- non-gateway activities end the branch when all conditional outbound flows are falsy instead of throwing; only exclusive and inclusive gateways still require a taken or default flow
+- multiple start events are mutually exclusive entry points — the first start event to fire discards the others still waiting to be triggered, so two start events can no longer both run (e.g. into a parallel join, or a joining task taken twice)
+- start activities that are not start events (e.g. a starting receive task, or an activity without an inbound flow) are no longer auto-discarded; they are genuine tokens that must be signalled or completed
+- shake sequence has changed
+
+### Additions
+
+- expose throwable error classes via new `bpmn-elements/errors` subpath: `import { ActivityError, BpmnError, RunError } from 'bpmn-elements/errors'`
+- activity readonly property `isParallelGateway` indicating a parallel gateway
+- activity readonly property `isStartEvent` indicating a start event
+- new activity event `activity.converge` published when parallel gateway is executed
+- fix link event definition shaking
+- fix `Activity.recover()` to return the activity when called without state
+- a condition expression resolving to a service function is now invoked with the flow execution scope, supporting sync (return) and async (callback) results
+- converging parallel gateways cache their discovered peers per runtime instance, skipping the start-up shake on repeated runs (loops, stop/resume); the cache is rebuilt on recover
+
+### Types
+
+- runtime types are now generated from JSDoc and bundled with [dts-buddy](https://github.com/Rich-Harris/dts-buddy)
+- expose `isStartEvent` and `isParallelGateway` on the `Activity` interface
 
 ## v17.3.0 - 2025-12-03
 

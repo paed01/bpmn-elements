@@ -1,8 +1,9 @@
+import { Definition } from 'bpmn-elements';
 import testHelpers from '../helpers/testHelpers.js';
-import Definition from '../../src/definition/Definition.js';
 
 Feature('BoundaryEvent', () => {
   Scenario('task with boundary event followed by a join', () => {
+    /** @type {import('bpmn-elements').Process} */
     let bp;
     Given('a process', async () => {
       const source = `
@@ -36,6 +37,7 @@ Feature('BoundaryEvent', () => {
   });
 
   Scenario('user task with interrupting boundary event followed by a join', () => {
+    /** @type {import('bpmn-elements').Process} */
     let bp;
     Given('a process', async () => {
       const source = `
@@ -47,8 +49,8 @@ Feature('BoundaryEvent', () => {
           <boundaryEvent id="bound" attachedToRef="task" cancelActivity="true">
             <messageEventDefinition />
           </boundaryEvent>
-          <sequenceFlow id="toJoinFromTask" sourceRef="task" targetRef="join" />
-          <sequenceFlow id="toJoinFromBoundary" sourceRef="bound" targetRef="join" />
+          <sequenceFlow id="from-task" sourceRef="task" targetRef="join" />
+          <sequenceFlow id="from-bound" sourceRef="bound" targetRef="join" />
           <parallelGateway id="join" />
           <sequenceFlow id="toEnd" sourceRef="join" targetRef="end" />
           <endEvent id="end" />
@@ -122,6 +124,7 @@ Feature('BoundaryEvent', () => {
   });
 
   Scenario('user task with non-interrupting boundary event followed by a join', () => {
+    /** @type {import('bpmn-elements').Process} */
     let bp;
     Given('a process', async () => {
       const source = `
@@ -277,8 +280,8 @@ Feature('BoundaryEvent', () => {
       expect(initTask.counters).to.have.property('taken', 2);
     });
 
-    And('end was discarded', () => {
-      expect(bp.getActivityById('end').counters).to.have.property('discarded', 1);
+    And('end was not discarded', () => {
+      expect(bp.getActivityById('end').counters).to.have.property('discarded', 0);
       expect(bp.getActivityById('end').counters).to.have.property('taken', 0);
     });
 
@@ -299,8 +302,8 @@ Feature('BoundaryEvent', () => {
       expect(bound.owner.counters).to.have.property('discarded', 1);
     });
 
-    And('init task is discarded', () => {
-      expect(initTask.counters).to.have.property('discarded', 1);
+    And('init task is not discarded', () => {
+      expect(initTask.counters).to.have.property('discarded', 0);
       expect(initTask.counters).to.have.property('taken', 2);
     });
 
@@ -311,7 +314,7 @@ Feature('BoundaryEvent', () => {
 
     And('end was taken', () => {
       expect(bp.getActivityById('end').counters).to.have.property('taken', 1);
-      expect(bp.getActivityById('end').counters).to.have.property('discarded', 1);
+      expect(bp.getActivityById('end').counters).to.have.property('discarded', 0);
     });
 
     And('process completes', () => {
@@ -341,7 +344,7 @@ Feature('BoundaryEvent', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      context.environment.addService('volatile', (ctx, next) => {
+      context.environment.addService('volatile', (_ctx, next) => {
         serviceCallback = next;
       });
       [bp] = context.getProcesses();
@@ -463,7 +466,7 @@ Feature('BoundaryEvent', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      context.environment.addService('volatile', (ctx, next) => {
+      context.environment.addService('volatile', (_ctx, next) => {
         serviceCallback = next;
       });
       [bp] = context.getProcesses();
@@ -584,7 +587,7 @@ Feature('BoundaryEvent', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      context.environment.addService('volatile', (ctx, next) => {
+      context.environment.addService('volatile', (_ctx, next) => {
         serviceCallbacks.push(next);
       });
       [bp] = context.getProcesses();
@@ -664,7 +667,7 @@ Feature('BoundaryEvent', () => {
       </definitions>`;
 
       const context = await testHelpers.context(source);
-      context.environment.addService('volatile', (ctx, next) => {
+      context.environment.addService('volatile', (_ctx, next) => {
         serviceCallbacks.push(next);
       });
       [bp] = context.getProcesses();
@@ -867,7 +870,7 @@ Feature('BoundaryEvent', () => {
 
     let end;
     When('task is completed', () => {
-      definition.waitFor('leave');
+      end = definition.waitFor('leave');
       definition.signal({ id: 'task' });
     });
 

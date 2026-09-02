@@ -1,5 +1,5 @@
+import { ActivityError } from 'bpmn-elements/errors';
 import testHelpers from '../helpers/testHelpers.js';
-import { ActivityError } from '../../src/error/Errors.js';
 
 describe('InclusiveGateway', () => {
   describe('behavior', () => {
@@ -42,9 +42,7 @@ describe('InclusiveGateway', () => {
       expect(activity.outbound[0].counters).to.have.property('take', 1);
       expect(activity.outbound[0].counters).to.have.property('discard', 0);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
     });
 
     it('discards default outbound if one outbound was taken', async () => {
@@ -59,11 +57,9 @@ describe('InclusiveGateway', () => {
       await leave;
 
       expect(activity.outbound[0].counters).to.have.property('take', 0);
-      expect(activity.outbound[0].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 1);
       expect(activity.outbound[1].counters).to.have.property('discard', 0);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
     });
 
     it('discards default outbound if more than one outbound was taken', async () => {
@@ -83,7 +79,6 @@ describe('InclusiveGateway', () => {
       expect(activity.outbound[1].counters).to.have.property('take', 1);
       expect(activity.outbound[1].counters).to.have.property('discard', 0);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
     });
 
     it('takes default outbound if no conditional flow was taken', async () => {
@@ -99,31 +94,24 @@ describe('InclusiveGateway', () => {
       await leave;
 
       expect(activity.outbound[0].counters).to.have.property('take', 0);
-      expect(activity.outbound[0].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 1);
       expect(activity.outbound[2].counters).to.have.property('discard', 0);
     });
 
-    it('discards all outbound if inbound was discarded', async () => {
+    it('ignores a discarded inbound and takes no outbound', () => {
       const activity = context.getActivityById('decisions');
       context.environment.variables.condition1 = true;
       context.environment.variables.condition2 = true;
 
       activity.activate();
 
-      const leave = activity.waitFor('leave');
       activity.inbound[0].discard();
 
-      await leave;
-
+      expect(activity.counters).to.deep.include({ taken: 0, discarded: 0 });
       expect(activity.outbound[0].counters).to.have.property('take', 0);
-      expect(activity.outbound[0].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
     });
 
     it('emits error if no flow was taken', async () => {

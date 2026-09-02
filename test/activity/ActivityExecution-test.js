@@ -1,12 +1,11 @@
-import Activity from '../../src/activity/Activity.js';
-import ActivityExecution from '../../src/activity/ActivityExecution.js';
-import Environment from '../../src/Environment.js';
-import EventDefinitionExecution from '../../src/eventDefinitions/EventDefinitionExecution.js';
-import LoopCharacteristics from '../../src/tasks/LoopCharacteristics.js';
-import SequenceFlow from '../../src/flows/SequenceFlow.js';
+import {
+  Activity,
+  ActivityExecution,
+  EventDefinitionExecution,
+  MultiInstanceLoopCharacteristics as LoopCharacteristics,
+} from 'bpmn-elements';
+import { SequenceFlow } from 'bpmn-elements/flows';
 import testHelpers from '../helpers/testHelpers.js';
-
-const Logger = testHelpers.Logger;
 
 describe('ActivityExecution', () => {
   describe('execute(executeMessage)', () => {
@@ -19,12 +18,14 @@ describe('ActivityExecution', () => {
     it('requires executeMessage content', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
+      // @ts-expect-error message content is required
       expect(() => execution.execute({})).to.throw(/requires execution id/i);
     });
 
     it('requires executeMessage content executionId', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
+      // @ts-expect-error content executionId is required
       expect(() => execution.execute({ content: {} })).to.throw(/requires execution id/i);
     });
 
@@ -32,12 +33,15 @@ describe('ActivityExecution', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let message;
       activity.broker.subscribeOnce('execution', 'execute.#', (_, msg) => {
         message = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -62,12 +66,15 @@ describe('ActivityExecution', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let startMessage;
       activity.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
         startMessage = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -76,6 +83,8 @@ describe('ActivityExecution', () => {
           state: 'start',
         },
       });
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
       let completeMessage;
       activity.broker.subscribeOnce('execution', 'execution.#', (_, msg) => {
@@ -99,12 +108,15 @@ describe('ActivityExecution', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let startMessage;
       activity.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
         startMessage = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -113,6 +125,8 @@ describe('ActivityExecution', () => {
           state: 'start',
         },
       });
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
       let completeMessage;
       activity.broker.subscribeOnce('execution', 'execution.#', (_, msg) => {
@@ -140,9 +154,10 @@ describe('ActivityExecution', () => {
 
     it('ignores complete message if not postponed', () => {
       const activity = createActivity();
-      activity.isParallelGateway = true;
 
       const execution = new ActivityExecution(activity);
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
       let startMessage;
       activity.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
@@ -150,6 +165,7 @@ describe('ActivityExecution', () => {
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -158,6 +174,8 @@ describe('ActivityExecution', () => {
           state: 'start',
         },
       });
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
       let completeMessage;
       activity.broker.subscribeOnce('execution', 'execution.#', (_, msg) => {
@@ -183,12 +201,15 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let discardMessage;
       activity.broker.subscribeOnce('api', 'activity.discard.*', (_, msg) => {
         discardMessage = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -228,12 +249,15 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let discardMessage;
       activity.broker.subscribeOnce('api', 'activity.discard.*', (_, msg) => {
         discardMessage = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -274,6 +298,7 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -316,6 +341,7 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -363,6 +389,7 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -405,6 +432,7 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -454,6 +482,7 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -488,10 +517,40 @@ describe('ActivityExecution', () => {
     });
   });
 
+  describe('passthrough(executeMessage)', () => {
+    it('executes if called before any source is set up', () => {
+      const activity = createActivity();
+      const execution = new ActivityExecution(activity);
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      let message;
+      activity.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
+        message = msg;
+      });
+
+      execution.passthrough({
+        // @ts-expect-error type coverage
+        fields: {},
+        content: {
+          id: 'activity',
+          type: 'task',
+          executionId: 'activity_1',
+          state: 'start',
+        },
+      });
+
+      expect(message, 'execute.start published').to.be.ok;
+      expect(execution.source, 'source instantiated').to.be.ok;
+    });
+  });
+
   describe('discard()', () => {
     it('discards execution', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
 
       let message;
       activity.broker.subscribeOnce('execution', 'execution.discard', (_, msg) => {
@@ -499,6 +558,7 @@ describe('ActivityExecution', () => {
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -539,6 +599,7 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -597,6 +658,7 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -643,6 +705,7 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -685,6 +748,7 @@ describe('ActivityExecution', () => {
       const executeQ = activity.broker.getQueue('execute-q');
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -707,6 +771,7 @@ describe('ActivityExecution', () => {
       let stoppedSubExecution = false;
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -760,6 +825,7 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -796,6 +862,7 @@ describe('ActivityExecution', () => {
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -829,6 +896,7 @@ describe('ActivityExecution', () => {
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -882,6 +950,7 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -928,6 +997,7 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -976,6 +1046,7 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -1026,6 +1097,7 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -1089,6 +1161,7 @@ describe('ActivityExecution', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -1105,6 +1178,7 @@ describe('ActivityExecution', () => {
       const activity = createActivity();
       const execution = new ActivityExecution(activity);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -1140,6 +1214,7 @@ describe('ActivityExecution', () => {
       const executeMessages = [];
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {
           routingKey: 'run.execute',
         },
@@ -1154,6 +1229,7 @@ describe('ActivityExecution', () => {
       execution.stop();
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {
           routingKey: 'run.execute',
           redelivered: true,
@@ -1188,6 +1264,7 @@ describe('ActivityExecution', () => {
 
       const executeMessages = [];
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {
           routingKey: 'run.execute',
         },
@@ -1202,6 +1279,7 @@ describe('ActivityExecution', () => {
       execution.stop();
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {
           routingKey: 'run.execute',
           redelivered: true,
@@ -1241,6 +1319,7 @@ describe('ActivityExecution', () => {
 
       const executeMessages = [];
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {
           routingKey: 'run.execute',
         },
@@ -1257,6 +1336,7 @@ describe('ActivityExecution', () => {
       activity.broker.getQueue('execute-q').purge();
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {
           routingKey: 'run.execute',
           redelivered: true,
@@ -1302,12 +1382,15 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeOnce('execution', 'execution.completed', (_, msg) => {
         completeMsg = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -1361,6 +1444,8 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeTmp(
         'execution',
@@ -1372,6 +1457,7 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -1419,12 +1505,15 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeOnce('execution', 'execution.completed', (_, msg) => {
         completeMsg = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -1473,6 +1562,8 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeTmp(
         'execution',
@@ -1484,6 +1575,7 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -1536,12 +1628,15 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeOnce('execution', 'execution.completed', (_, msg) => {
         completeMsg = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -1606,12 +1701,15 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let errorMsg;
       task.broker.subscribeOnce('execution', 'execution.error', (_, msg) => {
         errorMsg = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -1682,12 +1780,15 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let discardMsg;
       task.broker.subscribeOnce('execution', 'execution.discard', (_, msg) => {
         discardMsg = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -1738,12 +1839,15 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeOnce('execution', 'execution.completed', (_, msg) => {
         completeMsg = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -1796,6 +1900,7 @@ describe('ActivityExecution', () => {
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -1844,6 +1949,7 @@ describe('ActivityExecution', () => {
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
@@ -1897,6 +2003,8 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeTmp(
         'execution',
@@ -1908,11 +2016,13 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
           type: 'event',
           executionId: 'activity_1',
+          // @ts-expect-error type coverage
           parent: {
             id: 'theProcess',
           },
@@ -1934,6 +2044,7 @@ describe('ActivityExecution', () => {
 
       function Behaviour(activity) {
         const eventDefinitionExecution = new EventDefinitionExecution(activity, [
+          // @ts-expect-error type coverage
           {
             type: 'messageeventdef',
             execute() {},
@@ -1962,6 +2073,8 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeTmp(
         'execution',
@@ -1973,11 +2086,13 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
           type: 'event',
           executionId: 'activity_1',
+          // @ts-expect-error type coverage
           parent: {
             id: 'theProcess',
           },
@@ -2002,10 +2117,12 @@ describe('ActivityExecution', () => {
 
       function Behaviour(activity) {
         const eventDefinitionExecution = new EventDefinitionExecution(activity, [
+          // @ts-expect-error type coverage
           {
             type: 'messageeventdef1',
             execute() {},
           },
+          // @ts-expect-error type coverage
           {
             type: 'messageeventdef2',
             execute() {},
@@ -2034,6 +2151,8 @@ describe('ActivityExecution', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
       let completeMsg;
       task.broker.subscribeTmp(
         'execution',
@@ -2045,12 +2164,14 @@ describe('ActivityExecution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
           type: 'event',
           executionId: 'activity_1',
           message: 3,
+          // @ts-expect-error type coverage
           parent: {
             id: 'theProcess',
           },
@@ -2076,10 +2197,12 @@ describe('ActivityExecution', () => {
 
       function Behaviour(activity) {
         const eventDefinitionExecution = new EventDefinitionExecution(activity, [
+          // @ts-expect-error type coverage
           {
             type: 'messageeventdef1',
             execute() {},
           },
+          // @ts-expect-error type coverage
           {
             type: 'messageeventdef2',
             execute() {},
@@ -2101,12 +2224,14 @@ describe('ActivityExecution', () => {
       const execution = new ActivityExecution(activity);
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
           type: 'task',
           executionId: 'activity_1',
           state: 'start',
+          // @ts-expect-error type coverage
           parent: {
             id: 'theProcess',
           },
@@ -2129,18 +2254,21 @@ describe('ActivityExecution', () => {
       const execution = new ActivityExecution(activity);
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'activity',
           type: 'task',
           executionId: 'activity_1',
           state: 'start',
+          // @ts-expect-error type coverage
           parent: {
             id: 'theProcess',
           },
         },
       });
       expect(
+        // @ts-expect-error type coverage
         execution.getApi({
           content: {
             executionId: 'activity_2',
@@ -2167,6 +2295,7 @@ describe('ActivityExecution', () => {
         );
 
         execution.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'activity',
@@ -2194,11 +2323,11 @@ describe('ActivityExecution', () => {
   });
 });
 
+/**
+ * @param {any} [Behaviour]
+ * @returns {import('bpmn-elements').Activity}
+ */
 function createActivity(Behaviour) {
-  const environment = new Environment({
-    Logger,
-  });
-
   return new Activity(
     Behaviour || ActivityBehaviour,
     {
@@ -2209,17 +2338,14 @@ function createActivity(Behaviour) {
         type: 'process',
       },
     },
-    {
-      environment,
+    testHelpers.emptyContext({
       getInboundSequenceFlows() {
-        return [new SequenceFlow({ id: 'flow', sourceId: 'task', targetId: 'end', parent: { id: 'process1' } }, { environment })];
+        return [{ Behaviour: SequenceFlow, id: 'flow', sourceId: 'task', targetId: 'end', parent: { id: 'process1' } }];
       },
       getOutboundSequenceFlows() {
         return [];
       },
-      loadExtensions() {},
-      getInboundAssociations() {},
-    }
+    })
   );
 
   function ActivityBehaviour({ broker }) {

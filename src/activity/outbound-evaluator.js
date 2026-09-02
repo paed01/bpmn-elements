@@ -1,14 +1,31 @@
 import { ActivityError } from '../error/Errors.js';
 import { cloneMessage } from '../messageHelper.js';
 
+/**
+ * Outbound evaluator
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').SequenceFlow[]} outboundFlows
+ */
 export function OutboundEvaluator(activity, outboundFlows) {
   this.activity = activity;
   this.broker = activity.broker;
   const flows = (this.outboundFlows = outboundFlows.slice());
-  const defaultFlowIdx = flows.findIndex(({ isDefault }) => isDefault);
-  if (defaultFlowIdx > -1) {
-    const [defaultFlow] = flows.splice(defaultFlowIdx, 1);
-    flows.push(defaultFlow);
+  const targets = (this.targets = new Map());
+
+  if (outboundFlows.length === 1) {
+    targets.set(outboundFlows[0].targetId, [flows[0]]);
+  } else if (outboundFlows.length > 1) {
+    for (const flow of outboundFlows) {
+      if (flow.isDefault) {
+        flows.splice(flows.indexOf(flow), 1);
+        flows.push(flow);
+      }
+      if (!targets.has(flow.targetId)) {
+        targets.set(flow.targetId, [flow]);
+      } else {
+        targets.get(flow.targetId).push(flow);
+      }
+    }
   }
 
   this._onEvaluated = this.onEvaluated.bind(this);
@@ -39,7 +56,7 @@ OutboundEvaluator.prototype.evaluate = function evaluate(fromMessage, discardRes
   return this.evaluateFlow(flows.shift());
 };
 
-OutboundEvaluator.prototype.onEvaluated = function onEvaluated(routingKey, message) {
+OutboundEvaluator.prototype.onEvaluated = function onEvaluated(_routingKey, message) {
   const content = message.content;
   const { id: flowId, action, evaluationId } = message.content;
   const args = this.evaluateArgs;
@@ -99,7 +116,7 @@ OutboundEvaluator.prototype.completed = function completed(err) {
 
   if (err) return callback(err);
 
-  if (!takenCount && this.outboundFlows.length) {
+  if (!takenCount && this.outboundFlows.length && fromMessage.content.requireOutbound) {
     const nonTakenError = new ActivityError(`<${this.activity.id}> no conditional flow taken`, fromMessage);
     return callback(nonTakenError);
   }

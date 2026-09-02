@@ -6,71 +6,77 @@ Object.defineProperty(exports, "__esModule", {
 Object.defineProperty(exports, "CancelEventDefinition", {
   enumerable: true,
   get: function () {
-    return _CancelEventDefinition.default;
+    return _CancelEventDefinition.CancelEventDefinition;
   }
 });
 Object.defineProperty(exports, "CompensateEventDefinition", {
   enumerable: true,
   get: function () {
-    return _CompensateEventDefinition.default;
+    return _CompensateEventDefinition.CompensateEventDefinition;
   }
 });
 Object.defineProperty(exports, "ConditionalEventDefinition", {
   enumerable: true,
   get: function () {
-    return _ConditionalEventDefinition.default;
+    return _ConditionalEventDefinition.ConditionalEventDefinition;
   }
 });
 Object.defineProperty(exports, "ErrorEventDefinition", {
   enumerable: true,
   get: function () {
-    return _ErrorEventDefinition.default;
+    return _ErrorEventDefinition.ErrorEventDefinition;
   }
 });
 Object.defineProperty(exports, "EscalationEventDefinition", {
   enumerable: true,
   get: function () {
-    return _EscalationEventDefinition.default;
+    return _EscalationEventDefinition.EscalationEventDefinition;
+  }
+});
+Object.defineProperty(exports, "EventDefinitionExecution", {
+  enumerable: true,
+  get: function () {
+    return _EventDefinitionExecution.EventDefinitionExecution;
   }
 });
 Object.defineProperty(exports, "LinkEventDefinition", {
   enumerable: true,
   get: function () {
-    return _LinkEventDefinition.default;
+    return _LinkEventDefinition.LinkEventDefinition;
   }
 });
 Object.defineProperty(exports, "MessageEventDefinition", {
   enumerable: true,
   get: function () {
-    return _MessageEventDefinition.default;
+    return _MessageEventDefinition.MessageEventDefinition;
   }
 });
 Object.defineProperty(exports, "SignalEventDefinition", {
   enumerable: true,
   get: function () {
-    return _SignalEventDefinition.default;
+    return _SignalEventDefinition.SignalEventDefinition;
   }
 });
 Object.defineProperty(exports, "TerminateEventDefinition", {
   enumerable: true,
   get: function () {
-    return _TerminateEventDefinition.default;
+    return _TerminateEventDefinition.TerminateEventDefinition;
   }
 });
 Object.defineProperty(exports, "TimerEventDefinition", {
   enumerable: true,
   get: function () {
-    return _TimerEventDefinition.default;
+    return _TimerEventDefinition.TimerEventDefinition;
   }
 });
-var _CancelEventDefinition = _interopRequireDefault(require("./CancelEventDefinition.js"));
-var _CompensateEventDefinition = _interopRequireDefault(require("./CompensateEventDefinition.js"));
-var _ConditionalEventDefinition = _interopRequireDefault(require("./ConditionalEventDefinition.js"));
-var _ErrorEventDefinition = _interopRequireDefault(require("./ErrorEventDefinition.js"));
-var _EscalationEventDefinition = _interopRequireDefault(require("./EscalationEventDefinition.js"));
-var _LinkEventDefinition = _interopRequireDefault(require("./LinkEventDefinition.js"));
-var _MessageEventDefinition = _interopRequireDefault(require("./MessageEventDefinition.js"));
-var _SignalEventDefinition = _interopRequireDefault(require("./SignalEventDefinition.js"));
-var _TerminateEventDefinition = _interopRequireDefault(require("./TerminateEventDefinition.js"));
-var _TimerEventDefinition = _interopRequireDefault(require("./TimerEventDefinition.js"));
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+var _CancelEventDefinition = require("./CancelEventDefinition.js");
+var _CompensateEventDefinition = require("./CompensateEventDefinition.js");
+var _ConditionalEventDefinition = require("./ConditionalEventDefinition.js");
+var _ErrorEventDefinition = require("./ErrorEventDefinition.js");
+var _EscalationEventDefinition = require("./EscalationEventDefinition.js");
+var _LinkEventDefinition = require("./LinkEventDefinition.js");
+var _MessageEventDefinition = require("./MessageEventDefinition.js");
+var _SignalEventDefinition = require("./SignalEventDefinition.js");
+var _TerminateEventDefinition = require("./TerminateEventDefinition.js");
+var _TimerEventDefinition = require("./TimerEventDefinition.js");
+var _EventDefinitionExecution = require("./EventDefinitionExecution.js");

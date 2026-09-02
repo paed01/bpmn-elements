@@ -3,14 +3,23 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.InclusiveGateway = InclusiveGateway;
 exports.InclusiveGatewayBehaviour = InclusiveGatewayBehaviour;
-exports.default = InclusiveGateway;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
+var _Activity = require("../activity/Activity.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+/**
+ * Inclusive gateway
+ * @param {import('#types').ActivityDefinition} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function InclusiveGateway(activityDef, context) {
-  return new _Activity.default(InclusiveGatewayBehaviour, activityDef, context);
+  return new _Activity.Activity(InclusiveGatewayBehaviour, activityDef, context);
 }
+
+/**
+ * Inclusive gateway behaviour
+ * @param {import('#types').Activity} activity
+ */
 function InclusiveGatewayBehaviour(activity) {
   const {
     id,
@@ -21,8 +30,15 @@ function InclusiveGatewayBehaviour(activity) {
   this.type = type;
   this.broker = broker;
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 InclusiveGatewayBehaviour.prototype.execute = function execute({
   content
 }) {
-  this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content));
+  this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
+    requireOutbound: true
+  }));
 };

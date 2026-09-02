@@ -1,6 +1,11 @@
 import { cloneContent, shiftParent } from '../messageHelper.js';
 
-export default function TerminateEventDefinition(activity, eventDefinition) {
+/**
+ * Terminate event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').SerializableElement} eventDefinition
+ */
+export function TerminateEventDefinition(activity, eventDefinition) {
   const { id, broker, environment } = activity;
   const { type = 'TerminateEventDefinition' } = eventDefinition;
 
@@ -11,6 +16,9 @@ export default function TerminateEventDefinition(activity, eventDefinition) {
   this.logger = environment.Logger(type.toLowerCase());
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 TerminateEventDefinition.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
 

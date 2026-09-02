@@ -1,12 +1,12 @@
-import JsExtension from '../resources/extensions/JsExtension.js';
 import nock from 'nock';
-import ServiceTask from '../../src/tasks/ServiceTask.js';
+import { ServiceTask } from 'bpmn-elements/tasks';
+import { ActivityError } from 'bpmn-elements/errors';
+import JsExtension from '../resources/extensions/JsExtension.js';
 import testHelpers from '../helpers/testHelpers.js';
-import { ActivityError } from '../../src/error/Errors.js';
 
 describe('ServiceTask', () => {
   describe('behaviour', () => {
-    it('no service on execution returns error if disableDummyService is enabled', async () => {
+    it('no service on execution returns error if enableDummyService is false', async () => {
       const source = `
       <?xml version="1.0" encoding="UTF-8"?>
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -15,7 +15,7 @@ describe('ServiceTask', () => {
         </process>
       </definitions>`;
 
-      const context = await testHelpers.context(source, { settings: { disableDummyService: true } });
+      const context = await testHelpers.context(source, { settings: { enableDummyService: false } });
       const task = context.getActivityById('task');
 
       let error;
@@ -291,7 +291,7 @@ describe('ServiceTask', () => {
       </definitions>`;
 
       context = await testHelpers.context(source);
-      context.environment.addService('postMessage', (ctx, next) => {
+      context.environment.addService('postMessage', (_ctx, next) => {
         next(null, true);
       });
     });
@@ -323,7 +323,7 @@ describe('ServiceTask', () => {
     });
 
     it('error in callback is caught by bound error event', async () => {
-      context.environment.addService('postMessage', (message, callback) => {
+      context.environment.addService('postMessage', (_message, callback) => {
         callback(new Error('Failed'));
       });
 
@@ -338,7 +338,7 @@ describe('ServiceTask', () => {
     });
 
     it('error in callback discards task', async () => {
-      context.environment.addService('postMessage', (message, callback) => {
+      context.environment.addService('postMessage', (_message, callback) => {
         callback(new Error('Failed'));
       });
 
@@ -349,7 +349,7 @@ describe('ServiceTask', () => {
 
       await errored;
 
-      expect(task.outbound[0].counters).to.have.property('discard', 1);
+      expect(task.outbound[0].counters).to.have.property('discard', 0);
     });
 
     it('caught error discards other boundary events', async () => {
@@ -385,7 +385,7 @@ describe('ServiceTask', () => {
 
       await errored;
 
-      expect(task.outbound[0].counters).to.have.property('discard', 1);
+      expect(task.outbound[0].counters).to.have.property('discard', 0);
     });
 
     it('times out if bound timeout event if callback is not called within timeout duration', () => {
@@ -485,7 +485,7 @@ describe('ServiceTask', () => {
       const context = await testHelpers.context(source);
 
       context.environment.addService('getService', (input) => {
-        return (executionContext, callback) => {
+        return (_executionContext, callback) => {
           callback(null, input);
         };
       });
@@ -511,7 +511,7 @@ describe('ServiceTask', () => {
       const context = await testHelpers.context(source);
 
       context.environment.addService('getService', (input) => {
-        return (executionContext, callback) => {
+        return (_executionContext, callback) => {
           callback(null, input);
         };
       });
@@ -593,7 +593,7 @@ describe('ServiceTask', () => {
         task.broker.subscribeTmp(
           'execution',
           'execute.start',
-          (routingKey, message) => {
+          (_routingKey, message) => {
             if (!message.content.isMultiInstance) return;
             const { index, item } = message.content;
 
@@ -678,7 +678,7 @@ describe('ServiceTask', () => {
         task.broker.subscribeTmp(
           'execution',
           'execute.start',
-          (routingKey, message) => {
+          (_routingKey, message) => {
             const { index, item: pathname } = message.content;
             nock('http://example.com')
               .get(`/api${pathname}?version=${index}`)

@@ -1,10 +1,9 @@
-import Environment from '../src/Environment.js';
-import { Timers } from '../src/Timers.js';
+import { Environment, Timers } from 'bpmn-elements';
 
 describe('Environment', () => {
   describe('ctor', () => {
-    it('sets settings', () => {
-      expect(new Environment()).to.have.property('settings').that.eql({});
+    it('defaults settings to an empty object', () => {
+      expect(new Environment()).to.have.property('settings').that.deep.equal({});
       expect(
         new Environment({
           settings: {
@@ -35,21 +34,25 @@ describe('Environment', () => {
     it('throws if scripts interface validation is not met', () => {
       expect(() => {
         new Environment({
+          // @ts-expect-error
           scripts: {},
         });
       }).to.throw(/scripts.register is not a function/);
       expect(() => {
         new Environment({
+          // @ts-expect-error
           scripts: { register: {} },
         });
       }).to.throw(/scripts.register is not a function/);
       expect(() => {
         new Environment({
+          // @ts-expect-error
           scripts: { register() {} },
         });
       }).to.throw(/scripts.getScript is not a function/);
       expect(() => {
         new Environment({
+          // @ts-expect-error
           scripts: { register() {}, getScript: 1 },
         });
       }).to.throw(/scripts.getScript is not a function/);
@@ -58,12 +61,14 @@ describe('Environment', () => {
     it('throws if extensions interface validation is not met', () => {
       expect(() => {
         new Environment({
+          // @ts-expect-error
           extensions: 1,
         });
       }).to.throw(/extensions is not an object/);
       expect(() => {
         new Environment({
           extensions: {
+            // @ts-expect-error
             js: {},
           },
         });
@@ -120,6 +125,7 @@ describe('Environment', () => {
     it('sets options, variables, and output', () => {
       const extensions = {};
       let environment = new Environment({
+        // @ts-expect-error
         extensions,
         variables: {
           beforeState: true,
@@ -129,6 +135,7 @@ describe('Environment', () => {
         },
       });
 
+      // @ts-expect-error
       environment = environment.recover({
         variables: {
           init: 1,
@@ -160,6 +167,7 @@ describe('Environment', () => {
         },
       });
 
+      // @ts-expect-error
       environment = environment.recover({
         variables: {
           init: 1,
@@ -175,6 +183,7 @@ describe('Environment', () => {
     it('recovers without state', () => {
       const extensions = {};
       let environment = new Environment({
+        // @ts-expect-error
         extensions,
         services: {
           request() {},
@@ -193,6 +202,7 @@ describe('Environment', () => {
     it('recovers variables only', () => {
       const extensions = {};
       let environment = new Environment({
+        // @ts-expect-error
         extensions,
         services: {
           request() {},
@@ -202,6 +212,7 @@ describe('Environment', () => {
         },
       });
 
+      // @ts-expect-error
       environment = environment.recover({
         variables: { beforeState: false },
       });
@@ -212,6 +223,7 @@ describe('Environment', () => {
     it('recovers with empty object', () => {
       const extensions = {};
       let environment = new Environment({
+        // @ts-expect-error
         extensions,
         services: {
           request() {},
@@ -221,6 +233,7 @@ describe('Environment', () => {
         },
       });
 
+      // @ts-expect-error
       environment = environment.recover({});
 
       expect(environment.variables).to.have.property('beforeState', true);
@@ -245,8 +258,10 @@ describe('Environment', () => {
       expect(environment.variables).to.eql({ before: true });
       environment.assignVariables(null);
       expect(environment.variables).to.eql({ before: true });
+      // @ts-expect-error
       environment.assignVariables('null');
       expect(environment.variables).to.eql({ before: true });
+      // @ts-expect-error
       environment.assignVariables(1);
       expect(environment.variables).to.eql({ before: true });
     });
@@ -270,8 +285,10 @@ describe('Environment', () => {
       expect(environment.settings).to.eql({ before: true });
       environment.assignSettings(null);
       expect(environment.settings).to.eql({ before: true });
+      // @ts-expect-error
       environment.assignSettings('null');
       expect(environment.settings).to.eql({ before: true });
+      // @ts-expect-error
       environment.assignSettings(1);
       expect(environment.settings).to.eql({ before: true });
     });
@@ -293,15 +310,19 @@ describe('Environment', () => {
         listener,
         settings,
         variables,
+        // @ts-ignore
         expressions,
         timers: {
+          // @ts-ignore
           register() {},
+          // @ts-ignore
           setTimeout() {},
           clearTimeout() {},
         },
         services: {
           get() {},
         },
+        // @ts-ignore
         Logger() {},
         output: {
           result: true,
@@ -373,6 +394,7 @@ describe('Environment', () => {
       const environment = new Environment({
         scripts: {
           register() {},
+          // @ts-ignore
           getScript() {},
         },
       });
@@ -381,18 +403,23 @@ describe('Environment', () => {
         register() {},
         getScript() {},
       };
+      // @ts-ignore
       const clone = environment.clone({ scripts: myScripts });
 
       expect(clone.scripts).to.be.ok.and.an('object').that.equal(myScripts);
     });
 
     it('allows override of expressions', () => {
-      const expressions = {};
+      const expressions = {
+        resolveExpression() {},
+      };
       const environment = new Environment({
         expressions,
       });
 
-      const newExpressions = {};
+      const newExpressions = {
+        resolveExpression() {},
+      };
       const clone = environment.clone({ expressions: newExpressions });
 
       expect(clone.expressions).to.be.ok.and.an('object').that.equal(newExpressions);
@@ -437,7 +464,9 @@ describe('Environment', () => {
             return true;
           },
         },
-        Logger() {},
+        Logger() {
+          return { debug() {}, warn() {}, error() {} };
+        },
       });
 
       expect(environment.resolveExpression('${environment.settings.init}')).to.be.true;
@@ -473,7 +502,9 @@ describe('Environment', () => {
             return true;
           },
         },
-        Logger() {},
+        Logger() {
+          return { debug() {}, warn() {}, error() {} };
+        },
       });
 
       expect(environment.resolveExpression('${environment.settings.init}')).to.eql([
@@ -489,6 +520,7 @@ describe('Environment', () => {
       const { timers } = new Environment({
         timers: new Timers({
           setTimeout() {},
+          clearTimeout() {},
         }),
       });
 
@@ -500,6 +532,7 @@ describe('Environment', () => {
     });
 
     it('removes timer from executing when timed out', () => {
+      /** @type {any} */
       let onTimeout;
       const { timers } = new Environment({
         timers: new Timers({
@@ -519,6 +552,7 @@ describe('Environment', () => {
     });
 
     it('callback called twice is ignored', () => {
+      /** @type {any} */
       let onTimeout;
       const { timers } = new Environment({
         timers: new Timers({
@@ -742,6 +776,7 @@ describe('Environment', () => {
 
         expect(timers.executing).to.have.length(1);
 
+        // @ts-ignore
         timer.clearTimeout({});
 
         expect(timers.executing).to.have.length(1);
@@ -751,16 +786,19 @@ describe('Environment', () => {
     describe('custom timer', () => {
       it('throws if interface not met', () => {
         expect(() => {
+          // @ts-expect-error
           new Environment({ timers: {} });
         }).to.throw(/register is not a function/);
 
         expect(() => {
+          // @ts-expect-error
           new Environment({ timers: { register: 1 } });
         }).to.throw(/register is not a function/);
 
         expect(() => {
           new Environment({
             timers: {
+              // @ts-expect-error
               register() {},
             },
           });
@@ -769,7 +807,9 @@ describe('Environment', () => {
         expect(() => {
           new Environment({
             timers: {
+              // @ts-expect-error
               register() {},
+              // @ts-expect-error
               setTimeout() {},
             },
           });

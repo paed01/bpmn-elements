@@ -1,4 +1,4 @@
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import testHelpers from '../helpers/testHelpers.js';
 
 Feature('Shaking', () => {
@@ -30,9 +30,9 @@ Feature('Shaking', () => {
     When('definition is ran', () => {
       definition.broker.subscribeTmp(
         'event',
-        'activity.shake.end',
-        (_, msg) => {
-          messages.push(msg);
+        '*.shake.*',
+        (routingKey) => {
+          messages.push(routingKey);
         },
         { noAck: true }
       );
@@ -40,24 +40,10 @@ Feature('Shaking', () => {
       definition.run();
     });
 
-    Then('the start events are shaken', () => {
-      expect(messages).to.have.length(2);
-    });
-
-    And('execution sequence is presented in messages', () => {
-      expect(messages[0].content).to.have.property('sequence').that.is.an('array');
-      const sequence1 = messages[0].content.sequence;
-      expect(sequence1[0]).to.have.property('id', 'start1');
-      expect(sequence1[1]).to.have.property('id', 'from12end');
-      expect(sequence1[2]).to.have.property('id', 'end');
-      expect(sequence1).to.have.length(3);
-
-      expect(messages[1].content).to.have.property('sequence').that.is.an('array');
-      const sequence2 = messages[1].content.sequence;
-      expect(sequence2[0]).to.have.property('id', 'start2');
-      expect(sequence2[1]).to.have.property('id', 'from22end');
-      expect(sequence2[2]).to.have.property('id', 'end');
-      expect(sequence2).to.have.length(3);
+    // Multiple start events no longer trigger a graph shake on run; they are torn down on
+    // completion directly. The shake remains available on demand.
+    Then('the start events are not shaken on run', () => {
+      expect(messages, messages.join()).to.have.length(0);
     });
 
     let start1, start2;
@@ -65,6 +51,25 @@ Feature('Shaking', () => {
       [start1, start2] = definition.getPostponed();
       expect(start1).to.have.property('id', 'start1');
       expect(start2).to.have.property('id', 'start2');
+    });
+
+    let result;
+    When('definition is shaken on demand', () => {
+      result = definition.shake();
+    });
+
+    Then('execution sequence is presented for each start event', () => {
+      const sequence1 = result.start1[0].sequence;
+      expect(sequence1[0]).to.have.property('id', 'start1');
+      expect(sequence1[1]).to.have.property('id', 'from12end');
+      expect(sequence1[2]).to.have.property('id', 'end');
+      expect(sequence1).to.have.length(3);
+
+      const sequence2 = result.start2[0].sequence;
+      expect(sequence2[0]).to.have.property('id', 'start2');
+      expect(sequence2[1]).to.have.property('id', 'from22end');
+      expect(sequence2[2]).to.have.property('id', 'end');
+      expect(sequence2).to.have.length(3);
     });
   });
 
@@ -103,18 +108,9 @@ Feature('Shaking', () => {
     When('definition is ran', () => {
       definition.broker.subscribeTmp(
         'event',
-        'activity.shake.end',
-        (_, msg) => {
-          messages.push(msg);
-        },
-        { noAck: true }
-      );
-
-      definition.broker.subscribeTmp(
-        'event',
-        'flow.shake.loop',
-        (_, msg) => {
-          messages.push(msg);
+        '*.shake.*',
+        (routingKey) => {
+          messages.push(routingKey);
         },
         { noAck: true }
       );
@@ -122,22 +118,26 @@ Feature('Shaking', () => {
       definition.run();
     });
 
-    Then('execution sequence is presented in first start event shake end message', () => {
-      expect(messages).to.have.length(3);
+    Then('the start events are not shaken on run', () => {
+      expect(messages, messages.join()).to.have.length(0);
+    });
 
-      expect(messages[0].content).to.have.property('sequence').that.is.an('array');
-      const sequence = messages[0].content.sequence;
+    let result;
+    When('definition is shaken on demand', () => {
+      result = definition.shake();
+    });
+
+    Then('execution sequence is presented for the first start event', () => {
+      const sequence = result.start1[0].sequence;
       expect(sequence[0]).to.have.property('id', 'start1');
       expect(sequence[1]).to.have.property('id', 'from12end');
       expect(sequence[2]).to.have.property('id', 'end');
       expect(sequence).to.have.length(3);
     });
 
-    And('execution sequence is presented in second start event shake end message', () => {
-      expect(messages).to.have.length(3);
-
-      expect(messages[1].content).to.have.property('sequence').that.is.an('array');
-      const sequence = messages[1].content.sequence;
+    And('execution sequence is presented for the second start event', () => {
+      expect(result.start2[0]).to.have.property('isLooped', false);
+      const sequence = result.start2[0].sequence;
       expect(sequence[0]).to.have.property('id', 'start2');
       expect(sequence[1]).to.have.property('id', 'from22Task');
       expect(sequence[2]).to.have.property('id', 'task');
@@ -148,10 +148,11 @@ Feature('Shaking', () => {
       expect(sequence).to.have.length(7);
     });
 
-    And('second start event loop sequence is presented in shake loop message', () => {
-      expect(messages[2].content).to.have.property('sequence').that.is.an('array');
-      const sequence = messages[2].content.sequence;
-      expect(sequence).to.have.length(8);
+    And('second start event loop sequence is presented', () => {
+      expect(result.start2[1]).to.have.property('isLooped', true);
+      const sequence = result.start2[1].sequence;
+
+      expect(sequence).to.have.length(7);
       expect(sequence[0]).to.have.property('id', 'start2');
       expect(sequence[1]).to.have.property('id', 'from22Task');
       expect(sequence[2]).to.have.property('id', 'task');
@@ -159,7 +160,6 @@ Feature('Shaking', () => {
       expect(sequence[4]).to.have.property('id', 'gateway');
       expect(sequence[5]).to.have.property('id', 'back2Task');
       expect(sequence[6]).to.have.property('id', 'task');
-      expect(sequence[7]).to.have.property('id', 'fromTask2Gateway');
     });
 
     let start1, start2;
@@ -281,8 +281,7 @@ Feature('Shaking', () => {
           expect(sequence.sequence[4]).to.have.property('id', 'gateway');
           expect(sequence.sequence[5]).to.have.property('id', 'back2Task');
           expect(sequence.sequence[6]).to.have.property('id', 'task');
-          expect(sequence.sequence[7]).to.have.property('id', 'fromTask2Gateway');
-          expect(sequence.sequence).to.have.length(8);
+          expect(sequence.sequence).to.have.length(7);
         });
 
         And('event messsages are forwarded from event activity', () => {
@@ -306,6 +305,7 @@ Feature('Shaking', () => {
           expect(sequence.sequence).to.have.length(3);
 
           sequence = result.gateway[1];
+
           expect(sequence.sequence[0]).to.have.property('id', 'gateway');
           expect(sequence.sequence[1]).to.have.property('id', 'back2Task');
           expect(sequence.sequence[2]).to.have.property('id', 'task');
@@ -551,6 +551,7 @@ Feature('Shaking', () => {
 
         And('sub process sequence is included', () => {
           const subProcess = result.start[0].sequence[2];
+
           expect(subProcess).to.be.an('object').with.property('sequence').that.is.an('object').with.property('task');
           expect(subProcess.sequence.task).to.be.an('array').with.length(1);
           expect(subProcess.sequence.task[0]).to.have.property('sequence').that.is.an('array').with.length(3);
@@ -623,6 +624,198 @@ Feature('Shaking', () => {
         expect(shakeEndMessage.content.sequence[3]).to.have.property('id', 'to-end');
         expect(shakeEndMessage.content.sequence[4]).to.have.property('id', 'end');
       });
+    });
+  });
+
+  Scenario('a process with paired link throw and catch', () => {
+    let definition;
+    Given('a process where a link throw is followed by a link catch leading to the end', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-throw" sourceRef="start" targetRef="throw" />
+          <intermediateThrowEvent id="throw">
+            <linkEventDefinition name="LINKA" />
+          </intermediateThrowEvent>
+          <intermediateCatchEvent id="catch">
+            <linkEventDefinition name="LINKA" />
+          </intermediateCatchEvent>
+          <sequenceFlow id="from-catch" sourceRef="catch" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      const context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    const linkedMessages = [];
+    const shakeEndMessages = [];
+    let result;
+    When('definition is shaken from start', () => {
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.shake.linked',
+        (_, msg) => {
+          linkedMessages.push(msg);
+        },
+        { noAck: true }
+      );
+
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.shake.end',
+        (_, msg) => {
+          shakeEndMessages.push(msg);
+        },
+        { noAck: true }
+      );
+
+      result = definition.shake('start');
+    });
+
+    Then('the catch publishes a linked-shake response with the chain back to the throw', () => {
+      expect(linkedMessages).to.have.length(1);
+      const ids = linkedMessages[0].content.sequence.map((s) => s.id);
+      expect(ids).to.include.members(['throw', 'catch']);
+      expect(linkedMessages[0].content).to.have.property('isLinked', true);
+      expect(linkedMessages[0].content).to.have.property('targetId', 'catch');
+    });
+
+    And('the shake walk continues past the catch and reaches the end event', () => {
+      const reachedEnd = shakeEndMessages.some((m) => m.content.sequence.some((s) => s.id === 'end'));
+      expect(reachedEnd, 'shake.end with end in sequence').to.be.true;
+      const endSequence = shakeEndMessages.map((m) => m.content.sequence.map((s) => s.id)).find((ids) => ids.includes('end'));
+      expect(endSequence).to.include.members(['catch', 'from-catch', 'end']);
+    });
+
+    And('the shake result for start contains a sequence reaching the end via the link', () => {
+      expect(result).to.have.property('start').that.is.an('array');
+      const sequenceIds = result.start.map((s) => s.sequence.map((e) => e.id));
+      expect(sequenceIds.some((ids) => ids.includes('throw') && ids.includes('catch') && ids.includes('end'))).to.be.true;
+    });
+
+    And('the throwing link event is not marked as an end', () => {
+      expect(definition.getActivityById('throw')).to.have.property('isEnd', false);
+    });
+
+    And('the throw does not terminate a shake sequence as a dead end', () => {
+      for (const msg of shakeEndMessages) {
+        const ids = msg.content.sequence.map((s) => s.id);
+        expect(ids[ids.length - 1], ids.join()).to.not.equal('throw');
+      }
+      const resultIds = result.start.map((s) => s.sequence.map((e) => e.id));
+      expect(
+        resultIds.every((ids) => ids[ids.length - 1] !== 'throw'),
+        resultIds.join(' | ')
+      ).to.be.true;
+    });
+  });
+
+  Scenario('a converging parallel gateway discovers its peers once and reuses them', () => {
+    let definition;
+    Given('a process with a parallel fork and join', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-fork" sourceRef="start" targetRef="fork" />
+          <parallelGateway id="fork" />
+          <sequenceFlow id="to-t1" sourceRef="fork" targetRef="t1" />
+          <sequenceFlow id="to-t2" sourceRef="fork" targetRef="t2" />
+          <task id="t1" />
+          <task id="t2" />
+          <sequenceFlow id="from-t1" sourceRef="t1" targetRef="join" />
+          <sequenceFlow id="from-t2" sourceRef="t2" targetRef="join" />
+          <parallelGateway id="join" />
+          <sequenceFlow id="to-end" sourceRef="join" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+      definition = new Definition(await testHelpers.context(source));
+    });
+
+    let shakes;
+    function countShakes() {
+      shakes = 0;
+      definition.broker.subscribeTmp('event', 'activity.shake.end', () => (shakes += 1), { noAck: true, consumerTag: '_test-shakes' });
+    }
+
+    When('definition is ran the first time', async () => {
+      countShakes();
+      const left = definition.waitFor('leave');
+      definition.run();
+      await left;
+      definition.broker.cancel('_test-shakes');
+    });
+
+    Then('the converging gateway discovered its peers by shaking', () => {
+      expect(shakes, 'shake on first run').to.be.above(0);
+    });
+
+    And('the parallel join completed', () => {
+      expect(definition.getActivityById('join').counters).to.have.property('taken', 1);
+    });
+
+    When('the same definition is ran again', async () => {
+      countShakes();
+      const left = definition.waitFor('leave');
+      definition.run();
+      await left;
+      definition.broker.cancel('_test-shakes');
+    });
+
+    Then('the cached peers are reused without shaking again', () => {
+      expect(shakes, 'no shake on second run').to.equal(0);
+    });
+
+    And('the parallel join completed again', () => {
+      expect(definition.getActivityById('join').counters).to.have.property('taken', 2);
+    });
+  });
+
+  Scenario('a shaken converging parallel gateway emits activity.shake.converge', () => {
+    let definition;
+    Given('a process with a parallel fork and join', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-fork" sourceRef="start" targetRef="fork" />
+          <parallelGateway id="fork" />
+          <sequenceFlow id="to-t1" sourceRef="fork" targetRef="t1" />
+          <sequenceFlow id="to-t2" sourceRef="fork" targetRef="t2" />
+          <task id="t1" />
+          <task id="t2" />
+          <sequenceFlow id="from-t1" sourceRef="t1" targetRef="join" />
+          <sequenceFlow id="from-t2" sourceRef="t2" targetRef="join" />
+          <parallelGateway id="join" />
+          <sequenceFlow id="to-end" sourceRef="join" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+      definition = new Definition(await testHelpers.context(source));
+    });
+
+    const convergeMessages = [];
+    When('definition is shaken from start', () => {
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.shake.converge',
+        (_, msg) => {
+          convergeMessages.push(msg);
+        },
+        { noAck: true }
+      );
+
+      definition.shake('start');
+    });
+
+    Then('each parallel gateway emitted a shake converge event identified by its own id', () => {
+      const joins = convergeMessages.map((m) => m.content.join);
+      expect(joins, joins.join()).to.include('fork');
+      expect(joins, joins.join()).to.include('join');
     });
   });
 });

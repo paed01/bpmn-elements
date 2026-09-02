@@ -1,4 +1,4 @@
-import EventDefinitionExecution from '../../src/eventDefinitions/EventDefinitionExecution.js';
+import { EventDefinitionExecution } from 'bpmn-elements';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { cloneContent } from '../../src/messageHelper.js';
 import { Logger } from '../helpers/testHelpers.js';
@@ -7,6 +7,7 @@ describe('EventDefinitionExecution', () => {
   it('publishes root message with prevent complete instruction when executed', () => {
     const event = getActivity();
 
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -14,12 +15,14 @@ describe('EventDefinitionExecution', () => {
       },
     ]);
 
+    /** @type {import('bpmn-elements').ElementBrokerMessage} */
     let message;
     event.broker.subscribeOnce('execution', 'execute.#', (_, msg) => {
       message = msg;
     });
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {},
       content: {
         id: 'event',
@@ -43,6 +46,7 @@ describe('EventDefinitionExecution', () => {
   it('publishes start definition message when executed', () => {
     const event = getActivity();
 
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -50,12 +54,14 @@ describe('EventDefinitionExecution', () => {
       },
     ]);
 
+    /** @type {import('bpmn-elements').ElementBrokerMessage} */
     let message;
     event.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
       message = msg;
     });
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {},
       content: {
         id: 'event',
@@ -94,6 +100,7 @@ describe('EventDefinitionExecution', () => {
 
   it('publishes no start message if redelivered execute message', () => {
     const event = getActivity();
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -101,19 +108,23 @@ describe('EventDefinitionExecution', () => {
       },
     ]);
 
+    /** @type {import('bpmn-elements').ElementBrokerMessage} */
     let message;
     event.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
       message = msg;
     });
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {
         redelivered: true,
       },
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -126,7 +137,9 @@ describe('EventDefinitionExecution', () => {
   it('executes event definition when executed with event definition start message', () => {
     const event = getActivity();
 
+    /** @type {import('bpmn-elements').ElementBrokerMessage} */
     let executeMessage;
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -136,17 +149,21 @@ describe('EventDefinitionExecution', () => {
       },
     ]);
 
+    /** @type {import('bpmn-elements').ElementBrokerMessage} */
     let startMessage;
     event.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
       startMessage = msg;
     });
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {},
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -167,6 +184,7 @@ describe('EventDefinitionExecution', () => {
 
   it('starts all event definitions', () => {
     const event = getActivity();
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -189,11 +207,14 @@ describe('EventDefinitionExecution', () => {
     );
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {},
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -206,6 +227,7 @@ describe('EventDefinitionExecution', () => {
     expect(messages[0].content).to.have.property('executionId').that.is.ok.and.not.equal('root-execution-id');
     expect(messages[0].content).to.have.property('index', 0);
     expect(messages[0].content).to.have.property('isDefinitionScope', true);
+    // @ts-expect-error type coverage
     expect(messages[0].content).to.have.property('parent').with.property('id', event.id);
     expect(messages[0].content.parent).to.have.property('path').with.length(1);
     expect(messages[0].content.parent.path[0]).to.have.property('id', 'theProcess');
@@ -215,6 +237,7 @@ describe('EventDefinitionExecution', () => {
     expect(messages[1].content).to.have.property('executionId').that.is.ok.and.not.equal('root-execution-id');
     expect(messages[1].content).to.have.property('index', 1);
     expect(messages[1].content).to.have.property('isDefinitionScope', true);
+    // @ts-expect-error type coverage
     expect(messages[1].content).to.have.property('parent').with.property('id', event.id);
     expect(messages[1].content.parent).to.have.property('path').with.length(1);
     expect(messages[1].content.parent.path[0]).to.have.property('id', 'theProcess');
@@ -222,6 +245,7 @@ describe('EventDefinitionExecution', () => {
 
   it('publishes event definition complete message with output to update root scope', () => {
     const event = getActivity();
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -229,6 +253,7 @@ describe('EventDefinitionExecution', () => {
       },
     ]);
 
+    /** @type {import('bpmn-elements').ElementBrokerMessage} */
     let completeMessage;
     event.broker.subscribeTmp(
       'execution',
@@ -250,11 +275,14 @@ describe('EventDefinitionExecution', () => {
     );
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {},
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -274,6 +302,7 @@ describe('EventDefinitionExecution', () => {
 
   it('publishes event definition complete message with message to update root scope', () => {
     const event = getActivity();
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -281,6 +310,7 @@ describe('EventDefinitionExecution', () => {
       },
     ]);
 
+    /** @type {import('bpmn-elements').ElementBrokerMessage} */
     let completeMessage;
     event.broker.subscribeTmp(
       'execution',
@@ -302,11 +332,14 @@ describe('EventDefinitionExecution', () => {
     );
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {},
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -326,6 +359,7 @@ describe('EventDefinitionExecution', () => {
 
   it('completes execution when first event definition completes', () => {
     const event = getActivity();
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:TimerEventDefinition',
@@ -337,6 +371,7 @@ describe('EventDefinitionExecution', () => {
       },
     ]);
 
+    /** @type {import('bpmn-elements').ElementBrokerMessage} */
     let completeMessage;
     event.broker.subscribeTmp(
       'execution',
@@ -358,11 +393,14 @@ describe('EventDefinitionExecution', () => {
     );
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {},
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -383,6 +421,7 @@ describe('EventDefinitionExecution', () => {
   it('doesn´t start second event definition if first completes immediately', () => {
     const event = getActivity();
 
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -416,11 +455,14 @@ describe('EventDefinitionExecution', () => {
     );
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {},
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -434,6 +476,7 @@ describe('EventDefinitionExecution', () => {
   it('doesn´t start second event definition if first is stopped immediately', () => {
     const event = getActivity();
 
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -467,11 +510,14 @@ describe('EventDefinitionExecution', () => {
     );
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {},
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -485,6 +531,7 @@ describe('EventDefinitionExecution', () => {
   it('leaves no lingering listeners when complete', () => {
     const event = getActivity();
 
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -502,11 +549,14 @@ describe('EventDefinitionExecution', () => {
     });
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {},
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -520,7 +570,9 @@ describe('EventDefinitionExecution', () => {
   it('redelivered messages, calls event definition behvaiour execute function', () => {
     const event = getActivity();
 
+    /** @type {import('bpmn-elements').ElementBrokerMessage} */
     let executeMessage;
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -531,13 +583,16 @@ describe('EventDefinitionExecution', () => {
     ]);
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {
         redelivered: true,
       },
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -545,6 +600,7 @@ describe('EventDefinitionExecution', () => {
     });
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {
         routingKey: 'execute.start',
         redelivered: true,
@@ -563,7 +619,9 @@ describe('EventDefinitionExecution', () => {
 
   it('redelivered start event definition message with index that is not found is ignored', () => {
     const event = getActivity();
+    /** @type {import('bpmn-elements').ElementBrokerMessage} */
     let executeMessage;
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -574,13 +632,16 @@ describe('EventDefinitionExecution', () => {
     ]);
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {
         redelivered: true,
       },
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -588,6 +649,7 @@ describe('EventDefinitionExecution', () => {
     });
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {
         routingKey: 'execute.start',
         redelivered: true,
@@ -604,6 +666,7 @@ describe('EventDefinitionExecution', () => {
 
   it('redelivered messages, completes execution when event definition completes', () => {
     const event = getActivity();
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -611,6 +674,7 @@ describe('EventDefinitionExecution', () => {
       },
     ]);
 
+    /** @type {import('bpmn-elements').ElementBrokerMessage} */
     let completeMessage;
     event.broker.subscribeTmp(
       'execution',
@@ -622,13 +686,16 @@ describe('EventDefinitionExecution', () => {
     );
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {
         redelivered: true,
       },
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -636,6 +703,7 @@ describe('EventDefinitionExecution', () => {
     });
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {
         routingKey: 'execute.start',
         redelivered: true,
@@ -661,6 +729,7 @@ describe('EventDefinitionExecution', () => {
 
   it('stop cancels listeners', () => {
     const event = getActivity();
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -672,11 +741,14 @@ describe('EventDefinitionExecution', () => {
     expect(executionExchange).to.have.property('bindingCount', 1);
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {},
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -694,6 +766,7 @@ describe('EventDefinitionExecution', () => {
   it('completed routingKey overrides completed execution routingKey', (done) => {
     const event = getActivity();
     const execution = new EventDefinitionExecution(
+      // @ts-expect-error type coverage
       event,
       [
         {
@@ -715,11 +788,14 @@ describe('EventDefinitionExecution', () => {
     });
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {},
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -730,6 +806,7 @@ describe('EventDefinitionExecution', () => {
   it('non root execute message is ignored', () => {
     const event = getActivity();
 
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -753,10 +830,13 @@ describe('EventDefinitionExecution', () => {
     );
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {},
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -766,9 +846,157 @@ describe('EventDefinitionExecution', () => {
     expect(messages).to.have.length(0);
   });
 
+  describe('parallelMultiple', () => {
+    it('does not complete until every event definition completes', () => {
+      const event = getActivity();
+      // @ts-expect-error type coverage
+      event.behaviour = { parallelMultiple: true };
+      // @ts-expect-error type coverage
+      const execution = new EventDefinitionExecution(event, [
+        { type: 'bpmn:TimerEventDefinition', execute() {} },
+        { type: 'bpmn:MessageEventDefinition', execute() {} },
+      ]);
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+      let completeMessage;
+      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => msg.content.isRootScope && (completeMessage = msg), {
+        noAck: true,
+      });
+
+      const starts = [];
+      event.broker.subscribeTmp('execution', 'execute.start', (_, msg) => starts.push(msg), { noAck: true });
+
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        // @ts-expect-error type coverage
+        content: { id: event.id, isRootScope: true, executionId: 'root-execution-id', parent: { id: 'theProcess' } },
+      });
+
+      expect(starts, 'starts all definitions').to.have.length(2);
+
+      event.broker.publish('execution', 'execute.completed', { ...cloneContent(starts[0].content), output: 1 });
+      expect(completeMessage, 'does not complete on first definition').to.not.be.ok;
+      expect(execution.completed).to.be.false;
+
+      event.broker.publish('execution', 'execute.completed', { ...cloneContent(starts[1].content), output: 2 });
+      expect(completeMessage, 'completes once all definitions complete').to.be.ok;
+      expect(completeMessage.content).to.have.property('isRootScope', true);
+      expect(execution.completed).to.be.true;
+    });
+
+    it('ignores a redelivered duplicate definition completion', () => {
+      const event = getActivity();
+      // @ts-expect-error type coverage
+      event.behaviour = { parallelMultiple: true };
+      // @ts-expect-error type coverage
+      const execution = new EventDefinitionExecution(event, [
+        { type: 'bpmn:TimerEventDefinition', execute() {} },
+        { type: 'bpmn:MessageEventDefinition', execute() {} },
+      ]);
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+      let completeMessage;
+      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => msg.content.isRootScope && (completeMessage = msg), {
+        noAck: true,
+      });
+
+      const starts = [];
+      event.broker.subscribeTmp('execution', 'execute.start', (_, msg) => starts.push(msg), { noAck: true });
+
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        // @ts-expect-error type coverage
+        content: { id: event.id, isRootScope: true, executionId: 'root-execution-id', parent: { id: 'theProcess' } },
+      });
+
+      event.broker.publish('execution', 'execute.completed', { ...cloneContent(starts[0].content), output: 1 });
+      event.broker.publish('execution', 'execute.completed', { ...cloneContent(starts[0].content), output: 1 });
+      expect(completeMessage, 'a duplicate of the same definition does not satisfy the wait').to.not.be.ok;
+
+      event.broker.publish('execution', 'execute.completed', { ...cloneContent(starts[1].content), output: 2 });
+      expect(completeMessage).to.be.ok;
+    });
+
+    it('persists completed definition indices on the root scope for recovery', () => {
+      const event = getActivity();
+      // @ts-expect-error type coverage
+      event.behaviour = { parallelMultiple: true };
+      // @ts-expect-error type coverage
+      const execution = new EventDefinitionExecution(event, [
+        { type: 'bpmn:TimerEventDefinition', execute() {} },
+        { type: 'bpmn:MessageEventDefinition', execute() {} },
+      ]);
+
+      const updates = [];
+      event.broker.subscribeTmp('execution', 'execute.update', (_, msg) => updates.push(msg), { noAck: true });
+
+      const starts = [];
+      event.broker.subscribeTmp('execution', 'execute.start', (_, msg) => starts.push(msg), { noAck: true });
+
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: {},
+        // @ts-expect-error type coverage
+        content: { id: event.id, isRootScope: true, executionId: 'root-execution-id', parent: { id: 'theProcess' } },
+      });
+
+      event.broker.publish('execution', 'execute.completed', { ...cloneContent(starts[0].content), output: 1 });
+
+      const lastUpdate = updates[updates.length - 1];
+      expect(lastUpdate.content).to.have.property('preventComplete', true);
+      expect(lastUpdate.content).to.have.property('completedDefinitions').that.eql([0]);
+    });
+
+    it('seeds already completed definitions from the root content on redelivery', () => {
+      const event = getActivity();
+      // @ts-expect-error type coverage
+      event.behaviour = { parallelMultiple: true };
+      // @ts-expect-error type coverage
+      const execution = new EventDefinitionExecution(event, [
+        { type: 'bpmn:TimerEventDefinition', execute() {} },
+        { type: 'bpmn:MessageEventDefinition', execute() {} },
+      ]);
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+      let completeMessage;
+      event.broker.subscribeTmp('execution', 'execute.completed', (_, msg) => msg.content.isRootScope && (completeMessage = msg), {
+        noAck: true,
+      });
+
+      // Resume: index 0 already fired before the stop, redelivered root carries it.
+      execution.execute({
+        // @ts-expect-error type coverage
+        fields: { redelivered: true },
+        content: {
+          // @ts-expect-error type coverage
+          id: event.id,
+          isRootScope: true,
+          executionId: 'root-execution-id',
+          completedDefinitions: [0],
+          // @ts-expect-error type coverage
+          parent: { id: 'theProcess' },
+        },
+      });
+
+      event.broker.publish('execution', 'execute.completed', {
+        executionId: 'root-execution-id_1',
+        type: 'bpmn:MessageEventDefinition',
+        isDefinitionScope: true,
+        index: 1,
+        output: 2,
+      });
+
+      expect(completeMessage, 'completes once the remaining definition fires after resume').to.be.ok;
+      expect(execution.completed).to.be.true;
+    });
+  });
+
   it('parent complete message stops execution', () => {
     const event = getActivity();
 
+    // @ts-expect-error type coverage
     const execution = new EventDefinitionExecution(event, [
       {
         type: 'bpmn:MessageEventDefinition',
@@ -777,11 +1005,14 @@ describe('EventDefinitionExecution', () => {
     ]);
 
     execution.execute({
+      // @ts-expect-error type coverage
       fields: {},
       content: {
+        // @ts-expect-error type coverage
         id: event.id,
         isRootScope: true,
         executionId: 'root-execution-id',
+        // @ts-expect-error type coverage
         parent: {
           id: 'theProcess',
         },
@@ -789,6 +1020,7 @@ describe('EventDefinitionExecution', () => {
     });
 
     event.broker.publish('execution', 'execute.completed', {
+      // @ts-expect-error type coverage
       id: event.id,
       isRootScope: true,
       executionId: 'root-execution-id',
@@ -800,8 +1032,11 @@ describe('EventDefinitionExecution', () => {
 
 function getActivity() {
   const activity = ActivityBroker();
+  // @ts-expect-error type coverage
   activity.id = 'event';
+  // @ts-expect-error type coverage
   activity.type = 'bpmn:StartEvent';
+  // @ts-expect-error type coverage
   activity.logger = Logger('bpmn:startevent');
 
   return activity;

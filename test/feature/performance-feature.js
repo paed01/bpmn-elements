@@ -1,4 +1,4 @@
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 
@@ -64,6 +64,7 @@ Feature('Performance', () => {
           getScript() {
             return {
               execute(...args) {
+                // @ts-expect-error type coverage
                 return args.pop()();
               },
             };
@@ -98,6 +99,7 @@ Feature('Performance', () => {
           getScript() {
             return {
               execute(...args) {
+                // @ts-expect-error type coverage
                 return args.pop()();
               },
             };

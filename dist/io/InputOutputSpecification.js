@@ -3,11 +3,16 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = IoSpecification;
-var _getPropertyValue = _interopRequireDefault(require("../getPropertyValue.js"));
+exports.IoSpecification = IoSpecification;
 var _shared = require("../shared.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-const kConsuming = Symbol.for('consuming');
+var _constants = require("../constants.js");
+/**
+ * Activity ioSpecification behaviour. Reads bound data objects on enter and writes them on completion.
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').SerializableElement} ioSpecificationDef
+ * @param {import('#types').ContextInstance} context
+ * @satisfies {import('#types').IExtension}
+ */
 function IoSpecification(activity, ioSpecificationDef, context) {
   const {
     id,
@@ -21,20 +26,25 @@ function IoSpecification(activity, ioSpecificationDef, context) {
   this.broker = activity.broker;
   this.context = context;
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} [message]
+ */
 IoSpecification.prototype.activate = function activate(message) {
-  if (this[kConsuming]) return;
+  if (this[_constants.K_CONSUMING]) return;
   if (message?.fields.redelivered && message.fields.routingKey === 'run.start') {
     this._onFormatEnter();
   }
   if (message?.fields.redelivered && message.fields.routingKey === 'run.end') {
     this._onFormatComplete(message);
   }
-  this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {
+  /** @internal @type {import('smqp').Consumer | void} */
+  this[_constants.K_CONSUMING] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), {
     noAck: true
   });
 };
 IoSpecification.prototype.deactivate = function deactivate() {
-  if (this[kConsuming]) this[kConsuming] = this[kConsuming].cancel();
+  if (this[_constants.K_CONSUMING]) this[_constants.K_CONSUMING] = this[_constants.K_CONSUMING].cancel();
 };
 IoSpecification.prototype._onActivityEvent = function onActivityEvent(routingKey, message) {
   const {
@@ -73,7 +83,7 @@ IoSpecification.prototype._onFormatEnter = function onFormatOnEnter() {
       name: ioSource.name
     };
     result.sources.push(source);
-    const dataObjectId = (0, _getPropertyValue.default)(ioSource, 'behaviour.association.source.dataObject.id');
+    const dataObjectId = ioSource.behaviour?.association?.source?.dataObject?.id;
     if (!dataObjectId) return result;
     const dataObject = this.context.getDataObjectById(dataObjectId);
     if (!dataObject) return result;
@@ -118,8 +128,8 @@ IoSpecification.prototype._onFormatEnter = function onFormatOnEnter() {
 };
 IoSpecification.prototype._onFormatComplete = function formatOnComplete(message) {
   const safeType = (0, _shared.brokerSafeId)(this.type).toLowerCase();
-  const messageInputs = (0, _getPropertyValue.default)(message, 'content.ioSpecification.dataInputs');
-  const messageOutputs = (0, _getPropertyValue.default)(message, 'content.output.ioSpecification.dataOutputs') || [];
+  const messageInputs = message.content?.ioSpecification?.dataInputs;
+  const messageOutputs = message.content?.output?.ioSpecification?.dataOutputs || [];
   const dataOutputs = this.behaviour.dataOutputs;
   const broker = this.broker;
   const context = this.context;
@@ -137,7 +147,7 @@ IoSpecification.prototype._onFormatComplete = function formatOnComplete(message)
       value
     };
     result.sources.push(source);
-    const dataObjectId = (0, _getPropertyValue.default)(ioSource, 'behaviour.association.target.dataObject.id');
+    const dataObjectId = ioSource.behaviour?.association?.target?.dataObject?.id;
     if (!dataObjectId) return result;
     const dataObject = context.getDataObjectById(dataObjectId);
     if (!dataObject) return result;
@@ -211,7 +221,7 @@ function read(broker, dataObjectRefs, callback) {
   } of dataObjectRefs) {
     dataObject.read(broker, 'data', 'data.read.');
   }
-  function onDataObjectResponse(routingKey, message) {
+  function onDataObjectResponse(_routingKey, message) {
     const {
       index
     } = dataObjectRefs.find(({
@@ -239,7 +249,7 @@ function write(broker, dataObjectRefs, callback) {
   } of dataObjectRefs) {
     dataObject.write(broker, 'data', 'data.write.', value);
   }
-  function onDataObjectResponse(routingKey, message) {
+  function onDataObjectResponse(_routingKey, message) {
     const idx = dataObjectRefs.findIndex(({
       dataObject
     }) => dataObject.id === message.content.id);

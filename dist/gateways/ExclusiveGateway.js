@@ -3,14 +3,23 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.ExclusiveGateway = ExclusiveGateway;
 exports.ExclusiveGatewayBehaviour = ExclusiveGatewayBehaviour;
-exports.default = ExclusiveGateway;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
+var _Activity = require("../activity/Activity.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+/**
+ * Exclusive gateway
+ * @param {import('#types').ActivityDefinition} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function ExclusiveGateway(activityDef, context) {
-  return new _Activity.default(ExclusiveGatewayBehaviour, activityDef, context);
+  return new _Activity.Activity(ExclusiveGatewayBehaviour, activityDef, context);
 }
+
+/**
+ * Exclusive gateway behaviour
+ * @param {import('#types').Activity} activity
+ */
 function ExclusiveGatewayBehaviour(activity) {
   const {
     id,
@@ -21,10 +30,16 @@ function ExclusiveGatewayBehaviour(activity) {
   this.type = type;
   this.broker = broker;
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 ExclusiveGatewayBehaviour.prototype.execute = function execute({
   content
 }) {
   this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
-    outboundTakeOne: true
+    outboundTakeOne: true,
+    requireOutbound: true
   }));
 };

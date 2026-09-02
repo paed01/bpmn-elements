@@ -1,11 +1,10 @@
-import Environment from '../../src/Environment.js';
-import LoopCharacteristics from '../../src/tasks/LoopCharacteristics.js';
+import { Environment, MultiInstanceLoopCharacteristics as LoopCharacteristics } from 'bpmn-elements';
+import { ActivityError } from 'bpmn-elements/errors';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { Logger } from '../helpers/testHelpers.js';
-import { ActivityError } from '../../src/error/Errors.js';
 
 describe('LoopCharacteristics', () => {
-  let task;
+  /** @type {any} */ let task;
   beforeEach(() => {
     task = ActivityBroker();
     task.id = 'task';
@@ -54,6 +53,7 @@ describe('LoopCharacteristics', () => {
       });
 
       expect(() => {
+        // @ts-expect-error type coverage
         loop.execute({
           content: {
             isRootScope: true,
@@ -84,6 +84,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -125,6 +126,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -157,6 +159,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'task',
@@ -212,6 +215,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -265,6 +269,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -317,6 +322,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -365,6 +371,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -402,6 +409,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -455,6 +463,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -486,6 +495,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -518,6 +528,7 @@ describe('LoopCharacteristics', () => {
         });
 
         loop.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.start',
             redelivered: true,
@@ -562,6 +573,7 @@ describe('LoopCharacteristics', () => {
         });
 
         loop.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.iteration.next',
             redelivered: true,
@@ -605,6 +617,7 @@ describe('LoopCharacteristics', () => {
         });
 
         loop.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.iteration.next',
             redelivered: true,
@@ -646,6 +659,7 @@ describe('LoopCharacteristics', () => {
         });
 
         loop.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.iteration.next',
             redelivered: true,
@@ -710,6 +724,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'task',
@@ -817,6 +832,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -865,6 +881,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'task',
@@ -903,6 +920,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -953,6 +971,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -983,6 +1002,7 @@ describe('LoopCharacteristics', () => {
       });
 
       loop.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           isRootScope: true,
@@ -1015,6 +1035,7 @@ describe('LoopCharacteristics', () => {
         });
 
         loop.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.start',
             redelivered: true,
@@ -1048,6 +1069,7 @@ describe('LoopCharacteristics', () => {
         });
 
         loop.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.iteration.completed',
             redelivered: true,
@@ -1081,6 +1103,7 @@ describe('LoopCharacteristics', () => {
         });
 
         loop.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.iteration.completed',
             redelivered: true,

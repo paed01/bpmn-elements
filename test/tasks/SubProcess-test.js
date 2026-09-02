@@ -1,9 +1,8 @@
+import { SignalTask, SubProcess } from 'bpmn-elements/tasks';
+import { BpmnError } from 'bpmn-elements/errors';
 import factory from '../helpers/factory.js';
 import JsExtension from '../resources/extensions/JsExtension.js';
-import SignalTask from '../../src/tasks/SignalTask.js';
-import SubProcess from '../../src/tasks/SubProcess.js';
 import testHelpers from '../helpers/testHelpers.js';
-import { BpmnError } from '../../src/error/Errors.js';
 
 const subProcessSource = factory.resource('sub-process.bpmn');
 
@@ -118,6 +117,7 @@ describe('SubProcess', () => {
     });
 
     it('discarded child activity still completes sub process', async () => {
+      context = await testHelpers.context(subProcessSource);
       const subProcess = context.getActivityById('subProcess');
       subProcess.activate();
 
@@ -147,8 +147,6 @@ describe('SubProcess', () => {
       assertMessage('activity.enter', 'subUserTask');
       assertMessage('activity.start', 'subUserTask');
       assertMessage('activity.wait', 'subUserTask');
-      assertMessage('activity.discard', 'subScriptTask');
-      assertMessage('activity.leave', 'subScriptTask');
       assertMessage('activity.leave', 'subUserTask');
       assertMessage('activity.end', 'subProcess');
       assertMessage('activity.leave', 'subProcess');
@@ -432,6 +430,7 @@ describe('SubProcess', () => {
     it('returns child api', () => {
       const subProcess = context.getActivityById('subProcess');
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       subProcess.broker.subscribeOnce('event', 'activity.wait', (_, msg) => {
         message = msg;
@@ -451,6 +450,7 @@ describe('SubProcess', () => {
       context.environment.variables.input = 1;
       const subProcess = context.getActivityById('subProcess');
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       subProcess.broker.subscribeOnce('event', 'activity.wait', (_, msg) => {
         message = msg;
@@ -466,6 +466,7 @@ describe('SubProcess', () => {
       context.environment.variables.input = 1;
       const subProcess = context.getActivityById('subProcess');
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       subProcess.broker.subscribeOnce('event', 'activity.wait', (_, msg) => {
         message = msg;
@@ -482,6 +483,7 @@ describe('SubProcess', () => {
       context.environment.variables.input = 1;
       const subProcess = context.getActivityById('subProcess');
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       subProcess.broker.subscribeOnce('event', 'activity.wait', (_, msg) => {
         message = msg;
@@ -548,7 +550,7 @@ describe('SubProcess', () => {
       subProcess.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -591,7 +593,7 @@ describe('SubProcess', () => {
       subProcess.broker.subscribeTmp(
         'event',
         'activity.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }

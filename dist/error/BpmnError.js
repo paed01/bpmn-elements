@@ -3,7 +3,12 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = BpmnErrorActivity;
+exports.BpmnErrorActivity = BpmnErrorActivity;
+/**
+ * BPMN error.
+ * @param {import('#types').SerializableElement} errorDef
+ * @param {import('#types').ContextInstance} context
+ */
 function BpmnErrorActivity(errorDef, context) {
   const {
     id,
@@ -21,11 +26,18 @@ function BpmnErrorActivity(errorDef, context) {
     errorCode: behaviour.errorCode,
     resolve
   };
+
+  /**
+   * @param {import('#types').ElementBrokerMessage} executionMessage
+   * @param {Error} [error]
+   * @returns {import('#types').ResolvedReference & {code?:string}}
+   */
   function resolve(executionMessage, error) {
     const resolveCtx = {
       ...executionMessage,
       error
     };
+    /** @type {{ id?: string; type?: string; messageType: string; name: string; code: string | undefined; inner?: Error }} */
     const result = {
       id,
       type,
@@ -34,6 +46,6 @@ function BpmnErrorActivity(errorDef, context) {
       code: behaviour.errorCode && environment.resolveExpression(behaviour.errorCode, resolveCtx)
     };
     if (error) result.inner = error;
-    return result;
+    return /** @type {import('#types').ResolvedReference & {code?:string}} */result;
   }
 }

@@ -11,7 +11,7 @@ describe('package exports', () => {
   describe('events', () => {
     it('exports expected', async () => {
       const modules = await import(resolve(cwd, pkg.exports['./events'].import));
-      expect(Object.keys(modules)).to.deep.equal([
+      expect(Object.keys(modules)).to.have.same.members([
         'BoundaryEvent',
         'BoundaryEventBehaviour',
         'EndEvent',
@@ -29,7 +29,24 @@ describe('package exports', () => {
   describe('event definitions', () => {
     it('exports expected', async () => {
       const modules = await import(resolve(cwd, pkg.exports['./eventDefinitions'].import));
-      expect(Object.keys(modules)).to.deep.equal([
+      expect(Object.keys(modules)).to.have.same.members([
+        'CancelEventDefinition',
+        'CompensateEventDefinition',
+        'ConditionalEventDefinition',
+        'ErrorEventDefinition',
+        'EscalationEventDefinition',
+        'LinkEventDefinition',
+        'MessageEventDefinition',
+        'SignalEventDefinition',
+        'TerminateEventDefinition',
+        'TimerEventDefinition',
+        'EventDefinitionExecution',
+      ]);
+    });
+
+    it('commonjs exports expected', async () => {
+      const modules = await import(resolve(cwd, pkg.exports['./eventDefinitions'].require));
+      expect(Object.keys(modules)).to.include.members([
         'CancelEventDefinition',
         'CompensateEventDefinition',
         'ConditionalEventDefinition',
@@ -42,35 +59,19 @@ describe('package exports', () => {
         'TimerEventDefinition',
       ]);
     });
-
-    it('commonjs exports expected', async () => {
-      const modules = await import(resolve(cwd, pkg.exports['./eventDefinitions'].require));
-      expect(Object.keys(modules)).to.deep.include(
-        'CancelEventDefinition',
-        'CompensateEventDefinition',
-        'ConditionalEventDefinition',
-        'ErrorEventDefinition',
-        'EscalationEventDefinition',
-        'LinkEventDefinition',
-        'MessageEventDefinition',
-        'SignalEventDefinition',
-        'TerminateEventDefinition',
-        'TimerEventDefinition'
-      );
-    });
   });
 
   describe('flows', () => {
     it('exports expected', async () => {
       const modules = await import(resolve(cwd, pkg.exports['./flows'].import));
-      expect(Object.keys(modules)).to.deep.equal(['Association', 'MessageFlow', 'SequenceFlow']);
+      expect(Object.keys(modules)).to.have.same.members(['Association', 'MessageFlow', 'SequenceFlow']);
     });
   });
 
   describe('gateways', () => {
     it('exports expected', async () => {
       const modules = await import(resolve(cwd, pkg.exports['./gateways'].import));
-      expect(Object.keys(modules)).to.deep.equal([
+      expect(Object.keys(modules)).to.have.same.members([
         'EventBasedGateway',
         'EventBasedGatewayBehaviour',
         'ExclusiveGateway',
@@ -83,16 +84,35 @@ describe('package exports', () => {
     });
   });
 
+  describe('root', () => {
+    it('exports Expressions, the default environment expression handler', async () => {
+      const modules = await import(resolve(cwd, pkg.exports['.'].import));
+
+      expect(modules).to.have.property('Expressions').that.is.a('function');
+
+      const expressions = modules.Expressions();
+      expect(expressions.resolveExpression('${content.id}', { content: { id: 'element_1' } })).to.equal('element_1');
+    });
+  });
+
   describe('tasks', () => {
     it('exports expected', async () => {
       const modules = await import(resolve(cwd, pkg.exports['./tasks'].import));
-      expect(Object.keys(modules)).to.deep.equal([
+      expect(Object.keys(modules)).to.have.same.members([
+        'AdHocSubProcess',
+        'AdHocSubProcessBehaviour',
+        'BusinessRuleTask',
+        'BusinessRuleTaskBehaviour',
         'CallActivity',
         'CallActivityBehaviour',
+        'ManualTask',
+        'ManualTaskBehaviour',
         'ReceiveTask',
         'ReceiveTaskBehaviour',
         'ScriptTask',
         'ScriptTaskBehaviour',
+        'SendTask',
+        'SendTaskBehaviour',
         'ServiceTask',
         'ServiceTaskBehaviour',
         'SignalTask',
@@ -102,6 +122,8 @@ describe('package exports', () => {
         'Task',
         'TaskBehaviour',
         'Transaction',
+        'UserTask',
+        'UserTaskBehaviour',
       ]);
     });
   });

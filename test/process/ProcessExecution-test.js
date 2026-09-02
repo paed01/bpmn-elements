@@ -1,16 +1,14 @@
-import BoundaryEvent from '../../src/events/BoundaryEvent.js';
-import EndEvent from '../../src/events/EndEvent.js';
-import ErrorEventDefinition from '../../src/eventDefinitions/ErrorEventDefinition.js';
-import MessageEventDefinition from '../../src/eventDefinitions/MessageEventDefinition.js';
-import TimerEventDefinition from '../../src/eventDefinitions/TimerEventDefinition.js';
-import ProcessExecution from '../../src/process/ProcessExecution.js';
-import Process from '../../src/process/Process.js';
-import ServiceTask from '../../src/tasks/ServiceTask.js';
-import SequenceFlow from '../../src/flows/SequenceFlow.js';
-import SignalTask from '../../src/tasks/SignalTask.js';
-import StartEvent from '../../src/events/StartEvent.js';
-import SubProcess from '../../src/tasks/SubProcess.js';
-import TerminateEventDefinition from '../../src/eventDefinitions/TerminateEventDefinition.js';
+import { Process, ProcessExecution } from 'bpmn-elements';
+import { BoundaryEvent, EndEvent, StartEvent } from 'bpmn-elements/events';
+import {
+  ErrorEventDefinition,
+  MessageEventDefinition,
+  TerminateEventDefinition,
+  TimerEventDefinition,
+} from 'bpmn-elements/eventDefinitions';
+import { SequenceFlow } from 'bpmn-elements/flows';
+import { ServiceTask, SignalTask, SubProcess } from 'bpmn-elements/tasks';
+
 import testHelpers from '../helpers/testHelpers.js';
 
 describe('Process execution', () => {
@@ -25,6 +23,7 @@ describe('Process execution', () => {
       const bp = createProcess();
       const execution = new ProcessExecution(bp, bp.context);
       expect(() => {
+        // @ts-expect-error content executionId is required
         execution.execute({ content: {} });
       }).to.throw(/requires execution id/i);
     });
@@ -33,12 +32,16 @@ describe('Process execution', () => {
       const bp = createProcess();
       const execution = new ProcessExecution(bp, bp.context);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('execution', 'execute.#', (_, msg) => {
         message = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'parentActivity',
@@ -65,6 +68,7 @@ describe('Process execution', () => {
       const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'parentActivity',
@@ -82,12 +86,16 @@ describe('Process execution', () => {
       const bp = createProcess();
       const execution = new ProcessExecution(bp, bp.context);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('event', 'activity.enter', (_, msg) => {
         message = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -114,12 +122,16 @@ describe('Process execution', () => {
       const bp = createProcess();
       const execution = new ProcessExecution(bp, bp.context);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('execution', 'execute.start', (_, msg) => {
         message = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {
           redelivered: true,
         },
@@ -139,14 +151,19 @@ describe('Process execution', () => {
     it('completes if recovered on executing when all activities are completed', () => {
       const bp = createProcess();
       const execution = new ProcessExecution(bp, bp.context);
+      // @ts-expect-error type coverage
       execution.recover({ status: 'executing' });
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('execution', '#', (_, msg) => {
         message = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {
           redelivered: true,
         },
@@ -177,6 +194,7 @@ describe('Process execution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'parentActivity',
@@ -202,12 +220,16 @@ describe('Process execution', () => {
       const bp = createProcess();
       const execution = new ProcessExecution(bp, bp.context);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('event', 'flow.#', (_, msg) => {
         message = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'parentActivity',
@@ -257,12 +279,16 @@ describe('Process execution', () => {
 
       const execution = new ProcessExecution(bp, bp.context);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       execution.broker.subscribeOnce('execution', 'execution.error.*', (_, msg) => {
         message = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -328,6 +354,7 @@ describe('Process execution', () => {
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -394,6 +421,7 @@ describe('Process execution', () => {
       const end = new Promise((resolve) => execution.broker.subscribeOnce('execution', 'execution.completed.*', resolve));
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -416,6 +444,7 @@ describe('Process execution', () => {
 
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -444,6 +473,7 @@ describe('Process execution', () => {
 
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -465,6 +495,7 @@ describe('Process execution', () => {
 
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -499,6 +530,7 @@ describe('Process execution', () => {
 
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -538,10 +570,11 @@ describe('Process execution', () => {
     it('completes when no pending activities', () => {
       const bp = createProcess();
       const [activity1, activity2] = bp.getActivities();
-      const [sequenceflow] = bp.getSequenceFlows();
+      const [sequenceflow] = /** @type {import('bpmn-elements').SequenceFlow[]} */ (bp.getSequenceFlows());
 
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -589,6 +622,7 @@ describe('Process execution', () => {
 
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -650,6 +684,7 @@ describe('Process execution', () => {
       const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -672,6 +707,7 @@ describe('Process execution', () => {
 
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -706,6 +742,7 @@ describe('Process execution', () => {
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -734,6 +771,7 @@ describe('Process execution', () => {
 
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -788,6 +826,7 @@ describe('Process execution', () => {
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -860,6 +899,7 @@ describe('Process execution', () => {
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -903,6 +943,7 @@ describe('Process execution', () => {
 
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -932,6 +973,7 @@ describe('Process execution', () => {
 
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1005,6 +1047,7 @@ describe('Process execution', () => {
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1062,6 +1105,7 @@ describe('Process execution', () => {
 
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1085,6 +1129,7 @@ describe('Process execution', () => {
       const bp = createProcess();
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1104,6 +1149,7 @@ describe('Process execution', () => {
       const bp = createProcess();
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1134,6 +1180,7 @@ describe('Process execution', () => {
       const bp = createProcess();
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1146,6 +1193,7 @@ describe('Process execution', () => {
       execution.stop();
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {
           redelivered: true,
         },
@@ -1186,6 +1234,7 @@ describe('Process execution', () => {
 
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1195,12 +1244,16 @@ describe('Process execution', () => {
 
       expect(execution).to.have.property('completed', true);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('execution', '#', (_, msg) => {
         message = msg;
       });
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {
           redelivered: true,
         },
@@ -1225,6 +1278,7 @@ describe('Process execution', () => {
 
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1235,15 +1289,20 @@ describe('Process execution', () => {
       expect(execution).to.have.property('completed', true);
 
       const state = execution.getState();
+
       const recoveredExecution = new ProcessExecution(bp, bp.context);
       recoveredExecution.recover(state);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('execution', '#', (_, msg) => {
         message = msg;
       });
 
       recoveredExecution.execute({
+        // @ts-expect-error type coverage
         fields: {
           redelivered: true,
         },
@@ -1268,6 +1327,7 @@ describe('Process execution', () => {
 
       const execution = new ProcessExecution(bp, bp.context);
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1278,15 +1338,20 @@ describe('Process execution', () => {
       expect(execution).to.have.property('completed', true);
 
       const state = execution.getState();
+
       const recoveredExecution = new ProcessExecution(bp, bp.context);
       recoveredExecution.recover(state);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
+
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       bp.broker.subscribeOnce('execution', '#', (_, msg) => {
         message = msg;
       });
 
       recoveredExecution.execute({
+        // @ts-expect-error type coverage
         fields: {
           redelivered: true,
         },
@@ -1309,6 +1374,7 @@ describe('Process execution', () => {
       const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1336,6 +1402,7 @@ describe('Process execution', () => {
       const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1371,6 +1438,7 @@ describe('Process execution', () => {
       const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1388,6 +1456,7 @@ describe('Process execution', () => {
       const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1396,6 +1465,7 @@ describe('Process execution', () => {
       });
 
       const api = execution.getApi({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1413,6 +1483,7 @@ describe('Process execution', () => {
       const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1421,6 +1492,7 @@ describe('Process execution', () => {
       });
 
       const api = execution.getApi({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'task',
@@ -1485,6 +1557,7 @@ describe('Process execution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1562,6 +1635,7 @@ describe('Process execution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1618,6 +1692,7 @@ describe('Process execution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1681,6 +1756,7 @@ describe('Process execution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1738,6 +1814,7 @@ describe('Process execution', () => {
       const execution = new ProcessExecution(bp, bp.context);
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'process1',
@@ -1788,6 +1865,7 @@ describe('Process execution', () => {
       );
 
       execution.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'process1_1',

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="issue-42" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.27.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.21.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="issue-42" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.42.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.21.0">
   <bpmn:process id="Process_0" isExecutable="true">
     <bpmn:startEvent id="start">
       <bpmn:outgoing>to-task1</bpmn:outgoing>
@@ -60,7 +60,7 @@
       <bpmn:incoming>to-fork</bpmn:incoming>
       <bpmn:outgoing>from-fork-1</bpmn:outgoing>
       <bpmn:outgoing>from-fork-2</bpmn:outgoing>
-      <bpmn:outgoing>from-fork-0</bpmn:outgoing>
+      <bpmn:outgoing>to-task6</bpmn:outgoing>
     </bpmn:parallelGateway>
     <bpmn:sequenceFlow id="to-end" sourceRef="join-fork" targetRef="task5" />
     <bpmn:parallelGateway id="join-fork">
@@ -70,7 +70,7 @@
       <bpmn:outgoing>to-end</bpmn:outgoing>
     </bpmn:parallelGateway>
     <bpmn:sequenceFlow id="from-fork-2" sourceRef="fork" targetRef="join-fork" />
-    <bpmn:sequenceFlow id="from-fork-0" sourceRef="fork" targetRef="task6" />
+    <bpmn:sequenceFlow id="to-task6" sourceRef="fork" targetRef="task6" />
     <bpmn:sequenceFlow id="Flow_069q2f5" sourceRef="join-task5" targetRef="end" />
     <bpmn:parallelGateway id="join-task5">
       <bpmn:incoming>from-task5-1</bpmn:incoming>
@@ -97,7 +97,7 @@
     </bpmn:task>
     <bpmn:sequenceFlow id="from-task7" sourceRef="task7" targetRef="join-task5" />
     <bpmn:task id="task6" name="Task 6">
-      <bpmn:incoming>from-fork-0</bpmn:incoming>
+      <bpmn:incoming>to-task6</bpmn:incoming>
       <bpmn:outgoing>from-task6</bpmn:outgoing>
     </bpmn:task>
     <bpmn:sequenceFlow id="from-task6" sourceRef="task6" targetRef="join-fork" />
@@ -122,6 +122,9 @@
         <dc:Bounds x="440" y="80" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0kih3v7_di" bpmnElement="end">
+        <dc:Bounds x="1522" y="209" width="36" height="36" />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_04w1hkt_di" bpmnElement="task4">
         <dc:Bounds x="720" y="187" width="100" height="80" />
         <bpmndi:BPMNLabel />
@@ -129,18 +132,15 @@
       <bpmndi:BPMNShape id="Gateway_08zuvwq_di" bpmnElement="fork">
         <dc:Bounds x="875" y="202" width="50" height="50" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_0kih3v7_di" bpmnElement="end">
-        <dc:Bounds x="1522" y="209" width="36" height="36" />
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Gateway_066xbzk_di" bpmnElement="join-fork">
         <dc:Bounds x="1065" y="202" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_131ybp7_di" bpmnElement="join-task5">
+        <dc:Bounds x="1375" y="202" width="50" height="50" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0utw1c4_di" bpmnElement="task5">
         <dc:Bounds x="1160" y="187" width="100" height="80" />
         <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Gateway_131ybp7_di" bpmnElement="join-task5">
-        <dc:Bounds x="1375" y="202" width="50" height="50" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_0p3zt3z_di" bpmnElement="task7">
         <dc:Bounds x="1260" y="80" width="100" height="80" />
@@ -198,13 +198,17 @@
         <di:waypoint x="925" y="227" />
         <di:waypoint x="1065" y="227" />
       </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_132vt2c_di" bpmnElement="to-end">
+        <di:waypoint x="1115" y="227" />
+        <di:waypoint x="1160" y="227" />
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1vxsjk7_di" bpmnElement="from-fork-2">
         <di:waypoint x="900" y="252" />
         <di:waypoint x="900" y="340" />
         <di:waypoint x="1090" y="340" />
         <di:waypoint x="1090" y="252" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0eqq94a_di" bpmnElement="from-fork-0">
+      <bpmndi:BPMNEdge id="Flow_0eqq94a_di" bpmnElement="to-task6">
         <di:waypoint x="900" y="202" />
         <di:waypoint x="900" y="120" />
         <di:waypoint x="950" y="120" />
@@ -212,10 +216,6 @@
       <bpmndi:BPMNEdge id="Flow_069q2f5_di" bpmnElement="Flow_069q2f5">
         <di:waypoint x="1425" y="227" />
         <di:waypoint x="1522" y="227" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_132vt2c_di" bpmnElement="to-end">
-        <di:waypoint x="1115" y="227" />
-        <di:waypoint x="1160" y="227" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1c79zkk_di" bpmnElement="from-task5-1">
         <di:waypoint x="1260" y="227" />

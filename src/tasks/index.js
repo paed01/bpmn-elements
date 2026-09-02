@@ -1,26 +1,13 @@
-import CallActivity, { CallActivityBehaviour } from './CallActivity.js';
-import ReceiveTask, { ReceiveTaskBehaviour } from './ReceiveTask.js';
-import ScriptTask, { ScriptTaskBehaviour } from './ScriptTask.js';
-import ServiceTask, { ServiceTaskBehaviour } from './ServiceTask.js';
-import SignalTask, { SignalTaskBehaviour } from './SignalTask.js';
-import SubProcess, { SubProcessBehaviour } from './SubProcess.js';
-import Task, { TaskBehaviour } from './Task.js';
-import Transaction from './Transaction.js';
-
-export {
-  CallActivity,
-  CallActivityBehaviour,
-  ReceiveTask,
-  ReceiveTaskBehaviour,
-  ScriptTask,
-  ScriptTaskBehaviour,
-  ServiceTask,
-  ServiceTaskBehaviour,
-  SignalTask,
-  SignalTaskBehaviour,
-  SubProcess,
-  SubProcessBehaviour,
-  Task,
-  TaskBehaviour,
-  Transaction,
-};
+export { AdHocSubProcess, AdHocSubProcessBehaviour } from './AdHocSubProcess.js';
+export { BusinessRuleTask, BusinessRuleTaskBehaviour } from './BusinessRuleTask.js';
+export { CallActivity, CallActivityBehaviour } from './CallActivity.js';
+export { ManualTask, ManualTaskBehaviour } from './ManualTask.js';
+export { ReceiveTask, ReceiveTaskBehaviour } from './ReceiveTask.js';
+export { ScriptTask, ScriptTaskBehaviour } from './ScriptTask.js';
+export { SendTask, SendTaskBehaviour } from './SendTask.js';
+export { ServiceTask, ServiceTaskBehaviour } from './ServiceTask.js';
+export { SignalTask, SignalTaskBehaviour } from './SignalTask.js';
+export { SubProcess, SubProcessBehaviour } from './SubProcess.js';
+export { Task, TaskBehaviour } from './Task.js';
+export { Transaction } from './Transaction.js';
+export { UserTask, UserTaskBehaviour } from './UserTask.js';

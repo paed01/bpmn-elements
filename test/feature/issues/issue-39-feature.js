@@ -1,4 +1,4 @@
-import { Definition, SequenceFlow } from '../../../src/index.js';
+import { Definition, SequenceFlow } from 'bpmn-elements';
 import testHelpers from '../../helpers/testHelpers.js';
 
 const source = `
@@ -73,9 +73,15 @@ Feature('Issue 39 - resolve SequenceFlow expression promise', () => {
       expect(definition.getActivityById('takenend').counters).to.deep.equal({ taken: 1, discarded: 0 });
     });
 
-    And('discarded default and the other one', () => {
-      expect(definition.getActivityById('defaultend').counters, 'default').to.deep.equal({ taken: 0, discarded: 1 });
-      expect(definition.getActivityById('theotherone').counters, 'the other one').to.deep.equal({ taken: 0, discarded: 1 });
+    And('neither took nor discarded default and the other one', () => {
+      expect(definition.getActivityById('defaultend').counters, 'default').to.deep.equal({
+        taken: 0,
+        discarded: 0,
+      });
+      expect(definition.getActivityById('theotherone').counters, 'the other one').to.deep.equal({
+        taken: 0,
+        discarded: 0,
+      });
     });
   });
 });

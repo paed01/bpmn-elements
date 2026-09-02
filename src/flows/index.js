@@ -1,5 +1,3 @@
-import Association from './Association.js';
-import MessageFlow from './MessageFlow.js';
-import SequenceFlow from './SequenceFlow.js';
-
-export { Association, MessageFlow, SequenceFlow };
+export { Association } from './Association.js';
+export { MessageFlow } from './MessageFlow.js';
+export { SequenceFlow } from './SequenceFlow.js';

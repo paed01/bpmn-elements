@@ -3,8 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = TerminateEventDefinition;
+exports.TerminateEventDefinition = TerminateEventDefinition;
 var _messageHelper = require("../messageHelper.js");
+/**
+ * Terminate event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').SerializableElement} eventDefinition
+ */
 function TerminateEventDefinition(activity, eventDefinition) {
   const {
     id,
@@ -20,6 +25,10 @@ function TerminateEventDefinition(activity, eventDefinition) {
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 TerminateEventDefinition.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const throwContent = (0, _messageHelper.cloneContent)(executeContent, {

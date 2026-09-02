@@ -1,4 +1,4 @@
-import { Definition } from '../../../src/index.js';
+import { Definition } from 'bpmn-elements';
 import testHelpers from '../../helpers/testHelpers.js';
 import factory from '../../helpers/factory.js';
 
@@ -6,7 +6,7 @@ const source = factory.resource('issue-31.bpmn');
 const sourceParallelJoin = factory.resource('issue-31-cm.bpmn');
 
 Feature('Issue 31 - Error handling on save and resume', () => {
-  function makeRequestServiceSync(message, callback) {
+  function makeRequestServiceSync(_message, callback) {
     callback(
       {
         name: 'requestError',

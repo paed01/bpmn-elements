@@ -1,19 +1,19 @@
 {
-  "include": ["src/**/*", "types"],
+  "include": ["src/**/*", "test/**/*", "types"],
   "compilerOptions": {
     "emitDeclarationOnly": true,
     "sourceMap": false,
-    "rootDir": "src",
-    "lib": ["es2017"],
-    "target": "es2017",
+    "rootDir": ".",
+    "lib": ["es2020"],
+    "target": "es2020",
     "outDir": "./tmp/ignore",
     "declaration": true,
     "noEmitOnError": true,
     "noErrorTruncation": true,
     "allowJs": true,
     "checkJs": false,
-    "module": "esnext",
-    "moduleResolution": "node",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "resolveJsonModule": false,
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -21,9 +21,9 @@
     "noImplicitThis": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "typeRoots": ["./node_modules/@types"],
+    "types": ["node"],
     "paths": {
-      "types": ["./types/types.js"]
+      "#types": ["./types/interfaces.d.ts"]
     }
   }
 }

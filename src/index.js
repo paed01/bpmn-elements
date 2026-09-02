@@ -1,26 +1,45 @@
-import Activity from './activity/Activity.js';
-import BpmnError from './error/BpmnError.js';
-import Context from './Context.js';
-import DataObject from './io/EnvironmentDataObject.js';
-import DataStore from './io/EnvironmentDataStore.js';
-import DataStoreReference from './io/EnvironmentDataStoreReference.js';
-import Definition from './definition/Definition.js';
-import Dummy from './activity/Dummy.js';
-import Environment from './Environment.js';
-import Escalation from './activity/Escalation.js';
-import InputOutputSpecification from './io/InputOutputSpecification.js';
-import Lane from './process/Lane.js';
-import LoopCharacteristics from './tasks/LoopCharacteristics.js';
-import Message from './activity/Message.js';
-import Process from './process/Process.js';
-import Properties from './io/Properties.js';
-import ServiceImplementation from './tasks/ServiceImplementation.js';
-import Signal from './activity/Signal.js';
-import StandardLoopCharacteristics from './tasks/StandardLoopCharacteristics.js';
+import { Activity } from './activity/Activity.js';
+import { ActivityExecution } from './activity/ActivityExecution.js';
+import { BpmnErrorActivity as BpmnError } from './error/BpmnError.js';
+import { Context } from './Context.js';
+import { EnvironmentDataObject as DataObject } from './io/EnvironmentDataObject.js';
+import { EnvironmentDataStore as DataStore } from './io/EnvironmentDataStore.js';
+import { EnvironmentDataStoreReference as DataStoreReference } from './io/EnvironmentDataStoreReference.js';
+import { Definition } from './definition/Definition.js';
+import { DefinitionExecution } from './definition/DefinitionExecution.js';
+import { DummyActivity as Dummy, TextAnnotation, Group, Category } from './activity/Dummy.js';
+import { Environment } from './Environment.js';
+import { Escalation } from './activity/Escalation.js';
+import { Expressions } from './Expressions.js';
+import { IoSpecification as InputOutputSpecification } from './io/InputOutputSpecification.js';
+import { Lane } from './process/Lane.js';
+import { LoopCharacteristics } from './tasks/LoopCharacteristics.js';
+import { Message } from './activity/Message.js';
+import { OutputExtension } from './io/OutputExtension.js';
+import { Process } from './process/Process.js';
+import { ProcessExecution } from './process/ProcessExecution.js';
+import { Properties } from './io/Properties.js';
+import { ServiceImplementation } from './tasks/ServiceImplementation.js';
+import { Signal } from './activity/Signal.js';
+import { StandardLoopCharacteristics } from './tasks/StandardLoopCharacteristics.js';
 import { Association, MessageFlow, SequenceFlow } from './flows/index.js';
 import { BoundaryEvent, EndEvent, IntermediateCatchEvent, IntermediateThrowEvent, StartEvent } from './events/index.js';
 import { EventBasedGateway, ExclusiveGateway, InclusiveGateway, ParallelGateway } from './gateways/index.js';
-import { CallActivity, ReceiveTask, ServiceTask, ScriptTask, SubProcess, SignalTask, Task, Transaction } from './tasks/index.js';
+import {
+  AdHocSubProcess,
+  BusinessRuleTask,
+  CallActivity,
+  ManualTask,
+  ReceiveTask,
+  SendTask,
+  ServiceTask,
+  ScriptTask,
+  SubProcess,
+  SignalTask,
+  Task,
+  Transaction,
+  UserTask,
+} from './tasks/index.js';
 import {
   CancelEventDefinition,
   CompensateEventDefinition,
@@ -32,17 +51,21 @@ import {
   SignalEventDefinition,
   TerminateEventDefinition,
   TimerEventDefinition,
+  EventDefinitionExecution,
 } from './eventDefinitions/index.js';
+
 import { Timers } from './Timers.js';
 
 export { ActivityError, RunError } from './error/Errors.js';
 
 export {
-  SubProcess as AdHocSubProcess,
+  AdHocSubProcess,
   Association,
   Activity,
+  ActivityExecution,
   BoundaryEvent,
   BpmnError,
+  BusinessRuleTask,
   CallActivity,
   CancelEventDefinition,
   CompensateEventDefinition,
@@ -52,17 +75,20 @@ export {
   DataStore,
   DataStoreReference,
   Definition,
+  DefinitionExecution,
   Dummy,
-  Dummy as TextAnnotation,
-  Dummy as Group,
-  Dummy as Category,
+  TextAnnotation,
+  Group,
+  Category,
   EndEvent,
   Environment,
   ErrorEventDefinition,
   Escalation,
   EscalationEventDefinition,
   EventBasedGateway,
+  EventDefinitionExecution,
   ExclusiveGateway,
+  Expressions,
   InclusiveGateway,
   InputOutputSpecification,
   IntermediateCatchEvent,
@@ -72,21 +98,21 @@ export {
   MessageEventDefinition,
   MessageFlow,
   Lane,
+  OutputExtension,
   LoopCharacteristics as MultiInstanceLoopCharacteristics,
   ParallelGateway,
   Process,
+  ProcessExecution,
   Properties,
+  ManualTask,
   ReceiveTask,
   ScriptTask,
+  SendTask,
   SequenceFlow,
   ServiceImplementation,
-  ServiceTask as SendTask,
-  ServiceTask as BusinessRuleTask,
   ServiceTask,
   Signal,
   SignalEventDefinition,
-  SignalTask as ManualTask,
-  SignalTask as UserTask,
   SignalTask,
   StandardLoopCharacteristics,
   StartEvent,
@@ -96,4 +122,5 @@ export {
   TimerEventDefinition,
   Transaction,
   Timers,
+  UserTask,
 };

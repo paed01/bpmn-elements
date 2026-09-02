@@ -1,4 +1,4 @@
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import factory from '../helpers/factory.js';
 import nock from 'nock';
 
@@ -49,9 +49,9 @@ Feature('Gateway', () => {
       expect(definition.getActivityById('end1').counters).to.have.property('taken', 1);
     });
 
-    And('the other two discarded', () => {
-      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 1);
-      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 1);
+    And('the other two are not discarded', () => {
+      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 0);
+      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 0);
     });
 
     When('definition is ran with truthy second condition script', () => {
@@ -59,18 +59,18 @@ Feature('Gateway', () => {
       definition.run();
     });
 
-    Then('default flow is discarded', () => {
+    Then('default flow is not taken again and not discarded', () => {
       expect(definition.getActivityById('end1').counters).to.have.property('taken', 1);
-      expect(definition.getActivityById('end1').counters).to.have.property('discarded', 1);
+      expect(definition.getActivityById('end1').counters).to.have.property('discarded', 0);
     });
 
     And('the second flow is taken', () => {
       expect(definition.getActivityById('end2').counters).to.have.property('taken', 1);
-      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 1);
+      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 0);
     });
 
-    And('the third flow is discarded', () => {
-      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 2);
+    And('the third flow is not discarded', () => {
+      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 0);
     });
 
     When('definition is ran with truthy second and third condition script', () => {
@@ -79,19 +79,19 @@ Feature('Gateway', () => {
       definition.run();
     });
 
-    Then('default flow is discarded', () => {
+    Then('default flow is not taken and not discarded', () => {
       expect(definition.getActivityById('end1').counters).to.have.property('taken', 1);
-      expect(definition.getActivityById('end1').counters).to.have.property('discarded', 2);
+      expect(definition.getActivityById('end1').counters).to.have.property('discarded', 0);
     });
 
     And('the second flow is taken', () => {
       expect(definition.getActivityById('end2').counters).to.have.property('taken', 2);
-      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 1);
+      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 0);
     });
 
     And('the third flow is taken', () => {
       expect(definition.getActivityById('end3').counters).to.have.property('taken', 1);
-      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 2);
+      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 0);
     });
 
     let error;
@@ -145,9 +145,9 @@ Feature('Gateway', () => {
       expect(definition.getActivityById('end1').counters).to.have.property('taken', 1);
     });
 
-    And('the other two discarded', () => {
-      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 1);
-      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 1);
+    And('the other two are not discarded', () => {
+      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 0);
+      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 0);
     });
 
     When('definition is ran with truthy second condition script', () => {
@@ -155,18 +155,18 @@ Feature('Gateway', () => {
       definition.run();
     });
 
-    Then('default flow is discarded', () => {
+    Then('default flow is not taken again and not discarded', () => {
       expect(definition.getActivityById('end1').counters).to.have.property('taken', 1);
-      expect(definition.getActivityById('end1').counters).to.have.property('discarded', 1);
+      expect(definition.getActivityById('end1').counters).to.have.property('discarded', 0);
     });
 
     And('the second flow is taken', () => {
       expect(definition.getActivityById('end2').counters).to.have.property('taken', 1);
-      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 1);
+      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 0);
     });
 
-    And('the third flow is discarded', () => {
-      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 2);
+    And('the third flow is not discarded', () => {
+      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 0);
     });
 
     When('definition is ran with truthy second and third condition script', () => {
@@ -175,19 +175,19 @@ Feature('Gateway', () => {
       definition.run();
     });
 
-    Then('default flow is discarded', () => {
+    Then('default flow is not taken and not discarded', () => {
       expect(definition.getActivityById('end1').counters).to.have.property('taken', 1);
-      expect(definition.getActivityById('end1').counters).to.have.property('discarded', 2);
+      expect(definition.getActivityById('end1').counters).to.have.property('discarded', 0);
     });
 
     And('the second flow is taken', () => {
       expect(definition.getActivityById('end2').counters).to.have.property('taken', 2);
-      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 1);
+      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 0);
     });
 
-    And('the third flow is still discarded', () => {
+    And('the third flow is still not taken and not discarded', () => {
       expect(definition.getActivityById('end3').counters).to.have.property('taken', 0);
-      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 3);
+      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 0);
     });
 
     let error;
@@ -274,6 +274,7 @@ Feature('Gateway', () => {
       async function getRule(rule) {
         const body = await fetch(new URL(rule, 'https://rules.local')).then((res) => res.json());
 
+        // @ts-expect-error type coverage
         return { rule, value: body.value };
       }
 
@@ -313,10 +314,10 @@ Feature('Gateway', () => {
       expect(denied.counters).to.have.property('discarded', 0);
     });
 
-    And('script flow was discarded', () => {
+    And('script flow was not taken', () => {
       const accepted = definition.getActivityById('accepted');
       expect(accepted.counters).to.have.property('taken', 0);
-      expect(accepted.counters).to.have.property('discarded', 1);
+      expect(accepted.counters).to.have.property('discarded', 0);
     });
 
     When('definition is ran again', () => {
@@ -332,16 +333,16 @@ Feature('Gateway', () => {
       return end;
     });
 
-    And('default flow was discarded', () => {
+    And('default flow was not taken again', () => {
       const denied = definition.getActivityById('denied');
       expect(denied.counters).to.have.property('taken', 1);
-      expect(denied.counters).to.have.property('discarded', 1);
+      expect(denied.counters).to.have.property('discarded', 0);
     });
 
     And('script flow was taken', () => {
       const accepted = definition.getActivityById('accepted');
       expect(accepted.counters).to.have.property('taken', 1);
-      expect(accepted.counters).to.have.property('discarded', 1);
+      expect(accepted.counters).to.have.property('discarded', 0);
     });
   });
 
@@ -392,7 +393,7 @@ Feature('Gateway', () => {
 
     When('definition is ran with falsy second and first condition script', () => {
       definition.environment.variables.condition = { var1: false };
-      definition.environment.services.evaluateRule = function evaluateRule(name, variables, callback) {
+      definition.environment.services.evaluateRule = function evaluateRule(_name, variables, callback) {
         return new Promise((resolve) => {
           resolve(variables.condition.var1);
         })
@@ -410,9 +411,9 @@ Feature('Gateway', () => {
       expect(definition.getActivityById('end1').counters).to.have.property('taken', 1);
     });
 
-    And('the other two discarded', () => {
-      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 1);
-      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 1);
+    And('the other two are not discarded', () => {
+      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 0);
+      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 0);
     });
 
     When('definition is ran with truthy second condition script', () => {
@@ -420,18 +421,18 @@ Feature('Gateway', () => {
       definition.run();
     });
 
-    Then('default flow is discarded', () => {
+    Then('default flow is not taken again and not discarded', () => {
       expect(definition.getActivityById('end1').counters).to.have.property('taken', 1);
-      expect(definition.getActivityById('end1').counters).to.have.property('discarded', 1);
+      expect(definition.getActivityById('end1').counters).to.have.property('discarded', 0);
     });
 
     And('the second flow is taken', () => {
       expect(definition.getActivityById('end2').counters).to.have.property('taken', 1);
-      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 1);
+      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 0);
     });
 
-    And('the third flow is discarded', () => {
-      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 2);
+    And('the third flow is not discarded', () => {
+      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 0);
     });
 
     When('definition is ran with truthy second and third condition script', () => {
@@ -440,19 +441,19 @@ Feature('Gateway', () => {
       definition.run();
     });
 
-    Then('default flow is discarded', () => {
+    Then('default flow is not taken and not discarded', () => {
       expect(definition.getActivityById('end1').counters).to.have.property('taken', 1);
-      expect(definition.getActivityById('end1').counters).to.have.property('discarded', 2);
+      expect(definition.getActivityById('end1').counters).to.have.property('discarded', 0);
     });
 
     And('the second flow is taken', () => {
       expect(definition.getActivityById('end2').counters).to.have.property('taken', 2);
-      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 1);
+      expect(definition.getActivityById('end2').counters).to.have.property('discarded', 0);
     });
 
-    And('the third flow is still discarded', () => {
+    And('the third flow is still not taken and not discarded', () => {
       expect(definition.getActivityById('end3').counters).to.have.property('taken', 0);
-      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 3);
+      expect(definition.getActivityById('end3').counters).to.have.property('discarded', 0);
     });
 
     let error;

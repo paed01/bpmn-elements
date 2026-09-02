@@ -1,23 +1,11 @@
-import CancelEventDefinition from './CancelEventDefinition.js';
-import CompensateEventDefinition from './CompensateEventDefinition.js';
-import ConditionalEventDefinition from './ConditionalEventDefinition.js';
-import ErrorEventDefinition from './ErrorEventDefinition.js';
-import EscalationEventDefinition from './EscalationEventDefinition.js';
-import LinkEventDefinition from './LinkEventDefinition.js';
-import MessageEventDefinition from './MessageEventDefinition.js';
-import SignalEventDefinition from './SignalEventDefinition.js';
-import TerminateEventDefinition from './TerminateEventDefinition.js';
-import TimerEventDefinition from './TimerEventDefinition.js';
-
-export {
-  CancelEventDefinition,
-  CompensateEventDefinition,
-  ConditionalEventDefinition,
-  ErrorEventDefinition,
-  EscalationEventDefinition,
-  LinkEventDefinition,
-  MessageEventDefinition,
-  SignalEventDefinition,
-  TerminateEventDefinition,
-  TimerEventDefinition,
-};
+export { CancelEventDefinition } from './CancelEventDefinition.js';
+export { CompensateEventDefinition } from './CompensateEventDefinition.js';
+export { ConditionalEventDefinition } from './ConditionalEventDefinition.js';
+export { ErrorEventDefinition } from './ErrorEventDefinition.js';
+export { EscalationEventDefinition } from './EscalationEventDefinition.js';
+export { LinkEventDefinition } from './LinkEventDefinition.js';
+export { MessageEventDefinition } from './MessageEventDefinition.js';
+export { SignalEventDefinition } from './SignalEventDefinition.js';
+export { TerminateEventDefinition } from './TerminateEventDefinition.js';
+export { TimerEventDefinition } from './TimerEventDefinition.js';
+export { EventDefinitionExecution } from './EventDefinitionExecution.js';

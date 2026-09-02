@@ -3,15 +3,24 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.SignalTask = SignalTask;
 exports.SignalTaskBehaviour = SignalTaskBehaviour;
-exports.default = SignalTask;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
+var _Activity = require("../activity/Activity.js");
 var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+/**
+ * Signal task
+ * @param {import('#types').ActivityDefinition} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function SignalTask(activityDef, context) {
-  return new _Activity.default(SignalTaskBehaviour, activityDef, context);
+  return new _Activity.Activity(SignalTaskBehaviour, activityDef, context);
 }
+
+/**
+ * Signal task behaviour
+ * @param {import('#types').Activity} activity
+ */
 function SignalTaskBehaviour(activity) {
   const {
     id,
@@ -20,10 +29,16 @@ function SignalTaskBehaviour(activity) {
   } = activity;
   this.id = id;
   this.type = type;
+  /** @type {import('./LoopCharacteristics.js').LoopCharacteristics | undefined} */
   this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
   this.broker = activity.broker;
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 SignalTaskBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;
@@ -32,16 +47,19 @@ SignalTaskBehaviour.prototype.execute = function execute(executeMessage) {
   }
   const executionId = executeContent.executionId;
   const broker = this.broker;
+  // @ts-ignore
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(executeMessage, ...args), {
     noAck: true,
     consumerTag: `_api-${executionId}`
   });
+  // @ts-ignore
   broker.subscribeTmp('api', '#.signal.*', (...args) => this._onDelegatedApiMessage(executeMessage, ...args), {
     noAck: true,
     consumerTag: `_api-delegated-${executionId}`
   });
   broker.publish('event', 'activity.wait', (0, _messageHelper.cloneContent)(executeContent, {
-    state: 'wait'
+    state: 'wait',
+    accepts: ['signal', 'error']
   }));
 };
 SignalTaskBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMessage(executeMessage, routingKey, message) {
@@ -53,7 +71,8 @@ SignalTaskBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMe
   const executeContent = executeMessage.content;
   const {
     id: signalId,
-    executionId: signalExecutionId
+    executionId: signalExecutionId,
+    ...signalMessage
   } = delegateContent.message;
   if (this.loopCharacteristics && signalExecutionId !== executeContent.executionId) return;
   if (signalId !== this.id && signalExecutionId !== executeContent.executionId) return;
@@ -69,9 +88,15 @@ SignalTaskBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMe
     correlationId,
     type: messageType
   });
-  return this._onApiMessage(executeMessage, routingKey, message);
+  return this._onApiMessage(executeMessage, routingKey, {
+    ...message,
+    content: {
+      ...delegateContent,
+      message: signalMessage
+    }
+  });
 };
-SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, routingKey, message) {
+SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, _routingKey, message) {
   const {
     type: messageType,
     correlationId
@@ -92,7 +117,9 @@ SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessa
       this._stop(executeContent.executionId);
       return this.broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(executeContent, {
         error: new _Errors.ActivityError(message.content.message, executeMessage, message.content)
-      }, {
+      },
+      // @ts-ignore
+      {
         mandatory: true,
         correlationId
       }));

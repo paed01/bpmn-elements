@@ -1,5 +1,6 @@
 import testHelpers from '../helpers/testHelpers.js';
 import factory from '../helpers/factory.js';
+import js from '../resources/extensions/JsExtension.js';
 
 const AssertMessage = testHelpers.AssertMessage;
 
@@ -25,7 +26,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'process.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -34,7 +35,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -97,7 +98,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'process.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -106,7 +107,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -165,7 +166,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'process.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -174,7 +175,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -249,7 +250,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'process.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -258,7 +259,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -285,8 +286,6 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'decision');
       assertMessage('activity.start', 'decision');
       assertMessage('activity.end', 'decision');
-      assertMessage('activity.discard', 'end1');
-      assertMessage('activity.leave', 'end1');
       assertMessage('activity.enter', 'end2');
       assertMessage('activity.start', 'end2');
       assertMessage('activity.end', 'end2');
@@ -328,9 +327,10 @@ Feature('Process', () => {
       start2.signal();
     });
 
-    Then('the process completes', () => {
-      expect(bp.isRunning).to.be.false;
-      return completed;
+    // Both user tasks have no incoming flow, so per BPMN 2.0 they are independent tokens that must
+    // both complete - neither is an alternative entry point to be discarded (that is start events).
+    Then('the process is still running', () => {
+      expect(bp.isRunning).to.be.true;
     });
 
     And('second user task was taken', () => {
@@ -338,9 +338,23 @@ Feature('Process', () => {
       expect(start2.owner.counters).to.have.property('discarded', 0);
     });
 
-    And('first user task was discarded', () => {
-      expect(start1.owner.counters).to.have.property('discarded', 1);
-      expect(start1.owner.counters).to.have.property('taken', 0);
+    When('first user task is signaled', () => {
+      start1.signal();
+    });
+
+    Then('the process completes', () => {
+      expect(bp.isRunning).to.be.false;
+      return completed;
+    });
+
+    And('first user task was taken', () => {
+      expect(start1.owner.counters).to.have.property('taken', 1);
+      expect(start1.owner.counters).to.have.property('discarded', 0);
+    });
+
+    And('end event was taken twice', () => {
+      expect(bp.getActivityById('end').counters).to.have.property('taken', 2);
+      expect(bp.getActivityById('end').counters).to.have.property('discarded', 0);
     });
 
     Given('a process with two user tasks both arriving at a join', async () => {
@@ -478,15 +492,15 @@ Feature('Process', () => {
     });
   });
 
-  Scenario('A process with a join', () => {
+  Scenario('A process with double start and a join', () => {
     const source = `
     <?xml version="1.0" encoding="UTF-8"?>
     <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <process id="theProcess" isExecutable="true">
         <startEvent id="start1" />
         <startEvent id="start2" />
-        <sequenceFlow id="flow1" sourceRef="start1" targetRef="join" />
-        <sequenceFlow id="flow2" sourceRef="start2" targetRef="join" />
+        <sequenceFlow id="from-start1" sourceRef="start1" targetRef="join" />
+        <sequenceFlow id="from-start2" sourceRef="start2" targetRef="join" />
         <parallelGateway id="join" />
         <sequenceFlow id="flow3" sourceRef="join" targetRef="end" />
         <endEvent id="end" />
@@ -505,7 +519,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'process.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -514,7 +528,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -539,19 +553,20 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'start1');
       assertMessage('activity.start', 'start1');
       assertMessage('activity.end', 'start1');
+      assertMessage('activity.enter', 'join');
+      assertMessage('activity.start', 'join');
+      assertMessage('activity.converge', 'join');
       assertMessage('activity.leave', 'start1');
       assertMessage('activity.enter', 'start2');
       assertMessage('activity.start', 'start2');
       assertMessage('activity.end', 'start2');
-      assertMessage('activity.enter', 'join');
-      assertMessage('activity.start', 'join');
+      assertMessage('activity.leave', 'start2');
       assertMessage('activity.end', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
       assertMessage('activity.leave', 'join');
-      assertMessage('activity.leave', 'start2');
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
     });
@@ -587,7 +602,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'process.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -596,7 +611,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -625,14 +640,15 @@ Feature('Process', () => {
       assertMessage('activity.end', 'decision');
       assertMessage('activity.enter', 'join');
       assertMessage('activity.start', 'join');
+      assertMessage('activity.converge', 'join');
+      assertMessage('activity.leave', 'decision');
+      assertMessage('activity.leave', 'start');
       assertMessage('activity.end', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
       assertMessage('activity.leave', 'join');
-      assertMessage('activity.leave', 'decision');
-      assertMessage('activity.leave', 'start');
       assertMessage('process.end', 'theProcess');
       assertMessage('process.leave', 'theProcess');
     });
@@ -645,7 +661,7 @@ Feature('Process', () => {
       <process id="theProcess" isExecutable="true">
         <startEvent id="start" />
         <sequenceFlow id="to-activity1" sourceRef="start" targetRef="activity1" />
-       <intermediateCatchEvent id="activity1">
+        <intermediateCatchEvent id="activity1">
           <timerEventDefinition>
             <timeDuration xsi:type="tFormalExpression">PT0.01S</timeDuration>
           </timerEventDefinition>
@@ -739,20 +755,7 @@ Feature('Process', () => {
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
 
-      assertMessage('flow.discard', 'back-to-activity1');
-
       assertMessage('activity.leave', 'decision');
-      assertMessage('activity.leave', 'activity2');
-      assertMessage('activity.leave', 'activity1');
-
-      assertMessage('activity.discard', 'activity1');
-
-      assertMessage('flow.discard', 'to-activity2');
-
-      assertMessage('activity.discard', 'activity2');
-
-      assertMessage('flow.looped', 'to-decision');
-
       assertMessage('activity.leave', 'activity2');
       assertMessage('activity.leave', 'activity1');
 
@@ -803,7 +806,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'process.#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -812,7 +815,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -838,6 +841,8 @@ Feature('Process', () => {
       assertMessage('activity.end', 'start');
       assertMessage('activity.enter', 'fork');
       assertMessage('activity.start', 'fork');
+      assertMessage('activity.converge', 'fork');
+      assertMessage('activity.leave', 'start');
       assertMessage('activity.end', 'fork');
 
       assertMessage('activity.enter', 'timer');
@@ -852,8 +857,6 @@ Feature('Process', () => {
 
       assertMessage('activity.leave', 'fork');
 
-      assertMessage('activity.leave', 'start');
-      assertMessage('activity.stop', 'start');
       assertMessage('activity.stop', 'fork');
       assertMessage('activity.stop', 'timer');
 
@@ -899,7 +902,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -933,20 +936,22 @@ Feature('Process', () => {
     });
 
     And('before the timeout event completes', () => {
+      assertMessage('activity.enter', 'join');
+      assertMessage('activity.start', 'join');
+
+      assertMessage('activity.converge', 'join');
       assertMessage('activity.leave', 'immediate');
       assertMessage('activity.leave', 'start');
 
       assertMessage('activity.timeout', 'postponed');
       assertMessage('activity.end', 'postponed');
-      assertMessage('activity.enter', 'join');
-      assertMessage('activity.start', 'join');
+      assertMessage('activity.leave', 'postponed');
       assertMessage('activity.end', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
       assertMessage('activity.leave', 'join');
-      assertMessage('activity.leave', 'postponed');
     });
   });
 
@@ -978,7 +983,7 @@ Feature('Process', () => {
       bp.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1073,7 +1078,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1108,20 +1113,22 @@ Feature('Process', () => {
     });
 
     And('before the timeout event completes', () => {
+      assertMessage('activity.enter', 'join');
+      assertMessage('activity.start', 'join');
+      assertMessage('activity.converge', 'join');
+
       assertMessage('activity.leave', 'immediate');
       assertMessage('activity.leave', 'start');
 
       assertMessage('activity.timeout', 'postponed');
       assertMessage('activity.end', 'postponed');
-      assertMessage('activity.enter', 'join');
-      assertMessage('activity.start', 'join');
+      assertMessage('activity.leave', 'postponed');
       assertMessage('activity.end', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
       assertMessage('activity.leave', 'join');
-      assertMessage('activity.leave', 'postponed');
       expect(messages.length).to.equal(0);
     });
 
@@ -1147,6 +1154,9 @@ Feature('Process', () => {
       assertMessage('activity.enter', 'immediate');
       assertMessage('activity.start', 'immediate');
       assertMessage('activity.end', 'immediate');
+      assertMessage('activity.enter', 'join');
+      assertMessage('activity.start', 'join');
+      assertMessage('activity.converge', 'join');
 
       api.signal();
     });
@@ -1157,19 +1167,17 @@ Feature('Process', () => {
 
       assertMessage('activity.catch', 'postponed');
       assertMessage('activity.end', 'postponed');
+      assertMessage('activity.leave', 'postponed');
     });
 
     And('the timeout is discarded and process completes', async () => {
       await completed;
-      assertMessage('activity.enter', 'join');
-      assertMessage('activity.start', 'join');
       assertMessage('activity.end', 'join');
       assertMessage('activity.enter', 'end');
       assertMessage('activity.start', 'end');
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
       assertMessage('activity.leave', 'join');
-      assertMessage('activity.leave', 'postponed');
     });
   });
 
@@ -1203,7 +1211,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         '#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1269,7 +1277,7 @@ Feature('Process', () => {
       bp.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1312,8 +1320,8 @@ Feature('Process', () => {
       assertMessage('activity.end', 'end1');
     });
 
-    And('boundary event flow is discarded', () => {
-      assertMessage('activity.discard', 'end2');
+    And('boundary event is discarded without taking its flow', () => {
+      assertMessage('activity.leave', 'attached');
     });
 
     And('service task has left', () => {
@@ -1357,8 +1365,8 @@ Feature('Process', () => {
       assertMessage('activity.catch', 'attached');
     });
 
-    And('the service flows is discarded', () => {
-      assertMessage('activity.discard', 'end1');
+    And('the service task errors without taking its flow', () => {
+      assertMessage('activity.error', 'service');
     });
 
     And('the boundary event flow is taken', () => {
@@ -1404,7 +1412,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1450,9 +1458,7 @@ Feature('Process', () => {
       assertMessage('activity.leave', 'end1');
     });
 
-    And('boundary event flow is discarded', () => {
-      assertMessage('activity.discard', 'end2');
-      assertMessage('activity.leave', 'end2');
+    And('boundary event is discarded without taking its flow', () => {
       assertMessage('activity.leave', 'attached');
     });
 
@@ -1497,12 +1503,7 @@ Feature('Process', () => {
       assertMessage('activity.timeout', 'attached');
     });
 
-    And('the service task flow was discarded', () => {
-      assertMessage('activity.discard', 'end1');
-      assertMessage('activity.leave', 'end1');
-    });
-
-    And('the service task was discarded', () => {
+    And('the service task is discarded without taking its flow', () => {
       assertMessage('activity.leave', 'service');
     });
 
@@ -1555,7 +1556,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1598,9 +1599,7 @@ Feature('Process', () => {
       assertMessage('activity.leave', 'end1');
     });
 
-    And('boundary event flow was discarded', () => {
-      assertMessage('activity.discard', 'end2');
-      assertMessage('activity.leave', 'end2');
+    And('boundary event is discarded without taking its flow', () => {
       assertMessage('activity.leave', 'attached');
     });
 
@@ -1678,7 +1677,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1763,7 +1762,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1795,7 +1794,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -1833,9 +1832,8 @@ Feature('Process', () => {
       assertMessage('activity.leave', 'end1');
     });
 
-    And('boundary event flow were discarded', () => {
-      assertMessage('activity.discard', 'end2');
-      assertMessage('activity.leave', 'end2');
+    And('boundary event is discarded without taking its flow', () => {
+      assertMessage('activity.leave', 'attached');
       assertMessage('activity.leave', 'userInput');
       expect(messages.length, 'no more messages').to.equal(0);
     });
@@ -1985,25 +1983,7 @@ Feature('Process', () => {
       assertMessage('activity.end', 'end');
       assertMessage('activity.leave', 'end');
 
-      assertMessage('flow.discard', 'back-to-activity0');
-
-      assertMessage('activity.discard', 'activity0');
-
-      assertMessage('flow.discard', 'to-activity1');
-
-      assertMessage('activity.leave', 'activity0');
-
       assertMessage('activity.leave', 'decision');
-      assertMessage('activity.leave', 'activity2');
-      assertMessage('activity.leave', 'activity1');
-
-      assertMessage('activity.discard', 'activity1');
-
-      assertMessage('flow.discard', 'to-activity2');
-
-      assertMessage('activity.discard', 'activity2');
-      assertMessage('flow.looped', 'to-decision');
-
       assertMessage('activity.leave', 'activity2');
       assertMessage('activity.leave', 'activity1');
 
@@ -2046,7 +2026,7 @@ Feature('Process', () => {
       bp.broker.subscribeTmp(
         'event',
         'activity.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -2135,7 +2115,7 @@ Feature('Process', () => {
       processInstance.broker.subscribeTmp(
         'event',
         '#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -2187,13 +2167,7 @@ Feature('Process', () => {
       assertMessage('activity.execution.discard', 'bound');
     });
 
-    And('bound flow is discarded', () => {
-      assertMessage('flow.discard', 'fromBoundaryEvent');
-    });
-
-    And('end event is discarded', () => {
-      assertMessage('activity.discard', 'end');
-      assertMessage('activity.leave', 'end');
+    And('bound event leaves without taking its flow', () => {
       assertMessage('activity.leave', 'bound');
     });
 
@@ -2266,12 +2240,9 @@ Feature('Process', () => {
       return timeout;
     });
 
-    Then('process execution is looped back to user task', () => {
+    Then('the loop branch is taken and execution loops back to user task', () => {
+      assertMessage('flow.take', 'toLoop');
       assertMessage('activity.wait', 'userTask1');
-    });
-
-    And('end event is discarded', () => {
-      assertMessage('activity.discard', 'theEnd');
     });
 
     When('user task is signaled again', () => {
@@ -2289,20 +2260,9 @@ Feature('Process', () => {
       return timeout;
     });
 
-    Then('looped flow is discarded', () => {
-      assertMessage('flow.discard', 'toLoop');
-    });
-
-    And('user task is discarded', () => {
-      assertMessage('activity.discard', 'userTask1');
-    });
-
-    And('end event completes', () => {
+    Then('the final branch is taken and end event completes', () => {
+      assertMessage('flow.take', 'toFinal');
       assertMessage('activity.end', 'theEnd');
-    });
-
-    And('flow loop is detected', () => {
-      assertMessage('flow.looped', 'toDecision');
     });
 
     And('process execution is completed', () => {
@@ -2428,7 +2388,8 @@ Feature('Process', () => {
       return timeout;
     });
 
-    Then('process execution is looped back to user task', () => {
+    Then('the loop branch is taken and execution loops back to user task', () => {
+      assertMessage('flow.take', 'toLoop');
       assertMessage('activity.wait', 'userTask1');
     });
 
@@ -2445,20 +2406,9 @@ Feature('Process', () => {
       return timeout;
     });
 
-    Then('looped flow is discarded', () => {
-      assertMessage('flow.discard', 'toLoop');
-    });
-
-    And('user task is discarded', () => {
-      assertMessage('activity.discard', 'userTask1');
-    });
-
-    And('end event completes', () => {
+    Then('the final branch is taken and end event completes', () => {
+      assertMessage('flow.take', 'toFinal');
       assertMessage('activity.end', 'theEnd');
-    });
-
-    And('flow loop is detected', () => {
-      assertMessage('flow.looped', 'toDecision');
     });
 
     And('process execution is completed', () => {
@@ -2511,6 +2461,80 @@ Feature('Process', () => {
 
     And('running activity was discarded', () => {
       expect(bp.getActivityById('activity').counters).to.deep.equal({ discarded: 1, taken: 0 });
+    });
+  });
+
+  Scenario('Process with a js:extension', () => {
+    const source = `
+    <?xml version="1.0" encoding="UTF-8"?>
+    <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:js="http://paed01.github.io/bpmn-engine/schema/2017/08/bpmn">
+      <process id="theProcess" isExecutable="true" js:versionTag="2">
+        <startEvent id="start" />
+        <sequenceFlow id="to-task" sourceRef="start" targetRef="task" />
+        <userTask id="task" />
+        <sequenceFlow id="to-end" sourceRef="task" targetRef="end" />
+        <endEvent id="end" />
+      </process>
+    </definitions>`;
+
+    let context, bp;
+    Given('a process with a js:versionTag and a waiting user task', async () => {
+      context = await testHelpers.context(source, { extensions: { js } });
+      bp = context.getProcessById('theProcess');
+    });
+
+    And('the js:extension is loaded on the process', () => {
+      expect(bp.extensions.extensions.find((e) => e.type === 'js:extension')).to.be.ok;
+    });
+
+    let waiting;
+    When('process is ran', () => {
+      waiting = bp.getActivityById('task').waitFor('wait');
+      bp.run();
+      return waiting;
+    });
+
+    Then('the process is waiting for the user task', () => {
+      expect(bp.getPostponed().map((a) => a.id)).to.include('task');
+    });
+
+    let state;
+    When('the process is stopped', () => {
+      bp.stop();
+    });
+
+    Then('the extension was deactivated on stop', () => {
+      expect(bp.stopped).to.be.true;
+    });
+
+    And('state is saved', () => {
+      state = JSON.parse(JSON.stringify(bp.getState()));
+    });
+
+    When('the process is recovered into a new instance', () => {
+      bp = context.clone().getProcessById('theProcess').recover(state);
+    });
+
+    let leave;
+    And('execution is resumed', () => {
+      waiting = bp.getActivityById('task').waitFor('wait');
+      leave = bp.waitFor('leave');
+      bp.resume();
+      return waiting;
+    });
+
+    And('the user task is signaled', async () => {
+      const task = await waiting;
+      task.signal();
+      return leave;
+    });
+
+    Then('the process completes', () => {
+      return leave;
+    });
+
+    And('the version tag was captured, proving the extension reactivated on resume', () => {
+      expect(bp.environment.output).to.have.property('theProcess').that.deep.equal({ versionTag: '2' });
     });
   });
 });

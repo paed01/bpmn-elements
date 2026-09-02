@@ -1,14 +1,21 @@
-import Activity from '../activity/Activity.js';
-import ProcessExecution from '../process/ProcessExecution.js';
-import { cloneContent } from '../messageHelper.js';
+import { Activity } from '../activity/Activity.js';
+import { ProcessExecution } from '../process/ProcessExecution.js';
+import { cloneContent, cloneMessage } from '../messageHelper.js';
 
-const kExecutions = Symbol.for('executions');
-const kOnExecutionCompleted = Symbol.for('execution completed handler');
+const K_EXECUTIONS = Symbol.for('executions');
+const K_ON_EXECUTION_COMPLETED = Symbol.for('execution completed handler');
 
-export default function SubProcess(activityDef, context) {
+/**
+ * Sub process
+ * @param {import('#types').ActivityDefinition} activityDef
+ * @param {import('#types').ContextInstance} context
+ * @param {import('#types').IActivityBehaviour} [Behaviour] behaviour class, defaults to {@link SubProcessBehaviour}
+ */
+export function SubProcess(activityDef, context, Behaviour = SubProcessBehaviour) {
   const triggeredByEvent = activityDef.behaviour && activityDef.behaviour.triggeredByEvent;
-  const subProcess = new Activity(SubProcessBehaviour, { ...activityDef, isSubProcess: true, triggeredByEvent }, context);
+  const subProcess = new Activity(Behaviour, { ...activityDef, isSubProcess: true, triggeredByEvent }, context);
 
+  // @ts-ignore
   subProcess.getStartActivities = function getStartActivities(filterOptions) {
     return context.getStartActivities(filterOptions, activityDef.id);
   };
@@ -26,10 +33,16 @@ export default function SubProcess(activityDef, context) {
   }
 }
 
+/**
+ * Sub process behaviour
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').ContextInstance} context
+ */
 export function SubProcessBehaviour(activity, context) {
   const { id, type, behaviour } = activity;
   this.id = id;
   this.type = type;
+  /** @type {import('./LoopCharacteristics.js').LoopCharacteristics | undefined} */
   this.loopCharacteristics =
     behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
@@ -38,23 +51,30 @@ export function SubProcessBehaviour(activity, context) {
   this.broker = activity.broker;
   this.executionId = undefined;
 
-  this[kExecutions] = new Set();
-  this[kOnExecutionCompleted] = this._onExecutionCompleted.bind(this);
+  /** @internal */
+  this[K_EXECUTIONS] = new Set();
+  /** @internal */
+  this[K_ON_EXECUTION_COMPLETED] = this._onExecutionCompleted.bind(this);
 }
 
-Object.defineProperties(SubProcessBehaviour.prototype, {
-  execution: {
-    get() {
-      return [...this[kExecutions]][0];
-    },
-  },
-  executions: {
-    get() {
-      return [...this[kExecutions]];
-    },
+Object.defineProperty(SubProcessBehaviour.prototype, 'execution', {
+  /** @return {import('../process/ProcessExecution.js').ProcessExecution | undefined} */
+  get() {
+    return [...this[K_EXECUTIONS]][0];
   },
 });
 
+Object.defineProperty(SubProcessBehaviour.prototype, 'executions', {
+  /** @return {import('../process/ProcessExecution.js').ProcessExecution[]} */
+  get() {
+    return [...this[K_EXECUTIONS]];
+  },
+});
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 SubProcessBehaviour.prototype.execute = function execute(executeMessage) {
   const { isRootScope, executionId } = executeMessage.content;
 
@@ -67,13 +87,33 @@ SubProcessBehaviour.prototype.execute = function execute(executeMessage) {
     return loopCharacteristics.execute(executeMessage);
   }
 
-  const processExecution = this._upsertExecution(executeMessage);
-  return processExecution.execute(executeMessage);
+  // Forward the multi-instance loop context as input to the sub process execution; any current content input takes precedence.
+  let message = executeMessage;
+  const content = executeMessage.content;
+  if (content.isMultiInstance) {
+    const input = {
+      isSequential: content.isSequential,
+      index: content.index,
+      cardinality: content.loopCardinality,
+    };
+    const elementVariable = loopCharacteristics?.elementVariable;
+    if (elementVariable && elementVariable in content) {
+      input[elementVariable] = content[elementVariable];
+    }
+    message = cloneMessage(executeMessage, { input: { ...input, ...content.input } });
+  }
+
+  const processExecution = this._upsertExecution(message);
+  return processExecution.execute(message);
 };
 
+/**
+ * Get SubProcess state
+ * @returns {import('#types').ProcessExecutionState[]}
+ */
 SubProcessBehaviour.prototype.getState = function getState() {
   const states = [];
-  for (const pe of this[kExecutions]) {
+  for (const pe of this[K_EXECUTIONS]) {
     const state = pe.getState();
     state.environment = pe.environment.getState();
     states.push(state);
@@ -81,6 +121,7 @@ SubProcessBehaviour.prototype.getState = function getState() {
 
   if (this.loopCharacteristics) {
     return {
+      // @ts-ignore
       executions: states,
     };
   }
@@ -88,14 +129,20 @@ SubProcessBehaviour.prototype.getState = function getState() {
   return states[0];
 };
 
+/**
+ * Recover SubProcess
+ * @param {import('#types').ProcessExecutionState[]} [state]
+ */
 SubProcessBehaviour.prototype.recover = function recover(state) {
   if (!state) return;
 
-  const executions = this[kExecutions];
+  const executions = this[K_EXECUTIONS];
 
   const loopCharacteristics = this.loopCharacteristics;
+  // @ts-ignore
   if (loopCharacteristics && state.executions) {
     executions.clear();
+    // @ts-ignore
     for (const se of state.executions) {
       this.recover(se);
     }
@@ -106,21 +153,46 @@ SubProcessBehaviour.prototype.recover = function recover(state) {
     executions.clear();
   }
 
+  // @ts-ignore
   const subEnvironment = this.environment.clone().recover(state.environment);
   const subContext = this.context.clone(subEnvironment, this.activity);
 
+  // @ts-ignore
   const execution = new ProcessExecution(this.activity, subContext).recover(state);
 
   executions.add(execution);
-  return execution;
 };
 
+/**
+ * @returns {ReturnType<import('../process/ProcessExecution.js').ProcessExecution['getPostponed']>}
+ */
 SubProcessBehaviour.prototype.getPostponed = function getPostponed() {
   let postponed = [];
-  for (const pe of this[kExecutions]) {
+  for (const pe of this[K_EXECUTIONS]) {
     postponed = postponed.concat(pe.getPostponed());
   }
   return postponed;
+};
+
+/**
+ * @param {import('#types').ElementBrokerMessage} apiMessage
+ * @returns {import('#types').IApi<this> | undefined}
+ */
+SubProcessBehaviour.prototype.getApi = function getApi(apiMessage) {
+  const content = apiMessage.content;
+
+  if (content.id === this.id) return;
+
+  let execution;
+  if ((execution = this._getExecutionById(content.parent.executionId))) {
+    return execution.getApi(apiMessage);
+  }
+
+  if (!content.parent.path) return;
+
+  for (const pp of content.parent.path) {
+    if ((execution = this._getExecutionById(pp.executionId))) return execution.getApi(apiMessage);
+  }
 };
 
 SubProcessBehaviour.prototype._upsertExecution = function upsertExecution(executeMessage) {
@@ -137,7 +209,7 @@ SubProcessBehaviour.prototype._upsertExecution = function upsertExecution(execut
   const subContext = this.context.clone(subEnvironment, this.activity);
 
   execution = new ProcessExecution(this.activity, subContext);
-  this[kExecutions].add(execution);
+  this[K_EXECUTIONS].add(execution);
 
   this._addListeners(executionId);
 
@@ -145,7 +217,7 @@ SubProcessBehaviour.prototype._upsertExecution = function upsertExecution(execut
 };
 
 SubProcessBehaviour.prototype._addListeners = function addListeners(executionId) {
-  this.broker.subscribeTmp('subprocess-execution', `execution.#.${executionId}`, this[kOnExecutionCompleted], {
+  this.broker.subscribeTmp('subprocess-execution', `execution.#.${executionId}`, this[K_ON_EXECUTION_COMPLETED], {
     noAck: true,
     consumerTag: `_sub-process-execution-${executionId}`,
   });
@@ -182,31 +254,14 @@ SubProcessBehaviour.prototype._onExecutionCompleted = function onExecutionComple
 SubProcessBehaviour.prototype._completeExecution = function completeExecution(completeRoutingKey, content) {
   if (this.loopCharacteristics) {
     const execution = this._getExecutionById(content.executionId);
-    this[kExecutions].delete(execution);
+    this[K_EXECUTIONS].delete(execution);
   }
 
   this.broker.publish('execution', completeRoutingKey, cloneContent(content));
 };
 
-SubProcessBehaviour.prototype.getApi = function getApi(apiMessage) {
-  const content = apiMessage.content;
-
-  if (content.id === this.id) return;
-
-  let execution;
-  if ((execution = this._getExecutionById(content.parent.executionId))) {
-    return execution.getApi(apiMessage);
-  }
-
-  if (!content.parent.path) return;
-
-  for (const pp of content.parent.path) {
-    if ((execution = this._getExecutionById(pp.executionId))) return execution.getApi(apiMessage);
-  }
-};
-
 SubProcessBehaviour.prototype._getExecutionById = function getExecutionById(executionId) {
-  for (const pe of this[kExecutions]) {
+  for (const pe of this[K_EXECUTIONS]) {
     if (pe.executionId === executionId) return pe;
   }
 };

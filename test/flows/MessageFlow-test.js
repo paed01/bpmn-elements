@@ -1,6 +1,6 @@
-import Environment from '../../src/Environment.js';
+import { Environment } from 'bpmn-elements';
+import { MessageFlow } from 'bpmn-elements/flows';
 import factory from '../helpers/factory.js';
-import MessageFlow from '../../src/flows/MessageFlow.js';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 
@@ -24,6 +24,7 @@ describe('MessageFlow', () => {
           id: 'task1',
         },
       },
+      // @ts-expect-error type coverage
       context
     );
 
@@ -50,6 +51,7 @@ describe('MessageFlow', () => {
           id: 'task1',
         },
       },
+      // @ts-expect-error type coverage
       context
     );
 
@@ -135,6 +137,7 @@ describe('MessageFlow', () => {
           id: 'task1',
         },
       },
+      // @ts-expect-error type coverage
       context
     );
 
@@ -163,9 +166,11 @@ describe('MessageFlow', () => {
           id: 'task1',
         },
       },
+      // @ts-expect-error type coverage
       context
     );
 
+    // @ts-expect-error type coverage
     const api = flow.getApi({ content: { id: 'foo' } });
     expect(api).to.have.property('id', 'foo');
   });

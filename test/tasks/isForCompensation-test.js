@@ -1,5 +1,5 @@
-import Association from '../../src/flows/Association.js';
-import ServiceTask from '../../src/tasks/ServiceTask.js';
+import { Association } from 'bpmn-elements/flows';
+import { ServiceTask } from 'bpmn-elements/tasks';
 import testHelpers from '../helpers/testHelpers.js';
 
 describe('isForCompensation task', () => {
@@ -37,6 +37,7 @@ describe('isForCompensation task', () => {
     );
 
     task.activate();
+    // @ts-expect-error type coverage
     context.getInboundAssociations()[0].take();
 
     expect(task).to.have.property('counters').that.deep.equal({ taken: 1, discarded: 0 });
@@ -76,6 +77,7 @@ describe('isForCompensation task', () => {
     );
 
     task.activate();
+    // @ts-expect-error type coverage
     const [association] = context.getInboundAssociations();
     association.take();
     association.take();
@@ -119,6 +121,7 @@ describe('isForCompensation task', () => {
     );
 
     task.activate();
+    // @ts-expect-error type coverage
     const [association] = context.getInboundAssociations();
     association.take();
     association.take();
@@ -180,6 +183,7 @@ describe('isForCompensation task', () => {
     );
 
     task.activate();
+    // @ts-expect-error type coverage
     for (const association of context.getInboundAssociations()) {
       association.take();
     }
@@ -221,6 +225,7 @@ describe('isForCompensation task', () => {
     );
 
     task.activate();
+    // @ts-expect-error type coverage
     const [association] = context.getInboundAssociations();
     association.take();
     association.discard();
@@ -264,6 +269,7 @@ describe('isForCompensation task', () => {
 
     expect(task.broker.consumerCount, 'task consumers').to.equal(0);
 
+    // @ts-expect-error type coverage
     const [association] = context.getInboundAssociations();
     association.take();
 
@@ -305,6 +311,7 @@ describe('isForCompensation task', () => {
     );
 
     task.activate();
+    // @ts-expect-error type coverage
     const [association] = context.getInboundAssociations();
     association.take();
     association.take();
@@ -352,6 +359,7 @@ describe('isForCompensation task', () => {
     );
 
     task.activate();
+    // @ts-expect-error type coverage
     const [association] = context.getInboundAssociations();
     association.take();
     association.take();

@@ -1,4 +1,4 @@
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import factory from '../helpers/factory.js';
 
 import testHelpers from '../helpers/testHelpers.js';
@@ -24,14 +24,14 @@ Feature('Outbound flows', () => {
       });
     });
 
-    And('the other two discarded', () => {
+    And('the other two stay dormant', () => {
       expect(definition.getActivityById('task3').counters).to.deep.equal({
         taken: 0,
-        discarded: 1,
+        discarded: 0,
       });
       expect(definition.getActivityById('task4').counters).to.deep.equal({
         taken: 0,
-        discarded: 1,
+        discarded: 0,
       });
     });
 
@@ -44,18 +44,18 @@ Feature('Outbound flows', () => {
     Then('expression flow is taken', () => {
       expect(definition.getActivityById('task4').counters).to.deep.equal({
         taken: 1,
-        discarded: 1,
+        discarded: 0,
       });
     });
 
-    And('the other two discarded', () => {
+    And('the other two stay as before', () => {
       expect(definition.getActivityById('task2').counters).to.deep.equal({
         taken: 1,
-        discarded: 1,
+        discarded: 0,
       });
       expect(definition.getActivityById('task3').counters).to.deep.equal({
         taken: 0,
-        discarded: 2,
+        discarded: 0,
       });
     });
 
@@ -68,18 +68,18 @@ Feature('Outbound flows', () => {
     Then('default flow is taken', () => {
       expect(definition.getActivityById('task3').counters).to.deep.equal({
         taken: 1,
-        discarded: 2,
+        discarded: 0,
       });
     });
 
-    And('the other two discarded', () => {
+    And('the other two stay as before', () => {
       expect(definition.getActivityById('task2').counters).to.deep.equal({
         taken: 1,
-        discarded: 2,
+        discarded: 0,
       });
       expect(definition.getActivityById('task4').counters).to.deep.equal({
         taken: 1,
-        discarded: 2,
+        discarded: 0,
       });
     });
   });

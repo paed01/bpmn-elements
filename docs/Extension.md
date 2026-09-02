@@ -4,12 +4,14 @@ The element behaviours in this project only support elements and attributed defi
 
 ## `extension(activity, context)`
 
-All activities will call extension functions when instantiated.
+Activities and processes call extension functions when instantiated.
 
 Arguments:
 
-- `activity`: instance of [activity](/docs/Activity.md)
+- `activity`: instance of [activity](/docs/Activity.md) — or the owning process
 - `context`: shared [context](/docs/Context.md)
+
+An extension may return an object with optional `activate(message)` and `deactivate(message)` lifecycle hooks. They run when the owner enters/resumes its run (`activate`) and when it leaves or is stopped (`deactivate`), letting an extension set up and tear down per-run state. Return nothing to only subscribe to events, as below.
 
 Example:
 
@@ -27,17 +29,53 @@ function saveAllOutputToEnvironmentExtension(activity, { environment }) {
 }
 ```
 
+## Extension and output
+
+Activity output is not saved to `environment.output` by default; the example above is the idiomatic way to do that. The environment setting `assignOutput` (`id` or `auto`, see [Environment](/docs/Environment.md)) attaches an equivalent built-in extension to every activity that no user extension attached to, i.e. all extension functions returned nothing for the activity. Note that an extension that only subscribes to events and returns nothing counts as not attached — return an object (`{}` will do) to tell the context that the activity is taken care of.
+
+The built-in extension is exported as `OutputExtension(activity, context)` and can be registered like any other extension, e.g. to pick elements yourself:
+
+```js
+import { Definition, OutputExtension } from 'bpmn-elements';
+
+const definition = new Definition(context, {
+  extensions: {
+    userTaskOutput(activity, context) {
+      if (activity.type !== 'bpmn:UserTask') return;
+      return new OutputExtension(activity, context);
+    },
+  },
+});
+```
+
+```js
+const definition = new Definition(context, {
+  settings: { assignOutput: 'id' },
+  extensions: {
+    myUserTaskExtension(activity, { environment }) {
+      if (activity.type !== 'bpmn:UserTask') return; // built-in output extension takes over
+      activity.on('end', (api) => {
+        environment.output[api.id] = api.content.output;
+      });
+      return {};
+    },
+  },
+});
+```
+
 ## Extension with formatting
 
 In some cases it may be required to add some extra data when an activity executes.
 
 The basic flow is to publish a formatting message on the activity format queue.
 
+The same mechanism works on the **process**: publish a `format` message (optionally with an `endRoutingKey`) in response to a `process.*` event, and the process run pauses at the next transition until the matching end key is published — see the asynchronous example below, which applies equally to process events.
+
 ```javascript
 import * as elements from 'bpmn-elements';
-import BpmnModdle from 'bpmn-moddle';
+import { BpmnModdle } from 'bpmn-moddle';
 
-import { default as serialize, TypeResolver } from 'moddle-context-serializer';
+import { Serializer, TypeResolver } from 'moddle-context-serializer';
 
 const { Context, Definition } = elements;
 const typeResolver = TypeResolver(elements);
@@ -78,7 +116,7 @@ const moddleOptions = {
 async function run() {
   const moddleContext = await getModdleContext(source);
 
-  const context = new Context(serialize(moddleContext, typeResolver));
+  const context = new Context(Serializer(moddleContext, typeResolver));
   const definition = new Definition(context, {
     Logger,
     variables: {

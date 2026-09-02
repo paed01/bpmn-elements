@@ -1,4 +1,4 @@
-import { Definition } from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import testHelpers from '../helpers/testHelpers.js';
 import factory from '../helpers/factory.js';
 import js from '../resources/extensions/JsExtension.js';
@@ -252,10 +252,15 @@ Feature('Conditional event', () => {
     let state, stopped;
     When('run and saving state on activity condition', () => {
       definition = new Definition(context.clone());
-      definition.waitFor('activity.condition', () => {
-        state = definition.getState();
-        definition.stop();
-      });
+      definition.waitFor(
+        'activity.condition',
+
+        // @ts-expect-error type coverage
+        () => {
+          state = definition.getState();
+          definition.stop();
+        }
+      );
       stopped = definition.waitFor('stop');
 
       definition.run();
@@ -269,10 +274,15 @@ Feature('Conditional event', () => {
       definition = new Definition(context.clone()).recover(state);
       definition.resume();
 
-      definition.waitFor('activity.condition', () => {
-        state = definition.getState();
-        definition.stop();
-      });
+      definition.waitFor(
+        'activity.condition',
+
+        // @ts-expect-error type coverage
+        () => {
+          state = definition.getState();
+          definition.stop();
+        }
+      );
       stopped = definition.waitFor('stop');
     });
 
@@ -528,6 +538,10 @@ Feature('Conditional event', () => {
       expect(event).to.have.property('id', 'start');
     });
 
+    And('conditional event accepts signal and cancel api calls', () => {
+      expect(event.content.accepts).to.deep.equal(['signal', 'cancel']);
+    });
+
     When('start event is signaled', () => {
       event.signal();
     });
@@ -654,6 +668,73 @@ Feature('Conditional event', () => {
 
     Then('it is ignored', () => {
       expect(definition.getActivityById('cond').counters).to.deep.equal({ taken: 0, discarded: 1 });
+    });
+  });
+
+  Scenario('conditional event is cancelled via api', () => {
+    let context, definition;
+    Given('a manual task with an interrupting bound conditional event', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-task" sourceRef="start" targetRef="task" />
+          <manualTask id="task" />
+          <boundaryEvent id="cond" attachedToRef="task" cancelActivity="true">
+            <conditionalEventDefinition>
+              <condition xsi:type="tFormalExpression">\${environment.variables.conditionMet}</condition>
+            </conditionalEventDefinition>
+          </boundaryEvent>
+          <sequenceFlow id="to-cond-end" sourceRef="cond" targetRef="cond-end" />
+          <endEvent id="cond-end" />
+          <sequenceFlow id="to-end" sourceRef="task" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
+
+    let completed;
+    When('ran', () => {
+      completed = definition.waitFor('leave');
+      definition.run();
+    });
+
+    Then('bound conditional event is waiting', () => {
+      const [event] = definition.getPostponed((api) => api.id === 'cond');
+      expect(event, 'postponed conditional event').to.be.ok;
+      expect(event.content.accepts).to.deep.equal(['signal', 'cancel']);
+    });
+
+    When('conditional event is cancelled via api', () => {
+      const [event] = definition.getPostponed((api) => api.id === 'cond');
+      event.cancel();
+    });
+
+    Then('run completes as if condition was met', async () => {
+      await completed;
+      expect(definition.getActivityById('cond').counters).to.deep.equal({ taken: 1, discarded: 0 });
+      expect(definition.getActivityById('cond-end').counters).to.deep.equal({ taken: 1, discarded: 0 });
+    });
+
+    And('attached task was cancelled', () => {
+      expect(definition.getActivityById('task').counters).to.deep.equal({ taken: 0, discarded: 1 });
+    });
+
+    When('ran again and conditional event is cancelled with delegated cancel', async () => {
+      completed = definition.waitFor('leave');
+      const wait = definition.waitFor('wait', (_, msg) => msg.content.id === 'cond');
+      definition.run();
+      await wait;
+      definition.cancelActivity({ id: 'cond' });
+    });
+
+    Then('run completes as if condition was met again', async () => {
+      await completed;
+      expect(definition.getActivityById('cond').counters).to.deep.equal({ taken: 2, discarded: 0 });
+      expect(definition.getActivityById('task').counters).to.deep.equal({ taken: 0, discarded: 2 });
     });
   });
 });

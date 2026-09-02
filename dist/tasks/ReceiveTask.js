@@ -3,17 +3,18 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.ReceiveTask = ReceiveTask;
 exports.ReceiveTaskBehaviour = ReceiveTaskBehaviour;
-exports.default = ReceiveTask;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
+var _Activity = require("../activity/Activity.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-const kCompleted = Symbol.for('completed');
-const kExecuteMessage = Symbol.for('executeMessage');
-const kReferenceElement = Symbol.for('referenceElement');
-const kReferenceInfo = Symbol.for('referenceInfo');
+var _constants = require("../constants.js");
+/**
+ * Receive task
+ * @param {import('#types').ActivityDefinition} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function ReceiveTask(activityDef, context) {
-  const task = new _Activity.default(ReceiveTaskBehaviour, activityDef, context);
+  const task = new _Activity.Activity(ReceiveTaskBehaviour, activityDef, context);
   task.broker.assertQueue('message', {
     autoDelete: false,
     durable: true
@@ -23,6 +24,11 @@ function ReceiveTask(activityDef, context) {
   });
   return task;
 }
+
+/**
+ * Receive task behaviour
+ * @param {import('#types').Activity} activity
+ */
 function ReceiveTaskBehaviour(activity) {
   const {
     id,
@@ -31,16 +37,33 @@ function ReceiveTaskBehaviour(activity) {
   } = activity;
   this.id = id;
   this.type = type;
-  const reference = this.reference = {
+
+  /** @type {import('#types').EventReference} */
+  this.reference = {
     name: 'anonymous',
     ...behaviour.messageRef,
     referenceType: 'message'
   };
+
+  /** @type {import('./LoopCharacteristics.js').LoopCharacteristics | undefined } */
   this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
   this.broker = activity.broker;
-  this[kReferenceElement] = reference.id && activity.getActivityById(reference.id);
+
+  /** @internal */
+  this[_constants.K_REFERENCE_ELEMENT] = this.reference.id && activity.getActivityById(this.reference.id);
+  /** @internal */
+  this[_constants.K_COMPLETED] = false;
+  /** @internal */
+  this[_constants.K_EXECUTE_MESSAGE] = undefined;
+  /** @internal */
+  this[_constants.K_REFERENCE_INFO] = undefined;
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 ReceiveTaskBehaviour.prototype.execute = function execute(executeMessage) {
   return new ReceiveTaskExecution(this).execute(executeMessage);
 };
@@ -56,18 +79,18 @@ function ReceiveTaskExecution(parent) {
   this.reference = reference;
   this.broker = broker;
   this.loopCharacteristics = loopCharacteristics;
-  this.referenceElement = parent[kReferenceElement];
-  this[kCompleted] = false;
+  this.referenceElement = parent[_constants.K_REFERENCE_ELEMENT];
+  this[_constants.K_COMPLETED] = false;
 }
 ReceiveTaskExecution.prototype.execute = function execute(executeMessage) {
-  this[kExecuteMessage] = executeMessage;
+  this[_constants.K_EXECUTE_MESSAGE] = executeMessage;
   const executeContent = executeMessage.content;
   const {
     executionId,
     isRootScope
   } = executeContent;
   this.executionId = executionId;
-  const info = this[kReferenceInfo] = this._getReferenceInfo(executeMessage);
+  const info = this[_constants.K_REFERENCE_INFO] = this._getReferenceInfo(executeMessage);
   if (isRootScope) {
     this._setupMessageHandling(executionId);
   }
@@ -80,7 +103,7 @@ ReceiveTaskExecution.prototype.execute = function execute(executeMessage) {
     noAck: true,
     consumerTag: `_onmessage-${executionId}`
   });
-  if (this[kCompleted]) return;
+  if (this[_constants.K_COMPLETED]) return;
   broker.subscribeTmp('api', `activity.#.${executionId}`, this._onApiMessage.bind(this), {
     noAck: true,
     consumerTag: `_api-${executionId}`,
@@ -90,10 +113,11 @@ ReceiveTaskExecution.prototype.execute = function execute(executeMessage) {
   broker.publish('event', 'activity.wait', (0, _messageHelper.cloneContent)(executeContent, {
     message: {
       ...info.message
-    }
+    },
+    accepts: ['message', 'signal']
   }));
 };
-ReceiveTaskExecution.prototype._onCatchMessage = function onCatchMessage(routingKey, message) {
+ReceiveTaskExecution.prototype._onCatchMessage = function onCatchMessage(_routingKey, message) {
   const content = message.content;
   const {
     id: signalId,
@@ -102,7 +126,7 @@ ReceiveTaskExecution.prototype._onCatchMessage = function onCatchMessage(routing
   const {
     message: referenceMessage,
     description
-  } = this[kReferenceInfo];
+  } = this[_constants.K_REFERENCE_INFO];
   if (!referenceMessage.id && signalId || signalExecutionId) {
     if (this.loopCharacteristics && signalExecutionId !== this.executionId) return;
     if (signalId !== this.id && signalExecutionId !== this.executionId) return;
@@ -115,7 +139,7 @@ ReceiveTaskExecution.prototype._onCatchMessage = function onCatchMessage(routing
     correlationId
   } = message.properties;
   const broker = this.broker;
-  const executeContent = this[kExecuteMessage].content;
+  const executeContent = this[_constants.K_EXECUTE_MESSAGE].content;
   broker.publish('event', 'activity.consumed', (0, _messageHelper.cloneContent)(executeContent, {
     message: {
       ...message.content.message
@@ -134,7 +158,7 @@ ReceiveTaskExecution.prototype._onCatchMessage = function onCatchMessage(routing
     correlationId
   });
 };
-ReceiveTaskExecution.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+ReceiveTaskExecution.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   const {
     type: messageType,
     correlationId
@@ -149,9 +173,9 @@ ReceiveTaskExecution.prototype._onApiMessage = function onApiMessage(routingKey,
       }
     case 'discard':
       {
-        this[kCompleted] = true;
+        this[_constants.K_COMPLETED] = true;
         this._stop();
-        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[kExecuteMessage].content), {
+        return this.broker.publish('execution', 'execute.discard', (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content), {
           correlationId
         });
       }
@@ -162,9 +186,9 @@ ReceiveTaskExecution.prototype._onApiMessage = function onApiMessage(routingKey,
   }
 };
 ReceiveTaskExecution.prototype._complete = function complete(output, options) {
-  this[kCompleted] = true;
+  this[_constants.K_COMPLETED] = true;
   this._stop();
-  return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(this[kExecuteMessage].content, {
+  return this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content, {
     output
   }), options);
 };

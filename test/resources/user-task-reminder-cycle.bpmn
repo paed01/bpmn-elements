@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="UserTaskReminderCycle" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:process id="user-reminder-cycle-process" isExecutable="true">
+    <bpmn:startEvent id="start">
+      <bpmn:outgoing>to-user-task</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="to-user-task" sourceRef="start" targetRef="user-task" />
+    <bpmn:userTask id="user-task" name="Do the job">
+      <bpmn:incoming>to-user-task</bpmn:incoming>
+      <bpmn:outgoing>to-end</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:boundaryEvent id="reminder-timer" name="Reminder" cancelActivity="false" attachedToRef="user-task">
+      <bpmn:outgoing>to-notify</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="reminder-timer-def">
+        <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">${environment.variables.reminderCycle}</bpmn:timeCycle>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:sequenceFlow id="to-notify" sourceRef="reminder-timer" targetRef="notify" />
+    <bpmn:scriptTask id="notify" name="Notify user and give more time before next reminder" scriptFormat="javascript">
+      <bpmn:incoming>to-notify</bpmn:incoming>
+      <bpmn:outgoing>to-notified</bpmn:outgoing>
+      <bpmn:script>
+        environment.variables.reminderCycle = environment.services.notify(content.id);
+        next();
+      </bpmn:script>
+    </bpmn:scriptTask>
+    <bpmn:sequenceFlow id="to-notified" sourceRef="notify" targetRef="notified" />
+    <bpmn:endEvent id="notified">
+      <bpmn:incoming>to-notified</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="to-end" sourceRef="user-task" targetRef="end" />
+    <bpmn:endEvent id="end">
+      <bpmn:incoming>to-end</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="Diagram_UserTaskReminderCycle">
+    <bpmndi:BPMNPlane id="Plane_UserTaskReminderCycle" bpmnElement="user-reminder-cycle-process">
+      <bpmndi:BPMNShape id="start_di" bpmnElement="start">
+        <dc:Bounds x="152" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="user-task_di" bpmnElement="user-task">
+        <dc:Bounds x="240" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="reminder-timer_di" bpmnElement="reminder-timer">
+        <dc:Bounds x="272" y="139" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="245" y="182" width="47" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="notify_di" bpmnElement="notify">
+        <dc:Bounds x="340" y="220" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="notified_di" bpmnElement="notified">
+        <dc:Bounds x="502" y="242" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_di" bpmnElement="end">
+        <dc:Bounds x="502" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="to-user-task_di" bpmnElement="to-user-task">
+        <di:waypoint x="188" y="117" />
+        <di:waypoint x="240" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="to-notify_di" bpmnElement="to-notify">
+        <di:waypoint x="290" y="175" />
+        <di:waypoint x="290" y="260" />
+        <di:waypoint x="340" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="to-notified_di" bpmnElement="to-notified">
+        <di:waypoint x="440" y="260" />
+        <di:waypoint x="502" y="260" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="to-end_di" bpmnElement="to-end">
+        <di:waypoint x="340" y="117" />
+        <di:waypoint x="502" y="117" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

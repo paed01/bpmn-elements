@@ -1,58 +1,73 @@
 import { ISOInterval, getDate } from '@0dep/piso';
 import { cloneContent } from '../messageHelper.js';
 import { RunError } from '../error/Errors.js';
+import { K_STOPPED } from '../constants.js';
 
-const kStopped = Symbol.for('stopped');
-const kTimerContent = Symbol.for('timerContent');
-const kTimer = Symbol.for('timer');
+const K_TIMER_CONTENT = Symbol.for('timerContent');
+const K_TIMER = Symbol.for('timer');
 
 const timerTypes = new Set(['timeDuration', 'timeDate', 'timeCycle']);
 
-export default function TimerEventDefinition(activity, eventDefinition) {
+/**
+ * Timer event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').SerializableElement} eventDefinition
+ */
+export function TimerEventDefinition(activity, eventDefinition) {
   const type = (this.type = eventDefinition.type || 'TimerEventDefinition');
   this.activity = activity;
   const environment = (this.environment = activity.environment);
   this.eventDefinition = eventDefinition;
 
   const { timeDuration, timeCycle, timeDate } = eventDefinition.behaviour || {};
-  if (timeDuration) this.timeDuration = timeDuration;
-  if (timeCycle) this.timeCycle = timeCycle;
-  if (timeDate) this.timeDate = timeDate;
+  if (timeDuration) this.timeDuration = /** @type {string} */ (timeDuration);
+  if (timeCycle) this.timeCycle = /** @type {string} */ (timeCycle);
+  if (timeDate) this.timeDate = /** @type {string} */ (timeDate);
 
   this.broker = activity.broker;
   this.logger = environment.Logger(type.toLowerCase());
 
-  this[kStopped] = false;
-  this[kTimer] = null;
+  /** @internal */
+  this[K_STOPPED] = false;
+  /** @internal */
+  this[K_TIMER] = null;
+  /** @internal */
+  this[K_TIMER_CONTENT] = undefined;
 }
 
-Object.defineProperties(TimerEventDefinition.prototype, {
-  executionId: {
-    get() {
-      return this[kTimerContent]?.executionId;
-    },
-  },
-  stopped: {
-    get() {
-      return this[kStopped];
-    },
-  },
-  timer: {
-    get() {
-      return this[kTimer];
-    },
+Object.defineProperty(TimerEventDefinition.prototype, 'executionId', {
+  /** @returns {string} */
+  get() {
+    return this[K_TIMER_CONTENT]?.executionId;
   },
 });
 
+Object.defineProperty(TimerEventDefinition.prototype, 'stopped', {
+  /** @returns {boolean} */
+  get() {
+    return this[K_STOPPED];
+  },
+});
+
+Object.defineProperty(TimerEventDefinition.prototype, 'timer', {
+  /** @returns {import('#types').Timer | null} */
+  get() {
+    return this[K_TIMER];
+  },
+});
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 TimerEventDefinition.prototype.execute = function execute(executeMessage) {
   const { routingKey: executeKey, redelivered: isResumed } = executeMessage.fields;
-  const timer = this[kTimer];
+  const timer = this[K_TIMER];
   if (timer && executeKey === 'execute.timer') {
     return;
   }
 
-  if (timer) this[kTimer] = this.environment.timers.clearTimeout(timer);
-  this[kStopped] = false;
+  if (timer) this[K_TIMER] = this.environment.timers.clearTimeout(timer);
+  this[K_STOPPED] = false;
 
   const content = executeMessage.content;
   const executionId = content.executionId;
@@ -63,14 +78,16 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
     var resolvedTimer = this._getTimers(executeMessage);
   } catch (err) {
     this.logger.error(`<${executionId} (${this.activity.id})> failed to get timeout delay: ${err}`);
+    // @ts-ignore
     throw new RunError(err.message, executeMessage, err);
   }
 
-  const timerContent = (this[kTimerContent] = cloneContent(content, {
+  const timerContent = (this[K_TIMER_CONTENT] = cloneContent(content, {
     ...resolvedTimer,
     ...(isResumed && { isResumed }),
     startedAt,
     state: 'timer',
+    accepts: ['cancel'],
   }));
 
   const broker = this.broker;
@@ -93,7 +110,7 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
 
   const timers = this.environment.timers.register(timerContent);
   const delay = timerContent.timeout;
-  this[kTimer] = timers.setTimeout(this._completed.bind(this), delay, {
+  this[K_TIMER] = timers.setTimeout(this._completed.bind(this), delay, {
     id: content.id,
     type: this.type,
     executionId,
@@ -103,8 +120,8 @@ TimerEventDefinition.prototype.execute = function execute(executeMessage) {
 };
 
 TimerEventDefinition.prototype.stop = function stopTimer() {
-  const timer = this[kTimer];
-  if (timer) this[kTimer] = this.environment.timers.clearTimeout(timer);
+  const timer = this[K_TIMER];
+  if (timer) this[K_TIMER] = this.environment.timers.clearTimeout(timer);
 };
 
 TimerEventDefinition.prototype._completed = function completed(completeContent, options) {
@@ -115,7 +132,7 @@ TimerEventDefinition.prototype._completed = function completed(completeContent, 
   const runningTime = stoppedAt.getTime() - this.startedAt.getTime();
   this._debug(`completed in ${runningTime}ms`);
 
-  const timerContent = this[kTimerContent];
+  const timerContent = this[K_TIMER_CONTENT];
   const content = { stoppedAt, runningTime, state: 'timeout', ...completeContent };
 
   const broker = this.broker;
@@ -148,7 +165,7 @@ TimerEventDefinition.prototype._onDelegatedApiMessage = function onDelegatedApiM
   this.broker.publish(
     'event',
     'activity.consumed',
-    cloneContent(this[kTimerContent], {
+    cloneContent(this[K_TIMER_CONTENT], {
       message: {
         ...content.message,
       },
@@ -159,7 +176,7 @@ TimerEventDefinition.prototype._onDelegatedApiMessage = function onDelegatedApiM
   return this._onApiMessage(routingKey, message);
 };
 
-TimerEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+TimerEventDefinition.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   const { type: messageType, correlationId } = message.properties;
 
   switch (messageType) {
@@ -180,22 +197,29 @@ TimerEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey,
     case 'discard': {
       this._stop();
       this._debug('discarded');
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kTimerContent], { state: 'discard' }), {
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[K_TIMER_CONTENT], { state: 'discard' }), {
         correlationId,
       });
     }
   }
 };
 
+/** @internal */
 TimerEventDefinition.prototype._stop = function stop() {
-  this[kStopped] = true;
-  const timer = this[kTimer];
-  if (timer) this[kTimer] = this.environment.timers.clearTimeout(timer);
+  this[K_STOPPED] = true;
+  const timer = this[K_TIMER];
+  if (timer) this[K_TIMER] = this.environment.timers.clearTimeout(timer);
   const broker = this.broker;
   broker.cancel(`_api-${this.executionId}`);
   broker.cancel(`_api-delegated-${this.executionId}`);
 };
 
+/**
+ * Parse timer
+ * @param {import('#types').TimerType} timerType
+ * @param {string} value
+ * @returns {import('#types').parsedTimer}
+ */
 TimerEventDefinition.prototype.parse = function parse(timerType, value) {
   let repeat, delay, expireAt;
   const now = new Date();
@@ -210,6 +234,7 @@ TimerEventDefinition.prototype.parse = function parse(timerType, value) {
     }
     case 'timeDate': {
       expireAt = getDate(value);
+      // @ts-ignore
       delay = now.getTime() - expireAt;
       break;
     }
@@ -239,7 +264,11 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
     let expireAtDate, repeat;
     const timerStr = result[timerType];
     if (timerStr) {
-      const { repeat: parsedRepeat, expireAt: parsedExpireAt } = this.parse(timerType, timerStr);
+      const { repeat: parsedRepeat, expireAt: parsedExpireAt } = this.parse(
+        // @ts-ignore
+        timerType,
+        timerStr
+      );
       repeat = parsedRepeat;
       if (!parsedExpireAt || !parsedExpireAt.getTime) {
         throw new TypeError(`Parsed ${timerType} "${timerStr}" expireAt failed to resolve to a date`);
@@ -250,21 +279,27 @@ TimerEventDefinition.prototype._getTimers = function getTimers(executeMessage) {
     }
 
     if (!('expireAt' in result) || result.expireAt > expireAtDate) {
+      // @ts-ignore
       result.timerType = timerType;
       result.expireAt = expireAtDate;
+      // @ts-ignore
       result.repeat = repeat;
     }
   }
 
   if ('expireAt' in result) {
+    // @ts-ignore
     result.timeout = result.expireAt - now.getTime();
   } else if ('timeout' in content) {
+    // @ts-ignore
     result.timeout = content.timeout;
   } else if (!Object.keys(result).length) {
+    // @ts-ignore
     result.timeout = 0;
   }
 
   if (content.inbound?.[0] && 'repeat' in content.inbound[0]) {
+    // @ts-ignore
     result.repeat = content.inbound[0].repeat;
   }
 

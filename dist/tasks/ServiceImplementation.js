@@ -3,9 +3,12 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = ServiceImplementation;
-var _ExecutionScope = _interopRequireDefault(require("../activity/ExecutionScope.js"));
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+exports.ServiceImplementation = ServiceImplementation;
+var _ExecutionScope = require("../activity/ExecutionScope.js");
+/**
+ * Service implementation
+ * @param {import('#types').Activity} activity
+ */
 function ServiceImplementation(activity) {
   this.type = `${activity.type}:implementation`;
   this.implementation = activity.behaviour.implementation;
@@ -16,7 +19,7 @@ ServiceImplementation.prototype.execute = function execute(executionMessage, cal
   const implementation = this.implementation;
   const serviceFn = activity.environment.resolveExpression(implementation, executionMessage);
   if (typeof serviceFn !== 'function') return callback(new Error(`Implementation ${implementation} did not resolve to a function`));
-  serviceFn.call(activity, (0, _ExecutionScope.default)(activity, executionMessage), (err, ...args) => {
+  serviceFn.call(activity, (0, _ExecutionScope.ExecutionScope)(activity, executionMessage), (err, ...args) => {
     callback(err, args);
   });
 };

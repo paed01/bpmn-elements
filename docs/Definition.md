@@ -22,6 +22,7 @@ Returns api with properties:
 - `execution`: current execution
 - `environment`: definition environment instance, see [Environment](/docs/Environment.md)
 - `isRunning`: boolean indicating if the definition is running
+- `stopped`: boolean indicating if the definition is in a stopped state
 - `activityStatus`: activity executing status. Can be used to decide when to save state, `timer` and `wait` is recommended.
   - `idle`: idle, not running anything
   - `executing`: at least one activity is executing, e.g. a service task making a asynchronous request
@@ -43,7 +44,15 @@ Arguments:
 
 ### `getActivityById(id)`
 
-Get activity by id
+Get activity by id.
+
+### `getElementById(elementId)`
+
+Get any element (activity, sequence flow, message flow, or association) in the parsed definition by id.
+
+### `getRunningProcesses()`
+
+Get currently running processes.
 
 ### `shake([activityId])`
 
@@ -65,7 +74,7 @@ Arguments:
 - `message`: optional object
   - `id`: optional task/element id to signal, also matched with Message and Signal id. If not passed only anonymous Signal- and MessageEventDefinitions will pick up the signal.
   - `executionId`: optional execution id to signal, specially for looped tasks, also works for signal tasks that are not looped
-  - `[name]*`: any other properties will be forwarded as message to activity
+  - `[name]*`: any other properties will be forwarded as message to activity. For signal tasks (user-, manual task) the forwarded message, without `id` and `executionId`, becomes the task output
 
 ### `cancelActivity(message)`
 
@@ -77,6 +86,16 @@ Arguments:
   - `id`: optional task/element id to cancel
   - `executionId`: optional execution id to cancel
   - `[name]*`: any other properties will be forwarded as message to activity
+
+### `sendMessage(message)`
+
+Deliver a message to a referenced element. If the message id matches a Message, Signal, or Escalation element, the reference is resolved before delegation.
+
+Arguments:
+
+- `message`: object
+  - `id`: optional id of the target Message, Signal, Escalation, or element with a `resolve` method
+  - `[name]*`: any other properties will be forwarded as message content
 
 ### `getPostponed()`
 

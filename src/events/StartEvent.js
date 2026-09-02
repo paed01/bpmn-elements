@@ -1,30 +1,45 @@
-import Activity from '../activity/Activity.js';
-import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution.js';
+import { Activity } from '../activity/Activity.js';
+import { EventDefinitionExecution } from '../eventDefinitions/EventDefinitionExecution.js';
 import { cloneContent } from '../messageHelper.js';
+import { K_EXECUTE_MESSAGE, K_EXECUTION } from '../constants.js';
 
-const kExecuteMessage = Symbol.for('executeMessage');
-const kExecution = Symbol.for('execution');
-
-export default function StartEvent(activityDef, context) {
-  return new Activity(StartEventBehaviour, activityDef, context);
+/**
+ * Start event
+ * @param {import('#types').ActivityDefinition} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
+export function StartEvent(activityDef, context) {
+  return new Activity(StartEventBehaviour, { ...activityDef, isStartEvent: true }, context);
 }
 
+/**
+ * Start event behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function StartEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
   this.activity = activity;
   this.broker = activity.broker;
-  this[kExecution] = activity.eventDefinitions && new EventDefinitionExecution(activity, activity.eventDefinitions);
+  /** @internal */
+  this[K_EXECUTION] = activity.eventDefinitions && new EventDefinitionExecution(activity, activity.eventDefinitions);
+  /** @internal */
+  this[K_EXECUTE_MESSAGE] = undefined;
 }
 
 Object.defineProperty(StartEventBehaviour.prototype, 'executionId', {
+  /** @returns {string | undefined} */
   get() {
-    return this[kExecuteMessage]?.content.executionId;
+    return this[K_EXECUTE_MESSAGE]?.content.executionId;
   },
 });
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 StartEventBehaviour.prototype.execute = function execute(executeMessage) {
-  const execution = this[kExecution];
+  const execution = this[K_EXECUTION];
   if (execution) {
     return execution.execute(executeMessage);
   }
@@ -32,31 +47,34 @@ StartEventBehaviour.prototype.execute = function execute(executeMessage) {
   const content = cloneContent(executeMessage.content);
   const broker = this.broker;
   if (!content.form) {
+    // @ts-ignore
     return broker.publish('execution', 'execute.completed', content);
   }
 
   const executionId = content.executionId;
-  this[kExecuteMessage] = executeMessage;
+  this[K_EXECUTE_MESSAGE] = executeMessage;
+  // @ts-ignore
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(...args), {
     noAck: true,
     consumerTag: `_api-${executionId}`,
     priority: 300,
   });
+  // @ts-ignore
   broker.subscribeTmp('api', '#.signal.*', (...args) => this._onDelegatedApiMessage(...args), {
     noAck: true,
     consumerTag: `_api-delegated-${executionId}`,
   });
-  broker.publish('event', 'activity.wait', { ...content, executionId, state: 'wait' });
+  broker.publish('event', 'activity.wait', { ...content, executionId, state: 'wait', accepts: ['signal'] });
 };
 
-StartEventBehaviour.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+StartEventBehaviour.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   const { type: messageType, correlationId } = message.properties;
   switch (messageType) {
     case 'stop':
       return this._stop();
     case 'signal': {
       this._stop();
-      const content = this[kExecuteMessage].content;
+      const content = this[K_EXECUTE_MESSAGE].content;
       return this.broker.publish(
         'execution',
         'execute.completed',
@@ -69,7 +87,7 @@ StartEventBehaviour.prototype._onApiMessage = function onApiMessage(routingKey, 
     }
     case 'discard': {
       this._stop();
-      const content = this[kExecuteMessage].content;
+      const content = this[K_EXECUTE_MESSAGE].content;
       return this.broker.publish('execution', 'execute.discard', cloneContent(content), { correlationId });
     }
   }
@@ -85,7 +103,7 @@ StartEventBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMe
   if (signalId !== this.id && signalExecutionId !== this.executionId) return;
 
   const { type, correlationId } = message.properties;
-  const executeContent = this[kExecuteMessage].content;
+  const executeContent = this[K_EXECUTE_MESSAGE].content;
   this.broker.publish(
     'event',
     'activity.consumed',

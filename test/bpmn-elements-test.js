@@ -1,4 +1,4 @@
-import * as api from '../src/index.js';
+import * as api from 'bpmn-elements';
 
 describe('bpmn-elemements module', () => {
   it('exports Timers', () => {

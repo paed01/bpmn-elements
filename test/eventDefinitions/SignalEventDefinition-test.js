@@ -1,9 +1,7 @@
-import Environment from '../../src/Environment.js';
-import SignalEventDefinition from '../../src/eventDefinitions/SignalEventDefinition.js';
-import testHelpers from '../helpers/testHelpers.js';
-import Signal from '../../src/activity/Signal.js';
+import { Environment, Signal } from 'bpmn-elements';
+import { SignalEventDefinition } from 'bpmn-elements/eventDefinitions';
+import testHelpers, { Logger } from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
-import { Logger } from '../helpers/testHelpers.js';
 
 describe('SignalEventDefinition', () => {
   let event;
@@ -14,7 +12,7 @@ describe('SignalEventDefinition', () => {
       broker: ActivityBroker(this).broker,
       getActivityById(id) {
         if (id !== 'Signal_0') return;
-        return Signal({ id }, testHelpers.emptyContext());
+        return new Signal({ id }, testHelpers.emptyContext());
       },
     };
   });
@@ -36,10 +34,12 @@ describe('SignalEventDefinition', () => {
       );
 
       catchSignal.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -76,10 +76,12 @@ describe('SignalEventDefinition', () => {
       );
 
       catchSignal.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -122,10 +124,12 @@ describe('SignalEventDefinition', () => {
       );
 
       catchSignal.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -162,10 +166,12 @@ describe('SignalEventDefinition', () => {
       );
 
       catchSignal.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -194,10 +200,12 @@ describe('SignalEventDefinition', () => {
       });
 
       catchSignal.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -234,10 +242,12 @@ describe('SignalEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event',
             executionId: 'event_1',
@@ -280,10 +290,12 @@ describe('SignalEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'intermediate',
             executionId: 'event_1',
@@ -327,6 +339,7 @@ describe('SignalEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
@@ -334,6 +347,7 @@ describe('SignalEventDefinition', () => {
           input: {
             myMessage: 1,
           },
+          // @ts-expect-error type coverage
           parent: {
             id: 'intermediate',
             executionId: 'event_1',
@@ -373,11 +387,13 @@ describe('SignalEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'event_1',
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event',
             executionId: 'event_1',
@@ -424,6 +440,7 @@ describe('SignalEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'event_1',
@@ -432,6 +449,7 @@ describe('SignalEventDefinition', () => {
           input: {
             myMessage: 1,
           },
+          // @ts-expect-error type coverage
           parent: {
             id: 'event',
             executionId: 'event_1',

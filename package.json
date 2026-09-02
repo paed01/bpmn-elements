@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "17.3.0",
+  "version": "18.0.23",
   "description": "Executable workflow elements based on BPMN 2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,6 +12,11 @@
       "types": "./types/index.d.ts",
       "require": "./dist/index.js",
       "import": "./src/index.js"
+    },
+    "./errors": {
+      "types": "./types/index.d.ts",
+      "require": "./dist/error/Errors.js",
+      "import": "./src/error/Errors.js"
     },
     "./events": {
       "types": "./types/index.d.ts",
@@ -42,21 +47,24 @@
   "sideEffects": false,
   "scripts": {
     "test": "mocha -R @bonniernews/hot-bev -p -t 3000",
-    "posttest": "npm run lint && npm run dist",
+    "posttest": "npm run lint && npm run dist && npm run typecheck",
     "lint": "eslint . --cache && prettier . --check --cache",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p test",
     "prepack": "npm run dist",
     "test:md": "texample ./docs/Examples.md,./docs/StartEvent.md,./docs/Extension.md,./docs/ConditionalEventDefinition.md",
     "cov:html": "c8 -r html -r text mocha -R @bonniernews/hot-bev -p -t 3000",
     "test:lcov": "c8 -r lcov mocha && npm run lint",
-    "dist": "babel src -d dist/"
+    "dist": "babel src -d dist/ && npm run build:types",
+    "build:types": "node scripts/build-types.js"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/paed01/bpmn-elements.git"
+    "url": "git+https://github.com/paed01/bpmn-elements.git"
   },
+  "homepage": "https://0dep.se/run",
   "author": {
     "name": "Pål Edman",
-    "url": "https://github.com/paed01"
+    "url": "https://0dep.se/about"
   },
   "license": "MIT",
   "keywords": [
@@ -71,12 +79,20 @@
     "dist",
     "src",
     "types",
+    "!types/bundle.d.ts",
+    "!types/bundle-errors.d.ts",
+    "!types/interfaces.d.ts",
     "*.d.ts"
   ],
   "c8": {
     "include": [
       "src/**/*"
     ]
+  },
+  "overrides": {
+    "mocha": {
+      "yargs": "^18.0.0"
+    }
   },
   "devDependencies": {
     "@aircall/expression-parser": "^1.0.4",
@@ -85,24 +101,30 @@
     "@babel/preset-env": "^7.24.4",
     "@babel/register": "^7.23.7",
     "@bonniernews/hot-bev": "^0.4.0",
-    "@types/node": "^18.19.63",
-    "bpmn-moddle": "^9.0.1",
-    "c8": "^10.1.1",
-    "camunda-bpmn-moddle": "^7.0.1",
+    "@eslint/js": "^10.0.1",
+    "@types/bpmn-moddle": "^10.0.0",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.19.40",
+    "bpmn-moddle": "^10.0.0",
+    "c8": "^12.0.0",
+    "camunda-bpmn-moddle": "^8.0.1",
     "chai": "^6.2.1",
-    "chronokinesis": "^7.0.0",
+    "chronokinesis": "^8.0.0",
     "debug": "^4.3.4",
-    "eslint": "^9.0.0",
-    "globals": "^16.0.0",
+    "dts-buddy": "^0.8.3",
+    "eslint": "^10.3.0",
+    "globals": "^17.0.0",
     "mocha": "^11.0.1",
     "mocha-cakes-2": "^3.3.0",
-    "moddle-context-serializer": "^4.2.1",
+    "moddle-context-serializer": "^6.0.0",
     "nock": "^14.0.0",
     "prettier": "^3.2.5",
-    "texample": "^0.1.0"
+    "texample": "^1.0.1",
+    "typescript": "6.0.3"
   },
   "dependencies": {
-    "@0dep/piso": "^3.0.1",
-    "smqp": "^11.0.1"
+    "@0dep/piso": "^5.0.0",
+    "smqp": "^13.1.0"
   }
 }
