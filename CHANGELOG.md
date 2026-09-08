@@ -1,5 +1,9 @@
 # Changelog
 
+## v18.0.24 - 2026-09-08
+
+- major upgrade of [smqp@14](https://github.com/paed01/smqp/blob/default/CHANGELOG.md)
+
 ## v18.0.23 - 2026-09-01
 
 - package metadata: repository url, homepage, and author url point to 0dep.se
