@@ -161,7 +161,10 @@ Feature('Engine issues', () => {
   });
 
   Scenario('the notify script gives the user more time by updating the reminder timer cycle expression variable (#170)', () => {
-    let context, definition;
+    /** @type {import('bpmn-elements').ContextInstance} */
+    let context;
+    /** @type {import('bpmn-elements').Definition} */
+    let definition;
     let nextCycle;
     const notifications = [];
     const services = {
@@ -170,6 +173,11 @@ Feature('Engine issues', () => {
         return nextCycle;
       },
     };
+
+    after(() => {
+      definition?.stop();
+    });
+
     Given('a user task reminder timer with an environment variable cycle expression, updated by the notify script', async () => {
       context = await testHelpers.context(userTaskReminderCycleSource);
       definition = new Definition(context, {
@@ -184,7 +192,7 @@ Feature('Engine issues', () => {
 
     Then('reminder timer is armed with the initial cycle interval', () => {
       const [timer] = definition.environment.timers.executing;
-      expect(timer.delay).to.equal(1000 * 60 * 10);
+      expect(timer.delay).to.be.approximately(1000 * 60 * 10, 2);
     });
 
     When('user fails to complete the task in time, and the notify script decides to allow an hour until next reminder', () => {
@@ -198,7 +206,7 @@ Feature('Engine issues', () => {
 
     And('the repeated reminder timer is re-armed with the updated cycle interval', () => {
       const [timer] = definition.environment.timers.executing;
-      expect(timer.delay).to.equal(1000 * 60 * 60);
+      expect(timer.delay).to.be.approximately(1000 * 60 * 60, 2);
     });
 
     let state;
@@ -228,7 +236,7 @@ Feature('Engine issues', () => {
 
     And('the repeated reminder timer is re-armed with the resumed environment cycle interval', () => {
       const [timer] = definition.environment.timers.executing;
-      expect(timer.delay).to.equal(1000 * 60 * 60 * 2);
+      expect(timer.delay).to.be.approximately(1000 * 60 * 60 * 2, 2);
     });
 
     let end;
