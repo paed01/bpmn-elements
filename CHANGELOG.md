@@ -1,5 +1,9 @@
 # Changelog
 
+## v18.0.11 - 2026-09-11
+
+- major upgrade of [smqp@15](https://github.com/paed01/smqp/blob/default/CHANGELOG.md) that have straighten out routing quirks
+
 ## v18.0.24 - 2026-09-08
 
 - major upgrade of [smqp@14](https://github.com/paed01/smqp/blob/default/CHANGELOG.md)

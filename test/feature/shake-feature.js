@@ -219,7 +219,7 @@ Feature('Shaking', () => {
         And('shake messages are collected', () => {
           definition.broker.subscribeTmp(
             'event',
-            '*.shake#',
+            '*.shake.#',
             (routingKey) => {
               messages.push(routingKey);
             },
@@ -600,7 +600,7 @@ Feature('Shaking', () => {
       And('shake messages are collected', () => {
         definition.broker.subscribeTmp(
           'event',
-          '*.shake#',
+          '*.shake.#',
           (_, msg) => {
             messages.push(msg);
           },

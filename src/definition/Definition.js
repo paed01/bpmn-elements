@@ -289,7 +289,7 @@ Definition.prototype._shakeProcess = function shakeProcess(shakeBp, startId) {
       'shaker',
       {
         exchange: 'event',
-        pattern: '*.shake#',
+        pattern: '*.shake.#',
       },
       {
         broker: this.broker,

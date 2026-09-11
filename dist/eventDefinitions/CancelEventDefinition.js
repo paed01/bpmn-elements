@@ -64,9 +64,14 @@ CancelEventDefinition.prototype.executeCatch = function executeCatch(executeMess
   const parentExecutionId = parent.executionId;
   const broker = this.broker;
   this._debug('expect cancel');
-  broker.subscribeTmp('api', `activity.#.${parent.executionId}#`, this._onApiMessage.bind(this), {
+  const onApiMessage = this._onApiMessage.bind(this);
+  broker.subscribeTmp('api', `activity.*.${executionId}`, onApiMessage, {
     noAck: true,
     consumerTag: `_api-${executionId}`
+  });
+  broker.subscribeTmp('api', `activity.*.${parent.executionId}`, onApiMessage, {
+    noAck: true,
+    consumerTag: `_api-parent-${executionId}`
   });
   const expectRoutingKey = `execute.cancelled.${executionId}`;
   broker.subscribeOnce('execution', expectRoutingKey, this._onCatchMessage.bind(this), {
@@ -144,6 +149,7 @@ CancelEventDefinition.prototype._stop = function stop() {
     executionId = this.executionId;
   broker.cancel(`_onattached-cancel-${executionId}`);
   broker.cancel(`_api-${executionId}`);
+  broker.cancel(`_api-parent-${executionId}`);
 };
 CancelEventDefinition.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.executionId} (${this.activity.id})> ${msg}`);

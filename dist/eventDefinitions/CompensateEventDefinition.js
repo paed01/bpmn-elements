@@ -104,9 +104,14 @@ CompensateEventDefinition.prototype.executeCatch = function executeCatch(execute
     consumerTag: `_oncompensate-${executionId}`
   });
   if (this[_constants.K_COMPLETED]) return;
-  broker.subscribeTmp('api', `activity.#.${parent.executionId}#`, this._onApiMessage.bind(this), {
+  const onApiMessage = this._onApiMessage.bind(this);
+  broker.subscribeTmp('api', `activity.*.${executionId}`, onApiMessage, {
     noAck: true,
     consumerTag: `_api-${executionId}`
+  });
+  broker.subscribeTmp('api', `activity.*.${parent.executionId}`, onApiMessage, {
+    noAck: true,
+    consumerTag: `_api-parent-${executionId}`
   });
   broker.publish('execution', 'execute.detach', (0, _messageHelper.cloneContent)(executeContent, {
     sourceExchange: 'execution',
@@ -217,6 +222,7 @@ CompensateEventDefinition.prototype._stopCollect = function stopCollect() {
   const broker = this.broker,
     executionId = this.executionId;
   broker.cancel(`_api-${executionId}`);
+  broker.cancel(`_api-parent-${executionId}`);
   broker.cancel(`_oncompensate-${executionId}`);
   broker.cancel('_oncollect-messages');
   this[_constants.K_MESSAGE_Q].purge();
