@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "18.0.25",
+  "version": "18.0.26",
   "description": "Executable workflow elements based on BPMN 2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -47,7 +47,7 @@
   "sideEffects": false,
   "scripts": {
     "test": "mocha -R @bonniernews/hot-bev -p -t 3000",
-    "posttest": "npm run lint && npm run dist && npm run typecheck",
+    "posttest": "npm run lint && npm run toc && npm run dist && npm run typecheck",
     "lint": "eslint . --cache && prettier . --check --cache",
     "typecheck": "tsc --noEmit && tsc --noEmit -p test",
     "prepack": "npm run dist",
@@ -55,7 +55,8 @@
     "cov:html": "c8 -r html -r text mocha -R @bonniernews/hot-bev -p -t 3000",
     "test:lcov": "c8 -r lcov mocha && npm run lint",
     "dist": "babel src -d dist/ && npm run build:types",
-    "build:types": "node scripts/build-types.js"
+    "build:types": "node scripts/build-types.js",
+    "toc": "toc docs/Upgrade.md"
   },
   "repository": {
     "type": "git",
@@ -95,6 +96,7 @@
     }
   },
   "devDependencies": {
+    "@0dep/toc": "^1.0.1",
     "@aircall/expression-parser": "^1.0.4",
     "@babel/cli": "^7.24.1",
     "@babel/core": "^7.24.4",

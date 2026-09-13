@@ -4,6 +4,8 @@
 
 Version 18 refactors parallel gateway convergence and removes sequence flow discards altogether. Most diagrams run unchanged, but hosts that listen for discard events, assert `discarded` counters, or rely on multiple start events all running need attention.
 
+<!-- toc -->
+
 - [`Definition` requires `new`](#definition-requires-new)
 - [No more flow discards](#no-more-flow-discards)
 - [Parallel gateways](#parallel-gateways)
@@ -15,6 +17,8 @@ Version 18 refactors parallel gateway convergence and removes sequence flow disc
 - [Resuming state saved by v17](#resuming-state-saved-by-v17)
 - [Types](#types)
 - [Notable additions](#notable-additions)
+
+<!-- /toc -->
 
 ### `Definition` requires `new`
 
