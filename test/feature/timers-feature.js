@@ -1,12 +1,9 @@
 import * as ck from 'chronokinesis';
-import Definition from '../../src/definition/Definition.js';
+import { Definition, RunError, TimerEventDefinition } from 'bpmn-elements';
 import testHelpers from '../helpers/testHelpers.js';
 import factory from '../helpers/factory.js';
 import CamundaExtension from '../resources/extensions/CamundaExtension.js';
 import { resolveExpression } from '@aircall/expression-parser';
-import { RunError } from '../../src/error/Errors.js';
-import TimerEventDefinition from '../../src/eventDefinitions/TimerEventDefinition.js';
-
 const extensions = {
   camunda: CamundaExtension,
 };
@@ -23,7 +20,10 @@ Feature('Timers', () => {
     });
     after(ck.reset);
 
-    let context, definition;
+    /** @type {import('bpmn-elements').ContextInstance} */
+    let context;
+    /** @type {Definition} */
+    let definition;
     after(() => {
       expect(definition?.environment.timers.executing).to.have.length(0);
     });
@@ -53,6 +53,11 @@ Feature('Timers', () => {
     And('time cycle is executing', () => {
       const [execution] = activity.getExecuting();
       expect(execution.content).to.have.property('timeCycle', 'R3/PT10H');
+    });
+
+    And('timer accepts cancel api call', () => {
+      const [execution] = activity.getExecuting();
+      expect(execution.content.accepts).to.deep.equal(['cancel']);
     });
 
     When('start event times out', () => {
@@ -654,7 +659,7 @@ Feature('Timers', () => {
 
   Scenario('bound activity interrupting timer cycle with ISO8601 interval', () => {
     let context;
-    /** @type {import('../../types/types.js').Definition} */
+    /** @type {import('bpmn-elements').Definition} */
     let definition;
     after(() => {
       ck.reset();
@@ -1276,6 +1281,7 @@ Feature('Timers', () => {
   [null, 'foo', { expireAt: 'bar' }].forEach((parseResult) => {
     Scenario(`override TimerEventDefinition parse function and return unaccepted >${JSON.stringify(parseResult)}<`, () => {
       class ExtendedTimerEventDefinition extends TimerEventDefinition {
+        /** @returns {any} */
         parse() {
           return parseResult;
         }

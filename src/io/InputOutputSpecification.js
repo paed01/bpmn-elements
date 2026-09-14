@@ -1,9 +1,14 @@
-import getPropertyValue from '../getPropertyValue.js';
 import { brokerSafeId } from '../shared.js';
+import { K_CONSUMING } from '../constants.js';
 
-const kConsuming = Symbol.for('consuming');
-
-export default function IoSpecification(activity, ioSpecificationDef, context) {
+/**
+ * Activity ioSpecification behaviour. Reads bound data objects on enter and writes them on completion.
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').SerializableElement} ioSpecificationDef
+ * @param {import('#types').ContextInstance} context
+ * @satisfies {import('#types').IExtension}
+ */
+export function IoSpecification(activity, ioSpecificationDef, context) {
   const { id, type = 'iospecification', behaviour = {} } = ioSpecificationDef;
   this.id = id;
   this.type = type;
@@ -13,19 +18,23 @@ export default function IoSpecification(activity, ioSpecificationDef, context) {
   this.context = context;
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} [message]
+ */
 IoSpecification.prototype.activate = function activate(message) {
-  if (this[kConsuming]) return;
+  if (this[K_CONSUMING]) return;
   if (message?.fields.redelivered && message.fields.routingKey === 'run.start') {
     this._onFormatEnter();
   }
   if (message?.fields.redelivered && message.fields.routingKey === 'run.end') {
     this._onFormatComplete(message);
   }
-  this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), { noAck: true });
+  /** @internal @type {import('smqp').Consumer | void} */
+  this[K_CONSUMING] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), { noAck: true });
 };
 
 IoSpecification.prototype.deactivate = function deactivate() {
-  if (this[kConsuming]) this[kConsuming] = this[kConsuming].cancel();
+  if (this[K_CONSUMING]) this[K_CONSUMING] = this[K_CONSUMING].cancel();
 };
 
 IoSpecification.prototype._onActivityEvent = function onActivityEvent(routingKey, message) {
@@ -61,7 +70,7 @@ IoSpecification.prototype._onFormatEnter = function onFormatOnEnter() {
       };
       result.sources.push(source);
 
-      const dataObjectId = getPropertyValue(ioSource, 'behaviour.association.source.dataObject.id');
+      const dataObjectId = ioSource.behaviour?.association?.source?.dataObject?.id;
       if (!dataObjectId) return result;
       const dataObject = this.context.getDataObjectById(dataObjectId);
       if (!dataObject) return result;
@@ -108,8 +117,8 @@ IoSpecification.prototype._onFormatEnter = function onFormatOnEnter() {
 
 IoSpecification.prototype._onFormatComplete = function formatOnComplete(message) {
   const safeType = brokerSafeId(this.type).toLowerCase();
-  const messageInputs = getPropertyValue(message, 'content.ioSpecification.dataInputs');
-  const messageOutputs = getPropertyValue(message, 'content.output.ioSpecification.dataOutputs') || [];
+  const messageInputs = message.content?.ioSpecification?.dataInputs;
+  const messageOutputs = message.content?.output?.ioSpecification?.dataOutputs || [];
   const dataOutputs = this.behaviour.dataOutputs;
   const broker = this.broker;
   const context = this.context;
@@ -125,7 +134,7 @@ IoSpecification.prototype._onFormatComplete = function formatOnComplete(message)
       };
       result.sources.push(source);
 
-      const dataObjectId = getPropertyValue(ioSource, 'behaviour.association.target.dataObject.id');
+      const dataObjectId = ioSource.behaviour?.association?.target?.dataObject?.id;
       if (!dataObjectId) return result;
       const dataObject = context.getDataObjectById(dataObjectId);
       if (!dataObject) return result;
@@ -197,7 +206,7 @@ function read(broker, dataObjectRefs, callback) {
     dataObject.read(broker, 'data', 'data.read.');
   }
 
-  function onDataObjectResponse(routingKey, message) {
+  function onDataObjectResponse(_routingKey, message) {
     const { index } = dataObjectRefs.find(({ dataObject }) => dataObject.id === message.content.id);
     responses.push({ ...message.content, index });
 
@@ -219,7 +228,7 @@ function write(broker, dataObjectRefs, callback) {
     dataObject.write(broker, 'data', 'data.write.', value);
   }
 
-  function onDataObjectResponse(routingKey, message) {
+  function onDataObjectResponse(_routingKey, message) {
     const idx = dataObjectRefs.findIndex(({ dataObject }) => dataObject.id === message.content.id);
     responses[idx] = { index: idx, ...message.content };
 

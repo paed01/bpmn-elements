@@ -43,7 +43,7 @@ describe('IntermediateThrowEvent', () => {
       event.broker.subscribeTmp(
         'execution',
         'execute.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { brokerSafeId } from '../../../src/shared.js';
 
+// @ts-expect-error type coverage
 const moddleOptions = JSON.parse(fs.readFileSync('./test/resources/js-bpmn-moddle.json'));
 
 export default {
@@ -9,19 +10,27 @@ export default {
 };
 
 function Js(activity, context) {
+  // @ts-expect-error type coverage
   const resultVariable = ResultVariableIo(activity, context);
   const formKey = FormKey(activity, context);
+  // @ts-expect-error type coverage
+  const versionTag = VersionTag(activity, context);
 
   return {
     type: 'js:extension',
-    extensions: { resultVariable, formKey },
+    extensions: { resultVariable, formKey, versionTag },
     activate(msg) {
+      // @ts-expect-error type coverage
       if (resultVariable) resultVariable.activate(msg);
+      // @ts-expect-error type coverage
       if (formKey) formKey.activate(msg);
+      // @ts-expect-error type coverage
+      if (versionTag) versionTag.activate(msg);
     },
     deactivate() {
       if (resultVariable) resultVariable.deactivate();
       if (formKey) formKey.deactivate();
+      if (versionTag) versionTag.deactivate();
     },
   };
 }
@@ -96,5 +105,37 @@ function FormKey(activity, context) {
         key: formKeyValue,
       },
     });
+  }
+}
+
+function VersionTag(element) {
+  if (element.type !== 'bpmn:Process') return;
+
+  const { versionTag } = element.behaviour;
+  if (!versionTag) return;
+
+  const { id, logger, broker, environment } = element;
+
+  const type = 'js:versiontag';
+  let processConsumer;
+
+  return {
+    type,
+    activate,
+    deactivate,
+  };
+
+  function deactivate() {
+    if (processConsumer) processConsumer = processConsumer.cancel();
+  }
+
+  function activate() {
+    if (processConsumer) return;
+    processConsumer = broker.subscribeTmp('event', 'process.end', onProcessEnd, { noAck: true });
+  }
+
+  function onProcessEnd() {
+    logger.debug(`<${id}> js:extension capture version tag "${versionTag}"`);
+    environment.output[id] = { versionTag };
   }
 }

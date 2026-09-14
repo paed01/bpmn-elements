@@ -1,24 +1,26 @@
 import { brokerSafeId } from '../shared.js';
 import { cloneContent, shiftParent } from '../messageHelper.js';
+import { K_COMPLETED, K_EXECUTE_MESSAGE, K_MESSAGE_Q, K_REFERENCE_ELEMENT, K_REFERENCE_INFO } from '../constants.js';
 
-const kCompleted = Symbol.for('completed');
-const kMessageQ = Symbol.for('messageQ');
-const kExecuteMessage = Symbol.for('executeMessage');
-const kReferenceElement = Symbol.for('referenceElement');
-const kReferenceInfo = Symbol.for('referenceInfo');
-
-export default function ErrorEventDefinition(activity, eventDefinition) {
+/**
+ * Error event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').SerializableElement} eventDefinition
+ */
+export function ErrorEventDefinition(activity, eventDefinition) {
   const { id, broker, environment, isThrowing } = activity;
   const { type = 'ErrorEventDefinition', behaviour = {} } = eventDefinition;
 
   this.id = id;
   this.type = type;
 
-  const reference = (this.reference = {
+  /** @type {import('#types').EventReference} */
+  this.reference = {
     name: 'anonymous',
+    // @ts-ignore
     ...behaviour.errorRef,
     referenceType: 'throw',
-  });
+  };
 
   this.isThrowing = isThrowing;
   this.activity = activity;
@@ -26,42 +28,59 @@ export default function ErrorEventDefinition(activity, eventDefinition) {
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
 
-  const referenceElement = (this[kReferenceElement] = reference.id && activity.getActivityById(reference.id));
+  /** @internal */
+  this[K_REFERENCE_ELEMENT] = this.reference.id && activity.getActivityById(this.reference.id);
+  const referenceElement = this[K_REFERENCE_ELEMENT];
+
+  /** @internal */
+  this[K_EXECUTE_MESSAGE] = undefined;
+  /** @internal */
+  this[K_COMPLETED] = false;
+
   if (!isThrowing) {
-    this[kCompleted] = false;
+    /** @internal */
+    this[K_REFERENCE_INFO] = undefined;
     const referenceId = referenceElement ? referenceElement.id : 'anonymous';
-    const messageQueueName = `${reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(referenceId)}-q`;
-    this[kMessageQ] = broker.assertQueue(messageQueueName, { autoDelete: false, durable: true });
-    broker.bindQueue(messageQueueName, 'api', `*.${reference.referenceType}.#`, { durable: true, priority: 300 });
+    const messageQueueName = `${this.reference.referenceType}-${brokerSafeId(id)}-${brokerSafeId(referenceId)}-q`;
+    /** @internal */
+    this[K_MESSAGE_Q] = broker.assertQueue(messageQueueName, { autoDelete: false, durable: true });
+    broker.bindQueue(messageQueueName, 'api', `*.${this.reference.referenceType}.#`, { durable: true, priority: 300 });
   }
 }
 
 Object.defineProperty(ErrorEventDefinition.prototype, 'executionId', {
+  /** @returns {string} */
   get() {
-    return this[kExecuteMessage]?.content.executionId;
+    return this[K_EXECUTE_MESSAGE]?.content.executionId;
   },
 });
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 ErrorEventDefinition.prototype.execute = function execute(executeMessage) {
   return this.isThrowing ? this.executeThrow(executeMessage) : this.executeCatch(executeMessage);
 };
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 ErrorEventDefinition.prototype.executeCatch = function executeCatch(executeMessage) {
-  this[kExecuteMessage] = executeMessage;
-  this[kCompleted] = false;
+  this[K_EXECUTE_MESSAGE] = executeMessage;
+  this[K_COMPLETED] = false;
 
   const executeContent = executeMessage.content;
   const { executionId, parent } = executeContent;
   const parentExecutionId = parent?.executionId;
 
-  const info = (this[kReferenceInfo] = this._getReferenceInfo(executeMessage));
+  const info = (this[K_REFERENCE_INFO] = this._getReferenceInfo(executeMessage));
 
-  this[kMessageQ].consume(this._onThrowApiMessage.bind(this), {
+  this[K_MESSAGE_Q].consume(this._onThrowApiMessage.bind(this), {
     noAck: true,
     consumerTag: `_onthrow-${executionId}`,
   });
 
-  if (this[kCompleted]) return;
+  if (this[K_COMPLETED]) return;
 
   this._debug(`expect ${info.description}`);
 
@@ -88,18 +107,22 @@ ErrorEventDefinition.prototype.executeCatch = function executeCatch(executeMessa
       })
     );
 
-    if (this[kCompleted]) return this._stop();
+    if (this[K_COMPLETED]) return this._stop();
   }
 
   const waitContent = cloneContent(executeContent, {
     executionId: parentExecutionId,
     expect: { ...info.message },
+    accepts: ['error'],
   });
   waitContent.parent = shiftParent(parent);
 
   broker.publish('event', 'activity.wait', waitContent);
 };
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 ErrorEventDefinition.prototype.executeThrow = function executeThrow(executeMessage) {
   const executeContent = executeMessage.content;
   const { executionId, parent } = executeContent;
@@ -118,7 +141,7 @@ ErrorEventDefinition.prototype.executeThrow = function executeThrow(executeMessa
 
   this.broker.publish('event', 'activity.throw', throwContent, { type: 'throw', delegate: true });
 
-  return broker.publish(
+  broker.publish(
     'execution',
     'execute.completed',
     cloneContent(executeContent, {
@@ -129,11 +152,11 @@ ErrorEventDefinition.prototype.executeThrow = function executeThrow(executeMessa
 
 ErrorEventDefinition.prototype._onErrorMessage = function onErrorMessage(routingKey, message) {
   const error = message.content.error;
-  if (!this[kReferenceElement]) return this._catchError(routingKey, message, error);
+  if (!this[K_REFERENCE_ELEMENT]) return this._catchError(routingKey, message, error);
 
   if (!error) return;
 
-  const info = this[kReferenceInfo];
+  const info = this[K_REFERENCE_INFO];
   if ('' + error.code !== '' + info.message.code) return;
 
   return this._catchError(routingKey, message, error);
@@ -141,21 +164,21 @@ ErrorEventDefinition.prototype._onErrorMessage = function onErrorMessage(routing
 
 ErrorEventDefinition.prototype._onThrowApiMessage = function onThrowApiMessage(routingKey, message) {
   const error = message.content.message;
-  if (!this[kReferenceElement]) return this._catchError(routingKey, message, error);
+  if (!this[K_REFERENCE_ELEMENT]) return this._catchError(routingKey, message, error);
 
-  const info = this[kReferenceInfo];
+  const info = this[K_REFERENCE_INFO];
   if (info.message.id !== error?.id) return;
   return this._catchError(routingKey, message, error);
 };
 
-ErrorEventDefinition.prototype._catchError = function catchError(routingKey, message, error) {
-  this[kCompleted] = true;
+ErrorEventDefinition.prototype._catchError = function catchError(_routingKey, message, error) {
+  this[K_COMPLETED] = true;
 
   this._stop();
 
-  this._debug(`caught ${this[kReferenceInfo].description}`);
+  this._debug(`caught ${this[K_REFERENCE_INFO].description}`);
 
-  const executeContent = this[kExecuteMessage].content;
+  const executeContent = this[K_EXECUTE_MESSAGE].content;
   const parent = executeContent.parent;
   const catchContent = cloneContent(executeContent, {
     source: {
@@ -182,14 +205,14 @@ ErrorEventDefinition.prototype._catchError = function catchError(routingKey, mes
   );
 };
 
-ErrorEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+ErrorEventDefinition.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   const messageType = message.properties.type;
 
   switch (messageType) {
     case 'discard': {
-      this[kCompleted] = true;
+      this[K_COMPLETED] = true;
       this._stop();
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content));
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[K_EXECUTE_MESSAGE].content));
     }
     case 'stop': {
       this._stop();
@@ -204,11 +227,11 @@ ErrorEventDefinition.prototype._stop = function stop() {
   broker.cancel(`_onthrow-${executionId}`);
   broker.cancel(`_onerror-${executionId}`);
   broker.cancel(`_api-${executionId}`);
-  this[kMessageQ].purge();
+  this[K_MESSAGE_Q].purge();
 };
 
 ErrorEventDefinition.prototype._getReferenceInfo = function getReferenceInfo(message) {
-  const referenceElement = this[kReferenceElement];
+  const referenceElement = this[K_REFERENCE_ELEMENT];
   if (!referenceElement) {
     return {
       message: { ...this.reference },
@@ -217,6 +240,7 @@ ErrorEventDefinition.prototype._getReferenceInfo = function getReferenceInfo(mes
   }
 
   const result = {
+    // @ts-ignore
     message: referenceElement.resolve(message),
   };
 

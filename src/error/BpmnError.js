@@ -1,4 +1,9 @@
-export default function BpmnErrorActivity(errorDef, context) {
+/**
+ * BPMN error.
+ * @param {import('#types').SerializableElement} errorDef
+ * @param {import('#types').ContextInstance} context
+ */
+export function BpmnErrorActivity(errorDef, context) {
   const { id, type, name = 'BpmnError', behaviour = {} } = errorDef;
   const { environment } = context;
 
@@ -10,8 +15,14 @@ export default function BpmnErrorActivity(errorDef, context) {
     resolve,
   };
 
+  /**
+   * @param {import('#types').ElementBrokerMessage} executionMessage
+   * @param {Error} [error]
+   * @returns {import('#types').ResolvedReference & {code?:string}}
+   */
   function resolve(executionMessage, error) {
     const resolveCtx = { ...executionMessage, error };
+    /** @type {{ id?: string; type?: string; messageType: string; name: string; code: string | undefined; inner?: Error }} */
     const result = {
       id,
       type,
@@ -21,6 +32,6 @@ export default function BpmnErrorActivity(errorDef, context) {
     };
 
     if (error) result.inner = error;
-    return result;
+    return /** @type {import('#types').ResolvedReference & {code?:string}} */ (result);
   }
 }

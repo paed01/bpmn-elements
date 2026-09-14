@@ -1,26 +1,25 @@
-import Message from '../../src/activity/Message.js';
-import MessageEventDefinition from '../../src/eventDefinitions/MessageEventDefinition.js';
-import Environment from '../../src/Environment.js';
+import { Message } from 'bpmn-elements';
+import { MessageEventDefinition } from 'bpmn-elements/eventDefinitions';
 import { ActivityBroker } from '../../src/EventBroker.js';
-import { Logger } from '../helpers/testHelpers.js';
+import testHelpers, { Logger } from '../helpers/testHelpers.js';
 
 describe('MessageEventDefinition', () => {
   let event;
   beforeEach(() => {
-    const environment = new Environment({ Logger });
+    const context = testHelpers.emptyContext(undefined, { Logger });
     event = {
       id: 'event',
-      environment,
+      environment: context.environment,
       broker: ActivityBroker(this).broker,
       getActivityById(id) {
         if (id !== 'message_1') return;
-        return Message(
+        return new Message(
           {
             id: 'message_1',
             type: 'bpmn:Message',
             name: 'My Message ${content.id}',
           },
-          { environment }
+          context
         );
       },
     };
@@ -49,11 +48,13 @@ describe('MessageEventDefinition', () => {
       );
 
       catchMessage.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'event_1',
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event_1',
             executionId: 'event_1',
@@ -98,11 +99,13 @@ describe('MessageEventDefinition', () => {
       );
 
       catchMessage.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'event_1',
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event_1',
             executionId: 'event_1',
@@ -160,11 +163,13 @@ describe('MessageEventDefinition', () => {
       );
 
       catchMessage.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'event_1',
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event_1',
             executionId: 'event_1',
@@ -219,11 +224,13 @@ describe('MessageEventDefinition', () => {
       );
 
       catchMessage.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'event_1',
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event_1',
             executionId: 'event_1',
@@ -270,10 +277,12 @@ describe('MessageEventDefinition', () => {
       );
 
       catchMessage.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event_1',
             executionId: 'event_1',
@@ -310,10 +319,12 @@ describe('MessageEventDefinition', () => {
       );
 
       catchMessage.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event_1',
             executionId: 'event_1',
@@ -352,10 +363,12 @@ describe('MessageEventDefinition', () => {
       );
 
       catchMessage.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event_1',
             executionId: 'event_1',
@@ -384,10 +397,12 @@ describe('MessageEventDefinition', () => {
       });
 
       catchMessage.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event_1',
             executionId: 'event_1',
@@ -422,10 +437,12 @@ describe('MessageEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event',
             executionId: 'event_1',
@@ -462,10 +479,12 @@ describe('MessageEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event',
             executionId: 'event_1',
@@ -513,11 +532,13 @@ describe('MessageEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'event_1',
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event',
             executionId: 'event_1',
@@ -564,6 +585,7 @@ describe('MessageEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
@@ -571,6 +593,7 @@ describe('MessageEventDefinition', () => {
           input: {
             myMessage: 1,
           },
+          // @ts-expect-error type coverage
           parent: {
             id: 'intermediate',
             executionId: 'event_1',
@@ -611,11 +634,13 @@ describe('MessageEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'event_1',
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event',
             executionId: 'event_1',

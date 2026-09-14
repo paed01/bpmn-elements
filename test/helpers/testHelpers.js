@@ -1,14 +1,14 @@
-import fs from 'fs';
 import Debug from 'debug';
-import * as types from '../../src/index.js';
-import BpmnModdle from 'bpmn-moddle';
-import Context from '../../src/Context.js';
-import Environment from '../../src/Environment.js';
+import { BpmnModdle } from 'bpmn-moddle';
+import * as types from 'bpmn-elements';
+
+import { Context, Environment } from 'bpmn-elements';
 import { Serializer, TypeResolver } from 'moddle-context-serializer';
 import { Scripts } from './JavaScripts.js';
 
-const camundaBpmnModdle = JSON.parse(fs.readFileSync('./node_modules/camunda-bpmn-moddle/resources/camunda.json'));
+import camundaBpmnModdle from 'camunda-bpmn-moddle/resources/camunda.json' with { type: 'json' };
 
+// @ts-expect-error type coverage
 const typeResolver = TypeResolver(types);
 
 export default {
@@ -20,6 +20,12 @@ export default {
   camundaBpmnModdle,
 };
 
+/**
+ * Context helper
+ * @param {Buffer|string} source BPMN2 source
+ * @param {...any} args
+ * @returns {Promise<import('bpmn-elements').ContextInstance>}
+ */
 async function context(source, ...args) {
   const logger = Logger('test-helpers:context');
 
@@ -51,9 +57,10 @@ async function context(source, ...args) {
       return result;
     }, {});
 
+  const { settings, ...otherOptions } = options;
   const ctx = Context(
     serializer,
-    new Environment({ Logger, scripts: new Scripts(), settings: { enableDummyService: true }, ...options, extensions })
+    new Environment({ Logger, scripts: new Scripts(), settings: { enableDummyService: true, ...settings }, ...otherOptions, extensions })
   );
   logger.debug('context complete');
   if (callback) {
@@ -63,6 +70,12 @@ async function context(source, ...args) {
   return ctx;
 }
 
+/**
+ * Parse BPMN2 source into a moddle context
+ * @param {Buffer|string} source BPMN2 source
+ * @param {any} [options]
+ * @returns {Promise<any>}
+ */
 function moddleContext(source, options = {}) {
   const moddleOptions =
     options.extensions &&
@@ -75,6 +88,7 @@ function moddleContext(source, options = {}) {
   return bpmnModdle.fromXML(Buffer.isBuffer(source) ? source.toString() : source.trim());
 }
 
+/** @type {import('bpmn-elements').LoggerFactory} */
 export function Logger(scope) {
   return {
     debug: Debug('bpmn-elements:' + scope),
@@ -83,6 +97,12 @@ export function Logger(scope) {
   };
 }
 
+/**
+ * Context helper without source, based on overridable serializable context stub
+ * @param {any} [override]
+ * @param {import('bpmn-elements').EnvironmentOptions} [options]
+ * @returns {import('bpmn-elements').ContextInstance}
+ */
 function emptyContext(override, options) {
   return Context(
     {

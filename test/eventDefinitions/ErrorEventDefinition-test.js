@@ -1,6 +1,5 @@
-import BpmnError from '../../src/error/BpmnError.js';
-import Environment from '../../src/Environment.js';
-import ErrorEventDefinition from '../../src/eventDefinitions/ErrorEventDefinition.js';
+import { BpmnError } from 'bpmn-elements';
+import { ErrorEventDefinition } from 'bpmn-elements/eventDefinitions';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 
@@ -8,7 +7,8 @@ describe('ErrorEventDefinition', () => {
   describe('catching', () => {
     let event;
     beforeEach(() => {
-      const environment = new Environment({ Logger: testHelpers.Logger });
+      const context = testHelpers.emptyContext(undefined, { Logger: testHelpers.Logger });
+      const environment = context.environment;
 
       event = {
         id: 'bound',
@@ -27,7 +27,7 @@ describe('ErrorEventDefinition', () => {
                 errorCode: 'ERR_MINE',
               },
             },
-            { environment }
+            context
           );
         },
       };
@@ -49,10 +49,12 @@ describe('ErrorEventDefinition', () => {
       );
 
       catchError.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -89,10 +91,12 @@ describe('ErrorEventDefinition', () => {
       );
 
       catchError.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -133,10 +137,12 @@ describe('ErrorEventDefinition', () => {
       );
 
       catchError.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -173,10 +179,12 @@ describe('ErrorEventDefinition', () => {
       );
 
       catchError.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -215,10 +223,12 @@ describe('ErrorEventDefinition', () => {
       );
 
       catchError.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -252,16 +262,19 @@ describe('ErrorEventDefinition', () => {
           },
         });
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let tryMessage;
         event.broker.subscribeOnce('execution', 'execute.expect', (_, msg) => {
           tryMessage = msg;
         });
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -291,18 +304,21 @@ describe('ErrorEventDefinition', () => {
           },
         });
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let tryMessage;
         event.broker.subscribeOnce('execution', 'execute.expect', (_, msg) => {
           tryMessage = msg;
         });
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {
             redelivered: true,
           },
           content: {
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -333,17 +349,20 @@ describe('ErrorEventDefinition', () => {
           type: 'bpmn:ErrorEventDefinition',
         });
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let message;
         event.broker.subscribeOnce('event', 'activity.catch', (_, msg) => {
           message = msg;
         });
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'bound',
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -390,10 +409,12 @@ describe('ErrorEventDefinition', () => {
         );
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -430,10 +451,12 @@ describe('ErrorEventDefinition', () => {
         );
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -473,10 +496,12 @@ describe('ErrorEventDefinition', () => {
         );
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -512,10 +537,12 @@ describe('ErrorEventDefinition', () => {
         );
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -549,10 +576,12 @@ describe('ErrorEventDefinition', () => {
         );
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -583,10 +612,12 @@ describe('ErrorEventDefinition', () => {
         expect(event.broker.getExchange('execution')).to.have.property('bindingCount', 1);
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -624,10 +655,12 @@ describe('ErrorEventDefinition', () => {
         );
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -670,10 +703,12 @@ describe('ErrorEventDefinition', () => {
         );
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -721,10 +756,12 @@ describe('ErrorEventDefinition', () => {
         );
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -747,17 +784,20 @@ describe('ErrorEventDefinition', () => {
           type: 'bpmn:ErrorEventDefinition',
         });
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let message;
         event.broker.subscribeOnce('event', 'activity.catch', (_, msg) => {
           message = msg;
         });
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'bound',
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -798,17 +838,20 @@ describe('ErrorEventDefinition', () => {
           },
         });
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let message;
         event.broker.subscribeOnce('event', 'activity.catch', (_, msg) => {
           message = msg;
         });
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'bound',
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -849,17 +892,20 @@ describe('ErrorEventDefinition', () => {
           },
         });
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let message;
         event.broker.subscribeOnce('event', 'activity.catch', (_, msg) => {
           message = msg;
         });
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'bound',
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -893,17 +939,20 @@ describe('ErrorEventDefinition', () => {
           },
         });
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let message;
         event.broker.subscribeOnce('event', 'activity.catch', (_, msg) => {
           message = msg;
         });
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'bound',
             executionId: 'bound_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'bound_1',
@@ -932,7 +981,8 @@ describe('ErrorEventDefinition', () => {
   describe('throw', () => {
     let event, bpmnError;
     beforeEach(() => {
-      const environment = new Environment();
+      const context = testHelpers.emptyContext();
+      const environment = context.environment;
       bpmnError = BpmnError(
         {
           id: 'Error_0',
@@ -943,7 +993,7 @@ describe('ErrorEventDefinition', () => {
           },
           debug() {},
         },
-        { environment }
+        context
       );
 
       event = {
@@ -981,9 +1031,11 @@ describe('ErrorEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'end_1_0',
+          // @ts-expect-error type coverage
           parent: {
             id: 'end',
             executionId: 'end_1',
@@ -1016,9 +1068,11 @@ describe('ErrorEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'end_1_0',
+          // @ts-expect-error type coverage
           parent: {
             id: 'end',
             executionId: 'end_1',
@@ -1053,9 +1107,11 @@ describe('ErrorEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'end_1_0',
+          // @ts-expect-error type coverage
           parent: {
             id: 'end',
             executionId: 'end_1',

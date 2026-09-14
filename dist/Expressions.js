@@ -3,11 +3,14 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Expressions;
-var _getPropertyValue = _interopRequireDefault(require("./getPropertyValue.js"));
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+exports.Expressions = Expressions;
+var _getPropertyValue = require("./getPropertyValue.js");
 const isExpressionPattern = /^\${(.+?)}$/;
 const expressionPattern = /\${(.+?)}/;
+
+/**
+ * Default expression handler
+ */
 function Expressions() {
   return {
     resolveExpression,
@@ -15,6 +18,13 @@ function Expressions() {
     hasExpression
   };
 }
+
+/**
+ * Resolve expression(s) in a templated string
+ * @param {string} templatedString
+ * @param {any} [context] resolution context, e.g. an element execution message
+ * @param {any} [expressionFnContext] this-context for called expression functions
+ */
 function resolveExpression(templatedString, context, expressionFnContext) {
   let result = templatedString;
   while (expressionPattern.test(result)) {
@@ -30,7 +40,7 @@ function resolveExpression(templatedString, context, expressionFnContext) {
       const n = Number(innerProperty);
       if (!isNaN(n)) return n;
     }
-    const contextValue = (0, _getPropertyValue.default)(context, innerProperty, expressionFnContext);
+    const contextValue = (0, _getPropertyValue.getPropertyValue)(context, innerProperty, expressionFnContext);
     if (expressionMatch.input === expressionMatch[0]) {
       return contextValue;
     }
@@ -38,10 +48,20 @@ function resolveExpression(templatedString, context, expressionFnContext) {
   }
   return result;
 }
+
+/**
+ * Text is a lone expression
+ * @param {string} [text]
+ */
 function isExpression(text) {
   if (!text) return false;
   return isExpressionPattern.test(text);
 }
+
+/**
+ * Text contains one or more expressions
+ * @param {string} [text]
+ */
 function hasExpression(text) {
   if (!text) return false;
   return expressionPattern.test(text);

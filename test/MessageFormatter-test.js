@@ -1,5 +1,5 @@
+import { ActivityError } from 'bpmn-elements/errors';
 import { ActivityBroker } from '../src/EventBroker.js';
-import { ActivityError } from '../src/error/Errors.js';
 import { Formatter } from '../src/MessageFormatter.js';
 import { Logger } from './helpers/testHelpers.js';
 
@@ -7,10 +7,13 @@ describe('MessageFormatter', () => {
   let formatter;
   /** @type {import('smqp').Broker} */
   let broker;
+  // @ts-ignore
   beforeEach(() => {
-    const activityBroker = new ActivityBroker({ id: 'element' });
+    // @ts-expect-error type coverage
+    const activityBroker = ActivityBroker({ id: 'element' });
     broker = activityBroker.broker;
 
+    // @ts-ignore
     formatter = new Formatter({
       id: 'element',
       broker,

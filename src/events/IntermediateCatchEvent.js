@@ -1,22 +1,39 @@
-import Activity from '../activity/Activity.js';
-import EventDefinitionExecution from '../eventDefinitions/EventDefinitionExecution.js';
+import { Activity } from '../activity/Activity.js';
+import { EventDefinitionExecution } from '../eventDefinitions/EventDefinitionExecution.js';
 import { cloneContent } from '../messageHelper.js';
+import { K_EXECUTION } from '../constants.js';
 
-const kExecution = Symbol.for('execution');
-
-export default function IntermediateCatchEvent(activityDef, context) {
-  return new Activity(IntermediateCatchEventBehaviour, activityDef, context);
+/**
+ * Intermediate catch event
+ * @param {import('#types').ActivityDefinition} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
+export function IntermediateCatchEvent(activityDef, context) {
+  return new Activity(
+    IntermediateCatchEventBehaviour,
+    { ...activityDef, isCatching: true, ...context.getLinkEventDefinitionInfo(activityDef) },
+    context
+  );
 }
 
+/**
+ * Intermediate catch event behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function IntermediateCatchEventBehaviour(activity) {
   this.id = activity.id;
   this.type = activity.type;
   this.broker = activity.broker;
-  this[kExecution] = activity.eventDefinitions && new EventDefinitionExecution(activity, activity.eventDefinitions);
+  /** @internal */
+  this[K_EXECUTION] = activity.eventDefinitions && new EventDefinitionExecution(activity, activity.eventDefinitions);
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 IntermediateCatchEventBehaviour.prototype.execute = function execute(executeMessage) {
-  const execution = this[kExecution];
+  const execution = this[K_EXECUTION];
   if (execution) {
     return execution.execute(executeMessage);
   }
@@ -29,10 +46,11 @@ IntermediateCatchEventBehaviour.prototype.execute = function execute(executeMess
     consumerTag: '_api-behaviour-execution',
   });
 
-  return broker.publish('event', 'activity.wait', cloneContent(executeContent));
+  // @ts-ignore
+  return broker.publish('event', 'activity.wait', cloneContent(executeContent, { accepts: ['message', 'signal'] }));
 };
 
-IntermediateCatchEventBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, routingKey, message) {
+IntermediateCatchEventBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, _routingKey, message) {
   switch (message.properties.type) {
     case 'message':
     case 'signal': {

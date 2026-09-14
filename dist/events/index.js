@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", {
 Object.defineProperty(exports, "BoundaryEvent", {
   enumerable: true,
   get: function () {
-    return _BoundaryEvent.default;
+    return _BoundaryEvent.BoundaryEvent;
   }
 });
 Object.defineProperty(exports, "BoundaryEventBehaviour", {
@@ -18,7 +18,7 @@ Object.defineProperty(exports, "BoundaryEventBehaviour", {
 Object.defineProperty(exports, "EndEvent", {
   enumerable: true,
   get: function () {
-    return _EndEvent.default;
+    return _EndEvent.EndEvent;
   }
 });
 Object.defineProperty(exports, "EndEventBehaviour", {
@@ -30,7 +30,7 @@ Object.defineProperty(exports, "EndEventBehaviour", {
 Object.defineProperty(exports, "IntermediateCatchEvent", {
   enumerable: true,
   get: function () {
-    return _IntermediateCatchEvent.default;
+    return _IntermediateCatchEvent.IntermediateCatchEvent;
   }
 });
 Object.defineProperty(exports, "IntermediateCatchEventBehaviour", {
@@ -42,7 +42,7 @@ Object.defineProperty(exports, "IntermediateCatchEventBehaviour", {
 Object.defineProperty(exports, "IntermediateThrowEvent", {
   enumerable: true,
   get: function () {
-    return _IntermediateThrowEvent.default;
+    return _IntermediateThrowEvent.IntermediateThrowEvent;
   }
 });
 Object.defineProperty(exports, "IntermediateThrowEventBehaviour", {
@@ -54,7 +54,7 @@ Object.defineProperty(exports, "IntermediateThrowEventBehaviour", {
 Object.defineProperty(exports, "StartEvent", {
   enumerable: true,
   get: function () {
-    return _StartEvent.default;
+    return _StartEvent.StartEvent;
   }
 });
 Object.defineProperty(exports, "StartEventBehaviour", {
@@ -63,9 +63,8 @@ Object.defineProperty(exports, "StartEventBehaviour", {
     return _StartEvent.StartEventBehaviour;
   }
 });
-var _BoundaryEvent = _interopRequireWildcard(require("./BoundaryEvent.js"));
-var _EndEvent = _interopRequireWildcard(require("./EndEvent.js"));
-var _IntermediateCatchEvent = _interopRequireWildcard(require("./IntermediateCatchEvent.js"));
-var _IntermediateThrowEvent = _interopRequireWildcard(require("./IntermediateThrowEvent.js"));
-var _StartEvent = _interopRequireWildcard(require("./StartEvent.js"));
-function _interopRequireWildcard(e, t) { if ("function" == typeof WeakMap) var r = new WeakMap(), n = new WeakMap(); return (_interopRequireWildcard = function (e, t) { if (!t && e && e.__esModule) return e; var o, i, f = { __proto__: null, default: e }; if (null === e || "object" != typeof e && "function" != typeof e) return f; if (o = t ? n : r) { if (o.has(e)) return o.get(e); o.set(e, f); } for (const t in e) "default" !== t && {}.hasOwnProperty.call(e, t) && ((i = (o = Object.defineProperty) && Object.getOwnPropertyDescriptor(e, t)) && (i.get || i.set) ? o(f, t, i) : f[t] = e[t]); return f; })(e, t); }
+var _BoundaryEvent = require("./BoundaryEvent.js");
+var _EndEvent = require("./EndEvent.js");
+var _IntermediateCatchEvent = require("./IntermediateCatchEvent.js");
+var _IntermediateThrowEvent = require("./IntermediateThrowEvent.js");
+var _StartEvent = require("./StartEvent.js");

@@ -1,7 +1,5 @@
-import Definition from '../../src/definition/Definition.js';
+import { Definition, SequenceFlow } from 'bpmn-elements';
 import testHelpers from '../helpers/testHelpers.js';
-import SequenceFlow from '../../src/flows/SequenceFlow.js';
-
 const camunda = testHelpers.camundaBpmnModdle;
 
 const extensions = {

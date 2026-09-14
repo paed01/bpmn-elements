@@ -47,9 +47,40 @@ Get executable processes.
 
 Get data object by id.
 
-### `getMessageFlows()`
+### `getDataStoreById(id)`
 
-Get data object by id.
+Get data store by id.
+
+### `getMessageFlows(sourceId)`
+
+Get message flows that originate from the given process id.
+
+### `getAssociations([scopeId])`
+
+Get association flows, optionally narrowed to a parent scope.
+
+### `getInboundAssociations(activityId)`
+
+Get inbound association flows for the given activity.
+
+### `getOutboundAssociations(activityId)`
+
+Get outbound association flows for the given activity.
+
+### `getStartActivities([filterOptions, scopeId])`
+
+Get start activities, optionally filtered by referenced event definition or restricted to a parent scope.
+
+Arguments:
+
+- `filterOptions`: optional filter
+  - `referenceId`: optional reference id (e.g. message or signal id)
+  - `referenceType`: optional reference type, e.g. `'message'` or `'signal'`
+- `scopeId`: optional process or sub-process id to restrict the search
+
+### `getActivityParentById(activityId)`
+
+Resolve the parent process or sub-process activity that owns the given activity.
 
 ### `getProcessById(id)`
 

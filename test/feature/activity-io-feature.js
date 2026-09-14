@@ -1,10 +1,12 @@
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 
 Feature('Activity IO', () => {
   Scenario('Activity with property that references input DataObject', () => {
-    let definition, taskMessage;
+    /** @type {Definition} */
+    let definition;
+    let taskMessage;
     Given('a process with an activity with property', async () => {
       const source = factory.resource('engine-issue-139.bpmn');
       const context = await testHelpers.context(source);
@@ -43,7 +45,9 @@ Feature('Activity IO', () => {
   });
 
   Scenario('Activity with properties that references output DataObject by association', () => {
-    let definition, taskMessage;
+    /** @type {Definition} */
+    let definition;
+    let taskMessage;
     Given('a process with an activity with property', async () => {
       const source = `<?xml version="1.0" encoding="UTF-8"?>
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
@@ -125,7 +129,9 @@ Feature('Activity IO', () => {
   });
 
   Scenario('Activity with properties that references output DataObject by directly', () => {
-    let definition, taskMessage;
+    /** @type {Definition} */
+    let definition;
+    let taskMessage;
     Given('a process with an activity with property', async () => {
       const source = `<?xml version="1.0" encoding="UTF-8"?>
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
@@ -204,7 +210,9 @@ Feature('Activity IO', () => {
   });
 
   Scenario('both IO specification and properties', () => {
-    let definition, taskMessage;
+    /** @type {Definition} */
+    let definition;
+    let taskMessage;
     Given('a user task with properties and IO specification', async () => {
       const source = `<?xml version="1.0" encoding="UTF-8"?>
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"

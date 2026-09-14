@@ -3,15 +3,24 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.ServiceTask = ServiceTask;
 exports.ServiceTaskBehaviour = ServiceTaskBehaviour;
-exports.default = ServiceTask;
-var _Activity = _interopRequireDefault(require("../activity/Activity.js"));
+var _Activity = require("../activity/Activity.js");
 var _Errors = require("../error/Errors.js");
 var _messageHelper = require("../messageHelper.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+/**
+ * Service task
+ * @param {import('#types').ActivityDefinition} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
 function ServiceTask(activityDef, context) {
-  return new _Activity.default(ServiceTaskBehaviour, activityDef, context);
+  return new _Activity.Activity(ServiceTaskBehaviour, activityDef, context);
 }
+
+/**
+ * Service task behaviour
+ * @param {import('#types').Activity} activity
+ */
 function ServiceTaskBehaviour(activity) {
   const {
     id,
@@ -20,11 +29,23 @@ function ServiceTaskBehaviour(activity) {
   } = activity;
   this.id = id;
   this.type = type;
+  /** @type {import('./LoopCharacteristics.js').LoopCharacteristics | undefined} */
   this.loopCharacteristics = behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
   this.environment = activity.environment;
   this.broker = activity.broker;
+
+  /**
+   * Service function instance
+   * @type {import('#types').IService | undefined}
+   */
+  this.service = undefined;
 }
+
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;
@@ -35,6 +56,7 @@ ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
   const service = this.service = this.getService(executeMessage);
   if (!service) return this.activity.emitFatal(new _Errors.ActivityError(`<${this.id}> service not defined`, executeMessage), executeContent);
   const broker = this.broker;
+  // @ts-ignore
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(executeMessage, ...args), {
     consumerTag: `_api-${executionId}`
   });
@@ -44,7 +66,9 @@ ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
       this.activity.logger.error(`<${executionId} (${this.id})>`, err);
       return broker.publish('execution', 'execute.error', (0, _messageHelper.cloneContent)(executeContent, {
         error: new _Errors.ActivityError(err.message, executeMessage, err)
-      }, {
+      },
+      // @ts-ignore
+      {
         mandatory: true
       }));
     }
@@ -54,6 +78,12 @@ ServiceTaskBehaviour.prototype.execute = function execute(executeMessage) {
     }));
   });
 };
+
+/**
+ * Resolve the service instance backing this run.
+ * @param {import('#types').ElementBrokerMessage} message
+ * @returns {import('#types').IService | undefined}
+ */
 ServiceTaskBehaviour.prototype.getService = function getService(message) {
   let Service = this.activity.behaviour.Service;
   if (!Service && this.environment.settings.enableDummyService) Service = DummyService;

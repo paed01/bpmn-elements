@@ -1,9 +1,8 @@
-import Environment from '../../src/Environment.js';
+import { resolveExpression } from '@aircall/expression-parser';
+import { SequenceFlow } from 'bpmn-elements/flows';
 import factory from '../helpers/factory.js';
 import js from '../resources/extensions/JsExtension.js';
 import testHelpers from '../helpers/testHelpers.js';
-import SequenceFlow from '../../src/flows/SequenceFlow.js';
-import { resolveExpression } from '@aircall/expression-parser';
 import { Scripts } from '../helpers/JavaScripts.js';
 
 const extensions = {
@@ -23,6 +22,7 @@ class TestScripts {
     const scriptBody = behaviour.conditionExpression.body;
     const sync = !/next\(/.test(scriptBody);
 
+    // @ts-expect-error type coverage
     const registered = this.javaScripts.register({
       id,
       type,
@@ -36,7 +36,7 @@ class TestScripts {
 
     this.scripts.set(id, { sync, registered });
   }
-  getScript(language, { id }) {
+  getScript(_language, { id }) {
     const { sync, registered } = this.scripts.get(id);
     return {
       execute,
@@ -70,6 +70,7 @@ describe('SequenceFlow', () => {
   });
 
   describe('discard', () => {
+    /** @type {import('bpmn-elements').ContextInstance} */
     let context;
     before(async () => {
       context = await testHelpers.context(factory.resource('multiple-multiple-inbound.bpmn'));
@@ -78,6 +79,7 @@ describe('SequenceFlow', () => {
 
     it('emits looped if flow target is in discard sequence', () => {
       const flow = context.getSequenceFlowById('taskflow-1');
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       flow.broker.subscribeOnce('event', 'flow.*', (_, msg) => {
         message = msg;
@@ -124,7 +126,6 @@ describe('SequenceFlow', () => {
       expect(activity.outbound[1].counters).to.have.property('take', 1);
 
       expect(activity.outbound[2]).to.have.property('id', 'flow4withExpression');
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
     });
 
@@ -158,7 +159,6 @@ describe('SequenceFlow', () => {
       activity.run();
 
       expect(activity.outbound[0]).to.have.property('id', 'flow2');
-      expect(activity.outbound[0].counters).to.have.property('discard', 1);
       expect(activity.outbound[0].counters).to.have.property('take', 0);
 
       expect(activity.outbound[1]).to.have.property('id', 'flowWithSyncScript');
@@ -166,7 +166,6 @@ describe('SequenceFlow', () => {
       expect(activity.outbound[1].counters).to.have.property('take', 1);
 
       expect(activity.outbound[2]).to.have.property('id', 'flowWithScript');
-      expect(activity.outbound[2].counters).to.have.property('discard', 1);
       expect(activity.outbound[2].counters).to.have.property('take', 0);
 
       expect(activity.outbound[3]).to.have.property('id', 'flowWithoutCondition');
@@ -201,8 +200,165 @@ describe('SequenceFlow', () => {
       activity.run();
 
       expect(activity.outbound[1]).to.have.property('id', 'flow3withExpression');
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
+    });
+
+    it('calls a service expression that resolves to a function with the flow as scope', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="theStart" />
+          <inclusiveGateway id="decision" default="flow2" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+          <endEvent id="end3" />
+          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
+          <sequenceFlow id="flow2" sourceRef="decision" targetRef="end1" />
+          <sequenceFlow id="flow3" sourceRef="decision" targetRef="end2">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.services.cond}</conditionExpression>
+          </sequenceFlow>
+          <sequenceFlow id="flow4" sourceRef="decision" targetRef="end3">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.services.cond}</conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const ctx = await testHelpers.context(source);
+      const scopes = [];
+      ctx.environment.addService('cond', function cond(scope) {
+        scopes.push(scope.id);
+        return scope.id === 'flow3';
+      });
+
+      const activity = ctx.getActivityById('decision');
+      activity.run();
+
+      expect(scopes, 'function called once per conditional flow with the flow id').to.have.members(['flow3', 'flow4']);
+
+      expect(activity.outbound.find((f) => f.id === 'flow3').counters).to.deep.include({ take: 1, discard: 0 });
+      expect(activity.outbound.find((f) => f.id === 'flow4').counters).to.deep.include({ take: 0 });
+    });
+
+    it('resolves an asynchronous function-valued service expression via its callback', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="theStart" />
+          <inclusiveGateway id="decision" default="flow2" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="decision" />
+          <sequenceFlow id="flow2" sourceRef="decision" targetRef="end1" />
+          <sequenceFlow id="flow3" sourceRef="decision" targetRef="end2">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.services.cond}</conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const ctx = await testHelpers.context(source);
+      ctx.environment.addService('cond', function cond(scope, next) {
+        process.nextTick(next, null, scope.id === 'flow3');
+      });
+
+      const activity = ctx.getActivityById('decision');
+      const left = activity.waitFor('leave');
+      activity.run();
+      await left;
+
+      expect(activity.outbound.find((f) => f.id === 'flow3').counters).to.deep.include({ take: 1, discard: 0 });
+    });
+
+    it('returns the function result synchronously when the condition is executed without a callback', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="theStart" />
+          <task id="task" />
+          <endEvent id="end" />
+          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="task" />
+          <sequenceFlow id="flow2" sourceRef="task" targetRef="end">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.services.cond}</conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const ctx = await testHelpers.context(source);
+      ctx.environment.addService('cond', (scope) => scope.id === 'flow2');
+
+      const flow = ctx.getActivityById('task').outbound.find((f) => f.id === 'flow2');
+      const condition = flow.getCondition();
+      // @ts-expect-error type coverage
+      const result = condition.execute({ fields: {}, content: { id: 'task' }, properties: {} });
+
+      expect(result).to.be.true;
+    });
+
+    it('does not error a non-gateway activity when every outbound condition is falsy', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="theStart" />
+          <task id="task" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="task" />
+          <sequenceFlow id="flow2" sourceRef="task" targetRef="end1">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.never}</conditionExpression>
+          </sequenceFlow>
+          <sequenceFlow id="flow3" sourceRef="task" targetRef="end2">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.never}</conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const ctx = await testHelpers.context(source);
+
+      const activity = ctx.getActivityById('task');
+      const errors = [];
+      activity.broker.subscribeTmp('event', 'activity.error', (_, msg) => errors.push(msg), { noAck: true });
+
+      const leave = activity.waitFor('leave');
+      activity.run();
+      await leave;
+
+      expect(errors, 'unlike a gateway, no error is raised').to.have.length(0);
+      expect(activity.counters, 'activity is taken').to.include({ taken: 1 });
+      expect(activity.outbound.find((f) => f.id === 'flow2').counters).to.include({ take: 0 });
+      expect(activity.outbound.find((f) => f.id === 'flow3').counters).to.include({ take: 0 });
+    });
+
+    it('neither takes nor discards the outbound of a non-gateway activity with falsy conditions', async () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions id="testProcess" xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess1" isExecutable="true">
+          <startEvent id="theStart" />
+          <task id="task" />
+          <endEvent id="end1" />
+          <endEvent id="end2" />
+          <sequenceFlow id="flow1" sourceRef="theStart" targetRef="task" />
+          <sequenceFlow id="flow2" sourceRef="task" targetRef="end1">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.never}</conditionExpression>
+          </sequenceFlow>
+          <sequenceFlow id="flow3" sourceRef="task" targetRef="end2">
+            <conditionExpression xsi:type="tFormalExpression">\${environment.variables.never}</conditionExpression>
+          </sequenceFlow>
+        </process>
+      </definitions>`;
+
+      const ctx = await testHelpers.context(source);
+
+      const activity = ctx.getActivityById('task');
+      const leave = activity.waitFor('leave');
+      activity.run();
+      await leave;
+
+      expect(activity.outbound.find((f) => f.id === 'flow2').counters).to.include({ take: 0, discard: 0 });
+      expect(activity.outbound.find((f) => f.id === 'flow3').counters).to.include({ take: 0, discard: 0 });
     });
 
     it('can handle external resource condition with custom script handler', async () => {
@@ -246,7 +402,6 @@ describe('SequenceFlow', () => {
       activity.run();
 
       expect(activity.outbound[1]).to.have.property('id', 'flow3withExternalResource');
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 0);
 
       ctx.environment.variables.input = 4;
@@ -254,7 +409,6 @@ describe('SequenceFlow', () => {
       activity.run();
 
       expect(activity.outbound[1]).to.have.property('id', 'flow3withExternalResource');
-      expect(activity.outbound[1].counters).to.have.property('discard', 1);
       expect(activity.outbound[1].counters).to.have.property('take', 1);
 
       expect(count).to.equal(2);
@@ -268,6 +422,7 @@ describe('SequenceFlow', () => {
         flow.getCondition().execute(
           {
             content: {
+              // @ts-expect-error type coverage
               parent: {},
             },
           },
@@ -315,6 +470,7 @@ describe('SequenceFlow', () => {
       const flow = context.getSequenceFlowById('flowWithScript');
 
       expect(() => {
+        // @ts-expect-error executed without required callback
         flow.getCondition().execute({
           content: {
             parent: {},
@@ -326,6 +482,7 @@ describe('SequenceFlow', () => {
         flow.getCondition().execute(
           {
             content: {
+              // @ts-expect-error type coverage
               parent: {},
             },
           },
@@ -358,6 +515,7 @@ describe('SequenceFlow', () => {
       const flow = context.getSequenceFlowById('flowWithExpression');
 
       expect(
+        // @ts-expect-error type coverage
         flow.getCondition().execute({
           content: {
             isOk: 1,
@@ -371,6 +529,7 @@ describe('SequenceFlow', () => {
           {
             content: {
               isOk: 2,
+              // @ts-expect-error type coverage
               parent: {},
             },
           },
@@ -405,6 +564,7 @@ describe('SequenceFlow', () => {
       const flow = context.getSequenceFlowById('flowWithExpression');
 
       expect(() => {
+        // @ts-expect-error executed without required callback
         flow.getCondition().execute({
           content: {
             isOk: 1,
@@ -418,6 +578,7 @@ describe('SequenceFlow', () => {
           {
             content: {
               isOk: 2,
+              // @ts-expect-error type coverage
               parent: {},
             },
           },
@@ -463,10 +624,10 @@ describe('SequenceFlow', () => {
           },
         },
       };
-
-      const flow = new SequenceFlow(flowDef, { environment: new Environment() });
+      const flow = new SequenceFlow(flowDef, testHelpers.emptyContext(undefined, { scripts: undefined }));
 
       expect(() => {
+        // @ts-expect-error executed without required callback
         flow.getCondition().execute({
           content: {
             parent: {},
@@ -486,10 +647,10 @@ describe('SequenceFlow', () => {
           },
         },
       };
-
-      const flow = new SequenceFlow(flowDef, { environment: new Environment() });
+      const flow = new SequenceFlow(flowDef, testHelpers.emptyContext(undefined, { scripts: undefined }));
 
       expect(() => {
+        // @ts-expect-error executed without required callback
         flow.getCondition().execute({
           content: {
             parent: {},
@@ -638,17 +799,20 @@ describe('SequenceFlow', () => {
 
       const flow = context.getSequenceFlowById('taskflow-1');
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       flow.broker.subscribeOnce('event', 'flow.shake', (_, msg) => {
         message = msg;
       });
 
+      // @ts-expect-error type coverage
       flow.shake({ content: {} });
 
       expect(message.content.sequence).to.deep.equal([
         {
           id: flow.id,
           isSequenceFlow: true,
+          sourceId: flow.sourceId,
           targetId: 'decision-1',
           type: 'bpmn:SequenceFlow',
         },

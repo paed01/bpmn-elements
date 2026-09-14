@@ -1,5 +1,6 @@
+import { Definition } from 'bpmn-elements';
+
 import CamundaExtension from '../resources/extensions/CamundaExtension.js';
-import Definition from '../../src/definition/Definition.js';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 
@@ -35,6 +36,10 @@ Feature('Escalate', () => {
             type: 'bpmn:Definitions',
           },
         });
+    });
+
+    And('escalation event accepts escalate api call', () => {
+      expect(escalated.content.accepts).to.deep.equal(['escalate']);
     });
 
     And('amount above treshold is ordered', () => {
@@ -541,7 +546,7 @@ async function prepareSource() {
       camunda: CamundaExtension,
     },
   });
-  return Definition(context, {
+  return new Definition(context, {
     services: {
       isAbove(treshold, value) {
         return parseInt(treshold) < parseInt(value);

@@ -3,12 +3,18 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Association;
+exports.Association = Association;
 var _messageHelper = require("../messageHelper.js");
 var _EventBroker = require("../EventBroker.js");
 var _Api = require("../Api.js");
 var _shared = require("../shared.js");
-const kCounters = Symbol.for('counters');
+var _constants = require("../constants.js");
+/**
+ * Association connecting a source and target activity. Used to drive compensation —
+ * activities marked `isForCompensation` subscribe to inbound association events.
+ * @param {import('#types').AssociationDefinition} associationDef
+ * @param {import('#types').ContextInstance} context
+ */
 function Association(associationDef, {
   environment
 }) {
@@ -25,13 +31,16 @@ function Association(associationDef, {
   this.type = type;
   this.name = name;
   this.parent = (0, _messageHelper.cloneParent)(parent);
+  /** @type {Record<string, any>} */
   this.behaviour = behaviour;
   this.sourceId = sourceId;
   this.targetId = targetId;
   this.isAssociation = true;
   this.environment = environment;
   const logger = this.logger = environment.Logger(type.toLowerCase());
-  this[kCounters] = {
+
+  /** @internal */
+  this[_constants.K_COUNTERS] = {
     take: 0,
     discard: 0
   };
@@ -52,24 +61,41 @@ function Association(associationDef, {
   logger.debug(`<${id}> init, <${sourceId}> -> <${targetId}>`);
 }
 Object.defineProperty(Association.prototype, 'counters', {
+  /** @returns {{ take: number, discard: number }} */
   get() {
     return {
-      ...this[kCounters]
+      ...this[_constants.K_COUNTERS]
     };
   }
 });
+
+/**
+ * Take the association and publish association.take.
+ * @param {Record<string, any>} [content]
+ */
 Association.prototype.take = function take(content) {
   this.logger.debug(`<${this.id}> take target <${this.targetId}>`);
-  ++this[kCounters].take;
+  ++this[_constants.K_COUNTERS].take;
   this._publishEvent('take', content);
   return true;
 };
+
+/**
+ * Discard the association and publish association.discard.
+ * @param {Record<string, any>} [content]
+ */
 Association.prototype.discard = function discard(content) {
   this.logger.debug(`<${this.id}> discard target <${this.targetId}>`);
-  ++this[kCounters].discard;
+  ++this[_constants.K_COUNTERS].discard;
   this._publishEvent('discard', content);
   return true;
 };
+
+/**
+ * Snapshot association state. Returns undefined when broker has no state and
+ * `disableTrackState` is set.
+ * @returns {import('#types').AssociationState | undefined}
+ */
 Association.prototype.getState = function getState() {
   const brokerState = this.broker.getState(true);
   if (!brokerState && this.environment.settings.disableTrackState) return;
@@ -80,18 +106,36 @@ Association.prototype.getState = function getState() {
     broker: brokerState
   };
 };
+
+/**
+ * Restore association state captured by getState.
+ * @param {import('#types').AssociationState} state
+ */
 Association.prototype.recover = function recover(state) {
-  Object.assign(this[kCounters], state.counters);
+  Object.assign(this[_constants.K_COUNTERS], state.counters);
   this.broker.recover(state.broker);
 };
+
+/**
+ * Resolve an association-scoped Api wrapper.
+ * @param {import('#types').ElementBrokerMessage} [message]
+ * @returns {import('#types').IApi<this>}
+ */
 Association.prototype.getApi = function getApi(message) {
+  // @ts-ignore
   return new _Api.Api('association', this.broker, message || {
     content: this._createMessageContent()
   });
 };
+
+/**
+ * Stop the association's broker.
+ */
 Association.prototype.stop = function stop() {
   this.broker.stop();
 };
+
+/** @internal */
 Association.prototype._publishEvent = function publishEvent(action, content) {
   const eventContent = this._createMessageContent({
     action,
@@ -102,6 +146,8 @@ Association.prototype._publishEvent = function publishEvent(action, content) {
     type: action
   });
 };
+
+/** @internal */
 Association.prototype._createMessageContent = function createMessageContent(override) {
   return {
     ...override,

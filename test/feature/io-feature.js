@@ -1,10 +1,11 @@
+import { Definition } from 'bpmn-elements';
 import camunda from '../resources/extensions/CamundaExtension.js';
-import Definition from '../../src/definition/Definition.js';
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
 
 Feature('IO', () => {
   Scenario('DataStoreReference and DataInput- and DataOutputAssociation', () => {
+    /** @type {Definition} */
     let definition;
     Given('two tasks associated with a data store reference only', async () => {
       const context = await testHelpers.context(factory.resource('signals.bpmn'), {
@@ -58,6 +59,7 @@ Feature('IO', () => {
 
     When('second process is triggered', () => {
       const signal = definition.getActivityById('updateSpotPrice');
+      // @ts-expect-error type coverage
       definition.signal(signal.resolve());
       approvePriceTask = definition.getPostponed()[2];
       expect(approvePriceTask.id).to.equal('approveSpotPrice');

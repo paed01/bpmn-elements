@@ -1,5 +1,5 @@
-import CancelEventDefinition from '../../src/eventDefinitions/CancelEventDefinition.js';
-import Environment from '../../src/Environment.js';
+import { Environment } from 'bpmn-elements';
+import { CancelEventDefinition } from 'bpmn-elements/eventDefinitions';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { Logger } from '../helpers/testHelpers.js';
 
@@ -31,10 +31,12 @@ describe('CancelEventDefinition', () => {
       );
 
       catchEvent.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -72,11 +74,13 @@ describe('CancelEventDefinition', () => {
       );
 
       catchEvent.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'event_1',
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event_1',
             executionId: 'event_1',
@@ -111,11 +115,13 @@ describe('CancelEventDefinition', () => {
       );
 
       catchEvent.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'event_1',
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event_1',
             executionId: 'event_1',
@@ -144,12 +150,14 @@ describe('CancelEventDefinition', () => {
       });
 
       catchEvent.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'event_1',
           attachedTo: 'atomic',
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event',
             executionId: 'event_1',
@@ -174,12 +182,14 @@ describe('CancelEventDefinition', () => {
       });
 
       catchEvent.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'event_1',
           attachedTo: 'atomic',
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event_1',
             executionId: 'event_1',
@@ -230,11 +240,13 @@ describe('CancelEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           id: 'event_1',
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event',
             executionId: 'event_1',

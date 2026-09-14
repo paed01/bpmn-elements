@@ -1,5 +1,5 @@
-import BpmnErrorActivity from '../../src/error/BpmnError.js';
-import Environment from '../../src/Environment.js';
+import { BpmnError as BpmnErrorActivity } from 'bpmn-elements';
+import testHelpers from '../helpers/testHelpers.js';
 
 describe('BpmnError', () => {
   it('returns BpmnError instanceof from error', () => {
@@ -8,9 +8,10 @@ describe('BpmnError', () => {
         id: 'Error_0',
         name: 'TestError',
       },
-      { environment: new Environment() }
+      testHelpers.emptyContext()
     );
 
+    // @ts-expect-error type coverage
     const err = bpmnError.resolve({}, new Error('Men'));
 
     expect(err).to.have.property('id', 'Error_0');
@@ -26,11 +27,12 @@ describe('BpmnError', () => {
           errorCode: 'EMES',
         },
       },
-      { environment: new Environment() }
+      testHelpers.emptyContext()
     );
 
     const err = bpmnError.resolve(
       {
+        // @ts-expect-error type coverage
         resolveExpression(errorCode) {
           return errorCode;
         },

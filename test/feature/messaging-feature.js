@@ -1,4 +1,4 @@
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import testHelpers from '../helpers/testHelpers.js';
 import factory from '../helpers/factory.js';
 
@@ -58,9 +58,9 @@ Feature('Messaging', () => {
       expect(start2.owner.counters).to.have.property('discarded', 1);
     });
 
-    And('gateway is taken and discarded', () => {
+    And('gateway is taken', () => {
       expect(definition.getActivityById('gateway').counters).to.have.property('taken', 1);
-      expect(definition.getActivityById('gateway').counters).to.have.property('discarded', 1);
+      expect(definition.getActivityById('gateway').counters).to.have.property('discarded', 0);
     });
   });
 
@@ -633,7 +633,7 @@ Feature('Messaging', () => {
     And('receive task is discarded', () => {
       expect(receive.owner.counters).to.have.property('discarded', 1);
       expect(receive.owner.counters).to.have.property('taken', 2);
-      expect(definition.getActivityById('end').counters).to.have.property('discarded', 1);
+      expect(definition.getActivityById('end').counters).to.have.property('discarded', 0);
       expect(definition.getActivityById('end').counters).to.have.property('taken', 2);
     });
 
@@ -684,7 +684,7 @@ Feature('Messaging', () => {
       expect(definition.getActivityById('receive').counters).to.have.property('taken', 3);
       expect(definition.getActivityById('receive').counters).to.have.property('discarded', 1);
       expect(definition.getActivityById('end').counters).to.have.property('taken', 3);
-      expect(definition.getActivityById('end').counters).to.have.property('discarded', 1);
+      expect(definition.getActivityById('end').counters).to.have.property('discarded', 0);
     });
 
     When('definition is ran again', () => {

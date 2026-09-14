@@ -1,22 +1,36 @@
-import Activity from '../activity/Activity.js';
+import { Activity } from '../activity/Activity.js';
 import { ActivityError } from '../error/Errors.js';
 import { cloneContent } from '../messageHelper.js';
 
-export default function SignalTask(activityDef, context) {
+/**
+ * Signal task
+ * @param {import('#types').ActivityDefinition} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
+export function SignalTask(activityDef, context) {
   return new Activity(SignalTaskBehaviour, activityDef, context);
 }
 
+/**
+ * Signal task behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function SignalTaskBehaviour(activity) {
   const { id, type, behaviour } = activity;
 
   this.id = id;
   this.type = type;
+  /** @type {import('./LoopCharacteristics.js').LoopCharacteristics | undefined} */
   this.loopCharacteristics =
     behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
   this.broker = activity.broker;
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 SignalTaskBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;
@@ -27,15 +41,17 @@ SignalTaskBehaviour.prototype.execute = function execute(executeMessage) {
   const executionId = executeContent.executionId;
 
   const broker = this.broker;
+  // @ts-ignore
   broker.subscribeTmp('api', `activity.#.${executionId}`, (...args) => this._onApiMessage(executeMessage, ...args), {
     noAck: true,
     consumerTag: `_api-${executionId}`,
   });
+  // @ts-ignore
   broker.subscribeTmp('api', '#.signal.*', (...args) => this._onDelegatedApiMessage(executeMessage, ...args), {
     noAck: true,
     consumerTag: `_api-delegated-${executionId}`,
   });
-  broker.publish('event', 'activity.wait', cloneContent(executeContent, { state: 'wait' }));
+  broker.publish('event', 'activity.wait', cloneContent(executeContent, { state: 'wait', accepts: ['signal', 'error'] }));
 };
 
 SignalTaskBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMessage(executeMessage, routingKey, message) {
@@ -45,7 +61,7 @@ SignalTaskBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMe
   if (!delegateContent || !delegateContent.message) return;
 
   const executeContent = executeMessage.content;
-  const { id: signalId, executionId: signalExecutionId } = delegateContent.message;
+  const { id: signalId, executionId: signalExecutionId, ...signalMessage } = delegateContent.message;
   if (this.loopCharacteristics && signalExecutionId !== executeContent.executionId) return;
   if (signalId !== this.id && signalExecutionId !== executeContent.executionId) return;
 
@@ -62,10 +78,10 @@ SignalTaskBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMe
     }
   );
 
-  return this._onApiMessage(executeMessage, routingKey, message);
+  return this._onApiMessage(executeMessage, routingKey, { ...message, content: { ...delegateContent, message: signalMessage } });
 };
 
-SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, routingKey, message) {
+SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessage, _routingKey, message) {
   const { type: messageType, correlationId } = message.properties;
   const executeContent = executeMessage.content;
   switch (messageType) {
@@ -94,6 +110,7 @@ SignalTaskBehaviour.prototype._onApiMessage = function onApiMessage(executeMessa
           {
             error: new ActivityError(message.content.message, executeMessage, message.content),
           },
+          // @ts-ignore
           {
             mandatory: true,
             correlationId,

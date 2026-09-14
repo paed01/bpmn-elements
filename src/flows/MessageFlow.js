@@ -2,11 +2,18 @@ import { brokerSafeId } from '../shared.js';
 import { cloneParent } from '../messageHelper.js';
 import { MessageFlowBroker } from '../EventBroker.js';
 import { Api } from '../Api.js';
+import { K_COUNTERS } from '../constants.js';
 
-const kCounters = Symbol.for('counters');
-const kSourceElement = Symbol.for('sourceElement');
+const K_SOURCE_ELEMENT = Symbol.for('sourceElement');
 
-export default function MessageFlow(flowDef, context) {
+/**
+ * Message flow connecting a source activity (or process) to a target. Subscribes to the
+ * source's `end` event and publishes `message.outbound` whenever the source completes,
+ * carrying any message payload through to the target.
+ * @param {import('#types').MessageFlowDefinition} flowDef
+ * @param {import('#types').ContextInstance} context
+ */
+export function MessageFlow(flowDef, context) {
   const { id, type = 'messageflow', name, target, source, behaviour, parent } = flowDef;
 
   this.id = id;
@@ -15,11 +22,13 @@ export default function MessageFlow(flowDef, context) {
   this.parent = cloneParent(parent);
   this.source = source;
   this.target = target;
+  /** @type {Record<string, any>} */
   this.behaviour = behaviour;
   this.environment = context.environment;
   this.context = context;
 
-  this[kCounters] = {
+  /** @internal */
+  this[K_COUNTERS] = {
     messages: 0,
   };
 
@@ -30,16 +39,23 @@ export default function MessageFlow(flowDef, context) {
   this.emit = emit;
   this.waitFor = waitFor;
 
-  this[kSourceElement] = context.getActivityById(source.id) || context.getProcessById(source.processId);
+  /** @internal */
+  this[K_SOURCE_ELEMENT] = context.getActivityById(source.id) || context.getProcessById(source.processId);
   this.logger = context.environment.Logger(type.toLowerCase());
 }
 
 Object.defineProperty(MessageFlow.prototype, 'counters', {
+  /** @returns {{ messages: number }} */
   get() {
-    return { ...this[kCounters] };
+    return { ...this[K_COUNTERS] };
   },
 });
 
+/**
+ * Snapshot message-flow state. Returns undefined when broker has no state and
+ * `disableTrackState` is set.
+ * @returns {import('#types').MessageFlowState | undefined}
+ */
 MessageFlow.prototype.getState = function getState() {
   const brokerState = this.broker.getState(true);
   if (!brokerState && this.environment.settings.disableTrackState) return;
@@ -52,31 +68,48 @@ MessageFlow.prototype.getState = function getState() {
   };
 };
 
+/**
+ * Restore message-flow state captured by getState.
+ * @param {import('#types').MessageFlowState} state
+ */
 MessageFlow.prototype.recover = function recover(state) {
-  Object.assign(this[kCounters], state.counters);
+  Object.assign(this[K_COUNTERS], state.counters);
   this.broker.recover(state.broker);
 };
 
+/**
+ * Resolve a message-scoped Api wrapper.
+ * @param {import('#types').ElementBrokerMessage} [message]
+ * @returns {import('#types').IApi<this>}
+ */
 MessageFlow.prototype.getApi = function getApi(message) {
+  // @ts-ignore
   return new Api('message', this.broker, message || { content: this._createMessageContent() });
 };
 
+/**
+ * Subscribe to the source element's message and end events to bridge the message across.
+ */
 MessageFlow.prototype.activate = function activate() {
-  const sourceElement = this[kSourceElement];
+  const sourceElement = this[K_SOURCE_ELEMENT];
   const safeId = brokerSafeId(this.id);
   sourceElement.on('message', this.deactivate.bind(this), { consumerTag: `_message-on-message-${safeId}` });
   sourceElement.on('end', this._onSourceEnd.bind(this), { consumerTag: `_message-on-end-${safeId}` });
 };
 
+/**
+ * Cancel the source element subscriptions added by activate.
+ */
 MessageFlow.prototype.deactivate = function deactivate() {
-  const sourceElement = this[kSourceElement];
+  const sourceElement = this[K_SOURCE_ELEMENT];
   const safeId = brokerSafeId(this.id);
   sourceElement.broker.cancel(`_message-on-end-${safeId}`);
   sourceElement.broker.cancel(`_message-on-message-${safeId}`);
 };
 
+/** @internal */
 MessageFlow.prototype._onSourceEnd = function onSourceEnd({ content }) {
-  ++this[kCounters].messages;
+  ++this[K_COUNTERS].messages;
   const source = this.source;
   const target = this.target;
   this.logger.debug(
@@ -85,6 +118,7 @@ MessageFlow.prototype._onSourceEnd = function onSourceEnd({ content }) {
   this.broker.publish('event', 'message.outbound', this._createMessageContent(content.message));
 };
 
+/** @internal */
 MessageFlow.prototype._createMessageContent = function createMessage(message) {
   return {
     id: this.id,

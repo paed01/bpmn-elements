@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = getPropertyValue;
+exports.getPropertyValue = getPropertyValue;
 const propertyPattern = /(\w+)\((.*?)(?:\))|(\.|\[|^)(.+?)(?:\]|\[|\.|$)/;
 const stringConstantPattern = /^(['"])(.*)\1$/;
 const numberConstantPattern = /^\W*-?\d+(.\d+)?\W*$/;
@@ -20,7 +20,7 @@ function getPropertyValue(inputContext, propertyPath, fnScope) {
 }
 function iterateProps(base, iterateContext, iteratePropertyPath, fnScope) {
   let result;
-  const rest = iteratePropertyPath.replace(propertyPattern, (match, fnName, args, p, prop) => {
+  const rest = iteratePropertyPath.replace(propertyPattern, (_match, fnName, args, _p, prop) => {
     if (fnName) {
       result = executeFn(getNamedValue(iterateContext, fnName), args, base, fnScope);
     } else {

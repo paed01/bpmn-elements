@@ -3,36 +3,50 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = Escalation;
-function Escalation(signalDef, context) {
+exports.Escalation = Escalation;
+/**
+ * Escalation reference element. Resolves the escalation name expression against the execution message.
+ * @param {import('#types').SerializableElement} escalationDef
+ * @param {import('#types').ContextInstance} context
+ */
+function Escalation(escalationDef, context) {
+  if (!(this instanceof Escalation)) return new Escalation(escalationDef, context);
   const {
     id,
     type,
     name,
-    parent: originalParent
-  } = signalDef;
-  const {
-    environment
-  } = context;
-  const parent = {
-    ...originalParent
+    parent
+  } = escalationDef;
+  this.id = id;
+  this.type = type;
+  this.name = name;
+  /** @type {import('#types').ElementParent} */
+  // @ts-ignore
+  this.parent = {
+    ...parent
   };
+  this.environment = context.environment;
+}
+
+/**
+ * Resolve escalation reference for the given execution message.
+ * @param {import('#types').ElementBrokerMessage} executionMessage
+ * @returns {import('#types').ResolvedReference}
+ */
+Escalation.prototype.resolve = function resolve(executionMessage) {
+  const {
+    id,
+    type,
+    name,
+    parent
+  } = this;
   return {
     id,
     type,
-    name,
-    parent,
-    resolve
+    messageType: 'escalation',
+    name: name && this.environment.resolveExpression(name, executionMessage),
+    parent: {
+      ...parent
+    }
   };
-  function resolve(executionMessage) {
-    return {
-      id,
-      type,
-      messageType: 'escalation',
-      name: name && environment.resolveExpression(name, executionMessage),
-      parent: {
-        ...parent
-      }
-    };
-  }
-}
+};

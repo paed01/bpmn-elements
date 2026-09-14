@@ -1,5 +1,5 @@
-import ConditionalEventDefinition from '../../src/eventDefinitions/ConditionalEventDefinition.js';
-import Environment from '../../src/Environment.js';
+import { Environment } from 'bpmn-elements';
+import { ConditionalEventDefinition } from 'bpmn-elements/eventDefinitions';
 import testHelpers from '../helpers/testHelpers.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 import { ActivityApi } from '../../src/Api.js';
@@ -44,10 +44,12 @@ describe('ConditionalEventDefinition', () => {
       );
 
       condition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event',
             executionId: 'event_1',
@@ -81,6 +83,7 @@ describe('ConditionalEventDefinition', () => {
         type: 'bpmn:ConditionalEventDefinition',
       });
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       event.broker.subscribeOnce('event', 'activity.condition', (_, msg) => {
         message = msg;
@@ -91,10 +94,12 @@ describe('ConditionalEventDefinition', () => {
       });
 
       condition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_0_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event',
             executionId: 'event_0',
@@ -117,6 +122,7 @@ describe('ConditionalEventDefinition', () => {
         },
       });
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let conditionMessage;
       event.broker.subscribeTmp(
         'event',
@@ -127,6 +133,7 @@ describe('ConditionalEventDefinition', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let completedMessage;
       event.broker.subscribeOnce('execution', '#', (_, msg) => {
         completedMessage = msg;
@@ -144,8 +151,10 @@ describe('ConditionalEventDefinition', () => {
         },
       };
 
+      // @ts-expect-error type coverage
       condition.execute(executeMessage);
 
+      // @ts-expect-error type coverage
       ActivityApi(event.broker, executeMessage, event.environment).signal({ data: 1 });
 
       expect(conditionMessage).to.be.ok;
@@ -171,16 +180,19 @@ describe('ConditionalEventDefinition', () => {
         },
       });
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       event.broker.subscribeOnce('execution', 'execute.error', (_, msg) => {
         message = msg;
       });
 
       condition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_0_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event',
             executionId: 'event_0',
@@ -212,6 +224,7 @@ describe('ConditionalEventDefinition', () => {
         behaviour: {},
       });
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let message;
       event.broker.subscribeOnce('event', 'activity.condition', (_, msg) => {
         message = msg;
@@ -233,8 +246,10 @@ describe('ConditionalEventDefinition', () => {
         },
       };
 
+      // @ts-expect-error type coverage
       condition.execute(executeMessage);
 
+      // @ts-expect-error type coverage
       ActivityApi(event.broker, executeMessage, event.environment).signal({ value: { data: 1 } });
 
       expect(message).to.not.be.ok;
@@ -258,6 +273,7 @@ describe('ConditionalEventDefinition', () => {
         { noAck: true }
       );
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let completedMessage;
       event.broker.subscribeOnce('execution', '#', (_, msg) => {
         completedMessage = msg;
@@ -275,11 +291,13 @@ describe('ConditionalEventDefinition', () => {
         },
       };
 
+      // @ts-expect-error type coverage
       condition.execute(executeMessage);
 
       expect(conditionMessages.length).to.equal(1);
       expect(conditionMessages[0]).to.have.property('content').with.property('conditionResult').that.is.undefined;
 
+      // @ts-expect-error type coverage
       ActivityApi(event.broker, executeMessage, event.environment).signal({ value: { data: 1 } });
 
       expect(conditionMessages.length).to.equal(2);
@@ -315,15 +333,18 @@ describe('ConditionalEventDefinition', () => {
         },
       };
 
+      // @ts-expect-error type coverage
       condition.execute(executeMessage);
 
-      expect(event.broker.getExchange('api').bindingCount).to.equal(3);
+      expect(event.broker.getExchange('api').bindingCount).to.equal(4);
 
+      /** @type {import('bpmn-elements').ElementBrokerMessage} */
       let discardMessage;
       event.broker.subscribeOnce('execution', '#', (_, msg) => {
         discardMessage = msg;
       });
 
+      // @ts-expect-error type coverage
       ActivityApi(event.broker, executeMessage, event.environment).discard();
 
       expect(event.broker.getExchange('api').bindingCount).to.equal(0);
@@ -340,6 +361,7 @@ describe('ConditionalEventDefinition', () => {
         type: 'bpmn:ConditionalEventDefinition',
       });
 
+      // @ts-expect-error type coverage
       condition.evaluate({}, done);
     });
   });
@@ -367,10 +389,12 @@ describe('ConditionalEventDefinition', () => {
         },
       };
 
+      // @ts-expect-error type coverage
       condition.execute(executeMessage);
 
-      expect(event.broker.getExchange('api').bindingCount).to.equal(3);
+      expect(event.broker.getExchange('api').bindingCount).to.equal(4);
 
+      // @ts-expect-error type coverage
       ActivityApi(event.broker, executeMessage, event.environment).signal({ value: true });
 
       expect(event.broker.getExchange('api').bindingCount).to.equal(0);
@@ -401,11 +425,13 @@ describe('ConditionalEventDefinition', () => {
         },
       };
 
+      // @ts-expect-error type coverage
       condition.execute(executeMessage);
 
       expect(task.broker.getExchange('execution').bindingCount).to.equal(1);
-      expect(event.broker.getExchange('api').bindingCount).to.equal(3);
+      expect(event.broker.getExchange('api').bindingCount).to.equal(4);
 
+      // @ts-expect-error type coverage
       ActivityApi(event.broker, executeMessage, event.environment).signal({
         output: {
           value: true,
@@ -440,10 +466,12 @@ describe('ConditionalEventDefinition', () => {
         },
       };
 
+      // @ts-expect-error type coverage
       condition.execute(executeMessage);
 
-      expect(event.broker.getExchange('api').bindingCount).to.equal(3);
+      expect(event.broker.getExchange('api').bindingCount).to.equal(4);
 
+      // @ts-expect-error type coverage
       ActivityApi(event.broker, executeMessage, event.environment).stop();
 
       expect(event.broker.getExchange('api').bindingCount).to.equal(0);
@@ -474,11 +502,13 @@ describe('ConditionalEventDefinition', () => {
         },
       };
 
+      // @ts-expect-error type coverage
       condition.execute(executeMessage);
 
       expect(task.broker.getExchange('execution').bindingCount).to.equal(1);
-      expect(event.broker.getExchange('api').bindingCount).to.equal(3);
+      expect(event.broker.getExchange('api').bindingCount).to.equal(4);
 
+      // @ts-expect-error type coverage
       ActivityApi(event.broker, executeMessage, event.environment).stop();
 
       expect(task.broker.getExchange('execution').bindingCount).to.equal(1);

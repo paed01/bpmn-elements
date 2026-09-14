@@ -1,7 +1,6 @@
 import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
-import Definition from '../../src/definition/Definition.js';
-
+import { Definition } from 'bpmn-elements';
 const extensions = {
   camunda: {
     moddleOptions: testHelpers.camundaBpmnModdle,
@@ -21,7 +20,9 @@ Feature('Definition', () => {
       </process>
     </definitions>`;
 
-    let definition, assertMessage;
+    /** @type {Definition} */
+    let definition;
+    let assertMessage;
     const messages = [];
     Given('a definition', async () => {
       const context = await testHelpers.context(source);
@@ -33,7 +34,7 @@ Feature('Definition', () => {
       definition.broker.subscribeTmp(
         'event',
         '#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -90,7 +91,7 @@ Feature('Definition', () => {
       definition.broker.subscribeTmp(
         'event',
         '#',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }

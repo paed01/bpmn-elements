@@ -1,6 +1,5 @@
 import testHelpers from '../helpers/testHelpers.js';
-import Definition from '../../src/definition/Definition.js';
-
+import { Definition } from 'bpmn-elements';
 const camunda = testHelpers.camundaBpmnModdle;
 
 const extensions = {

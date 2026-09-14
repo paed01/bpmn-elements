@@ -6,22 +6,21 @@ Object.defineProperty(exports, "__esModule", {
 Object.defineProperty(exports, "Association", {
   enumerable: true,
   get: function () {
-    return _Association.default;
+    return _Association.Association;
   }
 });
 Object.defineProperty(exports, "MessageFlow", {
   enumerable: true,
   get: function () {
-    return _MessageFlow.default;
+    return _MessageFlow.MessageFlow;
   }
 });
 Object.defineProperty(exports, "SequenceFlow", {
   enumerable: true,
   get: function () {
-    return _SequenceFlow.default;
+    return _SequenceFlow.SequenceFlow;
   }
 });
-var _Association = _interopRequireDefault(require("./Association.js"));
-var _MessageFlow = _interopRequireDefault(require("./MessageFlow.js"));
-var _SequenceFlow = _interopRequireDefault(require("./SequenceFlow.js"));
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+var _Association = require("./Association.js");
+var _MessageFlow = require("./MessageFlow.js");
+var _SequenceFlow = require("./SequenceFlow.js");

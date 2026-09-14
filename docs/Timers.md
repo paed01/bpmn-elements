@@ -2,7 +2,7 @@
 
 Timers handler. The purpose is to keep track of executing timers. Can be added to inline script context to override builtin timers.
 
-# `Timers(options)`
+# `new Timers([options])`
 
 Default timers behavior.
 
@@ -12,7 +12,7 @@ Arguments:
   - `setTimeout`: optional function, defaults to builtin `setTimeout`
   - `clearTimeout`: optional function, defaults to builtin `clearTimeout`
 
-Returns:
+Instance:
 
 - `executing`: list with executing timers
 - `register(owner)`: register timers owner

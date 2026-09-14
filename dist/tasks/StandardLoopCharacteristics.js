@@ -3,9 +3,13 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = StandardLoopCharacteristics;
-var _LoopCharacteristics = _interopRequireDefault(require("./LoopCharacteristics.js"));
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
+exports.StandardLoopCharacteristics = StandardLoopCharacteristics;
+var _LoopCharacteristics = require("./LoopCharacteristics.js");
+/**
+ * Standard loop characteristics
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').SerializableElement} loopCharacteristics
+ */
 function StandardLoopCharacteristics(activity, loopCharacteristics) {
   let {
     behaviour
@@ -14,7 +18,7 @@ function StandardLoopCharacteristics(activity, loopCharacteristics) {
     ...behaviour,
     isSequential: true
   };
-  return new _LoopCharacteristics.default(activity, {
+  return new _LoopCharacteristics.LoopCharacteristics(activity, {
     ...loopCharacteristics,
     behaviour
   });

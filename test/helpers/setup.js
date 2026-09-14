@@ -1,4 +1,4 @@
 import 'chai/register-expect.js';
 
 process.env.NODE_ENV = 'test';
-Error.stackTraceLimit = 20;
+Error.stackTraceLimit = 50;

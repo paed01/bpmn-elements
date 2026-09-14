@@ -1,23 +1,41 @@
-import Activity from '../activity/Activity.js';
+import { Activity } from '../activity/Activity.js';
 import { ActivityError } from '../error/Errors.js';
 import { cloneContent } from '../messageHelper.js';
 
-export default function CallActivity(activityDef, context) {
+/**
+ * Call activity
+ * @param {import('#types').ActivityDefinition} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
+export function CallActivity(activityDef, context) {
   return new Activity(CallActivityBehaviour, activityDef, context);
 }
 
+/**
+ * Call activity behaviour
+ * @param {import('#types').Activity} activity
+ */
 export function CallActivityBehaviour(activity) {
   const { id, type, behaviour = {} } = activity;
   this.id = id;
   this.type = type;
+  // @ts-ignore
   this.calledElement = behaviour.calledElement;
+  /** @type {import('./LoopCharacteristics.js').LoopCharacteristics | undefined} */
   this.loopCharacteristics =
-    behaviour.loopCharacteristics && new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
+    // @ts-ignore
+    behaviour.loopCharacteristics &&
+    // @ts-ignore
+    new behaviour.loopCharacteristics.Behaviour(activity, behaviour.loopCharacteristics);
   this.activity = activity;
   this.broker = activity.broker;
   this.environment = activity.environment;
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ * @returns {void}
+ */
 CallActivityBehaviour.prototype.execute = function execute(executeMessage) {
   const executeContent = executeMessage.content;
   const loopCharacteristics = this.loopCharacteristics;
@@ -29,14 +47,17 @@ CallActivityBehaviour.prototype.execute = function execute(executeMessage) {
   try {
     var calledElement = this.environment.resolveExpression(this.calledElement); // eslint-disable-line no-var
   } catch (err) {
+    // @ts-ignore
     return broker.publish(
       'execution',
       'execute.error',
       cloneContent(
         executeContent,
         {
+          // @ts-ignore
           error: new ActivityError(err.message, executeMessage, err),
         },
+        // @ts-ignore
         {
           mandatory: true,
         }
@@ -49,6 +70,7 @@ CallActivityBehaviour.prototype.execute = function execute(executeMessage) {
     'api',
     `activity.#.${executionId}`,
     (...args) => {
+      // @ts-ignore
       this._onApiMessage(calledElement, executeMessage, ...args);
     },
     {
@@ -57,26 +79,50 @@ CallActivityBehaviour.prototype.execute = function execute(executeMessage) {
       priority: 300,
     }
   );
-  broker.subscribeTmp('api', '#.signal.*', (...args) => this._onDelegatedApiMessage(calledElement, executeMessage, ...args), {
-    noAck: true,
-    consumerTag: `_api-delegated-signal-${executionId}`,
-  });
-  broker.subscribeTmp('api', '#.cancel.*', (...args) => this._onDelegatedApiMessage(calledElement, executeMessage, ...args), {
-    noAck: true,
-    consumerTag: `_api-delegated-cancel-${executionId}`,
-  });
-
-  broker.publish(
-    'event',
-    'activity.call',
-    cloneContent(executeContent, {
-      state: 'wait',
-      calledElement,
-    }),
+  broker.subscribeTmp(
+    'api',
+    '#.signal.*',
+    // @ts-ignore
+    (...args) => this._onDelegatedApiMessage(calledElement, executeMessage, ...args),
     {
-      type: 'call',
+      noAck: true,
+      consumerTag: `_api-delegated-signal-${executionId}`,
     }
   );
+  broker.subscribeTmp(
+    'api',
+    '#.cancel.*',
+    // @ts-ignore
+    (...args) => this._onDelegatedApiMessage(calledElement, executeMessage, ...args),
+    {
+      noAck: true,
+      consumerTag: `_api-delegated-cancel-${executionId}`,
+    }
+  );
+
+  const callContent = {
+    state: 'wait',
+    calledElement,
+    accepts: ['signal', 'cancel', 'error'],
+  };
+
+  // Forward the multi-instance loop context as input to the called process; any current content input takes precedence.
+  if (executeContent.isMultiInstance) {
+    const input = {
+      isSequential: executeContent.isSequential,
+      index: executeContent.index,
+      cardinality: executeContent.loopCardinality,
+    };
+    const elementVariable = loopCharacteristics?.elementVariable;
+    if (elementVariable && elementVariable in executeContent) {
+      input[elementVariable] = executeContent[elementVariable];
+    }
+    callContent.input = Object.assign(input, executeContent.input);
+  }
+
+  broker.publish('event', 'activity.call', cloneContent(executeContent, callContent), {
+    type: 'call',
+  });
 };
 
 CallActivityBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApiMessage(
@@ -112,7 +158,7 @@ CallActivityBehaviour.prototype._onDelegatedApiMessage = function onDelegatedApi
   return this._onApiMessage(calledElement, executeMessage, routingKey, message);
 };
 
-CallActivityBehaviour.prototype._onApiMessage = function onApiMessage(calledElement, executeMessage, routingKey, message) {
+CallActivityBehaviour.prototype._onApiMessage = function onApiMessage(calledElement, executeMessage, _routingKey, message) {
   const { type: messageType, correlationId } = message.properties;
   const executeContent = executeMessage.content;
 
@@ -155,6 +201,7 @@ CallActivityBehaviour.prototype._onApiMessage = function onApiMessage(calledElem
           {
             error: new ActivityError(message.content.message, executeMessage, message.content),
           },
+          // @ts-ignore
           {
             mandatory: true,
             correlationId,

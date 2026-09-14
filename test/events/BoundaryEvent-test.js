@@ -1,9 +1,8 @@
+import { Environment } from 'bpmn-elements';
+import { BoundaryEvent, BoundaryEventBehaviour } from 'bpmn-elements/events';
+import { ErrorEventDefinition, MessageEventDefinition } from 'bpmn-elements/eventDefinitions';
+import { SignalTask } from 'bpmn-elements/tasks';
 import testHelpers from '../helpers/testHelpers.js';
-import Environment from '../../src/Environment.js';
-import ErrorEventDefinition from '../../src/eventDefinitions/ErrorEventDefinition.js';
-import MessageEventDefinition from '../../src/eventDefinitions/MessageEventDefinition.js';
-import SignalTask from '../../src/tasks/SignalTask.js';
-import BoundaryEvent, { BoundaryEventBehaviour } from '../../src/events/BoundaryEvent.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('BoundaryEvent', () => {
@@ -15,7 +14,9 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         const behaviour = new BoundaryEventBehaviour({
+          // @ts-expect-error type coverage
           broker: ActivityBroker(this).broker,
+          // @ts-expect-error type coverage
           attachedTo,
         });
 
@@ -28,7 +29,9 @@ describe('BoundaryEvent', () => {
           broker: ActivityBroker(this).broker,
         };
         const behaviour = new BoundaryEventBehaviour({
+          // @ts-expect-error type coverage
           broker: ActivityBroker(this).broker,
+          // @ts-expect-error type coverage
           attachedTo,
           behaviour: { cancelActivity: false },
         });
@@ -49,6 +52,7 @@ describe('BoundaryEvent', () => {
             broker: ActivityBroker(this).broker,
             attachedTo,
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
@@ -57,6 +61,7 @@ describe('BoundaryEvent', () => {
         expect(attachedTo.broker.getExchange('event')).to.have.property('bindingCount', 0);
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
@@ -80,6 +85,7 @@ describe('BoundaryEvent', () => {
             broker,
             attachedTo,
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
@@ -88,6 +94,7 @@ describe('BoundaryEvent', () => {
         expect(broker.getExchange('api')).to.have.property('bindingCount', 0);
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
@@ -111,12 +118,14 @@ describe('BoundaryEvent', () => {
             broker,
             attachedTo,
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
         );
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
@@ -152,12 +161,14 @@ describe('BoundaryEvent', () => {
             broker,
             attachedTo,
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
         );
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
@@ -192,12 +203,14 @@ describe('BoundaryEvent', () => {
             broker,
             attachedTo,
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
         );
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
@@ -241,12 +254,14 @@ describe('BoundaryEvent', () => {
             environment: new Environment(),
             logger: testHelpers.Logger('boundaryevent'),
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
         );
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
@@ -289,9 +304,11 @@ describe('BoundaryEvent', () => {
           attachedTo,
           get eventDefinitions() {
             const self = this;
+            // @ts-expect-error type coverage
             return self._eds || (self._eds = [new ErrorEventDefinition(self, {}), new MessageEventDefinition(self, {})]);
           },
         };
+        // @ts-expect-error type coverage
         const behaviour = new BoundaryEventBehaviour(activity, {
           getOutboundAssociations() {},
         });
@@ -300,11 +317,13 @@ describe('BoundaryEvent', () => {
         broker.subscribeTmp('event', 'execute.start', (_, msg) => behaviour.execute(msg));
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
             executionId: 'event_1',
             isRootScope: true,
+            // @ts-expect-error type coverage
             parent: {
               id: 'theProcess',
             },
@@ -336,17 +355,20 @@ describe('BoundaryEvent', () => {
               ],
             },
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
         );
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
             executionId: 'event_1',
             isRootScope: true,
+            // @ts-expect-error type coverage
             parent: {
               id: 'theProcess',
             },
@@ -388,17 +410,20 @@ describe('BoundaryEvent', () => {
               ],
             },
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
         );
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
             executionId: 'event_1',
             isRootScope: true,
+            // @ts-expect-error type coverage
             parent: {
               id: 'theProcess',
             },
@@ -440,17 +465,20 @@ describe('BoundaryEvent', () => {
               ],
             },
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
         );
 
         behaviour.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             id: 'event',
             executionId: 'event_1',
             isRootScope: true,
+            // @ts-expect-error type coverage
             parent: {
               id: 'theProcess',
             },
@@ -489,6 +517,7 @@ describe('BoundaryEvent', () => {
             },
             removeInboundListeners() {},
           },
+          // @ts-expect-error type coverage
           {
             getOutboundAssociations() {},
           }
@@ -701,7 +730,7 @@ describe('BoundaryEvent', () => {
         event.broker.subscribeTmp(
           'execution',
           'execute.*',
-          (routingKey, message) => {
+          (_routingKey, message) => {
             messages.push(message);
           },
           { noAck: true }
@@ -737,7 +766,7 @@ describe('BoundaryEvent', () => {
         event.broker.subscribeTmp(
           'execution',
           'execute.*',
-          (routingKey, message) => {
+          (_routingKey, message) => {
             messages.push(message);
           },
           { noAck: true }
@@ -763,7 +792,7 @@ describe('BoundaryEvent', () => {
         event.broker.subscribeTmp(
           'execution',
           'execute.*',
-          (routingKey, message) => {
+          (_routingKey, message) => {
             messages.push(message);
           },
           { noAck: true }
@@ -813,7 +842,7 @@ describe('BoundaryEvent', () => {
       });
 
       it('completes when attached error is caught', async () => {
-        context.environment.addService('test', (arg, next) => {
+        context.environment.addService('test', (_arg, next) => {
           next(new Error('FAIL'));
         });
 
@@ -832,7 +861,7 @@ describe('BoundaryEvent', () => {
       });
 
       it('leaves when error is caught', () => {
-        context.environment.addService('test', (arg, next) => {
+        context.environment.addService('test', (_arg, next) => {
           next(new Error('FAIL'));
         });
 
@@ -857,67 +886,6 @@ describe('BoundaryEvent', () => {
         expect(messages[1].content).to.have.property('id', 'service');
       });
 
-      it('adds attachedTo id to discardSequence when attachedTo completes', async () => {
-        context.environment.addService('test', (arg, next) => {
-          next();
-        });
-
-        const task = context.getActivityById('service');
-        const event = context.getActivityById('errorEvent');
-
-        let discardMessage;
-
-        event.outbound[0].broker.subscribeOnce('event', 'flow.discard', (_, message) => {
-          discardMessage = message;
-        });
-
-        const leave = event.waitFor('leave');
-
-        event.activate();
-        task.run();
-
-        await leave;
-
-        expect(event.counters).to.have.property('discarded', 1);
-
-        expect(discardMessage).to.be.ok;
-        expect(discardMessage.content).to.have.property('discardSequence').that.eql(['service', 'errorEvent']);
-      });
-
-      it('adds attachedTo id to discardSequence if discarded during execution', async () => {
-        let executing;
-        const execute = new Promise((resolve) => {
-          executing = resolve;
-        });
-
-        context.environment.addService('test', () => {
-          executing();
-        });
-
-        const task = context.getActivityById('service');
-        const event = context.getActivityById('errorEvent');
-
-        let discardMessage;
-        event.outbound[0].broker.subscribeOnce('event', 'flow.discard', (_, message) => {
-          discardMessage = message;
-        });
-
-        const leave = event.waitFor('leave');
-
-        event.activate();
-        task.run();
-
-        await execute;
-        task.discard();
-
-        await leave;
-
-        expect(event.counters).to.have.property('discarded', 1);
-
-        expect(discardMessage).to.be.ok;
-        expect(discardMessage.content).to.have.property('discardSequence').that.eql(['service', 'errorEvent']);
-      });
-
       it('is discarded if attached activity is discarded', async () => {
         const task = context.getActivityById('service');
         const event = context.getActivityById('errorEvent');
@@ -926,39 +894,11 @@ describe('BoundaryEvent', () => {
 
         event.activate();
         task.activate();
-        task.inbound[0].discard();
+        task.discard();
 
         await leave;
 
         expect(event.counters).to.have.property('discarded', 1);
-      });
-
-      it('is discarded with attached inbound discard sequence when attached is discarded', async () => {
-        const task = context.getActivityById('service');
-        const event = context.getActivityById('errorEvent');
-
-        let discardMessage, taskDiscardMessage;
-        task.outbound[0].broker.subscribeOnce('event', 'flow.discard', (_, message) => {
-          taskDiscardMessage = message;
-        });
-        event.outbound[0].broker.subscribeOnce('event', 'flow.discard', (_, message) => {
-          discardMessage = message;
-        });
-
-        const leave = event.waitFor('leave');
-
-        event.activate();
-        task.activate();
-        task.inbound[0].discard({ discardSequence: ['hittepa-1'] });
-
-        await leave;
-
-        expect(event.counters).to.have.property('discarded', 1);
-
-        expect(taskDiscardMessage).to.be.ok;
-        expect(taskDiscardMessage.content).to.have.property('discardSequence').that.eql(['hittepa-1', 'start', 'service']);
-        expect(discardMessage).to.be.ok;
-        expect(discardMessage.content).to.have.property('discardSequence').that.eql(['hittepa-1', 'start', 'errorEvent']);
       });
     });
 
@@ -980,7 +920,7 @@ describe('BoundaryEvent', () => {
       });
 
       it('completes when error is caught and attached activity is discarded by its own error', async () => {
-        context.environment.addService('test', (arg, next) => {
+        context.environment.addService('test', (_arg, next) => {
           next(new Error('FAIL'));
         });
 
@@ -1056,7 +996,7 @@ describe('BoundaryEvent', () => {
 
       it('is discarded if attached activity completes', async () => {
         context.environment.variables.duration = 'PT2S';
-        context.environment.addService('test', (arg, next) => {
+        context.environment.addService('test', (_arg, next) => {
           next();
         });
 
@@ -1109,7 +1049,7 @@ describe('BoundaryEvent', () => {
 
         event.activate();
         task.activate();
-        task.inbound[0].discard();
+        task.discard();
 
         await leave;
 
@@ -1157,8 +1097,8 @@ describe('BoundaryEvent', () => {
       });
 
       it('leaves attached activity running when timeout occur', async () => {
-        let serviceComplete;
-        context.environment.addService('test', (arg, next) => {
+        /** @type {(...args: any[]) => void} */ let serviceComplete;
+        context.environment.addService('test', (_arg, next) => {
           serviceComplete = next;
         });
 
@@ -1183,7 +1123,7 @@ describe('BoundaryEvent', () => {
 
       it('is discarded if attached activity completes', async () => {
         context.environment.variables.duration = 'PT2S';
-        context.environment.addService('test', (arg, next) => {
+        context.environment.addService('test', (_arg, next) => {
           next();
         });
 
@@ -1208,7 +1148,7 @@ describe('BoundaryEvent', () => {
 
         event.activate();
         task.activate();
-        task.inbound[0].discard();
+        task.discard();
 
         await leave;
 
@@ -1310,7 +1250,7 @@ describe('BoundaryEvent', () => {
 
         event.activate();
         task.activate();
-        task.inbound[0].discard();
+        task.discard();
 
         await leave;
 
@@ -1388,8 +1328,8 @@ describe('BoundaryEvent', () => {
       });
 
       it('takes attached and discards if condition is not met', async () => {
-        let serviceComplete;
-        context.environment.addService('test', (arg, next) => {
+        /** @type {(...args: any[]) => void} */ let serviceComplete;
+        context.environment.addService('test', (_arg, next) => {
           serviceComplete = next;
         });
 
@@ -1409,7 +1349,7 @@ describe('BoundaryEvent', () => {
         expect(task.counters).to.have.property('taken', 1);
       });
 
-      it('is discarded if attached inbound is discarded', async () => {
+      it('is discarded when attached is discarded', async () => {
         const task = context.getActivityById('service');
         const event = context.getActivityById('conditionalEvent');
 
@@ -1417,7 +1357,7 @@ describe('BoundaryEvent', () => {
 
         event.activate();
         task.activate();
-        task.inbound[0].discard();
+        task.discard();
 
         await leave;
 

@@ -1,4 +1,4 @@
-import IntermediateCatchEvent from '../../src/events/IntermediateCatchEvent.js';
+import { IntermediateCatchEvent } from 'bpmn-elements/events';
 import testHelpers from '../helpers/testHelpers.js';
 
 describe('IntermediateCatchEvent', () => {
@@ -79,7 +79,7 @@ describe('IntermediateCatchEvent', () => {
       event.broker.subscribeTmp(
         'execution',
         'execute.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -107,7 +107,7 @@ describe('IntermediateCatchEvent', () => {
       event.broker.subscribeTmp(
         'execution',
         'execute.*',
-        (routingKey, message) => {
+        (_routingKey, message) => {
           messages.push(message);
         },
         { noAck: true }
@@ -317,6 +317,113 @@ describe('IntermediateCatchEvent', () => {
       await leave;
 
       expect(event.counters).to.have.property('taken', 1);
+    });
+  });
+
+  describe('with link event definition', () => {
+    it('exposes linkNames on activity behaviour for a single-link catch', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+        <process id="theProcess" isExecutable="true">
+          <intermediateCatchEvent id="catch">
+            <linkEventDefinition name="LINKA" />
+          </intermediateCatchEvent>
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+      const event = context.getActivityById('catch');
+      expect(event.behaviour).to.have.property('linkNames').that.deep.equals(['LINKA']);
+    });
+
+    it('deduplicates repeated link names on the same activity', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+        <process id="theProcess" isExecutable="true">
+          <intermediateCatchEvent id="catch">
+            <linkEventDefinition name="LINKA" />
+            <linkEventDefinition name="LINKA" />
+            <linkEventDefinition name="LINKB" />
+          </intermediateCatchEvent>
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+      const event = context.getActivityById('catch');
+      expect(event.behaviour.linkNames).to.have.same.members(['LINKA', 'LINKB']);
+      expect(event.behaviour.linkNames).to.have.length(2);
+    });
+
+    it('exposes all linkNames for a multi-link catch', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+        <process id="theProcess" isExecutable="true">
+          <intermediateCatchEvent id="catch">
+            <linkEventDefinition name="LINKA" />
+            <linkEventDefinition name="LINKB" />
+          </intermediateCatchEvent>
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+      const event = context.getActivityById('catch');
+      expect(event.behaviour.linkNames).to.have.same.members(['LINKA', 'LINKB']);
+    });
+
+    it('routes a throw on a secondary link name to a multi-link catch', async () => {
+      const { Definition } = await import('bpmn-elements');
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-throw" sourceRef="start" targetRef="throw" />
+          <intermediateThrowEvent id="throw">
+            <linkEventDefinition name="LINKB" />
+          </intermediateThrowEvent>
+          <intermediateCatchEvent id="catch">
+            <linkEventDefinition name="LINKA" />
+            <linkEventDefinition name="LINKB" />
+          </intermediateCatchEvent>
+          <sequenceFlow id="to-end" sourceRef="catch" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+      const definition = new Definition(context);
+      const end = definition.waitFor('end');
+      definition.run();
+      await end;
+      expect(definition.getActivityById('catch').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('end').counters).to.have.property('taken', 1);
+    });
+
+    it('a throw with multiple link names triggers catches for either name (one in process)', async () => {
+      const { Definition } = await import('bpmn-elements');
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-throw" sourceRef="start" targetRef="throw" />
+          <intermediateThrowEvent id="throw">
+            <linkEventDefinition name="LINKA" />
+            <linkEventDefinition name="LINKB" />
+          </intermediateThrowEvent>
+          <intermediateCatchEvent id="catchA">
+            <linkEventDefinition name="LINKA" />
+          </intermediateCatchEvent>
+          <sequenceFlow id="to-endA" sourceRef="catchA" targetRef="endA" />
+          <endEvent id="endA" />
+          <intermediateCatchEvent id="catchB">
+            <linkEventDefinition name="LINKB" />
+          </intermediateCatchEvent>
+          <sequenceFlow id="to-endB" sourceRef="catchB" targetRef="endB" />
+          <endEvent id="endB" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+      const definition = new Definition(context);
+      const end = definition.waitFor('end');
+      definition.run();
+      await end;
+      expect(definition.getActivityById('catchA').counters).to.have.property('taken', 1);
+      expect(definition.getActivityById('catchB').counters).to.have.property('taken', 1);
     });
   });
 });

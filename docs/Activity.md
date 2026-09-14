@@ -21,19 +21,30 @@ Activity properties:
 - `id`: activity id
 - `type`: activity type
 - `name`: activity name
-- `attachedTo`: activity is attached to, e.g. a BoundaryEvent
+- `attachedTo`: if this is a BoundaryEvent, the activity instance it is attached to; otherwise `null`
 - `Behaviour`: passed activity Behaviour function, invoked with new
 - `behaviour`: activity behaviour from serializable context
+- `bpmnIo`: BpmnIO extension if present
 - `broker`: activity [broker](https://github.com/paed01/smqp)
 - `counters`: counters for completed runs etc
 - `environment`: shared [environment](/docs/Environment)
+- `eventDefinitions`: list of event definition instances
 - `execution`: getter for current [execution instance](/docs/ActivityExecution.md)
 - `executionId`: current unique execution id
 - `extensions`: object with [extensions](/docs/Extension.md)
+- `formatter`: per-activity formatter that resolves pending format messages
 - `inbound`: list of inbound sequence flows
+- `initialized`: boolean indicating that the activity has been initialized (`init` called)
+- `isCatching`: boolean indicating that the activity is a catching event
+- `isEnd`: boolean indicating that the activity has no outbound sequence flows
+- `isForCompensation`: boolean indicating that the activity is for compensation
+- `isMultiInstance`: boolean indicating that the activity has loop characteristics
+- `isParallelJoin`: boolean indicating if the activity is a parallel join gateway
 - `isRunning`: boolean indicating if the activity is running
 - `isStart`: boolean indicating if the activity a start activity
 - `isSubProcess`: boolean indicating if the activity is a sub process
+- `isThrowing`: boolean indicating that the activity is a throwing event
+- `isTransaction`: boolean indicating that the activity is a transaction
 - `logger`: activity [logger](/docs/Environment.md#logger) instance
 - `outbound`: list of outbound sequence flows
 - `parent`: activity parent
@@ -52,6 +63,7 @@ Activity properties:
   - `error`: Activity behaviour execution failed, discard run
   - `formatting`: Formatting next run message
 - `stopped`: boolean indicating if the activity is in a stopped state
+- `triggeredByEvent`: boolean indicating that the activity (sub process) is triggered by an event
 
 ### `activate()`
 
@@ -83,9 +95,26 @@ Get [activity](/docs/Activity.md) by id from context.
 
 Get activity state. If `environment.settings.disableTrackState === true` the state may be undefined if the task is not running.
 
-### `message(messageContent)`
+### `init([initContent])`
 
-Send message to activity. Queues message to activity.
+Initialize the activity without running. Publishes an `activity.init` event with an execution id reserved for the next run, and queues a non-persistent `activity.init` message on the activity's inbound queue. When the inbound queue is consumed the activity runs with that reserved id. This is how start activities and link catch events are armed.
+
+Arguments:
+
+- `initContent`: optional object merged into the init message content
+- `properties`: optional message properties merged into the queued inbound message
+
+### `addInboundListeners()`
+
+Subscribe to inbound sequence flow events. Called internally from `activate()` and rarely needs to be called directly.
+
+### `removeInboundListeners()`
+
+Unsubscribe from inbound sequence flow events. Counterpart to `addInboundListeners()`.
+
+### `shake()`
+
+Walk outbound sequence flows for shake analysis. Used to discover reachable flows from this activity.
 
 ### `next()`
 

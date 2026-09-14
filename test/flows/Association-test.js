@@ -1,5 +1,5 @@
-import Environment from '../../src/Environment.js';
-import Association from '../../src/flows/Association.js';
+import { Environment } from 'bpmn-elements';
+import { Association } from 'bpmn-elements/flows';
 import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('Association', () => {
@@ -24,6 +24,7 @@ describe('Association', () => {
           id: 'task1',
         },
       },
+      // @ts-expect-error type coverage
       context
     );
 
@@ -53,6 +54,7 @@ describe('Association', () => {
           id: 'task1',
         },
       },
+      // @ts-expect-error type coverage
       context
     );
 
@@ -81,9 +83,11 @@ describe('Association', () => {
           id: 'task1',
         },
       },
+      // @ts-expect-error type coverage
       context
     );
 
+    // @ts-expect-error type coverage
     const api = flow.getApi({ content: { id: 'foo' } });
     expect(api).to.have.property('id', 'foo');
   });

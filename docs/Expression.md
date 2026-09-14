@@ -38,9 +38,9 @@ The following expressions are supported:
 - `${environment.variables.input[-1]}` - resolves to last item of the variable input array
 - `${environment.variables.input[spaced name]}` - resolves to the variable input object property `spaced name`
 
-- `${environment.services.getInput}` - return the service function `getInput`
-- `${environment.services.getInput()}` - executes the service function `getInput` with the argument `{services, variables}`
-- `${environment.services.isBelow(content.input,2)}` - executes the service function `isBelow` with result of `variable.input` value and 2
+- `${environment.services.getInput}` - resolves to the service function `getInput` itself (it is **not** called). The caller decides how to invoke it — e.g. a [sequence flow condition](/docs/SequenceFlow.md#service-function-conditions) calls it with the flow execution scope
+- `${environment.services.getInput()}` - calls the service function `getInput`. Empty parentheses are **not** a no-argument call: the resolution `context` is passed as the single argument, i.e. `{ environment, ...message }` (so the service can read `arg.content`, `arg.environment`, …)
+- `${environment.services.isBelow(content.input,2)}` - calls the service function `isBelow` with the resolved `content.input` value and `2`
 
 - `I, ${content.id}, execute with id ${content.executionId}` - formats a string addressing content object values
 

@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = ExecutionScope;
+exports.ExecutionScope = ExecutionScope;
 var _messageHelper = require("../messageHelper.js");
 var _Errors = require("../error/Errors.js");
 function ExecutionScope(activity, initMessage) {

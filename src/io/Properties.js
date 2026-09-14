@@ -1,17 +1,25 @@
-import getPropertyValue from '../getPropertyValue.js';
+import { K_CONSUMING } from '../constants.js';
 
-const kProperties = Symbol.for('properties');
-const kConsuming = Symbol.for('consuming');
+const K_PROPERTIES = Symbol.for('properties');
 
-export default function Properties(activity, propertiesDef, context) {
+/**
+ * Activity properties behaviour. Resolves bound data input/output references during the run.
+ * @param {import('#types').Activity} activity
+ * @param {{ type: 'properties', values: import('#types').SerializableElement[] }} propertiesDef
+ * @param {import('#types').ContextInstance} context
+ * @satisfies {import('#types').IExtension}
+ */
+export function Properties(activity, propertiesDef, context) {
   this.activity = activity;
   this.broker = activity.broker;
 
-  const props = (this[kProperties] = {
+  /** @internal */
+  this[K_PROPERTIES] = {
     properties: new Set(),
     dataInputObjects: new Set(),
     dataOutputObjects: new Set(),
-  });
+  };
+  const props = this[K_PROPERTIES];
 
   for (const { id, ...def } of propertiesDef.values) {
     const source = {
@@ -21,10 +29,10 @@ export default function Properties(activity, propertiesDef, context) {
     };
     props.properties.add(source);
 
-    const inputDataObjectId = getPropertyValue(def, 'behaviour.dataInput.association.source.dataObject.id');
-    const outputDataObjectId = getPropertyValue(def, 'behaviour.dataOutput.association.target.dataObject.id');
-    const inputDataStoreId = getPropertyValue(def, 'behaviour.dataInput.association.source.dataStore.id');
-    const outputDataStoreId = getPropertyValue(def, 'behaviour.dataOutput.association.target.dataStore.id');
+    const inputDataObjectId = def.behaviour?.dataInput?.association?.source?.dataObject?.id;
+    const outputDataObjectId = def.behaviour?.dataOutput?.association?.target?.dataObject?.id;
+    const inputDataStoreId = def.behaviour?.dataInput?.association?.source?.dataStore?.id;
+    const outputDataStoreId = def.behaviour?.dataOutput?.association?.target?.dataStore?.id;
 
     if (inputDataObjectId) {
       const reference = context.getDataObjectById(inputDataObjectId);
@@ -55,10 +63,15 @@ export default function Properties(activity, propertiesDef, context) {
       };
     }
   }
+  /** @internal */
+  this[K_CONSUMING] = undefined;
 }
 
+/**
+ * @param {import('#types').ElementBrokerMessage} message
+ */
 Properties.prototype.activate = function activate(message) {
-  if (this[kConsuming]) return;
+  if (this[K_CONSUMING]) return;
   if (message.fields.redelivered && message.fields.routingKey === 'run.start') {
     this._onActivityEvent('activity.enter', message);
   }
@@ -67,11 +80,11 @@ Properties.prototype.activate = function activate(message) {
     this._onActivityEvent('activity.extension.resume', message);
   }
 
-  this[kConsuming] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), { noAck: true });
+  this[K_CONSUMING] = this.broker.subscribeTmp('event', 'activity.#', this._onActivityEvent.bind(this), { noAck: true });
 };
 
 Properties.prototype.deactivate = function deactivate() {
-  if (this[kConsuming]) this[kConsuming] = this[kConsuming].cancel();
+  if (this[K_CONSUMING]) this[K_CONSUMING] = this[K_CONSUMING].cancel();
 };
 
 Properties.prototype._onActivityEvent = function onActivityEvent(routingKey, message) {
@@ -87,7 +100,7 @@ Properties.prototype._onActivityEvent = function onActivityEvent(routingKey, mes
 Properties.prototype._formatOnEnter = function formatOnEnter(message) {
   const startRoutingKey = 'run.enter.bpmn-properties';
 
-  const dataInputObjects = this[kProperties].dataInputObjects;
+  const dataInputObjects = this[K_PROPERTIES].dataInputObjects;
   const broker = this.broker;
   if (!dataInputObjects.size) {
     return broker.getQueue('format-run-q').queueMessage(
@@ -117,10 +130,10 @@ Properties.prototype._formatOnEnter = function formatOnEnter(message) {
 Properties.prototype._formatOnComplete = function formatOnComplete(message) {
   const startRoutingKey = 'run.end.bpmn-properties';
 
-  const messageOutput = getPropertyValue(message, 'content.output.properties') || {};
+  const messageOutput = message.content?.output?.properties || {};
   const outputProperties = this._getProperties(message, messageOutput);
 
-  const dataOutputObjects = this[kProperties].dataOutputObjects;
+  const dataOutputObjects = this[K_PROPERTIES].dataOutputObjects;
   const broker = this.broker;
   if (!dataOutputObjects.size) {
     return broker.getQueue('format-run-q').queueMessage(
@@ -154,7 +167,7 @@ Properties.prototype._getProperties = function getProperties(message, values) {
     response = { ...message.content.properties };
   }
 
-  for (const { id, type, name } of this[kProperties].properties) {
+  for (const { id, type, name } of this[K_PROPERTIES].properties) {
     if (!(id in response)) {
       response[id] = { id, type, name };
     }
@@ -176,7 +189,7 @@ function read(broker, dataReferences, callback) {
     reference.read(broker, 'data', 'data.read.', { correlationId: propertyId });
   }
 
-  function onDataReadResponse(routingKey, message) {
+  function onDataReadResponse(_routingKey, message) {
     responses[message.properties.correlationId] = { ...message.content };
 
     if (++count < dataReferences.length) return;
@@ -196,7 +209,7 @@ function write(broker, dataReferences, properties, callback) {
     reference.write(broker, 'data', 'data.write.', value, { correlationId: propertyId });
   }
 
-  function onDataWriteResponse(routingKey, message) {
+  function onDataWriteResponse(_routingKey, message) {
     responses[message.properties.correlationId] = { ...message.content };
 
     if (++count < dataReferences.length) return;

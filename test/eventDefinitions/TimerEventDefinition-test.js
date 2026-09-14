@@ -1,20 +1,22 @@
 import * as ck from 'chronokinesis';
-import Environment from '../../src/Environment.js';
+import { Environment, Timers } from 'bpmn-elements';
+import { RunError } from 'bpmn-elements/errors';
+import { TimerEventDefinition } from 'bpmn-elements/eventDefinitions';
 import testHelpers from '../helpers/testHelpers.js';
-import TimerEventDefinition from '../../src/eventDefinitions/TimerEventDefinition.js';
 import { ActivityApi, DefinitionApi } from '../../src/Api.js';
 import { ActivityBroker } from '../../src/EventBroker.js';
-import { Timers } from '../../src/Timers.js';
-import { RunError } from '../../src/error/Errors.js';
 
 describe('TimerEventDefinition', () => {
+  /** @type {import('bpmn-elements').Activity} */
   let event;
   beforeEach(() => {
+    // @ts-expect-error type coverage
     event = {
       id: 'event',
       type: 'bpmn:Event',
       environment: new Environment({ Logger: testHelpers.Logger }),
     };
+    // @ts-expect-error type coverage
     event.broker = ActivityBroker(event).broker;
   });
   afterEach(() => {
@@ -42,10 +44,12 @@ describe('TimerEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -80,10 +84,12 @@ describe('TimerEventDefinition', () => {
       event.broker.subscribeOnce('execution', 'execute.completed', () => done());
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -107,10 +113,12 @@ describe('TimerEventDefinition', () => {
       });
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -133,10 +141,12 @@ describe('TimerEventDefinition', () => {
       });
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -164,10 +174,12 @@ describe('TimerEventDefinition', () => {
 
       expect(() => {
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             executionId: 'event_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'event_1',
@@ -191,18 +203,21 @@ describe('TimerEventDefinition', () => {
 
         const broker = event.broker;
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let timerMessage;
         broker.subscribeOnce('execution', 'execute.timer', (_, msg) => {
           timerMessage = msg;
         });
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.start',
           },
           content: {
             executionId: 'event_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'event_1',
@@ -214,6 +229,7 @@ describe('TimerEventDefinition', () => {
           ActivityApi(broker, timerMessage).stop();
           expect(event.environment.timers.executing, 'no of executing timers').to.have.length(0);
 
+          /** @type {import('bpmn-elements').ElementBrokerMessage} */
           let timerMsg;
           broker.subscribeOnce('event', 'activity.timer', (_, msg) => {
             timerMsg = msg;
@@ -259,6 +275,7 @@ describe('TimerEventDefinition', () => {
           clearTimeout: fakeClearTimeout,
         });
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let timerMessage;
         broker.subscribeOnce('execution', 'execute.timer', (_, msg) => {
           timerMessage = msg;
@@ -270,12 +287,14 @@ describe('TimerEventDefinition', () => {
         });
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.start',
           },
           content: {
             executionId: 'event_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'event_1',
@@ -331,18 +350,21 @@ describe('TimerEventDefinition', () => {
 
         const broker = event.broker;
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let timerMessage;
         broker.subscribeOnce('execution', 'execute.timer', (_, msg) => {
           timerMessage = msg;
         });
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.start',
           },
           content: {
             executionId: 'event_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'event_1',
@@ -375,11 +397,13 @@ describe('TimerEventDefinition', () => {
 
         const broker = event.broker;
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let timerMessage;
         broker.subscribeOnce('execution', 'execute.timer', (_, msg) => {
           timerMessage = msg;
         });
 
+        // @ts-expect-error type coverage
         definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
         setTimeout(() => {
@@ -408,11 +432,13 @@ describe('TimerEventDefinition', () => {
 
         const broker = event.broker;
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let timerMessage;
         broker.subscribeOnce('execution', 'execute.timer', (_, msg) => {
           timerMessage = msg;
         });
 
+        // @ts-expect-error type coverage
         definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
         setTimeout(() => {
@@ -457,10 +483,12 @@ describe('TimerEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -494,10 +522,12 @@ describe('TimerEventDefinition', () => {
       event.broker.subscribeOnce('execution', 'execute.completed', () => done());
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -527,10 +557,12 @@ describe('TimerEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -567,10 +599,12 @@ describe('TimerEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -610,10 +644,12 @@ describe('TimerEventDefinition', () => {
 
       expect(() => {
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             executionId: 'event_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'event_1',
@@ -642,6 +678,7 @@ describe('TimerEventDefinition', () => {
         });
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.timer',
             redelivered: true,
@@ -650,6 +687,7 @@ describe('TimerEventDefinition', () => {
             executionId: 'event_1_0',
             index: 0,
             timeDate: '1993-06-28',
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'event_1',
@@ -676,6 +714,7 @@ describe('TimerEventDefinition', () => {
         });
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.timer',
             redelivered: true,
@@ -683,6 +722,7 @@ describe('TimerEventDefinition', () => {
           content: {
             executionId: 'event_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'event_1',
@@ -703,12 +743,14 @@ describe('TimerEventDefinition', () => {
 
         const broker = event.broker;
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let timerMessage;
         broker.subscribeOnce('execution', 'execute.timer', (_, msg) => {
           timerMessage = msg;
         });
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.start',
           },
@@ -717,6 +759,7 @@ describe('TimerEventDefinition', () => {
             index: 0,
             timeDate: '1993-06-27',
             startedAt: new Date(),
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'event_1',
@@ -767,10 +810,12 @@ describe('TimerEventDefinition', () => {
 
         expect(() => {
           definition.execute({
+            // @ts-expect-error type coverage
             fields: {},
             content: {
               executionId: 'event_1_0',
               index: 0,
+              // @ts-expect-error type coverage
               parent: {
                 id: 'bound',
                 executionId: 'event_1',
@@ -804,10 +849,12 @@ describe('TimerEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -843,6 +890,7 @@ describe('TimerEventDefinition', () => {
         });
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.timer',
             redelivered: true,
@@ -851,6 +899,7 @@ describe('TimerEventDefinition', () => {
             executionId: 'event_1_0',
             index: 0,
             timeCycle: 'R3/PT10H',
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'event_1',
@@ -875,6 +924,7 @@ describe('TimerEventDefinition', () => {
         });
 
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {
             routingKey: 'execute.timer',
             redelivered: true,
@@ -882,6 +932,7 @@ describe('TimerEventDefinition', () => {
           content: {
             executionId: 'event_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'event_1',
@@ -902,11 +953,13 @@ describe('TimerEventDefinition', () => {
 
         const broker = event.broker;
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let timerMessage;
         broker.subscribeOnce('execution', 'execute.timer', (_, msg) => {
           timerMessage = msg;
         });
 
+        // @ts-expect-error type coverage
         definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
         ActivityApi(broker, timerMessage).stop();
@@ -930,11 +983,13 @@ describe('TimerEventDefinition', () => {
 
         const broker = event.broker;
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let timerMessage;
         broker.subscribeOnce('execution', 'execute.timer', (_, msg) => {
           timerMessage = msg;
         });
 
+        // @ts-expect-error type coverage
         definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
         ActivityApi(broker, timerMessage).stop();
@@ -959,11 +1014,13 @@ describe('TimerEventDefinition', () => {
 
         const broker = event.broker;
 
+        /** @type {import('bpmn-elements').ElementBrokerMessage} */
         let timerMessage;
         broker.subscribeOnce('execution', 'execute.timer', (_, msg) => {
           timerMessage = msg;
         });
 
+        // @ts-expect-error type coverage
         definition.execute({ fields: {}, content: { executionId: 'def-execution-id' } });
 
         ActivityApi(broker, timerMessage).stop();
@@ -1004,10 +1061,12 @@ describe('TimerEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -1048,10 +1107,12 @@ describe('TimerEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -1096,10 +1157,12 @@ describe('TimerEventDefinition', () => {
 
       setTimeout(() => {
         definition.execute({
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             executionId: 'event_1_0',
             index: 0,
+            // @ts-expect-error type coverage
             parent: {
               id: 'bound',
               executionId: 'event_1',
@@ -1133,10 +1196,12 @@ describe('TimerEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -1291,6 +1356,7 @@ describe('TimerEventDefinition', () => {
             },
           });
 
+          // @ts-expect-error type coverage
           DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel(
             {
               id: 'event',
@@ -1316,6 +1382,7 @@ describe('TimerEventDefinition', () => {
             },
           });
 
+          // @ts-expect-error type coverage
           DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel(
             {
               id: 'task',
@@ -1354,6 +1421,7 @@ describe('TimerEventDefinition', () => {
             },
           });
 
+          // @ts-expect-error type coverage
           DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel(
             {
               executionId: 'event_1_0',
@@ -1379,6 +1447,7 @@ describe('TimerEventDefinition', () => {
             },
           });
 
+          // @ts-expect-error type coverage
           DefinitionApi(event.broker, {
             content: {
               id: 'Def_1',
@@ -1399,6 +1468,7 @@ describe('TimerEventDefinition', () => {
       describe('discard ' + descr, () => {
         it('stops timer and cancels consumers', () => {
           const broker = event.broker;
+          /** @type {import('bpmn-elements').ElementBrokerMessage} */
           let timerMessage;
           broker.subscribeOnce('event', 'activity.timer', (_, msg) => {
             timerMessage = msg;
@@ -1481,6 +1551,7 @@ describe('TimerEventDefinition', () => {
           it('can be stopped again', (done) => {
             const broker = event.broker;
 
+            /** @type {import('bpmn-elements').ElementBrokerMessage} */
             let timerMessage;
             broker.subscribeOnce('execution', 'execute.timer', (_, msg) => {
               timerMessage = msg;
@@ -1502,6 +1573,7 @@ describe('TimerEventDefinition', () => {
           it('can be discarded', (done) => {
             const broker = event.broker;
 
+            /** @type {import('bpmn-elements').ElementBrokerMessage} */
             let timerMessage;
             broker.subscribeOnce('execution', 'execute.timer', (_, msg) => {
               timerMessage = msg;
@@ -1524,6 +1596,7 @@ describe('TimerEventDefinition', () => {
           it('can be cancelled', (done) => {
             const broker = event.broker;
 
+            /** @type {import('bpmn-elements').ElementBrokerMessage} */
             let timerMessage;
             broker.subscribeOnce('execution', 'execute.timer', (_, msg) => {
               timerMessage = msg;
@@ -1562,11 +1635,13 @@ describe('TimerEventDefinition', () => {
       });
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
           timeout: 50,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -1589,11 +1664,13 @@ describe('TimerEventDefinition', () => {
       });
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
           expireAt: new Date(Date.now() + 50),
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -1619,10 +1696,12 @@ describe('TimerEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -1652,10 +1731,12 @@ describe('TimerEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -1667,10 +1748,12 @@ describe('TimerEventDefinition', () => {
       expect(event.environment.timers.executing.length).to.equal(1);
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_1',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -1697,10 +1780,12 @@ describe('TimerEventDefinition', () => {
       });
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -1708,6 +1793,7 @@ describe('TimerEventDefinition', () => {
         },
       });
 
+      // @ts-expect-error type coverage
       DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel({
         id: 'event',
       });
@@ -1730,10 +1816,12 @@ describe('TimerEventDefinition', () => {
       });
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -1741,7 +1829,10 @@ describe('TimerEventDefinition', () => {
         },
       });
 
-      DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel(undefined, { delegate: true });
+      // @ts-expect-error type coverage
+      DefinitionApi(event.broker, { content: { id: 'Def_1', executionId: 'Def_1_1' } }).cancel(undefined, {
+        delegate: true,
+      });
 
       definition.stop();
     });
@@ -1765,6 +1856,7 @@ describe('TimerEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {
           routingKey: 'execute.start',
           redelivered: true,
@@ -1772,6 +1864,7 @@ describe('TimerEventDefinition', () => {
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -1783,12 +1876,14 @@ describe('TimerEventDefinition', () => {
       expect(event.environment.timers.executing.length).to.equal(1);
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {
           routingKey: 'execute.timer',
         },
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -1822,6 +1917,7 @@ describe('TimerEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {
           routingKey: 'execute.start',
           redelivered: true,
@@ -1829,6 +1925,7 @@ describe('TimerEventDefinition', () => {
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -1862,6 +1959,7 @@ describe('TimerEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {
           routingKey: 'execute.start',
           redelivered: true,
@@ -1869,6 +1967,7 @@ describe('TimerEventDefinition', () => {
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',

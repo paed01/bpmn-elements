@@ -1,4 +1,4 @@
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import testHelpers from '../helpers/testHelpers.js';
 
 Feature('Compensation', () => {
@@ -83,6 +83,11 @@ Feature('Compensation', () => {
 
     And('compensation service is not started', () => {
       expect(undoService).to.have.length(0);
+    });
+
+    And('compensate event accepts compensate api call', () => {
+      const [compensation] = definition.getPostponed((api) => api.id === 'compensation');
+      expect(compensation.content.accepts).to.deep.equal(['compensate']);
     });
 
     When('service completes', () => {
@@ -267,6 +272,11 @@ Feature('Compensation', () => {
 
     And('compensation service is not started', () => {
       expect(undoService).to.have.length(0);
+    });
+
+    And('error listener accepts error api call', () => {
+      const [errorListener] = definition.getPostponed((api) => api.id === 'onError');
+      expect(errorListener.content.accepts).to.deep.equal(['error']);
     });
 
     When('service completes with error', () => {
@@ -924,6 +934,84 @@ Feature('Compensation', () => {
     And('compensation services were taken', () => {
       expect(definition.getActivityById('undoService1').counters, 'first').to.deep.equal({ taken: 2, discarded: 0 });
       expect(definition.getActivityById('undoService2').counters, 'second').to.deep.equal({ taken: 2, discarded: 0 });
+    });
+  });
+
+  Scenario('A bound compensate event is dismissed via api discard', () => {
+    let definition;
+    const execService = [];
+    const undoService = [];
+    Given('a service task with a bound compensate event and a compensate throw end event', async () => {
+      const source = `
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-service" sourceRef="start" targetRef="service" />
+          <serviceTask id="service" implementation="\${environment.services.exec}" />
+          <boundaryEvent id="compensation" attachedToRef="service">
+            <compensateEventDefinition />
+          </boundaryEvent>
+          <serviceTask id="undoService" isForCompensation="true" implementation="\${environment.services.compensate}" />
+          <sequenceFlow id="to-end" sourceRef="service" targetRef="end" />
+          <endEvent id="end">
+            <compensateEventDefinition />
+          </endEvent>
+          <association id="association_0" associationDirection="One" sourceRef="compensation" targetRef="undoService" />
+        </process>
+      </definitions>`;
+      const context = await testHelpers.context(source);
+
+      definition = new Definition(context, {
+        services: {
+          exec(...args) {
+            execService.push(args);
+          },
+          compensate(...args) {
+            undoService.push(args);
+          },
+        },
+      });
+    });
+
+    let end;
+    When('definition is ran', () => {
+      end = definition.waitFor('end');
+      definition.run();
+    });
+
+    Then('service waits for callback', () => {
+      expect(execService).to.have.length(1);
+    });
+
+    And('compensate event accepts compensate api call', () => {
+      const [compensation] = definition.getPostponed((api) => api.id === 'compensation');
+      expect(compensation.content.accepts).to.deep.equal(['compensate']);
+    });
+
+    When('compensate event is discarded', () => {
+      const [compensation] = definition.getPostponed((api) => api.id === 'compensation');
+      compensation.discard();
+    });
+
+    Then('compensate event run is discarded', () => {
+      expect(definition.getActivityById('compensation').counters).to.deep.equal({ taken: 0, discarded: 1 });
+    });
+
+    When('service completes', () => {
+      const [, callback] = execService.pop();
+      callback(null, {});
+    });
+
+    Then('definition completes', () => {
+      return end;
+    });
+
+    And('compensation service was never called', () => {
+      expect(undoService).to.have.length(0);
+    });
+
+    And('compensation service task was untouched', () => {
+      expect(definition.getActivityById('undoService').counters).to.deep.equal({ taken: 0, discarded: 0 });
     });
   });
 });

@@ -1,10 +1,10 @@
-import Environment from '../../src/Environment.js';
-import Properties from '../../src/io/Properties.js';
+import { Environment, Properties } from 'bpmn-elements';
 import { ActivityBroker } from '../../src/EventBroker.js';
 
 describe('Properties', () => {
   it('activate twice has no effect', () => {
     const { broker } = ActivityBroker();
+    // @ts-expect-error type coverage
     const props = new Properties(
       {
         id: 'input',
@@ -16,10 +16,12 @@ describe('Properties', () => {
       }
     );
     props.activate({
+      // @ts-expect-error type coverage
       fields: {},
       content: {},
     });
     props.activate({
+      // @ts-expect-error type coverage
       fields: {},
       content: {},
     });
@@ -27,6 +29,7 @@ describe('Properties', () => {
 
   it('deactivate twice has no effect', () => {
     const { broker } = ActivityBroker();
+    // @ts-expect-error type coverage
     const props = new Properties(
       {
         id: 'input',
@@ -38,6 +41,7 @@ describe('Properties', () => {
       }
     );
     props.activate({
+      // @ts-expect-error type coverage
       fields: {},
       content: {},
     });

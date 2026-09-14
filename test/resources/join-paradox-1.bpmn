@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1jz2gnj" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.45.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.23.0">
+  <bpmn:process id="Process_0" isExecutable="true">
+    <bpmn:startEvent id="start" name="">
+      <bpmn:outgoing>to-sub</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:subProcess id="sub">
+      <bpmn:incoming>to-sub</bpmn:incoming>
+      <bpmn:outgoing>to-end</bpmn:outgoing>
+      <bpmn:startEvent id="sub-start" name="sub-start">
+        <bpmn:outgoing>to-task1</bpmn:outgoing>
+      </bpmn:startEvent>
+      <bpmn:task id="task1" name="task1">
+        <bpmn:incoming>to-task1</bpmn:incoming>
+        <bpmn:incoming>from-task3</bpmn:incoming>
+        <bpmn:outgoing>to-task2</bpmn:outgoing>
+        <bpmn:outgoing>to-task4</bpmn:outgoing>
+      </bpmn:task>
+      <bpmn:sequenceFlow id="to-task1" sourceRef="sub-start" targetRef="task1" />
+      <bpmn:sequenceFlow id="to-task2" sourceRef="task1" targetRef="task2" />
+      <bpmn:task id="task2" name="Task 2">
+        <bpmn:incoming>to-task2</bpmn:incoming>
+        <bpmn:outgoing>from-task2</bpmn:outgoing>
+        <bpmn:outgoing>backto-task3</bpmn:outgoing>
+      </bpmn:task>
+      <bpmn:sequenceFlow id="from-task2" sourceRef="task2" targetRef="join" />
+      <bpmn:task id="task3" name="task3">
+        <bpmn:incoming>backto-task3</bpmn:incoming>
+        <bpmn:outgoing>from-task3</bpmn:outgoing>
+      </bpmn:task>
+      <bpmn:sequenceFlow id="backto-task3" sourceRef="task2" targetRef="task3">
+        <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${environment.services.takeOnce()}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="from-task3" sourceRef="task3" targetRef="task1" />
+      <bpmn:task id="task4" name="task4">
+        <bpmn:incoming>to-task4</bpmn:incoming>
+        <bpmn:outgoing>from-task4</bpmn:outgoing>
+        <bpmn:outgoing>to-task</bpmn:outgoing>
+      </bpmn:task>
+      <bpmn:sequenceFlow id="to-task4" sourceRef="task1" targetRef="task4" />
+      <bpmn:sequenceFlow id="from-task4" sourceRef="task4" targetRef="join" />
+      <bpmn:endEvent id="sub-end" name="sub-end">
+        <bpmn:incoming>to-sub-end</bpmn:incoming>
+      </bpmn:endEvent>
+      <bpmn:parallelGateway id="join" name="join">
+        <bpmn:incoming>from-task2</bpmn:incoming>
+        <bpmn:incoming>from-task4</bpmn:incoming>
+        <bpmn:incoming>from-task5</bpmn:incoming>
+        <bpmn:outgoing>to-fork</bpmn:outgoing>
+      </bpmn:parallelGateway>
+      <bpmn:parallelGateway id="fork">
+        <bpmn:incoming>to-fork</bpmn:incoming>
+        <bpmn:outgoing>from-fork</bpmn:outgoing>
+        <bpmn:outgoing>to-fork-task-2</bpmn:outgoing>
+        <bpmn:outgoing>to-fork-task1</bpmn:outgoing>
+      </bpmn:parallelGateway>
+      <bpmn:parallelGateway id="join-fork">
+        <bpmn:incoming>from-fork</bpmn:incoming>
+        <bpmn:incoming>from-fork-task1</bpmn:incoming>
+        <bpmn:incoming>from-fork-task2</bpmn:incoming>
+        <bpmn:outgoing>to-sub-end</bpmn:outgoing>
+      </bpmn:parallelGateway>
+      <bpmn:task id="fork-task1" name="Fork task 1">
+        <bpmn:incoming>to-fork-task1</bpmn:incoming>
+        <bpmn:outgoing>from-fork-task1</bpmn:outgoing>
+      </bpmn:task>
+      <bpmn:sequenceFlow id="from-fork" sourceRef="fork" targetRef="join-fork" />
+      <bpmn:sequenceFlow id="to-fork-task-2" sourceRef="fork" targetRef="fork-task2" />
+      <bpmn:sequenceFlow id="to-fork-task1" sourceRef="fork" targetRef="fork-task1" />
+      <bpmn:sequenceFlow id="from-fork-task1" sourceRef="fork-task1" targetRef="join-fork" />
+      <bpmn:sequenceFlow id="to-fork" sourceRef="join" targetRef="fork" />
+      <bpmn:sequenceFlow id="to-sub-end" sourceRef="join-fork" targetRef="sub-end" />
+      <bpmn:task id="task5" name="Task 5">
+        <bpmn:incoming>to-task</bpmn:incoming>
+        <bpmn:outgoing>from-task5</bpmn:outgoing>
+      </bpmn:task>
+      <bpmn:sequenceFlow id="to-task" sourceRef="task4" targetRef="task5" />
+      <bpmn:sequenceFlow id="from-task5" sourceRef="task5" targetRef="join" />
+      <bpmn:task id="fork-task2" name="Fork task 2">
+        <bpmn:incoming>to-fork-task-2</bpmn:incoming>
+        <bpmn:outgoing>from-fork-task2</bpmn:outgoing>
+      </bpmn:task>
+      <bpmn:sequenceFlow id="from-fork-task2" sourceRef="fork-task2" targetRef="join-fork" />
+    </bpmn:subProcess>
+    <bpmn:sequenceFlow id="to-sub" sourceRef="start" targetRef="sub" />
+    <bpmn:endEvent id="end">
+      <bpmn:incoming>to-end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="to-end" sourceRef="sub" targetRef="end" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_0">
+      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="start">
+        <dc:Bounds x="152" y="382" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0m9y2ea_di" bpmnElement="sub" isExpanded="true">
+        <dc:Bounds x="280" y="80" width="890" height="560" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1nbv04h_di" bpmnElement="sub-start">
+        <dc:Bounds x="320" y="382" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="317" y="425" width="43" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0arsix9_di" bpmnElement="task1">
+        <dc:Bounds x="410" y="360" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_125lstk_di" bpmnElement="task2">
+        <dc:Bounds x="560" y="360" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1makfr3_di" bpmnElement="task3">
+        <dc:Bounds x="410" y="490" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_18pi4t5_di" bpmnElement="task4">
+        <dc:Bounds x="410" y="230" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_09c1m5j_di" bpmnElement="sub-end">
+        <dc:Bounds x="1092" y="382" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1091" y="425" width="40" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0vzkqfs_di" bpmnElement="join">
+        <dc:Bounds x="715" y="375" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="732" y="432" width="17" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_08zuvwq_di" bpmnElement="fork">
+        <dc:Bounds x="805" y="375" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0nqqe2i" bpmnElement="join-fork">
+        <dc:Bounds x="995" y="375" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0pyr41d" bpmnElement="fork-task1">
+        <dc:Bounds x="880" y="230" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_16ycz70_di" bpmnElement="task5">
+        <dc:Bounds x="410" y="100" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ukv9h8_di" bpmnElement="fork-task2">
+        <dc:Bounds x="880" y="490" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1nlp9vg_di" bpmnElement="to-task1">
+        <di:waypoint x="356" y="400" />
+        <di:waypoint x="410" y="400" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1nshb89_di" bpmnElement="to-task2">
+        <di:waypoint x="510" y="400" />
+        <di:waypoint x="560" y="400" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0hyi83v_di" bpmnElement="from-task2">
+        <di:waypoint x="660" y="400" />
+        <di:waypoint x="715" y="400" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0tcz6e3_di" bpmnElement="backto-task3">
+        <di:waypoint x="610" y="440" />
+        <di:waypoint x="610" y="530" />
+        <di:waypoint x="510" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0huh4og_di" bpmnElement="from-task3">
+        <di:waypoint x="460" y="490" />
+        <di:waypoint x="460" y="440" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1gybpq2_di" bpmnElement="to-task4">
+        <di:waypoint x="460" y="360" />
+        <di:waypoint x="460" y="310" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1e6rmkz_di" bpmnElement="from-task4">
+        <di:waypoint x="510" y="270" />
+        <di:waypoint x="740" y="270" />
+        <di:waypoint x="740" y="375" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0bi07ia_di" bpmnElement="from-fork">
+        <di:waypoint x="855" y="400" />
+        <di:waypoint x="995" y="400" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1vxsjk7_di" bpmnElement="to-fork-task-2">
+        <di:waypoint x="830" y="425" />
+        <di:waypoint x="830" y="530" />
+        <di:waypoint x="880" y="530" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0eqq94a_di" bpmnElement="to-fork-task1">
+        <di:waypoint x="830" y="375" />
+        <di:waypoint x="830" y="270" />
+        <di:waypoint x="880" y="270" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="BPMNEdge_0gqcl12" bpmnElement="from-fork-task1">
+        <di:waypoint x="980" y="270" />
+        <di:waypoint x="1020" y="270" />
+        <di:waypoint x="1020" y="375" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1fxwf7p_di" bpmnElement="to-fork">
+        <di:waypoint x="765" y="400" />
+        <di:waypoint x="805" y="400" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ypa676_di" bpmnElement="to-sub-end">
+        <di:waypoint x="1045" y="400" />
+        <di:waypoint x="1092" y="400" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1ksbirj_di" bpmnElement="to-task">
+        <di:waypoint x="460" y="230" />
+        <di:waypoint x="460" y="180" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1eg4l1c_di" bpmnElement="from-task5">
+        <di:waypoint x="510" y="140" />
+        <di:waypoint x="740" y="140" />
+        <di:waypoint x="740" y="375" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0x1l6gs_di" bpmnElement="from-fork-task2">
+        <di:waypoint x="980" y="530" />
+        <di:waypoint x="1020" y="530" />
+        <di:waypoint x="1020" y="425" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="Event_1q8cnlt_di" bpmnElement="end">
+        <dc:Bounds x="1232" y="382" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_0orcenb_di" bpmnElement="to-sub">
+        <di:waypoint x="188" y="400" />
+        <di:waypoint x="280" y="400" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0791kkn_di" bpmnElement="to-end">
+        <di:waypoint x="1170" y="400" />
+        <di:waypoint x="1232" y="400" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

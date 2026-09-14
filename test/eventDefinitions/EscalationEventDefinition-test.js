@@ -1,8 +1,7 @@
-import Environment from '../../src/Environment.js';
-import Escalation from '../../src/activity/Escalation.js';
-import EscalationEventDefinition from '../../src/eventDefinitions/EscalationEventDefinition.js';
+import { Environment, Escalation } from 'bpmn-elements';
+import { EscalationEventDefinition } from 'bpmn-elements/eventDefinitions';
 import { ActivityBroker } from '../../src/EventBroker.js';
-import { Logger } from '../helpers/testHelpers.js';
+import testHelpers, { Logger } from '../helpers/testHelpers.js';
 
 describe('EscalationEventDefinition', () => {
   let event;
@@ -31,10 +30,12 @@ describe('EscalationEventDefinition', () => {
       );
 
       catchSignal.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -71,10 +72,12 @@ describe('EscalationEventDefinition', () => {
       );
 
       catchSignal.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -114,10 +117,12 @@ describe('EscalationEventDefinition', () => {
       );
 
       catchSignal.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -148,7 +153,7 @@ describe('EscalationEventDefinition', () => {
                 id: 'Escalate_0',
                 name: 'Awake King',
               },
-              { environment: new Environment() }
+              testHelpers.emptyContext()
             );
           },
         },
@@ -173,10 +178,12 @@ describe('EscalationEventDefinition', () => {
       );
 
       catchSignal.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -213,7 +220,7 @@ describe('EscalationEventDefinition', () => {
                 id: 'Escalate_0',
                 name: 'Awake King',
               },
-              { environment: new Environment() }
+              testHelpers.emptyContext()
             );
           },
         },
@@ -244,10 +251,12 @@ describe('EscalationEventDefinition', () => {
       });
 
       catchSignal.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -284,10 +293,12 @@ describe('EscalationEventDefinition', () => {
       );
 
       catchSignal.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -316,10 +327,12 @@ describe('EscalationEventDefinition', () => {
       });
 
       catchSignal.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'bound',
             executionId: 'event_1',
@@ -356,10 +369,12 @@ describe('EscalationEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'event',
             executionId: 'event_1',
@@ -402,10 +417,12 @@ describe('EscalationEventDefinition', () => {
       );
 
       definition.execute({
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           executionId: 'event_1_0',
           index: 0,
+          // @ts-expect-error type coverage
           parent: {
             id: 'intermediate',
             executionId: 'event_1',

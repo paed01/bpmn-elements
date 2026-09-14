@@ -4,3 +4,5 @@ coverage/
 tmp/
 test/resources/*.bpmn
 *.bpmn
+types/index.d.ts
+types/index.d.ts.map

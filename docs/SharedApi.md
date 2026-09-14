@@ -17,6 +17,7 @@ Api properties:
   - `id`: element id
   - `type`: element type
   - `executionId`: element execution id
+  - `accepts`: present on postponed activity content, list of api message types the waiting activity acts on beyond the universal `stop` and `discard`, e.g. `['signal', 'error']` for a user task, `['cancel']` for a timer, `['message', 'signal']` for message catch elements, `['signal', 'cancel']` for conditional events, `['compensate']` for a compensation listener. Use it to determine the proper api call, e.g. `signal()`, `cancel()`, or `fail()`
   - `parent`: element parent
     - `id`: element parent id
     - `type`: element parent type

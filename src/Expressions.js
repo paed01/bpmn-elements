@@ -1,9 +1,11 @@
-import getPropertyValue from './getPropertyValue.js';
-
+import { getPropertyValue } from './getPropertyValue.js';
 const isExpressionPattern = /^\${(.+?)}$/;
 const expressionPattern = /\${(.+?)}/;
 
-export default function Expressions() {
+/**
+ * Default expression handler
+ */
+export function Expressions() {
   return {
     resolveExpression,
     isExpression,
@@ -11,6 +13,12 @@ export default function Expressions() {
   };
 }
 
+/**
+ * Resolve expression(s) in a templated string
+ * @param {string} templatedString
+ * @param {any} [context] resolution context, e.g. an element execution message
+ * @param {any} [expressionFnContext] this-context for called expression functions
+ */
 function resolveExpression(templatedString, context, expressionFnContext) {
   let result = templatedString;
 
@@ -40,11 +48,19 @@ function resolveExpression(templatedString, context, expressionFnContext) {
   return result;
 }
 
+/**
+ * Text is a lone expression
+ * @param {string} [text]
+ */
 function isExpression(text) {
   if (!text) return false;
   return isExpressionPattern.test(text);
 }
 
+/**
+ * Text contains one or more expressions
+ * @param {string} [text]
+ */
 function hasExpression(text) {
   if (!text) return false;
   return expressionPattern.test(text);

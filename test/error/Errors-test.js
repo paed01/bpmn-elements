@@ -1,4 +1,4 @@
-import { ActivityError, BpmnError, makeErrorFromMessage } from '../../src/error/Errors.js';
+import { ActivityError, BpmnError, makeErrorFromMessage } from 'bpmn-elements/errors';
 
 describe('Errors', () => {
   describe('ActivityError', () => {
@@ -20,6 +20,7 @@ describe('Errors', () => {
 
     it('sets source from activity message', () => {
       const err = new ActivityError('unstable', {
+        // @ts-expect-error type coverage
         fields: {},
         content: {},
         properties: {},
@@ -34,6 +35,7 @@ describe('Errors', () => {
 
     it('removes error from source message content', () => {
       const err = new ActivityError('unstable', {
+        // @ts-expect-error type coverage
         fields: {},
         content: {
           error: new Error('unstable'),
@@ -49,6 +51,7 @@ describe('Errors', () => {
       const err = new ActivityError(
         'unstable',
         {
+          // @ts-expect-error type coverage
           fields: {},
           content: {},
           properties: {},
@@ -62,6 +65,7 @@ describe('Errors', () => {
       const err = new ActivityError(
         'unstable',
         {
+          // @ts-expect-error type coverage
           fields: {},
           content: {},
           properties: {},
@@ -114,6 +118,7 @@ describe('Errors', () => {
         'unstable',
         { id: 'Error_0' },
         {
+          // @ts-expect-error type coverage
           fields: {},
           content: {},
           properties: {},
@@ -132,6 +137,7 @@ describe('Errors', () => {
         'unstable',
         { id: 'Error_0' },
         {
+          // @ts-expect-error type coverage
           fields: {},
           content: {
             error: new Error('unstable'),
@@ -147,19 +153,26 @@ describe('Errors', () => {
 
   describe('makeErrorFromMessage(errorMessage)', () => {
     it('returns error instance if message content is a known error', () => {
+      // @ts-expect-error type coverage
       expect(makeErrorFromMessage({ content: new ActivityError() })).to.be.instanceof(ActivityError);
+      // @ts-expect-error type coverage
       expect(makeErrorFromMessage({ content: new BpmnError() })).to.be.instanceof(BpmnError);
+      // @ts-expect-error type coverage
       expect(makeErrorFromMessage({ content: new Error() })).to.be.instanceof(Error);
     });
 
     it('returns error instance if message content error is a known error', () => {
+      // @ts-expect-error type coverage
       expect(makeErrorFromMessage({ content: { error: new ActivityError() } })).to.be.instanceof(ActivityError);
+      // @ts-expect-error type coverage
       expect(makeErrorFromMessage({ content: { error: new BpmnError() } })).to.be.instanceof(BpmnError);
+      // @ts-expect-error type coverage
       expect(makeErrorFromMessage({ content: { error: new Error() } })).to.be.instanceof(Error);
     });
 
     it('returns ActivityError instance if message content error type is ActivityError', () => {
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {
             error: {
@@ -172,6 +185,7 @@ describe('Errors', () => {
 
     it('returns ActivityError instance if with message from message', () => {
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {
             error: {
@@ -187,6 +201,7 @@ describe('Errors', () => {
 
     it('returns ActivityError instance if with message from description', () => {
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {
             error: {
@@ -202,6 +217,7 @@ describe('Errors', () => {
 
     it('returns ActivityError with source if any', () => {
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {
             error: {
@@ -226,6 +242,7 @@ describe('Errors', () => {
 
     it('returns ActivityError with code if if any', () => {
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {
             error: {
@@ -241,6 +258,7 @@ describe('Errors', () => {
 
     it('returns ActivityError with name if if any', () => {
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {
             error: {
@@ -256,6 +274,7 @@ describe('Errors', () => {
 
     it('returns ActivityError with code from inner', () => {
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {
             error: {
@@ -271,6 +290,7 @@ describe('Errors', () => {
 
     it('returns ActivityError with name from inner', () => {
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {
             error: {
@@ -286,6 +306,7 @@ describe('Errors', () => {
 
     it('returns BpmnError instance if message content error type is BpmnError', () => {
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {
             error: {
@@ -298,6 +319,7 @@ describe('Errors', () => {
 
     it('returns BpmnError instance if with message from message', () => {
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {
             error: {
@@ -313,6 +335,7 @@ describe('Errors', () => {
 
     it('returns BpmnError instance if with message from description', () => {
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {
             error: {
@@ -328,6 +351,7 @@ describe('Errors', () => {
 
     it('returns BpmnError with source if any', () => {
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {
             error: {
@@ -352,6 +376,7 @@ describe('Errors', () => {
 
     it('returns BpmnError with code if if any', () => {
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {
             error: {
@@ -367,6 +392,7 @@ describe('Errors', () => {
 
     it('returns BpmnError with name if if any', () => {
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {
             error: {
@@ -382,6 +408,7 @@ describe('Errors', () => {
 
     it('returns BpmnError with name', () => {
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {
             error: {
@@ -398,6 +425,7 @@ describe('Errors', () => {
     it('returns Error if error is missing from content', () => {
       expect(
         makeErrorFromMessage({
+          // @ts-expect-error type coverage
           fields: { routingKey: 'my.error' },
           content: {},
         })
@@ -406,6 +434,7 @@ describe('Errors', () => {
         .that.match(/my\.error/);
 
       expect(
+        // @ts-expect-error type coverage
         makeErrorFromMessage({
           content: {},
         })

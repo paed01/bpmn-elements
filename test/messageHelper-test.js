@@ -73,31 +73,31 @@ describe('message helper', () => {
     it('only adds id, type, and executionId from new parent', () => {
       const newParent = unshiftParent(
         {
-          id: 1,
+          id: '1',
           executionId: '1_0',
           type: 'task',
-          path: [{ id: 3 }],
+          path: [{ id: '3' }],
         },
         {
-          id: 2,
+          id: '2',
           executionId: '2_0',
           type: 'task',
           list: [],
-          parent: {},
+          parent: { id: '4', type: 'process' },
         }
       );
       expect(newParent).to.eql({
-        id: 2,
+        id: '2',
         executionId: '2_0',
         type: 'task',
         path: [
           {
-            id: 1,
+            id: '1',
             executionId: '1_0',
             type: 'task',
           },
           {
-            id: 3,
+            id: '3',
           },
         ],
       });
@@ -105,12 +105,12 @@ describe('message helper', () => {
 
     it('return new parent if no current parent', () => {
       const newParent = unshiftParent(undefined, {
-        id: 1,
+        id: '1',
         executionId: '1_0',
         type: 'task',
       });
       expect(newParent).to.eql({
-        id: 1,
+        id: '1',
         executionId: '1_0',
         type: 'task',
       });
@@ -123,6 +123,7 @@ describe('message helper', () => {
         filterUndefined(
           shiftParent({
             id: 'child',
+            type: 'task',
             path: [{ id: 'parent' }],
           })
         )
@@ -134,6 +135,7 @@ describe('message helper', () => {
         filterUndefined(
           shiftParent({
             id: 'child',
+            type: 'task',
             path: [{ id: 'parent' }, { id: 'grandpa' }],
           })
         )
@@ -144,10 +146,12 @@ describe('message helper', () => {
     });
 
     it('returns undefined if no parent parent path', () => {
+      // @ts-expect-error
       expect(shiftParent({})).to.be.undefined;
     });
 
     it('returns undefined if empty parent path', () => {
+      // @ts-expect-error
       expect(shiftParent({ path: [] })).to.be.undefined;
     });
 

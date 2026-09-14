@@ -38,11 +38,11 @@ Scripts.prototype.register = function register({ id, type, behaviour, logger, en
   return script;
 };
 
-Scripts.prototype.getScript = function getScript(language, { id }) {
+Scripts.prototype.getScript = function getScript(_language, { id }) {
   return this.scripts.get(id);
 };
 
-Scripts.prototype.compile = function compile(language, filename, scriptBody) {
+Scripts.prototype.compile = function compile(_language, filename, scriptBody) {
   return new Script(scriptBody, { filename });
 };
 

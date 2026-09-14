@@ -1,4 +1,4 @@
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import testHelpers from '../helpers/testHelpers.js';
 
 class Scripts {
@@ -6,7 +6,9 @@ class Scripts {
     if (!/^(javascript|js)$/i.test(behaviour.scriptFormat)) return;
   }
   compile() {}
-  getScript() {}
+  getScript() {
+    return undefined;
+  }
 }
 
 Feature('Script', () => {

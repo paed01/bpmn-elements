@@ -1,10 +1,16 @@
 import { cloneContent, shiftParent } from '../messageHelper.js';
 import { ActivityError } from '../error/Errors.js';
 import { ScriptCondition, ExpressionCondition } from '../condition.js';
+import { K_EXECUTE_MESSAGE } from '../constants.js';
 
-const kExecuteMessage = Symbol.for('executeMessage');
-
-export default function ConditionalEventDefinition(activity, eventDefinition, _context, index) {
+/**
+ * Conditional event definition
+ * @param {import('#types').Activity} activity
+ * @param {import('#types').SerializableElement} eventDefinition
+ * @param {import('#types').ContextInstance} [_context]
+ * @param {number} [index] event definition index
+ */
+export function ConditionalEventDefinition(activity, eventDefinition, _context, index) {
   const { id, broker, environment } = activity;
 
   const { type = 'ConditionalEventDefinition', behaviour = {} } = eventDefinition;
@@ -16,16 +22,23 @@ export default function ConditionalEventDefinition(activity, eventDefinition, _c
   this.broker = broker;
   this.logger = environment.Logger(type.toLowerCase());
   this.condition = this.getCondition(index);
+
+  /** @internal */
+  this[K_EXECUTE_MESSAGE] = undefined;
 }
 
 Object.defineProperty(ConditionalEventDefinition.prototype, 'executionId', {
+  /** @returns {string} */
   get() {
-    return this[kExecuteMessage]?.content.executionId;
+    return this[K_EXECUTE_MESSAGE]?.content.executionId;
   },
 });
 
+/**
+ * @param {import('#types').ElementBrokerMessage} executeMessage
+ */
 ConditionalEventDefinition.prototype.execute = function execute(executeMessage) {
-  this[kExecuteMessage] = executeMessage;
+  this[K_EXECUTE_MESSAGE] = executeMessage;
 
   if (!this.condition) return this._setup(executeMessage);
 
@@ -52,14 +65,20 @@ ConditionalEventDefinition.prototype._setup = function setup(executeMessage) {
     noAck: true,
     consumerTag: `_parent-signal-${executionId}`,
   });
-  broker.subscribeTmp('api', '#.signal.*', this._onDelegateApiMessage.bind(this), {
+  const onDelegateApiMessage = this._onDelegateApiMessage.bind(this);
+  broker.subscribeTmp('api', '#.signal.*', onDelegateApiMessage, {
     noAck: true,
     consumerTag: `_api-delegated-${executionId}`,
+  });
+  broker.subscribeTmp('api', '#.cancel.*', onDelegateApiMessage, {
+    noAck: true,
+    consumerTag: `_api-delegated-cancel-${executionId}`,
   });
 
   const waitContent = cloneContent(executeContent, {
     executionId: parentExecutionId,
     ...(this.condition && { condition: this.condition.type }),
+    accepts: ['signal', 'cancel'],
   });
   waitContent.parent = shiftParent(parent);
 
@@ -68,8 +87,9 @@ ConditionalEventDefinition.prototype._setup = function setup(executeMessage) {
 
 /**
  * Evaluate condition
- * @param {import('types').ElementBrokerMessage} message
+ * @param {import('#types').ElementBrokerMessage} message
  * @param {CallableFunction} callback
+ * @returns {void}
  */
 ConditionalEventDefinition.prototype.evaluate = function evaluate(message, callback) {
   const condition = this.condition;
@@ -85,16 +105,19 @@ ConditionalEventDefinition.prototype.evaluate = function evaluate(message, callb
  * Handle evaluate result or error
  * @param {Error|null} err Condition evaluation error
  * @param {any} result Result from evaluated condition, completes execution if truthy
+ * @returns {void}
  */
 ConditionalEventDefinition.prototype.evaluateCallback = function evaluateCallback(err, result) {
   const broker = this.broker;
-  const executeMessage = this[kExecuteMessage];
+  const executeMessage = this[K_EXECUTE_MESSAGE];
   const executeContent = executeMessage.content;
 
   if (err) {
+    // @ts-ignore
     return broker.publish(
       'execution',
       'execute.error',
+      // @ts-ignore
       cloneContent(executeContent, { error: new ActivityError(err.message, executeMessage, err) }, { mandatory: true })
     );
   }
@@ -104,7 +127,7 @@ ConditionalEventDefinition.prototype.evaluateCallback = function evaluateCallbac
   this.broker.publish(
     'event',
     'activity.condition',
-    cloneContent(this[kExecuteMessage].content, {
+    cloneContent(this[K_EXECUTE_MESSAGE].content, {
       conditionResult: result,
     })
   );
@@ -112,18 +135,21 @@ ConditionalEventDefinition.prototype.evaluateCallback = function evaluateCallbac
   if (!result) return;
 
   this._stop();
+  // @ts-ignore
   return broker.publish('execution', 'execute.completed', cloneContent(executeContent, { output: result }));
 };
 
 /**
  * Get condition
  * @param {number} index Eventdefinition sequence number, used to name registered script
- * @returns {ExpressionCondition|ScriptCondition|null}
+ * @returns {import('#types').ICondition | null}
  */
 ConditionalEventDefinition.prototype.getCondition = function getCondition(index) {
   const behaviour = this.behaviour;
 
+  // @ts-ignore
   if (behaviour.script) {
+    // @ts-ignore
     const { language, body, resource } = behaviour.script;
 
     const scriptId = `${this.id}/${index}`;
@@ -132,6 +158,7 @@ ConditionalEventDefinition.prototype.getCondition = function getCondition(index)
       id: scriptId,
       type: this.type,
       environment: this.environment,
+      // @ts-ignore
       behaviour: {
         scriptFormat: language,
         ...(body && { script: body }),
@@ -140,9 +167,12 @@ ConditionalEventDefinition.prototype.getCondition = function getCondition(index)
     });
 
     if (script) {
+      // @ts-ignore
       return new ScriptCondition(this, script, language);
     }
+    // @ts-ignore
   } else if (behaviour.expression) {
+    // @ts-ignore
     return new ExpressionCondition(this, behaviour.expression);
   }
 };
@@ -153,7 +183,7 @@ ConditionalEventDefinition.prototype._onDelegateApiMessage = function onDelegate
   }
 };
 
-ConditionalEventDefinition.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+ConditionalEventDefinition.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   const messageType = message.properties.type;
 
   switch (messageType) {
@@ -161,10 +191,24 @@ ConditionalEventDefinition.prototype._onApiMessage = function onApiMessage(routi
       if (!this.condition) break;
       return this.evaluate(message, (err, result) => this.evaluateCallback(err, result));
     }
+    case 'cancel': {
+      this._stop();
+      this._debug('cancelled');
+      const output = message.content.message;
+      return this.broker.publish(
+        'execution',
+        'execute.completed',
+        cloneContent(this[K_EXECUTE_MESSAGE].content, {
+          state: 'cancel',
+          ...(output && { output }),
+        }),
+        { correlationId: message.properties.correlationId }
+      );
+    }
     case 'discard': {
       this._stop();
       this._debug('discarded');
-      return this.broker.publish('execution', 'execute.discard', cloneContent(this[kExecuteMessage].content, { state: 'discard' }));
+      return this.broker.publish('execution', 'execute.discard', cloneContent(this[K_EXECUTE_MESSAGE].content, { state: 'discard' }));
     }
     case 'stop': {
       this._stop();
@@ -179,6 +223,7 @@ ConditionalEventDefinition.prototype._stop = function stop() {
   broker.cancel(`_api-${executionId}`);
   broker.cancel(`_parent-signal-${executionId}`);
   broker.cancel(`_api-delegated-${executionId}`);
+  broker.cancel(`_api-delegated-cancel-${executionId}`);
 };
 
 ConditionalEventDefinition.prototype._debug = function debug(msg) {

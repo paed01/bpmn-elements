@@ -29,6 +29,7 @@ ActivityTracker.prototype.track = function track(routingKey, message) {
       this._executing(executionId);
       break;
     case 'activity.execution.outbound.take':
+    case 'activity.converge':
     case 'activity.detach':
     case 'activity.call':
     case 'activity.wait': {

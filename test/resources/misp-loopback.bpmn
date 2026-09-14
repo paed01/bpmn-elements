@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1ub09o2" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.17.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.20.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1ub09o2" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.38.1" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.20.0">
   <bpmn:process id="Process_1" isExecutable="true" camunda:historyTimeToLive="180">
     <bpmn:subProcess id="sub" name="Looped">
       <bpmn:extensionElements>
@@ -28,8 +28,7 @@
         <bpmn:scriptTask id="subscript" scriptFormat="js">
           <bpmn:incoming>to-subscript</bpmn:incoming>
           <bpmn:outgoing>to-subend</bpmn:outgoing>
-          <bpmn:script>
-next(null, environment.variables.content.index)</bpmn:script>
+          <bpmn:script>next(null, environment.variables.content.index)</bpmn:script>
         </bpmn:scriptTask>
         <bpmn:endEvent id="subend">
           <bpmn:incoming>to-subend</bpmn:incoming>
@@ -60,6 +59,10 @@ next(null, loopback);</bpmn:conditionExpression>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="Activity_0kkf6h5_di" bpmnElement="sub">
+        <dc:Bounds x="250" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Event_0sh7cb3_di" bpmnElement="end">
         <dc:Bounds x="502" y="102" width="36" height="36" />
       </bpmndi:BPMNShape>
@@ -69,27 +72,23 @@ next(null, loopback);</bpmn:conditionExpression>
       <bpmndi:BPMNShape id="Event_0xodulq_di" bpmnElement="start">
         <dc:Bounds x="152" y="102" width="36" height="36" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Activity_0kkf6h5_di" bpmnElement="sub">
-        <dc:Bounds x="250" y="80" width="100" height="80" />
-        <bpmndi:BPMNLabel />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_1nnxznf_di" bpmnElement="to-end">
-        <di:waypoint x="445" y="120" />
-        <di:waypoint x="502" y="120" />
+      <bpmndi:BPMNEdge id="Flow_0g9daso_di" bpmnElement="to-sub">
+        <di:waypoint x="188" y="120" />
+        <di:waypoint x="250" y="120" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_1td7sz9_di" bpmnElement="to-gw">
         <di:waypoint x="350" y="120" />
         <di:waypoint x="395" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1nnxznf_di" bpmnElement="to-end">
+        <di:waypoint x="445" y="120" />
+        <di:waypoint x="502" y="120" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="Flow_0cyp5l6_di" bpmnElement="backto-task">
         <di:waypoint x="420" y="145" />
         <di:waypoint x="420" y="210" />
         <di:waypoint x="300" y="210" />
         <di:waypoint x="300" y="160" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0g9daso_di" bpmnElement="to-sub">
-        <di:waypoint x="188" y="120" />
-        <di:waypoint x="250" y="120" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

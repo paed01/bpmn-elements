@@ -1,5 +1,5 @@
 import camunda from '../resources/extensions/CamundaExtension.js';
-import Definition from '../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import factory from '../helpers/factory.js';
 import JsExtension from '../resources/extensions/JsExtension.js';
 import testHelpers from '../helpers/testHelpers.js';
@@ -409,12 +409,10 @@ Feature('Signals', () => {
     });
   });
 
-  Scenario('Process with end throwing signal and a start event waiting for signal', () => {
+  Scenario('A none start event discards a waiting signal start event at instantiation', () => {
     let definition;
-    Given(
-      'a process with two flows with user input, the first flow ends with signal, the second expects signal and then user input',
-      async () => {
-        const source = `
+    Given('a process with two flows, the first started by a none start event, the second by a signal start event', async () => {
+      const source = `
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
         <process id="signalProcess" isExecutable="true">
           <startEvent id="start1" />
@@ -433,23 +431,21 @@ Feature('Signals', () => {
         </process>
       </definitions>`;
 
-        const context = await testHelpers.context(source);
-        definition = new Definition(context);
-      }
-    );
+      const context = await testHelpers.context(source);
+      definition = new Definition(context);
+    });
 
     When('definition is ran', () => {
       definition.run();
     });
 
-    let task1, start2;
-    Then('first user task is waiting for input and second start event waits for signal', () => {
+    let task1;
+    Then('the none start event fired and discarded the waiting signal start event', () => {
       const postponed = definition.getPostponed();
-      expect(postponed).to.have.length(2);
-      [task1, start2] = postponed;
-      expect(task1).to.be.ok;
+      expect(postponed).to.have.length(1);
+      [task1] = postponed;
       expect(task1).to.have.property('id', 'task1');
-      expect(start2).to.have.property('id', 'start2');
+      expect(definition.getActivityById('start2').counters).to.include({ taken: 0, discarded: 1 });
     });
 
     When('first user task receives input', () => {
@@ -460,24 +456,11 @@ Feature('Signals', () => {
       expect(definition.getActivityById('end1').counters).to.have.property('taken', 1);
     });
 
-    And('second flow is continued', () => {
-      expect(start2.owner.counters).to.have.property('taken', 1);
+    But('the second flow never ran, since its start event was discarded at instantiation', () => {
+      expect(definition.getActivityById('task2').counters).to.include({ taken: 0 });
     });
 
-    let task2;
-    And('second user task is awaiting input', () => {
-      const postponed = definition.getPostponed();
-      expect(postponed).to.have.length(1);
-      [task2] = postponed;
-      expect(task2).to.be.ok;
-      expect(task2).to.have.property('id', 'task2');
-    });
-
-    When('second user task receives input', () => {
-      task2.signal();
-    });
-
-    Then('run completes', () => {
+    And('run completes', () => {
       expect(definition.counters).to.have.property('completed', 1);
     });
   });
@@ -601,6 +584,10 @@ Feature('Signals', () => {
       expect(activity).to.have.property('id', 'start');
     });
 
+    And('start event accepts signal api call', () => {
+      expect(activity.content.accepts).to.deep.equal(['signal']);
+    });
+
     When('definition signals form start event', () => {
       definition.signal({
         id: 'start',
@@ -610,6 +597,10 @@ Feature('Signals', () => {
     Then('execution stops at first user task', () => {
       [activity] = definition.getPostponed();
       expect(activity).to.have.property('id', 'task1');
+    });
+
+    And('user task accepts signal and error api calls', () => {
+      expect(activity.content.accepts).to.deep.equal(['signal', 'error']);
     });
 
     When('definition signals without message', () => {
@@ -705,6 +696,10 @@ Feature('Signals', () => {
       expect(activity).to.have.property('id', 'receiveAnon');
     });
 
+    And('receive task accepts message and signal api calls', () => {
+      expect(activity.content.accepts).to.deep.equal(['message', 'signal']);
+    });
+
     When('definition signals without message', () => {
       definition.signal();
     });
@@ -791,6 +786,10 @@ Feature('Signals', () => {
       expect(activity).to.have.property('id', 'anonSignalEvent');
     });
 
+    And('signal event accepts signal api call', () => {
+      expect(activity.content.accepts).to.deep.equal(['signal']);
+    });
+
     When('definition signals without message', () => {
       definition.signal();
     });
@@ -848,6 +847,10 @@ Feature('Signals', () => {
     And('anonymous message event is waiting to be signaled', () => {
       [activity] = definition.getPostponed();
       expect(activity).to.have.property('id', 'anonMessageEvent');
+    });
+
+    And('message event accepts message and signal api calls', () => {
+      expect(activity.content.accepts).to.deep.equal(['message', 'signal']);
     });
 
     When('definition signals with message', () => {
@@ -942,7 +945,7 @@ Feature('Signals', () => {
       }
     );
 
-    let end, state, definition;
+    let state, definition;
     const output = {};
     When('definition is ran', () => {
       definition = new Definition(context);
@@ -1257,9 +1260,41 @@ Feature('Signals', () => {
     Then('activity output is set to signal message', () => {
       expect(output).to.have.property('namedMessageEvent').with.property('input', 1);
     });
+  });
 
-    And('execution completes', () => {
-      return end;
+  Scenario('a thrown signal in a process with a text annotation', () => {
+    let definition;
+    Given('a process that throws a signal from an annotated throw event', async () => {
+      const source = `<?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Def" targetNamespace="http://bpmn.io/schema/bpmn">
+        <signal id="sig" name="go" />
+        <process id="p" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="f1" sourceRef="start" targetRef="throw" />
+          <intermediateThrowEvent id="throw">
+            <signalEventDefinition signalRef="sig" />
+          </intermediateThrowEvent>
+          <sequenceFlow id="f2" sourceRef="throw" targetRef="end" />
+          <endEvent id="end" />
+          <textAnnotation id="note"><text>broadcasts a signal</text></textAnnotation>
+          <association id="note-association" sourceRef="throw" targetRef="note" />
+        </process>
+      </definitions>`;
+      definition = new Definition(await testHelpers.context(source));
+    });
+
+    let leave;
+    When('ran', () => {
+      leave = definition.waitFor('leave');
+      definition.run();
+    });
+
+    Then('the run completes, delegating the thrown signal past the annotation placeholder', () => {
+      return leave;
+    });
+
+    And('the signal was thrown', () => {
+      expect(definition.getActivityById('throw').counters).to.include({ taken: 1 });
     });
   });
 });

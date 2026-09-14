@@ -1,4 +1,4 @@
-import ActivityExecution from './ActivityExecution.js';
+import { ActivityExecution } from './ActivityExecution.js';
 import { getUniqueId } from '../shared.js';
 import { ActivityApi } from '../Api.js';
 import { ActivityBroker } from '../EventBroker.js';
@@ -6,42 +6,63 @@ import { Formatter } from '../MessageFormatter.js';
 import { cloneContent, cloneParent, cloneMessage } from '../messageHelper.js';
 import { makeErrorFromMessage, ActivityError } from '../error/Errors.js';
 import { OutboundEvaluator, formatFlowAction } from './outbound-evaluator.js';
+import {
+  K_ACTIVATED,
+  K_CONSUMING,
+  K_COUNTERS,
+  K_EXECUTE_MESSAGE,
+  K_EXTENSIONS,
+  K_MESSAGE_HANDLERS,
+  K_STATE_MESSAGE,
+  K_FORMATTER,
+} from '../constants.js';
 
-const kActivityDef = Symbol.for('activityDefinition');
-const kConsuming = Symbol.for('consuming');
-const kConsumingRunQ = Symbol.for('run queue consumer');
-const kCounters = Symbol.for('counters');
-const kEventDefinitions = Symbol.for('eventDefinitions');
-const kExec = Symbol.for('exec');
-const kExecuteMessage = Symbol.for('executeMessage');
-const kExtensions = Symbol.for('extensions');
-const kFlags = Symbol.for('flags');
-const kFlows = Symbol.for('flows');
-const kFormatter = Symbol.for('formatter');
-const kMessageHandlers = Symbol.for('messageHandlers');
-const kStateMessage = Symbol.for('stateMessage');
-const kActivated = Symbol.for('activated');
+const K_ACTIVITY_DEF = Symbol.for('activityDefinition');
+const K_CONSUMING_RUN_Q = Symbol.for('run queue consumer');
+const K_EVENT_DEFINITIONS = Symbol.for('eventDefinitions');
+const K_EXEC = Symbol.for('exec');
+const K_FLAGS = Symbol.for('flags');
+const K_FLOWS = Symbol.for('flows');
 
-export default Activity;
-
-function Activity(Behaviour, activityDef, context) {
+/**
+ * Activity wraps any element (task, event, gateway) and orchestrates its lifecycle through the broker.
+ * @param {import('#types').IActivityBehaviour} Behaviour Element-specific behaviour constructor invoked per execution
+ * @param {import('#types').ActivityDefinition} activityDef Parsed BPMN element definition, behaviour is optional
+ * @param {import('#types').ContextInstance} context Per-execution registry and factory
+ */
+export function Activity(Behaviour, activityDef, context) {
   const { id, type = 'activity', name, behaviour = {} } = activityDef;
+  // @ts-ignore
   const { attachedTo: attachedToRef, eventDefinitions } = behaviour;
 
-  this[kActivityDef] = activityDef;
+  /** @internal */
+  this[K_ACTIVITY_DEF] = activityDef;
   this.id = id;
   this.type = type;
   this.name = name;
-  this.behaviour = { ...behaviour, eventDefinitions };
+  /** @type {NonNullable<import('#types').ActivityDefinition['behaviour']>} */
+  // @ts-ignore
+  this.behaviour = {
+    ...behaviour,
+    eventDefinitions,
+    ...(activityDef.linkNames && { linkNames: activityDef.linkNames, linkBehaviour: activityDef.linkBehaviour }),
+  };
   this.Behaviour = Behaviour;
+  /** @type {import('#types').ElementParentRef} */
   this.parent = activityDef.parent ? cloneParent(activityDef.parent) : {};
+  /** @type {import('#types').ILogger} */
   this.logger = context.environment.Logger(type.toLowerCase());
   this.environment = context.environment;
   this.context = context;
-  this[kCounters] = {
+  /** @type {import('#types').ActivityStatus | undefined} */
+  this.status = undefined;
+
+  /** @internal */
+  this[K_COUNTERS] = {
     taken: 0,
     discarded: 0,
   };
+  // @ts-ignore
   const isForCompensation = !!behaviour.isForCompensation;
 
   let attachedToActivity, attachedTo;
@@ -60,159 +81,200 @@ function Activity(Behaviour, activityDef, context) {
 
   const inboundSequenceFlows = context.getInboundSequenceFlows(id);
   const inboundAssociations = context.getInboundAssociations(id);
-  let inboundTriggers;
-  if (attachedToActivity) {
-    inboundTriggers = [attachedToActivity];
-  } else if (isForCompensation) {
-    inboundTriggers = inboundAssociations.slice();
-  } else {
-    inboundTriggers = inboundSequenceFlows.slice();
-  }
+  const hasInboundTrigger = attachedToActivity ? true : isForCompensation ? !!inboundAssociations.length : !!inboundSequenceFlows.length;
+
   const outboundSequenceFlows = context.getOutboundSequenceFlows(id);
 
-  const isParallelJoin = activityDef.isParallelGateway && inboundSequenceFlows.length > 1;
+  const inboundSourceIds = new Set(inboundSequenceFlows.map(({ sourceId }) => sourceId));
+  const isParallelJoin = activityDef.isParallelGateway && inboundSourceIds.size > 1;
 
-  this[kFlows] = {
+  /** @internal */
+  this[K_FLOWS] = {
     inboundSequenceFlows,
     inboundAssociations,
-    inboundTriggers,
+    inboundTriggers: undefined,
     outboundSequenceFlows,
     outboundEvaluator: new OutboundEvaluator(this, outboundSequenceFlows),
-    ...(isParallelJoin && {
-      inboundJoinFlows: new Set(),
-      inboundSourceIds: new Set(inboundSequenceFlows.map(({ sourceId }) => sourceId)),
-    }),
   };
 
-  this[kFlags] = {
-    isEnd: !outboundSequenceFlows.length,
-    isStart: !inboundTriggers.length && !behaviour.triggeredByEvent,
+  const isThrowingLink = activityDef.isThrowing && activityDef.linkNames?.length;
+
+  /** @internal */
+  this[K_FLAGS] = {
+    isEnd: !outboundSequenceFlows.length && !isThrowingLink,
+    // @ts-ignore
+    isStart: !hasInboundTrigger && !behaviour.triggeredByEvent && !activityDef.isCatching,
     isSubProcess: activityDef.isSubProcess,
+    // @ts-ignore
     isMultiInstance: !!behaviour.loopCharacteristics,
     isForCompensation,
     attachedTo,
     isTransaction: activityDef.isTransaction,
+    isAdHoc: activityDef.isAdHoc,
     isParallelJoin,
+    isParallelGateway: activityDef.isParallelGateway,
+    isStartEvent: !!activityDef.isStartEvent,
     isThrowing: activityDef.isThrowing,
+    linkNames: activityDef.linkNames,
+    linkBehaviour: activityDef.linkBehaviour,
+    isCatching: activityDef.isCatching,
     lane: activityDef.lane?.id,
   };
-  this[kExec] = new Map();
+  /** @internal */
+  this[K_EXEC] = new Map();
 
-  this[kMessageHandlers] = {
-    onInbound: isParallelJoin ? this._onJoinInbound.bind(this) : this._onInbound.bind(this),
+  /** @internal */
+  this[K_MESSAGE_HANDLERS] = {
+    onInbound: this._onInbound.bind(this),
     onRunMessage: this._onRunMessage.bind(this),
     onApiMessage: this._onApiMessage.bind(this),
     onExecutionMessage: this._onExecutionMessage.bind(this),
   };
 
-  this[kEventDefinitions] = eventDefinitions?.map((ed, idx) => new ed.Behaviour(this, ed, context, idx));
-  this[kExtensions] = context.loadExtensions(this);
-  this[kConsuming] = false;
-  this[kConsumingRunQ] = undefined;
+  /** @internal */
+  this[K_EVENT_DEFINITIONS] = eventDefinitions?.map((ed, idx) => new ed.Behaviour(this, ed, context, idx));
+  /** @internal */
+  this[K_EXTENSIONS] = context.loadExtensions(this);
+  /** @internal */
+  this[K_CONSUMING] = false;
+  /** @internal */
+  this[K_CONSUMING_RUN_Q] = undefined;
+  /** @internal */
+  this[K_ACTIVATED] = false;
+  this[K_CONSUMING] = false;
+  this[K_CONSUMING_RUN_Q] = false;
+  /** @internal */
+  this[K_STATE_MESSAGE] = undefined;
+  /** @internal */
+  this[K_EXECUTE_MESSAGE] = undefined;
 }
 
 Object.defineProperties(Activity.prototype, {
   counters: {
     get() {
-      return { ...this[kCounters] };
+      return { ...this[K_COUNTERS] };
     },
   },
   execution: {
     get() {
-      return this[kExec].get('execution');
+      return this[K_EXEC].get('execution');
     },
   },
   executionId: {
     get() {
-      return this[kExec].get('executionId');
+      return this[K_EXEC].get('executionId');
     },
   },
   extensions: {
     get() {
-      return this[kExtensions];
+      return this[K_EXTENSIONS];
     },
   },
   bpmnIo: {
     get() {
-      const extensions = this[kExtensions];
+      const extensions = this[K_EXTENSIONS];
       return extensions?.extensions.find((e) => e.type === 'bpmnio');
     },
   },
   formatter: {
     get() {
-      let formatter = this[kFormatter];
+      let formatter = this[K_FORMATTER];
       if (formatter) return formatter;
-
-      formatter = this[kFormatter] = new Formatter(this);
+      formatter = this[K_FORMATTER] = new Formatter(this);
       return formatter;
     },
   },
   isRunning: {
     get() {
-      if (!this[kConsuming]) return false;
+      if (!this[K_CONSUMING]) return false;
       return !!this.status;
     },
   },
   outbound: {
     get() {
-      return this[kFlows].outboundSequenceFlows;
+      return this[K_FLOWS].outboundSequenceFlows;
     },
   },
   inbound: {
     get() {
-      return this[kFlows].inboundSequenceFlows;
+      return this[K_FLOWS].inboundSequenceFlows;
     },
   },
   isEnd: {
     get() {
-      return this[kFlags].isEnd;
+      return this[K_FLAGS].isEnd;
     },
   },
   isStart: {
     get() {
-      return this[kFlags].isStart;
+      return this[K_FLAGS].isStart;
     },
   },
   isSubProcess: {
     get() {
-      return this[kFlags].isSubProcess;
+      return this[K_FLAGS].isSubProcess;
     },
   },
   isTransaction: {
     get() {
-      return this[kFlags].isTransaction;
+      return this[K_FLAGS].isTransaction;
+    },
+  },
+  isAdHoc: {
+    get() {
+      return this[K_FLAGS].isAdHoc;
     },
   },
   isMultiInstance: {
     get() {
-      return this[kFlags].isMultiInstance;
+      return this[K_FLAGS].isMultiInstance;
     },
   },
   isThrowing: {
     get() {
-      return this[kFlags].isThrowing;
+      return this[K_FLAGS].isThrowing;
+    },
+  },
+  isCatching: {
+    get() {
+      return this[K_FLAGS].isCatching;
     },
   },
   isForCompensation: {
     get() {
-      return this[kFlags].isForCompensation;
+      return this[K_FLAGS].isForCompensation;
+    },
+  },
+  isParallelJoin: {
+    get() {
+      return this[K_FLAGS].isParallelJoin;
+    },
+  },
+  isParallelGateway: {
+    get() {
+      return this[K_FLAGS].isParallelGateway;
+    },
+  },
+  isStartEvent: {
+    get() {
+      return this[K_FLAGS].isStartEvent;
     },
   },
   triggeredByEvent: {
     get() {
-      return this[kActivityDef].triggeredByEvent;
+      return this[K_ACTIVITY_DEF].triggeredByEvent;
     },
   },
   attachedTo: {
     get() {
-      const attachedToId = this[kFlags].attachedTo;
+      const attachedToId = this[K_FLAGS].attachedTo;
       if (!attachedToId) return null;
       return this.getActivityById(attachedToId);
     },
   },
   lane: {
     get() {
-      const laneId = this[kFlags].lane;
+      const laneId = this[K_FLAGS].lane;
       if (!laneId) return undefined;
       const parent = this.parentElement;
       return parent.getLaneById && parent.getLaneById(laneId);
@@ -220,7 +282,7 @@ Object.defineProperties(Activity.prototype, {
   },
   eventDefinitions: {
     get() {
-      return this[kEventDefinitions];
+      return this[K_EVENT_DEFINITIONS];
     },
   },
   parentElement: {
@@ -228,55 +290,135 @@ Object.defineProperties(Activity.prototype, {
       return this.context.getActivityParentById(this.id);
     },
   },
+  initialized: {
+    get() {
+      return this[K_EXEC].get('initialized') > 0;
+    },
+  },
+  associations: {
+    get() {
+      return this[K_FLOWS].inboundAssociations;
+    },
+  },
 });
 
+/**
+ * Subscribe to inbound flows and start consuming the inbound queue.
+ * @returns {void}
+ */
 Activity.prototype.activate = function activate() {
-  if (this[kActivated]) return;
-  this[kActivated] = true;
-  return this.addInboundListeners() && this._consumeInbound();
+  if (this[K_ACTIVATED]) return;
+  this[K_ACTIVATED] = true;
+  this.addInboundListeners();
+  return this.consumeInbound();
 };
 
+/**
+ * Assert the inbound queue consumer when the activity has a trigger or is initialized.
+ * Idempotent: asserting the consumer again while one is active is a no-op.
+ * @returns {void}
+ */
+Activity.prototype.consumeInbound = function consumeInbound() {
+  if (!this[K_ACTIVATED]) return;
+
+  if (this.status) return;
+
+  if (!this._getInboundTriggers().length && !this.initialized) return;
+
+  const onInbound = this[K_MESSAGE_HANDLERS].onInbound;
+
+  this.broker.getQueue('inbound-q').assertConsumer(onInbound, { consumerTag: '_run-on-inbound' });
+};
+
+/** @internal */
+Activity.prototype._getInboundTriggers = function _getInboundTriggers() {
+  const flows = this[K_FLOWS];
+  if (flows.inboundTriggers) return flows.inboundTriggers;
+
+  const flags = this[K_FLAGS];
+  let triggers;
+  if (flags.attachedTo) {
+    triggers = [this.context.getActivityById(flags.attachedTo)];
+  } else if (flags.isForCompensation) {
+    triggers = flows.inboundAssociations.slice();
+  } else {
+    triggers = flows.inboundSequenceFlows.slice();
+  }
+
+  const { isCatching, linkNames, linkBehaviour } = flags;
+  if (isCatching && linkNames?.length) {
+    const known = new Set(triggers.map((t) => t.id));
+    for (const source of this.context.getActivitiesByEventDefinitionBehaviour(linkBehaviour, linkNames)) {
+      if (source.id === this.id || !source.isThrowing || known.has(source.id)) continue;
+      triggers.push(source);
+      known.add(source.id);
+    }
+  }
+
+  return (flows.inboundTriggers = triggers);
+};
+
+/**
+ * Cancel inbound subscriptions and any pending run/format consumers.
+ */
 Activity.prototype.deactivate = function deactivate() {
-  this[kActivated] = false;
+  this[K_ACTIVATED] = false;
   const broker = this.broker;
   this.removeInboundListeners();
   broker.cancel('_run-on-inbound');
-  broker.cancel('_format-consumer');
+  if (this[K_FORMATTER]) this[K_FORMATTER].reset();
 };
 
-Activity.prototype.init = function init(initContent) {
+/**
+ * Initialise activity executionId and emit init event without starting the run.
+ * @param {Record<string, any>} [initContent] Optional content merged into the init message
+ * @param {import('smqp').MessageProperties} [properties] Optional message properties merged into the init message properties
+ */
+Activity.prototype.init = function init(initContent, properties) {
   const id = this.id;
-  const exec = this[kExec];
-  const executionId = exec.has('initExecutionId') ? exec.get('initExecutionId') : getUniqueId(id);
-  exec.set('initExecutionId', executionId);
+  const exec = this[K_EXEC];
+  exec.set('initialized', (exec.get('initialized') || 0) + 1);
+  const executionId = getUniqueId(id);
   this.logger.debug(`<${id}> initialized with executionId <${executionId}>`);
   this._publishEvent('init', this._createMessage({ ...initContent, executionId }));
+  this.broker
+    .getQueue('inbound-q')
+    .queueMessage({ routingKey: 'activity.init' }, { ...initContent, id, executionId }, { persistent: false, ...properties });
 };
 
+/**
+ * Start running the activity by publishing run.enter and run.start.
+ * @param {Record<string, any>} [runContent] Optional content merged into the run message
+ * @throws {Error} if the activity is already running
+ */
 Activity.prototype.run = function run(runContent) {
   const id = this.id;
   if (this.isRunning) throw new Error(`activity <${id}> is already running`);
 
-  const exec = this[kExec];
-  const executionId = exec.get('initExecutionId') || getUniqueId(id);
-  exec.set('executionId', executionId);
-  exec.delete('initExecutionId');
+  const { initExecutionId, ...runMessage } = runContent || {};
+  const executionId = runMessage?.id === id && initExecutionId ? initExecutionId : getUniqueId(id);
+  this[K_EXEC].set('executionId', executionId);
 
   this._consumeApi();
 
-  const content = this._createMessage({ ...runContent, executionId });
+  const content = this._createMessage({ ...runMessage, executionId });
   const broker = this.broker;
 
   broker.publish('run', 'run.enter', content);
   broker.publish('run', 'run.start', cloneContent(content));
 
-  this[kConsuming] = true;
+  this[K_CONSUMING] = true;
   this._consumeRunQ();
 };
 
+/**
+ * Snapshot activity state for recover.
+ * Returns undefined when nothing is running and `disableTrackState` is set.
+ * @returns {import('#types').ActivityState}
+ */
 Activity.prototype.getState = function getState() {
   const status = this.status;
-  const exec = this[kExec];
+  const exec = this[K_EXEC];
   const execution = exec.get('execution');
   const executionId = exec.get('executionId');
   const brokerState = this.broker.getState(true);
@@ -294,16 +436,23 @@ Activity.prototype.getState = function getState() {
   };
 };
 
+/**
+ * Restore activity state captured by getState. Cannot be called while running.
+ * @param {import('#types').ActivityState} [state]
+ * @returns {this} this when state was applied
+ * @throws {Error} when activity is currently running
+ */
 Activity.prototype.recover = function recover(state) {
   if (this.isRunning) throw new Error(`cannot recover running activity <${this.id}>`);
-  if (!state) return;
+  // @ts-ignore
+  if (!state) return this;
 
   this.stopped = state.stopped;
   this.status = state.status;
-  const exec = this[kExec];
+  const exec = this[K_EXEC];
   exec.set('executionId', state.executionId);
 
-  this[kCounters] = { ...this[kCounters], ...state.counters };
+  this[K_COUNTERS] = { ...this[K_COUNTERS], ...state.counters };
 
   if (state.execution) {
     exec.set('execution', new ActivityExecution(this, this.context).recover(state.execution));
@@ -311,11 +460,16 @@ Activity.prototype.recover = function recover(state) {
 
   this.broker.recover(state.broker);
 
+  // @ts-ignore
   return this;
 };
 
+/**
+ * Resume after recover. If no run has been started, falls back to activate.
+ * @throws {Error} when called on a running activity
+ */
 Activity.prototype.resume = function resume() {
-  if (this[kConsuming]) {
+  if (this[K_CONSUMING]) {
     throw new Error(`cannot resume running activity <${this.id}>`);
   }
   if (!this.status) return this.activate();
@@ -327,25 +481,34 @@ Activity.prototype.resume = function resume() {
   const content = this._createMessage();
   this.broker.publish('run', 'run.resume', content, { persistent: false });
 
-  this[kConsuming] = true;
+  this[K_CONSUMING] = true;
   this._consumeRunQ();
 };
 
+/**
+ * Discard the activity. Stops execution if running; the activity leaves without taking any outbound flow.
+ * @param {Record<string, any>} [discardContent] Optional content propagated with the discard
+ * @returns {void}
+ */
 Activity.prototype.discard = function discard(discardContent) {
   if (!this.status) return this._runDiscard(discardContent);
-  const execution = this[kExec].get('execution');
+  const execution = this[K_EXEC].get('execution');
   if (execution && !execution.completed) return execution.discard();
 
   this._deactivateRunConsumers();
   const broker = this.broker;
   broker.getQueue('run-q').purge();
-  broker.publish('run', 'run.discard', cloneContent(this[kStateMessage].content));
-  this[kConsuming] = true;
+  broker.publish('run', 'run.discard', cloneContent(this[K_STATE_MESSAGE].content));
+  this[K_CONSUMING] = true;
   this._consumeRunQ();
 };
 
+/**
+ * Subscribe to inbound triggers (sequence flows, attached activity, or compensation associations).
+ * @returns {number} count of subscribed triggers
+ */
 Activity.prototype.addInboundListeners = function addInboundListeners() {
-  const triggers = this[kFlows].inboundTriggers;
+  const triggers = this._getInboundTriggers();
   if (triggers.length) {
     const onInboundEvent = this._onInboundEvent.bind(this);
     const triggerConsumerTag = `_inbound-${this.id}`;
@@ -362,21 +525,33 @@ Activity.prototype.addInboundListeners = function addInboundListeners() {
   return triggers.length;
 };
 
+/**
+ * Cancel inbound trigger subscriptions added by addInboundListeners.
+ */
 Activity.prototype.removeInboundListeners = function removeInboundListeners() {
+  const triggers = this[K_FLOWS].inboundTriggers;
+  if (!triggers) return;
   const triggerConsumerTag = `_inbound-${this.id}`;
-  for (const trigger of this[kFlows].inboundTriggers) {
+  for (const trigger of triggers) {
     trigger.broker.cancel(triggerConsumerTag);
   }
 };
 
+/**
+ * Stop the activity. If not currently running, just cancels the inbound consumer.
+ */
 Activity.prototype.stop = function stop() {
-  if (!this[kConsuming]) return this.broker.cancel('_run-on-inbound');
-  return this.getApi(this[kStateMessage]).stop();
+  if (!this[K_CONSUMING]) return this.broker.cancel('_run-on-inbound');
+  return this.getApi(this[K_STATE_MESSAGE]).stop();
 };
 
+/**
+ * Advance one run-step when the environment runs in step mode. No-op otherwise.
+ */
 Activity.prototype.next = function next() {
   if (!this.environment.settings.step) return;
-  const stateMessage = this[kStateMessage];
+  /** @type {import('smqp').Message} */
+  const stateMessage = this[K_STATE_MESSAGE];
   if (!stateMessage) return;
   if (this.status === 'executing') return false;
   if (this.status === 'formatting') return false;
@@ -385,44 +560,64 @@ Activity.prototype.next = function next() {
   return current;
 };
 
+/**
+ * Walk outbound flows to discover the activity graph from this point.
+ */
 Activity.prototype.shake = function shake() {
   this._shakeOutbound({ content: this._createMessage() });
 };
 
+/**
+ * Evaluate outbound sequence flows for the given source message.
+ * @param {import('#types').ElementBrokerMessage} fromMessage Source run message
+ * @param {boolean} discardRestAtTake When true, take only the first matching flow and discard the rest
+ * @param {(err: Error, evaluationResult: any) => void} callback
+ * @returns {void}
+ */
 Activity.prototype.evaluateOutbound = function evaluateOutbound(fromMessage, discardRestAtTake, callback) {
-  return this[kFlows].outboundEvaluator.evaluate(fromMessage, discardRestAtTake, callback);
+  return this[K_FLOWS].outboundEvaluator.evaluate(fromMessage, discardRestAtTake, callback);
 };
 
+/**
+ * Resolve an Api wrapper for the activity, preferring the running execution if any.
+ * @param {import('#types').ElementBrokerMessage} [message]
+ * @returns {import('#types').IApi<import('./Activity.js').Activity>}
+ */
 Activity.prototype.getApi = function getApi(message) {
-  const execution = this[kExec].get('execution');
+  const execution = this[K_EXEC].get('execution');
   if (execution && !execution.completed) return execution.getApi(message);
-  return ActivityApi(this.broker, message || this[kStateMessage]);
+  // @ts-ignore
+  return ActivityApi(this.broker, message || this[K_STATE_MESSAGE]);
 };
 
+/**
+ * Look up another activity in the same context.
+ * @param {string} elementId
+ */
 Activity.prototype.getActivityById = function getActivityById(elementId) {
   return this.context.getActivityById(elementId);
 };
 
+/** @internal */
 Activity.prototype._runDiscard = function runDiscard(discardContent) {
-  const exec = this[kExec];
-  const executionId = exec.get('initExecutionId') || getUniqueId(this.id);
-  exec.set('executionId', executionId);
-  exec.delete('initExecutionId');
+  const executionId = getUniqueId(this.id);
+  this[K_EXEC].set('executionId', executionId);
 
   this._consumeApi();
 
   const content = this._createMessage({ ...discardContent, executionId });
   this.broker.publish('run', 'run.discard', content);
 
-  this[kConsuming] = true;
+  this[K_CONSUMING] = true;
   this._consumeRunQ();
 };
 
+/** @internal */
 Activity.prototype._discardRun = function discardRun() {
   const status = this.status;
   if (!status) return;
 
-  const execution = this[kExec].get('execution');
+  const execution = this[K_EXEC].get('execution');
   if (execution && !execution.completed) return;
 
   let discardRoutingKey = 'run.discard';
@@ -440,122 +635,95 @@ Activity.prototype._discardRun = function discardRun() {
 
   this._deactivateRunConsumers();
 
-  const stateMessage = this[kStateMessage];
+  const stateMessage = this[K_STATE_MESSAGE];
   if (this.extensions) this.extensions.deactivate(cloneMessage(stateMessage));
 
   const broker = this.broker;
   broker.getQueue('run-q').purge();
 
   broker.publish('run', discardRoutingKey, cloneContent(stateMessage.content), { correlationId: stateMessage.properties.correlationId });
-  this[kConsuming] = true;
+  this[K_CONSUMING] = true;
   this._consumeRunQ();
 };
 
+/** @internal */
+Activity.prototype._onShakeMessage = function _onShakeMessage(sourceMessage) {
+  if (this[K_FLAGS].isParallelGateway) {
+    const message = cloneMessage(sourceMessage, { join: this.id });
+    message.content.sequence.push({ id: this.id, type: this.type });
+    return this.broker.publish('event', 'activity.shake.converge', message.content, {
+      persistent: false,
+      type: 'shake',
+    });
+  }
+
+  this._shakeOutbound(sourceMessage);
+};
+
+/** @internal */
 Activity.prototype._shakeOutbound = function shakeOutbound(sourceMessage) {
   const message = cloneMessage(sourceMessage);
-  message.content.sequence = message.content.sequence || [];
-  message.content.sequence.push({ id: this.id, type: this.type });
+  const sequence = (message.content.sequence = message.content.sequence || []);
+  const count = 1;
+  const looped = sequence?.find((f) => f.id === this.id);
 
-  const broker = this.broker;
+  sequence.push({ id: this.id, type: this.type, count: looped ? looped.count + 1 : count });
+
   this.broker.publish('api', 'activity.shake.start', message.content, { persistent: false, type: 'shake' });
 
-  if (this[kFlags].isEnd) {
-    return broker.publish('event', 'activity.shake.end', message.content, { persistent: false, type: 'shake' });
+  const flags = this[K_FLAGS];
+  if (flags.isThrowing && flags.linkNames?.length) {
+    for (const target of this.context.getActivitiesByEventDefinitionBehaviour(flags.linkBehaviour, flags.linkNames)) {
+      if (target.id === this.id || !target.isCatching) continue;
+      const linkedContent = cloneContent(message.content, { sourceId: this.id, targetId: target.id, isLinked: true });
+      linkedContent.sequence = linkedContent.sequence.concat({ id: target.id, type: target.type });
+      target.broker.publish('event', 'activity.shake.linked', linkedContent, { persistent: false, type: 'shake' });
+      // @ts-ignore
+      for (const flow of target.outbound) flow.shake({ content: cloneContent(linkedContent) });
+    }
   }
 
-  for (const flow of this[kFlows].outboundSequenceFlows) flow.shake(message);
-};
-
-Activity.prototype._consumeInbound = function consumeInbound() {
-  if (!this[kActivated]) return;
-
-  if (this.status || !this[kFlows].inboundTriggers.length) return;
-
-  const inboundQ = this.broker.getQueue('inbound-q');
-  const onInbound = this[kMessageHandlers].onInbound;
-
-  if (this[kFlags].isParallelJoin) {
-    return inboundQ.assertConsumer(onInbound, { consumerTag: '_run-on-inbound', prefetch: 1000 });
+  if (this[K_FLAGS].isEnd) {
+    return this.broker.publish('event', 'activity.shake.end', cloneContent(message.content), { persistent: false, type: 'shake' });
   }
 
-  return inboundQ.assertConsumer(onInbound, { consumerTag: '_run-on-inbound' });
+  for (const [, targetFlows] of this[K_FLOWS].outboundEvaluator.targets) targetFlows[0].shake(message);
 };
 
+/** @internal */
 Activity.prototype._onInbound = function onInbound(routingKey, message) {
   message.ack();
   const broker = this.broker;
   broker.cancel('_run-on-inbound');
 
   const content = message.content;
-  const inbound = [cloneContent(content)];
 
   switch (routingKey) {
+    case 'activity.init': {
+      const exec = this[K_EXEC];
+      exec.set('initialized', (exec.get('initialized') || 0) - 1);
+      return this.run({
+        initExecutionId: content.executionId,
+        id: content.id,
+        message: content.message,
+        ...(content.inbound?.length && { inbound: content.inbound }),
+      });
+    }
     case 'association.take':
     case 'flow.take':
     case 'activity.restart':
     case 'activity.enter':
       return this.run({
         message: content.message,
-        inbound,
+        inbound: [cloneContent(content)],
       });
-    case 'flow.discard':
     case 'activity.discard': {
-      let discardSequence;
-      if (content.discardSequence) discardSequence = content.discardSequence.slice();
-      return this._runDiscard({ inbound, discardSequence });
+      return this._runDiscard({ inbound: [cloneContent(content)] });
     }
   }
 };
 
-Activity.prototype._onJoinInbound = function onJoinInbound(routingKey, message) {
-  const { content } = message;
-  const { inboundJoinFlows, inboundSourceIds } = this[kFlows];
-  let alreadyTouched = false;
-
-  const touched = new Set();
-
-  let taken;
-  for (const msg of inboundJoinFlows) {
-    const sourceId = msg.content.sourceId;
-    touched.add(sourceId);
-    if (sourceId === content.sourceId) {
-      alreadyTouched = true;
-    }
-  }
-
-  inboundJoinFlows.add(message);
-
-  if (alreadyTouched) return;
-
-  const remaining = inboundSourceIds.size - touched.size - 1;
-  if (remaining) {
-    return this.logger.debug(`<${this.id}> inbound ${message.content.action} from <${message.content.id}>, ${remaining} remaining`);
-  }
-
-  const inbound = [];
-  for (const im of inboundJoinFlows) {
-    if (im.fields.routingKey === 'flow.take') taken = true;
-    im.ack();
-    inbound.push(cloneContent(im.content));
-  }
-
-  const discardSequence = new Set();
-  if (!taken) {
-    for (const im of inboundJoinFlows) {
-      if (!im.content.discardSequence) continue;
-      for (const sourceId of im.content.discardSequence) {
-        discardSequence.add(sourceId);
-      }
-    }
-  }
-
-  inboundJoinFlows.clear();
-  this.broker.cancel('_run-on-inbound');
-
-  if (!taken) return this._runDiscard({ inbound, discardSequence: [...discardSequence] });
-  return this.run({ inbound });
-};
-
+/** @internal */
 Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message) {
   const { fields, content, properties } = message;
   const inboundQ = this.broker.getQueue('inbound-q');
@@ -563,38 +731,46 @@ Activity.prototype._onInboundEvent = function onInboundEvent(routingKey, message
   switch (routingKey) {
     case 'activity.enter':
     case 'activity.discard': {
-      if (content.id === this[kFlags].attachedTo) {
+      if (content.id === this[K_FLAGS].attachedTo) {
         inboundQ.queueMessage(fields, cloneContent(content), properties);
       }
       break;
     }
-    case 'flow.shake': {
-      return this._shakeOutbound(message);
+    case 'flow.shake':
+    case 'activity.shake.start':
+      return this._onShakeMessage(message);
+    case 'activity.link': {
+      const linkName = content.message?.linkName;
+      if (!this[K_FLAGS].linkNames?.includes(linkName)) break;
+      return this.init({ inbound: [cloneContent(content)] });
     }
     case 'association.take':
     case 'flow.take':
-    case 'flow.discard':
       return inboundQ.queueMessage(fields, cloneContent(content), properties);
   }
 };
 
+/** @internal */
 Activity.prototype._consumeRunQ = function consumeRunQ() {
-  this[kConsumingRunQ] = true;
-  this.broker.getQueue('run-q').assertConsumer(this[kMessageHandlers].onRunMessage, { exclusive: true, consumerTag: '_activity-run' });
+  this[K_CONSUMING_RUN_Q] = true;
+  this.broker.getQueue('run-q').assertConsumer(this[K_MESSAGE_HANDLERS].onRunMessage, { exclusive: true, consumerTag: '_activity-run' });
 };
 
+/** @internal */
 Activity.prototype._pauseRunQ = function pauseRunQ() {
-  if (!this[kConsumingRunQ]) return;
+  if (!this[K_CONSUMING_RUN_Q]) return;
 
-  this[kConsumingRunQ] = false;
+  this[K_CONSUMING_RUN_Q] = false;
   this.broker.cancel('_activity-run');
 };
 
+/** @internal */
 Activity.prototype._onRunMessage = function onRunMessage(routingKey, message, messageProperties) {
   switch (routingKey) {
-    case 'run.outbound.discard':
+    case 'run.execute.passthrough':
     case 'run.outbound.take':
     case 'run.next':
+      // @ts-ignore
       return this._continueRunMessage(routingKey, message, messageProperties);
     case 'run.resume': {
       return this._onResumeMessage(message);
@@ -610,10 +786,12 @@ Activity.prototype._onRunMessage = function onRunMessage(routingKey, message, me
       return this.emitFatal(err, message.content);
     }
     if (formatted) message.content = formattedContent;
+    // @ts-ignore
     this._continueRunMessage(routingKey, message, messageProperties);
   });
 };
 
+/** @internal */
 Activity.prototype._continueRunMessage = function continueRunMessage(routingKey, message) {
   const isRedelivered = message.fields.redelivered;
   const content = cloneContent(message.content);
@@ -621,7 +799,7 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
 
   const id = this.id;
   const step = this.environment.settings.step;
-  this[kStateMessage] = message;
+  this[K_STATE_MESSAGE] = message;
 
   switch (routingKey) {
     case 'run.enter': {
@@ -629,7 +807,7 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
 
       this.status = 'entered';
       if (!isRedelivered) {
-        this[kExec].delete('execution');
+        this[K_EXEC].delete('execution');
         if (this.extensions) this.extensions.activate(cloneMessage(message));
         this._publishEvent('enter', content, { correlationId });
       }
@@ -639,7 +817,7 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
       this.logger.debug(`<${id}> discard`, isRedelivered ? 'redelivered' : '');
 
       this.status = 'discard';
-      this[kExec].delete('execution');
+      this[K_EXEC].delete('execution');
 
       if (this.extensions) this.extensions.activate(cloneMessage(message));
 
@@ -655,24 +833,27 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
       if (!isRedelivered) {
         this.broker.publish('run', 'run.execute', content, { correlationId });
         this._publishEvent('start', content, { correlationId });
+      } else if (this.extensions) {
+        // Resume rested at 'started' (e.g. step mode): re-activate extensions the stop deactivated.
+        this.extensions.activate(cloneMessage(message));
       }
       break;
     }
     case 'run.execute.passthrough': {
-      const execution = this[kExec].get('execution');
+      const execution = this[K_EXEC].get('execution');
       if (!isRedelivered && execution) {
         if (execution.completed) return message.ack();
-        this[kExecuteMessage] = message;
+        this[K_EXECUTE_MESSAGE] = message;
         return execution.passthrough(message);
       }
     }
     case 'run.execute': {
       this.status = 'executing';
-      this[kExecuteMessage] = message;
+      this[K_EXECUTE_MESSAGE] = message;
 
       if (isRedelivered && this.extensions) this.extensions.activate(cloneMessage(message));
 
-      const exec = this[kExec];
+      const exec = this[K_EXEC];
       let execution = exec.get('execution');
       if (!execution) {
         execution = new ActivityExecution(this, this.context);
@@ -681,14 +862,14 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
 
       this.broker
         .getQueue('execution-q')
-        .assertConsumer(this[kMessageHandlers].onExecutionMessage, { exclusive: true, consumerTag: '_activity-execution' });
+        .assertConsumer(this[K_MESSAGE_HANDLERS].onExecutionMessage, { exclusive: true, consumerTag: '_activity-execution' });
       return execution.execute(message);
     }
     case 'run.end': {
       this.logger.debug(`<${id}> end`, isRedelivered ? 'redelivered' : '');
       if (isRedelivered) break;
 
-      this[kCounters].taken++;
+      this[K_COUNTERS].taken++;
 
       this.status = 'end';
 
@@ -710,7 +891,7 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
     }
     case 'run.discarded': {
       this.logger.debug(`<${content.executionId} (${id})> discarded`);
-      this[kCounters].discarded++;
+      this[K_COUNTERS].discarded++;
 
       this.status = 'discarded';
       content.outbound = undefined;
@@ -728,11 +909,6 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
       message.ack();
       return flow.take(content.flow);
     }
-    case 'run.outbound.discard': {
-      const flow = this._getOutboundSequenceFlowById(content.flow.id);
-      message.ack();
-      return flow.discard(content.flow);
-    }
     case 'run.leave': {
       this.status = undefined;
 
@@ -748,14 +924,15 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
     case 'run.next':
       message.ack();
       this._pauseRunQ();
-      return this._consumeInbound();
+      return this.consumeInbound();
   }
 
   if (!step) message.ack();
 };
 
+/** @internal */
 Activity.prototype._onExecutionMessage = function onExecutionMessage(routingKey, message) {
-  const executeMessage = this[kExecuteMessage];
+  const executeMessage = this[K_EXECUTE_MESSAGE];
   const content = cloneContent({
     ...executeMessage.content,
     ...message.content,
@@ -770,7 +947,7 @@ Activity.prototype._onExecutionMessage = function onExecutionMessage(routingKey,
 
   switch (routingKey) {
     case 'execution.outbound.take': {
-      return this._doOutbound(message, false, (err, outbound) => {
+      return this._doOutbound(message, (err, outbound) => {
         message.ack();
         if (err) return this.emitFatal(err, content);
         broker.publish('run', 'run.execute.passthrough', cloneContent(content, { outbound }));
@@ -784,10 +961,11 @@ Activity.prototype._onExecutionMessage = function onExecutionMessage(routingKey,
       break;
     }
     case 'execution.cancel':
-    case 'execution.discard':
+    case 'execution.discard': {
       this.status = 'discarded';
       broker.publish('run', 'run.discarded', content, { correlationId });
       break;
+    }
     default: {
       this.status = 'executed';
       broker.publish('run', 'run.end', content, { correlationId });
@@ -798,21 +976,23 @@ Activity.prototype._onExecutionMessage = function onExecutionMessage(routingKey,
   this._ackRunExecuteMessage();
 };
 
+/** @internal */
 Activity.prototype._ackRunExecuteMessage = function ackRunExecuteMessage() {
   if (this.environment.settings.step) return;
-  const executeMessage = this[kExecuteMessage];
+  const executeMessage = this[K_EXECUTE_MESSAGE];
   executeMessage.ack();
 };
 
+/** @internal */
 Activity.prototype._doRunLeave = function doRunLeave(message, isDiscarded, onOutbound) {
   const { content, properties } = message;
   const correlationId = properties.correlationId;
-  if (content.ignoreOutbound) {
+  if (isDiscarded || content.ignoreOutbound) {
     this.broker.publish('run', 'run.leave', cloneContent(content), { correlationId });
     return onOutbound();
   }
 
-  return this._doOutbound(cloneMessage(message), isDiscarded, (err, outbound) => {
+  return this._doOutbound(cloneMessage(message), (err, outbound) => {
     if (err) {
       return this._publishEvent('error', { ...content, error: err }, { correlationId });
     }
@@ -830,39 +1010,33 @@ Activity.prototype._doRunLeave = function doRunLeave(message, isDiscarded, onOut
   });
 };
 
-Activity.prototype._doOutbound = function doOutbound(fromMessage, isDiscarded, callback) {
-  const outboundSequenceFlows = this[kFlows].outboundSequenceFlows;
+/** @internal */
+Activity.prototype._doOutbound = function doOutbound(fromMessage, callback) {
+  const outboundSequenceFlows = this[K_FLOWS].outboundSequenceFlows;
   if (!outboundSequenceFlows.length) return callback(null, []);
 
   const fromContent = fromMessage.content;
 
-  let discardSequence = fromContent.discardSequence;
-  if (isDiscarded && !discardSequence && this[kFlags].attachedTo && fromContent.inbound?.[0]) {
-    discardSequence = [fromContent.inbound[0].id];
-  }
+  if (fromContent.outbound?.length) {
+    const outboundFlows = outboundSequenceFlows.map((flow) =>
+      formatFlowAction(flow, fromContent.outbound.filter((f) => f.id === flow.id).pop())
+    );
 
-  let outboundFlows;
-  if (isDiscarded) {
-    outboundFlows = outboundSequenceFlows.map((flow) => formatFlowAction(flow, { action: 'discard' }));
-  } else if (fromContent.outbound?.length) {
-    outboundFlows = outboundSequenceFlows.map((flow) => formatFlowAction(flow, fromContent.outbound.filter((f) => f.id === flow.id).pop()));
-  }
-
-  if (outboundFlows) {
-    this._doRunOutbound(outboundFlows, fromContent, discardSequence);
+    this._doRunOutbound(outboundFlows, fromContent);
     return callback(null, outboundFlows);
   }
 
   return this.evaluateOutbound(fromMessage, fromContent.outboundTakeOne, (err, evaluatedOutbound) => {
     if (err) return callback(new ActivityError(err.message, fromMessage, err));
-    const outbound = this._doRunOutbound(evaluatedOutbound, fromContent, discardSequence);
+    const outbound = this._doRunOutbound(evaluatedOutbound, fromContent);
     return callback(null, outbound);
   });
 };
 
-Activity.prototype._doRunOutbound = function doRunOutbound(outboundList, content, discardSequence) {
+/** @internal */
+Activity.prototype._doRunOutbound = function doRunOutbound(outboundList, content) {
   if (outboundList.length === 1) {
-    this._publishRunOutbound(outboundList[0], content, discardSequence);
+    this._publishRunOutbound(outboundList[0], content);
   } else {
     const targets = new Map();
 
@@ -876,15 +1050,21 @@ Activity.prototype._doRunOutbound = function doRunOutbound(outboundList, content
     }
 
     for (const outboundFlow of targets.values()) {
-      this._publishRunOutbound(outboundFlow, content, discardSequence);
+      this._publishRunOutbound(outboundFlow, content);
     }
   }
 
   return outboundList;
 };
 
-Activity.prototype._publishRunOutbound = function publishRunOutbound(outboundFlow, content, discardSequence) {
+/** @internal */
+Activity.prototype._publishRunOutbound = function publishRunOutbound(outboundFlow, content) {
   const { id: flowId, action, result } = outboundFlow;
+
+  if (action === 'discard') {
+    return;
+  }
+
   this.broker.publish(
     'run',
     'run.outbound.' + action,
@@ -893,16 +1073,16 @@ Activity.prototype._publishRunOutbound = function publishRunOutbound(outboundFlo
         ...(result && typeof result === 'object' && result),
         ...outboundFlow,
         sequenceId: getUniqueId(`${flowId}_${action}`),
-        ...(discardSequence && { discardSequence: discardSequence.slice() }),
       },
     })
   );
 };
 
+/** @internal */
 Activity.prototype._onResumeMessage = function onResumeMessage(message) {
   message.ack();
 
-  const stateMessage = this[kStateMessage];
+  const stateMessage = this[K_STATE_MESSAGE];
   const fields = stateMessage.fields;
   if (!fields.redelivered) return;
 
@@ -924,6 +1104,7 @@ Activity.prototype._onResumeMessage = function onResumeMessage(message) {
   return this.broker.publish('run', fields.routingKey, cloneContent(stateMessage.content), stateMessage.properties);
 };
 
+/** @internal */
 Activity.prototype._publishEvent = function publishEvent(state, content, properties) {
   this.broker.publish('event', `activity.${state}`, cloneContent(content, { state }), {
     ...properties,
@@ -932,18 +1113,19 @@ Activity.prototype._publishEvent = function publishEvent(state, content, propert
   });
 };
 
+/** @internal */
 Activity.prototype._onStop = function onStop(message) {
-  const running = this[kConsuming];
+  const running = this[K_CONSUMING];
 
   this.stopped = true;
 
-  this[kConsuming] = false;
+  this[K_CONSUMING] = false;
   const broker = this.broker;
   this._pauseRunQ();
   broker.cancel('_activity-api');
   broker.cancel('_activity-execution');
   broker.cancel('_run-on-inbound');
-  broker.cancel('_format-consumer');
+  if (this[K_FORMATTER]) this[K_FORMATTER].reset();
 
   if (this.extensions) this.extensions.deactivate(cloneMessage(message));
 
@@ -952,22 +1134,24 @@ Activity.prototype._onStop = function onStop(message) {
   }
 };
 
+/** @internal */
 Activity.prototype._consumeApi = function consumeApi() {
-  const executionId = this[kExec].get('executionId');
+  const executionId = this[K_EXEC].get('executionId');
   if (!executionId) return;
   const broker = this.broker;
   broker.cancel('_activity-api');
-  broker.subscribeTmp('api', `activity.*.${executionId}`, this[kMessageHandlers].onApiMessage, {
+  broker.subscribeTmp('api', `activity.*.${executionId}`, this[K_MESSAGE_HANDLERS].onApiMessage, {
     noAck: true,
     consumerTag: '_activity-api',
     priority: 100,
   });
 };
 
-Activity.prototype._onApiMessage = function onApiMessage(routingKey, message) {
+/** @internal */
+Activity.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
   switch (message.properties.type) {
     case 'discard': {
-      return this._discardRun(message);
+      return this._discardRun();
     }
     case 'stop': {
       return this._onStop(message);
@@ -978,6 +1162,7 @@ Activity.prototype._onApiMessage = function onApiMessage(routingKey, message) {
   }
 };
 
+/** @internal */
 Activity.prototype._createMessage = function createMessage(override) {
   const { name, status, parent } = this;
 
@@ -990,21 +1175,23 @@ Activity.prototype._createMessage = function createMessage(override) {
     ...(parent && { parent: cloneParent(parent) }),
   };
 
-  for (const [flag, value] of Object.entries(this[kFlags])) {
+  for (const [flag, value] of Object.entries(this[K_FLAGS])) {
     if (value) result[flag] = value;
   }
 
   return result;
 };
 
+/** @internal */
 Activity.prototype._getOutboundSequenceFlowById = function getOutboundSequenceFlowById(flowId) {
-  return this[kFlows].outboundSequenceFlows.find((flow) => flow.id === flowId);
+  return this[K_FLOWS].outboundSequenceFlows.find((flow) => flow.id === flowId);
 };
 
+/** @internal */
 Activity.prototype._deactivateRunConsumers = function _deactivateRunConsumers() {
   const broker = this.broker;
   broker.cancel('_activity-api');
   this._pauseRunQ();
   broker.cancel('_activity-execution');
-  this[kConsuming] = false;
+  this[K_CONSUMING] = false;
 };

@@ -1,9 +1,7 @@
-import Association from '../../src/flows/Association.js';
-import BoundaryEvent from '../../src/events/BoundaryEvent.js';
-import CompensateEventDefinition from '../../src/eventDefinitions/CompensateEventDefinition.js';
-import EndEvent from '../../src/events/EndEvent.js';
-import IntermediateThrowEvent from '../../src/events/IntermediateThrowEvent.js';
-import Task from '../../src/tasks/Task.js';
+import { CompensateEventDefinition } from 'bpmn-elements/eventDefinitions';
+import { BoundaryEvent, EndEvent, IntermediateThrowEvent } from 'bpmn-elements/events';
+import { Association } from 'bpmn-elements/flows';
+import { Task } from 'bpmn-elements/tasks';
 import testHelpers from '../helpers/testHelpers.js';
 
 describe('CompensateEventDefinition', () => {

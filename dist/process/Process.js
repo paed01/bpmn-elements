@@ -4,25 +4,22 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.Process = Process;
-exports.default = void 0;
-var _ProcessExecution = _interopRequireDefault(require("./ProcessExecution.js"));
+var _ProcessExecution = require("./ProcessExecution.js");
 var _shared = require("../shared.js");
 var _Api = require("../Api.js");
 var _EventBroker = require("../EventBroker.js");
+var _MessageFormatter = require("../MessageFormatter.js");
 var _messageHelper = require("../messageHelper.js");
 var _Errors = require("../error/Errors.js");
-function _interopRequireDefault(e) { return e && e.__esModule ? e : { default: e }; }
-const kConsuming = Symbol.for('consuming');
-const kCounters = Symbol.for('counters');
-const kExec = Symbol.for('execution');
-const kExecuteMessage = Symbol.for('executeMessage');
-const kExtensions = Symbol.for('extensions');
-const kLanes = Symbol.for('lanes');
-const kMessageHandlers = Symbol.for('messageHandlers');
-const kStateMessage = Symbol.for('stateMessage');
-const kStatus = Symbol.for('status');
-const kStopped = Symbol.for('stopped');
-var _default = exports.default = Process;
+var _constants = require("../constants.js");
+const K_LANES = Symbol.for('lanes');
+
+/**
+ * Owns one `<bpmn:process>`. Wraps the structural definition and orchestrates flow traversal,
+ * joins, and parallel activation through ProcessExecution.
+ * @param {import('#types').ProcessDefinition} processDef
+ * @param {import('#types').ContextInstance} context
+ */
 function Process(processDef, context) {
   const {
     id,
@@ -34,105 +31,145 @@ function Process(processDef, context) {
   this.id = id;
   this.type = type;
   this.name = name;
+  /** @type {import('#types').ElementParent} */
+  // @ts-ignore
   this.parent = parent ? (0, _messageHelper.cloneParent)(parent) : {};
+  /** @type {import('#types').ProcessDefinition['behaviour']} */
+  // @ts-ignore
   this.behaviour = behaviour;
-  const {
-    isExecutable
-  } = behaviour;
-  this.isExecutable = isExecutable;
+
+  // @ts-ignore
+  this.isExecutable = behaviour.isExecutable;
   const environment = this.environment = context.environment;
   this.context = context;
-  this[kCounters] = {
+  /** @internal */
+  this[_constants.K_COUNTERS] = {
     completed: 0,
     discarded: 0
   };
-  this[kConsuming] = false;
-  this[kExec] = new Map();
-  this[kStatus] = undefined;
-  this[kStopped] = false;
+  /** @internal */
+  this[_constants.K_CONSUMING] = false;
+  /** @internal */
+  this[_constants.K_EXECUTION] = new Map();
+  /** @internal */
+  this[_constants.K_STATUS] = undefined;
+  /** @internal */
+  this[_constants.K_STOPPED] = false;
   const {
     broker,
     on,
     once,
-    waitFor
+    waitFor,
+    emitFatal
   } = (0, _EventBroker.ProcessBroker)(this);
   this.broker = broker;
   this.on = on;
   this.once = once;
   this.waitFor = waitFor;
-  this[kMessageHandlers] = {
+  this.emitFatal = emitFatal;
+
+  /** @internal */
+  this[_constants.K_MESSAGE_HANDLERS] = {
     onApiMessage: this._onApiMessage.bind(this),
     onRunMessage: this._onRunMessage.bind(this),
     onExecutionMessage: this._onExecutionMessage.bind(this)
   };
   this.logger = environment.Logger(type.toLowerCase());
+
+  // @ts-ignore
   if (behaviour.lanes) {
-    this[kLanes] = behaviour.lanes.map(lane => new lane.Behaviour(this, lane));
+    /** @internal */
+    // @ts-ignore
+    this[K_LANES] = behaviour.lanes.map(lane => new lane.Behaviour(this, lane));
   }
-  this[kExtensions] = context.loadExtensions(this);
+  /** @internal */
+  this[_constants.K_EXTENSIONS] = context.loadExtensions(this);
+  /** @internal */
+  this[_constants.K_STATE_MESSAGE] = undefined;
+  /** @internal */
+  this[_constants.K_EXECUTE_MESSAGE] = undefined;
 }
 Object.defineProperties(Process.prototype, {
   counters: {
     get() {
       return {
-        ...this[kCounters]
+        ...this[_constants.K_COUNTERS]
       };
     }
   },
   lanes: {
     get() {
-      return this[kLanes]?.slice();
+      return this[K_LANES]?.slice();
     }
   },
   extensions: {
     get() {
-      return this[kExtensions];
+      return this[_constants.K_EXTENSIONS];
+    }
+  },
+  formatter: {
+    get() {
+      let formatter = this[_constants.K_FORMATTER];
+      if (formatter) return formatter;
+      formatter = this[_constants.K_FORMATTER] = new _MessageFormatter.Formatter(this);
+      return formatter;
     }
   },
   stopped: {
     get() {
-      return this[kStopped];
+      return this[_constants.K_STOPPED];
     }
   },
   isRunning: {
     get() {
-      if (!this[kConsuming]) return false;
+      if (!this[_constants.K_CONSUMING]) return false;
       return !!this.status;
     }
   },
   executionId: {
     get() {
-      const exec = this[kExec];
+      const exec = this[_constants.K_EXECUTION];
       return exec.get('executionId') || exec.get('initExecutionId');
     }
   },
   execution: {
     get() {
-      return this[kExec].get('execution');
+      return this[_constants.K_EXECUTION].get('execution');
     }
   },
   status: {
     get() {
-      return this[kStatus];
+      return this[_constants.K_STATUS];
     }
   },
   activityStatus: {
     get() {
-      return this[kExec].get('execution')?.activityStatus || 'idle';
+      return this[_constants.K_EXECUTION].get('execution')?.activityStatus || 'idle';
     }
   }
 });
+
+/**
+ * Allocate an executionId and emit init event without starting the run.
+ * @param {string} [useAsExecutionId] Override for the generated execution id
+ */
 Process.prototype.init = function init(useAsExecutionId) {
   const initExecutionId = useAsExecutionId || (0, _shared.getUniqueId)(this.id);
-  this[kExec].set('initExecutionId', initExecutionId);
+  this[_constants.K_EXECUTION].set('initExecutionId', initExecutionId);
   this._debug(`initialized with executionId <${initExecutionId}>`);
   this._publishEvent('init', this._createMessage({
     executionId: initExecutionId
   }));
 };
+
+/**
+ * Start running the process by publishing run.enter, run.start, and run.execute.
+ * @param {Record<string, any>} [runContent] Optional content merged into the run message
+ * @throws {Error} when the process is already running
+ */
 Process.prototype.run = function run(runContent) {
   if (this.isRunning) throw new Error(`process <${this.id}> is already running`);
-  const exec = this[kExec];
+  const exec = this[_constants.K_EXECUTION];
   const executionId = exec.get('initExecutionId') || (0, _shared.getUniqueId)(this.id);
   exec.delete('initExecutionId');
   exec.set('executionId', executionId);
@@ -146,17 +183,30 @@ Process.prototype.run = function run(runContent) {
   broker.publish('run', 'run.execute', (0, _messageHelper.cloneContent)(content));
   this._activateRunConsumers();
 };
+
+/**
+ * Resume after recover by republishing the last run message.
+ * @returns {this}
+ * @throws {Error} when called on a running process
+ */
 Process.prototype.resume = function resume() {
   if (this.isRunning) throw new Error(`cannot resume running process <${this.id}>`);
+  // @ts-ignore
   if (!this.status) return this;
-  this[kStopped] = false;
+  this[_constants.K_STOPPED] = false;
   const content = this._createMessage();
   this.broker.publish('run', 'run.resume', content, {
     persistent: false
   });
   this._activateRunConsumers();
+  // @ts-ignore
   return this;
 };
+
+/**
+ * Snapshot process state for recover.
+ * @returns {import('#types').ProcessState}
+ */
 Process.prototype.getState = function getState() {
   return {
     id: this.id,
@@ -170,54 +220,95 @@ Process.prototype.getState = function getState() {
     execution: this.execution?.getState()
   };
 };
-Process.prototype.recover = function recover(state) {
+
+/**
+ * Restore process state captured by getState.
+ * @param {import('#types').ProcessState} [state]
+ * @param {number} [recoveredVersion] State version
+ * @returns {this}
+ * @throws {Error} when called on a running process
+ */
+Process.prototype.recover = function recover(state, recoveredVersion) {
   if (this.isRunning) throw new Error(`cannot recover running process <${this.id}>`);
+  // @ts-ignore
   if (!state) return this;
-  this[kStopped] = !!state.stopped;
-  this[kStatus] = state.status;
-  const exec = this[kExec];
+  this[_constants.K_STOPPED] = !!state.stopped;
+  this[_constants.K_STATUS] = state.status;
+  const exec = this[_constants.K_EXECUTION];
   exec.set('executionId', state.executionId);
-  this[kCounters] = {
-    ...this[kCounters],
+  this[_constants.K_COUNTERS] = {
+    ...this[_constants.K_COUNTERS],
     ...state.counters
   };
   this.environment.recover(state.environment);
   if (state.execution) {
-    exec.set('execution', new _ProcessExecution.default(this, this.context).recover(state.execution));
+    exec.set('execution', new _ProcessExecution.ProcessExecution(this, this.context).recover(state.execution, recoveredVersion));
   }
   this.broker.recover(state.broker);
+
+  // @ts-ignore
   return this;
 };
+
+/**
+ * Walk activity graph from the given start id, or every start activity when omitted.
+ * @param {string} [startId]
+ * @returns {import('#types').ShakeResult}
+ */
 Process.prototype.shake = function shake(startId) {
   if (this.isRunning) return this.execution.shake(startId);
-  return new _ProcessExecution.default(this, this.context).shake(startId);
+  return new _ProcessExecution.ProcessExecution(this, this.context).shake(startId);
 };
+
+/**
+ * Stop the process if running.
+ */
 Process.prototype.stop = function stop() {
   if (!this.isRunning) return;
   this.getApi().stop();
 };
+
+/**
+ * Resolve a Process Api wrapper, preferring the running execution if any.
+ * @param {import('#types').ElementBrokerMessage} [message]
+ * @returns {import('#types').IApi<this>}
+ */
 Process.prototype.getApi = function getApi(message) {
   const execution = this.execution;
+  // @ts-ignore
   if (execution) return execution.getApi(message);
-  return (0, _Api.ProcessApi)(this.broker, message || this[kStateMessage]);
+  // @ts-ignore
+  return (0, _Api.ProcessApi)(this.broker, message || this[_constants.K_STATE_MESSAGE]);
 };
+
+/**
+ * Send a delegated signal to the running process.
+ * @param {import('#types').signalMessage} [message]
+ */
 Process.prototype.signal = function signal(message) {
   return this.getApi().signal(message, {
     delegate: true
   });
 };
+
+/**
+ * Cancel a running activity inside the process by delegated api message.
+ * @param {import('#types').signalMessage} [message]
+ */
 Process.prototype.cancelActivity = function cancelActivity(message) {
   return this.getApi().cancel(message, {
     delegate: true
   });
 };
+
+/** @internal */
 Process.prototype._activateRunConsumers = function activateRunConsumers() {
-  this[kConsuming] = true;
+  this[_constants.K_CONSUMING] = true;
   const broker = this.broker;
   const {
     onApiMessage,
     onRunMessage
-  } = this[kMessageHandlers];
+  } = this[_constants.K_MESSAGE_HANDLERS];
   broker.subscribeTmp('api', `process.*.${this.executionId}`, onApiMessage, {
     noAck: true,
     consumerTag: '_process-api',
@@ -228,60 +319,86 @@ Process.prototype._activateRunConsumers = function activateRunConsumers() {
     consumerTag: '_process-run'
   });
 };
+
+/** @internal */
 Process.prototype._deactivateRunConsumers = function deactivateRunConsumers() {
   const broker = this.broker;
   broker.cancel('_process-api');
   broker.cancel('_process-run');
   broker.cancel('_process-execution');
-  this[kConsuming] = false;
+  if (this[_constants.K_FORMATTER]) this[_constants.K_FORMATTER].reset();
+  this[_constants.K_CONSUMING] = false;
 };
-Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
+
+/** @internal */
+Process.prototype._onRunMessage = function onRunMessage(routingKey, message, messageProperties) {
+  if (routingKey === 'run.resume') {
+    return this._onResumeMessage(message);
+  }
+  const preStatus = this[_constants.K_STATUS];
+  this[_constants.K_STATUS] = 'formatting';
+
+  // @ts-ignore
+  return this.formatter.format(message, (err, formattedContent, formatted) => {
+    this[_constants.K_STATUS] = preStatus;
+    if (err) {
+      return this.emitFatal(err, message.content);
+    }
+    if (formatted) message.content = formattedContent;
+    this._continueRunMessage(routingKey, message, messageProperties);
+  });
+};
+
+/**
+ * @internal
+ * @type {(routingKey: string, message: any, messageProperties?: any) => void}
+ */
+Process.prototype._continueRunMessage = function continueRunMessage(routingKey, message) {
   const {
     content,
     fields
   } = message;
-  if (routingKey === 'run.resume') {
-    return this._onResumeMessage(message);
-  }
-  this[kStateMessage] = message;
+  this[_constants.K_STATE_MESSAGE] = message;
   switch (routingKey) {
     case 'run.enter':
       {
         this._debug('enter');
-        this[kStatus] = 'entered';
+        this[_constants.K_STATUS] = 'entered';
         if (fields.redelivered) break;
-        this[kExec].delete('execution');
+        this[_constants.K_EXECUTION].delete('execution');
+        if (this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(message));
         this._publishEvent('enter', content);
         break;
       }
     case 'run.start':
       {
         this._debug('start');
-        this[kStatus] = 'start';
+        this[_constants.K_STATUS] = 'start';
         this._publishEvent('start', content);
         break;
       }
     case 'run.execute':
       {
-        const exec = this[kExec];
-        this[kStatus] = 'executing';
+        const exec = this[_constants.K_EXECUTION];
+        this[_constants.K_STATUS] = 'executing';
+        if (fields.redelivered && this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(message));
         const executeMessage = (0, _messageHelper.cloneMessage)(message);
         let execution = exec.get('execution');
         if (fields.redelivered && !execution) {
           executeMessage.fields.redelivered = undefined;
         }
-        this[kExecuteMessage] = message;
-        this.broker.getQueue('execution-q').assertConsumer(this[kMessageHandlers].onExecutionMessage, {
+        this[_constants.K_EXECUTE_MESSAGE] = message;
+        this.broker.getQueue('execution-q').assertConsumer(this[_constants.K_MESSAGE_HANDLERS].onExecutionMessage, {
           exclusive: true,
           consumerTag: '_process-execution'
         });
-        execution = execution || new _ProcessExecution.default(this, this.context);
+        execution = execution || new _ProcessExecution.ProcessExecution(this, this.context);
         exec.set('execution', execution);
         return execution.execute(executeMessage);
       }
     case 'run.error':
       {
-        this[kStatus] = 'errored';
+        this[_constants.K_STATUS] = 'errored';
         this._publishEvent('error', (0, _messageHelper.cloneContent)(content, {
           error: fields.redelivered ? (0, _Errors.makeErrorFromMessage)(message) : content.error
         }));
@@ -289,26 +406,27 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
       }
     case 'run.end':
       {
-        this[kStatus] = 'end';
+        this[_constants.K_STATUS] = 'end';
         if (fields.redelivered) break;
         this._debug('completed');
-        this[kCounters].completed++;
+        this[_constants.K_COUNTERS].completed++;
         this.broker.publish('run', 'run.leave', content);
         this._publishEvent('end', content);
         break;
       }
     case 'run.discarded':
       {
-        this[kStatus] = 'discarded';
+        this[_constants.K_STATUS] = 'discarded';
         if (fields.redelivered) break;
-        this[kCounters].discarded++;
+        this[_constants.K_COUNTERS].discarded++;
         this.broker.publish('run', 'run.leave', content);
         this._publishEvent('discarded', content);
         break;
       }
     case 'run.leave':
       {
-        this[kStatus] = undefined;
+        this[_constants.K_STATUS] = undefined;
+        if (this.extensions) this.extensions.deactivate((0, _messageHelper.cloneMessage)(message));
         message.ack();
         this._deactivateRunConsumers();
         const {
@@ -321,9 +439,11 @@ Process.prototype._onRunMessage = function onRunMessage(routingKey, message) {
   }
   message.ack();
 };
+
+/** @internal */
 Process.prototype._onResumeMessage = function onResumeMessage(message) {
   message.ack();
-  const stateMessage = this[kStateMessage];
+  const stateMessage = this[_constants.K_STATE_MESSAGE];
   switch (stateMessage.fields.routingKey) {
     case 'run.enter':
     case 'run.start':
@@ -335,10 +455,13 @@ Process.prototype._onResumeMessage = function onResumeMessage(message) {
       return;
   }
   if (!stateMessage.fields.redelivered) return;
+  if (this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(stateMessage));
   this._debug(`resume from ${this.status}`);
   return this.broker.publish('run', stateMessage.fields.routingKey, (0, _messageHelper.cloneContent)(stateMessage.content), stateMessage.properties);
 };
-Process.prototype._onExecutionMessage = function onExecutionMessage(routingKey, message) {
+
+/** @internal */
+Process.prototype._onExecutionMessage = function onExecutionMessage(_routingKey, message) {
   const content = message.content;
   const messageType = message.properties.type;
   message.ack();
@@ -361,10 +484,12 @@ Process.prototype._onExecutionMessage = function onExecutionMessage(routingKey, 
         this.broker.publish('run', 'run.end', content);
       }
   }
-  const executeMessage = this[kExecuteMessage];
-  this[kExecuteMessage] = null;
+  const executeMessage = this[_constants.K_EXECUTE_MESSAGE];
+  this[_constants.K_EXECUTE_MESSAGE] = null;
   executeMessage.ack();
 };
+
+/** @internal */
 Process.prototype._publishEvent = function publishEvent(state, content) {
   const eventContent = this._createMessage({
     ...content,
@@ -375,6 +500,12 @@ Process.prototype._publishEvent = function publishEvent(state, content) {
     mandatory: state === 'error'
   });
 };
+
+/**
+ * Deliver a message to a target activity or start activity that references it.
+ * Starts the process if a target is found and the process is idle.
+ * @param {import('#types').ElementBrokerMessage} message
+ */
 Process.prototype.sendMessage = function sendMessage(message) {
   const messageContent = message?.content;
   if (!messageContent) return;
@@ -393,37 +524,61 @@ Process.prototype.sendMessage = function sendMessage(message) {
     delegate: true
   });
 };
+
+/**
+ * @param {string} childId
+ */
 Process.prototype.getActivityById = function getActivityById(childId) {
   const execution = this.execution;
   if (execution) return execution.getActivityById(childId);
   return this.context.getActivityById(childId);
 };
+
+/**
+ * Get every activity in the process scope.
+ */
 Process.prototype.getActivities = function getActivities() {
   const execution = this.execution;
   if (execution) return execution.getActivities();
   return this.context.getActivities(this.id);
 };
+
+/**
+ * Get start activities, optionally filtered by referenced event definition.
+ * @param {import('#types').startActivityFilterOptions} [filterOptions]
+ */
 Process.prototype.getStartActivities = function getStartActivities(filterOptions) {
   return this.context.getStartActivities(filterOptions, this.id);
 };
+
+/**
+ * Get sequence flows in the process scope.
+ */
 Process.prototype.getSequenceFlows = function getSequenceFlows() {
   const execution = this.execution;
   if (execution) return execution.getSequenceFlows();
   return this.context.getSequenceFlows();
 };
+
+/**
+ * @param {string} laneId
+ * @returns {import('./Lane.js').Lane | undefined}
+ */
 Process.prototype.getLaneById = function getLaneById(laneId) {
-  const lanes = this[kLanes];
-  if (!lanes) return;
-  return lanes.find(lane => lane.id === laneId);
+  return this[K_LANES]?.find(lane => lane.id === laneId);
 };
+
+/**
+ * List currently postponed activities as Api wrappers.
+ * @param {Parameters<import('./ProcessExecution.js').ProcessExecution['getPostponed']>} args
+ */
 Process.prototype.getPostponed = function getPostponed(...args) {
-  const execution = this.execution;
-  if (!execution) return [];
-  return execution.getPostponed(...args);
+  return this.execution?.getPostponed(...args) || [];
 };
-Process.prototype._onApiMessage = function onApiMessage(routingKey, message) {
-  const messageType = message.properties.type;
-  switch (messageType) {
+
+/** @internal */
+Process.prototype._onApiMessage = function onApiMessage(_routingKey, message) {
+  switch (message.properties.type) {
     case 'stop':
       {
         if (this.execution && !this.execution.completed) return;
@@ -432,11 +587,16 @@ Process.prototype._onApiMessage = function onApiMessage(routingKey, message) {
       }
   }
 };
+
+/** @internal */
 Process.prototype._onStop = function onStop() {
-  this[kStopped] = true;
+  this[_constants.K_STOPPED] = true;
   this._deactivateRunConsumers();
+  if (this.extensions) this.extensions.deactivate((0, _messageHelper.cloneMessage)(this[_constants.K_STATE_MESSAGE]));
   return this._publishEvent('stop');
 };
+
+/** @internal */
 Process.prototype._createMessage = function createMessage(override) {
   return {
     id: this.id,
@@ -449,6 +609,8 @@ Process.prototype._createMessage = function createMessage(override) {
     ...override
   };
 };
+
+/** @internal */
 Process.prototype._debug = function debug(msg) {
   this.logger.debug(`<${this.id}> ${msg}`);
 };

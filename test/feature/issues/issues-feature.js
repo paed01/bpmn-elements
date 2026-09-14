@@ -1,4 +1,4 @@
-import Definition from '../../../src/definition/Definition.js';
+import { Definition } from 'bpmn-elements';
 import factory from '../../helpers/factory.js';
 import testHelpers from '../../helpers/testHelpers.js';
 import js from '../../resources/extensions/JsExtension.js';
@@ -55,32 +55,32 @@ Feature('Issues', () => {
       return leave;
     });
 
-    And('first user task is taken once and discarded twice', () => {
+    And('first user task is taken once and discarded once', () => {
       expect(task1.counters).to.have.property('taken', 1);
-      expect(task1.counters).to.have.property('discarded', 2);
+      expect(task1.counters).to.have.property('discarded', 1);
     });
 
-    And('second user task is taken once and discarded twice', () => {
+    And('second user task is taken once and not discarded', () => {
       expect(task2.counters).to.have.property('taken', 1);
-      expect(task2.counters).to.have.property('discarded', 2);
+      expect(task2.counters).to.have.property('discarded', 0);
     });
 
-    And('first decision is taken once and discarded once since discard loop prevents more', () => {
+    And('first decision is taken once and not discarded', () => {
       const decision = definition.getActivityById('decision1');
       expect(decision.counters).to.have.property('taken', 1);
-      expect(decision.counters).to.have.property('discarded', 1);
+      expect(decision.counters).to.have.property('discarded', 0);
     });
 
-    And('second decision is discarded twice', () => {
+    And('second decision is not discarded', () => {
       const decision = definition.getActivityById('decision2');
       expect(decision.counters).to.have.property('taken', 0);
-      expect(decision.counters).to.have.property('discarded', 2);
+      expect(decision.counters).to.have.property('discarded', 0);
     });
 
-    And('end event is discarded four times', () => {
+    And('end event is not discarded', () => {
       const decision = definition.getActivityById('end');
       expect(decision.counters).to.have.property('taken', 0);
-      expect(decision.counters).to.have.property('discarded', 4);
+      expect(decision.counters).to.have.property('discarded', 0);
     });
   });
 
@@ -149,14 +149,14 @@ Feature('Issues', () => {
       expect(usertask.counters).to.have.property('taken', 3);
     });
 
-    And('discarded 4 times', () => {
-      expect(usertask.counters).to.have.property('discarded', 4);
+    And('not discarded', () => {
+      expect(usertask.counters).to.have.property('discarded', 0);
     });
 
-    And('end event is taken once and discarded twice', () => {
+    And('end event is taken once and not discarded', () => {
       const endEvent = recovered.getActivityById('end');
       expect(endEvent.counters).to.have.property('taken', 1);
-      expect(endEvent.counters).to.have.property('discarded', 2);
+      expect(endEvent.counters).to.have.property('discarded', 0);
     });
   });
 
@@ -220,7 +220,7 @@ Feature('Issues', () => {
         context = await testHelpers.context(source1);
         options = {
           services: {
-            async doTask1(scope, callback) {
+            async doTask1(_scope, callback) {
               await sleep(50); // calling other heavy service...
               return callback(null);
             },
@@ -277,16 +277,16 @@ Feature('Issues', () => {
         return leave;
       });
 
-      And('user task was discarded once', () => {
+      And('user task was taken once and not discarded', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 1);
+        expect(task.counters).to.have.property('discarded', 0);
       });
 
-      And('end was discarded thrice', () => {
+      And('end was not discarded', () => {
         const task = definition.getActivityById('End');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 3);
+        expect(task.counters).to.have.property('discarded', 0);
       });
 
       Given('variables are reset', () => {
@@ -325,16 +325,16 @@ Feature('Issues', () => {
         return leave;
       });
 
-      And('user task was discarded twice', () => {
+      And('user task was taken twice and not discarded', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 2);
-        expect(task.counters).to.have.property('discarded', 2);
+        expect(task.counters).to.have.property('discarded', 0);
       });
 
-      And('end was discarded six times', () => {
+      And('end was not discarded', () => {
         const task = definition.getActivityById('End');
         expect(task.counters).to.have.property('taken', 2);
-        expect(task.counters).to.have.property('discarded', 6);
+        expect(task.counters).to.have.property('discarded', 0);
       });
 
       When('definition is recovered with state from first run user task wait', () => {
@@ -375,16 +375,16 @@ Feature('Issues', () => {
         return leave;
       });
 
-      And('user task was discarded once', () => {
+      And('user task was taken once and not discarded', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 1);
+        expect(task.counters).to.have.property('discarded', 0);
       });
 
-      And('end was discarded thrice', () => {
+      And('end was not discarded', () => {
         const task = definition.getActivityById('End');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 3);
+        expect(task.counters).to.have.property('discarded', 0);
       });
     });
 
@@ -394,7 +394,7 @@ Feature('Issues', () => {
         context = await testHelpers.context(source2);
         options = {
           services: {
-            async doTask1(scope, callback) {
+            async doTask1(_scope, callback) {
               await sleep(50); // calling other heavy service...
               return callback(null);
             },
@@ -450,10 +450,10 @@ Feature('Issues', () => {
         return leave;
       });
 
-      And('user task was discarded twice', () => {
+      And('user task was taken twice and not discarded', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 2);
+        expect(task.counters).to.have.property('discarded', 0);
       });
 
       When('definition is recovered with state from wait', () => {
@@ -494,10 +494,10 @@ Feature('Issues', () => {
         return leave;
       });
 
-      And('user task was discarded twice', () => {
+      And('user task was taken twice and not discarded', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 2);
+        expect(task.counters).to.have.property('discarded', 0);
       });
     });
 
@@ -508,7 +508,7 @@ Feature('Issues', () => {
         context = await testHelpers.context(source3);
         options = {
           services: {
-            async doTask1(scope, callback) {
+            async doTask1(_scope, callback) {
               await sleep(50); // calling other heavy service...
               return callback(null);
             },
@@ -565,16 +565,16 @@ Feature('Issues', () => {
         return leave;
       });
 
-      And('user task was discarded once', () => {
+      And('user task was taken once and not discarded', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 1);
+        expect(task.counters).to.have.property('discarded', 0);
       });
 
-      And('end was discarded thrice', () => {
+      And('end was not discarded', () => {
         const task = definition.getActivityById('End');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 3);
+        expect(task.counters).to.have.property('discarded', 0);
       });
 
       Given('variables are reset', () => {
@@ -613,16 +613,16 @@ Feature('Issues', () => {
         return leave;
       });
 
-      And('user task was discarded twice', () => {
+      And('user task was taken twice and not discarded', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 2);
-        expect(task.counters).to.have.property('discarded', 2);
+        expect(task.counters).to.have.property('discarded', 0);
       });
 
-      And('end was discarded six times', () => {
+      And('end was not discarded', () => {
         const task = definition.getActivityById('End');
         expect(task.counters).to.have.property('taken', 2);
-        expect(task.counters).to.have.property('discarded', 6);
+        expect(task.counters).to.have.property('discarded', 0);
       });
 
       When('definition is recovered with state from first run user task wait', () => {
@@ -663,16 +663,16 @@ Feature('Issues', () => {
         return leave;
       });
 
-      And('user task was discarded once', () => {
+      And('user task was taken once and not discarded', () => {
         const task = definition.getActivityById('UserTask');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 1);
+        expect(task.counters).to.have.property('discarded', 0);
       });
 
-      And('end was discarded thrice', () => {
+      And('end was not discarded', () => {
         const task = definition.getActivityById('End');
         expect(task.counters).to.have.property('taken', 1);
-        expect(task.counters).to.have.property('discarded', 3);
+        expect(task.counters).to.have.property('discarded', 0);
       });
 
       Given('definition is ran again', () => {
@@ -712,8 +712,11 @@ Feature('Issues', () => {
         definition.resume();
       });
 
-      Then('end event is discarded once', () => {
-        expect(definition.getActivityById('End').counters).to.deep.equal({ taken: 0, discarded: 1 });
+      Then('end event is still not discarded', () => {
+        expect(definition.getActivityById('End').counters).to.deep.equal({
+          taken: 0,
+          discarded: 0,
+        });
       });
     });
   });
@@ -723,7 +726,7 @@ Feature('Issues', () => {
     Given('fork two user tasks and then join', async () => {
       const source = `<?xml version="1.0" encoding="UTF-8"?>
       <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Issue_125" targetNamespace="http://bpmn.io/schema/bpmn">
-        <process id="parallel" isExecutable="true">
+        <process id="Process_0" isExecutable="true">
           <startEvent id="start" name="START" />
           <sequenceFlow id="to-fork" sourceRef="start" targetRef="fork" />
           <parallelGateway id="fork" name="FORK" />
@@ -1024,9 +1027,14 @@ Feature('Issues', () => {
       definition = new Definition(context, {
         extensions: { AsyncFormatting },
       });
-      definition.waitFor('activity.wait', () => {
-        state = definition.getState();
-      });
+      definition.waitFor(
+        'activity.wait',
+
+        // @ts-expect-error type coverage
+        () => {
+          state = definition.getState();
+        }
+      );
       definition.run();
     });
 
@@ -1114,9 +1122,14 @@ Feature('Issues', () => {
       definition = new Definition(context.clone(), {
         extensions: { AsyncFormatting },
       });
-      definition.waitFor('activity.wait', () => {
-        state = definition.getState();
-      });
+      definition.waitFor(
+        'activity.wait',
+
+        // @ts-expect-error type coverage
+        () => {
+          state = definition.getState();
+        }
+      );
       definition.run();
     });
 
@@ -1154,9 +1167,14 @@ Feature('Issues', () => {
       definition = new Definition(context.clone(), {
         extensions: { AsyncFormatting },
       });
-      definition.waitFor('activity.wait', () => {
-        state = definition.getState();
-      });
+      definition.waitFor(
+        'activity.wait',
+
+        // @ts-expect-error type coverage
+        () => {
+          state = definition.getState();
+        }
+      );
       definition.run();
     });
 

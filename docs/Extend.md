@@ -38,9 +38,9 @@ Example with bpmn-moddle:
 
 ```js
 import * as elements from 'bpmn-elements';
-import BpmnModdle from 'bpmn-moddle';
+import { BpmnModdle } from 'bpmn-moddle';
 import MyStartEvent from './extend/MyStartEvent';
-import { default as serialize, TypeResolver } from 'moddle-context-serializer';
+import { Serializer, TypeResolver } from 'moddle-context-serializer';
 
 const myOwnElements = {
   ...elements,
@@ -69,7 +69,7 @@ async function run(source) {
       },
     },
   };
-  const context = new Context(serialize(moddleContext, typeResolver));
+  const context = new Context(Serializer(moddleContext, typeResolver));
 
   const definition = new Definition(context, options);
   definition.run();
@@ -88,6 +88,8 @@ Define your own event definition type function.
 The behaviour function will receive the Activity instance and the workflow context when the activity executes.
 
 To complete execution the broker must publish an `execute.completed` or an `execute.error` message.
+
+Note: `Escalation` and `EscalationEventDefinition` ship with `bpmn-elements` and do not need to be supplied. The example below is illustrative — replace with the event definition type you actually need to support.
 
 ```js
 export default function EscalateEventDefinition(activity, eventDefinition = {}) {
@@ -127,9 +129,9 @@ import Escalation from './extend/Escalation.js';
 import IntermediateThrowEvent from './extend/IntermediateThrowEvent';
 
 import * as elements from 'bpmn-elements';
-import BpmnModdle from 'bpmn-moddle';
+import { BpmnModdle } from 'bpmn-moddle';
 
-import { default as serialize, TypeResolver } from 'moddle-context-serializer';
+import { Serializer, TypeResolver } from 'moddle-context-serializer';
 
 const { Context, Definition } = elements;
 const typeResolver = TypeResolver(elements, (activityTypes) => {
@@ -160,7 +162,7 @@ async function run(source) {
       },
     },
   };
-  const context = new Context(serialize(moddleContext, typeResolver));
+  const context = new Context(Serializer(moddleContext, typeResolver));
 
   const definition = new Definition(context, options);
   definition.run();
@@ -171,3 +173,16 @@ function getModdleContext(sourceXml) {
   return bpmnModdle.fromXML(sourceXml.trim());
 }
 ```
+
+# Replacing `LinkEventDefinition`
+
+Link catches are wired to their matching throws at activity construction. The wiring reads each activity's `behaviour.eventDefinitions` through `context.getLinkEventDefinitionInfo(activityDef)`, which discovers the resolved link Behaviour and its link names. If you ship your own `LinkEventDefinition`, the wiring keeps working as long as the contract below holds:
+
+- The moddle entity's `type` must end with `LinkEventDefinition` (e.g. `bpmn:LinkEventDefinition`, `myns:LinkEventDefinition`). This is the only string-based check — once the first matching definition is found, all subsequent matches compare against the resolved `Behaviour` reference, so any rename is honoured.
+- Expose the link name on `behaviour.name` (the moddle default).
+- The Behaviour signature is `(activity, eventDefinition, context, index)`.
+- When throwing (`activity.isThrowing`), publish `activity.link` on the activity's `event` exchange with `content.message.linkName` set. The catch's construction-time inbound trigger listens for this and calls the catch's `init()`, which queues an `activity.init` message on the catch's inbound queue to drive its run cycle.
+- Publish `execute.completed` on the `execution` exchange so the throwing activity terminates.
+- When catching, publish `activity.catch` on the `event` exchange and complete with `execute.completed`. `Activity` drives the rest of the lifecycle.
+
+Shake propagation (`activity.shake.link` / `activity.shake.linked`) is emitted by `Activity` from the `linkNames` exposed by `getLinkEventDefinitionInfo` — your event definition does not need to subscribe to or republish shake events.
