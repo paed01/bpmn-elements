@@ -38,7 +38,6 @@ Refactor parallel converging and forking gateways, and treat multiple start even
 - `Definition#getElementById` resolves sequence flows, message flows, and associations in addition to activities, matching its documented "any element" contract. Adds `Context#getMessageFlowById` and `Context#getAssociationById`
 - new exported types `ServiceFunction`, declaring injected `environment.services` functions with the calling element as `this`, and `ResolvedReference`, returned by `resolve` on signal-, message-, and escalation reference elements. `EnvironmentOptions` accepts arbitrary consumer options
 - major upgrade of [smqp@15](https://github.com/paed01/smqp/blob/default/CHANGELOG.md) that straightens out routing quirks, and of [@0dep/piso@5](https://www.npmjs.com/package/@0dep/piso); types are built and validated with `typescript@6.0.3`
-- package metadata: repository url, homepage, and author url point to 0dep.se
 
 ### Fixes
 
