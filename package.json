@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "18.0.26",
+  "version": "18.0.27",
   "description": "Executable workflow elements based on BPMN 2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -62,10 +62,10 @@
     "type": "git",
     "url": "git+https://github.com/paed01/bpmn-elements.git"
   },
-  "homepage": "https://0dep.se/run",
+  "homepage": "https://0dep.se/run/",
   "author": {
     "name": "Pål Edman",
-    "url": "https://0dep.se/about"
+    "url": "https://0dep.se/about/"
   },
   "license": "MIT",
   "keywords": [

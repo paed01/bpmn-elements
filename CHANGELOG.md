@@ -1,5 +1,9 @@
 # Changelog
 
+## v18.0.27 - 2026-09-16
+
+- fix package homepage trailing slash
+
 ## v18.0.26 - 2026-09-13
 
 Refactor parallel converging and forking gateways, and treat multiple start events as mutually exclusive entry points. With the parallel gateway keeping track of its peers there is no longer any need for discarding sequence flows. Most diagrams run unchanged; see the [upgrade guide](/docs/Upgrade.md) for migration details.
