@@ -2,6 +2,31 @@
 
 Executable BPMN 2 definition. Pass [context](/docs/Context.md) and execute.
 
+<!-- toc -->
+
+- [`new Definition(context[, options])`](#new-definitioncontext-options)
+  - [`run([options, callback])`](#runoptions-callback)
+  - [`getActivityById(id)`](#getactivitybyidid)
+  - [`getElementById(elementId)`](#getelementbyidelementid)
+  - [`getRunningProcesses()`](#getrunningprocesses)
+  - [`shake([activityId])`](#shakeactivityid)
+  - [`signal(message)`](#signalmessage)
+  - [`cancelActivity(message)`](#cancelactivitymessage)
+  - [`sendMessage(message)`](#sendmessagemessage)
+  - [`getPostponed()`](#getpostponed)
+  - [`getProcesses()`](#getprocesses)
+  - [`getProcessById(id)`](#getprocessbyidid)
+  - [`getExecutableProcesses()`](#getexecutableprocesses)
+  - [`getState()`](#getstate)
+  - [`recover(state)`](#recoverstate)
+  - [`resume([callback])`](#resumecallback)
+  - [`on(eventName, handler[, eventOptions])`](#oneventname-handler-eventoptions)
+  - [`once(eventName, handler[, eventOptions])`](#onceeventname-handler-eventoptions)
+  - [`stop()`](#stop)
+  - [`waitFor(eventName[, onMessage])`](#waitforeventname-onmessage)
+
+<!-- /toc -->
+
 ## `new Definition(context[, options])`
 
 Arguments:
@@ -117,7 +142,7 @@ Get all executable processes.
 
 Get definition state.
 
-## `recover(state)`
+### `recover(state)`
 
 Recover definition.
 
@@ -127,7 +152,7 @@ Arguments:
 
 Returns definition.
 
-## `resume([callback])`
+### `resume([callback])`
 
 Resume stopped or recovered definition with optional callback. The callback will be called on error, when run completes, or run is stopped.
 

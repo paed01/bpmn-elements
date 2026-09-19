@@ -2,6 +2,20 @@
 
 `bpmn-elements` targets the **Common Executable** conformance sub-class of BPMN 2.0 — the subset the OMG spec defines as the minimum an executing engine must support. This page maps that element set to the library's support status and records the deliberate design decisions behind it.
 
+<!-- toc -->
+
+- [Execution philosophy](#execution-philosophy)
+- [Coverage](#coverage)
+  - [Events](#events)
+  - [Activities / tasks](#activities--tasks)
+  - [Gateways](#gateways)
+  - [Data, flows and swimlanes](#data-flows-and-swimlanes)
+- [Design decisions](#design-decisions)
+- [Business Rule Task and DMN](#business-rule-task-and-dmn)
+- [Out of scope / limitations](#out-of-scope--limitations)
+
+<!-- /toc -->
+
 ## Execution philosophy
 
 The library is a **semantic execution engine**, not a service/DMN/forms runtime. Elements whose behaviour is "invoke an external capability" (a service, a decision, a human form) are executed by delegating to a host-supplied implementation rather than by the engine speaking WSDL, DMN or a form language itself. This is the same effective model used by mainstream engines and is how the executable task types below are realised.

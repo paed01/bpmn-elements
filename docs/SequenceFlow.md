@@ -2,6 +2,14 @@
 
 Sequence flow behaviour.
 
+<!-- toc -->
+
+- [Conditional flows](#conditional-flows)
+  - [Service function conditions](#service-function-conditions)
+  - [When no conditional flow is taken](#when-no-conditional-flow-is-taken)
+
+<!-- /toc -->
+
 # Conditional flows
 
 All outbound sequence flows can have conditions. Flows are evaluated in sequence. Default flow will be taken if no other flow was taken.

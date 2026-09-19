@@ -1,5 +1,13 @@
 # Extending behaviour
 
+<!-- toc -->
+
+- [Extend by overriding behaviour](#extend-by-overriding-behaviour)
+- [Extend event definition](#extend-event-definition)
+- [Replacing `LinkEventDefinition`](#replacing-linkeventdefinition)
+
+<!-- /toc -->
+
 # Extend by overriding behaviour
 
 First off define your own type function. The type function will receive the activity definition and the current context and is required to return an instance of `Activity` with behaviour functionality, i.e. an api with an execute function.

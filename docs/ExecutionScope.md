@@ -2,6 +2,14 @@
 
 When calling services and scripts the following scope is provided.
 
+<!-- toc -->
+
+- [`resolveExpression(expression)`](#resolveexpressionexpression)
+- [`ActivityError(message, sourceMessage[, inner])`](#activityerrormessage-sourcemessage-inner)
+- [`BpmnError(message[, behaviour, sourceMessage, inner])`](#bpmnerrormessage-behaviour-sourcemessage-inner)
+
+<!-- /toc -->
+
 Properties:
 
 - `id`: calling element id

@@ -2,6 +2,22 @@
 
 Shared activity execution.
 
+<!-- toc -->
+
+- [`new ActivityExecution(activity, context)`](#new-activityexecutionactivity-context)
+  - [`activate()`](#activate)
+  - [`deactivate()`](#deactivate)
+  - [`discard()`](#discard)
+  - [`execute(executeMessage)`](#executeexecutemessage)
+  - [`passthrough(executeMessage)`](#passthroughexecutemessage)
+  - [`getApi(message)`](#getapimessage)
+  - [`getPostponed()`](#getpostponed)
+  - [`getState()`](#getstate)
+  - [`recover([state])`](#recoverstate)
+  - [`stop()`](#stop)
+
+<!-- /toc -->
+
 ![Activity execution](https://raw.github.com/paed01/bpmn-elements/master/docs/activity-execution.png)
 
 ## `new ActivityExecution(activity, context)`

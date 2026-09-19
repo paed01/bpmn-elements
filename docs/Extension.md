@@ -2,6 +2,14 @@
 
 The element behaviours in this project only support elements and attributed defined in the BPMN 2.0 scheme, but can be extended to understand other schemas.
 
+<!-- toc -->
+
+- [`extension(activity, context)`](#extensionactivity-context)
+- [Extension and output](#extension-and-output)
+- [Extension with formatting](#extension-with-formatting)
+
+<!-- /toc -->
+
 ## `extension(activity, context)`
 
 Activities and processes call extension functions when instantiated.

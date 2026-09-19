@@ -2,6 +2,32 @@
 
 Shared activity behaviour.
 
+<!-- toc -->
+
+- [Activity lifecycle](#activity-lifecycle)
+- [`new Activity(Behaviour, activityDefinition, context)`](#new-activitybehaviour-activitydefinition-context)
+  - [`activate()`](#activate)
+  - [`deactivate()`](#deactivate)
+  - [`discard()`](#discard)
+  - [`getApi(message)`](#getapimessage)
+  - [`getActivityById(id)`](#getactivitybyidid)
+  - [`getState()`](#getstate)
+  - [`init([initContent])`](#initinitcontent)
+  - [`addInboundListeners()`](#addinboundlisteners)
+  - [`removeInboundListeners()`](#removeinboundlisteners)
+  - [`shake()`](#shake)
+  - [`next()`](#next)
+  - [`on(eventName, handler[, eventOptions])`](#oneventname-handler-eventoptions)
+  - [`once(eventName, handler[, eventOptions])`](#onceeventname-handler-eventoptions)
+  - [`recover(state)`](#recoverstate)
+  - [`resume()`](#resume)
+  - [`run([runContent])`](#runruncontent)
+  - [`stop()`](#stop)
+  - [`waitFor(eventName[, onMessage])`](#waitforeventname-onmessage)
+  - [`evaluateOutbound(brokerMessage, discardRestAtTake, callback)`](#evaluateoutboundbrokermessage-discardrestattake-callback)
+
+<!-- /toc -->
+
 ## Activity lifecycle
 
 All activities except EventBasedGateway share this lifecycle. The EventBasedGateway takes care of it's own outbound in the Behaviour.

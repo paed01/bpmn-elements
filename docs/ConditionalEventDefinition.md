@@ -2,6 +2,14 @@
 
 ConditionalEventDefinition behaviour.
 
+<!-- toc -->
+
+- [ConditionalEventDefinition events](#conditionaleventdefinition-events)
+  - [`activity.wait`](#activitywait)
+  - [`activity.condition`](#activitycondition)
+
+<!-- /toc -->
+
 - Checks condition when event is first executed
 - Expects to be signalled to check condition again
 

@@ -2,6 +2,19 @@
 
 Activity, Process, and Definition elements share the same api interface. The element must not necessarely implement listeners for all the api calls.
 
+<!-- toc -->
+
+- [`cancel([message, options])`](#cancelmessage-options)
+- [`discard()`](#discard)
+- [`signal(message[, options])`](#signalmessage-options)
+- [`fail(error)`](#failerror)
+- [`stop()`](#stop)
+- [`resolveExpression(expression)`](#resolveexpressionexpression)
+- [`createMessage([overrideContent])`](#createmessageoverridecontent)
+- [`sendApiMessage(action[, content, options])`](#sendapimessageaction-content-options)
+
+<!-- /toc -->
+
 The Api is composed from the element event message.
 
 Api properties:

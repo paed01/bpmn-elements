@@ -2,6 +2,18 @@
 
 Expressions handler interface.
 
+<!-- toc -->
+
+- [Standard](#standard)
+  - [`resolveExpression(expression[, context, fnContext])`](#resolveexpressionexpression-context-fncontext)
+  - [`isExpression(testString)`](#isexpressionteststring)
+  - [`hasExpression(testString)`](#hasexpressionteststring)
+  - [Default expression handling](#default-expression-handling)
+- [Community](#community)
+  - [`expression-parser`](#expression-parser)
+
+<!-- /toc -->
+
 - `Expressions`
   - `resolveExpression(expression[, context, fnContext])`: resolve expression
   - `isExpression(testString)`: optional function to evaluate if string is an expression

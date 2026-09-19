@@ -2,6 +2,31 @@
 
 Shared context.
 
+<!-- toc -->
+
+- [`new Context(serializableContext[, environment])`](#new-contextserializablecontext-environment)
+  - [`clone([environment])`](#cloneenvironment)
+  - [`getActivities([scopeId])`](#getactivitiesscopeid)
+  - [`getActivityById(id)`](#getactivitybyidid)
+  - [`getExecutableProcesses()`](#getexecutableprocesses)
+  - [`getDataObjectById(id)`](#getdataobjectbyidid)
+  - [`getDataStoreById(id)`](#getdatastorebyidid)
+  - [`getMessageFlows(sourceId)`](#getmessageflowssourceid)
+  - [`getAssociations([scopeId])`](#getassociationsscopeid)
+  - [`getInboundAssociations(activityId)`](#getinboundassociationsactivityid)
+  - [`getOutboundAssociations(activityId)`](#getoutboundassociationsactivityid)
+  - [`getStartActivities([filterOptions, scopeId])`](#getstartactivitiesfilteroptions-scopeid)
+  - [`getActivityParentById(activityId)`](#getactivityparentbyidactivityid)
+  - [`getProcessById(id)`](#getprocessbyidid)
+  - [`getProcesses()`](#getprocesses)
+  - [`getSequenceFlowById(id)`](#getsequenceflowbyidid)
+  - [`getSequenceFlows(scopeId)`](#getsequenceflowsscopeid)
+  - [`getInboundSequenceFlows(activityId)`](#getinboundsequenceflowsactivityid)
+  - [`getOutboundSequenceFlows(activityId)`](#getoutboundsequenceflowsactivityid)
+  - [`loadExtensions(activity)`](#loadextensionsactivity)
+
+<!-- /toc -->
+
 ## `new Context(serializableContext[, environment])`
 
 Arguments:

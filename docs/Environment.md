@@ -2,6 +2,25 @@
 
 Shared environment.
 
+<!-- toc -->
+
+- [`new Environment([options])`](#new-environmentoptions)
+  - [`addService(name, serviceFn)`](#addservicename-servicefn)
+  - [`assignVariables(vars)`](#assignvariablesvars)
+  - [`clone([overrideOptions])`](#cloneoverrideoptions)
+  - [`getScript(scriptType, activity)`](#getscriptscripttype-activity)
+  - [`getServiceByName(name)`](#getservicebynamename)
+  - [`getState()`](#getstate)
+  - [`registerScript(activity)`](#registerscriptactivity)
+  - [`resolveExpression(expression[, message = {}, expressionFnContext])`](#resolveexpressionexpression-message---expressionfncontext)
+  - [`recover(state)`](#recoverstate)
+- [Strict mode](#strict-mode)
+- [Logger](#logger)
+  - [`Logger(scope)`](#loggerscope)
+- [Example implementation for nodejs](#example-implementation-for-nodejs)
+
+<!-- /toc -->
+
 ## `new Environment([options])`
 
 Arguments:

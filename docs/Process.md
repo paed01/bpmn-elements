@@ -1,5 +1,31 @@
 # Process
 
+<!-- toc -->
+
+- [`new Process(processDefinition, context)`](#new-processprocessdefinition-context)
+  - [`getApi(message)`](#getapimessage)
+  - [`getActivities()`](#getactivities)
+  - [`getActivityById(id)`](#getactivitybyidid)
+  - [`getLaneById(id)`](#getlanebyidid)
+  - [`getSequenceFlows()`](#getsequenceflows)
+  - [`getStartActivities([filterOptions])`](#getstartactivitiesfilteroptions)
+  - [`getPostponed()`](#getpostponed)
+  - [`getState()`](#getstate)
+  - [`init([useAsExecutionId])`](#inituseasexecutionid)
+  - [`shake([startId])`](#shakestartid)
+  - [`signal(message)`](#signalmessage)
+  - [`cancelActivity(message)`](#cancelactivitymessage)
+  - [`sendMessage(message)`](#sendmessagemessage)
+  - [`on(eventName, handler[, eventOptions])`](#oneventname-handler-eventoptions)
+  - [`once(eventName, handler[, eventOptions])`](#onceeventname-handler-eventoptions)
+  - [`recover([state])`](#recoverstate)
+  - [`resume()`](#resume)
+  - [`run()`](#run)
+  - [`stop()`](#stop)
+  - [`waitFor(eventName[, onMessage])`](#waitforeventname-onmessage)
+
+<!-- /toc -->
+
 ## `new Process(processDefinition, context)`
 
 Arguments:

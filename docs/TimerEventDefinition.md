@@ -2,6 +2,21 @@
 
 TimerEventDefinition behaviour.
 
+<!-- toc -->
+
+- [TimerEventDefinition events](#timereventdefinition-events)
+  - [`activity.timer`](#activitytimer)
+  - [`activity.timeout`](#activitytimeout)
+- [`timeDuration`](#timeduration)
+- [`timeDate`](#timedate)
+- [`timeCycle`](#timecycle)
+- [Combined `timeDuration` and `timeDate`](#combined-timeduration-and-timedate)
+- [Set your own timeout](#set-your-own-timeout)
+- [Api](#api)
+  - [`TimerEventDefinition.parse(timerType, value)`](#timereventdefinitionparsetimertype-value)
+
+<!-- /toc -->
+
 ## TimerEventDefinition events
 
 The timer event definition publish a number of events.

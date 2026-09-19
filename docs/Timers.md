@@ -2,6 +2,15 @@
 
 Timers handler. The purpose is to keep track of executing timers. Can be added to inline script context to override builtin timers.
 
+<!-- toc -->
+
+- [`new Timers([options])`](#new-timersoptions)
+  - [`register(owner)`](#registerowner)
+  - [`setTimeout(callback, delay, ...args)`](#settimeoutcallback-delay-args)
+  - [`clearTimeout(ref)`](#cleartimeoutref)
+
+<!-- /toc -->
+
 # `new Timers([options])`
 
 Default timers behavior.

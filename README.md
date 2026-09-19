@@ -10,6 +10,13 @@ Isomorphic JavaScript BPMN 2.0 workflow elements suitable for bundling into fron
 - [BPMN 2.0 conformance](/docs/Conformance.md)
 - [Upgrade guide](/docs/Upgrade.md)
 
+<!-- toc -->
+
+- [Supported elements](#supported-elements)
+- [Ecosystem](#ecosystem)
+
+<!-- /toc -->
+
 # Supported elements
 
 The following elements are tested and supported.
@@ -92,4 +99,4 @@ Packages that build on or complement `bpmn-elements`:
 - [@0dep/bpmn-extensions](https://github.com/zerodep/bpmn-extensions) — Flow extensions for `bpmn-elements`: FEEL expressions and the Zeebe-namespace BPMN extension elements.
 - [@onify/flow-extensions](https://github.com/onify/flow-extensions) — Onify Flow extensions for `bpmn-elements`.
 - [dmn-elements](https://github.com/zerodep/dmn-elements) — Executable DMN 1.3 decision elements; back a Business Rule Task with it.
-- [BPMN Runner](https://0dep.se/run) — Browser-based BPMN 2.0 and DMN runner built on `bpmn-elements`, `@0dep/bpmn-extensions`, and `dmn-elements`; run and step through diagrams client-side with live element highlighting, no data leaves the browser.
+- [BPMN Runner](https://0dep.se/run/) — Browser-based BPMN 2.0 and DMN runner built on `bpmn-elements`, `@0dep/bpmn-extensions`, and `dmn-elements`; run and step through diagrams client-side with live element highlighting, no data leaves the browser.

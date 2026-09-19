@@ -2,6 +2,14 @@
 
 Inline scripts handler interface.
 
+<!-- toc -->
+
+- [`register(activity)`](#registeractivity)
+- [`getScript(scriptType, activity)`](#getscriptscripttype-activity)
+- [Example implementation for nodejs](#example-implementation-for-nodejs)
+
+<!-- /toc -->
+
 - `Scripts`
   - `register(activity)`: register script
   - `getScript(scriptType, activity)`: get registered script

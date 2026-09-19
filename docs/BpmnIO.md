@@ -2,6 +2,16 @@
 
 The implementation of data storage in this project is rather basic. It relies on object assigned to `environment.variables._data`. Use it for reference and preferably override it with your own implementation.
 
+<!-- toc -->
+
+- [DataObject](#dataobject)
+- [DataStoreReference](#datastorereference)
+- [DataStore](#datastore)
+- [InputOutputSpecification](#inputoutputspecification)
+- [Property](#property)
+
+<!-- /toc -->
+
 # DataObject
 
 Process data object element

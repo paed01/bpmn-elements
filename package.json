@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "18.0.27",
+  "version": "18.0.28",
   "description": "Executable workflow elements based on BPMN 2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -47,16 +47,16 @@
   "sideEffects": false,
   "scripts": {
     "test": "mocha -R @bonniernews/hot-bev -p -t 3000",
-    "posttest": "npm run lint && npm run toc && npm run dist && npm run typecheck",
+    "posttest": "npm run toc && npm run lint && npm run dist && npm run typecheck",
     "lint": "eslint . --cache && prettier . --check --cache",
     "typecheck": "tsc --noEmit && tsc --noEmit -p test",
-    "prepack": "npm run dist",
+    "prepack": "npm run toc && npm run dist",
     "test:md": "texample ./docs/Examples.md,./docs/StartEvent.md,./docs/Extension.md,./docs/ConditionalEventDefinition.md",
     "cov:html": "c8 -r html -r text mocha -R @bonniernews/hot-bev -p -t 3000",
     "test:lcov": "c8 -r lcov mocha && npm run lint",
     "dist": "babel src -d dist/ && npm run build:types",
     "build:types": "node scripts/build-types.js",
-    "toc": "toc docs/Upgrade.md"
+    "toc": "toc -c README.md docs/*.md"
   },
   "repository": {
     "type": "git",
@@ -92,11 +92,12 @@
   },
   "overrides": {
     "mocha": {
+      "serialize-javascript": "^7.1.0",
       "yargs": "^18.0.0"
     }
   },
   "devDependencies": {
-    "@0dep/toc": "^1.0.1",
+    "@0dep/toc": "^1.1.0",
     "@aircall/expression-parser": "^1.0.4",
     "@babel/cli": "^7.24.1",
     "@babel/core": "^7.24.4",

@@ -2,6 +2,15 @@
 
 Join or fork gateway.
 
+<!-- toc -->
+
+- [Converging behaviour](#converging-behaviour)
+- [When to use a parallel gateway](#when-to-use-a-parallel-gateway)
+- [Performance and trade-offs](#performance-and-trade-offs)
+- [Events](#events)
+
+<!-- /toc -->
+
 ## Converging behaviour
 
 A parallel gateway — fork or join — monitors its upstream peer activities and completes once they have all settled, rather than completing as soon as the expected number of inbound flows have been touched. Peers are discovered during the process shake.

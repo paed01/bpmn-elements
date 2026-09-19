@@ -2,6 +2,18 @@
 
 Task loops can made based on conditions, cardinality, and/or a collection.
 
+<!-- toc -->
+
+- [`bpmn:multiInstanceLoopCharacteristics`](#bpmnmultiinstanceloopcharacteristics)
+  - [Sequential](#sequential)
+  - [Parallel](#parallel)
+- [`bpmn:standardLoopCharacteristics`](#bpmnstandardloopcharacteristics)
+- [Cardinality loop](#cardinality-loop)
+- [Conditional loop](#conditional-loop)
+- [Collection loop](#collection-loop)
+
+<!-- /toc -->
+
 ## `bpmn:multiInstanceLoopCharacteristics`
 
 Multi instance loop.
