@@ -618,6 +618,7 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
   };
 
   const convergingGateways = new Map();
+  const continued = new Set();
   const consumerTag = `_shaker-${this.executionId}`;
 
   this.broker.subscribeTmp(
@@ -628,9 +629,14 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
 
       switch (routingKey) {
         case 'activity.shake.converge': {
-          const join = convergingGateways.get(content.join);
+          const joinId = content.join;
+          if (continued.has(joinId)) {
+            this.getActivityById(joinId).broker.publish('api', 'activity.shake.continue', content, { type: 'shake', collectOnly: true });
+            break;
+          }
+          const join = convergingGateways.get(joinId);
           if (!join) {
-            convergingGateways.set(content.join, content);
+            convergingGateways.set(joinId, content);
           } else {
             join.sequence = join.sequence.concat(content.sequence);
           }
@@ -639,8 +645,7 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
         case 'flow.shake.loop':
         case 'activity.shake.linked':
         case 'activity.shake.end': {
-          const { id: shakeId, parent: shakeParent } = content;
-          if (shakeParent.id !== id) return;
+          const shakeId = content.id;
 
           let seqnce;
           if (!(seqnce = result.sequences.get(shakeId))) {
@@ -660,12 +665,15 @@ ProcessExecution.prototype._shakeElements = function shakeElements(fromId) {
 
   for (const [aid, c] of convergingGateways.entries()) {
     this._debug(`manual shake of converging gateway <${aid}>`);
+    continued.add(aid);
     this.getActivityById(aid).broker.publish('api', 'activity.shake.continue', c, { type: 'shake' });
   }
 
   if (!executing) this._deactivate();
 
   this.broker.cancel(consumerTag);
+
+  this._debug('shake completed');
 
   return result;
 };
@@ -1022,7 +1030,7 @@ ProcessExecution.prototype._onApiMessage = function onApiMessage(routingKey, mes
 
 /** @internal */
 ProcessExecution.prototype._delegateApiMessage = function delegateApiMessage(routingKey, message, continueOnConsumed) {
-  const correlationId = message.properties.correlationId || getUniqueId(this.executionId);
+  const correlationId = message.properties.correlationId;
   this._debug(`delegate api ${routingKey} message to children, with correlationId <${correlationId}>`);
 
   const broker = this.broker;
@@ -1033,7 +1041,7 @@ ProcessExecution.prototype._delegateApiMessage = function delegateApiMessage(rou
     (_, msg) => {
       if (msg.properties.correlationId === correlationId) {
         consumed = true;
-        this._debug(`delegated api message was consumed by ${msg.content ? msg.content.executionId : 'unknown'}`);
+        this._debug(`delegated api message was consumed by ${msg.content.executionId}`);
       }
     },
     { consumerTag: `_ct-delegate-${correlationId}`, noAck: true }

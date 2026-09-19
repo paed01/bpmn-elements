@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" id="sid-38422fae" targetNamespace="http://bpmn.io/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="Event_Start">
+      <bpmn:outgoing>Flow1_StartToDownstream</bpmn:outgoing>
+      <bpmn:outgoing>Flow2_StartToDelay</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:serviceTask id="Activity_Delay" name="delay" implementation="${environment.services.delay}">
+      <bpmn:incoming>Flow2_StartToDelay</bpmn:incoming>
+      <bpmn:outgoing>Flow2_DelayToUpstream</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:parallelGateway id="Gateway_Upstream">
+      <bpmn:incoming>Flow2_DelayToUpstream</bpmn:incoming>
+      <bpmn:outgoing>Flow2_UpstreamToDownstream</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:parallelGateway id="Gateway_Downstream">
+      <bpmn:incoming>Flow1_StartToDownstream</bpmn:incoming>
+      <bpmn:incoming>Flow2_UpstreamToDownstream</bpmn:incoming>
+      <bpmn:outgoing>Flow_DownstreamToEnd</bpmn:outgoing>
+    </bpmn:parallelGateway>
+    <bpmn:endEvent id="Event_End">
+      <bpmn:incoming>Flow_DownstreamToEnd</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow1_StartToDownstream" sourceRef="Event_Start" targetRef="Gateway_Downstream" />
+    <bpmn:sequenceFlow id="Flow2_StartToDelay" sourceRef="Event_Start" targetRef="Activity_Delay" />
+    <bpmn:sequenceFlow id="Flow2_DelayToUpstream" sourceRef="Activity_Delay" targetRef="Gateway_Upstream" />
+    <bpmn:sequenceFlow id="Flow2_UpstreamToDownstream" sourceRef="Gateway_Upstream" targetRef="Gateway_Downstream" />
+    <bpmn:sequenceFlow id="Flow_DownstreamToEnd" sourceRef="Gateway_Downstream" targetRef="Event_End" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="Event_Start_di" bpmnElement="Event_Start">
+        <dc:Bounds x="179" y="209" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_Delay_di" bpmnElement="Activity_Delay">
+        <dc:Bounds x="270" y="80" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Upstream_di" bpmnElement="Gateway_Upstream">
+        <dc:Bounds x="425" y="95" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Downstream_di" bpmnElement="Gateway_Downstream">
+        <dc:Bounds x="575" y="202" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_End_di" bpmnElement="Event_End">
+        <dc:Bounds x="682" y="209" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow1_StartToDownstream_di" bpmnElement="Flow1_StartToDownstream">
+        <di:waypoint x="215" y="227" />
+        <di:waypoint x="575" y="227" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow2_StartToDelay_di" bpmnElement="Flow2_StartToDelay">
+        <di:waypoint x="197" y="209" />
+        <di:waypoint x="197" y="120" />
+        <di:waypoint x="270" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow2_DelayToUpstream_di" bpmnElement="Flow2_DelayToUpstream">
+        <di:waypoint x="370" y="120" />
+        <di:waypoint x="425" y="120" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow2_UpstreamToDownstream_di" bpmnElement="Flow2_UpstreamToDownstream">
+        <di:waypoint x="475" y="120" />
+        <di:waypoint x="600" y="120" />
+        <di:waypoint x="600" y="202" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_DownstreamToEnd_di" bpmnElement="Flow_DownstreamToEnd">
+        <di:waypoint x="625" y="227" />
+        <di:waypoint x="682" y="227" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

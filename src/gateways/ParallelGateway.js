@@ -26,8 +26,7 @@ export function ParallelGateway(activityDef, context) {
   const cachedPeers = context.getShakenPeers(id);
   if (cachedPeers) {
     for (const [flowId, sourceIds] of cachedPeers) {
-      let peer = peers.get(flowId);
-      if (!peer) peers.set(flowId, (peer = new Set()));
+      const peer = peers.get(flowId);
       for (const sourceId of sourceIds) peer.add(sourceId);
     }
     activity[K_PEERS_DISCOVERED] = true;
@@ -37,6 +36,7 @@ export function ParallelGateway(activityDef, context) {
 
   function onApiShake(_, message) {
     const collect = new Set();
+    const collectOnly = message.properties.collectOnly;
 
     let sequenceFlow;
     for (const s of message.content.sequence) {
@@ -60,6 +60,8 @@ export function ParallelGateway(activityDef, context) {
       id,
       [...peers].map(([flowId, sourceIds]) => [flowId, [...sourceIds]])
     );
+
+    if (collectOnly) return;
 
     // @ts-ignore
     activity.shake(message);
@@ -123,10 +125,13 @@ ParallelGatewayBehaviour.prototype.execute = function execute(executeMessage) {
  * @param {import('#types').ElementBrokerMessage} executeMessage
  */
 ParallelGatewayBehaviour.prototype.setup = function setup(executeMessage) {
-  const peerIds = new Set([...this.activity[K_PEERS].values()].map((v) => [...v]).flat());
-  this[K_TARGETS] = new Map([...peerIds].map((pid) => [pid, this.activity.getActivityById(pid)]));
+  const targets = (this[K_TARGETS] = new Map());
+  const touched = new Set(executeMessage.content.inbound.map(({ id: flowId }) => flowId));
+  for (const [flowId, sourceIds] of this.activity[K_PEERS]) {
+    collectPeerTargets(this.activity, this.id, sourceIds, targets, !touched.has(flowId));
+  }
 
-  this.peerMonitor = new PeerMonitor(this.activity, this[K_TARGETS]);
+  this.peerMonitor = new PeerMonitor(this.activity, targets);
 
   const message = (this[K_EXECUTE_MESSAGE] = cloneMessage(executeMessage));
   const executeContent = message.content;
@@ -202,6 +207,26 @@ ParallelGatewayBehaviour.prototype._stop = function stop() {
 };
 
 /**
+ * Collect peer target activities, optionally following upstream parallel gateways so their peers are monitored too
+ * @param {import('#types').Activity} gateway monitoring parallel gateway
+ * @param {string} rootId monitoring parallel gateway id, never a target of itself
+ * @param {Iterable<string>} peerIds peer activity ids
+ * @param {Map<string, import('#types').Activity>} targets collected peer targets
+ * @param {boolean} deep follow upstream parallel gateway peers
+ */
+function collectPeerTargets(gateway, rootId, peerIds, targets, deep) {
+  for (const peerId of peerIds) {
+    if (peerId === rootId || targets.has(peerId)) continue;
+    const peer = gateway.getActivityById(peerId);
+    targets.set(peerId, peer);
+    if (!deep || !peer[K_PEERS]) continue;
+    for (const upstreamIds of peer[K_PEERS].values()) {
+      collectPeerTargets(gateway, rootId, upstreamIds, targets, deep);
+    }
+  }
+}
+
+/**
  * Peer monitor
  * @param {import('#types').Activity} activity parallel gateway activity
  * @param {Map<string, import('#types').Activity>} targets parallel gateway peer target activities
@@ -255,7 +280,7 @@ PeerMonitor.prototype.execute = function execute(executeMessage) {
 PeerMonitor.prototype.monitor = function monitor(peerActivity) {
   if (this.watching.has(peerActivity.id)) return;
 
-  this.activity.logger.debug(`<${this.id}> monitor <${peerActivity.id}> with status: ${peerActivity.status}`);
+  this.activity.logger.debug(`<${this.id}> monitor <${peerActivity.id}> with status: ${peerActivity.status ?? '[idle]'}`);
 
   this.watching.set(peerActivity.id, peerActivity);
 

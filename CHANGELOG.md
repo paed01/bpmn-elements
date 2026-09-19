@@ -1,5 +1,13 @@
 # Changelog
 
+## v18.0.29 - 2026-09-19
+
+- fix [#45](https://github.com/paed01/bpmn-elements/issues/45): a converging parallel gateway fired before a branch behind another parallel gateway completed. An inbound flow that is not yet touched now awaits the peers of upstream parallel gateways as well, and a gateway reached again during the shake through an upstream gateway collects the peers of that path
+
+## v18.0.28 - 2026-09-17
+
+- fix README link trailing slash
+
 ## v18.0.27 - 2026-09-16
 
 - fix package homepage trailing slash

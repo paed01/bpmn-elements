@@ -17,6 +17,8 @@ A parallel gateway — fork or join — monitors its upstream peer activities an
 
 This avoids stalls in the edge case where the same inbound flow may be touched more than once before all peers have reported, and lets a single-inbound fork correctly wait for parallel upstream branches before taking its outbound flows. The outcome is `taken` if any inbound flow was taken, otherwise `discarded`.
 
+Peers are collected per inbound flow. An inbound flow that has not been touched when the gateway starts converging also awaits the peers of any parallel gateway upstream of it, so a branch that is still running behind another parallel gateway holds the join. An already touched inbound flow only awaits its immediate peers, which keeps a later token on the same flow, e.g. from a loop back, a separate firing.
+
 ## When to use a parallel gateway
 
 A parallel gateway is the only element that gives true **barrier** semantics: a converging parallel gateway waits for _every_ concurrent upstream branch to settle before it continues. Reach for it when you must converge all flows before proceeding — e.g. two parallel branches that both have to finish before the next step may start.
