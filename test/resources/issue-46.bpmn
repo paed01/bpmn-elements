@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_issue_46" targetNamespace="http://bpmn.io/bpmn">
+  <bpmn:process id="Process_1" isExecutable="true">
+    <bpmn:startEvent id="Event_Start">
+      <bpmn:outgoing>Flow_StartToSplit</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:inclusiveGateway id="Gateway_Split">
+      <bpmn:incoming>Flow_StartToSplit</bpmn:incoming>
+      <bpmn:outgoing>Flow_SplitToA</bpmn:outgoing>
+      <bpmn:outgoing>Flow_SplitToB</bpmn:outgoing>
+      <bpmn:outgoing>Flow_SplitToC</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+    <bpmn:task id="Activity_A" name="A">
+      <bpmn:incoming>Flow_SplitToA</bpmn:incoming>
+      <bpmn:outgoing>Flow_AToJoin</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:serviceTask id="Activity_B" name="B" implementation="${environment.services.delay}">
+      <bpmn:incoming>Flow_SplitToB</bpmn:incoming>
+      <bpmn:outgoing>Flow_BToJoin</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:task id="Activity_C" name="C">
+      <bpmn:incoming>Flow_SplitToC</bpmn:incoming>
+      <bpmn:outgoing>Flow_CToJoin</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:inclusiveGateway id="Gateway_Join">
+      <bpmn:incoming>Flow_AToJoin</bpmn:incoming>
+      <bpmn:incoming>Flow_BToJoin</bpmn:incoming>
+      <bpmn:incoming>Flow_CToJoin</bpmn:incoming>
+      <bpmn:outgoing>Flow_JoinToEnd</bpmn:outgoing>
+    </bpmn:inclusiveGateway>
+    <bpmn:endEvent id="Event_End">
+      <bpmn:incoming>Flow_JoinToEnd</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_StartToSplit" sourceRef="Event_Start" targetRef="Gateway_Split" />
+    <bpmn:sequenceFlow id="Flow_SplitToA" sourceRef="Gateway_Split" targetRef="Activity_A">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${environment.variables.takeA}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_SplitToB" sourceRef="Gateway_Split" targetRef="Activity_B">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${environment.variables.takeB}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_SplitToC" sourceRef="Gateway_Split" targetRef="Activity_C">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${environment.variables.takeC}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_AToJoin" sourceRef="Activity_A" targetRef="Gateway_Join" />
+    <bpmn:sequenceFlow id="Flow_BToJoin" sourceRef="Activity_B" targetRef="Gateway_Join" />
+    <bpmn:sequenceFlow id="Flow_CToJoin" sourceRef="Activity_C" targetRef="Gateway_Join" />
+    <bpmn:sequenceFlow id="Flow_JoinToEnd" sourceRef="Gateway_Join" targetRef="Event_End" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+      <bpmndi:BPMNShape id="Event_Start_di" bpmnElement="Event_Start">
+        <dc:Bounds x="179" y="202" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Split_di" bpmnElement="Gateway_Split">
+        <dc:Bounds x="275" y="195" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_A_di" bpmnElement="Activity_A">
+        <dc:Bounds x="390" y="60" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_B_di" bpmnElement="Activity_B">
+        <dc:Bounds x="390" y="180" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_C_di" bpmnElement="Activity_C">
+        <dc:Bounds x="390" y="300" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_Join_di" bpmnElement="Gateway_Join">
+        <dc:Bounds x="555" y="195" width="50" height="50" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_End_di" bpmnElement="Event_End">
+        <dc:Bounds x="672" y="202" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_StartToSplit_di" bpmnElement="Flow_StartToSplit">
+        <di:waypoint x="215" y="220" />
+        <di:waypoint x="275" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SplitToA_di" bpmnElement="Flow_SplitToA">
+        <di:waypoint x="300" y="195" />
+        <di:waypoint x="300" y="100" />
+        <di:waypoint x="390" y="100" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SplitToB_di" bpmnElement="Flow_SplitToB">
+        <di:waypoint x="325" y="220" />
+        <di:waypoint x="390" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_SplitToC_di" bpmnElement="Flow_SplitToC">
+        <di:waypoint x="300" y="245" />
+        <di:waypoint x="300" y="340" />
+        <di:waypoint x="390" y="340" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_AToJoin_di" bpmnElement="Flow_AToJoin">
+        <di:waypoint x="490" y="100" />
+        <di:waypoint x="580" y="100" />
+        <di:waypoint x="580" y="195" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_BToJoin_di" bpmnElement="Flow_BToJoin">
+        <di:waypoint x="490" y="220" />
+        <di:waypoint x="555" y="220" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_CToJoin_di" bpmnElement="Flow_CToJoin">
+        <di:waypoint x="490" y="340" />
+        <di:waypoint x="580" y="340" />
+        <di:waypoint x="580" y="245" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_JoinToEnd_di" bpmnElement="Flow_JoinToEnd">
+        <di:waypoint x="605" y="220" />
+        <di:waypoint x="672" y="220" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

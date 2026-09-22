@@ -26,6 +26,7 @@ A parallel gateway is the only element that gives true **barrier** semantics: a 
 If you do **not** need that guarantee, prefer a cheaper construct:
 
 - An exclusive gateway or an uncontrolled merge (an activity with multiple incoming flows) continues as soon as _any_ inbound flow is taken — it does not wait, and does not trigger the costs below.
+- An [inclusive gateway](/docs/InclusiveGateway.md) converges with the same peer monitoring and costs the same as a parallel gateway; it differs only in evaluating its conditional outbound flows.
 - For "first one wins" semantics use an event-based gateway.
 
 Picking a parallel join only when you genuinely need the barrier keeps the common path on the cheaper machinery.
@@ -34,7 +35,7 @@ Picking a parallel join only when you genuinely need the barrier keeps the commo
 
 A converging parallel gateway is more expensive than the other gateways, by design:
 
-- **Process shake on start.** To learn which upstream activities are its peers, the presence of a converging parallel gateway forces a graph shake when the process starts. Exclusive, inclusive and event-based joins do not. The shake walks the reachable graph, so its cost grows with graph size, and on graphs with many branching gateways in series it can grow super-linearly (it enumerates paths). The shake result is cached on the context and reused, so it runs **once per context** rather than once per run — reuse the same `Context`/`Definition` source across executions so the shake amortizes instead of repeating.
+- **Process shake on start.** To learn which upstream activities are its peers, the presence of a converging parallel gateway forces a graph shake when the process starts. Exclusive and event-based joins do not, but an [inclusive gateway](/docs/InclusiveGateway.md) does since it converges the same way. The shake walks the reachable graph, so its cost grows with graph size, and on graphs with many branching gateways in series it can grow super-linearly (it enumerates paths). The shake result is cached on the context and reused, so it runs **once per context** rather than once per run — reuse the same `Context`/`Definition` source across executions so the shake amortizes instead of repeating.
 - **Peer monitoring at runtime.** While converging, the gateway watches all of its discovered peer activities until they settle (see _Converging behaviour_ above), which is more work than counting inbound flows.
 
 The upside is correctness on hard topologies and a large win elsewhere: because joins no longer rely on discarded flows arriving, dead branches are not propagated as discards. On branchy or looping diagrams that is dramatically cheaper than discarding every dead-path flow on every run.

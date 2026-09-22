@@ -45,7 +45,7 @@ The following elements are tested and supported.
   - catch
 - EventBasedGateway
 - ExclusiveGateway
-- InclusiveGateway
+- [InclusiveGateway](/docs/InclusiveGateway.md)
 - IntermediateCatchEvent
 - IntermediateThrowEvent
 - [InputOutputSpecification](/docs/BpmnIO.md)

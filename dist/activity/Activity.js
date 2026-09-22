@@ -121,6 +121,7 @@ function Activity(Behaviour, activityDef, context) {
     isAdHoc: activityDef.isAdHoc,
     isParallelJoin,
     isParallelGateway: activityDef.isParallelGateway,
+    isConvergingGateway: activityDef.isConvergingGateway,
     isStartEvent: !!activityDef.isStartEvent,
     isThrowing: activityDef.isThrowing,
     linkNames: activityDef.linkNames,
@@ -262,6 +263,11 @@ Object.defineProperties(Activity.prototype, {
   isParallelGateway: {
     get() {
       return this[K_FLAGS].isParallelGateway;
+    }
+  },
+  isConvergingGateway: {
+    get() {
+      return this[K_FLAGS].isConvergingGateway;
     }
   },
   isStartEvent: {
@@ -674,7 +680,7 @@ Activity.prototype._discardRun = function discardRun() {
 
 /** @internal */
 Activity.prototype._onShakeMessage = function _onShakeMessage(sourceMessage) {
-  if (this[K_FLAGS].isParallelGateway) {
+  if (this[K_FLAGS].isConvergingGateway) {
     const message = (0, _messageHelper.cloneMessage)(sourceMessage, {
       join: this.id
     });

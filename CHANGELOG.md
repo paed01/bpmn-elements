@@ -1,5 +1,10 @@
 # Changelog
 
+## v18.1.0 - 2026-09-22
+
+- fix [#46](https://github.com/paed01/bpmn-elements/issues/46): a converging inclusive gateway now waits for the upstream branches that were actually taken and completes once, reusing the parallel gateway peer monitoring, instead of firing once per inbound token. A process with an inclusive gateway consequently shakes on start to discover its peers
+- new activity readonly property `isConvergingGateway`, true for parallel and inclusive gateways
+
 ## v18.0.28 - 2026-09-19
 
 - fix [#45](https://github.com/paed01/bpmn-elements/issues/45): a converging parallel gateway fired before a branch behind another parallel gateway completed. An inbound flow that is not yet touched now awaits the peers of upstream parallel gateways as well, and a gateway reached again during the shake through an upstream gateway collects the peers of that path

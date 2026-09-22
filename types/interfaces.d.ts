@@ -59,6 +59,7 @@ declare module '../src/activity/Activity.js' {
     get isForCompensation(): boolean;
     get isParallelJoin(): boolean;
     get isParallelGateway(): boolean;
+    get isConvergingGateway(): boolean;
     get isStartEvent(): boolean;
     get triggeredByEvent(): boolean;
     get attachedTo(): Activity | null;

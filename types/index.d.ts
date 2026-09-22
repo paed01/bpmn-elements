@@ -993,6 +993,7 @@ declare module 'bpmn-elements' {
 		get isForCompensation(): boolean;
 		get isParallelJoin(): boolean;
 		get isParallelGateway(): boolean;
+		get isConvergingGateway(): boolean;
 		get isStartEvent(): boolean;
 		get triggeredByEvent(): boolean;
 		get attachedTo(): Activity | null;
@@ -2375,28 +2376,16 @@ declare module 'bpmn-elements' {
 	export function InclusiveGateway(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Inclusive gateway behaviour
-	 * */
-		export class InclusiveGatewayBehaviour {
-		/**
-		 * Inclusive gateway behaviour
-		 * */
-		constructor(activity: Activity);
-		id: string | undefined;
-		type: string;
-		broker: ElementBroker<Activity>;
-		
-		execute({ content }: ElementBrokerMessage): void;
+	 *
+	 * Converges like the parallel gateway, awaiting the upstream peers that were actually activated, but requires
+	 * at least one conditional or default outbound flow to be taken on completion.
+	 */
+	export class InclusiveGatewayBehaviour extends ParallelGatewayBehaviour {
 	}
 	/**
 	 * Parallel gateway
 	 * */
-		export class ParallelGateway {
-		/**
-		 * Parallel gateway
-		 * */
-		constructor(activityDef: ActivityDefinition, context: ContextInstance);
-		id: string | undefined;
-	}
+	export function ParallelGateway(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Parallel gateway behaviour
 	 * */
@@ -2424,14 +2413,14 @@ declare module 'bpmn-elements' {
 	}
 	/**
 	 * Peer monitor
-	 * @param activity parallel gateway activity
-	 * @param targets parallel gateway peer target activities
+	 * @param activity converging gateway activity
+	 * @param targets gateway peer target activities
 	 */
 		class PeerMonitor {
 		/**
 		 * Peer monitor
-		 * @param activity parallel gateway activity
-		 * @param targets parallel gateway peer target activities
+		 * @param activity converging gateway activity
+		 * @param targets gateway peer target activities
 		 */
 		constructor(activity: Activity, targets: Map<string, Activity>);
 		activity: Activity;

@@ -8,6 +8,7 @@ const eventActivities = ['bpmn:StartEvent', 'bpmn:EndEvent', 'bpmn:IntermediateC
 const decisionGateways = ['bpmn:ExclusiveGateway', 'bpmn:InclusiveGateway'];
 
 const gateways = ['bpmn:ParallelGateway'].concat(decisionGateways);
+const convergingGateways = ['bpmn:ParallelGateway', 'bpmn:InclusiveGateway'];
 
 const taskActivities = [
   'bpmn:Task',
@@ -32,7 +33,7 @@ describe('activity', () => {
           singleFlowDefinition = await SingleFlowDefinition(activityType);
         });
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('run() publish messages in the expected sequence', async () => {
+        (convergingGateways.includes(activityType) ? it.skip : it)('run() publish messages in the expected sequence', async () => {
           const processContext = await testHelpers.context(simpleDefinition);
           const activity = processContext.getActivityById('activity');
 
@@ -64,7 +65,7 @@ describe('activity', () => {
           assertMessage('activity.leave');
         });
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('run() after run() resets messages', async () => {
+        (convergingGateways.includes(activityType) ? it.skip : it)('run() after run() resets messages', async () => {
           const processContext = await testHelpers.context(simpleDefinition);
           const activity = processContext.getActivityById('activity');
 
@@ -210,7 +211,7 @@ describe('activity', () => {
           expect(activity.outbound.length).to.equal(2);
         });
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('discard() on end is ignored', async () => {
+        (convergingGateways.includes(activityType) ? it.skip : it)('discard() on end is ignored', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -251,7 +252,7 @@ describe('activity', () => {
           expect(activity.outbound.some((flow) => flow.counters.take)).to.be.ok;
         });
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('discard() on leave is ignored', async () => {
+        (convergingGateways.includes(activityType) ? it.skip : it)('discard() on leave is ignored', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -356,7 +357,7 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('resume stopped on enter continuous execution', async () => {
+        (convergingGateways.includes(activityType) ? it.skip : it)('resume stopped on enter continuous execution', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -396,7 +397,7 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('resume recovered on enter continuous execution', async () => {
+        (convergingGateways.includes(activityType) ? it.skip : it)('resume recovered on enter continuous execution', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -443,7 +444,7 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)(
+        (convergingGateways.includes(activityType) ? it.skip : it)(
           'resume recovered new instance on enter continuous execution',
           async () => {
             const context = await testHelpers.context(singleFlowDefinition);
@@ -506,7 +507,7 @@ describe('activity', () => {
           }
         );
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('resume stopped on start continuous execution', async () => {
+        (convergingGateways.includes(activityType) ? it.skip : it)('resume stopped on start continuous execution', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -549,7 +550,7 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('resume recovered on start continuous execution', async () => {
+        (convergingGateways.includes(activityType) ? it.skip : it)('resume recovered on start continuous execution', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -595,7 +596,7 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)(
+        (convergingGateways.includes(activityType) ? it.skip : it)(
           'resume recovered new instance on start continuous execution',
           async () => {
             const context = await testHelpers.context(singleFlowDefinition);
@@ -655,7 +656,7 @@ describe('activity', () => {
           }
         );
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('resume stopped on end leaves activity', async () => {
+        (convergingGateways.includes(activityType) ? it.skip : it)('resume stopped on end leaves activity', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -703,7 +704,7 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('resume stopped on end leaves activity', async () => {
+        (convergingGateways.includes(activityType) ? it.skip : it)('resume stopped on end leaves activity', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -751,7 +752,7 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('resume recovered on end leaves activity', async () => {
+        (convergingGateways.includes(activityType) ? it.skip : it)('resume recovered on end leaves activity', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -802,7 +803,7 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (activityType === 'bpmn:ParallelGateway' ? it.skip : it)('resume recovered new instance on end leaves activity', async () => {
+        (convergingGateways.includes(activityType) ? it.skip : it)('resume recovered new instance on end leaves activity', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           let activity = context.getActivityById('activity');
 
@@ -866,7 +867,7 @@ describe('activity', () => {
         });
 
         it('resume stopped while discarded leaves activity', async function resumeWhileDiscarded() {
-          if (activityType === 'bpmn:ParallelGateway') return this.skip();
+          if (convergingGateways.includes(activityType)) return this.skip();
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -908,7 +909,7 @@ describe('activity', () => {
         });
 
         it('resume recovered while discarded leaves activity', async function resumeRecoveredWhileDiscarded() {
-          if (activityType === 'bpmn:ParallelGateway') return this.skip();
+          if (convergingGateways.includes(activityType)) return this.skip();
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -986,14 +987,14 @@ describe('activity', () => {
           const assertMessage = AssertMessage(context, messages, true);
           assertMessage('activity.enter');
           assertMessage('activity.start');
-          if (activityType === 'bpmn:ParallelGateway') assertMessage('activity.converge');
+          if (convergingGateways.includes(activityType)) assertMessage('activity.converge');
           assertMessage('activity.end');
           assertMessage('activity.leave');
           expect(messages, 'no more messages').to.have.length(0);
         });
 
         it('ignores a discarded inbound', function discards() {
-          if (activityType === 'bpmn:ParallelGateway') return this.skip();
+          if (convergingGateways.includes(activityType)) return this.skip();
 
           const messages = [];
           activity.broker.subscribeTmp(
@@ -1051,6 +1052,7 @@ describe('activity', () => {
             const assertMessage = AssertMessage(context, messages, true);
             assertMessage('activity.enter');
             assertMessage('activity.start');
+            if (convergingGateways.includes(activityType)) assertMessage('activity.converge');
             assertMessage('activity.end');
             assertMessage('activity.leave');
             expect(messages, 'no more messages').to.have.length(0);

@@ -530,7 +530,7 @@ ProcessExecution.prototype._activate = function activate() {
       if (activity.isStartEvent) startEventCount++;
     }
     if (activity.triggeredByEvent || activity.isCatching) triggeredByEvent.add(activity);
-    if (activity.isParallelGateway) convergingGateways.add(activity);
+    if (activity.isConvergingGateway) convergingGateways.add(activity);
   }
   this[K_ELEMENTS].startEventCount = startEventCount;
   this[_constants.K_ACTIVATED] = true;
@@ -897,9 +897,12 @@ ProcessExecution.prototype._onChildCompleted = function onChildCompleted(message
   const {
     id,
     type,
+    isConvergingGateway,
     isParallelGateway
   } = message.content;
-  if (isParallelGateway) {
+
+  // isParallelGateway: run messages recovered from states saved before isConvergingGateway
+  if (isConvergingGateway || isParallelGateway) {
     for (const inb of message.content.inbound) {
       this._popPostponed(inb)?.ack();
     }

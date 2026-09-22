@@ -3,6 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.ConvergingGateway = ConvergingGateway;
 exports.ParallelGateway = ParallelGateway;
 exports.ParallelGatewayBehaviour = ParallelGatewayBehaviour;
 var _Activity = require("../activity/Activity.js");
@@ -19,11 +20,27 @@ const K_PEERS_DISCOVERED = Symbol.for('peers discovered');
  * @param {import('#types').ContextInstance} context
  */
 function ParallelGateway(activityDef, context) {
-  const activity = new _Activity.Activity(ParallelGatewayBehaviour, {
+  return ConvergingGateway(ParallelGatewayBehaviour, {
     ...activityDef,
     isParallelGateway: true
   }, context);
-  const id = this.id = activity.id;
+}
+
+/**
+ * Converging gateway
+ *
+ * Activity that discovers its upstream peers during the process shake and monitors them while converging
+ * @internal
+ * @param {any} Behaviour gateway behaviour
+ * @param {import('#types').ActivityDefinition} activityDef
+ * @param {import('#types').ContextInstance} context
+ */
+function ConvergingGateway(Behaviour, activityDef, context) {
+  const activity = new _Activity.Activity(Behaviour, {
+    ...activityDef,
+    isConvergingGateway: true
+  }, context);
+  const id = activity.id;
   activity.broker.cancel('_api-shake');
   activity.broker.subscribeTmp('api', 'activity.shake.continue', onApiShake, {
     noAck: true,
@@ -60,7 +77,7 @@ function ParallelGateway(activityDef, context) {
         collect.add(s.id);
       }
     }
-    activity.logger.debug(`<${activity.id}> collected parallel gateway peers`);
+    activity.logger.debug(`<${activity.id}> collected converging gateway peers`);
     activity[K_PEERS_DISCOVERED] = true;
     context.setShakenPeers(id, [...peers].map(([flowId, sourceIds]) => [flowId, [...sourceIds]]));
     if (collectOnly) return;
@@ -125,7 +142,8 @@ ParallelGatewayBehaviour.prototype.execute = function execute(executeMessage) {
  */
 ParallelGatewayBehaviour.prototype.setup = function setup(executeMessage) {
   const targets = this[_constants.K_TARGETS] = new Map();
-  const touched = new Set(executeMessage.content.inbound.map(({
+  const inboundFlows = executeMessage.content.inbound ?? [];
+  const touched = new Set(inboundFlows.map(({
     id: flowId
   }) => flowId));
   for (const [flowId, sourceIds] of this.activity[K_PEERS]) {
@@ -137,7 +155,7 @@ ParallelGatewayBehaviour.prototype.setup = function setup(executeMessage) {
   const {
     executionId
   } = executeContent;
-  this.inbound.add((0, _messageHelper.cloneContent)(executeContent.inbound[0]));
+  if (inboundFlows.length) this.inbound.add((0, _messageHelper.cloneContent)(inboundFlows[0]));
   this.broker.subscribeOnce('api', `activity.stop.${executionId}`, () => this._stop(), {
     consumerTag: '_api-stop-execution'
   });
@@ -181,12 +199,20 @@ ParallelGatewayBehaviour.prototype._complete = function complete() {
   this.broker.cancel('_converging-inbound', false);
   this._stop();
   this.activity.logger.debug(`<${this.executionId} (${this.id})> completed monitoring`);
+  return this.broker.publish('execution', 'execute.completed', this._getCompletedContent());
+};
+
+/**
+ * Completed execute message content
+ * @returns {import('#types').ElementMessageContent}
+ */
+ParallelGatewayBehaviour.prototype._getCompletedContent = function getCompletedContent() {
   const content = (0, _messageHelper.cloneContent)(this[_constants.K_EXECUTE_MESSAGE].content, {
     isRootScope: true,
     state: 'completed'
   });
   content.inbound = this.peerMonitor.inbound;
-  return this.broker.publish('execution', 'execute.completed', content);
+  return content;
 };
 ParallelGatewayBehaviour.prototype._stop = function stop() {
   this.broker.cancel('_converging-inbound');
@@ -197,12 +223,12 @@ ParallelGatewayBehaviour.prototype._stop = function stop() {
 };
 
 /**
- * Collect peer target activities, optionally following upstream parallel gateways so their peers are monitored too
- * @param {import('#types').Activity} gateway monitoring parallel gateway
- * @param {string} rootId monitoring parallel gateway id, never a target of itself
+ * Collect peer target activities, optionally following upstream converging gateways so their peers are monitored too
+ * @param {import('#types').Activity} gateway monitoring gateway
+ * @param {string} rootId monitoring gateway id, never a target of itself
  * @param {Iterable<string>} peerIds peer activity ids
  * @param {Map<string, import('#types').Activity>} targets collected peer targets
- * @param {boolean} deep follow upstream parallel gateway peers
+ * @param {boolean} deep follow upstream converging gateway peers
  */
 function collectPeerTargets(gateway, rootId, peerIds, targets, deep) {
   for (const peerId of peerIds) {
@@ -218,8 +244,8 @@ function collectPeerTargets(gateway, rootId, peerIds, targets, deep) {
 
 /**
  * Peer monitor
- * @param {import('#types').Activity} activity parallel gateway activity
- * @param {Map<string, import('#types').Activity>} targets parallel gateway peer target activities
+ * @param {import('#types').Activity} activity converging gateway activity
+ * @param {Map<string, import('#types').Activity>} targets gateway peer target activities
  */
 function PeerMonitor(activity, targets) {
   this.activity = activity;
@@ -243,9 +269,9 @@ Object.defineProperty(PeerMonitor.prototype, 'isRunning', {
  */
 PeerMonitor.prototype.execute = function execute(executeMessage) {
   const message = (0, _messageHelper.cloneMessage)(executeMessage);
-  const inbound = message.content.inbound.pop();
-  this.inbound.push((0, _messageHelper.cloneContent)(inbound));
-  this.activity.logger.debug(`<${executeMessage.content.executionId} (${this.id})> start monitoring inbound <${inbound.id}> peers`);
+  const inbound = message.content.inbound?.pop();
+  if (inbound) this.inbound.push((0, _messageHelper.cloneContent)(inbound));
+  this.activity.logger.debug(`<${executeMessage.content.executionId} (${this.id})> start monitoring ${inbound ? `inbound <${inbound.id}> ` : ''}peers`);
   this.activity.broker.publish('execution', 'execute.start', {
     ...(0, _messageHelper.cloneContent)(executeMessage.content),
     inbound: this.inbound.slice(),

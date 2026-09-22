@@ -1,6 +1,6 @@
 {
   "name": "bpmn-elements",
-  "version": "18.0.28",
+  "version": "18.1.0",
   "description": "Executable workflow elements based on BPMN 2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -56,7 +56,7 @@
     "test:lcov": "c8 -r lcov mocha && npm run lint",
     "dist": "babel src -d dist/ && npm run build:types",
     "build:types": "node scripts/build-types.js",
-    "toc": "toc -c README.md docs/*.md"
+    "toc": "toc -c -s README.md docs/*.md"
   },
   "repository": {
     "type": "git",
@@ -97,7 +97,7 @@
     }
   },
   "devDependencies": {
-    "@0dep/toc": "^1.1.0",
+    "@0dep/toc": "^2.1.0",
     "@aircall/expression-parser": "^1.0.4",
     "@babel/cli": "^7.24.1",
     "@babel/core": "^7.24.4",

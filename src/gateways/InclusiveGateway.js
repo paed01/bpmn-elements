@@ -1,5 +1,29 @@
-import { Activity } from '../activity/Activity.js';
-import { cloneContent } from '../messageHelper.js';
+import { ConvergingGateway, ParallelGatewayBehaviour } from './ParallelGateway.js';
+
+/**
+ * Inclusive gateway behaviour
+ *
+ * Converges like the parallel gateway, awaiting the upstream peers that were actually activated, but requires
+ * at least one conditional or default outbound flow to be taken on completion.
+ */
+export class InclusiveGatewayBehaviour extends ParallelGatewayBehaviour {
+  /**
+   * @param {import('#types').Activity} activity
+   */
+  constructor(activity) {
+    super(activity);
+  }
+
+  /**
+   * Completed execute message content requiring an outbound flow to be taken
+   * @returns {import('#types').ElementMessageContent}
+   */
+  _getCompletedContent() {
+    const content = super._getCompletedContent();
+    content.requireOutbound = true;
+    return content;
+  }
+}
 
 /**
  * Inclusive gateway
@@ -7,24 +31,5 @@ import { cloneContent } from '../messageHelper.js';
  * @param {import('#types').ContextInstance} context
  */
 export function InclusiveGateway(activityDef, context) {
-  return new Activity(InclusiveGatewayBehaviour, activityDef, context);
+  return ConvergingGateway(InclusiveGatewayBehaviour, activityDef, context);
 }
-
-/**
- * Inclusive gateway behaviour
- * @param {import('#types').Activity} activity
- */
-export function InclusiveGatewayBehaviour(activity) {
-  const { id, type, broker } = activity;
-  this.id = id;
-  this.type = type;
-  this.broker = broker;
-}
-
-/**
- * @param {import('#types').ElementBrokerMessage} executeMessage
- * @returns {void}
- */
-InclusiveGatewayBehaviour.prototype.execute = function execute({ content }) {
-  this.broker.publish('execution', 'execute.completed', cloneContent(content, { requireOutbound: true }));
-};

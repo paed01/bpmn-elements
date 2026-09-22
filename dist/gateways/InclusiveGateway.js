@@ -4,41 +4,39 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.InclusiveGateway = InclusiveGateway;
-exports.InclusiveGatewayBehaviour = InclusiveGatewayBehaviour;
-var _Activity = require("../activity/Activity.js");
-var _messageHelper = require("../messageHelper.js");
+exports.InclusiveGatewayBehaviour = void 0;
+var _ParallelGateway = require("./ParallelGateway.js");
+/**
+ * Inclusive gateway behaviour
+ *
+ * Converges like the parallel gateway, awaiting the upstream peers that were actually activated, but requires
+ * at least one conditional or default outbound flow to be taken on completion.
+ */
+class InclusiveGatewayBehaviour extends _ParallelGateway.ParallelGatewayBehaviour {
+  /**
+   * @param {import('#types').Activity} activity
+   */
+  constructor(activity) {
+    super(activity);
+  }
+
+  /**
+   * Completed execute message content requiring an outbound flow to be taken
+   * @returns {import('#types').ElementMessageContent}
+   */
+  _getCompletedContent() {
+    const content = super._getCompletedContent();
+    content.requireOutbound = true;
+    return content;
+  }
+}
+
 /**
  * Inclusive gateway
  * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
+exports.InclusiveGatewayBehaviour = InclusiveGatewayBehaviour;
 function InclusiveGateway(activityDef, context) {
-  return new _Activity.Activity(InclusiveGatewayBehaviour, activityDef, context);
+  return (0, _ParallelGateway.ConvergingGateway)(InclusiveGatewayBehaviour, activityDef, context);
 }
-
-/**
- * Inclusive gateway behaviour
- * @param {import('#types').Activity} activity
- */
-function InclusiveGatewayBehaviour(activity) {
-  const {
-    id,
-    type,
-    broker
-  } = activity;
-  this.id = id;
-  this.type = type;
-  this.broker = broker;
-}
-
-/**
- * @param {import('#types').ElementBrokerMessage} executeMessage
- * @returns {void}
- */
-InclusiveGatewayBehaviour.prototype.execute = function execute({
-  content
-}) {
-  this.broker.publish('execution', 'execute.completed', (0, _messageHelper.cloneContent)(content, {
-    requireOutbound: true
-  }));
-};
