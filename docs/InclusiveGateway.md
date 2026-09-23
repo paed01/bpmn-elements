@@ -16,10 +16,12 @@ A converging inclusive gateway waits for the upstream branches that were actuall
 
 The gateway reuses the [parallel gateway](/docs/ParallelGateway.md) peer monitoring: its upstream peers are discovered during the process shake, it enters execution as soon as the first inbound flow is touched, publishes `activity.converge`, and completes when all monitored peers have settled. The performance notes in [ParallelGateway](/docs/ParallelGateway.md#performance-and-trade-offs) apply.
 
+An inclusive gateway with a single incoming sequence flow has nothing to converge: it fires on every inbound token without awaiting upstream peers, does not publish `activity.converge`, and does not trigger the process shake.
+
 ## Outbound flows
 
 On completion the conditional outbound flows are evaluated and every truthy flow is taken. The default flow is taken when no condition is met. Without a default flow, and no condition met, the gateway emits an `<id> no conditional flow taken` error.
 
 ## Events
 
-- `activity.converge`: The inclusive gateway is collecting inbound and monitoring peers
+- `activity.converge`: The converging inclusive gateway is collecting inbound and monitoring peers

@@ -13,9 +13,11 @@ Join or fork gateway.
 
 ## Converging behaviour
 
-A parallel gateway — fork or join — monitors its upstream peer activities and completes once they have all settled, rather than completing as soon as the expected number of inbound flows have been touched. Peers are discovered during the process shake.
+A parallel gateway with more than one incoming sequence flow is converging: it monitors its upstream peer activities and completes once they have all settled, rather than completing as soon as the expected number of inbound flows have been touched. Peers are discovered during the process shake.
 
-This avoids stalls in the edge case where the same inbound flow may be touched more than once before all peers have reported, and lets a single-inbound fork correctly wait for parallel upstream branches before taking its outbound flows. The outcome is `taken` if any inbound flow was taken, otherwise `discarded`.
+This avoids stalls in the edge case where the same inbound flow may be touched more than once before all peers have reported. The outcome is `taken` if any inbound flow was taken, otherwise `discarded`.
+
+A parallel gateway with a single incoming sequence flow has nothing to converge. As BPMN 2.0 prescribes, it fires on every inbound token without awaiting upstream peers, so an uncontrolled merge upstream (an activity with multiple incoming flows) fires it once per token. It does not publish `activity.converge` and does not trigger the process shake.
 
 Peers are collected per inbound flow. An inbound flow that has not been touched when the gateway starts converging also awaits the peers of any parallel gateway upstream of it, so a branch that is still running behind another parallel gateway holds the join. An already touched inbound flow only awaits its immediate peers, which keeps a later token on the same flow, e.g. from a loop back, a separate firing.
 
@@ -35,7 +37,7 @@ Picking a parallel join only when you genuinely need the barrier keeps the commo
 
 A converging parallel gateway is more expensive than the other gateways, by design:
 
-- **Process shake on start.** To learn which upstream activities are its peers, the presence of a converging parallel gateway forces a graph shake when the process starts. Exclusive and event-based joins do not, but an [inclusive gateway](/docs/InclusiveGateway.md) does since it converges the same way. The shake walks the reachable graph, so its cost grows with graph size, and on graphs with many branching gateways in series it can grow super-linearly (it enumerates paths). The shake result is cached on the context and reused, so it runs **once per context** rather than once per run — reuse the same `Context`/`Definition` source across executions so the shake amortizes instead of repeating.
+- **Process shake on start.** To learn which upstream activities are its peers, the presence of a converging parallel gateway — one with more than one incoming sequence flow — forces a graph shake when the process starts. A process where every gateway only forks is not shaken. Exclusive and event-based joins do not, but an [inclusive gateway](/docs/InclusiveGateway.md) does since it converges the same way. The shake walks the reachable graph, so its cost grows with graph size, and on graphs with many branching gateways in series it can grow super-linearly (it enumerates paths). The shake result is cached on the context and reused, so it runs **once per context** rather than once per run — reuse the same `Context`/`Definition` source across executions so the shake amortizes instead of repeating.
 - **Peer monitoring at runtime.** While converging, the gateway watches all of its discovered peer activities until they settle (see _Converging behaviour_ above), which is more work than counting inbound flows.
 
 The upside is correctness on hard topologies and a large win elsewhere: because joins no longer rely on discarded flows arriving, dead branches are not propagated as discards. On branchy or looping diagrams that is dramatically cheaper than discarding every dead-path flow on every run.
@@ -44,4 +46,4 @@ Rule of thumb: a parallel join is the right tool when you must synchronise all b
 
 ## Events
 
-- `activity.converge`: The parallel gateway is collecting inbound and monitoring peers
+- `activity.converge`: The converging parallel gateway is collecting inbound and monitoring peers

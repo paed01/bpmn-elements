@@ -62,12 +62,12 @@ Activity properties:
 - `inbound`: list of inbound sequence flows
 - `initialized`: boolean indicating that the activity has been initialized (`init` called)
 - `isCatching`: boolean indicating that the activity is a catching event
-- `isConvergingGateway`: boolean indicating that the activity is a parallel or inclusive gateway, converging by monitoring its upstream peers
+- `isConvergingGateway`: boolean indicating that the activity is a parallel or inclusive gateway with more than one incoming sequence flow, converging by monitoring its upstream peers
 - `isEnd`: boolean indicating that the activity has no outbound sequence flows
 - `isForCompensation`: boolean indicating that the activity is for compensation
 - `isMultiInstance`: boolean indicating that the activity has loop characteristics
 - `isParallelGateway`: boolean indicating if the activity is a parallel gateway
-- `isParallelJoin`: boolean indicating if the activity is a parallel join gateway
+- `isParallelJoin`: **deprecated**, use `isConvergingGateway` combined with `isParallelGateway`. Boolean indicating if the activity is a parallel gateway with inbound flows from more than one source activity
 - `isRunning`: boolean indicating if the activity is running
 - `isStart`: boolean indicating if the activity a start activity
 - `isSubProcess`: boolean indicating if the activity is a sub process
