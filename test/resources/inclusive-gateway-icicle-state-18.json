@@ -1,0 +1,2512 @@
+{
+  "id": "Definitions_inclusive_icicle",
+  "type": "bpmn:Definitions",
+  "executionId": "Definitions_inclusive_icicle_461badbd43",
+  "stateVersion": 18,
+  "status": "executing",
+  "stopped": false,
+  "counters": {
+    "completed": 0,
+    "discarded": 0
+  },
+  "environment": {
+    "settings": {
+      "enableDummyService": true
+    },
+    "variables": {
+      "take2": true,
+      "take4": true
+    },
+    "output": {}
+  },
+  "execution": {
+    "executionId": "Definitions_inclusive_icicle_461badbd43",
+    "stopped": false,
+    "completed": false,
+    "status": "start",
+    "processes": [
+      {
+        "id": "Process_1",
+        "type": "bpmn:Process",
+        "executionId": "Process_1_da1f10cc71",
+        "environment": {
+          "settings": {
+            "enableDummyService": true
+          },
+          "variables": {
+            "take2": true,
+            "take4": true,
+            "fields": {
+              "routingKey": "run.execute",
+              "exchange": "run",
+              "consumerTag": "_process-run"
+            },
+            "content": {
+              "id": "Process_1",
+              "type": "bpmn:Process",
+              "executionId": "Process_1_da1f10cc71",
+              "parent": {
+                "id": "Definitions_inclusive_icicle",
+                "type": "bpmn:Definitions"
+              }
+            },
+            "properties": {
+              "messageId": "smq.mid-8193e4bb4d",
+              "timestamp": 1790138334732
+            }
+          },
+          "output": {}
+        },
+        "status": "executing",
+        "stopped": false,
+        "counters": {
+          "completed": 0,
+          "discarded": 0
+        },
+        "broker": {
+          "queues": [
+            {
+              "name": "run-q",
+              "options": {
+                "autoDelete": false,
+                "durable": true
+              },
+              "messages": [
+                {
+                  "fields": {
+                    "routingKey": "run.execute",
+                    "exchange": "run",
+                    "consumerTag": "_process-run"
+                  },
+                  "content": {
+                    "id": "Process_1",
+                    "type": "bpmn:Process",
+                    "executionId": "Process_1_da1f10cc71",
+                    "parent": {
+                      "id": "Definitions_inclusive_icicle",
+                      "type": "bpmn:Definitions"
+                    }
+                  },
+                  "properties": {
+                    "messageId": "smq.mid-8193e4bb4d",
+                    "timestamp": 1790138334732
+                  }
+                }
+              ]
+            },
+            {
+              "name": "execute-Process_1_da1f10cc71-q",
+              "options": {
+                "autoDelete": false,
+                "durable": true
+              },
+              "messages": [
+                {
+                  "fields": {
+                    "routingKey": "activity.init",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "executionId": "Event_Start_a2558d2490",
+                    "id": "Event_Start",
+                    "type": "bpmn:StartEvent",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isStart": true,
+                    "isStartEvent": true,
+                    "state": "init"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "init",
+                    "mandatory": false,
+                    "messageId": "smq.mid-77c966ce7c",
+                    "timestamp": 1790138334738
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.enter",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "id": "Event_Start",
+                    "executionId": "Event_Start_a2558d2490",
+                    "type": "bpmn:StartEvent",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isStart": true,
+                    "isStartEvent": true,
+                    "state": "enter"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "enter",
+                    "mandatory": false,
+                    "messageId": "smq.mid-ac4ea31e3f",
+                    "timestamp": 1790138334738
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.start",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "id": "Event_Start",
+                    "executionId": "Event_Start_a2558d2490",
+                    "type": "bpmn:StartEvent",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isStart": true,
+                    "isStartEvent": true,
+                    "state": "start"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "start",
+                    "mandatory": false,
+                    "messageId": "smq.mid-6ed8a3cd74",
+                    "timestamp": 1790138334738
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.execution.completed",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "id": "Event_Start",
+                    "executionId": "Event_Start_a2558d2490",
+                    "type": "bpmn:StartEvent",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isStart": true,
+                    "isStartEvent": true,
+                    "state": "execution.completed",
+                    "isRootScope": true
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "execution.completed",
+                    "messageId": "smq.mid-3e020404c4",
+                    "timestamp": 1790138334738,
+                    "mandatory": false
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.end",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "id": "Event_Start",
+                    "executionId": "Event_Start_a2558d2490",
+                    "type": "bpmn:StartEvent",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isStart": true,
+                    "isStartEvent": true,
+                    "state": "end",
+                    "isRootScope": true
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "end",
+                    "mandatory": false,
+                    "messageId": "smq.mid-a3cb2c91ca",
+                    "timestamp": 1790138334739
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "flow.take",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "action": "take",
+                    "result": true,
+                    "evaluationId": "Event_Start_a2558d2490",
+                    "id": "Flow_StartTo1",
+                    "targetId": "Gateway_1",
+                    "sequenceId": "Flow_StartTo1_take_3c3873dedd",
+                    "type": "bpmn:SequenceFlow",
+                    "sourceId": "Event_Start",
+                    "isSequenceFlow": true,
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    }
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "take",
+                    "messageId": "smq.mid-6862099d03",
+                    "timestamp": 1790138334739
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.enter",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Event_Start_a2558d2490",
+                        "id": "Flow_StartTo1",
+                        "targetId": "Gateway_1",
+                        "sequenceId": "Flow_StartTo1_take_3c3873dedd",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Event_Start",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Gateway_1_a38f5f4708",
+                    "id": "Gateway_1",
+                    "type": "bpmn:InclusiveGateway",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isConvergingGateway": true,
+                    "state": "enter"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "enter",
+                    "mandatory": false,
+                    "messageId": "smq.mid-d90ee1acb5",
+                    "timestamp": 1790138334739
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.start",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Event_Start_a2558d2490",
+                        "id": "Flow_StartTo1",
+                        "targetId": "Gateway_1",
+                        "sequenceId": "Flow_StartTo1_take_3c3873dedd",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Event_Start",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Gateway_1_a38f5f4708",
+                    "id": "Gateway_1",
+                    "type": "bpmn:InclusiveGateway",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isConvergingGateway": true,
+                    "state": "start"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "start",
+                    "mandatory": false,
+                    "messageId": "smq.mid-8bf477b785",
+                    "timestamp": 1790138334739
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.converge",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Event_Start_a2558d2490",
+                        "id": "Flow_StartTo1",
+                        "targetId": "Gateway_1",
+                        "sequenceId": "Flow_StartTo1_take_3c3873dedd",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Event_Start",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Gateway_1_a38f5f4708",
+                    "id": "Gateway_1",
+                    "type": "bpmn:InclusiveGateway",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isConvergingGateway": true,
+                    "state": "start",
+                    "isRootScope": true
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "messageId": "smq.mid-02a68971a3",
+                    "timestamp": 1790138334740
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "id": "Event_Start",
+                    "executionId": "Event_Start_a2558d2490",
+                    "type": "bpmn:StartEvent",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isStart": true,
+                    "isStartEvent": true,
+                    "state": "leave",
+                    "isRootScope": true,
+                    "outbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Event_Start_a2558d2490",
+                        "id": "Flow_StartTo1",
+                        "targetId": "Gateway_1"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-8490a559b7",
+                    "timestamp": 1790138334740
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.execution.completed",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Event_Start_a2558d2490",
+                        "id": "Flow_StartTo1",
+                        "targetId": "Gateway_1",
+                        "sequenceId": "Flow_StartTo1_take_3c3873dedd",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Event_Start",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Gateway_1_a38f5f4708",
+                    "id": "Gateway_1",
+                    "type": "bpmn:InclusiveGateway",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isConvergingGateway": true,
+                    "state": "execution.completed",
+                    "isRootScope": true,
+                    "preventComplete": true,
+                    "requireOutbound": true
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "execution.completed",
+                    "messageId": "smq.mid-cf4ba25794",
+                    "timestamp": 1790138334740,
+                    "mandatory": false
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.end",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Event_Start_a2558d2490",
+                        "id": "Flow_StartTo1",
+                        "targetId": "Gateway_1",
+                        "sequenceId": "Flow_StartTo1_take_3c3873dedd",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Event_Start",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Gateway_1_a38f5f4708",
+                    "id": "Gateway_1",
+                    "type": "bpmn:InclusiveGateway",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isConvergingGateway": true,
+                    "state": "end",
+                    "isRootScope": true,
+                    "preventComplete": true,
+                    "requireOutbound": true
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "end",
+                    "mandatory": false,
+                    "messageId": "smq.mid-9e85882c86",
+                    "timestamp": 1790138334741
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "flow.take",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "action": "take",
+                    "result": true,
+                    "evaluationId": "Gateway_1_a38f5f4708",
+                    "id": "Flow_1ToTask1",
+                    "targetId": "Activity_1",
+                    "sequenceId": "Flow_1ToTask1_take_0271a880b8",
+                    "type": "bpmn:SequenceFlow",
+                    "sourceId": "Gateway_1",
+                    "isSequenceFlow": true,
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    }
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "take",
+                    "messageId": "smq.mid-7d075111cc",
+                    "timestamp": 1790138334741
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.enter",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_1_a38f5f4708",
+                        "id": "Flow_1ToTask1",
+                        "targetId": "Activity_1",
+                        "sequenceId": "Flow_1ToTask1_take_0271a880b8",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Gateway_1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Activity_1_2c834de8f0",
+                    "id": "Activity_1",
+                    "type": "bpmn:Task",
+                    "name": "1",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "state": "enter"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "enter",
+                    "mandatory": false,
+                    "messageId": "smq.mid-ea3d05e8ad",
+                    "timestamp": 1790138334741
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.start",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_1_a38f5f4708",
+                        "id": "Flow_1ToTask1",
+                        "targetId": "Activity_1",
+                        "sequenceId": "Flow_1ToTask1_take_0271a880b8",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Gateway_1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Activity_1_2c834de8f0",
+                    "id": "Activity_1",
+                    "type": "bpmn:Task",
+                    "name": "1",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "state": "start"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "start",
+                    "mandatory": false,
+                    "messageId": "smq.mid-f9e5dae876",
+                    "timestamp": 1790138334741
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.execution.completed",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_1_a38f5f4708",
+                        "id": "Flow_1ToTask1",
+                        "targetId": "Activity_1",
+                        "sequenceId": "Flow_1ToTask1_take_0271a880b8",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Gateway_1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Activity_1_2c834de8f0",
+                    "id": "Activity_1",
+                    "type": "bpmn:Task",
+                    "name": "1",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "state": "execution.completed",
+                    "isRootScope": true
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "execution.completed",
+                    "messageId": "smq.mid-fb5feeab6a",
+                    "timestamp": 1790138334741,
+                    "mandatory": false
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.end",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_1_a38f5f4708",
+                        "id": "Flow_1ToTask1",
+                        "targetId": "Activity_1",
+                        "sequenceId": "Flow_1ToTask1_take_0271a880b8",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Gateway_1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Activity_1_2c834de8f0",
+                    "id": "Activity_1",
+                    "type": "bpmn:Task",
+                    "name": "1",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "state": "end",
+                    "isRootScope": true
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "end",
+                    "mandatory": false,
+                    "messageId": "smq.mid-3334ba4c1e",
+                    "timestamp": 1790138334741
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "flow.take",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "action": "take",
+                    "result": true,
+                    "evaluationId": "Activity_1_2c834de8f0",
+                    "id": "Flow_Task1ToEnd1",
+                    "targetId": "Event_End1",
+                    "sequenceId": "Flow_Task1ToEnd1_take_8711cbf7f1",
+                    "type": "bpmn:SequenceFlow",
+                    "sourceId": "Activity_1",
+                    "isSequenceFlow": true,
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    }
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "take",
+                    "messageId": "smq.mid-e4d1b8cb8a",
+                    "timestamp": 1790138334741
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.enter",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Activity_1_2c834de8f0",
+                        "id": "Flow_Task1ToEnd1",
+                        "targetId": "Event_End1",
+                        "sequenceId": "Flow_Task1ToEnd1_take_8711cbf7f1",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Activity_1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Event_End1_5478d9321a",
+                    "id": "Event_End1",
+                    "type": "bpmn:EndEvent",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isEnd": true,
+                    "isThrowing": true,
+                    "state": "enter"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "enter",
+                    "mandatory": false,
+                    "messageId": "smq.mid-3f848dfb0d",
+                    "timestamp": 1790138334741
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.start",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Activity_1_2c834de8f0",
+                        "id": "Flow_Task1ToEnd1",
+                        "targetId": "Event_End1",
+                        "sequenceId": "Flow_Task1ToEnd1_take_8711cbf7f1",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Activity_1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Event_End1_5478d9321a",
+                    "id": "Event_End1",
+                    "type": "bpmn:EndEvent",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isEnd": true,
+                    "isThrowing": true,
+                    "state": "start"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "start",
+                    "mandatory": false,
+                    "messageId": "smq.mid-544f989bb0",
+                    "timestamp": 1790138334742
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.execution.completed",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Activity_1_2c834de8f0",
+                        "id": "Flow_Task1ToEnd1",
+                        "targetId": "Event_End1",
+                        "sequenceId": "Flow_Task1ToEnd1_take_8711cbf7f1",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Activity_1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Event_End1_5478d9321a",
+                    "id": "Event_End1",
+                    "type": "bpmn:EndEvent",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isEnd": true,
+                    "isThrowing": true,
+                    "state": "execution.completed",
+                    "isRootScope": true
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "execution.completed",
+                    "messageId": "smq.mid-74d5bd1098",
+                    "timestamp": 1790138334742,
+                    "mandatory": false
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.end",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Activity_1_2c834de8f0",
+                        "id": "Flow_Task1ToEnd1",
+                        "targetId": "Event_End1",
+                        "sequenceId": "Flow_Task1ToEnd1_take_8711cbf7f1",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Activity_1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Event_End1_5478d9321a",
+                    "id": "Event_End1",
+                    "type": "bpmn:EndEvent",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isEnd": true,
+                    "isThrowing": true,
+                    "state": "end",
+                    "isRootScope": true
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "end",
+                    "mandatory": false,
+                    "messageId": "smq.mid-6701837360",
+                    "timestamp": 1790138334742
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Activity_1_2c834de8f0",
+                        "id": "Flow_Task1ToEnd1",
+                        "targetId": "Event_End1",
+                        "sequenceId": "Flow_Task1ToEnd1_take_8711cbf7f1",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Activity_1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Event_End1_5478d9321a",
+                    "id": "Event_End1",
+                    "type": "bpmn:EndEvent",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isEnd": true,
+                    "isThrowing": true,
+                    "state": "leave",
+                    "isRootScope": true
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-d3d8814fc3",
+                    "timestamp": 1790138334742
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_1_a38f5f4708",
+                        "id": "Flow_1ToTask1",
+                        "targetId": "Activity_1",
+                        "sequenceId": "Flow_1ToTask1_take_0271a880b8",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Gateway_1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Activity_1_2c834de8f0",
+                    "id": "Activity_1",
+                    "type": "bpmn:Task",
+                    "name": "1",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "state": "leave",
+                    "isRootScope": true,
+                    "outbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Activity_1_2c834de8f0",
+                        "id": "Flow_Task1ToEnd1",
+                        "targetId": "Event_End1"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-13916a34ca",
+                    "timestamp": 1790138334742
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "flow.take",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "action": "take",
+                    "result": true,
+                    "evaluationId": "Gateway_1_a38f5f4708",
+                    "id": "Flow_1To2",
+                    "targetId": "Gateway_2",
+                    "sequenceId": "Flow_1To2_take_667386faf7",
+                    "type": "bpmn:SequenceFlow",
+                    "sourceId": "Gateway_1",
+                    "isSequenceFlow": true,
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    }
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "take",
+                    "messageId": "smq.mid-ed7b2b0595",
+                    "timestamp": 1790138334742
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.enter",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_1_a38f5f4708",
+                        "id": "Flow_1To2",
+                        "targetId": "Gateway_2",
+                        "sequenceId": "Flow_1To2_take_667386faf7",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Gateway_1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Gateway_2_90d7ce7069",
+                    "id": "Gateway_2",
+                    "type": "bpmn:InclusiveGateway",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isConvergingGateway": true,
+                    "state": "enter"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "enter",
+                    "mandatory": false,
+                    "messageId": "smq.mid-905463c68c",
+                    "timestamp": 1790138334742
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.start",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_1_a38f5f4708",
+                        "id": "Flow_1To2",
+                        "targetId": "Gateway_2",
+                        "sequenceId": "Flow_1To2_take_667386faf7",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Gateway_1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Gateway_2_90d7ce7069",
+                    "id": "Gateway_2",
+                    "type": "bpmn:InclusiveGateway",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isConvergingGateway": true,
+                    "state": "start"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "start",
+                    "mandatory": false,
+                    "messageId": "smq.mid-230c0ac7d7",
+                    "timestamp": 1790138334742
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.converge",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_1_a38f5f4708",
+                        "id": "Flow_1To2",
+                        "targetId": "Gateway_2",
+                        "sequenceId": "Flow_1To2_take_667386faf7",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Gateway_1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Gateway_2_90d7ce7069",
+                    "id": "Gateway_2",
+                    "type": "bpmn:InclusiveGateway",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isConvergingGateway": true,
+                    "state": "start",
+                    "isRootScope": true
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "messageId": "smq.mid-31b5c3c0c1",
+                    "timestamp": 1790138334742
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.leave",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Event_Start_a2558d2490",
+                        "id": "Flow_StartTo1",
+                        "targetId": "Gateway_1",
+                        "sequenceId": "Flow_StartTo1_take_3c3873dedd",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Event_Start",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Gateway_1_a38f5f4708",
+                    "id": "Gateway_1",
+                    "type": "bpmn:InclusiveGateway",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isConvergingGateway": true,
+                    "state": "leave",
+                    "isRootScope": true,
+                    "preventComplete": true,
+                    "requireOutbound": true,
+                    "outbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_1_a38f5f4708",
+                        "id": "Flow_1ToTask1",
+                        "targetId": "Activity_1"
+                      },
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_1_a38f5f4708",
+                        "id": "Flow_1To2",
+                        "targetId": "Gateway_2"
+                      }
+                    ]
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "leave",
+                    "mandatory": false,
+                    "messageId": "smq.mid-5b238e2123",
+                    "timestamp": 1790138334743
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.execution.completed",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_1_a38f5f4708",
+                        "id": "Flow_1To2",
+                        "targetId": "Gateway_2",
+                        "sequenceId": "Flow_1To2_take_667386faf7",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Gateway_1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Gateway_2_90d7ce7069",
+                    "id": "Gateway_2",
+                    "type": "bpmn:InclusiveGateway",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isConvergingGateway": true,
+                    "state": "execution.completed",
+                    "isRootScope": true,
+                    "preventComplete": true,
+                    "requireOutbound": true
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "execution.completed",
+                    "messageId": "smq.mid-8067653293",
+                    "timestamp": 1790138334743,
+                    "mandatory": false
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.end",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_1_a38f5f4708",
+                        "id": "Flow_1To2",
+                        "targetId": "Gateway_2",
+                        "sequenceId": "Flow_1To2_take_667386faf7",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Gateway_1",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Gateway_2_90d7ce7069",
+                    "id": "Gateway_2",
+                    "type": "bpmn:InclusiveGateway",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isConvergingGateway": true,
+                    "state": "end",
+                    "isRootScope": true,
+                    "preventComplete": true,
+                    "requireOutbound": true
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "end",
+                    "mandatory": false,
+                    "messageId": "smq.mid-04bcb624b1",
+                    "timestamp": 1790138334743
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "flow.take",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "action": "take",
+                    "result": true,
+                    "evaluationId": "Gateway_2_90d7ce7069",
+                    "id": "Flow_2ToTask2",
+                    "targetId": "Activity_2",
+                    "sequenceId": "Flow_2ToTask2_take_4947e83514",
+                    "type": "bpmn:SequenceFlow",
+                    "sourceId": "Gateway_2",
+                    "isSequenceFlow": true,
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    }
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "take",
+                    "messageId": "smq.mid-3dda3becfd",
+                    "timestamp": 1790138334743
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.enter",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_2_90d7ce7069",
+                        "id": "Flow_2ToTask2",
+                        "targetId": "Activity_2",
+                        "sequenceId": "Flow_2ToTask2_take_4947e83514",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Gateway_2",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Activity_2_6c1910c6e8",
+                    "id": "Activity_2",
+                    "type": "bpmn:ServiceTask",
+                    "name": "2",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "state": "enter"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "enter",
+                    "mandatory": false,
+                    "messageId": "smq.mid-cbbd449165",
+                    "timestamp": 1790138334743
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.start",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_2_90d7ce7069",
+                        "id": "Flow_2ToTask2",
+                        "targetId": "Activity_2",
+                        "sequenceId": "Flow_2ToTask2_take_4947e83514",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Gateway_2",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Activity_2_6c1910c6e8",
+                    "id": "Activity_2",
+                    "type": "bpmn:ServiceTask",
+                    "name": "2",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "state": "start"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "start",
+                    "mandatory": false,
+                    "messageId": "smq.mid-fd1d442894",
+                    "timestamp": 1790138334743
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "flow.take",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "action": "take",
+                    "result": true,
+                    "evaluationId": "Gateway_2_90d7ce7069",
+                    "id": "Flow_2To3",
+                    "targetId": "Gateway_3",
+                    "sequenceId": "Flow_2To3_take_34cb8cc832",
+                    "type": "bpmn:SequenceFlow",
+                    "sourceId": "Gateway_2",
+                    "isSequenceFlow": true,
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    }
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "take",
+                    "messageId": "smq.mid-fb500d2f0b",
+                    "timestamp": 1790138334744
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.enter",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_2_90d7ce7069",
+                        "id": "Flow_2To3",
+                        "targetId": "Gateway_3",
+                        "sequenceId": "Flow_2To3_take_34cb8cc832",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Gateway_2",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Gateway_3_659d908ac3",
+                    "id": "Gateway_3",
+                    "type": "bpmn:InclusiveGateway",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isConvergingGateway": true,
+                    "state": "enter"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "enter",
+                    "mandatory": false,
+                    "messageId": "smq.mid-00da353351",
+                    "timestamp": 1790138334744
+                  }
+                },
+                {
+                  "fields": {
+                    "routingKey": "activity.start",
+                    "exchange": "event"
+                  },
+                  "content": {
+                    "inbound": [
+                      {
+                        "action": "take",
+                        "result": true,
+                        "evaluationId": "Gateway_2_90d7ce7069",
+                        "id": "Flow_2To3",
+                        "targetId": "Gateway_3",
+                        "sequenceId": "Flow_2To3_take_34cb8cc832",
+                        "type": "bpmn:SequenceFlow",
+                        "sourceId": "Gateway_2",
+                        "isSequenceFlow": true,
+                        "parent": {
+                          "id": "Process_1",
+                          "type": "bpmn:Process",
+                          "executionId": "Process_1_da1f10cc71"
+                        }
+                      }
+                    ],
+                    "executionId": "Gateway_3_659d908ac3",
+                    "id": "Gateway_3",
+                    "type": "bpmn:InclusiveGateway",
+                    "parent": {
+                      "id": "Process_1",
+                      "type": "bpmn:Process",
+                      "executionId": "Process_1_da1f10cc71"
+                    },
+                    "isConvergingGateway": true,
+                    "state": "start"
+                  },
+                  "properties": {
+                    "persistent": true,
+                    "type": "start",
+                    "mandatory": false,
+                    "messageId": "smq.mid-8a62f72f0c",
+                    "timestamp": 1790138334744
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "execution": {
+          "executionId": "Process_1_da1f10cc71",
+          "stopped": false,
+          "completed": false,
+          "status": "executing",
+          "children": [
+            {
+              "id": "Event_Start",
+              "type": "bpmn:StartEvent",
+              "executionId": "Event_Start_a2558d2490",
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "broker": {
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    },
+                    "messages": [
+                      {
+                        "fields": {
+                          "routingKey": "run.leave",
+                          "exchange": "run",
+                          "consumerTag": "_activity-run"
+                        },
+                        "content": {
+                          "id": "Event_Start",
+                          "executionId": "Event_Start_a2558d2490",
+                          "type": "bpmn:StartEvent",
+                          "parent": {
+                            "id": "Process_1",
+                            "type": "bpmn:Process"
+                          },
+                          "isStart": true,
+                          "isStartEvent": true,
+                          "state": "completed",
+                          "isRootScope": true,
+                          "outbound": [
+                            {
+                              "action": "take",
+                              "result": true,
+                              "evaluationId": "Event_Start_a2558d2490",
+                              "id": "Flow_StartTo1",
+                              "targetId": "Gateway_1"
+                            }
+                          ]
+                        },
+                        "properties": {
+                          "messageId": "smq.mid-df01e7e6e9",
+                          "timestamp": 1790138334739
+                        }
+                      },
+                      {
+                        "fields": {
+                          "routingKey": "run.next",
+                          "exchange": "run"
+                        },
+                        "content": {
+                          "id": "Event_Start",
+                          "executionId": "Event_Start_a2558d2490",
+                          "type": "bpmn:StartEvent",
+                          "parent": {
+                            "id": "Process_1",
+                            "type": "bpmn:Process"
+                          },
+                          "isStart": true,
+                          "isStartEvent": true,
+                          "state": "completed",
+                          "isRootScope": true,
+                          "outbound": [
+                            {
+                              "action": "take",
+                              "result": true,
+                              "evaluationId": "Event_Start_a2558d2490",
+                              "id": "Flow_StartTo1",
+                              "targetId": "Gateway_1"
+                            }
+                          ]
+                        },
+                        "properties": {
+                          "persistent": false,
+                          "messageId": "smq.mid-53f46d6b87",
+                          "timestamp": 1790138334740
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "Gateway_1",
+              "type": "bpmn:InclusiveGateway",
+              "executionId": "Gateway_1_a38f5f4708",
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "broker": {
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    },
+                    "messages": [
+                      {
+                        "fields": {
+                          "routingKey": "run.leave",
+                          "exchange": "run",
+                          "consumerTag": "_activity-run"
+                        },
+                        "content": {
+                          "inbound": [
+                            {
+                              "action": "take",
+                              "result": true,
+                              "evaluationId": "Event_Start_a2558d2490",
+                              "id": "Flow_StartTo1",
+                              "targetId": "Gateway_1",
+                              "sequenceId": "Flow_StartTo1_take_3c3873dedd",
+                              "type": "bpmn:SequenceFlow",
+                              "sourceId": "Event_Start",
+                              "isSequenceFlow": true,
+                              "parent": {
+                                "id": "Process_1",
+                                "type": "bpmn:Process",
+                                "executionId": "Process_1_da1f10cc71"
+                              }
+                            }
+                          ],
+                          "executionId": "Gateway_1_a38f5f4708",
+                          "id": "Gateway_1",
+                          "type": "bpmn:InclusiveGateway",
+                          "parent": {
+                            "id": "Process_1",
+                            "type": "bpmn:Process"
+                          },
+                          "isConvergingGateway": true,
+                          "state": "completed",
+                          "isRootScope": true,
+                          "preventComplete": true,
+                          "requireOutbound": true,
+                          "outbound": [
+                            {
+                              "action": "take",
+                              "result": true,
+                              "evaluationId": "Gateway_1_a38f5f4708",
+                              "id": "Flow_1ToTask1",
+                              "targetId": "Activity_1"
+                            },
+                            {
+                              "action": "take",
+                              "result": true,
+                              "evaluationId": "Gateway_1_a38f5f4708",
+                              "id": "Flow_1To2",
+                              "targetId": "Gateway_2"
+                            }
+                          ]
+                        },
+                        "properties": {
+                          "messageId": "smq.mid-3c43b0b1e2",
+                          "timestamp": 1790138334741
+                        }
+                      },
+                      {
+                        "fields": {
+                          "routingKey": "run.next",
+                          "exchange": "run"
+                        },
+                        "content": {
+                          "inbound": [
+                            {
+                              "action": "take",
+                              "result": true,
+                              "evaluationId": "Event_Start_a2558d2490",
+                              "id": "Flow_StartTo1",
+                              "targetId": "Gateway_1",
+                              "sequenceId": "Flow_StartTo1_take_3c3873dedd",
+                              "type": "bpmn:SequenceFlow",
+                              "sourceId": "Event_Start",
+                              "isSequenceFlow": true,
+                              "parent": {
+                                "id": "Process_1",
+                                "type": "bpmn:Process",
+                                "executionId": "Process_1_da1f10cc71"
+                              }
+                            }
+                          ],
+                          "executionId": "Gateway_1_a38f5f4708",
+                          "id": "Gateway_1",
+                          "type": "bpmn:InclusiveGateway",
+                          "parent": {
+                            "id": "Process_1",
+                            "type": "bpmn:Process"
+                          },
+                          "isConvergingGateway": true,
+                          "state": "completed",
+                          "isRootScope": true,
+                          "preventComplete": true,
+                          "requireOutbound": true,
+                          "outbound": [
+                            {
+                              "action": "take",
+                              "result": true,
+                              "evaluationId": "Gateway_1_a38f5f4708",
+                              "id": "Flow_1ToTask1",
+                              "targetId": "Activity_1"
+                            },
+                            {
+                              "action": "take",
+                              "result": true,
+                              "evaluationId": "Gateway_1_a38f5f4708",
+                              "id": "Flow_1To2",
+                              "targetId": "Gateway_2"
+                            }
+                          ]
+                        },
+                        "properties": {
+                          "persistent": false,
+                          "messageId": "smq.mid-651e6dde24",
+                          "timestamp": 1790138334743
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "Activity_1",
+              "type": "bpmn:Task",
+              "executionId": "Activity_1_2c834de8f0",
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "Event_End1",
+              "type": "bpmn:EndEvent",
+              "executionId": "Event_End1_5478d9321a",
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "Gateway_2",
+              "type": "bpmn:InclusiveGateway",
+              "status": "end",
+              "executionId": "Gateway_2_90d7ce7069",
+              "counters": {
+                "taken": 1,
+                "discarded": 0
+              },
+              "broker": {
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    },
+                    "messages": [
+                      {
+                        "fields": {
+                          "routingKey": "run.leave",
+                          "exchange": "run",
+                          "consumerTag": "_activity-run"
+                        },
+                        "content": {
+                          "inbound": [
+                            {
+                              "action": "take",
+                              "result": true,
+                              "evaluationId": "Gateway_1_a38f5f4708",
+                              "id": "Flow_1To2",
+                              "targetId": "Gateway_2",
+                              "sequenceId": "Flow_1To2_take_667386faf7",
+                              "type": "bpmn:SequenceFlow",
+                              "sourceId": "Gateway_1",
+                              "isSequenceFlow": true,
+                              "parent": {
+                                "id": "Process_1",
+                                "type": "bpmn:Process",
+                                "executionId": "Process_1_da1f10cc71"
+                              }
+                            }
+                          ],
+                          "executionId": "Gateway_2_90d7ce7069",
+                          "id": "Gateway_2",
+                          "type": "bpmn:InclusiveGateway",
+                          "parent": {
+                            "id": "Process_1",
+                            "type": "bpmn:Process"
+                          },
+                          "isConvergingGateway": true,
+                          "state": "completed",
+                          "isRootScope": true,
+                          "preventComplete": true,
+                          "requireOutbound": true,
+                          "outbound": [
+                            {
+                              "action": "take",
+                              "result": true,
+                              "evaluationId": "Gateway_2_90d7ce7069",
+                              "id": "Flow_2ToTask2",
+                              "targetId": "Activity_2"
+                            },
+                            {
+                              "action": "take",
+                              "result": true,
+                              "evaluationId": "Gateway_2_90d7ce7069",
+                              "id": "Flow_2To3",
+                              "targetId": "Gateway_3"
+                            }
+                          ]
+                        },
+                        "properties": {
+                          "messageId": "smq.mid-b08ade9839",
+                          "timestamp": 1790138334743
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "execution": {
+                "completed": true
+              }
+            },
+            {
+              "id": "Activity_2",
+              "type": "bpmn:ServiceTask",
+              "status": "executing",
+              "executionId": "Activity_2_6c1910c6e8",
+              "counters": {
+                "taken": 0,
+                "discarded": 0
+              },
+              "broker": {
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    },
+                    "messages": [
+                      {
+                        "fields": {
+                          "routingKey": "run.execute",
+                          "exchange": "run",
+                          "consumerTag": "_activity-run"
+                        },
+                        "content": {
+                          "inbound": [
+                            {
+                              "action": "take",
+                              "result": true,
+                              "evaluationId": "Gateway_2_90d7ce7069",
+                              "id": "Flow_2ToTask2",
+                              "targetId": "Activity_2",
+                              "sequenceId": "Flow_2ToTask2_take_4947e83514",
+                              "type": "bpmn:SequenceFlow",
+                              "sourceId": "Gateway_2",
+                              "isSequenceFlow": true,
+                              "parent": {
+                                "id": "Process_1",
+                                "type": "bpmn:Process",
+                                "executionId": "Process_1_da1f10cc71"
+                              }
+                            }
+                          ],
+                          "executionId": "Activity_2_6c1910c6e8",
+                          "id": "Activity_2",
+                          "type": "bpmn:ServiceTask",
+                          "name": "2",
+                          "parent": {
+                            "id": "Process_1",
+                            "type": "bpmn:Process"
+                          }
+                        },
+                        "properties": {
+                          "messageId": "smq.mid-f9b7b9eea2",
+                          "timestamp": 1790138334743
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    },
+                    "messages": [
+                      {
+                        "fields": {
+                          "routingKey": "execute.start",
+                          "exchange": "execution",
+                          "consumerTag": "_activity-execute"
+                        },
+                        "content": {
+                          "inbound": [
+                            {
+                              "action": "take",
+                              "result": true,
+                              "evaluationId": "Gateway_2_90d7ce7069",
+                              "id": "Flow_2ToTask2",
+                              "targetId": "Activity_2",
+                              "sequenceId": "Flow_2ToTask2_take_4947e83514",
+                              "type": "bpmn:SequenceFlow",
+                              "sourceId": "Gateway_2",
+                              "isSequenceFlow": true,
+                              "parent": {
+                                "id": "Process_1",
+                                "type": "bpmn:Process",
+                                "executionId": "Process_1_da1f10cc71"
+                              }
+                            }
+                          ],
+                          "executionId": "Activity_2_6c1910c6e8",
+                          "id": "Activity_2",
+                          "type": "bpmn:ServiceTask",
+                          "name": "2",
+                          "parent": {
+                            "id": "Process_1",
+                            "type": "bpmn:Process"
+                          },
+                          "state": "start",
+                          "isRootScope": true
+                        },
+                        "properties": {
+                          "messageId": "smq.mid-fff676bec6",
+                          "timestamp": 1790138334743
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "execution": {
+                "completed": false
+              }
+            },
+            {
+              "id": "Event_End2",
+              "type": "bpmn:EndEvent",
+              "counters": {
+                "taken": 0,
+                "discarded": 0
+              }
+            },
+            {
+              "id": "Gateway_3",
+              "type": "bpmn:InclusiveGateway",
+              "status": "executing",
+              "executionId": "Gateway_3_659d908ac3",
+              "counters": {
+                "taken": 0,
+                "discarded": 0
+              },
+              "broker": {
+                "exchanges": [
+                  {
+                    "name": "execution",
+                    "type": "topic",
+                    "options": {
+                      "durable": true,
+                      "autoDelete": false
+                    },
+                    "deliveryQueue": {
+                      "name": "delivery-q",
+                      "options": {
+                        "autoDelete": false
+                      },
+                      "messages": [
+                        {
+                          "fields": {
+                            "routingKey": "execute.start",
+                            "consumerTag": "_exchange-tag"
+                          },
+                          "content": {
+                            "content": {
+                              "inbound": [
+                                {
+                                  "action": "take",
+                                  "result": true,
+                                  "evaluationId": "Gateway_2_90d7ce7069",
+                                  "id": "Flow_2To3",
+                                  "targetId": "Gateway_3",
+                                  "sequenceId": "Flow_2To3_take_34cb8cc832",
+                                  "type": "bpmn:SequenceFlow",
+                                  "sourceId": "Gateway_2",
+                                  "isSequenceFlow": true,
+                                  "parent": {
+                                    "id": "Process_1",
+                                    "type": "bpmn:Process",
+                                    "executionId": "Process_1_da1f10cc71"
+                                  }
+                                }
+                              ],
+                              "executionId": "Gateway_3_659d908ac3",
+                              "id": "Gateway_3",
+                              "type": "bpmn:InclusiveGateway",
+                              "parent": {
+                                "id": "Process_1",
+                                "type": "bpmn:Process"
+                              },
+                              "isConvergingGateway": true,
+                              "state": "monitoring",
+                              "isRootScope": true,
+                              "preventComplete": true
+                            }
+                          },
+                          "properties": {
+                            "messageId": "smq.mid-9ae6f29d20",
+                            "timestamp": 1790138334744
+                          }
+                        }
+                      ]
+                    },
+                    "bindings": [
+                      {
+                        "id": "execute-q/execute.#",
+                        "options": {
+                          "priority": 100
+                        },
+                        "queueName": "execute-q",
+                        "pattern": "execute.#"
+                      },
+                      {
+                        "id": "execution-q/execution.#",
+                        "options": {
+                          "priority": 0
+                        },
+                        "queueName": "execution-q",
+                        "pattern": "execution.#"
+                      }
+                    ]
+                  }
+                ],
+                "queues": [
+                  {
+                    "name": "run-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    },
+                    "messages": [
+                      {
+                        "fields": {
+                          "routingKey": "run.execute",
+                          "exchange": "run",
+                          "consumerTag": "_activity-run"
+                        },
+                        "content": {
+                          "inbound": [
+                            {
+                              "action": "take",
+                              "result": true,
+                              "evaluationId": "Gateway_2_90d7ce7069",
+                              "id": "Flow_2To3",
+                              "targetId": "Gateway_3",
+                              "sequenceId": "Flow_2To3_take_34cb8cc832",
+                              "type": "bpmn:SequenceFlow",
+                              "sourceId": "Gateway_2",
+                              "isSequenceFlow": true,
+                              "parent": {
+                                "id": "Process_1",
+                                "type": "bpmn:Process",
+                                "executionId": "Process_1_da1f10cc71"
+                              }
+                            }
+                          ],
+                          "executionId": "Gateway_3_659d908ac3",
+                          "id": "Gateway_3",
+                          "type": "bpmn:InclusiveGateway",
+                          "parent": {
+                            "id": "Process_1",
+                            "type": "bpmn:Process"
+                          },
+                          "isConvergingGateway": true
+                        },
+                        "properties": {
+                          "messageId": "smq.mid-dd4cf05640",
+                          "timestamp": 1790138334744
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "name": "execute-q",
+                    "options": {
+                      "autoDelete": false,
+                      "durable": true
+                    },
+                    "messages": [
+                      {
+                        "fields": {
+                          "routingKey": "execute.start",
+                          "exchange": "execution",
+                          "consumerTag": "_activity-execute"
+                        },
+                        "content": {
+                          "inbound": [
+                            {
+                              "action": "take",
+                              "result": true,
+                              "evaluationId": "Gateway_2_90d7ce7069",
+                              "id": "Flow_2To3",
+                              "targetId": "Gateway_3",
+                              "sequenceId": "Flow_2To3_take_34cb8cc832",
+                              "type": "bpmn:SequenceFlow",
+                              "sourceId": "Gateway_2",
+                              "isSequenceFlow": true,
+                              "parent": {
+                                "id": "Process_1",
+                                "type": "bpmn:Process",
+                                "executionId": "Process_1_da1f10cc71"
+                              }
+                            }
+                          ],
+                          "executionId": "Gateway_3_659d908ac3",
+                          "id": "Gateway_3",
+                          "type": "bpmn:InclusiveGateway",
+                          "parent": {
+                            "id": "Process_1",
+                            "type": "bpmn:Process"
+                          },
+                          "isConvergingGateway": true,
+                          "state": "start",
+                          "isRootScope": true
+                        },
+                        "properties": {
+                          "messageId": "smq.mid-09a89d344f",
+                          "timestamp": 1790138334744
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "execution": {
+                "completed": false
+              }
+            },
+            {
+              "id": "Activity_3",
+              "type": "bpmn:Task",
+              "counters": {
+                "taken": 0,
+                "discarded": 0
+              }
+            },
+            {
+              "id": "Activity_4",
+              "type": "bpmn:ServiceTask",
+              "counters": {
+                "taken": 0,
+                "discarded": 0
+              }
+            },
+            {
+              "id": "Event_End3",
+              "type": "bpmn:EndEvent",
+              "counters": {
+                "taken": 0,
+                "discarded": 0
+              }
+            },
+            {
+              "id": "Event_End4",
+              "type": "bpmn:EndEvent",
+              "counters": {
+                "taken": 0,
+                "discarded": 0
+              }
+            },
+            {
+              "id": "end",
+              "type": "bpmn:EndEvent",
+              "counters": {
+                "taken": 0,
+                "discarded": 0
+              }
+            }
+          ],
+          "flows": [
+            {
+              "id": "Flow_StartTo1",
+              "type": "bpmn:SequenceFlow",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              }
+            },
+            {
+              "id": "Flow_1ToTask1",
+              "type": "bpmn:SequenceFlow",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              }
+            },
+            {
+              "id": "Flow_Task1ToEnd1",
+              "type": "bpmn:SequenceFlow",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              }
+            },
+            {
+              "id": "Flow_1To2",
+              "type": "bpmn:SequenceFlow",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              }
+            },
+            {
+              "id": "Flow_2ToTask2",
+              "type": "bpmn:SequenceFlow",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              }
+            },
+            {
+              "id": "Flow_Task2ToEnd2",
+              "type": "bpmn:SequenceFlow",
+              "counters": {
+                "looped": 0,
+                "take": 0,
+                "discard": 0
+              }
+            },
+            {
+              "id": "Flow_2To3",
+              "type": "bpmn:SequenceFlow",
+              "counters": {
+                "looped": 0,
+                "take": 1,
+                "discard": 0
+              }
+            },
+            {
+              "id": "Flow_3ToTask3",
+              "type": "bpmn:SequenceFlow",
+              "counters": {
+                "looped": 0,
+                "take": 0,
+                "discard": 0
+              }
+            },
+            {
+              "id": "Flow_3ToTask4",
+              "type": "bpmn:SequenceFlow",
+              "counters": {
+                "looped": 0,
+                "take": 0,
+                "discard": 0
+              }
+            },
+            {
+              "id": "Flow_Task3ToEnd3",
+              "type": "bpmn:SequenceFlow",
+              "counters": {
+                "looped": 0,
+                "take": 0,
+                "discard": 0
+              }
+            },
+            {
+              "id": "Flow_Task4ToEnd4",
+              "type": "bpmn:SequenceFlow",
+              "counters": {
+                "looped": 0,
+                "take": 0,
+                "discard": 0
+              }
+            },
+            {
+              "id": "Flow_0596vdo",
+              "type": "bpmn:SequenceFlow",
+              "counters": {
+                "looped": 0,
+                "take": 0,
+                "discard": 0
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "broker": {
+    "queues": [
+      {
+        "name": "run-q",
+        "options": {
+          "autoDelete": false,
+          "durable": true
+        },
+        "messages": [
+          {
+            "fields": {
+              "routingKey": "run.execute",
+              "exchange": "run",
+              "consumerTag": "_definition-run"
+            },
+            "content": {
+              "id": "Definitions_inclusive_icicle",
+              "type": "bpmn:Definitions",
+              "executionId": "Definitions_inclusive_icicle_461badbd43"
+            },
+            "properties": {
+              "messageId": "smq.mid-2c2328e1ce",
+              "timestamp": 1790138334731
+            }
+          }
+        ]
+      },
+      {
+        "name": "execute-Definitions_inclusive_icicle_461badbd43-q",
+        "options": {
+          "autoDelete": false,
+          "durable": true
+        },
+        "messages": [
+          {
+            "fields": {
+              "routingKey": "process.init",
+              "exchange": "event"
+            },
+            "content": {
+              "id": "Process_1",
+              "type": "bpmn:Process",
+              "executionId": "Process_1_da1f10cc71",
+              "parent": {
+                "id": "Definitions_inclusive_icicle",
+                "type": "bpmn:Definitions",
+                "executionId": "Definitions_inclusive_icicle_461badbd43"
+              },
+              "state": "init"
+            },
+            "properties": {
+              "type": "init",
+              "mandatory": false,
+              "messageId": "smq.mid-b35ee1e9de",
+              "timestamp": 1790138334732
+            }
+          },
+          {
+            "fields": {
+              "routingKey": "process.enter",
+              "exchange": "event"
+            },
+            "content": {
+              "id": "Process_1",
+              "type": "bpmn:Process",
+              "executionId": "Process_1_da1f10cc71",
+              "parent": {
+                "id": "Definitions_inclusive_icicle",
+                "type": "bpmn:Definitions",
+                "executionId": "Definitions_inclusive_icicle_461badbd43"
+              },
+              "state": "enter"
+            },
+            "properties": {
+              "type": "enter",
+              "mandatory": false,
+              "messageId": "smq.mid-babc582426",
+              "timestamp": 1790138334732
+            }
+          },
+          {
+            "fields": {
+              "routingKey": "process.start",
+              "exchange": "event"
+            },
+            "content": {
+              "id": "Process_1",
+              "type": "bpmn:Process",
+              "executionId": "Process_1_da1f10cc71",
+              "parent": {
+                "id": "Definitions_inclusive_icicle",
+                "type": "bpmn:Definitions",
+                "executionId": "Definitions_inclusive_icicle_461badbd43"
+              },
+              "state": "start"
+            },
+            "properties": {
+              "type": "start",
+              "mandatory": false,
+              "messageId": "smq.mid-5e0e78de01",
+              "timestamp": 1790138334732
+            }
+          },
+          {
+            "fields": {
+              "routingKey": "execution.stop"
+            },
+            "content": {
+              "id": "Definitions_inclusive_icicle",
+              "type": "bpmn:Definitions",
+              "executionId": "Definitions_inclusive_icicle_461badbd43",
+              "state": "start"
+            },
+            "properties": {
+              "persistent": false,
+              "messageId": "smq.mid-1f006e770c",
+              "timestamp": 1790138334744
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

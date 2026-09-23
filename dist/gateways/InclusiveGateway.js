@@ -4,39 +4,36 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.InclusiveGateway = InclusiveGateway;
-exports.InclusiveGatewayBehaviour = void 0;
-var _ParallelGateway = require("./ParallelGateway.js");
-/**
- * Inclusive gateway behaviour
- *
- * Converges like the parallel gateway, awaiting the upstream peers that were actually activated, but requires
- * at least one conditional or default outbound flow to be taken on completion.
- */
-class InclusiveGatewayBehaviour extends _ParallelGateway.ParallelGatewayBehaviour {
-  /**
-   * @param {import('#types').Activity} activity
-   */
-  constructor(activity) {
-    super(activity);
-  }
-
-  /**
-   * Completed execute message content requiring an outbound flow to be taken
-   * @returns {import('#types').ElementMessageContent}
-   */
-  _getCompletedContent() {
-    const content = super._getCompletedContent();
-    content.requireOutbound = true;
-    return content;
-  }
-}
-
+exports.InclusiveGatewayBehaviour = InclusiveGatewayBehaviour;
+var _ConvergingGateway = require("./ConvergingGateway.js");
 /**
  * Inclusive gateway
  * @param {import('#types').ActivityDefinition} activityDef
  * @param {import('#types').ContextInstance} context
  */
-exports.InclusiveGatewayBehaviour = InclusiveGatewayBehaviour;
 function InclusiveGateway(activityDef, context) {
-  return (0, _ParallelGateway.ConvergingGateway)(InclusiveGatewayBehaviour, activityDef, context);
+  return (0, _ConvergingGateway.ConvergingGateway)(InclusiveGatewayBehaviour, activityDef, context);
 }
+
+/**
+ * Inclusive gateway behaviour
+ *
+ * Converges by awaiting the upstream peers that were actually activated and requires at least one
+ * conditional or default outbound flow to be taken on completion.
+ * @param {import('#types').Activity} activity
+ */
+function InclusiveGatewayBehaviour(activity) {
+  _ConvergingGateway.ConvergingGatewayBehaviour.call(this, activity);
+}
+InclusiveGatewayBehaviour.prototype = Object.create(_ConvergingGateway.ConvergingGatewayBehaviour.prototype);
+InclusiveGatewayBehaviour.prototype.constructor = InclusiveGatewayBehaviour;
+
+/**
+ * Completed execute message content requiring an outbound flow to be taken
+ * @returns {import('#types').ElementMessageContent}
+ */
+InclusiveGatewayBehaviour.prototype._getCompletedContent = function getCompletedContent() {
+  const content = _ConvergingGateway.ConvergingGatewayBehaviour.prototype._getCompletedContent.call(this);
+  content.requireOutbound = true;
+  return content;
+};

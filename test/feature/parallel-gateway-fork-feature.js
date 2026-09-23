@@ -183,9 +183,10 @@ Feature('Parallel gateway fork', () => {
     });
 
     let forkGw;
-    And('parallel fork was taken again', () => {
+    And('parallel fork was taken again, once per token merged by the preceding task', () => {
       forkGw = definition.getActivityById('fork');
-      expect(forkGw.counters).to.deep.equal({ taken: 2, discarded: 0 });
+      expect(definition.getActivityById('task5').counters).to.deep.equal({ taken: 4, discarded: 0 });
+      expect(forkGw.counters).to.deep.equal({ taken: 4, discarded: 0 });
     });
 
     And('has the expected number of inbound flows', () => {
@@ -545,7 +546,7 @@ Feature('Parallel gateway fork', () => {
     });
   });
 
-  Scenario('A process with a fork but no parallel join still triggers a shake', () => {
+  Scenario('A process with a fork with one incoming flow and no parallel join fires on every token without a shake', () => {
     const source = `
     <?xml version="1.0" encoding="UTF-8"?>
     <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -572,6 +573,8 @@ Feature('Parallel gateway fork', () => {
     /** @type {Definition} */
     let definition;
     const convergeMessages = [];
+    /** @type {string[]} */
+    const shakeMessages = [];
 
     Given('a definition with a fork (no join) and parallel upstream peers', async () => {
       const context = await testHelpers.context(source);
@@ -579,13 +582,14 @@ Feature('Parallel gateway fork', () => {
     });
 
     let leave;
-    When('definition is ran capturing activity.converge events', () => {
+    When('definition is ran capturing activity.converge and shake events', () => {
       leave = definition.waitFor('leave');
       definition.broker.subscribeTmp(
         'event',
-        'activity.converge',
-        (_, msg) => {
-          convergeMessages.push(msg.content.id);
+        '#',
+        (routingKey, msg) => {
+          if (routingKey === 'activity.converge') convergeMessages.push(msg.content.id);
+          else if (routingKey.indexOf('.shake') > -1) shakeMessages.push(routingKey);
         },
         { noAck: true }
       );
@@ -596,26 +600,25 @@ Feature('Parallel gateway fork', () => {
       return leave;
     });
 
-    And('the fork emitted activity.converge', () => {
-      expect(convergeMessages).to.include('fork');
+    And('neither gateway converged', () => {
+      expect(convergeMessages).to.be.empty;
     });
 
-    And('the fork discovered upstream parallel peers via shake', () => {
-      const fork = definition.getActivityById('fork');
-      const peers = fork[Symbol.for('peers')];
-      const peerIds = new Set([...peers.values()].flatMap((s) => [...s]));
-      expect(peerIds).to.include('task1');
-      expect(peerIds).to.include('task2');
-      expect(peerIds).to.include('split');
+    And('no shake was needed since no gateway has more than one incoming flow', () => {
+      expect(shakeMessages).to.be.empty;
     });
 
-    And('the fork fires once, aggregating both upstream firings via peer monitoring', () => {
+    And('the fork fires once per token merged by the preceding task', () => {
       const fork = definition.getActivityById('fork');
-      expect(fork.counters).to.deep.equal({ taken: 1, discarded: 0 });
+      expect(fork.counters).to.deep.equal({ taken: 2, discarded: 0 });
       const merge = definition.getActivityById('merge');
       expect(merge.counters).to.deep.equal({ taken: 2, discarded: 0 });
-      expect(definition.getActivityById('end1').counters).to.deep.equal({ taken: 1, discarded: 0 });
-      expect(definition.getActivityById('end2').counters).to.deep.equal({ taken: 1, discarded: 0 });
+      expect(definition.getActivityById('end1').counters).to.deep.equal({ taken: 2, discarded: 0 });
+      expect(definition.getActivityById('end2').counters).to.deep.equal({ taken: 2, discarded: 0 });
+    });
+
+    And('nothing is postponed', () => {
+      expect(definition.getPostponed()).to.have.length(0);
     });
   });
 });

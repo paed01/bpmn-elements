@@ -2236,6 +2236,66 @@ declare module 'bpmn-elements' {
 		getService(message: ElementBrokerMessage): IService | undefined;
 	}
 	/**
+	 * Converging gateway behaviour
+	 *
+	 * Monitors the upstream peers discovered by the process shake and completes once they have all settled
+	 * */
+		class ConvergingGatewayBehaviour {
+		/**
+		 * Converging gateway behaviour
+		 *
+		 * Monitors the upstream peers discovered by the process shake and completes once they have all settled
+		 * */
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
+		activity: Activity;
+		broker: ElementBroker<Activity>;
+		/**
+		 * Inbound taken sequence flow sequences
+		 * */
+		inbound: Set<ElementMessageContent>;
+		get executionId(): string | undefined;
+		
+		execute(executeMessage: ElementBrokerMessage): void;
+		/**
+		 * Setup peer monitor
+		 * */
+		setup(executeMessage: ElementBrokerMessage): void;
+		peerMonitor: PeerMonitor | undefined;
+	}
+	/**
+	 * Peer monitor
+	 * @param activity converging gateway activity
+	 * @param targets gateway peer target activities
+	 */
+		class PeerMonitor {
+		/**
+		 * Peer monitor
+		 * @param activity converging gateway activity
+		 * @param targets gateway peer target activities
+		 */
+		constructor(activity: Activity, targets: Map<string, Activity>);
+		activity: Activity;
+		id: string | undefined;
+		broker: ElementBroker<Activity>;
+		running: Map<any, any>;
+		watching: Map<any, any>;
+		targets: Map<string, Activity>;
+		inbound: any[];
+		get isRunning(): boolean;
+		/**
+		 * Execute peer monitor
+		 * @returns number of running peers
+		 */
+		execute(executeMessage: ElementBrokerMessage): number;
+		/**
+		 * Monitor peer activity
+		 * */
+		monitor(peerActivity: Activity): void;
+		stop(): void;
+	}
+	/**
 	 * Boundary event
 	 * */
 	export function BoundaryEvent(activityDef: ActivityDefinition, context: ContextInstance): Activity;
@@ -2377,10 +2437,26 @@ declare module 'bpmn-elements' {
 	/**
 	 * Inclusive gateway behaviour
 	 *
-	 * Converges like the parallel gateway, awaiting the upstream peers that were actually activated, but requires
-	 * at least one conditional or default outbound flow to be taken on completion.
-	 */
-	export class InclusiveGatewayBehaviour extends ParallelGatewayBehaviour {
+	 * Converges by awaiting the upstream peers that were actually activated and requires at least one
+	 * conditional or default outbound flow to be taken on completion.
+	 * */
+		export class InclusiveGatewayBehaviour {
+		/**
+		 * Inclusive gateway behaviour
+		 *
+		 * Converges by awaiting the upstream peers that were actually activated and requires at least one
+		 * conditional or default outbound flow to be taken on completion.
+		 * */
+		constructor(activity: Activity);
+		id: string | undefined;
+		type: string;
+		activity: Activity;
+		broker: ElementBroker<Activity>;
+		inbound: Set<ElementMessageContent>;
+		peerMonitor: ConvergingGatewayBehaviour["peerMonitor"];
+		get executionId(): string | undefined;
+		execute(executeMessage: ElementBrokerMessage): void;
+		setup(executeMessage: ElementBrokerMessage): void;
 	}
 	/**
 	 * Parallel gateway
@@ -2388,59 +2464,25 @@ declare module 'bpmn-elements' {
 	export function ParallelGateway(activityDef: ActivityDefinition, context: ContextInstance): Activity;
 	/**
 	 * Parallel gateway behaviour
+	 *
+	 * Converges by awaiting its upstream peers and takes every outbound flow on completion.
 	 * */
 		export class ParallelGatewayBehaviour {
 		/**
 		 * Parallel gateway behaviour
+		 *
+		 * Converges by awaiting its upstream peers and takes every outbound flow on completion.
 		 * */
 		constructor(activity: Activity);
 		id: string | undefined;
 		type: string;
 		activity: Activity;
 		broker: ElementBroker<Activity>;
-		/**
-		 * Inbound taken sequence flow sequences
-		 * */
 		inbound: Set<ElementMessageContent>;
+		peerMonitor: ConvergingGatewayBehaviour["peerMonitor"];
 		get executionId(): string | undefined;
-		
 		execute(executeMessage: ElementBrokerMessage): void;
-		/**
-		 * Setup peer monitor
-		 * */
 		setup(executeMessage: ElementBrokerMessage): void;
-		peerMonitor: PeerMonitor | undefined;
-	}
-	/**
-	 * Peer monitor
-	 * @param activity converging gateway activity
-	 * @param targets gateway peer target activities
-	 */
-		class PeerMonitor {
-		/**
-		 * Peer monitor
-		 * @param activity converging gateway activity
-		 * @param targets gateway peer target activities
-		 */
-		constructor(activity: Activity, targets: Map<string, Activity>);
-		activity: Activity;
-		id: string | undefined;
-		broker: ElementBroker<Activity>;
-		running: Map<any, any>;
-		watching: Map<any, any>;
-		targets: Map<string, Activity>;
-		inbound: any[];
-		get isRunning(): boolean;
-		/**
-		 * Execute peer monitor
-		 * @returns number of running peers
-		 */
-		execute(executeMessage: ElementBrokerMessage): number;
-		/**
-		 * Monitor peer activity
-		 * */
-		monitor(peerActivity: Activity): void;
-		stop(): void;
 	}
 	/**
 	 * Transaction

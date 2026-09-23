@@ -841,8 +841,6 @@ Feature('Process', () => {
       assertMessage('activity.end', 'start');
       assertMessage('activity.enter', 'fork');
       assertMessage('activity.start', 'fork');
-      assertMessage('activity.converge', 'fork');
-      assertMessage('activity.leave', 'start');
       assertMessage('activity.end', 'fork');
 
       assertMessage('activity.enter', 'timer');
@@ -856,7 +854,9 @@ Feature('Process', () => {
       assertMessage('activity.leave', 'end1');
 
       assertMessage('activity.leave', 'fork');
+      assertMessage('activity.leave', 'start');
 
+      assertMessage('activity.stop', 'start');
       assertMessage('activity.stop', 'fork');
       assertMessage('activity.stop', 'timer');
 

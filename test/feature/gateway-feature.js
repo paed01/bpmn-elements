@@ -470,4 +470,105 @@ Feature('Gateway', () => {
       expect(error).to.be.ok;
     });
   });
+
+  ['inclusiveGateway', 'parallelGateway'].forEach((gatewayType) => {
+    Scenario(`A ${gatewayType} with one incoming sequence flow fed by an uncontrolled merge`, () => {
+      const source = `
+      <?xml version="1.0" encoding="UTF-8"?>
+      <definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <process id="theProcess" isExecutable="true">
+          <startEvent id="start" />
+          <sequenceFlow id="to-fork" sourceRef="start" targetRef="fork" />
+          <parallelGateway id="fork" />
+          <sequenceFlow id="to-fast" sourceRef="fork" targetRef="fast" />
+          <sequenceFlow id="to-slow" sourceRef="fork" targetRef="slow" />
+          <task id="fast" />
+          <serviceTask id="slow" implementation="\${environment.services.slow}" />
+          <sequenceFlow id="from-fast" sourceRef="fast" targetRef="merge" />
+          <sequenceFlow id="from-slow" sourceRef="slow" targetRef="merge" />
+          <task id="merge" />
+          <sequenceFlow id="to-gateway" sourceRef="merge" targetRef="gateway" />
+          <${gatewayType} id="gateway" />
+          <sequenceFlow id="to-after" sourceRef="gateway" targetRef="after" />
+          <task id="after" />
+          <sequenceFlow id="to-end" sourceRef="after" targetRef="end" />
+          <endEvent id="end" />
+        </process>
+      </definitions>`;
+
+      /** @type {CallableFunction | undefined} */
+      let slowCallback;
+      let gatewayActed = false;
+
+      /** Complete the slow branch once the gateway has either converged or fired */
+      function releaseSlow() {
+        if (!gatewayActed || !slowCallback) return;
+        const next = slowCallback;
+        slowCallback = undefined;
+        next();
+      }
+
+      let context;
+      /** @type {Definition} */
+      let definition;
+      Given('a fork into a fast and a slow branch merged by a task feeding the gateway through its only incoming flow', async () => {
+        context = await testHelpers.context(source);
+        definition = new Definition(context, {
+          services: {
+            /**
+             * @param {any} _
+             * @param {CallableFunction} next
+             */
+            slow(_, next) {
+              slowCallback = next;
+              releaseSlow();
+            },
+          },
+        });
+      });
+
+      let leave;
+      /** @type {string[]} */
+      const sequence = [];
+      When('definition is ran with the slow branch held until the gateway has acted', () => {
+        definition.broker.subscribeTmp(
+          'event',
+          '#',
+          (routingKey, msg) => {
+            if (routingKey.indexOf('.shake') > -1) return sequence.push(routingKey);
+            const id = msg.content.id;
+            if (id === 'gateway' && (routingKey === 'activity.converge' || routingKey === 'activity.end')) {
+              sequence.push(`${id} ${routingKey}`);
+              gatewayActed = true;
+              releaseSlow();
+            } else if (id === 'slow' && routingKey === 'activity.end') {
+              sequence.push(`${id} ${routingKey}`);
+            }
+          },
+          { noAck: true }
+        );
+        leave = definition.waitFor('leave');
+        definition.run();
+      });
+
+      Then('run completes', () => {
+        return leave;
+      });
+
+      And('the gateway fired on the first merged token without converging, before the slow branch completed', () => {
+        expect(sequence).to.deep.equal(['gateway activity.end', 'slow activity.end', 'gateway activity.end']);
+      });
+
+      And('the gateway fired once per merged token', () => {
+        expect(definition.getActivityById('merge').counters).to.deep.equal({ taken: 2, discarded: 0 });
+        expect(definition.getActivityById('gateway').counters).to.deep.equal({ taken: 2, discarded: 0 });
+        expect(definition.getActivityById('after').counters).to.deep.equal({ taken: 2, discarded: 0 });
+        expect(definition.getActivityById('end').counters).to.deep.equal({ taken: 2, discarded: 0 });
+      });
+
+      And('nothing is postponed', () => {
+        expect(definition.getPostponed()).to.have.length(0);
+      });
+    });
+  });
 });

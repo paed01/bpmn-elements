@@ -14,6 +14,7 @@ import type { Formatter } from '../src/MessageFormatter.js';
 import type { ActivityError } from '../src/error/Errors.js';
 import type { SignalTaskBehaviour } from '../src/tasks/SignalTask.js';
 import type { ServiceTaskBehaviour } from '../src/tasks/ServiceTask.js';
+import type { ConvergingGatewayBehaviour } from '../src/gateways/ConvergingGateway.js';
 
 export type { Activity, ActivityExecution, ContextInstance, Definition, Environment, Lane, Process, SequenceFlow };
 export type { Consumer, MessageFields, MessageProperties };
@@ -36,6 +37,41 @@ declare module '../src/tasks/SendTask.js' {
 
 declare module '../src/tasks/BusinessRuleTask.js' {
   interface BusinessRuleTaskBehaviour extends ServiceTaskBehaviour {}
+}
+
+// The parallel and inclusive gateway behaviours share the internal converging
+// gateway prototype. Their members are declared here instead of as heritage so
+// the shipped types carry no internal base class.
+declare module '../src/gateways/ParallelGateway.js' {
+  interface ParallelGatewayBehaviour {
+    id: string | undefined;
+    type: string;
+    activity: Activity;
+    broker: ElementBroker<Activity>;
+    /** Inbound taken sequence flow sequences */
+    inbound: Set<ElementMessageContent>;
+    peerMonitor: ConvergingGatewayBehaviour['peerMonitor'];
+    get executionId(): string | undefined;
+    execute(executeMessage: ElementBrokerMessage): void;
+    /** Setup peer monitor */
+    setup(executeMessage: ElementBrokerMessage): void;
+  }
+}
+
+declare module '../src/gateways/InclusiveGateway.js' {
+  interface InclusiveGatewayBehaviour {
+    id: string | undefined;
+    type: string;
+    activity: Activity;
+    broker: ElementBroker<Activity>;
+    /** Inbound taken sequence flow sequences */
+    inbound: Set<ElementMessageContent>;
+    peerMonitor: ConvergingGatewayBehaviour['peerMonitor'];
+    get executionId(): string | undefined;
+    execute(executeMessage: ElementBrokerMessage): void;
+    /** Setup peer monitor */
+    setup(executeMessage: ElementBrokerMessage): void;
+  }
 }
 
 declare module '../src/activity/Activity.js' {

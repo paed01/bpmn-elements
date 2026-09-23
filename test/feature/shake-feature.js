@@ -775,7 +775,7 @@ Feature('Shaking', () => {
     });
   });
 
-  Scenario('a shaken converging parallel gateway emits activity.shake.converge', () => {
+  Scenario('a shaken converging parallel gateway emits activity.shake.converge, a fork with one incoming flow is shaken through', () => {
     let definition;
     Given('a process with a parallel fork and join', async () => {
       const source = `
@@ -812,10 +812,14 @@ Feature('Shaking', () => {
       definition.shake('start');
     });
 
-    Then('each parallel gateway emitted a shake converge event identified by its own id', () => {
+    Then('the converging join emitted a shake converge event identified by its own id', () => {
       const joins = convergeMessages.map((m) => m.content.join);
-      expect(joins, joins.join()).to.include('fork');
       expect(joins, joins.join()).to.include('join');
+    });
+
+    And('the fork with one incoming flow did not converge the shake', () => {
+      const joins = convergeMessages.map((m) => m.content.join);
+      expect(joins, joins.join()).to.not.include('fork');
     });
   });
 });

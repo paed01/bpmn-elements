@@ -33,7 +33,7 @@ describe('activity', () => {
           singleFlowDefinition = await SingleFlowDefinition(activityType);
         });
 
-        (convergingGateways.includes(activityType) ? it.skip : it)('run() publish messages in the expected sequence', async () => {
+        it('run() publish messages in the expected sequence', async () => {
           const processContext = await testHelpers.context(simpleDefinition);
           const activity = processContext.getActivityById('activity');
 
@@ -65,7 +65,7 @@ describe('activity', () => {
           assertMessage('activity.leave');
         });
 
-        (convergingGateways.includes(activityType) ? it.skip : it)('run() after run() resets messages', async () => {
+        it('run() after run() resets messages', async () => {
           const processContext = await testHelpers.context(simpleDefinition);
           const activity = processContext.getActivityById('activity');
 
@@ -211,7 +211,7 @@ describe('activity', () => {
           expect(activity.outbound.length).to.equal(2);
         });
 
-        (convergingGateways.includes(activityType) ? it.skip : it)('discard() on end is ignored', async () => {
+        it('discard() on end is ignored', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -252,7 +252,7 @@ describe('activity', () => {
           expect(activity.outbound.some((flow) => flow.counters.take)).to.be.ok;
         });
 
-        (convergingGateways.includes(activityType) ? it.skip : it)('discard() on leave is ignored', async () => {
+        it('discard() on leave is ignored', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -357,7 +357,7 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (convergingGateways.includes(activityType) ? it.skip : it)('resume stopped on enter continuous execution', async () => {
+        it('resume stopped on enter continuous execution', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -397,7 +397,7 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (convergingGateways.includes(activityType) ? it.skip : it)('resume recovered on enter continuous execution', async () => {
+        it('resume recovered on enter continuous execution', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -444,70 +444,67 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (convergingGateways.includes(activityType) ? it.skip : it)(
-          'resume recovered new instance on enter continuous execution',
-          async () => {
-            const context = await testHelpers.context(singleFlowDefinition);
-            let activity = context.getActivityById('activity');
+        it('resume recovered new instance on enter continuous execution', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          let activity = context.getActivityById('activity');
 
-            const messages = [];
-            activity.broker.subscribeTmp(
-              'event',
-              'activity.*',
-              (routingKey, message) => {
-                const api = assertApi(activity, message);
-                if (routingKey === 'activity.wait') return api.signal();
-                messages.push(message);
-              },
-              { noAck: true }
-            );
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true }
+          );
 
-            activity.broker.subscribeOnce('event', 'activity.enter', () => {
-              activity.stop();
-            });
+          activity.broker.subscribeOnce('event', 'activity.enter', () => {
+            activity.stop();
+          });
 
-            const stopped = activity.waitFor('stop');
-            activity.run();
+          const stopped = activity.waitFor('stop');
+          activity.run();
 
-            await stopped;
+          await stopped;
 
-            const state = activity.getState();
-            expect(activity).to.have.property('stopped', true);
-            expect(activity).to.have.property('isRunning', false);
-            expect(state).to.have.property('stopped', true);
+          const state = activity.getState();
+          expect(activity).to.have.property('stopped', true);
+          expect(activity).to.have.property('isRunning', false);
+          expect(state).to.have.property('stopped', true);
 
-            const assertMessage = AssertMessage(context, messages, true);
-            assertMessage('activity.enter');
-            assertMessage('activity.stop');
-            expect(messages, 'no more messages').to.have.length(0);
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.enter');
+          assertMessage('activity.stop');
+          expect(messages, 'no more messages').to.have.length(0);
 
-            activity = context.clone().getActivityById('activity');
+          activity = context.clone().getActivityById('activity');
 
-            activity.broker.subscribeTmp(
-              'event',
-              'activity.*',
-              (routingKey, message) => {
-                const api = assertApi(activity, message);
-                if (routingKey === 'activity.wait') return api.signal();
-                messages.push(message);
-              },
-              { noAck: true }
-            );
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true }
+          );
 
-            activity.recover(state);
+          activity.recover(state);
 
-            const leave = activity.waitFor('leave');
-            activity.resume();
-            await leave;
+          const leave = activity.waitFor('leave');
+          activity.resume();
+          await leave;
 
-            assertMessage('activity.start');
-            assertMessage('activity.end');
-            assertMessage('activity.leave');
-            expect(messages, 'no more messages').to.have.length(0);
-          }
-        );
+          assertMessage('activity.start');
+          assertMessage('activity.end');
+          assertMessage('activity.leave');
+          expect(messages, 'no more messages').to.have.length(0);
+        });
 
-        (convergingGateways.includes(activityType) ? it.skip : it)('resume stopped on start continuous execution', async () => {
+        it('resume stopped on start continuous execution', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -550,7 +547,7 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (convergingGateways.includes(activityType) ? it.skip : it)('resume recovered on start continuous execution', async () => {
+        it('resume recovered on start continuous execution', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -596,67 +593,64 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (convergingGateways.includes(activityType) ? it.skip : it)(
-          'resume recovered new instance on start continuous execution',
-          async () => {
-            const context = await testHelpers.context(singleFlowDefinition);
-            let activity = context.getActivityById('activity');
+        it('resume recovered new instance on start continuous execution', async () => {
+          const context = await testHelpers.context(singleFlowDefinition);
+          let activity = context.getActivityById('activity');
 
-            const messages = [];
-            activity.broker.subscribeTmp(
-              'event',
-              'activity.*',
-              (routingKey, message) => {
-                const api = assertApi(activity, message);
-                if (routingKey === 'activity.wait') return api.signal();
-                messages.push(message);
-              },
-              { noAck: true }
-            );
+          const messages = [];
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true }
+          );
 
-            activity.broker.subscribeTmp('event', 'activity.start', function stop() {
-              activity.broker.unsubscribe('activity.start', stop);
-              activity.stop();
-            });
+          activity.broker.subscribeTmp('event', 'activity.start', function stop() {
+            activity.broker.unsubscribe('activity.start', stop);
+            activity.stop();
+          });
 
-            const stopped = activity.waitFor('stop');
-            activity.activate();
-            activity.run();
-            await stopped;
+          const stopped = activity.waitFor('stop');
+          activity.activate();
+          activity.run();
+          await stopped;
 
-            const state = activity.getState();
+          const state = activity.getState();
 
-            const assertMessage = AssertMessage(context, messages, true);
-            assertMessage('activity.enter');
-            assertMessage('activity.start');
-            assertMessage('activity.stop');
-            expect(messages, 'no more messages').to.have.length(0);
+          const assertMessage = AssertMessage(context, messages, true);
+          assertMessage('activity.enter');
+          assertMessage('activity.start');
+          assertMessage('activity.stop');
+          expect(messages, 'no more messages').to.have.length(0);
 
-            activity = context.clone().getActivityById('activity');
-            activity.broker.subscribeTmp(
-              'event',
-              'activity.*',
-              (routingKey, message) => {
-                const api = assertApi(activity, message);
-                if (routingKey === 'activity.wait') return api.signal();
-                messages.push(message);
-              },
-              { noAck: true }
-            );
+          activity = context.clone().getActivityById('activity');
+          activity.broker.subscribeTmp(
+            'event',
+            'activity.*',
+            (routingKey, message) => {
+              const api = assertApi(activity, message);
+              if (routingKey === 'activity.wait') return api.signal();
+              messages.push(message);
+            },
+            { noAck: true }
+          );
 
-            const left = activity.waitFor('leave');
-            activity.recover(state);
-            activity.resume();
+          const left = activity.waitFor('leave');
+          activity.recover(state);
+          activity.resume();
 
-            await left;
+          await left;
 
-            assertMessage('activity.end');
-            assertMessage('activity.leave');
-            expect(messages, 'no more messages').to.have.length(0);
-          }
-        );
+          assertMessage('activity.end');
+          assertMessage('activity.leave');
+          expect(messages, 'no more messages').to.have.length(0);
+        });
 
-        (convergingGateways.includes(activityType) ? it.skip : it)('resume stopped on end leaves activity', async () => {
+        it('resume stopped on end leaves activity', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -704,7 +698,7 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (convergingGateways.includes(activityType) ? it.skip : it)('resume stopped on end leaves activity', async () => {
+        it('resume stopped on end leaves activity', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -752,7 +746,7 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (convergingGateways.includes(activityType) ? it.skip : it)('resume recovered on end leaves activity', async () => {
+        it('resume recovered on end leaves activity', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -803,7 +797,7 @@ describe('activity', () => {
           expect(messages, 'no more messages').to.have.length(0);
         });
 
-        (convergingGateways.includes(activityType) ? it.skip : it)('resume recovered new instance on end leaves activity', async () => {
+        it('resume recovered new instance on end leaves activity', async () => {
           const context = await testHelpers.context(singleFlowDefinition);
           let activity = context.getActivityById('activity');
 
@@ -867,7 +861,6 @@ describe('activity', () => {
         });
 
         it('resume stopped while discarded leaves activity', async function resumeWhileDiscarded() {
-          if (convergingGateways.includes(activityType)) return this.skip();
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -909,7 +902,6 @@ describe('activity', () => {
         });
 
         it('resume recovered while discarded leaves activity', async function resumeRecoveredWhileDiscarded() {
-          if (convergingGateways.includes(activityType)) return this.skip();
           const context = await testHelpers.context(singleFlowDefinition);
           const activity = context.getActivityById('activity');
 
@@ -987,15 +979,12 @@ describe('activity', () => {
           const assertMessage = AssertMessage(context, messages, true);
           assertMessage('activity.enter');
           assertMessage('activity.start');
-          if (convergingGateways.includes(activityType)) assertMessage('activity.converge');
           assertMessage('activity.end');
           assertMessage('activity.leave');
           expect(messages, 'no more messages').to.have.length(0);
         });
 
         it('ignores a discarded inbound', function discards() {
-          if (convergingGateways.includes(activityType)) return this.skip();
-
           const messages = [];
           activity.broker.subscribeTmp(
             'event',

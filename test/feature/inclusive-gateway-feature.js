@@ -1,5 +1,9 @@
+import fs from 'node:fs/promises';
 import { Definition } from 'bpmn-elements';
+import factory from '../helpers/factory.js';
 import testHelpers from '../helpers/testHelpers.js';
+
+const icicleSource = factory.resource('inclusive-gateway-icicle.bpmn');
 
 const joinSource = `
 <?xml version="1.0" encoding="UTF-8"?>
@@ -35,6 +39,29 @@ const joinSource = `
 
 Feature('Inclusive gateway', () => {
   Scenario('A converging inclusive gateway awaits the branches that were actually taken (issue #46)', () => {
+    /** @type {CallableFunction | undefined} */
+    let slowCallback;
+    let joinConverged = false;
+
+    /** Complete the asynchronous branch once the join is converging */
+    function releaseSlow() {
+      if (!joinConverged || !slowCallback) return;
+      const next = slowCallback;
+      slowCallback = undefined;
+      next();
+    }
+
+    const services = {
+      /**
+       * @param {any} _
+       * @param {CallableFunction} next
+       */
+      slow(_, next) {
+        slowCallback = next;
+        releaseSlow();
+      },
+    };
+
     let context;
     /** @type {Definition} */
     let definition;
@@ -42,11 +69,7 @@ Feature('Inclusive gateway', () => {
       context = await testHelpers.context(joinSource);
       definition = new Definition(context, {
         variables: { takeA: true, takeB: true, takeC: false },
-        services: {
-          slow(...args) {
-            setTimeout(args.pop(), 10);
-          },
-        },
+        services,
       });
     });
 
@@ -58,6 +81,9 @@ Feature('Inclusive gateway', () => {
         'activity.converge',
         (_, msg) => {
           convergeMessages.push(msg.content.id);
+          if (msg.content.id !== 'join') return;
+          joinConverged = true;
+          releaseSlow();
         },
         { noAck: true }
       );
@@ -92,6 +118,7 @@ Feature('Inclusive gateway', () => {
 
     When('ran again with a truthy join condition', () => {
       definition.environment.variables.takeConditional = true;
+      joinConverged = false;
       leave = definition.waitFor('leave');
       definition.run();
     });
@@ -112,8 +139,8 @@ Feature('Inclusive gateway', () => {
       definition = new Definition(context.clone(), {
         variables: { takeA: true, takeB: true, takeC: false },
         services: {
-          slow(...args) {
-            setTimeout(args.pop(), 10);
+          slow() {
+            // never calls back, keeps the asynchronous branch running until stopped
           },
         },
       });
@@ -143,8 +170,12 @@ Feature('Inclusive gateway', () => {
     When('recovered and resumed from the converging join', () => {
       definition = new Definition(context.clone(), {
         services: {
-          slow(...args) {
-            setTimeout(args.pop(), 10);
+          /**
+           * @param {any} _
+           * @param {CallableFunction} next
+           */
+          slow(_, next) {
+            next();
           },
         },
       }).recover(state);
@@ -204,6 +235,267 @@ Feature('Inclusive gateway', () => {
       expect(definition.getActivityById('join').counters).to.deep.equal({ taken: 1, discarded: 0 });
       expect(definition.getActivityById('join').inbound.find(({ id }) => id === 'from-taskA').counters).to.have.property('take', 1);
       expect(definition.getActivityById('join').inbound.find(({ id }) => id === 'from-taskB').counters).to.have.property('take', 1);
+    });
+  });
+
+  /** @type {[string, Record<string, boolean>, string[]][]} */
+  const icicleRuns = [
+    ['only the unconditional flows', {}, ['Activity_1', 'Activity_3']],
+    ['the delayed 2', { take2: true }, ['Activity_1', 'Activity_2', 'Activity_3']],
+    ['every branch', { take2: true, take4: true }, ['Activity_1', 'Activity_2', 'Activity_3', 'Activity_4']],
+  ];
+
+  const icicleEnds = { Activity_1: 'Event_End1', Activity_2: 'Event_End2', Activity_3: 'Event_End3', Activity_4: 'Event_End4' };
+
+  /**
+   * Delay service holding its callbacks until the expected number of service tasks have called it
+   * @param {number} expected number of service tasks
+   */
+  function HeldServices(expected) {
+    /** @type {string[][]} service task ids started before their callbacks were released */
+    const released = [];
+    /** @type {{id: string, next: CallableFunction}[]} */
+    let pending = [];
+    return {
+      released,
+      services: {
+        /**
+         * @param {{id: string}} scope
+         * @param {CallableFunction} next
+         */
+        delay(scope, next) {
+          pending.push({ id: scope.id, next });
+          if (pending.length < expected) return;
+          const calls = pending;
+          pending = [];
+          released.push(calls.map(({ id }) => id).sort());
+          for (const call of calls) call.next();
+        },
+      },
+    };
+  }
+
+  icicleRuns.forEach(([kind, variables, taken]) => {
+    Scenario(`Icicles hanging from a row of inclusive gateways, one following the other, taking ${kind}`, () => {
+      const delayed = taken.filter((id) => id === 'Activity_2' || id === 'Activity_4');
+      const held = HeldServices(delayed.length);
+
+      let context;
+      /** @type {Definition} */
+      let definition;
+      Given(
+        'three inclusive gateways along the eaves, each dropping a task into its own end event, with a mix of conditional and unconditional flows',
+        async () => {
+          context = await testHelpers.context(icicleSource);
+          definition = new Definition(context, {
+            variables,
+            services: held.services,
+          });
+        }
+      );
+
+      let leave;
+      const completed = [];
+      /** @type {string[]} */
+      const shakesAndConverges = [];
+      When('definition is ran capturing the completion sequence', () => {
+        definition.broker.subscribeTmp('event', 'activity.end', (_, msg) => completed.push(msg.content.id), { noAck: true });
+        definition.broker.subscribeTmp(
+          'event',
+          '#',
+          (routingKey) => {
+            if (routingKey === 'activity.converge' || routingKey.indexOf('.shake') > -1) shakesAndConverges.push(routingKey);
+          },
+          { noAck: true }
+        );
+        leave = definition.waitFor('leave');
+        definition.run();
+      });
+
+      Then('run completes', () => {
+        return leave;
+      });
+
+      And('every taken delayed service task was started before any service callback was called', () => {
+        expect(held.released).to.deep.equal(delayed.length ? [delayed] : []);
+      });
+
+      And('no gateway converged and no shake was needed since each gateway has one incoming flow', () => {
+        expect(shakesAndConverges).to.be.empty;
+      });
+
+      And('each gateway fired once, in order down the spine', () => {
+        for (const id of ['Gateway_1', 'Gateway_2', 'Gateway_3']) {
+          expect(definition.getActivityById(id).counters, id).to.deep.equal({ taken: 1, discarded: 0 });
+        }
+        expect(completed.indexOf('Gateway_1')).to.be.below(completed.indexOf('Gateway_2'));
+        expect(completed.indexOf('Gateway_2')).to.be.below(completed.indexOf('Gateway_3'));
+      });
+
+      And('the unconditional flows were taken and the conditional ones as configured', () => {
+        const flow = (gatewayId, flowId) => definition.getActivityById(gatewayId).outbound.find(({ id }) => id === flowId).counters;
+        expect(flow('Gateway_1', 'Flow_1ToTask1')).to.have.property('take', 1);
+        expect(flow('Gateway_1', 'Flow_1To2')).to.have.property('take', 1);
+        expect(flow('Gateway_2', 'Flow_2ToTask2')).to.have.property('take', variables.take2 ? 1 : 0);
+        expect(flow('Gateway_2', 'Flow_2To3')).to.have.property('take', 1);
+        expect(flow('Gateway_3', 'Flow_3ToTask3')).to.have.property('take', 1);
+        expect(flow('Gateway_3', 'Flow_3ToTask4')).to.have.property('take', variables.take4 ? 1 : 0);
+      });
+
+      And('the taken tasks ran once and the others not at all', () => {
+        for (const id of Object.keys(icicleEnds)) {
+          expect(definition.getActivityById(id).counters, id).to.deep.equal({ taken: taken.includes(id) ? 1 : 0, discarded: 0 });
+        }
+      });
+
+      And('each taken branch reached its own end event once and the others not at all', () => {
+        for (const [activityId, endId] of Object.entries(icicleEnds)) {
+          const expected = taken.includes(activityId) ? 1 : 0;
+          expect(definition.getActivityById(endId).counters, endId).to.deep.equal({ taken: expected, discarded: 0 });
+          if (expected) expect(completed.indexOf(activityId), `${activityId} before ${endId}`).to.be.below(completed.indexOf(endId));
+        }
+      });
+
+      And('nothing is postponed', () => {
+        expect(definition.getPostponed()).to.have.length(0);
+      });
+
+      When('ran again on the same definition', () => {
+        completed.length = 0;
+        held.released.length = 0;
+        leave = definition.waitFor('leave');
+        definition.run();
+      });
+
+      Then('run completes', () => {
+        return leave;
+      });
+
+      And('again every taken delayed service task was started before any service callback was called', () => {
+        expect(held.released).to.deep.equal(delayed.length ? [delayed] : []);
+      });
+
+      And('every gateway and every taken end event fired once again', () => {
+        for (const id of ['Gateway_1', 'Gateway_2', 'Gateway_3']) {
+          expect(definition.getActivityById(id).counters, id).to.deep.equal({ taken: 2, discarded: 0 });
+        }
+        for (const [activityId, endId] of Object.entries(icicleEnds)) {
+          expect(definition.getActivityById(endId).counters, endId).to.deep.equal({
+            taken: taken.includes(activityId) ? 2 : 0,
+            discarded: 0,
+          });
+        }
+      });
+    });
+  });
+
+  Scenario(
+    'Icicles hanging from a row of inclusive gateways stopped when the last gateway has fired and both delayed branches run, resumed from state',
+    () => {
+      let context;
+      /** @type {Definition} */
+      let definition;
+      let held;
+      Given('the icicle diagram with the delayed 2 and 4 taken', async () => {
+        context = await testHelpers.context(icicleSource);
+        definition = new Definition(context, {
+          variables: { take2: true, take4: true },
+          services: {
+            delay() {
+              // never calls back, keeps the delayed branches running until stopped
+            },
+          },
+        });
+      });
+
+      let stopped, state;
+      When('definition is ran and stopped when the last delayed branch starts', () => {
+        definition.broker.subscribeTmp(
+          'event',
+          'activity.start',
+          (_, msg) => {
+            if (msg.content.id !== 'Activity_4') return;
+            definition.broker.cancel(msg.fields.consumerTag);
+            definition.stop();
+            state = definition.getState();
+          },
+          { noAck: true, priority: 10000 }
+        );
+        stopped = definition.waitFor('stop');
+        definition.run();
+      });
+
+      Then('run is stopped with the two delayed branches postponed', async () => {
+        await stopped;
+        expect(definition.getPostponed().map(({ id }) => id)).to.have.members(['Activity_2', 'Activity_4']);
+      });
+
+      let leave;
+      When('recovered and resumed', () => {
+        held = HeldServices(2);
+        definition = new Definition(context.clone(), { services: held.services }).recover(state);
+        leave = definition.waitFor('leave');
+        definition.resume();
+      });
+
+      Then('run completes', () => {
+        return leave;
+      });
+
+      And('both resumed delayed service tasks were started before any service callback was called', () => {
+        expect(held.released).to.deep.equal([['Activity_2', 'Activity_4']]);
+      });
+
+      And('each gateway fired once and every branch reached its end event once', () => {
+        for (const id of ['Gateway_1', 'Gateway_2', 'Gateway_3']) {
+          expect(definition.getActivityById(id).counters, id).to.deep.equal({ taken: 1, discarded: 0 });
+        }
+        for (const endId of Object.values(icicleEnds)) {
+          expect(definition.getActivityById(endId).counters, endId).to.deep.equal({ taken: 1, discarded: 0 });
+        }
+        expect(definition.getPostponed()).to.have.length(0);
+      });
+    }
+  );
+
+  Scenario('Icicles state saved by a previous version while the last single incoming inclusive gateway was monitoring peers', () => {
+    let context;
+    /** @type {Definition} */
+    let definition;
+    let held;
+    Given('the icicle diagram and a state stopped when the last gateway started converging', async () => {
+      context = await testHelpers.context(icicleSource);
+    });
+
+    let leave;
+    When('recovered and resumed', async () => {
+      const state = JSON.parse(await fs.readFile('./test/resources/inclusive-gateway-icicle-state-18.json', 'utf8'));
+      held = HeldServices(2);
+      definition = new Definition(context, { services: held.services }).recover(state);
+      leave = definition.waitFor('leave');
+      definition.resume();
+    });
+
+    Then('run completes', () => {
+      return leave;
+    });
+
+    And('both delayed service tasks were started before any service callback was called', () => {
+      expect(held.released).to.deep.equal([['Activity_2', 'Activity_4']]);
+    });
+
+    And('each gateway fired once and every branch reached its end event once', () => {
+      for (const id of ['Gateway_1', 'Gateway_2', 'Gateway_3']) {
+        expect(definition.getActivityById(id).counters, id).to.deep.equal({ taken: 1, discarded: 0 });
+      }
+      for (const endId of Object.values(icicleEnds)) {
+        expect(definition.getActivityById(endId).counters, endId).to.deep.equal({ taken: 1, discarded: 0 });
+      }
+      expect(definition.getActivityById('end').counters).to.deep.equal({ taken: 1, discarded: 0 });
+    });
+
+    And('nothing is postponed', () => {
+      expect(definition.getPostponed()).to.have.length(0);
     });
   });
 });
