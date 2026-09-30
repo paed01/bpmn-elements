@@ -41,7 +41,7 @@
     <bpmn:sequenceFlow id="SequenceFlow_1334ker" sourceRef="join2" targetRef="end" />
     <bpmn:sequenceFlow id="SequenceFlow_05akcgw" sourceRef="decision1" targetRef="join2" />
     <bpmn:sequenceFlow id="SequenceFlow_12ip5vh" sourceRef="decision2" targetRef="join2">
-      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${variables.takeJoin2}</bpmn:conditionExpression>
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${environment.variables.takeJoin2}</bpmn:conditionExpression>
     </bpmn:sequenceFlow>
     <bpmn:parallelGateway id="join2">
       <bpmn:incoming>SequenceFlow_14a3u6g</bpmn:incoming>

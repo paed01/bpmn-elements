@@ -555,8 +555,96 @@ describe('activity run', () => {
       state = states.shift();
       expect(state[0]).to.equal('run.start');
     });
+
+    it('resumes step run stopped at executed and continues stepping', () => {
+      const activity = createActivity();
+      activity.run();
+
+      activity.next();
+      activity.next();
+      expect(activity).to.have.property('status', 'executed');
+
+      activity.stop();
+      activity.resume();
+
+      expect(activity).to.have.property('status', 'executed');
+      expectStepsToLeave(activity);
+    });
+
+    /** @type {[number, import('bpmn-elements').ActivityStatus | undefined][]} */ ([
+      [0, 'entered'],
+      [1, 'started'],
+      [2, 'executed'],
+      [3, 'end'],
+      [4, undefined],
+    ]).forEach(([steps, status]) => {
+      [false, true].forEach((recover) => {
+        it(`step run stopped at ${status ?? 'leave'}, ${recover ? 'recovered and ' : ''}resumed, steps to completion once`, () => {
+          const activity = createActivity();
+          activity.run();
+          for (let i = 0; i < steps; i++) activity.next();
+          expect(activity).to.have.property('status', status);
+
+          activity.stop();
+
+          let resumed = activity;
+          if (recover) {
+            resumed = createActivity();
+            resumed.recover(JSON.parse(JSON.stringify(activity.getState())));
+          }
+
+          const leaves = [];
+          resumed.broker.subscribeTmp('event', 'activity.leave', (_, msg) => leaves.push(msg), { noAck: true });
+          const taken = [];
+          resumed.outbound[0].broker.subscribeTmp('event', 'flow.take', (_, msg) => taken.push(msg), { noAck: true });
+
+          resumed.resume();
+          expect(resumed, 'resumed status').to.have.property('status', status);
+
+          const remaining = ['run.enter', 'run.start', 'run.execute', 'run.end', 'run.leave', 'run.next'].slice(steps);
+          if (status === undefined) remaining.length = 0;
+
+          /** @type {string[]} */
+          const stepped = [];
+          while (remaining.length && stepped.at(-1) !== 'run.next' && stepped.length < 10) {
+            const current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (resumed.next());
+            stepped.push(current.fields.routingKey);
+          }
+
+          if (recover) {
+            // recover flags queued run messages as redelivered, the skipped one is republished on resume and stepped again
+            expect(stepped.filter((routingKey, idx) => routingKey !== stepped[idx - 1])).to.deep.equal(remaining);
+            expect(stepped.length, stepped.join()).to.be.at.most(remaining.length + 1);
+          } else {
+            expect(stepped).to.deep.equal(remaining);
+          }
+
+          expect(resumed).to.have.property('status').that.is.undefined;
+          expect(resumed.counters).to.deep.equal({ taken: 1, discarded: 0 });
+          expect(leaves, 'leave events').to.have.length(steps < 4 ? 1 : 0);
+          expect(taken, 'outbound taken').to.have.length(steps < 4 ? 1 : 0);
+        });
+      });
+    });
   });
 });
+
+/**
+ * Step an activity paused at executed through to leave
+ * @param {import('bpmn-elements').Activity} activity
+ */
+function expectStepsToLeave(activity) {
+  let current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
+  expect(current.fields).to.have.property('routingKey', 'run.execute');
+  expect(activity).to.have.property('status', 'end');
+
+  current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
+  expect(current.fields).to.have.property('routingKey', 'run.end');
+
+  current = /** @type {import('bpmn-elements').ElementBrokerMessage} */ (activity.next());
+  expect(current.fields).to.have.property('routingKey', 'run.leave');
+  expect(activity).to.have.property('status').that.is.undefined;
+}
 
 function createActivity(step = true) {
   return new Activity(

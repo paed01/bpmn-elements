@@ -920,11 +920,15 @@ Activity.prototype._continueRunMessage = function continueRunMessage(routingKey,
       }
     case 'run.execute':
       {
-        this.status = 'executing';
         this[_constants.K_EXECUTE_MESSAGE] = message;
         if (isRedelivered && this.extensions) this.extensions.activate((0, _messageHelper.cloneMessage)(message));
         const exec = this[K_EXEC];
         let execution = exec.get('execution');
+        if (isRedelivered && this.status === 'executed' && execution?.completed) {
+          // Step run stopped at executed: run.end is already queued and continues once this message is acked
+          break;
+        }
+        this.status = 'executing';
         if (!execution) {
           execution = new _ActivityExecution.ActivityExecution(this, this.context);
           exec.set('execution', execution);

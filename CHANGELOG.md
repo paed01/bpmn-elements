@@ -1,5 +1,11 @@
 # Changelog
 
+## v18.1.1
+
+- fix resume of a step-mode activity stopped at status `executed`: the redelivered `run.execute` no longer flips status back to `executing` and re-enters the completed execution, so the run steps on to end and leave once
+- document the peer-monitoring converging joins and mutually exclusive start events as deliberate deviations in the [BPMN 2.0 conformance](/docs/Conformance.md#design-decisions) page
+- drop the stale claim that a converging parallel gateway can complete as `discarded`; it always takes its outbound flows
+
 ## v18.1.0 - 2026-09-22
 
 - fix [#46](https://github.com/paed01/bpmn-elements/issues/46): a converging inclusive gateway now waits for the upstream branches that were actually taken and completes once, reusing the parallel gateway peer monitoring, instead of firing once per inbound token

@@ -434,6 +434,173 @@ Feature('Parallel gateway', () => {
       return leave;
     });
   });
+
+  Scenario('Succeeding parallel joins fed by exclusive decisions', () => {
+    let context;
+    Given(
+      'a fork to two exclusive decisions and a direct flow, where decision outcomes converge in a join that feeds a second join',
+      async () => {
+        context = await testHelpers.context(factory.resource('succeeding-joins.bpmn'));
+      }
+    );
+
+    /** @type {Definition} */
+    let definition;
+    /** @type {Record<string, string[]>} */
+    let joinInbound;
+    function runWith(variables) {
+      definition = new Definition(context.clone(), { variables });
+      joinInbound = {};
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.end',
+        (_, msg) => {
+          if (!msg.content.isConvergingGateway) return;
+          joinInbound[msg.content.id] = msg.content.inbound.map((/** @type {any} */ f) => f.id).sort();
+        },
+        { noAck: true }
+      );
+      const leave = definition.waitFor('leave');
+      definition.run();
+      return leave;
+    }
+
+    function expectJoinsTakenOnce() {
+      expect(definition.getActivityById('join1').counters).to.deep.equal({ taken: 1, discarded: 0 });
+      expect(definition.getActivityById('join2').counters).to.deep.equal({ taken: 1, discarded: 0 });
+      expect(definition.getActivityById('end').counters).to.deep.equal({ taken: 1, discarded: 0 });
+      expect(definition.getPostponed()).to.have.length(0);
+    }
+
+    let leave;
+    When('ran with both decisions taking their default flow', () => {
+      leave = runWith({ takeJoin1: false, takeJoin2: false });
+    });
+
+    Then('run completes', () => {
+      return leave;
+    });
+
+    And('both joins and end were taken once', () => {
+      expectJoinsTakenOnce();
+    });
+
+    And('first join reports the fork flow and the second decision default as inbound', () => {
+      expect(joinInbound.join1).to.deep.equal(['SequenceFlow_01624fc', 'SequenceFlow_0f0dkku']);
+    });
+
+    And('second join reports the first join and the first decision default as inbound', () => {
+      expect(joinInbound.join2).to.deep.equal(['SequenceFlow_05akcgw', 'SequenceFlow_14a3u6g']);
+    });
+
+    When('ran with first decision routing to first join', () => {
+      leave = runWith({ takeJoin1: true, takeJoin2: false });
+    });
+
+    Then('run completes', () => {
+      return leave;
+    });
+
+    And('both joins and end were taken once', () => {
+      expectJoinsTakenOnce();
+    });
+
+    And('first join reports all three inbound flows', () => {
+      expect(joinInbound.join1).to.deep.equal(['SequenceFlow_01624fc', 'SequenceFlow_0f0dkku', 'flow-up-join1']);
+    });
+
+    And('second join reports only the first join as inbound', () => {
+      expect(joinInbound.join2).to.deep.equal(['SequenceFlow_14a3u6g']);
+    });
+
+    When('ran with second decision routing past first join', () => {
+      leave = runWith({ takeJoin1: false, takeJoin2: true });
+    });
+
+    Then('run completes', () => {
+      return leave;
+    });
+
+    And('both joins and end were taken once', () => {
+      expectJoinsTakenOnce();
+    });
+
+    And('first join reports only the fork flow as inbound', () => {
+      expect(joinInbound.join1).to.deep.equal(['SequenceFlow_0f0dkku']);
+    });
+
+    And('second join reports all three inbound flows', () => {
+      expect(joinInbound.join2).to.deep.equal(['SequenceFlow_05akcgw', 'SequenceFlow_12ip5vh', 'SequenceFlow_14a3u6g']);
+    });
+
+    When('ran with both decisions taking their conditional flow', () => {
+      leave = runWith({ takeJoin1: true, takeJoin2: true });
+    });
+
+    Then('run completes', () => {
+      return leave;
+    });
+
+    And('both joins and end were taken once', () => {
+      expectJoinsTakenOnce();
+    });
+
+    And('first join reports the fork flow and the first decision as inbound', () => {
+      expect(joinInbound.join1).to.deep.equal(['SequenceFlow_0f0dkku', 'flow-up-join1']);
+    });
+
+    And('second join reports the first join and the second decision as inbound', () => {
+      expect(joinInbound.join2).to.deep.equal(['SequenceFlow_12ip5vh', 'SequenceFlow_14a3u6g']);
+    });
+
+    let stopped;
+    let state;
+    When('ran again stopping when the second join starts converging', () => {
+      definition = new Definition(context.clone(), { variables: { takeJoin1: false, takeJoin2: true } });
+
+      definition.broker.subscribeTmp(
+        'event',
+        'activity.converge',
+        (_, msg) => {
+          if (msg.content.id === 'join2') {
+            definition.broker.cancel(msg.fields.consumerTag);
+            definition.stop();
+            state = definition.getState();
+          }
+        },
+        { noAck: true, priority: 10000 }
+      );
+
+      stopped = definition.waitFor('stop');
+      definition.run();
+    });
+
+    Then('run is stopped and state saved', () => {
+      return stopped;
+    });
+
+    When('recovered from state', () => {
+      definition = new Definition(context.clone()).recover(state);
+    });
+
+    Then('second join and end are not yet taken', () => {
+      expect(definition.getActivityById('join2').counters).to.deep.equal({ taken: 0, discarded: 0 });
+      expect(definition.getActivityById('end').counters).to.deep.equal({ taken: 0, discarded: 0 });
+    });
+
+    When('resumed', () => {
+      leave = definition.waitFor('leave');
+      definition.resume();
+    });
+
+    Then('run completes', () => {
+      return leave;
+    });
+
+    And('both joins and end were taken once', () => {
+      expectJoinsTakenOnce();
+    });
+  });
 });
 
 function getTakeServices() {

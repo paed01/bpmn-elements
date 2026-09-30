@@ -15,7 +15,7 @@ Join or fork gateway.
 
 A parallel gateway with more than one incoming sequence flow is converging: it monitors its upstream peer activities and completes once they have all settled, rather than completing as soon as the expected number of inbound flows have been touched. Peers are discovered during the process shake.
 
-This avoids stalls in the edge case where the same inbound flow may be touched more than once before all peers have reported. The outcome is `taken` if any inbound flow was taken, otherwise `discarded`.
+This avoids stalls in the edge case where the same inbound flow may be touched more than once before all peers have reported. The gateway only starts converging once an inbound flow is taken, so it always completes by taking its outbound flows; a join is never discarded because a branch was skipped.
 
 A parallel gateway with a single incoming sequence flow has nothing to converge. As BPMN 2.0 prescribes, it fires on every inbound token without awaiting upstream peers, so an uncontrolled merge upstream (an activity with multiple incoming flows) fires it once per token. It does not publish `activity.converge` and does not trigger the process shake.
 
