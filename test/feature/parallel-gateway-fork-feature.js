@@ -303,6 +303,11 @@ Feature('Parallel gateway fork', () => {
       expect(joinGw.counters).to.deep.equal({ taken: 2, discarded: 0 });
     });
 
+    And('ending converging gateway was taken once', () => {
+      joinGw = definition.getActivityById('join');
+      expect(joinGw.counters).to.deep.equal({ taken: 1, discarded: 0 });
+    });
+
     And('no pending inbound exists', () => {
       expect(joinGw.broker.getQueue('inbound-q').messageCount).to.equal(0);
     });
@@ -324,6 +329,11 @@ Feature('Parallel gateway fork', () => {
     And('parallel join was taken twice again', () => {
       joinGw = definition.getActivityById('join');
       expect(joinGw.counters).to.deep.equal({ taken: 4, discarded: 0 });
+    });
+
+    And('ending converging gateway join was taken twice', () => {
+      joinGw = definition.getActivityById('join');
+      expect(joinGw.counters).to.deep.equal({ taken: 2, discarded: 0 });
     });
 
     let stopped;
