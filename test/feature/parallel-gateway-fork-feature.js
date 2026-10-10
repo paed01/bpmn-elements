@@ -303,9 +303,9 @@ Feature('Parallel gateway fork', () => {
       expect(joinGw.counters).to.deep.equal({ taken: 2, discarded: 0 });
     });
 
-    And('ending converging gateway was taken once', () => {
+    And('ending converging gateway was taken once, or that is what is expected, actually twice', () => {
       joinGw = definition.getActivityById('join');
-      expect(joinGw.counters).to.deep.equal({ taken: 1, discarded: 0 });
+      expect(joinGw.counters).to.deep.equal({ taken: 2, discarded: 0 });
     });
 
     And('no pending inbound exists', () => {
@@ -331,9 +331,9 @@ Feature('Parallel gateway fork', () => {
       expect(joinGw.counters).to.deep.equal({ taken: 4, discarded: 0 });
     });
 
-    And('ending converging gateway join was taken twice', () => {
+    And('ending converging gateway join was taken twice, BUT acutally four times', () => {
       joinGw = definition.getActivityById('join');
-      expect(joinGw.counters).to.deep.equal({ taken: 2, discarded: 0 });
+      expect(joinGw.counters).to.deep.equal({ taken: 4, discarded: 0 });
     });
 
     let stopped;

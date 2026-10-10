@@ -5,6 +5,7 @@
 - fix resume of a step-mode activity stopped at status `executed`: the redelivered `run.execute` no longer flips status back to `executing` and re-enters the completed execution, so the run steps on to end and leave once
 - document the peer-monitoring converging joins and mutually exclusive start events as deliberate deviations in the [BPMN 2.0 conformance](/docs/Conformance.md#design-decisions) page
 - drop the stale claim that a converging parallel gateway can complete as `discarded`; it always takes its outbound flows
+- major upgrade of [@0dep/piso@6](https://www.npmjs.com/package/@0dep/piso)
 
 ## v18.1.0 - 2026-09-22
 
