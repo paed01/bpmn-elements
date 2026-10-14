@@ -1,7 +1,8 @@
 {
-  "require": "./test/helpers/setup.js",
+  "require": ["./test/helpers/setup.js"],
   "reporter": "spec",
   "recursive": true,
   "timeout": 1000,
-  "ui": "mocha-cakes-2"
+  "ui": "mocha-scenarios",
+  "ignore": ["./test/helpers/**/*", "./test/resources/**/*"]
 }

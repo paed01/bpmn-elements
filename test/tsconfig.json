@@ -11,6 +11,6 @@
     "noImplicitThis": false,
     "strictNullChecks": false,
     "resolveJsonModule": true,
-    "types": ["node", "chai", "mocha"]
+    "types": ["node", "chai", "mocha", "../node_modules/mocha-scenarios"]
   }
 }

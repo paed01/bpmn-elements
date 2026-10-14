@@ -1,5 +1,3 @@
-/// <reference path="../node_modules/mocha-cakes-2/mocha-cakes.d.ts" />
-
 // Side-effect imports keep the task and gateway modules augmented by
 // types/interfaces.d.ts in the test program even when no test imports them directly.
 import '../src/tasks/UserTask.js';
