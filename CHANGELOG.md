@@ -1,5 +1,10 @@
 # Changelog
 
+## v18.1.2
+
+- add pkg `browser` instruction
+- remove pkg `jsnext:main`, old and superseeded by `module`
+
 ## v18.1.1
 
 - fix resume of a step-mode activity stopped at status `executed`: the redelivered `run.execute` no longer flips status back to `executing` and re-enters the completed execution, so the run steps on to end and leave once
